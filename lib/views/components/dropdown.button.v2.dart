@@ -1,0 +1,375 @@
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+import 'package:meet/constants/assets.gen.dart';
+import 'package:meet/constants/constants.dart';
+import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/helper/extension/build.context.extension.dart';
+import 'package:meet/helper/logger.dart';
+import 'package:meet/l10n/generated/locale.dart';
+import 'package:meet/views/components/close_button_v1.dart';
+import 'package:meet/views/components/custom.header.dart';
+import 'package:meet/views/components/custom.tooltip.dart';
+import 'package:meet/views/components/textfield.text.v2.dart';
+import 'package:meet/views/scenes/core/responsive.dart';
+
+class DropdownButtonV2 extends StatefulWidget {
+  final double width;
+  final List items;
+  final List itemsText;
+  final List? itemsLeadingIcons;
+  final List? itemsTextForDisplay;
+  final List? itemsMoreDetail;
+  final ValueNotifier? valueNotifier;
+  final String? defaultOption;
+  final String? labelText;
+  final double? maxSuffixIconWidth;
+  final Color? backgroundColor;
+  final EdgeInsetsGeometry? padding;
+  final TextStyle? textStyle;
+  final bool canSearch;
+  final Border? border;
+  final String? title;
+
+  const DropdownButtonV2({
+    required this.width,
+    required this.items,
+    required this.itemsText,
+    super.key,
+    this.itemsTextForDisplay,
+    this.itemsMoreDetail,
+    this.labelText,
+    this.backgroundColor,
+    this.defaultOption,
+    this.padding,
+    this.textStyle,
+    this.maxSuffixIconWidth = 24,
+    this.valueNotifier,
+    this.canSearch = false,
+    this.itemsLeadingIcons,
+    this.border,
+    this.title,
+  });
+
+  @override
+  DropdownButtonV2State createState() => DropdownButtonV2State();
+}
+
+class DropdownButtonV2State extends State<DropdownButtonV2> {
+  dynamic selected;
+  final ScrollController _scrollController = ScrollController();
+  final TextEditingController _textEditingController = TextEditingController();
+
+  String getDisplayText(int index) {
+    try {
+      if (widget.itemsTextForDisplay != null) {
+        return widget.itemsTextForDisplay![index];
+      }
+    } catch (e) {
+      logger.e(e.toString());
+    }
+    return widget.itemsText[index];
+  }
+
+  @override
+  void initState() {
+    selected = widget.valueNotifier?.value;
+    final int selectedIndex = max(widget.items.indexOf(selected), 0);
+    _textEditingController.text = getDisplayText(selectedIndex);
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.items.isNotEmpty
+        ? buildWithList(context)
+        : Text(S.of(context).no_data);
+  }
+
+  Widget buildWithList(BuildContext buildContext) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        color: context.colors.backgroundSecondary,
+        borderRadius: BorderRadius.circular(18.0),
+      ),
+      child: Container(
+        width: widget.width,
+        padding:
+            widget.padding ??
+            const EdgeInsets.only(
+              left: defaultPadding,
+              right: 8,
+              top: 4,
+              bottom: 4,
+            ),
+        decoration: BoxDecoration(
+          color: widget.backgroundColor ?? context.colors.backgroundSecondary,
+          border: widget.border,
+          borderRadius: BorderRadius.circular(18.0),
+        ),
+        child: TextField(
+          controller: _textEditingController,
+          readOnly: true,
+          onTap: () {
+            if (Responsive.isMobile(context)) {
+              showOptionsInBottomSheet(context);
+            } else {
+              showOptionsInDialog(context);
+            }
+          },
+          style:
+              widget.textStyle ??
+              ProtonStyles.body1Medium(color: context.colors.textNorm),
+          decoration: InputDecoration(
+            floatingLabelBehavior: FloatingLabelBehavior.always,
+            enabledBorder: InputBorder.none,
+            border: InputBorder.none,
+            labelText: widget.labelText,
+            hintStyle: ProtonStyles.body2Regular(
+              color: context.colors.textHint,
+            ),
+            labelStyle: ProtonStyles.body2Regular(
+              color: context.colors.textWeak,
+              fontSize: 15.0,
+            ),
+            suffixIconConstraints: BoxConstraints(
+              maxWidth: widget.maxSuffixIconWidth ?? 24.0,
+            ),
+            contentPadding: EdgeInsets.only(
+              top: 4,
+              bottom: widget.padding != null ? 2 : 16,
+            ),
+            suffixIcon: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: context.colors.textWeak,
+              size: 24,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void showOptionsInBottomSheet(BuildContext context) {
+    final TextEditingController searchBoxController = TextEditingController();
+    final FocusNode searchBoxFocusNode = FocusNode();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: context.colors.backgroundSecondary,
+      constraints: BoxConstraints(
+        minWidth: context.width,
+        maxHeight: context.height * 0.8,
+      ),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
+      ),
+      builder: (BuildContext context) {
+        return _buildOptions(context, searchBoxController, searchBoxFocusNode);
+      },
+    );
+  }
+
+  void showOptionsInDialog(BuildContext context) {
+    final TextEditingController searchBoxController = TextEditingController();
+    final FocusNode searchBoxFocusNode = FocusNode();
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: context.colors.backgroundSecondary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24.0),
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 300,
+              maxHeight: context.height * 0.8,
+            ),
+            child: _buildOptions(
+              context,
+              searchBoxController,
+              searchBoxFocusNode,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildOptions(
+    BuildContext context,
+    TextEditingController searchBoxController,
+    FocusNode searchBoxFocusNode,
+  ) {
+    String keyWord = "";
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        if (widget.canSearch) {
+          searchBoxController.addListener(() {
+            setState(() {
+              keyWord = searchBoxController.text;
+            });
+          });
+        }
+        return SafeArea(
+          child: Container(
+            padding: EdgeInsets.only(
+              left: defaultPadding,
+              right: defaultPadding,
+              top: defaultPadding,
+              bottom: defaultPadding + MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: IntrinsicHeight(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CustomHeader(
+                    buttonDirection: AxisDirection.right,
+                    button: CloseButtonV1(
+                      backgroundColor: context.colors.backgroundNorm,
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    title: widget.title ?? widget.labelText,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                  ),
+                  const SizedBox(height: 6),
+                  if (widget.canSearch)
+                    TextFieldTextV2(
+                      borderColor: context.colors.textWeak,
+                      textController: searchBoxController,
+                      myFocusNode: searchBoxFocusNode,
+                      validation: (value) {
+                        return "";
+                      },
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        size: 20,
+                        color: context.colors.textWeak,
+                      ),
+                      paddingSize: 2,
+                      labelText: S.of(context).search,
+                    ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: _scrollController,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 5),
+                              for (
+                                int index = 0;
+                                index < widget.items.length;
+                                index++
+                              )
+                                if (widget.itemsText[index]
+                                    .toString()
+                                    .toLowerCase()
+                                    .contains(keyWord.toLowerCase()))
+                                  Container(
+                                    height: 60,
+                                    alignment: Alignment.center,
+                                    child: Column(
+                                      children: [
+                                        ListTile(
+                                          trailing:
+                                              selected == widget.items[index]
+                                              ? Assets.images.icon.icCheckmark
+                                                    .svg(
+                                                      fit: BoxFit.fill,
+                                                      width: 20,
+                                                      height: 20,
+                                                    )
+                                              : null,
+                                          leading:
+                                              widget.itemsMoreDetail != null
+                                              ? CustomTooltip(
+                                                  message: widget
+                                                      .itemsMoreDetail![index],
+                                                  child: Assets
+                                                      .images
+                                                      .icon
+                                                      .icInfoCircle
+                                                      .svg(
+                                                        fit: BoxFit.fill,
+                                                        width: 20,
+                                                        height: 20,
+                                                      ),
+                                                )
+                                              : null,
+                                          title:
+                                              widget.itemsLeadingIcons != null
+                                              ? Row(
+                                                  children: [
+                                                    widget
+                                                        .itemsLeadingIcons?[index],
+                                                    const SizedBox(width: 6),
+                                                    Expanded(
+                                                      child: Text(
+                                                        widget.itemsText[index],
+                                                        style:
+                                                            ProtonStyles.body2Regular(
+                                                              color: context
+                                                                  .colors
+                                                                  .textNorm,
+                                                            ),
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                )
+                                              : Text(
+                                                  widget.itemsText[index],
+                                                  style:
+                                                      ProtonStyles.body2Regular(
+                                                        color: context
+                                                            .colors
+                                                            .textNorm,
+                                                      ),
+                                                ),
+                                          onTap: () {
+                                            setState(() {
+                                              selected = widget.items[index];
+                                              final int selectedIndex = max(
+                                                widget.items.indexOf(selected),
+                                                0,
+                                              );
+                                              _textEditingController.text =
+                                                  getDisplayText(selectedIndex);
+                                              widget.valueNotifier?.value =
+                                                  selected;
+                                              Navigator.of(context).pop();
+                                            });
+                                          },
+                                        ),
+                                        const Divider(
+                                          thickness: 0.2,
+                                          height: 1,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}

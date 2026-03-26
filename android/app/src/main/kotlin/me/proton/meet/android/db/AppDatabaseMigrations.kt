@@ -1,0 +1,88 @@
+
+/*
+ * Copyright (c) 2024 Proton AG
+ * This file is part of Proton AG and Proton Meet.
+ *
+ * Proton Meet is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Proton Meet is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Proton Meet. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package proton.android.meet.db
+
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+import me.proton.core.account.data.db.AccountDatabase
+import me.proton.core.auth.data.db.AuthDatabase
+import me.proton.core.eventmanager.data.db.EventMetadataDatabase
+import me.proton.core.featureflag.data.db.FeatureFlagDatabase
+import me.proton.core.key.data.db.PublicAddressDatabase
+import me.proton.core.payment.data.local.db.PaymentDatabase
+import me.proton.core.user.data.db.UserDatabase
+import me.proton.core.user.data.db.UserKeyDatabase
+import me.proton.core.userrecovery.data.db.DeviceRecoveryDatabase
+import me.proton.core.usersettings.data.db.UserSettingsDatabase
+
+object AppDatabaseMigrations {
+
+    val MIGRATION_1_2 = object : Migration(1, 2) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            PaymentDatabase.MIGRATION_1.migrate(db)
+            UserSettingsDatabase.MIGRATION_6.migrate(db)
+        }
+    }
+
+    val MIGRATION_2_3 = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            DeviceRecoveryDatabase.MIGRATION_0.migrate(db)
+            DeviceRecoveryDatabase.MIGRATION_1.migrate(db)
+            UserKeyDatabase.MIGRATION_1.migrate(db)
+        }
+    }
+
+    val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            AccountDatabase.MIGRATION_8.migrate(db)
+            UserSettingsDatabase.MIGRATION_7.migrate(db)
+            PublicAddressDatabase.MIGRATION_3.migrate(db)
+            EventMetadataDatabase.MIGRATION_3.migrate(db)
+        }
+    }
+
+    val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            AuthDatabase.MIGRATION_0.migrate(db)
+            AuthDatabase.MIGRATION_1.migrate(db)
+        }
+    }
+
+    val MIGRATION_5_6 = object : Migration(5, 6) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            AuthDatabase.MIGRATION_2.migrate(db)
+            AuthDatabase.MIGRATION_3.migrate(db)
+            AuthDatabase.MIGRATION_4.migrate(db)
+            AuthDatabase.MIGRATION_5.migrate(db)
+            UserDatabase.MIGRATION_6.migrate(db)
+            AccountDatabase.MIGRATION_9.migrate(db)
+            UserSettingsDatabase.MIGRATION_8.migrate(db)
+        }
+    }
+
+    // android core 31.0.0 -> 36.3.1
+    val MIGRATION_6_7 = object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            AccountDatabase.MIGRATION_10.migrate(db)
+            AccountDatabase.MIGRATION_11.migrate(db)
+            FeatureFlagDatabase.MIGRATION_4.migrate(db)
+        }
+    }
+}

@@ -1,0 +1,22 @@
+<svg width="75" height="72" viewBox="0 0 75 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect y="7.61328" width="66.8135" height="43.4436" rx="11.2288" fill="#6251BC"/>
+<path d="M62.4521 21.6406C64.8608 21.6408 66.8133 23.5933 66.8135 26.002V56.2373C66.8135 62.4387 61.7863 67.4657 55.585 67.4658H11.2285C5.02716 67.4657 0 62.4387 0 56.2373V26.002C0.000197597 23.5933 1.95272 21.6408 4.36133 21.6406H62.4521Z" fill="#413969"/>
+<rect x="15.3203" y="2" width="11.2288" height="4.99056" rx="2.49528" transform="rotate(90 15.3203 2)" fill="#B9ABFF"/>
+<rect x="29.043" y="2" width="11.2288" height="4.99056" rx="2.49528" transform="rotate(90 29.043 2)" fill="#B9ABFF"/>
+<rect x="42.7656" y="2" width="11.2288" height="4.99056" rx="2.49528" transform="rotate(90 42.7656 2)" fill="#B9ABFF"/>
+<rect x="56.4922" y="2" width="11.2288" height="4.99056" rx="2.49528" transform="rotate(90 56.4922 2)" fill="#B9ABFF"/>
+<rect x="9" y="28.957" width="8.02148" height="6.2382" rx="3.1191" fill="#B9ABFF"/>
+<rect x="9" y="28.957" width="8.02148" height="6.2382" rx="3.1191" fill="#B9ABFF"/>
+<rect x="22.0117" y="28.957" width="8.02148" height="6.2382" rx="3.1191" fill="#B9ABFF"/>
+<rect x="35.0234" y="28.957" width="8.02148" height="6.2382" rx="3.1191" fill="#9581FF"/>
+<rect x="48.0352" y="28.957" width="8.02148" height="6.2382" rx="3.1191" fill="#B9ABFF"/>
+<rect x="9" y="38.9375" width="8.02148" height="6.2382" rx="3.1191" fill="#B9ABFF"/>
+<rect x="22.0117" y="38.9375" width="8.02148" height="6.2382" rx="3.1191" fill="#B9ABFF"/>
+<rect x="35.0234" y="38.9375" width="8.02148" height="6.2382" rx="3.1191" fill="#413969"/>
+<rect x="48.0352" y="38.9375" width="8.02148" height="6.2382" rx="3.1191" fill="#413969"/>
+<rect x="9" y="48.918" width="8.02148" height="6.2382" rx="3.1191" fill="#B9ABFF"/>
+<rect x="22.0117" y="48.918" width="8.02148" height="6.2382" rx="3.1191" fill="#B9ABFF"/>
+<rect x="35.0234" y="48.918" width="8.02148" height="6.2382" rx="3.1191" fill="#413969"/>
+<rect x="48.0352" y="48.918" width="8.02148" height="6.2382" rx="3.1191" fill="#413969"/>
+<path d="M35 44.8044L49.0339 56.4993L71.5 29.5" stroke="#9581FF" stroke-width="7"/>
+</svg>

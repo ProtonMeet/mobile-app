@@ -1,0 +1,56 @@
+{
+  "@@locale": "zh_TW",
+  "@@last_modified": "2024-02-12T00:10:57.227125",
+  "app_name": "Proton Meet",
+  "schedule_at": "at",
+  "schedule_duration_min": "min",
+  "schedule_duration_hr": "hr",
+  "schedule_recurrence_none": "Does not repeat",
+  "schedule_recurrence_daily": "Daily",
+  "schedule_recurrence_weekly": "Weekly",
+  "schedule_recurrence_monthly": "Monthly",
+  "schedule_recurrence_yearly": "Yearly",
+  "schedule_time_zone_search_hint": "Search time zone",
+  "schedule_time_zone_current": "Current time zone",
+  "schedule_time_zone_selected": "Selected time zone",
+  "unable_to_reconnect": "Unable to reconnect",
+  "@unable_to_reconnect": {
+    "description": "Title shown when reconnection fails"
+  },
+  "reconnection_failed_message": "We could not restore the connection. Please try rejoining the meeting",
+  "@reconnection_failed_message": {
+    "description": "Message shown when reconnection fails"
+  },
+  "connection": "Connection",
+  "@connection": {
+    "description": "Section title for connection settings"
+  },
+  "reconnect_meeting": "Reconnect Meeting",
+  "@reconnect_meeting": {
+    "description": "Button label to reconnect to meeting"
+  },
+  "always_show_status": "Always show status",
+  "@always_show_status": {
+    "description": "Setting label to always show connection status banner"
+  },
+  "connection_check_mls_checking": "Connection check\nMLS status checking...",
+  "@connection_check_mls_checking": {
+    "description": "Message shown when checking MLS sync status"
+  },
+  "connection_issue_restoring": "Connection issue\nWe are working to restore full functionality...",
+  "@connection_issue_restoring": {
+    "description": "Message shown when connection issue is being resolved"
+  },
+  "connection_check_mls_failed": "Connection check\nMLS status check failed, triggering rejoin...",
+  "@connection_check_mls_failed": {
+    "description": "Message shown when MLS sync check fails"
+  },
+  "connection_check_mls_passed": "Connection check\nMLS status check passed",
+  "@connection_check_mls_passed": {
+    "description": "Message shown when MLS sync check passes"
+  },
+  "trying_to_reconnect": "Trying to reconnect…",
+  "@trying_to_reconnect": {
+    "description": "Message shown when attempting to reconnect to meeting"
+  }
+}

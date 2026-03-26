@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector
+    android:height="108dp"
+    android:width="108dp"
+    android:viewportHeight="108"
+    android:viewportWidth="108"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 視頻圖標 -->
+    <path android:fillColor="#FFFFFF"
+          android:pathData="M44,64L64,54L44,44z"/>
+    <!-- 添加一些簡潔的裝飾元素 -->
+    <path android:fillColor="#FFFFFF"
+          android:pathData="M54,54m-40,0a40,40 0,1 1,80 0a40,40 0,1 1,-80 0"
+          android:strokeColor="#FFFFFF"
+          android:strokeWidth="2"/>
+</vector>

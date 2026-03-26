@@ -1,0 +1,260 @@
+import groovy.json.JsonSlurper
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("dev.flutter.flutter-gradle-plugin")
+    id("org.jetbrains.kotlin.kapt")
+    id("dagger.hilt.android.plugin")
+    id("org.jetbrains.kotlin.plugin.serialization")
+    id("org.jetbrains.kotlin.plugin.compose")
+    //id("io.sentry.android.gradle")
+    //alias(libs.plugins.proton.environmentConfig)
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
+def meetHost = System.getenv('MEET_HOST')
+if (meetHost == null) { meetHost = 'proton.me' }
+
+def sentryAccountDSN = System.getenv('SENTRY_ACCOUNT_ANDROID_DSN')
+if (sentryAccountDSN == null) { sentryAccountDSN = '' }
+
+def sentryMeetDSN = System.getenv('SENTRY_MEET_DSN')
+if (sentryMeetDSN == null) { sentryMeetDSN = '' }
+
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+}
+
+android {
+    namespace "proton.android.meet"
+    compileSdkVersion libs.versions.compileSdk.get().toInteger()
+    
+    // Force Kotlin version consistency
+    configurations.all {
+        resolutionStrategy {
+            force "org.jetbrains.kotlin:kotlin-stdlib:${libs.versions.kotlin.get()}"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${libs.versions.kotlin.get()}"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${libs.versions.kotlin.get()}"
+            force "org.jetbrains.kotlin:kotlin-stdlib-common:${libs.versions.kotlin.get()}"
+        }
+    }
+    defaultConfig {
+        applicationId "proton.android.meet"
+        // You can update the following values to match your application needs.
+        // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
+        ndkVersion libs.versions.ndkVersion.get()
+        targetSdkVersion libs.versions.targetSdk.get().toInteger()
+        minSdkVersion libs.versions.minSdk.get().toInteger()
+
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+
+        buildConfigField("String", "SENTRY_ACCOUNT_DSN", "\"$sentryAccountDSN\"")
+        buildConfigField("String", "SENTRY_MEET_DSN", "\"$sentryMeetDSN\"")
+        buildConfigField("String", "MEET_HOST", "\"$meetHost\"")
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments["room.schemaLocation"] = "$projectDir/schemas"
+                arguments["room.incremental"] = "true"
+            }
+        }
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64'
+        }
+        
+        resValue(
+            "string", "asset_statements",
+            """
+            [{
+            "relation": ["delegate_permission/common.handle_all_urls", "delegate_permission/common.get_login_creds"],
+            "target": { "namespace": "web", "site": "https://proton.me" }
+            }]
+            """.stripIndent()
+        )
+    }
+
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        buildConfig true
+        compose true
+        dataBinding true // required by Core presentation
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion libs.versions.androidx.compose.compiler.get()
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+        main.jniLibs.srcDirs += 'src/main/jniLibs'
+    }
+
+    configurations {
+        implementation.exclude group: 'com.intellij', module: 'annotations'
+    }
+
+    packagingOptions{
+       pickFirst '**'
+        // jniLibs {
+        //     useLegacyPackaging = true
+        // }
+    }
+
+    flavorDimensions "default"
+    productFlavors {
+        dev {
+            dimension "default"
+            applicationIdSuffix '.dev'
+        }
+        prod {
+            dimension "default"
+        }
+    }
+    buildTypes {
+        debug {
+            debuggable true
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        release {
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
+            signingConfig signingConfigs.debug
+
+            debuggable false
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            ndk {
+                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64'
+            }
+        }
+    }
+}
+// Allow references to generated code
+kapt {
+    correctErrorTypes true
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {
+    // Init rust context
+    // implementation(libs.rustls.platform.verifier)
+    coreLibraryDesugaring(libs.desugaring.jdk.libs)
+    // implementation(platform(libs.firebase.bom))
+    // implementation(libs.firebase.messaging)
+
+    implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.activity.compose)
+
+    implementation platform(libs.androidx.compose.bom)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.room.runtime)
+    kapt(libs.androidx.room.compiler)
+
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.lifecycle.process)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+
+    implementation(libs.androidx.startup.runtime)
+    implementation(libs.androidx.work.runtime.ktx)
+
+    implementation(libs.androidx.hilt.compiler)
+    implementation(libs.androidx.hilt.work)
+    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.dagger.hilt.android.base)
+    kapt(libs.dagger.hilt.android.compiler)
+    //testImplementation(libs.dagger.hilt.android.testing)
+
+    debugImplementation(libs.core.config.dagger.contentResolver)
+    releaseImplementation(libs.core.config.dagger.staticDefaults)
+
+    implementation(libs.core.account)
+    implementation(libs.core.accountManager)
+    implementation(libs.core.deviceMigration)
+    implementation(libs.core.accountRecovery)
+    implementation(libs.core.auth)
+    implementation(libs.core.authFido)
+    implementation(libs.core.biometric)
+    implementation(libs.core.challenge)
+    implementation(libs.core.config.data)
+    implementation(libs.core.country)
+    implementation(libs.core.crypto)
+    implementation(libs.core.data)
+    implementation(libs.core.dataRoom)
+    implementation(libs.core.domain)
+    implementation(libs.core.eventManager)
+    implementation(libs.core.featureFlag)
+    implementation(libs.core.humanVerification)
+    implementation(libs.core.key)
+    implementation(libs.core.network)
+    implementation(libs.core.notification)
+    implementation(libs.core.observability)
+    implementation(libs.core.passValidator)
+    implementation(libs.core.passValidatorDagger)
+    implementation(libs.core.payment)
+    implementation(libs.core.paymentIap)
+    implementation(libs.core.plan.data)
+    implementation(libs.core.plan.domain)
+    implementation(libs.core.plan.presentation)
+    implementation(libs.core.presentation.base)
+    implementation(libs.core.presentation.compose)
+    implementation(libs.core.proguard.rules)
+    implementation(libs.core.push)
+    implementation(libs.core.report)
+    implementation(libs.core.telemetry)
+    implementation(libs.core.user)
+    implementation(libs.core.userRecovery)
+    implementation(libs.core.userSettings)
+    implementation(libs.core.utilAndroidDagger)
+    implementation(libs.core.utilAndroidDevice)
+    implementation(libs.core.utilAndroidSentry)
+    implementation(libs.core.utilKotlin)
+
+    implementation(libs.kotlinx.datetime)
+    implementation(libs.kotlinx.serialization.json)
+
+    //implementation(libs.moonPay.sdk.android)
+
+    //implementation(libs.sentry.android.core)
+    //implementation(libs.sentry.android.timber)
+
+    //testImplementation(libs.junit)
+    //testImplementation(libs.fusion)
+}

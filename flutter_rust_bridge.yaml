@@ -1,0 +1,18 @@
+# https://github.com/fzyzcjy/flutter_rust_bridge/blob/master/frb_codegen/src/library/codegen/config/config.rs
+rust_input:
+  crate::api_service,
+  crate::panic_hook,
+  crate::proton_api,
+  crate::init,
+  crate::logger,
+  crate::flutter_logger,
+  crate::error,
+  crate::proton_meet,
+  crate::livekit,
+  # crate::rnnoise,
+rust_root: rust/crates/frb
+dart_output: lib/rust
+web: true
+enable_lifetime: true
+local: true
+auto_upgrade_dependency: true
