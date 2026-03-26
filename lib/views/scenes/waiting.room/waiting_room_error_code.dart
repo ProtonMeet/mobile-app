@@ -1,0 +1,1 @@
+enum WaitingRoomErrorCode { meetingLocked, generic }

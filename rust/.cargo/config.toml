@@ -1,0 +1,16 @@
+[build]
+rustflags = ["--cfg", "mls_build_async"]
+
+[target.wasm32-unknown-unknown]
+rustflags = ["--cfg", "mls_build_async", "--cfg", 'getrandom_backend="wasm_js"']
+
+[net]
+git-fetch-with-cli = true
+
+[registries.proton_public]
+index = "sparse+https://rust-registry.proton.me/index/"
+
+# Configure OpenSSL for Android cross-compilation
+[env]
+OPENSSL_STATIC = { value = "1", condition = { target-family = "android" } }
+OPENSSL_VENDOR = { value = "1", condition = { target-family = "android" } }

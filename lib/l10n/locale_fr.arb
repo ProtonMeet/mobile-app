@@ -1,0 +1,1453 @@
+{
+  "@@locale": "fr",
+  "@@last_modified": "2024-02-12T00:10:57.227125",
+  "app_name": "Proton Meet",
+  "@app_name": {
+    "description": "The name of the application"
+  },
+  "logout": "Déconnexion",
+  "login": "Connexion",
+  "sign_in": "Se connecter",
+  "sign_out": "Se déconnecter",
+  "learn_more": "En savoir plus",
+  "no_data": "Aucune donnée",
+  "submit": "Envoyer",
+  "cancel": "Annuler",
+  "close": "Fermer",
+  "ok": "OK",
+  "unlock_app": "Déverrouiller l'application",
+  "search": "Rechercher",
+  "placeholder": "Espace réservé",
+  "something_went_wrong": "Une erreur s'est produite",
+  "report_a_problem": "Signaler un problème",
+  "sign_in_to_proton_title": "Connectez-vous à Proton",
+  "sign_in_to_proton_subtitle": "Saisissez les informations de votre compte Proton.",
+  "options": "Options",
+  "@options": {
+    "description": "Title for options dialog"
+  },
+  "manage_accounts": "Gérer les comptes",
+  "@manage_accounts": {
+    "description": "Title for manage accounts dialog"
+  },
+  "delete_account": "Supprimer le compte",
+  "@delete_account": {
+    "description": "Title for delete account dialog"
+  },
+  "signin_intro_title": "Bienvenue sur Proton Meet",
+  "@signin_intro_title": {
+    "description": "Title in the sign-in intro sheet"
+  },
+  "signin_intro_subtitle": "Se connecter ou créer un compte pour continuer",
+  "@signin_intro_subtitle": {
+    "description": "Subtitle in the sign-in intro sheet"
+  },
+  "signin_intro_create_account": "Créer un compte",
+  "@signin_intro_create_account": {
+    "description": "Primary button label in the sign-in intro sheet"
+  },
+  "signin_intro_sign_in": "Se connecter",
+  "@signin_intro_sign_in": {
+    "description": "Secondary button label in the sign-in intro sheet"
+  },
+  "sign_in_username_or_email": "Nom d'utilisateur ou e-mail",
+  "email": "E-mail",
+  "user_name": "Nom d’utilisateur",
+  "account": "Compte",
+  "password": "Mot de passe",
+  "session_expired_content": "Votre session a expiré. Veuillez vous connecter pour continuer.",
+  "session_expired_title": "La session a expiré.",
+  "force_upgrade": "Forcer la mise à niveau",
+  "upgrade": "Mettre à niveau",
+  "search_participants": "Rechercher des participants...",
+  "participants_count": "Participants ({count})",
+  "no_participants_found": "Aucun participant n'a été trouvé",
+  "try_different_search_term": "Essayez un autre terme de recherche.",
+  "you": "(Vous)",
+  "invite_participant": "Inviter un participant",
+  "leave": "Quitter",
+  "emoji_reaction": "Réaction émoji",
+  "unshare_screen": "Arrêter le partage de l'écran",
+  "share_screen": "Partager l'écran",
+  "show_chatroom": "Chat",
+  "show_participants_list": "Participants",
+  "show_settings": "Paramètres",
+  "show_meeting_stats": "afficher les statistiques de la réunion",
+  "meeting_info": "Info",
+  "meeting_settings": "Paramètres",
+  "host": "Hôte",
+  "lock_meeting": "Verrouiller la réunion",
+  "meeting_locked": "Réunion verrouillée",
+  "@meeting_locked": {
+    "description": "Title when meeting is locked"
+  },
+  "meeting_locked_description": "Cette réunion est verrouillée. Veuillez contacter l'hôte pour la rejoindre.",
+  "@meeting_locked_description": {
+    "description": "Description when meeting is locked"
+  },
+  "meeting_locked_notification": "Réunion verrouillée. Aucun nouveau participant ne peut la rejoindre.",
+  "@meeting_locked_notification": {
+    "description": "Toast notification when meeting is locked by host"
+  },
+  "meeting_unlocked_notification": "Réunion déverrouillée. Les participants peuvent de nouveau la rejoindre.",
+  "@meeting_unlocked_notification": {
+    "description": "Toast notification when meeting is unlocked by host"
+  },
+  "hide_profile_pictures": "Masquer les photos de profil",
+  "picture_in_picture_mode": "Mode Image dans l'image",
+  "security": "Sécurité",
+  "enable_waiting_room": "Activer le salon d'attente",
+  "hide_self_view": "Masquer l'aperçu personnel",
+  "allow_all_participants_to": "Permettre à tous les participants de :",
+  "chat": "Chat",
+  "rename_themselves": "Se renommer",
+  "unmute_themselves": "Réactiver le micro",
+  "meeting": "Réunion",
+  "show_meeting_timer": "Afficher le minuteur de la réunion",
+  "unsubscribe_video_by_default": "Désactiver la vidéo entrante",
+  "dark_mode": "Mode sombre",
+  "show_connection_indicator": "Afficher l'indicateur de connexion",
+  "desktop_notifications": "Notifications de bureau",
+  "meeting_quality": "Qualité de la réunion",
+  "camera_resolution": "Résolution de la caméra",
+  "camera_max_bitrate": "Débit vidéo maximal de la caméra",
+  "screen_sharing_resolution": "Résolution du partage d'écran",
+  "screen_sharing_max_bitrate": "Débit maximal du partage d’écran",
+  "export_debug_log": "Exporter le journal de débogage",
+  "type_a_message": "Saisissez un message...",
+  "search_messages": "Rechercher des messages...",
+  "meeting_chat": "Chat de la réunion",
+  "no_messages_found": "Aucun message trouvé",
+  "no_messages_yet": "Pas encore de messages",
+  "start_the_conversation": "Entamer la conversation",
+  "unknown": "Inconnu",
+  "bitrate_extreme_high_2000": "Extrêmement élevé (2000 kbp/s)",
+  "bitrate_ultra_high_1900": "Ultra élevé (1900 kbp/s)",
+  "bitrate_ultra_high_1800": "Ultra élevé (1800 kbp/s)",
+  "bitrate_ultra_high_1700": "Ultra élevé (1700 kbp/s)",
+  "bitrate_ultra_high_1600": "Ultra élevé (1600 kbp/s)",
+  "bitrate_ultra_high_1500": "Ultra élevé (1500 kbp/s)",
+  "bitrate_very_high_1400": "Très élevé (1400 kbp/s)",
+  "bitrate_very_high_1300": "Très élevé (1300 kbp/s)",
+  "bitrate_very_high_1200": "Très élevé (1200 kbp/s)",
+  "bitrate_very_high_1100": "Très élevé (1100 kbp/s)",
+  "bitrate_high_1000": "Élevé (1000 kbp/s)",
+  "bitrate_high_900": "Élevé (900 kbp/s)",
+  "bitrate_high_800": "Élevé (800 kbp/s)",
+  "bitrate_medium_high_700": "Moyen élevé (700 kbp/s)",
+  "bitrate_medium_high_600": "Moyen élevé (600 kbp/s)",
+  "bitrate_medium_high_500": "Moyen élevé (500 kbps)",
+  "bitrate_medium_400": "Moyen (400 kbp/s)",
+  "bitrate_medium_low_300": "Moyen faible (300 kbp/s)",
+  "bitrate_low_200": "Faible (200 kbp/s)",
+  "bitrate_very_low_100": "Très faible (100 kbp/s)",
+  "resolution_360p": "360p",
+  "resolution_720p": "720p",
+  "resolution_1080p": "1080p",
+  "resolution_4k": "4K",
+  "join_meeting": "Discutez en toute confidentialité",
+  "app_description": "Nos réunions chiffrées de bout en bout protègent votre vie privée et vous offrent une véritable liberté d'expression.",
+  "meeting_link": "Lien de la réunion",
+  "meeting_detail": "Détails de la réunion",
+  "display_name": "Votre nom",
+  "enter_display_name": "Indiquez votre nom",
+  "display_name_required": "Vous devez indiquer un nom.",
+  "remember_display_name_on_device": "Se souvenir de mon nom sur cet appareil pour les prochaines réunions",
+  "join_meeting_button": "Participer à la réunion",
+  "create_meeting_button": "Créer une réunion",
+  "import_meeting_button": "Importer une réunion",
+  "import_meeting_title": "Importer une réunion",
+  "import_meeting_hint_text": "Saisir le lien de la réunion",
+  "open_home": "Ouvrir la page d'accueil",
+  "start_simulation": "Démarrer la simulation",
+  "change_layout": "Modifier la disposition",
+  "layout_spaced_grid": "Grille espacée",
+  "layout_compact_grid": "Grille compacte",
+  "layout_speaker_view": "Affichage de l'intervenant",
+  "layout_multi_speaker_view": "Affichage multi-intervenants",
+  "no_active_speaker": "Aucun intervenant actif",
+  "camera_view": "Affichage de la caméra",
+  "is_presenting": "présente",
+  "stop_presenting": "Arrêter de présenter",
+  "participant_joined": "Le participant a rejoint la réunion🎉",
+  "participant_left": "Le participant est parti👋",
+  "participant_name_prefix": "Nom : ",
+  "participant_identity_prefix": "Identité : ",
+  "setting_updated": "Le paramètre a été mis à jour.",
+  "changes_effect_next_screen_sharing": "Les modifications prendront effet lors du prochain partage d'écran.",
+  "video_stats_copied": "Les statistiques vidéo ont été copiées dans le presse-papiers.",
+  "anonymous_user": "Utilisateur anonyme",
+  "loading": "Chargement...",
+  "@loading": {
+    "description": "Loading text"
+  },
+  "video": "Vidéo",
+  "audio": "Audio",
+  "turn_off_camera": "Désactiver la caméra",
+  "turn_on_camera": "Activer la caméra",
+  "video_settings": "Paramètres vidéo",
+  "select_camera_device": "Sélectionnez la caméra",
+  "turn_off_microphone": "Désactiver le microphone",
+  "turn_on_microphone": "Activer le microphone",
+  "audio_settings": "Paramètres audio",
+  "select_microphone": "Sélectionnez un microphone",
+  "select_speaker": "Sélectionnez un intervenant",
+  "permission_not_given": "Les autorisations n'ont pas été accordées.",
+  "permission_camera": "Nous avons besoin de votre autorisation pour accéder à la caméra et l’activer",
+  "permission_microphone": "Nous avons besoin de votre autorisation pour accéder à la caméra et activer le microphone.",
+  "camera_is_off": "La caméra est éteinte.",
+  "copied_to_clipboard": "Copié dans le presse-papiers",
+  "personal_meeting": "Réunion personnelle",
+  "@personal_meeting": {
+    "description": "Title for personal meeting dialog"
+  },
+  "personal_meeting_description": "Votre salle de réunion toujours disponible",
+  "@personal_meeting_description": {
+    "description": "Description text for personal meeting room"
+  },
+  "personal_meeting_room": "Salle de réunion personnelle",
+  "@personal_meeting_room": {
+    "description": "Title for personal meeting room dialog"
+  },
+  "join_a_meeting": "Participer à une réunion",
+  "@join_a_meeting": {
+    "description": "Title for join meeting dialog"
+  },
+  "join_meeting_subtitle": "Collez votre lien Proton Meet pour participer à une réunion sécurisée",
+  "@join_meeting_subtitle": {
+    "description": "Subtitle text for join meeting dialog"
+  },
+  "please_enter_valid_meeting_link": "Veuillez saisir un lien de réunion valide.",
+  "@please_enter_valid_meeting_link": {
+    "description": "Error message when meeting link is invalid"
+  },
+  "link_copied_to_clipboard": "Lien copié dans le presse-papiers",
+  "@link_copied_to_clipboard": {
+    "description": "Success message when meeting link is copied"
+  },
+  "meeting_link_label": "Lien de la réunion",
+  "@meeting_link_label": {
+    "description": "Label for meeting link input field"
+  },
+  "copy_link": "Copier le lien",
+  "@copy_link": {
+    "description": "Button text to copy meeting link"
+  },
+  "copy_link_and_close": "Copier le lien et fermer",
+  "@copy_link_and_close": {
+    "description": "Button text to copy link and close dialog"
+  },
+  "copy": "Copier",
+  "@copy": {
+    "description": "Copy action"
+  },
+  "delete": "Supprimer",
+  "@delete": {
+    "description": "Delete action"
+  },
+  "delete_meeting": "Supprimer la réunion",
+  "@delete_meeting": {
+    "description": "Title for delete meeting dialog"
+  },
+  "delete_meeting_confirmation": "Voulez-vous vraiment supprimer cette réunion ? Cette action ne peut pas être annulée.",
+  "@delete_meeting_confirmation": {
+    "description": "Confirmation message for deleting a meeting"
+  },
+  "creating_meeting": "Création de la réunion...",
+  "@creating_meeting": {
+    "description": "Loading message shown while creating a meeting"
+  },
+  "deleting_meeting": "Suppression de la réunion...",
+  "@deleting_meeting": {
+    "description": "Loading message shown while deleting a meeting"
+  },
+  "updating_meeting": "Mise à jour de la réunion...",
+  "@updating_meeting": {
+    "description": "Loading message shown while updating a meeting"
+  },
+  "scheduling_meeting": "Planification de la réunion...",
+  "@scheduling_meeting": {
+    "description": "Loading message shown while scheduling a meeting"
+  },
+  "guest_user_description": "En tant qu'utilisateur invité, vous pouvez lancer des réunions anonymes et gratuites depuis ce tableau de bord.",
+  "@guest_user_description": {
+    "description": "Description text explaining guest user capabilities"
+  },
+  "create_free_account": "Créer un compte gratuit",
+  "@create_free_account": {
+    "description": "Button text to create a free account"
+  },
+  "please_sign_in_to_access_feature": "Veuillez vous connecter pour accéder à cette fonctionnalité ! ",
+  "@please_sign_in_to_access_feature": {
+    "description": "Message prompting user to sign in"
+  },
+  "already_have_account": "Vous avez déjà un compte ?",
+  "@already_have_account": {
+    "description": "Text before login link for existing users"
+  },
+  "we_hope_you_enjoyed_meeting": "Nous espérons que vous avez apprécié votre réunion sécurisée ! ",
+  "@we_hope_you_enjoyed_meeting": {
+    "description": "Message shown after user leaves meeting"
+  },
+  "left_by_mistake": "Parti par erreur ? ",
+  "@left_by_mistake": {
+    "description": "Text before rejoin link"
+  },
+  "rejoin_meeting": "Rejoindre la réunion",
+  "@rejoin_meeting": {
+    "description": "Button text to rejoin a meeting"
+  },
+  "left_meeting_title": "You left the meeting",
+  "@left_meeting_title": {
+    "description": "Title shown in left meeting bottom sheet"
+  },
+  "left_meeting_subtitle_guest_free": "Host your own secure meeting. Start a call in Proton Meet and share the link to invite anyone to join. Simple, secure, and free.",
+  "@left_meeting_subtitle_guest_free": {
+    "description": "Subtitle shown for non-paid non-host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_guest_paid": "Thank you for joining.",
+  "@left_meeting_subtitle_guest_paid": {
+    "description": "Subtitle shown for paid non-host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_host_free": "Thank you for hosting a meeting.",
+  "@left_meeting_subtitle_host_free": {
+    "description": "Subtitle shown for free host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_host_paid": "Thank you for hosting a premium meeting.",
+  "@left_meeting_subtitle_host_paid": {
+    "description": "Subtitle shown for paid host users after leaving a meeting"
+  },
+  "start_meeting_now": "Start a meeting now",
+  "@start_meeting_now": {
+    "description": "Button text to start a meeting immediately from left meeting bottom sheet"
+  },
+  "publish": "Publier",
+  "@publish": {
+    "description": "Dialog title for publishing camera and microphone"
+  },
+  "publish_camera_mic_question": "Souhaitez-vous publier votre caméra et votre micro ?",
+  "@publish_camera_mic_question": {
+    "description": "Question asking user to publish camera and microphone"
+  },
+  "no": "NON",
+  "@no": {
+    "description": "Negative response button text"
+  },
+  "yes": "OUI",
+  "@yes": {
+    "description": "Positive response button text"
+  },
+  "play_audio": "Lire l'audio",
+  "@play_audio": {
+    "description": "Dialog title and button text for playing audio"
+  },
+  "ios_safari_audio_activation": "Vous devez activer manuellement la lecture audio pour iOS Safari !",
+  "@ios_safari_audio_activation": {
+    "description": "Message explaining iOS Safari audio activation requirement"
+  },
+  "ignore": "Ignorer",
+  "@ignore": {
+    "description": "Button text to ignore an action"
+  },
+  "unpublish": "Arrêter la publication",
+  "@unpublish": {
+    "description": "Dialog title for unpublishing camera and microphone"
+  },
+  "unpublish_camera_mic_question": "Souhaitez-vous arrêter de publier votre caméra et votre micro ?",
+  "@unpublish_camera_mic_question": {
+    "description": "Question asking user to unpublish camera and microphone"
+  },
+  "error": "Erreur",
+  "@error": {
+    "description": "Generic error dialog title"
+  },
+  "disconnect": "Déconnecter",
+  "@disconnect": {
+    "description": "Dialog title and button text for disconnecting"
+  },
+  "are_you_sure_disconnect": "Voulez-vous vraiment vous déconnecter ?",
+  "@are_you_sure_disconnect": {
+    "description": "Confirmation question before disconnecting"
+  },
+  "reconnect": "Reconnecter",
+  "@reconnect": {
+    "description": "Dialog title and button text for reconnecting"
+  },
+  "force_reconnection_message": "Cela forcera une reconnexion",
+  "@force_reconnection_message": {
+    "description": "Message explaining that reconnection will be forced"
+  },
+  "reconnection_successful": "La reconnexion a réussi.",
+  "@reconnection_successful": {
+    "description": "Success message after reconnection"
+  },
+  "no_connection": "Pas de connexion",
+  "@no_connection": {
+    "description": "Message shown when there is no network connection"
+  },
+  "mls_not_synced": "MLS non synchronisé",
+  "@mls_not_synced": {
+    "description": "Message shown when MLS is not synced"
+  },
+  "reconnecting_warning": "Reconnexion",
+  "@reconnecting_warning": {
+    "description": "Message shown when MLS is not synced or websocket trying to reconnect"
+  },
+  "websocket_reconnecting": "WebSocket en cours de reconnexion",
+  "@websocket_reconnecting": {
+    "description": "Message shown when WebSocket is reconnecting"
+  },
+  "received_data": "Données reçues",
+  "@received_data": {
+    "description": "Dialog title for received data"
+  },
+  "room_recording_reminder": "Rappel d'enregistrement de la salle",
+  "@room_recording_reminder": {
+    "description": "Dialog title for room recording status"
+  },
+  "room_recording_active": "L'enregistrement de la salle est actif.",
+  "@room_recording_active": {
+    "description": "Message when room recording is active"
+  },
+  "room_recording_stopped": "L'enregistrement de la salle est arrêté.",
+  "@room_recording_stopped": {
+    "description": "Message when room recording is stopped"
+  },
+  "meeting_being_recorded": "Cette réunion est en cours d'enregistrement",
+  "@meeting_being_recorded": {
+    "description": "Title for recording in progress dialog"
+  },
+  "recording_consent_message": "En restant dans la réunion, vous reconnaissez et acceptez d'être enregistré.",
+  "@recording_consent_message": {
+    "description": "Message about recording consent"
+  },
+  "agree_and_continue": "Accepter et continuer",
+  "@agree_and_continue": {
+    "description": "Button text to agree and continue in meeting"
+  },
+  "allow_subscription": "Autoriser l'abonnement",
+  "@allow_subscription": {
+    "description": "Dialog title for allowing subscription"
+  },
+  "allow_subscription_question": "Autoriser tous les participants à s'abonner aux pistes publiées par le participant local ?",
+  "@allow_subscription_question": {
+    "description": "Question asking user to allow subscription"
+  },
+  "simulate_scenario": "Simuler le scénario",
+  "@simulate_scenario": {
+    "description": "Dialog title for simulating scenarios"
+  },
+  "leave_room": "Quitter la salle",
+  "@leave_room": {
+    "description": "Dialog title for leaving room"
+  },
+  "are_you_sure_leave_room": "Voulez-vous vraiment quitter cette salle ?",
+  "@are_you_sure_leave_room": {
+    "description": "Confirmation question before leaving room"
+  },
+  "no_response": "Non",
+  "@no_response": {
+    "description": "Negative response in confirmation dialogs"
+  },
+  "yes_response": "Oui",
+  "@yes_response": {
+    "description": "Positive response in confirmation dialogs"
+  },
+  "personal_meeting_link": "Lien de réunion personnelle",
+  "@personal_meeting_link": {
+    "description": "Label for personal meeting link button"
+  },
+  "regenerate_link": "Régénérer le lien",
+  "@regenerate_link": {
+    "description": "Button text to regenerate a meeting link"
+  },
+  "regenerating": "Régénération en cours...",
+  "@regenerating": {
+    "description": "Loading message shown while regenerating a meeting link"
+  },
+  "start_secure_meeting": "Démarrer une réunion sécurisée",
+  "@start_secure_meeting": {
+    "description": "Button text to start a secure meeting"
+  },
+  "upcoming_meetings": "Réunions à venir",
+  "@upcoming_meetings": {
+    "description": "Section title for upcoming meetings list"
+  },
+  "my_rooms_count": "Mes salles",
+  "@my_rooms_count": {
+    "description": "Title showing the count of my rooms"
+  },
+  "my_meetings_count": "Mes réunions",
+  "@my_meetings_count": {
+    "description": "Title showing the count of my meetings"
+  },
+  "schedule_meeting": "Planifier une réunion",
+  "@schedule_meeting": {
+    "description": "Button text to schedule a meeting"
+  },
+  "start_meeting": "Démarrer la réunion",
+  "@start_meeting": {
+    "description": "Button text to start a meeting"
+  },
+  "recent_meetings": "Réunions récentes",
+  "@recent_meetings": {
+    "description": "Section title for recent meetings list"
+  },
+  "start_instant_meeting": "Démarrer une réunion instantanée",
+  "@start_instant_meeting": {
+    "description": "Button text to start an instant meeting"
+  },
+  "copy_link_button": "Copier le lien",
+  "@copy_link_button": {
+    "description": "Button text to copy a link"
+  },
+  "start_now": "Démarrer maintenant",
+  "@start_now": {
+    "description": "Button text to start immediately"
+  },
+  "leave_meeting": "Quitter la réunion",
+  "@leave_meeting": {
+    "description": "Dialog title for leaving a meeting"
+  },
+  "are_you_sure_leave_meeting": "Voulez-vous vraiment quitter cette réunion ?",
+  "@are_you_sure_leave_meeting": {
+    "description": "Confirmation question before leaving meeting"
+  },
+  "user_is_presenting": "{name} (vous) présentez",
+  "@user_is_presenting": {
+    "description": "String for local user presenting screen share",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "remote_user_is_presenting": "{name} présente",
+  "@remote_user_is_presenting": {
+    "description": "String for remote user presenting screen share",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "screen_share": "Partage d'écran",
+  "@screen_share": {
+    "description": "Tooltip and button text for screen sharing"
+  },
+  "disable_denoising": "désactiver la réduction du bruit",
+  "@disable_denoising": {
+    "description": "Tooltip for disabling audio denoising"
+  },
+  "enable_denoising": "activer la réduction du bruit",
+  "@enable_denoising": {
+    "description": "Tooltip for enabling audio denoising"
+  },
+  "exit_full_screen": "quitter le plein écran",
+  "@exit_full_screen": {
+    "description": "Tooltip for exiting full screen mode"
+  },
+  "enter_full_screen": "passer en plein écran",
+  "@enter_full_screen": {
+    "description": "Tooltip for entering full screen mode"
+  },
+  "enter_pip": "Passer en mode Image dans l'image",
+  "@enter_pip": {
+    "description": "Tooltip for entering Picture-in-Picture mode"
+  },
+  "screen_sharing": "Partage d'écran",
+  "@screen_sharing": {
+    "description": "Notification title for screen sharing"
+  },
+  "sharing_your_screen": "Partage de votre écran",
+  "@sharing_your_screen": {
+    "description": "Notification text when sharing screen"
+  },
+  "screen_share_not_supported_mobile": "Le partage d'écran n'est pas pris en charge sur le web mobile",
+  "@screen_share_not_supported_mobile": {
+    "description": "Error message when screen sharing is not supported on mobile"
+  },
+  "switch_speakerphone_on": "Utiliser le haut-parleur du téléphone",
+  "@switch_speakerphone_on": {
+    "description": "Tooltip for switching audio output to the phone speaker"
+  },
+  "switch_speakerphone_off": "Utiliser la sortie audio par défaut",
+  "@switch_speakerphone_off": {
+    "description": "Tooltip for switching audio output back to the default device"
+  },
+  "please_grant_camera_permission": "Veuillez accorder l'autorisation d'accès à la caméra pour continuer",
+  "@please_grant_camera_permission": {
+    "description": "Message requesting camera permission"
+  },
+  "please_grant_microphone_permission": "Veuillez accorder l'autorisation d'accès au microphone pour continuer",
+  "@please_grant_microphone_permission": {
+    "description": "Message requesting microphone permission"
+  },
+  "your_meeting_is_ready": "Votre réunion est prête",
+  "@your_meeting_is_ready": {
+    "description": "Title message when meeting is ready"
+  },
+  "share_link_invite_description": "Partagez ce lien pour inviter d'autres personnes. Vous pouvez également le trouver à tout moment en cliquant sur l'icône d'information dans la barre d'outils.",
+  "@share_link_invite_description": {
+    "description": "Instructions for sharing meeting link"
+  },
+  "two_factor_authentication": "Authentification à deux facteurs",
+  "@two_factor_authentication": {
+    "description": "Title for two-factor authentication"
+  },
+  "enter_2fa_code": "Veuillez saisir votre code A2F pour continuer",
+  "@enter_2fa_code": {
+    "description": "Prompt for entering 2FA code"
+  },
+  "twofa_code": "Code A2F",
+  "@twofa_code": {
+    "description": "Label for 2FA code input field"
+  },
+  "verify": "Vérifier",
+  "@verify": {
+    "description": "Button text to verify"
+  },
+  "switch_to": "Passer à",
+  "@switch_to": {
+    "description": "Text before account name in account switcher"
+  },
+  "add_another_account": "Ajouter un autre compte",
+  "@add_another_account": {
+    "description": "Button text to add another account"
+  },
+  "delete_proton_account": "Supprimer le compte Proton",
+  "@delete_proton_account": {
+    "description": "Button text to delete Proton account"
+  },
+  "invalid_meeting_link": "Lien de réunion invalide",
+  "@invalid_meeting_link": {
+    "description": "Error message for invalid meeting link"
+  },
+  "permission_required": "Autorisation requise",
+  "@permission_required": {
+    "description": "Label when permission is required"
+  },
+  "unsubscribe_audio": "Se désabonner de l'audio",
+  "@unsubscribe_audio": {
+    "description": "Menu item to unsubscribe from audio"
+  },
+  "subscribe_audio": "S’abonner à l'audio",
+  "@subscribe_audio": {
+    "description": "Menu item to subscribe to audio"
+  },
+  "unsubscribe_video": "Se désabonner de la vidéo",
+  "@unsubscribe_video": {
+    "description": "Menu item to unsubscribe from video"
+  },
+  "subscribe_video": "S’abonner à la vidéo",
+  "@subscribe_video": {
+    "description": "Menu item to subscribe to video"
+  },
+  "remote_mute_video": "Couper la vidéo à distance",
+  "@remote_mute_video": {
+    "description": "Menu item to remotely mute video"
+  },
+  "remote_mute_audio": "Couper l'audio à distance",
+  "@remote_mute_audio": {
+    "description": "Menu item to remotely mute audio"
+  },
+  "force_mute": "Forcer le mode muet",
+  "@force_mute": {
+    "description": "Menu item to force mute a participant"
+  },
+  "force_mute_participant": "Forcer le mode muet pour {name}",
+  "@force_mute_participant": {
+    "description": "Toast message when force muting a participant",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "force_disable_camera": "Forcer la désactivation de la caméra",
+  "@force_disable_camera": {
+    "description": "Menu item to force disable camera"
+  },
+  "force_disable_camera_participant": "Forcer la désactivation de la caméra de {name}",
+  "@force_disable_camera_participant": {
+    "description": "Toast message when force disabling camera",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "kick_out": "Exclure",
+  "@kick_out": {
+    "description": "Menu item to kick out a participant"
+  },
+  "kick_out_participant": "Exclure {name}",
+  "@kick_out_participant": {
+    "description": "Toast message when kicking out a participant",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "subscribe_menu": "Menu d'abonnement",
+  "@subscribe_menu": {
+    "description": "Tooltip for subscribe menu button"
+  },
+  "subscribe": "S’abonner",
+  "@subscribe": {
+    "description": "Menu item to subscribe"
+  },
+  "unsubscribe": "Se désabonner",
+  "@unsubscribe": {
+    "description": "Menu item to unsubscribe"
+  },
+  "preferred_fps": "IPS préférées",
+  "@preferred_fps": {
+    "description": "Tooltip for preferred FPS setting"
+  },
+  "preferred_quality": "Qualité préférée",
+  "@preferred_quality": {
+    "description": "Tooltip for preferred quality setting"
+  },
+  "high": "ÉLEVÉE",
+  "@high": {
+    "description": "High quality option"
+  },
+  "medium": "MOYENNE",
+  "@medium": {
+    "description": "Medium quality option"
+  },
+  "low": "FAIBLE",
+  "@low": {
+    "description": "Low quality option"
+  },
+  "unnamed_room": "Salle sans nom",
+  "@unnamed_room": {
+    "description": "Default name for rooms without a name"
+  },
+  "participants_count_text": "{count} participants",
+  "@participants_count_text": {
+    "description": "Text showing number of participants",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_privacy_message": "This is an end to end encrypted chat with ephemeral messages, which disappear at the end of the call.",
+  "@chat_privacy_message": {
+    "description": "Privacy message displayed in chat when there are no messages."
+  },
+  "meeting_quality_feedback": "Commentaire sur la qualité de la réunion",
+  "@meeting_quality_feedback": {
+    "description": "Title for meeting quality feedback form"
+  },
+  "quality_feedback_email_message": "En soumettant, vous partagerez le journal de connexion avec nous par message.",
+  "@quality_feedback_email_message": {
+    "description": "Message explaining that connection log will be shared via email"
+  },
+  "skip": "Ignorer",
+  "@skip": {
+    "description": "Button text to skip an action"
+  },
+  "feature_not_ready": "Cette fonctionnalité n'est pas encore prête.",
+  "@feature_not_ready": {
+    "description": "Message when a feature is not ready"
+  },
+  "video_stats_all_participants": "Stats vidéo - Tous les participants",
+  "@video_stats_all_participants": {
+    "description": "Title for video statistics dialog"
+  },
+  "video_stats": "stats vidéo",
+  "@video_stats": {
+    "description": "Label for video statistics"
+  },
+  "page_not_found": "Page introuvable",
+  "@page_not_found": {
+    "description": "Error message when page is not found"
+  },
+  "invalid_deeplink_format": "Format de lien profond invalide : {name}",
+  "@invalid_deeplink_format": {
+    "description": "Error message for invalid deeplink format",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "open_settings": "Ouvrir les paramètres",
+  "@open_settings": {
+    "description": "Button text to open settings"
+  },
+  "schedule": "Planifier",
+  "@schedule": {
+    "description": "Button text to schedule"
+  },
+  "start": "Démarrer",
+  "@start": {
+    "description": "Button text to start"
+  },
+  "start_an_instant_meeting": "Démarrer une réunion instantanée",
+  "@start_an_instant_meeting": {
+    "description": "Button text to start an instant meeting"
+  },
+  "more": "Plus",
+  "@more": {
+    "description": "Tooltip for more options button"
+  },
+  "unlock_failed_too_many_times": "Le déverrouillage a échoué trop de fois",
+  "@unlock_failed_too_many_times": {
+    "description": "Error message when unlock fails too many times"
+  },
+  "show_all_stats_debug": "Afficher toutes les stats (mode débogage)",
+  "@show_all_stats_debug": {
+    "description": "Button text to show all stats in debug mode"
+  },
+  "close_simulation": "Fermer la simulation",
+  "@close_simulation": {
+    "description": "Button text to close simulation"
+  },
+  "close_all_rooms_exit_simulation": "Voulez-vous vraiment fermer toutes les salles et quitter le mode simulation ?",
+  "@close_all_rooms_exit_simulation": {
+    "description": "Confirmation question before closing simulation"
+  },
+  "yes_close_all": "Oui, tout fermer",
+  "@yes_close_all": {
+    "description": "Button text to confirm closing all rooms"
+  },
+  "simulation_mode": "Mode simulation",
+  "@simulation_mode": {
+    "description": "Title for simulation mode"
+  },
+  "simulation_mode_description": "Créer et gérer des salles simulées pour les tests",
+  "@simulation_mode_description": {
+    "description": "Description text for simulation mode"
+  },
+  "simulated_rooms": "Salles simulées",
+  "@simulated_rooms": {
+    "description": "Title for simulated rooms section"
+  },
+  "room_with_users": "Salle {key} ({count} utilisateurs)",
+  "@room_with_users": {
+    "description": "Text showing room ID and user count",
+    "placeholders": {
+      "key": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "enable_video": "Activer la vidéo",
+  "@enable_video": {
+    "description": "Button text to enable video"
+  },
+  "meeting_will_end_in": "La réunion se terminera dans {time}",
+  "@meeting_will_end_in": {
+    "description": "Title for meeting will end dialog with countdown timer",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "0:30"
+      }
+    }
+  },
+  "host_close_meeting_description": "Voulez-vous quitter la réunion ou y mettre fin pour tout le monde ?",
+  "@host_close_meeting_description": {
+    "description": "Description text when host want to leave meeting"
+  },
+  "close_meeting_description": "Voulez-vous vraiment partir ? La réunion continuera sans vous.",
+  "@close_meeting_description": {
+    "description": "Description text when host want to leave meeting"
+  },
+  "meeting_will_end_description": "Comme vous êtes le seul participant à cette réunion, elle se fermera automatiquement. Voulez-vous rester dans cette réunion ?",
+  "meeting_created": "Réunion créée",
+  "@meeting_created": {
+    "description": "Title for meeting created dialog"
+  },
+  "room_initialing_hint": "S'abonner aux pistes vidéo distantes…",
+  "@room_initialing_hint": {
+    "description": "Hint for room initialing process"
+  },
+  "add_to_calendar": "Ajouter au calendrier",
+  "@add_to_calendar": {
+    "description": "Button label to add a meeting to calendar"
+  },
+  "meeting_details": "Informations",
+  "@meeting_details": {
+    "description": "Button label to show meeting details"
+  },
+  "meeting_details_section": "Informations de la réunion",
+  "@meeting_details_section": {
+    "description": "Section title for meeting details in info panel"
+  },
+  "title_label": "Titre",
+  "@title_label": {
+    "description": "Label for meeting title field"
+  },
+  "date_label": "Date",
+  "@date_label": {
+    "description": "Label for meeting date field"
+  },
+  "time_label": "Heure",
+  "@time_label": {
+    "description": "Label for meeting time field"
+  },
+  "invite_link_label": "Lien d'invitation",
+  "@invite_link_label": {
+    "description": "Label for invite link field"
+  },
+  "messaging_layer_security": "Messaging Layer Security (MLS)",
+  "@messaging_layer_security": {
+    "description": "Title for MLS section in meeting info panel"
+  },
+  "participants_label": "Participants",
+  "@participants_label": {
+    "description": "Label for participants count field"
+  },
+  "epoch_label": "Epoch",
+  "@epoch_label": {
+    "description": "Label for epoch field"
+  },
+  "security_code_label": "Code de sécurité",
+  "@security_code_label": {
+    "description": "Label for security code field"
+  },
+  "recurrence_daily": "Chaque jour",
+  "@recurrence_daily": {
+    "description": "Recurrence frequency label for daily meetings"
+  },
+  "recurrence_weekly": "Chaque semaine",
+  "@recurrence_weekly": {
+    "description": "Recurrence frequency label for weekly meetings"
+  },
+  "recurrence_monthly": "Chaque mois",
+  "@recurrence_monthly": {
+    "description": "Recurrence frequency label for monthly meetings"
+  },
+  "recurrence_yearly": "Chaque année",
+  "@recurrence_yearly": {
+    "description": "Recurrence frequency label for yearly meetings"
+  },
+  "@meeting_will_end_description": {
+    "description": "Description text explaining why meeting will end"
+  },
+  "stay_in_meeting": "Rester dans la réunion",
+  "@stay_in_meeting": {
+    "description": "Button text to stay in meeting"
+  },
+  "end_meeting_for_all": "Mettre fin à la réunion pour tous",
+  "@end_meeting_for_all": {
+    "description": "Button text to end meeting for all"
+  },
+  "stay_in_the_meeting": "Rester dans la réunion",
+  "@stay_in_the_meeting": {
+    "description": "Button text to stay in the meeting"
+  },
+  "connection_lost": "Connexion perdue",
+  "@connection_lost": {
+    "description": "Connection lost description"
+  },
+  "connection_lost_content": "Connexion perdue, veuillez rejoindre la réunion à nouveau",
+  "@connection_lost_content": {
+    "description": "Connection lost description"
+  },
+  "go_back_to_dashboard": "Retourner au tableau de bord",
+  "@go_back_to_dashboard": {
+    "description": "Description text for go back to the dashboard button"
+  },
+  "early_access_description": "Cette fonctionnalité est disponible exclusivement pour les utilisateurs Lifetime et Visionary pendant l'accès en avant-première.",
+  "@early_access_description": {
+    "description": "Description text explaining guest user capabilities"
+  },
+  "early_access_title": "Connectez-vous pour accéder à cette fonctionnalité",
+  "@early_access_title": {
+    "description": "Message prompting user to sign in for this early access feature"
+  },
+  "early_access_title_for_login_user": "Fonctionnalité d'accès en avant-première",
+  "@early_access_title_for_login_user": {
+    "description": "Message to let user know this is early access feature available for Lifetime and Visionary users"
+  },
+  "schedule_a_meeting": "Planifier une réunion",
+  "@schedule_a_meeting": {
+    "description": "Menu item label to schedule a meeting in Proton Meet app"
+  },
+  "create_a_room": "Créer une salle",
+  "@create_a_room": {
+    "description": "Menu item label to create a room"
+  },
+  "create_new_room": "Créer une nouvelle salle",
+  "@create_new_room": {
+    "description": "Menu item label to create a new room"
+  },
+  "emoji_reactions": "Emoji reactions",
+  "@emoji_reactions": {
+    "description": "Emoji reactions tooltip"
+  },
+  "edit_room": "Modifier la salle",
+  "@edit_room": {
+    "description": "Menu item label to edit a room"
+  },
+  "edit_meeting": "Modifier la réunion",
+  "@edit_meeting": {
+    "description": "Menu item label to edit a meeting"
+  },
+  "join_with_a_link": "Rejoindre avec un lien",
+  "@join_with_a_link": {
+    "description": "Menu item label to join a meeting with a link"
+  },
+  "room_name": "Nom",
+  "@room_name": {
+    "description": "Label for room name input field header"
+  },
+  "room_id": "ID de la salle",
+  "@room_id": {
+    "description": "Label for room ID display"
+  },
+  "room_deleted": "Salle supprimée",
+  "@room_deleted": {
+    "description": "Success message shown after a room is deleted"
+  },
+  "meeting_deleted": "Réunion supprimée",
+  "@meeting_deleted": {
+    "description": "Success message shown after a meeting is deleted"
+  },
+  "enter_room_name_hint": "Ex. : Équipe de design, Réunion chaque semaine",
+  "@enter_room_name_hint": {
+    "description": "Hint text for room name input field"
+  },
+  "create_room_subtitle": "Les salles de réunion peuvent être utilisées à tout moment",
+  "@create_room_subtitle": {
+    "description": "Subtitle text for create room dialog"
+  },
+  "create_button": "Créer",
+  "@create_button": {
+    "description": "Button text to create"
+  },
+  "save": "Enregistrer",
+  "@save": {
+    "description": "Button text to save"
+  },
+  "create_and_copy_link": "Créer et copier le lien",
+  "@create_and_copy_link": {
+    "description": "Button text to create meeting and copy link"
+  },
+  "you_are_using_paid_meet_plan": "Vous utilisez un abonnement Meet payant.",
+  "@you_are_using_paid_meet_plan": {
+    "description": "Message shown to host indicating they are using a paid plan"
+  },
+  "you_are_using_free_meet_plan": "Vous utilisez l'abonnement Meet gratuit.",
+  "@you_are_using_free_meet_plan": {
+    "description": "Message shown to host indicating they are using the free plan"
+  },
+  "call_supports_up_to": "This call supports up to ",
+  "@call_supports_up_to": {
+    "description": "Message prefix showing the maximum number of participants allowed in the call"
+  },
+  "call_reached_limit": "This call has reached the ",
+  "@call_reached_limit": {
+    "description": "Message prefix showing the call has reached the limit"
+  },
+  "participants_suffix": " participants.",
+  "@participants_suffix": {
+    "description": "Message suffix after the participant count"
+  },
+  "participants_reached_limit_suffix": " participant limit.",
+  "@participants_reached_limit_suffix": {
+    "description": "Message suffix after the call reached limit message"
+  },
+  "no_more_participants_can_join": "Remove a participant or upgrade your plan to invite more people.",
+  "@no_more_participants_can_join": {
+    "description": "Message shown when the call has reached the maximum number of participants"
+  },
+  "connection_quality_poor": "Mauvaise connexion",
+  "@connection_quality_poor": {
+    "description": "Tooltip message shown when connection quality is poor"
+  },
+  "meeting_ended_by_host": "L'hôte a mis fin à la réunion",
+  "@meeting_ended_by_host": {
+    "description": "Toast message shown when the host ends the meeting for everyone"
+  },
+  "client_kicked_out_by_host": "L'hôte vous a retiré de la réunion",
+  "@client_kicked_out_by_host": {
+    "description": "Toast message shown when the host removes current user from the meeting"
+  },
+  "add_title": "Ajouter un titre",
+  "@add_title": {
+    "description": "Placeholder text for meeting title input field"
+  },
+  "schedule_at": "à",
+  "@schedule_at": {
+    "description": "Label for schedule at, used in schedule dialog"
+  },
+  "schedule_duration_min": "min",
+  "@schedule_duration_min": {
+    "description": "Label for schedule duration in minutes"
+  },
+  "schedule_duration_hr": "h",
+  "@schedule_duration_hr": {
+    "description": "Label for schedule duration in hours"
+  },
+  "schedule_recurrence_none": "Ne se répète pas",
+  "@schedule_recurrence_none": {
+    "description": "Label for schedule recurrence none"
+  },
+  "schedule_recurrence_daily": "Chaque jour",
+  "@schedule_recurrence_daily": {
+    "description": "Label for schedule recurrence daily"
+  },
+  "schedule_recurrence_weekly": "Chaque semaine",
+  "@schedule_recurrence_weekly": {
+    "description": "Label for schedule recurrence weekly"
+  },
+  "schedule_recurrence_monthly": "Chaque mois",
+  "@schedule_recurrence_monthly": {
+    "description": "Label for schedule recurrence monthly"
+  },
+  "schedule_recurrence_yearly": "Chaque année",
+  "@schedule_recurrence_yearly": {
+    "description": "Label for schedule recurrence yearly"
+  },
+  "schedule_time_zone_search_hint": "Rechercher un fuseau horaire",
+  "@schedule_time_zone_search_hint": {
+    "description": "Label for schedule time zone search hint"
+  },
+  "schedule_time_zone_current": "Fuseau horaire actuel",
+  "@schedule_time_zone_current": {
+    "description": "Label for schedule time zone current"
+  },
+  "schedule_time_zone_selected": "Fuseau horaire sélectionné",
+  "@schedule_time_zone_selected": {
+    "description": "Label for schedule time zone selected"
+  },
+  "month_jan": "Janvier",
+  "@month_jan": {
+    "description": "Full month name for January"
+  },
+  "month_feb": "Février",
+  "@month_feb": {
+    "description": "Full month name for February"
+  },
+  "month_mar": "Mars",
+  "@month_mar": {
+    "description": "Full month name for March"
+  },
+  "month_apr": "Avril",
+  "@month_apr": {
+    "description": "Full month name for April"
+  },
+  "month_may": "Mai",
+  "@month_may": {
+    "description": "Full month name for May"
+  },
+  "month_jun": "Juin",
+  "@month_jun": {
+    "description": "Full month name for June"
+  },
+  "month_jul": "Juillet",
+  "@month_jul": {
+    "description": "Full month name for July"
+  },
+  "month_aug": "Août",
+  "@month_aug": {
+    "description": "Full month name for August"
+  },
+  "month_sep": "Septembre",
+  "@month_sep": {
+    "description": "Full month name for September"
+  },
+  "month_oct": "Octobre",
+  "@month_oct": {
+    "description": "Full month name for October"
+  },
+  "month_nov": "Novembre",
+  "@month_nov": {
+    "description": "Full month name for November"
+  },
+  "month_dec": "Décembre",
+  "@month_dec": {
+    "description": "Full month name for December"
+  },
+  "weekday_monday": "Lundi",
+  "@weekday_monday": {
+    "description": "Weekday name for Monday"
+  },
+  "weekday_tuesday": "Mardi",
+  "@weekday_tuesday": {
+    "description": "Weekday name for Tuesday"
+  },
+  "weekday_wednesday": "Mercredi",
+  "@weekday_wednesday": {
+    "description": "Weekday name for Wednesday"
+  },
+  "weekday_thursday": "Jeudi",
+  "@weekday_thursday": {
+    "description": "Weekday name for Thursday"
+  },
+  "weekday_friday": "Vendredi",
+  "@weekday_friday": {
+    "description": "Weekday name for Friday"
+  },
+  "weekday_saturday": "Samedi",
+  "@weekday_saturday": {
+    "description": "Weekday name for Saturday"
+  },
+  "weekday_sunday": "Dimanche",
+  "@weekday_sunday": {
+    "description": "Weekday name for Sunday"
+  },
+  "calendar_system": "Ajouter au calendrier du téléphone",
+  "@calendar_system": {
+    "description": "Menu label for opening system calendar"
+  },
+  "calendar_google": "Ajouter au calendrier Google",
+  "@calendar_google": {
+    "description": "Menu label for opening Google Calendar"
+  },
+  "calendar_share_ics": "Partager le fichier de l'événement",
+  "@calendar_share_ics": {
+    "description": "Menu label for sharing ICS file"
+  },
+  "calendar_outlook": "Ajouter au calendrier Outlook",
+  "@calendar_outlook": {
+    "description": "Menu label for opening Outlook Calendar"
+  },
+  "calendar_proton": "Calendrier Proton",
+  "@calendar_proton": {
+    "description": "Menu label for opening Proton Calendar"
+  },
+  "scheduled_meeting_share": "Partager",
+  "@scheduled_meeting_share": {
+    "description": "Share button label in scheduled meeting summary"
+  },
+  "scheduled_meeting_done": "Terminé",
+  "@scheduled_meeting_done": {
+    "description": "Done button label in scheduled meeting summary"
+  },
+  "scheduled_meeting_link": "Lien",
+  "@scheduled_meeting_link": {
+    "description": "Link label in scheduled meeting summary"
+  },
+  "upcoming_today": "AUJOURD'HUI",
+  "@upcoming_today": {
+    "description": "Upcoming meetings header label for today"
+  },
+  "upcoming_tomorrow": "DEMAIN",
+  "@upcoming_tomorrow": {
+    "description": "Upcoming meetings header label for tomorrow"
+  },
+  "on_yesterday": "HIER",
+  "@on_yesterday": {
+    "description": "Meetings header label for yesterday"
+  },
+  "upcoming_prefix": "À VENIR",
+  "@upcoming_prefix": {
+    "description": "Prefix for upcoming meetings header label"
+  },
+  "ended_prefix": "TERMINÉES",
+  "@ended_prefix": {
+    "description": "Prefix for ended/past meetings header label"
+  },
+  "ended_today": "Terminées aujourd'hui",
+  "@ended_today": {
+    "description": "Label for meetings ended today"
+  },
+  "ended_yesterday": "Terminées hier",
+  "@ended_yesterday": {
+    "description": "Label for meetings ended yesterday"
+  },
+  "ended_on": "Terminées le",
+  "@ended_on": {
+    "description": "Label for meetings ended on a specific date"
+  },
+  "created_prefix": "CRÉÉ(E)(S)",
+  "@created_prefix": {
+    "description": "Prefix for newly created meetings header label"
+  },
+  "created_today": "Créé(e)(s) aujourd'hui",
+  "@created_today": {
+    "description": "Label for meetings created today"
+  },
+  "created_yesterday": "Créé(e)(s) hier",
+  "@created_yesterday": {
+    "description": "Label for meetings created yesterday"
+  },
+  "created_last_week": "Créé(e)(s) la semaine dernière",
+  "@created_last_week": {
+    "description": "Label for meetings created within the last week"
+  },
+  "created": "Créé(e)(s) le",
+  "@created": {
+    "description": "Label prefix for created time"
+  },
+  "last_used_today": "Dernière utilisation aujourd'hui",
+  "@last_used_today": {
+    "description": "Label for meetings last used today"
+  },
+  "last_used_yesterday": "Dernière utilisation hier",
+  "@last_used_yesterday": {
+    "description": "Label for meetings last used yesterday"
+  },
+  "last_used": "Dernière utilisation le",
+  "@last_used": {
+    "description": "Label prefix for last used time"
+  },
+  "created_on": "Créé(e)(s) le {day} {month} {year}",
+  "@created_on": {
+    "description": "Label for meetings created on a specific date",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      },
+      "day": {
+        "type": "int"
+      },
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "secure_meeting": "Réunion sécurisée",
+  "@secure_meeting": {
+    "description": "Default meeting name when no title is set"
+  },
+  "share_with_people_you_trust": "Partager avec des personnes approuvées",
+  "@share_with_people_you_trust": {
+    "description": "Personal meeting hint text"
+  },
+  "time_am": "AM",
+  "@time_am": {
+    "description": "AM suffix for 12-hour time format"
+  },
+  "time_pm": "PM",
+  "@time_pm": {
+    "description": "PM suffix for 12-hour time format"
+  },
+  "start_typing_to_search": "Commencez à saisir du texte pour lancer la recherche...",
+  "@start_typing_to_search": {
+    "description": "Placeholder text shown when search query is empty"
+  },
+  "no_results_found_for": "Aucun résultat trouvé pour \\\"{searchQuery}\\\"",
+  "@no_results_found_for": {
+    "description": "Message shown when search returns no results",
+    "placeholders": {
+      "searchQuery": {
+        "type": "String",
+        "example": "meeting name"
+      }
+    }
+  },
+  "sort_newest": "Le plus récent",
+  "@sort_newest": {
+    "description": "Sort option label for newest items"
+  },
+  "sort_last_used": "Dernière utilisation",
+  "@sort_last_used": {
+    "description": "Sort option label for last used items"
+  },
+  "sort_by": "Trier par {option}",
+  "@sort_by": {
+    "description": "Toast notification message when sort option is selected",
+    "placeholders": {
+      "option": {
+        "type": "String"
+      }
+    }
+  },
+  "sort_upcoming": "À venir",
+  "@sort_upcoming": {
+    "description": "Sort option label for upcoming meetings"
+  },
+  "sort_new_created": "Récemment créé",
+  "@sort_new_created": {
+    "description": "Sort option label for newly created items"
+  },
+  "sort_past_meeting": "Passé(e)(s)",
+  "@sort_past_meeting": {
+    "description": "Sort option label for past meetings"
+  },
+  "version": "Version {versionDisplay}",
+  "@version": {
+    "description": "Version text with version number",
+    "placeholders": {
+      "versionDisplay": {
+        "type": "String",
+        "example": "1.0.0-dev (00)"
+      }
+    }
+  },
+  "unable_to_reconnect": "Impossible de se reconnecter",
+  "@unable_to_reconnect": {
+    "description": "Title shown when reconnection fails"
+  },
+  "reconnection_failed_message": "Nous n'avons pas pu restaurer la connexion. Veuillez essayer de rejoindre la réunion à nouveau",
+  "@reconnection_failed_message": {
+    "description": "Message shown when reconnection fails"
+  },
+  "connection": "Connexion",
+  "@connection": {
+    "description": "Section title for connection settings"
+  },
+  "reconnect_meeting": "Se reconnecter à la réunion",
+  "@reconnect_meeting": {
+    "description": "Button label to reconnect to meeting"
+  },
+  "always_show_status": "Toujours montrer le statut",
+  "@always_show_status": {
+    "description": "Setting label to always show connection status banner"
+  },
+  "connection_check_mls_checking": "Vérification de la connexion\\nVérification du statut MLS en cours...",
+  "@connection_check_mls_checking": {
+    "description": "Message shown when checking MLS sync status"
+  },
+  "connection_issue_restoring": "Problème de connexion\\nNous travaillons pour restaurer toutes les fonctionnalités...",
+  "@connection_issue_restoring": {
+    "description": "Message shown when connection issue is being resolved"
+  },
+  "connection_check_mls_failed": "Vérification de la connexion\\nÉchec de la vérification du statut MLS, déclenchement de la reconnexion...",
+  "@connection_check_mls_failed": {
+    "description": "Message shown when MLS sync check fails"
+  },
+  "connection_check_mls_passed": "Vérification de la connexion\\nVérification du statut MLS réussie",
+  "@connection_check_mls_passed": {
+    "description": "Message shown when MLS sync check passes"
+  },
+  "trying_to_reconnect": "Tentative de reconnexion…",
+  "@trying_to_reconnect": {
+    "description": "Message shown when attempting to reconnect to meeting"
+  },
+  "sign_in_card_title": "Se connecter ou créer un compte",
+  "@sign_in_card_title": {
+    "description": "Title text for the sign-in card displayed on dashboard"
+  },
+  "sign_in_card_description": "pour planifier des réunions, utiliser votre salle personnelle, et en créer de nouvelles.",
+  "@sign_in_card_description": {
+    "description": "Description text for the sign-in card explaining benefits of signing in"
+  },
+  "almost_there_title": "You are almost there",
+  "@almost_there_title": {
+    "description": "Title for the almost there bottom sheet"
+  },
+  "almost_there_content_before": "To schedule a meeting, create a free ",
+  "@almost_there_content_before": {
+    "description": "Content before Proton account in almost there bottom sheet (schedule meeting)"
+  },
+  "almost_there_content_before_create_room": "To create a room, create a free ",
+  "@almost_there_content_before_create_room": {
+    "description": "Content before Proton account in almost there bottom sheet (create room)"
+  },
+  "almost_there_content_before_personal_room": "To use your personal meeting room, create a free ",
+  "@almost_there_content_before_personal_room": {
+    "description": "Content before Proton account in almost there bottom sheet (personal meeting room)"
+  },
+  "almost_there_proton_account": "Proton account",
+  "@almost_there_proton_account": {
+    "description": "Proton account text in almost there bottom sheet"
+  },
+  "almost_there_content_after": ". You will return to Proton Meet automatically.",
+  "@almost_there_content_after": {
+    "description": "Content after Proton account in almost there bottom sheet"
+  }
+}

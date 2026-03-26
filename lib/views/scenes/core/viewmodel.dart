@@ -1,0 +1,55 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:meet/helper/extension/platform.extension.dart' as pf_ext;
+import 'package:meet/helper/extension/stream.controller.dart';
+import 'package:meet/views/scenes/core/coordinator.dart';
+import 'package:meet/views/scenes/core/view.dart';
+import 'package:meet/views/scenes/core/view.navigatior.identifiers.dart';
+
+abstract class ViewModel<T extends Coordinator>
+    extends NavigationFlowInterface {
+  GlobalKey<NavigatorState>? get nestedNavigatorKey => coordinator.navigatorKey;
+
+  ViewModel(this.coordinator);
+
+  /// coordinator
+  @protected
+  @visibleForTesting
+  final T coordinator;
+
+  /// [ViewModel] stream controller
+  final _dataChangedStream = StreamController<ViewModel>.broadcast();
+
+  @protected
+  void sinkAddSafe() {
+    _dataChangedStream.sinkAddSafe(this);
+  }
+
+  /// steam and data changes state this will be listened from view
+  ///   and call SetState when data changes.
+  Stream<ViewModel> get datasourceChanged => _dataChangedStream.stream;
+
+  Future<void> loadData();
+
+  /// dispose function. all override ViewModel should call super.dispose()
+  @mustCallSuper
+  void dispose() {
+    _dataChangedStream.close();
+    coordinator.end();
+  }
+
+  ///
+  ViewSize? currentSize;
+
+  bool get isMobileSize => currentSize == ViewSize.mobile;
+
+  bool get keepAlive => false;
+  bool get mobile => pf_ext.mobile;
+  bool get desktop => pf_ext.desktop;
+  bool get android => pf_ext.android;
+  bool get iOS => pf_ext.iOS;
+  bool get macOS => pf_ext.macOS;
+  bool get apple => iOS || macOS;
+  bool get screenSizeState => false;
+}

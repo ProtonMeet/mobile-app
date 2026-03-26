@@ -1,0 +1,10 @@
+cargo:
+  debug:
+    toolchain: stable
+    extra_flags: ["--config", "build.rustflags='--cfg mls_build_async'"]
+  release:
+    toolchain: stable
+    extra_flags: ["--config", "build.rustflags='--cfg mls_build_async'"]
+  profile:
+    toolchain: stable
+    extra_flags: ["--config", "build.rustflags='--cfg mls_build_async'"]

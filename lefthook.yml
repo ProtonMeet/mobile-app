@@ -1,0 +1,7 @@
+pre-commit:
+  parallel: true
+  commands:
+    flutter:
+      run: flutter analyze --no-fatal-infos
+    rust:
+      run: cd rust && cargo clippy --all --all-targets

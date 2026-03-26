@@ -1,0 +1,159 @@
+[package]
+name = "proton-meet-core"
+version = "1.1.5-5"
+edition = "2021"
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[dependencies]
+base64 = { workspace = true }
+anyhow = { workspace = true }
+async-trait = "0.1.88"
+chrono = { version = "0.4.31", features = ["serde"] }
+futures = "0.3"
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+cfg-if = { workspace = true }
+
+# internal dependencies
+proton-meet-crypto = { path = "../meet-crypto" }
+proton-meet-chat = { path = "../meet-chat" }
+proton-meet-mls = { path = "../meet-mls" }
+proton-meet-macro = { path = "../meet-macro" }
+proton-meet-common = { path = "../meet-common" }
+meet-type = { workspace = true }
+
+reqwest = { version = "0.12.15", features = [
+    "json",
+    "rustls-tls",
+    "http2",
+], default-features = false }
+
+identity = { workspace = true, features = ["test-utils"] }
+meet-identifiers.workspace = true
+meet-mls.workspace = true
+proton-claims.workspace = true
+mls-spec.workspace = true
+tls_codec = "0.4.2"
+mls-types.workspace = true
+mls-rs-codec.workspace = true
+mls-trait.workspace = true
+mls-rs-crypto-rustcrypto.workspace = true
+url = "2.5.4"
+rand.workspace = true
+ciborium = "0.2.2"
+serde_bytes = "0.11"
+zstd = "0.13"
+ed25519-dalek = { version = "2.1", features = ["pem", "pkcs8", "rand_core"] }
+sha2 = "0.10"
+argon2 = "0.5"
+zeroize = "1.8"
+esdicawt.workspace = true
+mls-rs.workspace = true
+cose-key-thumbprint.workspace = true
+
+[target.'cfg(target_os = "ios")'.dependencies]
+# rustls = "0.23.31"
+# Force rustls to use ring (NOT aws-lc)
+rustls = { version = "0.23.31", default-features = false, features = [
+    "ring",
+    "std",
+] }
+rustls-platform-verifier = "0.6.1"
+
+[target.'cfg(target_os = "android")'.dependencies]
+# rustls = "0.23.31"
+# Force rustls to use ring (NOT aws-lc)
+rustls = { version = "0.23.31", default-features = false, features = [
+    "ring",
+    "std",
+] }
+rustls-platform-verifier = "0.6.1"
+muon = { workspace = true, features = [
+    "other-product",
+    "tls-tokio-native",
+    "util",
+    "http-proxy",
+    "rt-async",
+    "dns",
+    "lenient",
+] }
+openssl = { version = "*", features = ["vendored"] }
+
+
+[target.'cfg(not(target_os = "android"))'.dependencies]
+muon = { workspace = true, features = [
+    "other-product",
+    "tls",
+    "util",
+    "http-proxy",
+    "rt-async",
+    "dns",
+    "lenient",
+] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rusqlite = { version = "0.38.0", features = ["bundled", "serde_json"] }
+tokio = { workspace = true }
+tempfile = "3"
+tokio-tungstenite-wasm = { git = "git+ssh://git@gitlab.protontech.ch/meet/tokio-tungstenite-wasm.git", features = [
+    "rustls-tls-native-roots",
+    "native-tls",
+], branch = "feat/connect_with_auth" }
+
+uuid = { version = "1.17.0", features = ["v4", "serde"] }
+rustls = { version = "0.23", default-features = false, features = [
+    "ring",
+    "std",
+] }
+webpki-roots = "0.26"
+x509-parser = "0.16"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+gloo-timers = { version = "0.3", features = ["futures"] }
+## bindgen dependencies
+wasm-bindgen = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
+getrandom = { workspace = true, features = ["wasm_js"] }
+js-sys = { workspace = true }
+web-sys = { workspace = true, features = [
+    "Performance",
+    "Window",
+    "HtmlDocument",
+    "console",
+] }
+wasm-bindgen-test = { workspace = true }
+serde-wasm-bindgen = { workspace = true }
+idb = "0.6"
+tracing-web = "0.1.3"
+tokio-tungstenite-wasm = { git = "git+ssh://git@gitlab.protontech.ch/meet/tokio-tungstenite-wasm.git", branch = "feat/connect_with_auth" }
+tokio = { version = "1.45.0", features = ["sync", "time"] }
+console_log = "1.0.0"
+log = "0.4.21"
+uuid = { version = "1.17.0", features = ["v4", "js", "serde"] }
+wasmtimer = "0.4.2"
+
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+# console_error_panic_hook = "0.1.7"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+rcgen = "0.13"
+
+[dev-dependencies]
+rand.workspace = true
+mockall = { workspace = true }
+wasm-bindgen-test = { workspace = true }
+spki = { version = "0.7.3", features = ["pem"] }
+
+[features]
+allow-dangerous-env = ["muon/unsealed"]
+# Opt-in flag to allow insecure TLS for local/dev builds
+dev = ["insecure-tls"]
+insecure-tls = []
+# Used to be able to use a non-standard api (no atlas or prod)
+default = ["allow-dangerous-env"]
+test = ["dev"]

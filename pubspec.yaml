@@ -1,0 +1,206 @@
+name: meet
+description: "Proton Meet - Secure Video Conferencing"
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
+# Read more about iOS versioning at
+# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+# In Windows, build-name is used as the major, minor, and patch parts
+# of the product and file versions while build-number is used as the build suffix.
+version: 1.0.0+77
+
+environment:
+  sdk: ">=3.8.0 <4.0.0"
+  flutter: ">=3.35.0"
+
+# Dependencies specify other packages that your package needs in order to work.
+# To automatically upgrade your package dependencies to the latest versions
+# consider running `flutter pub upgrade --major-versions`. Alternatively,
+# dependencies can be manually updated by changing the version numbers below to
+# the latest version available on pub.dev. To see which dependencies have newer
+# versions available, run `flutter pub outdated`.
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
+
+  ####rust builder
+  rust_builder:
+    path: rust_builder
+
+  ####flutter localizations
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
+  timezone: ^0.10.0
+  #Get the device IANA timezone (iOS + Android)
+  flutter_timezone: ^5.0.1
+
+  # frb
+  flutter_rust_bridge: 2.11.1
+  freezed_annotation: ^3.1.0
+
+  # Add shelf dependencies for web server
+  # shelf: ^1.4.1
+  # shelf_static: ^1.1.2
+
+  sentry: ^9.12.0
+  provider: ^6.1.5
+  flutter_svg: ^2.2.2
+  logger: ^2.6.2
+  logging: ^1.3.0
+  path: ^1.9.1
+  path_provider: ^2.1.5
+
+  flutter_easyloading: ^3.0.5
+  fluttertoast: ^9.0.0
+
+  flutter_bloc: ^9.1.1
+  # better use with flutter bloc
+  equatable: ^2.0.8
+  url_launcher: ^6.3.2
+  envied: ^1.3.0
+  share_plus: ^12.0.0
+  local_auth: ^3.0.0
+  just_the_tooltip: ^0.0.12
+  wakelock_plus: ^1.4.0
+  flutter_linkify: ^6.0.0
+
+  # hive, shared_perferences is not stable
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  flutter_secure_storage: ^9.2.4
+
+  card_loading: ^0.3.2
+
+  # this is for app version and user agent
+  device_info_plus: ^12.2.0
+  package_info_plus: ^9.0.0
+  livekit_client: ^2.6.5
+  flutter_webrtc: any
+
+  # livekit example dependencies
+  permission_handler: ^12.0.0+1
+  dropdown_button2: ^2.3.6
+  collection: ">=1.16.0"
+  flutter_background: ^1.3.0
+  # shared_preferences: ^2.0.7
+  flutter_chat_ui: ^1.6.15
+  flutter_chat_types: ^3.6.2
+  universal_io: ^2.2.2
+  # awesome_snackbar_content: 0.1.8
+  toastification: 3.0.3
+  # can only compile for web target
+  web: ^1.1.1
+
+  #deeplinks
+  app_links: ^7.0.0
+
+  unleash_proxy_client_flutter: ^1.9.8
+
+  # Screen recording plugin
+  proton_screen_recorder:
+    path: plugins/proton_screen_recorder
+  # File picker for audio processing example
+  # file_picker: 10.2.0
+  # unleash proxy client for feature flags
+  # google_mlkit_selfie_segmentation: ^0.10.0
+  # livekit_noise_filter: ^0.2.1
+
+  # Android PIP support
+  simple_pip_mode: ^1.1.0
+  # Local notifications
+  flutter_local_notifications: ^19.5.0
+
+  # connectivity
+  connectivity_plus: ^7.0.0
+
+  # http dependency for unleash proxy client
+  http: ^1.6.0
+
+  # webview for account deletion
+  webview_flutter: ^4.13.1
+  # add calendar event to native calendar
+  add_2_calendar: ^3.0.1
+  flutter_sticky_header: ^0.8.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  vector_graphics: 1.1.19
+
+  # The "flutter_lints" package below contains a set of recommended lints to
+  # encourage good coding practices. The lint set provided by the package is
+  # activated in the `analysis_options.yaml` file located at the root of your
+  # package. See that file for information about deactivating specific lint
+  # rules and activating additional ones.
+  flutter_lints: 6.0.0
+  intl_translation: 0.21.0
+  ffigen: ^20.0.0
+  build_runner: ^2.10.5
+  analyzer: 8.4.1
+  #auto gen assets to const
+  flutter_gen_runner: ^5.12.0
+  flutter_gen: ^5.12.0
+  freezed: ^3.2.3
+  test: ^1.29.0
+
+  json_serializable: ^6.11.2
+
+  ## dev tools
+  envied_generator: ^1.3.1
+
+  # for ui tests
+  golden_toolkit: ^0.15.0
+  mockito: ^5.6.3
+  alchemist: 0.13.0 # golden_toolkit replacement
+  #path provider mock
+  path_provider_platform_interface: ^2.1.2
+  plugin_platform_interface: ^2.1.8
+  bloc_test: ^10.0.0
+  # flutter_gen configs
+  device_info_plus_platform_interface: 7.0.3
+
+flutter_gen:
+  output: lib/constants/
+  line_length: 80
+  integrations:
+    flutter_svg: true
+
+# The following section is specific to Flutter packages.
+flutter:
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+  generate: true
+
+  # To add assets to your application, add an assets section, like this:
+  assets:
+    - assets/images/
+    - assets/images/icon/
+    - assets/images/logos/
+    - assets/json/
+
+  fonts:
+    # we are using InterDisplay font
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-VariableFont.ttf
+# override livekit_client to use the local version
+dependency_overrides:
+  test_api: 0.7.7
+  # livekit_client:
+  #   path: ../client-sdk-flutter

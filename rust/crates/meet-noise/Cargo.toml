@@ -1,0 +1,10 @@
+[package]
+edition.workspace = true
+name = "proton-meet-noise"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[build-dependencies]
+bindgen = "0.72.0"

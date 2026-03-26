@@ -1,0 +1,1453 @@
+{
+  "@@locale": "nl",
+  "@@last_modified": "2024-02-12T00:10:57.227125",
+  "app_name": "Proton Meet",
+  "@app_name": {
+    "description": "The name of the application"
+  },
+  "logout": "Afmelden",
+  "login": "Inloggen",
+  "sign_in": "Inloggen",
+  "sign_out": "Uitloggen",
+  "learn_more": "Meer informatie",
+  "no_data": "Geen gegevens",
+  "submit": "Verzenden",
+  "cancel": "Annuleren",
+  "close": "Sluiten",
+  "ok": "OK",
+  "unlock_app": "App ontgrendelen",
+  "search": "Zoeken",
+  "placeholder": "Plaatsaanduiding",
+  "something_went_wrong": "Er is iets misgegaan",
+  "report_a_problem": "Probleem melden",
+  "sign_in_to_proton_title": "Inloggen bij Proton",
+  "sign_in_to_proton_subtitle": "Voer uw Proton-accountgegevens in.",
+  "options": "Opties",
+  "@options": {
+    "description": "Title for options dialog"
+  },
+  "manage_accounts": "Accounts beheren",
+  "@manage_accounts": {
+    "description": "Title for manage accounts dialog"
+  },
+  "delete_account": "Account verwijderen",
+  "@delete_account": {
+    "description": "Title for delete account dialog"
+  },
+  "signin_intro_title": "Welkom bij Proton Meet",
+  "@signin_intro_title": {
+    "description": "Title in the sign-in intro sheet"
+  },
+  "signin_intro_subtitle": "Log in of maak een account aan om door te gaan",
+  "@signin_intro_subtitle": {
+    "description": "Subtitle in the sign-in intro sheet"
+  },
+  "signin_intro_create_account": "Een account aanmaken",
+  "@signin_intro_create_account": {
+    "description": "Primary button label in the sign-in intro sheet"
+  },
+  "signin_intro_sign_in": "Inloggen",
+  "@signin_intro_sign_in": {
+    "description": "Secondary button label in the sign-in intro sheet"
+  },
+  "sign_in_username_or_email": "Gebruikersnaam of e-mail",
+  "email": "E-mail",
+  "user_name": "Gebruikersnaam",
+  "account": "Account",
+  "password": "Wachtwoord",
+  "session_expired_content": "Uw sessie is verlopen. Meld u opnieuw aan om door te gaan.",
+  "session_expired_title": "Sessie verlopen!",
+  "force_upgrade": "Upgrade afdwingen",
+  "upgrade": "Opwaarderen",
+  "search_participants": "Deelnemers zoeken...",
+  "participants_count": "Deelnemers({count})",
+  "no_participants_found": "Geen deelnemers gevonden",
+  "try_different_search_term": "Probeer een andere zoekterm",
+  "you": "(U)",
+  "invite_participant": "Deelnemer uitnodigen",
+  "leave": "Verlaten",
+  "emoji_reaction": "Emoji-reactie",
+  "unshare_screen": "Schermdeling stoppen",
+  "share_screen": "Scherm delen",
+  "show_chatroom": "Chat",
+  "show_participants_list": "Deelnemers",
+  "show_settings": "Instellingen",
+  "show_meeting_stats": "vergaderstatistieken tonen",
+  "meeting_info": "Info",
+  "meeting_settings": "Instellingen",
+  "host": "Host",
+  "lock_meeting": "Vergadering vergrendelen",
+  "meeting_locked": "Vergadering vergrendeld",
+  "@meeting_locked": {
+    "description": "Title when meeting is locked"
+  },
+  "meeting_locked_description": "Deze vergadering is vergrendeld. Neem contact op met de host om deel te nemen.",
+  "@meeting_locked_description": {
+    "description": "Description when meeting is locked"
+  },
+  "meeting_locked_notification": "Vergadering vergrendeld. Er kunnen geen nieuwe deelnemers meer deelnemen.",
+  "@meeting_locked_notification": {
+    "description": "Toast notification when meeting is locked by host"
+  },
+  "meeting_unlocked_notification": "Vergadering ontgrendeld. Deelnemers kunnen weer deelnemen.",
+  "@meeting_unlocked_notification": {
+    "description": "Toast notification when meeting is unlocked by host"
+  },
+  "hide_profile_pictures": "Profielfoto's verbergen",
+  "picture_in_picture_mode": "Picture-in-picture-modus",
+  "security": "Beveiliging",
+  "enable_waiting_room": "Wachtruimte inschakelen",
+  "hide_self_view": "Eigen weergave verbergen",
+  "allow_all_participants_to": "Alle deelnemers toestaan om:",
+  "chat": "Chatten",
+  "rename_themselves": "Zelf naam wijzigen",
+  "unmute_themselves": "Zichzelf dempen opheffen",
+  "meeting": "Vergadering",
+  "show_meeting_timer": "Vergadertimer weergeven",
+  "unsubscribe_video_by_default": "Inkomende video uitschakelen",
+  "dark_mode": "Donkere modus",
+  "show_connection_indicator": "Verbindingsindicator tonen",
+  "desktop_notifications": "Bureaubladmeldingen",
+  "meeting_quality": "Vergaderkwaliteit",
+  "camera_resolution": "Cameraresolutie",
+  "camera_max_bitrate": "Maximale camerabitrate",
+  "screen_sharing_resolution": "Resolutie scherm delen",
+  "screen_sharing_max_bitrate": "Maximale bitrate voor scherm delen",
+  "export_debug_log": "Debug-log exporteren",
+  "type_a_message": "Typ een bericht...",
+  "search_messages": "Berichten zoeken...",
+  "meeting_chat": "Vergaderchat",
+  "no_messages_found": "Geen berichten gevonden",
+  "no_messages_yet": "Nog geen berichten",
+  "start_the_conversation": "Begin het gesprek",
+  "unknown": "Onbekend",
+  "bitrate_extreme_high_2000": "Extreem hoog (2000 kbps)",
+  "bitrate_ultra_high_1900": "Ultra hoog (1900 kbps)",
+  "bitrate_ultra_high_1800": "Ultra hoog (1800 kbps)",
+  "bitrate_ultra_high_1700": "Ultra hoog (1700 kbps)",
+  "bitrate_ultra_high_1600": "Ultra hoog (1600 kbps)",
+  "bitrate_ultra_high_1500": "Ultra hoog (1500 kbps)",
+  "bitrate_very_high_1400": "Zeer hoog (1400 kbps)",
+  "bitrate_very_high_1300": "Zeer hoog (1300 kbps)",
+  "bitrate_very_high_1200": "Zeer hoog (1200 kbps)",
+  "bitrate_very_high_1100": "Zeer hoog (1100 kbps)",
+  "bitrate_high_1000": "Hoog (1000 kbps)",
+  "bitrate_high_900": "Hoog (900 kbps",
+  "bitrate_high_800": "Hoog (800 kbps)",
+  "bitrate_medium_high_700": "Middelmatig hoog (700 kbps)",
+  "bitrate_medium_high_600": "Middelmatig hoog (600 kbps)",
+  "bitrate_medium_high_500": "Middelmatig hoog (500 kbps)",
+  "bitrate_medium_400": "Gemiddeld (400 kbps)",
+  "bitrate_medium_low_300": "Middelmatig laag (300 kbps)",
+  "bitrate_low_200": "Laag (200 kbps)",
+  "bitrate_very_low_100": "Zeer laag (100 Mbps",
+  "resolution_360p": "360p",
+  "resolution_720p": "720 p",
+  "resolution_1080p": "1080 p",
+  "resolution_4k": "4 K",
+  "join_meeting": "Praat vertrouwelijk",
+  "app_description": "Onze end-to-end versleutelde vergaderingen beschermen de privacy en bevorderen werkelijk vrije expressie.",
+  "meeting_link": "Vergadering",
+  "meeting_detail": "Vergadergegevens",
+  "display_name": "Uw naam",
+  "enter_display_name": "Vul uw naam in",
+  "display_name_required": "Uw naam is verplicht",
+  "remember_display_name_on_device": "Onthoud mijn naam op dit apparaat voor toekomstige vergaderingen",
+  "join_meeting_button": "Aan vergadering deelnemen",
+  "create_meeting_button": "Vergadering aanmaken",
+  "import_meeting_button": "Vergadering importeren",
+  "import_meeting_title": "Vergadering importeren",
+  "import_meeting_hint_text": "De link voor de vergadering invoeren",
+  "open_home": "Startpagina openen",
+  "start_simulation": "Simulatie starten",
+  "change_layout": "Indeling wijzigen",
+  "layout_spaced_grid": "Ruimtelijk raster",
+  "layout_compact_grid": "Compact raster",
+  "layout_speaker_view": "Sprekersweergave",
+  "layout_multi_speaker_view": "Weergave meerdere sprekers",
+  "no_active_speaker": "Geen actieve spreker",
+  "camera_view": "Cameraweergave",
+  "is_presenting": "presenteert",
+  "stop_presenting": "Stoppen met presenteren",
+  "participant_joined": "Deelnemer doet mee🎉",
+  "participant_left": "Deelnemer is vertrokken👋",
+  "participant_name_prefix": "Naam:",
+  "participant_identity_prefix": "Identiteit: ",
+  "setting_updated": "Instelling bijgewerkt",
+  "changes_effect_next_screen_sharing": "Wijzigingen worden bij de volgende schermdeling doorgevoerd.",
+  "video_stats_copied": "Videogegevens gekopieerd naar klembord",
+  "anonymous_user": "Anonieme gebruiker",
+  "loading": "Laden...",
+  "@loading": {
+    "description": "Loading text"
+  },
+  "video": "Video",
+  "audio": "Audio",
+  "turn_off_camera": "Camera uitschakelen",
+  "turn_on_camera": "Camera inschakelen",
+  "video_settings": "Video-instellingen",
+  "select_camera_device": "Selecteer een camera",
+  "turn_off_microphone": "Microfoon uitschakelen",
+  "turn_on_microphone": "Microfoon inschakelen",
+  "audio_settings": "Audio-instellingen",
+  "select_microphone": "Selecteer een microfoon",
+  "select_speaker": "Selecteer een luidspreker",
+  "permission_not_given": "Toestemmingen niet verleend",
+  "permission_camera": "Wij hebben cameratoestemming nodig om uw camera in te schakelen.",
+  "permission_microphone": "Wij hebben microfoontoestemming nodig om uw microfoon in te schakelen.",
+  "camera_is_off": "Camera is uitgeschakeld",
+  "copied_to_clipboard": "Gekopieerd naar klembord",
+  "personal_meeting": "Persoonlijke vergadering",
+  "@personal_meeting": {
+    "description": "Title for personal meeting dialog"
+  },
+  "personal_meeting_description": "Uw vaste vergaderruimte",
+  "@personal_meeting_description": {
+    "description": "Description text for personal meeting room"
+  },
+  "personal_meeting_room": "Persoonlijke vergaderruimte",
+  "@personal_meeting_room": {
+    "description": "Title for personal meeting room dialog"
+  },
+  "join_a_meeting": "Deelnemen aan een vergadering",
+  "@join_a_meeting": {
+    "description": "Title for join meeting dialog"
+  },
+  "join_meeting_subtitle": "Plak uw link voor Proton Meet om deel te nemen aan een beveiligde vergadering",
+  "@join_meeting_subtitle": {
+    "description": "Subtitle text for join meeting dialog"
+  },
+  "please_enter_valid_meeting_link": "Voer een geldige vergadering in",
+  "@please_enter_valid_meeting_link": {
+    "description": "Error message when meeting link is invalid"
+  },
+  "link_copied_to_clipboard": "Link gekopieerd naar klembord",
+  "@link_copied_to_clipboard": {
+    "description": "Success message when meeting link is copied"
+  },
+  "meeting_link_label": "Vergaderlink",
+  "@meeting_link_label": {
+    "description": "Label for meeting link input field"
+  },
+  "copy_link": "Link kopiëren",
+  "@copy_link": {
+    "description": "Button text to copy meeting link"
+  },
+  "copy_link_and_close": "Link kopiëren en sluiten",
+  "@copy_link_and_close": {
+    "description": "Button text to copy link and close dialog"
+  },
+  "copy": "Kopiëren",
+  "@copy": {
+    "description": "Copy action"
+  },
+  "delete": "Verwijderen",
+  "@delete": {
+    "description": "Delete action"
+  },
+  "delete_meeting": "Vergadering verwijderen",
+  "@delete_meeting": {
+    "description": "Title for delete meeting dialog"
+  },
+  "delete_meeting_confirmation": "Weet u zeker dat u deze vergadering wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+  "@delete_meeting_confirmation": {
+    "description": "Confirmation message for deleting a meeting"
+  },
+  "creating_meeting": "Vergadering aanmaken ...",
+  "@creating_meeting": {
+    "description": "Loading message shown while creating a meeting"
+  },
+  "deleting_meeting": "Vergadering verwijderen ...",
+  "@deleting_meeting": {
+    "description": "Loading message shown while deleting a meeting"
+  },
+  "updating_meeting": "Vergadering updaten ...",
+  "@updating_meeting": {
+    "description": "Loading message shown while updating a meeting"
+  },
+  "scheduling_meeting": "Vergadering plannen ...",
+  "@scheduling_meeting": {
+    "description": "Loading message shown while scheduling a meeting"
+  },
+  "guest_user_description": "Als gastgebruiker kunt u anonieme en gratis vergaderingen starten vanaf dit dashboard.",
+  "@guest_user_description": {
+    "description": "Description text explaining guest user capabilities"
+  },
+  "create_free_account": "Een gratis account aanmaken",
+  "@create_free_account": {
+    "description": "Button text to create a free account"
+  },
+  "please_sign_in_to_access_feature": "Log in om toegang te krijgen tot deze functie!",
+  "@please_sign_in_to_access_feature": {
+    "description": "Message prompting user to sign in"
+  },
+  "already_have_account": "Hebt u al een account? ",
+  "@already_have_account": {
+    "description": "Text before login link for existing users"
+  },
+  "we_hope_you_enjoyed_meeting": "We hopen dat u genoten hebt van uw beveiligde vergadering! ",
+  "@we_hope_you_enjoyed_meeting": {
+    "description": "Message shown after user leaves meeting"
+  },
+  "left_by_mistake": "Per ongeluk weggegaan? ",
+  "@left_by_mistake": {
+    "description": "Text before rejoin link"
+  },
+  "rejoin_meeting": "Opnieuw deelnemen aan vergadering",
+  "@rejoin_meeting": {
+    "description": "Button text to rejoin a meeting"
+  },
+  "left_meeting_title": "You left the meeting",
+  "@left_meeting_title": {
+    "description": "Title shown in left meeting bottom sheet"
+  },
+  "left_meeting_subtitle_guest_free": "Host your own secure meeting. Start a call in Proton Meet and share the link to invite anyone to join. Simple, secure, and free.",
+  "@left_meeting_subtitle_guest_free": {
+    "description": "Subtitle shown for non-paid non-host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_guest_paid": "Thank you for joining.",
+  "@left_meeting_subtitle_guest_paid": {
+    "description": "Subtitle shown for paid non-host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_host_free": "Thank you for hosting a meeting.",
+  "@left_meeting_subtitle_host_free": {
+    "description": "Subtitle shown for free host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_host_paid": "Thank you for hosting a premium meeting.",
+  "@left_meeting_subtitle_host_paid": {
+    "description": "Subtitle shown for paid host users after leaving a meeting"
+  },
+  "start_meeting_now": "Start a meeting now",
+  "@start_meeting_now": {
+    "description": "Button text to start a meeting immediately from left meeting bottom sheet"
+  },
+  "publish": "Publiceren",
+  "@publish": {
+    "description": "Dialog title for publishing camera and microphone"
+  },
+  "publish_camera_mic_question": "Wilt u uw camera & microfoon publiceren?",
+  "@publish_camera_mic_question": {
+    "description": "Question asking user to publish camera and microphone"
+  },
+  "no": "NEE",
+  "@no": {
+    "description": "Negative response button text"
+  },
+  "yes": "JA",
+  "@yes": {
+    "description": "Positive response button text"
+  },
+  "play_audio": "Audio afspelen",
+  "@play_audio": {
+    "description": "Dialog title and button text for playing audio"
+  },
+  "ios_safari_audio_activation": "U moet audio-weergave handmatig activeren voor iOS Safari !",
+  "@ios_safari_audio_activation": {
+    "description": "Message explaining iOS Safari audio activation requirement"
+  },
+  "ignore": "Negeren",
+  "@ignore": {
+    "description": "Button text to ignore an action"
+  },
+  "unpublish": "Niet meer publiceren",
+  "@unpublish": {
+    "description": "Dialog title for unpublishing camera and microphone"
+  },
+  "unpublish_camera_mic_question": "Wilt u uw camera & microfoon niet meer publiceren?",
+  "@unpublish_camera_mic_question": {
+    "description": "Question asking user to unpublish camera and microphone"
+  },
+  "error": "Fout",
+  "@error": {
+    "description": "Generic error dialog title"
+  },
+  "disconnect": "Loskoppelen",
+  "@disconnect": {
+    "description": "Dialog title and button text for disconnecting"
+  },
+  "are_you_sure_disconnect": "Weet u zeker dat u wilt loskoppelen?",
+  "@are_you_sure_disconnect": {
+    "description": "Confirmation question before disconnecting"
+  },
+  "reconnect": "Opnieuw verbinden",
+  "@reconnect": {
+    "description": "Dialog title and button text for reconnecting"
+  },
+  "force_reconnection_message": "Dit dwingt een nieuwe verbinding af",
+  "@force_reconnection_message": {
+    "description": "Message explaining that reconnection will be forced"
+  },
+  "reconnection_successful": "Opnieuw verbinden is gelukt.",
+  "@reconnection_successful": {
+    "description": "Success message after reconnection"
+  },
+  "no_connection": "Geen verbinding",
+  "@no_connection": {
+    "description": "Message shown when there is no network connection"
+  },
+  "mls_not_synced": "MLS niet gesynchroniseerd",
+  "@mls_not_synced": {
+    "description": "Message shown when MLS is not synced"
+  },
+  "reconnecting_warning": "Opnieuw verbinden",
+  "@reconnecting_warning": {
+    "description": "Message shown when MLS is not synced or websocket trying to reconnect"
+  },
+  "websocket_reconnecting": "WebSocket opnieuw verbinden",
+  "@websocket_reconnecting": {
+    "description": "Message shown when WebSocket is reconnecting"
+  },
+  "received_data": "Ontvangen gegevens",
+  "@received_data": {
+    "description": "Dialog title for received data"
+  },
+  "room_recording_reminder": "Herinnering kameropname",
+  "@room_recording_reminder": {
+    "description": "Dialog title for room recording status"
+  },
+  "room_recording_active": "Kameropname is actief.",
+  "@room_recording_active": {
+    "description": "Message when room recording is active"
+  },
+  "room_recording_stopped": "Kameropname is gestopt.",
+  "@room_recording_stopped": {
+    "description": "Message when room recording is stopped"
+  },
+  "meeting_being_recorded": "Deze vergadering wordt opgenomen",
+  "@meeting_being_recorded": {
+    "description": "Title for recording in progress dialog"
+  },
+  "recording_consent_message": "Door in de vergadering te blijven, erkent u en stemt u ermee in dat u wordt opgenomen.",
+  "@recording_consent_message": {
+    "description": "Message about recording consent"
+  },
+  "agree_and_continue": "Akkoord en doorgaan",
+  "@agree_and_continue": {
+    "description": "Button text to agree and continue in meeting"
+  },
+  "allow_subscription": "Abonnement toestaan",
+  "@allow_subscription": {
+    "description": "Dialog title for allowing subscription"
+  },
+  "allow_subscription_question": "Alle deelnemers toestaan zich te abonneren op tracks gepubliceerd door de lokale deelnemer?",
+  "@allow_subscription_question": {
+    "description": "Question asking user to allow subscription"
+  },
+  "simulate_scenario": "Scenario simuleren",
+  "@simulate_scenario": {
+    "description": "Dialog title for simulating scenarios"
+  },
+  "leave_room": "Kamer verlaten",
+  "@leave_room": {
+    "description": "Dialog title for leaving room"
+  },
+  "are_you_sure_leave_room": "Weet u zeker dat u deze kamer wilt verlaten?",
+  "@are_you_sure_leave_room": {
+    "description": "Confirmation question before leaving room"
+  },
+  "no_response": "Nee",
+  "@no_response": {
+    "description": "Negative response in confirmation dialogs"
+  },
+  "yes_response": "Ja",
+  "@yes_response": {
+    "description": "Positive response in confirmation dialogs"
+  },
+  "personal_meeting_link": "Persoonlijke vergaderlink",
+  "@personal_meeting_link": {
+    "description": "Label for personal meeting link button"
+  },
+  "regenerate_link": "Link opnieuw genereren",
+  "@regenerate_link": {
+    "description": "Button text to regenerate a meeting link"
+  },
+  "regenerating": "Opnieuw genereren ...",
+  "@regenerating": {
+    "description": "Loading message shown while regenerating a meeting link"
+  },
+  "start_secure_meeting": "Beveiligde vergadering starten",
+  "@start_secure_meeting": {
+    "description": "Button text to start a secure meeting"
+  },
+  "upcoming_meetings": "Aankomende vergaderingen",
+  "@upcoming_meetings": {
+    "description": "Section title for upcoming meetings list"
+  },
+  "my_rooms_count": "Mijn ruimtes",
+  "@my_rooms_count": {
+    "description": "Title showing the count of my rooms"
+  },
+  "my_meetings_count": "Mijn vergaderingen",
+  "@my_meetings_count": {
+    "description": "Title showing the count of my meetings"
+  },
+  "schedule_meeting": "Vergadering plannen",
+  "@schedule_meeting": {
+    "description": "Button text to schedule a meeting"
+  },
+  "start_meeting": "Vergadering starten",
+  "@start_meeting": {
+    "description": "Button text to start a meeting"
+  },
+  "recent_meetings": "Recente vergaderingen",
+  "@recent_meetings": {
+    "description": "Section title for recent meetings list"
+  },
+  "start_instant_meeting": "Directe vergadering starten",
+  "@start_instant_meeting": {
+    "description": "Button text to start an instant meeting"
+  },
+  "copy_link_button": "Link kopiëren",
+  "@copy_link_button": {
+    "description": "Button text to copy a link"
+  },
+  "start_now": "Nu starten",
+  "@start_now": {
+    "description": "Button text to start immediately"
+  },
+  "leave_meeting": "Vergadering verlaten",
+  "@leave_meeting": {
+    "description": "Dialog title for leaving a meeting"
+  },
+  "are_you_sure_leave_meeting": "Weet u zeker dat u deze vergadering wilt verlaten?",
+  "@are_you_sure_leave_meeting": {
+    "description": "Confirmation question before leaving meeting"
+  },
+  "user_is_presenting": "{name} (u) presenteert",
+  "@user_is_presenting": {
+    "description": "String for local user presenting screen share",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "remote_user_is_presenting": "{name} presenteert",
+  "@remote_user_is_presenting": {
+    "description": "String for remote user presenting screen share",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "screen_share": "Scherm delen",
+  "@screen_share": {
+    "description": "Tooltip and button text for screen sharing"
+  },
+  "disable_denoising": "ruisonderdrukking uitschakelen",
+  "@disable_denoising": {
+    "description": "Tooltip for disabling audio denoising"
+  },
+  "enable_denoising": "ruisonderdrukking inschakelen",
+  "@enable_denoising": {
+    "description": "Tooltip for enabling audio denoising"
+  },
+  "exit_full_screen": "volledig scherm afsluiten",
+  "@exit_full_screen": {
+    "description": "Tooltip for exiting full screen mode"
+  },
+  "enter_full_screen": "volledig scherm openen",
+  "@enter_full_screen": {
+    "description": "Tooltip for entering full screen mode"
+  },
+  "enter_pip": "Beeld-in-beeld openen",
+  "@enter_pip": {
+    "description": "Tooltip for entering Picture-in-Picture mode"
+  },
+  "screen_sharing": "Scherm delen",
+  "@screen_sharing": {
+    "description": "Notification title for screen sharing"
+  },
+  "sharing_your_screen": "Uw scherm wordt gedeeld",
+  "@sharing_your_screen": {
+    "description": "Notification text when sharing screen"
+  },
+  "screen_share_not_supported_mobile": "Scherm delen wordt niet ondersteund op het mobiele web",
+  "@screen_share_not_supported_mobile": {
+    "description": "Error message when screen sharing is not supported on mobile"
+  },
+  "switch_speakerphone_on": "Telefoonluidspreker gebruiken",
+  "@switch_speakerphone_on": {
+    "description": "Tooltip for switching audio output to the phone speaker"
+  },
+  "switch_speakerphone_off": "Standaard audio-uitvoer gebruiken",
+  "@switch_speakerphone_off": {
+    "description": "Tooltip for switching audio output back to the default device"
+  },
+  "please_grant_camera_permission": "Geef cameratoestemming om door te gaan",
+  "@please_grant_camera_permission": {
+    "description": "Message requesting camera permission"
+  },
+  "please_grant_microphone_permission": "Geef microfoontoestemming om door te gaan",
+  "@please_grant_microphone_permission": {
+    "description": "Message requesting microphone permission"
+  },
+  "your_meeting_is_ready": "Uw vergadering is klaar",
+  "@your_meeting_is_ready": {
+    "description": "Title message when meeting is ready"
+  },
+  "share_link_invite_description": "Deel deze koppeling om anderen uit te nodigen. U kunt deze ook altijd vinden door op het info-pictogram in de werkbalk te klikken.",
+  "@share_link_invite_description": {
+    "description": "Instructions for sharing meeting link"
+  },
+  "two_factor_authentication": "Tweestapsverificatie",
+  "@two_factor_authentication": {
+    "description": "Title for two-factor authentication"
+  },
+  "enter_2fa_code": "Voer uw 2FA-code in om door te gaan",
+  "@enter_2fa_code": {
+    "description": "Prompt for entering 2FA code"
+  },
+  "twofa_code": "2FA-code",
+  "@twofa_code": {
+    "description": "Label for 2FA code input field"
+  },
+  "verify": "Verifiëren",
+  "@verify": {
+    "description": "Button text to verify"
+  },
+  "switch_to": "Overschakelen naar",
+  "@switch_to": {
+    "description": "Text before account name in account switcher"
+  },
+  "add_another_account": "Nog een account toevoegen",
+  "@add_another_account": {
+    "description": "Button text to add another account"
+  },
+  "delete_proton_account": "Proton-account verwijderen",
+  "@delete_proton_account": {
+    "description": "Button text to delete Proton account"
+  },
+  "invalid_meeting_link": "Ongeldige vergaderlink",
+  "@invalid_meeting_link": {
+    "description": "Error message for invalid meeting link"
+  },
+  "permission_required": "Toestemming vereist",
+  "@permission_required": {
+    "description": "Label when permission is required"
+  },
+  "unsubscribe_audio": "Afmelden voor audio",
+  "@unsubscribe_audio": {
+    "description": "Menu item to unsubscribe from audio"
+  },
+  "subscribe_audio": "Abonneren op audio",
+  "@subscribe_audio": {
+    "description": "Menu item to subscribe to audio"
+  },
+  "unsubscribe_video": "Afmelden voor video",
+  "@unsubscribe_video": {
+    "description": "Menu item to unsubscribe from video"
+  },
+  "subscribe_video": "Abonneren op video",
+  "@subscribe_video": {
+    "description": "Menu item to subscribe to video"
+  },
+  "remote_mute_video": "Video op afstand dempen",
+  "@remote_mute_video": {
+    "description": "Menu item to remotely mute video"
+  },
+  "remote_mute_audio": "Audio op afstand dempen",
+  "@remote_mute_audio": {
+    "description": "Menu item to remotely mute audio"
+  },
+  "force_mute": "Dempen afdwingen",
+  "@force_mute": {
+    "description": "Menu item to force mute a participant"
+  },
+  "force_mute_participant": "{name} dempen afdwingen",
+  "@force_mute_participant": {
+    "description": "Toast message when force muting a participant",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "force_disable_camera": "Camera gedwongen uitschakelen",
+  "@force_disable_camera": {
+    "description": "Menu item to force disable camera"
+  },
+  "force_disable_camera_participant": "Camera van {name} gedwongen uitschakelen",
+  "@force_disable_camera_participant": {
+    "description": "Toast message when force disabling camera",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "kick_out": "Verwijderen",
+  "@kick_out": {
+    "description": "Menu item to kick out a participant"
+  },
+  "kick_out_participant": "{name} verwijderen",
+  "@kick_out_participant": {
+    "description": "Toast message when kicking out a participant",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "subscribe_menu": "Abonneringsmenu",
+  "@subscribe_menu": {
+    "description": "Tooltip for subscribe menu button"
+  },
+  "subscribe": "Abonneren",
+  "@subscribe": {
+    "description": "Menu item to subscribe"
+  },
+  "unsubscribe": "Opzeggen",
+  "@unsubscribe": {
+    "description": "Menu item to unsubscribe"
+  },
+  "preferred_fps": "Voorkeurs-FPS",
+  "@preferred_fps": {
+    "description": "Tooltip for preferred FPS setting"
+  },
+  "preferred_quality": "Voorkeurskwaliteit",
+  "@preferred_quality": {
+    "description": "Tooltip for preferred quality setting"
+  },
+  "high": "HOOG",
+  "@high": {
+    "description": "High quality option"
+  },
+  "medium": "GEMIDDELD",
+  "@medium": {
+    "description": "Medium quality option"
+  },
+  "low": "LAAG",
+  "@low": {
+    "description": "Low quality option"
+  },
+  "unnamed_room": "Naamloze kamer",
+  "@unnamed_room": {
+    "description": "Default name for rooms without a name"
+  },
+  "participants_count_text": "{count} Deelnemers",
+  "@participants_count_text": {
+    "description": "Text showing number of participants",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_privacy_message": "This is an end to end encrypted chat with ephemeral messages, which disappear at the end of the call.",
+  "@chat_privacy_message": {
+    "description": "Privacy message displayed in chat when there are no messages."
+  },
+  "meeting_quality_feedback": "Feedback over vergaderkwaliteit",
+  "@meeting_quality_feedback": {
+    "description": "Title for meeting quality feedback form"
+  },
+  "quality_feedback_email_message": "Door verzenden, deelt u het verbindingslogbestand met ons via e-mail.",
+  "@quality_feedback_email_message": {
+    "description": "Message explaining that connection log will be shared via email"
+  },
+  "skip": "Overslaan",
+  "@skip": {
+    "description": "Button text to skip an action"
+  },
+  "feature_not_ready": "Deze functie is nog niet gereed.",
+  "@feature_not_ready": {
+    "description": "Message when a feature is not ready"
+  },
+  "video_stats_all_participants": "Videostatistieken - Alle deelnemers",
+  "@video_stats_all_participants": {
+    "description": "Title for video statistics dialog"
+  },
+  "video_stats": "videostatistieken",
+  "@video_stats": {
+    "description": "Label for video statistics"
+  },
+  "page_not_found": "Pagina niet gevonden",
+  "@page_not_found": {
+    "description": "Error message when page is not found"
+  },
+  "invalid_deeplink_format": "Ongeldige indeling deeplink: {name}",
+  "@invalid_deeplink_format": {
+    "description": "Error message for invalid deeplink format",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "open_settings": "Instellingen openen",
+  "@open_settings": {
+    "description": "Button text to open settings"
+  },
+  "schedule": "Plannen",
+  "@schedule": {
+    "description": "Button text to schedule"
+  },
+  "start": "Starten",
+  "@start": {
+    "description": "Button text to start"
+  },
+  "start_an_instant_meeting": "Een directe vergadering starten",
+  "@start_an_instant_meeting": {
+    "description": "Button text to start an instant meeting"
+  },
+  "more": "Meer",
+  "@more": {
+    "description": "Tooltip for more options button"
+  },
+  "unlock_failed_too_many_times": "Ontgrendelen te vaak mislukt",
+  "@unlock_failed_too_many_times": {
+    "description": "Error message when unlock fails too many times"
+  },
+  "show_all_stats_debug": "Alle statistieken tonen (foutopsporingsmodus)",
+  "@show_all_stats_debug": {
+    "description": "Button text to show all stats in debug mode"
+  },
+  "close_simulation": "Simulatie sluiten",
+  "@close_simulation": {
+    "description": "Button text to close simulation"
+  },
+  "close_all_rooms_exit_simulation": "Weet u zeker dat u alle kamers wilt sluiten en de simulatiemodus wilt verlaten?",
+  "@close_all_rooms_exit_simulation": {
+    "description": "Confirmation question before closing simulation"
+  },
+  "yes_close_all": "Ja, alles sluiten",
+  "@yes_close_all": {
+    "description": "Button text to confirm closing all rooms"
+  },
+  "simulation_mode": "Simulatiemodus",
+  "@simulation_mode": {
+    "description": "Title for simulation mode"
+  },
+  "simulation_mode_description": "Maak en beheer gesimuleerde kamers voor testen",
+  "@simulation_mode_description": {
+    "description": "Description text for simulation mode"
+  },
+  "simulated_rooms": "Gesimuleerde kamers",
+  "@simulated_rooms": {
+    "description": "Title for simulated rooms section"
+  },
+  "room_with_users": "Kamer {key} ({count} gebruikers)",
+  "@room_with_users": {
+    "description": "Text showing room ID and user count",
+    "placeholders": {
+      "key": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "enable_video": "Video inschakelen",
+  "@enable_video": {
+    "description": "Button text to enable video"
+  },
+  "meeting_will_end_in": "Vergadering eindigt over {time}",
+  "@meeting_will_end_in": {
+    "description": "Title for meeting will end dialog with countdown timer",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "0:30"
+      }
+    }
+  },
+  "host_close_meeting_description": "Wilt u de vergadering verlaten of voor iedereen beëindigen?",
+  "@host_close_meeting_description": {
+    "description": "Description text when host want to leave meeting"
+  },
+  "close_meeting_description": "Weet u zeker dat u wilt vertrekken? De vergadering gaat zonder u verder.",
+  "@close_meeting_description": {
+    "description": "Description text when host want to leave meeting"
+  },
+  "meeting_will_end_description": "Omdat u de enige deelnemer bent in deze vergadering, wordt de vergadering automatisch gesloten. Wilt u in deze vergadering blijven?",
+  "meeting_created": "Vergadering aangemaakt",
+  "@meeting_created": {
+    "description": "Title for meeting created dialog"
+  },
+  "room_initialing_hint": "Abonneren op externe videotracks…",
+  "@room_initialing_hint": {
+    "description": "Hint for room initialing process"
+  },
+  "add_to_calendar": "Aan agenda toevoegen",
+  "@add_to_calendar": {
+    "description": "Button label to add a meeting to calendar"
+  },
+  "meeting_details": "Gegevens",
+  "@meeting_details": {
+    "description": "Button label to show meeting details"
+  },
+  "meeting_details_section": "Vergadergegevens",
+  "@meeting_details_section": {
+    "description": "Section title for meeting details in info panel"
+  },
+  "title_label": "Titel",
+  "@title_label": {
+    "description": "Label for meeting title field"
+  },
+  "date_label": "Datum",
+  "@date_label": {
+    "description": "Label for meeting date field"
+  },
+  "time_label": "Tijd",
+  "@time_label": {
+    "description": "Label for meeting time field"
+  },
+  "invite_link_label": "Uitnodigingslink",
+  "@invite_link_label": {
+    "description": "Label for invite link field"
+  },
+  "messaging_layer_security": "Messaging Layer Security (MLS)",
+  "@messaging_layer_security": {
+    "description": "Title for MLS section in meeting info panel"
+  },
+  "participants_label": "Deelnemers",
+  "@participants_label": {
+    "description": "Label for participants count field"
+  },
+  "epoch_label": "Epoch",
+  "@epoch_label": {
+    "description": "Label for epoch field"
+  },
+  "security_code_label": "Beveiligingscode",
+  "@security_code_label": {
+    "description": "Label for security code field"
+  },
+  "recurrence_daily": "Dagelijks",
+  "@recurrence_daily": {
+    "description": "Recurrence frequency label for daily meetings"
+  },
+  "recurrence_weekly": "Wekelijks",
+  "@recurrence_weekly": {
+    "description": "Recurrence frequency label for weekly meetings"
+  },
+  "recurrence_monthly": "Maandelijks",
+  "@recurrence_monthly": {
+    "description": "Recurrence frequency label for monthly meetings"
+  },
+  "recurrence_yearly": "Jaarlijks",
+  "@recurrence_yearly": {
+    "description": "Recurrence frequency label for yearly meetings"
+  },
+  "@meeting_will_end_description": {
+    "description": "Description text explaining why meeting will end"
+  },
+  "stay_in_meeting": "In vergadering blijven",
+  "@stay_in_meeting": {
+    "description": "Button text to stay in meeting"
+  },
+  "end_meeting_for_all": "Vergadering voor iedereen beëindigen",
+  "@end_meeting_for_all": {
+    "description": "Button text to end meeting for all"
+  },
+  "stay_in_the_meeting": "In de vergadering blijven",
+  "@stay_in_the_meeting": {
+    "description": "Button text to stay in the meeting"
+  },
+  "connection_lost": "Verbinding verbroken",
+  "@connection_lost": {
+    "description": "Connection lost description"
+  },
+  "connection_lost_content": "Verbinding verbroken, neem opnieuw deel aan de vergadering",
+  "@connection_lost_content": {
+    "description": "Connection lost description"
+  },
+  "go_back_to_dashboard": "Ga terug naar het dashboard",
+  "@go_back_to_dashboard": {
+    "description": "Description text for go back to the dashboard button"
+  },
+  "early_access_description": "Deze functie is tijdens de vroege toegang exclusief beschikbaar voor gebruikers van Lifetime en Visionary.",
+  "@early_access_description": {
+    "description": "Description text explaining guest user capabilities"
+  },
+  "early_access_title": "Log in om toegang te krijgen tot deze functie",
+  "@early_access_title": {
+    "description": "Message prompting user to sign in for this early access feature"
+  },
+  "early_access_title_for_login_user": "Functie voor vroege toegang",
+  "@early_access_title_for_login_user": {
+    "description": "Message to let user know this is early access feature available for Lifetime and Visionary users"
+  },
+  "schedule_a_meeting": "Vergadering plannen",
+  "@schedule_a_meeting": {
+    "description": "Menu item label to schedule a meeting in Proton Meet app"
+  },
+  "create_a_room": "Een kamer aanmaken",
+  "@create_a_room": {
+    "description": "Menu item label to create a room"
+  },
+  "create_new_room": "Nieuwe ruimte aanmaken",
+  "@create_new_room": {
+    "description": "Menu item label to create a new room"
+  },
+  "emoji_reactions": "Emoji reactions",
+  "@emoji_reactions": {
+    "description": "Emoji reactions tooltip"
+  },
+  "edit_room": "Ruimte bewerken",
+  "@edit_room": {
+    "description": "Menu item label to edit a room"
+  },
+  "edit_meeting": "Vergadering bewerken",
+  "@edit_meeting": {
+    "description": "Menu item label to edit a meeting"
+  },
+  "join_with_a_link": "Deelnemen met een link",
+  "@join_with_a_link": {
+    "description": "Menu item label to join a meeting with a link"
+  },
+  "room_name": "Naam",
+  "@room_name": {
+    "description": "Label for room name input field header"
+  },
+  "room_id": "Kamer-ID",
+  "@room_id": {
+    "description": "Label for room ID display"
+  },
+  "room_deleted": "Ruimte verwijderd",
+  "@room_deleted": {
+    "description": "Success message shown after a room is deleted"
+  },
+  "meeting_deleted": "Vergadering verwijderd",
+  "@meeting_deleted": {
+    "description": "Success message shown after a meeting is deleted"
+  },
+  "enter_room_name_hint": "bijv. Designteam, wekelijkse stand-up",
+  "@enter_room_name_hint": {
+    "description": "Hint text for room name input field"
+  },
+  "create_room_subtitle": "Vergaderruimtes kunnen op elk moment worden gebruikt",
+  "@create_room_subtitle": {
+    "description": "Subtitle text for create room dialog"
+  },
+  "create_button": "Aanmaken",
+  "@create_button": {
+    "description": "Button text to create"
+  },
+  "save": "Opslaan",
+  "@save": {
+    "description": "Button text to save"
+  },
+  "create_and_copy_link": "Link aanmaken en kopiëren",
+  "@create_and_copy_link": {
+    "description": "Button text to create meeting and copy link"
+  },
+  "you_are_using_paid_meet_plan": "U gebruikt een betaald Meet-abonnement.",
+  "@you_are_using_paid_meet_plan": {
+    "description": "Message shown to host indicating they are using a paid plan"
+  },
+  "you_are_using_free_meet_plan": "U gebruikt het gratis Meet-abonnement.",
+  "@you_are_using_free_meet_plan": {
+    "description": "Message shown to host indicating they are using the free plan"
+  },
+  "call_supports_up_to": "This call supports up to ",
+  "@call_supports_up_to": {
+    "description": "Message prefix showing the maximum number of participants allowed in the call"
+  },
+  "call_reached_limit": "This call has reached the ",
+  "@call_reached_limit": {
+    "description": "Message prefix showing the call has reached the limit"
+  },
+  "participants_suffix": " participants.",
+  "@participants_suffix": {
+    "description": "Message suffix after the participant count"
+  },
+  "participants_reached_limit_suffix": " participant limit.",
+  "@participants_reached_limit_suffix": {
+    "description": "Message suffix after the call reached limit message"
+  },
+  "no_more_participants_can_join": "Remove a participant or upgrade your plan to invite more people.",
+  "@no_more_participants_can_join": {
+    "description": "Message shown when the call has reached the maximum number of participants"
+  },
+  "connection_quality_poor": "Slechte verbinding",
+  "@connection_quality_poor": {
+    "description": "Tooltip message shown when connection quality is poor"
+  },
+  "meeting_ended_by_host": "De host heeft de vergadering beëindigd",
+  "@meeting_ended_by_host": {
+    "description": "Toast message shown when the host ends the meeting for everyone"
+  },
+  "client_kicked_out_by_host": "De host heeft u uit de vergadering verwijderd",
+  "@client_kicked_out_by_host": {
+    "description": "Toast message shown when the host removes current user from the meeting"
+  },
+  "add_title": "Titel toevoegen",
+  "@add_title": {
+    "description": "Placeholder text for meeting title input field"
+  },
+  "schedule_at": "om",
+  "@schedule_at": {
+    "description": "Label for schedule at, used in schedule dialog"
+  },
+  "schedule_duration_min": "min",
+  "@schedule_duration_min": {
+    "description": "Label for schedule duration in minutes"
+  },
+  "schedule_duration_hr": "uur",
+  "@schedule_duration_hr": {
+    "description": "Label for schedule duration in hours"
+  },
+  "schedule_recurrence_none": "Wordt niet herhaald",
+  "@schedule_recurrence_none": {
+    "description": "Label for schedule recurrence none"
+  },
+  "schedule_recurrence_daily": "Dagelijks",
+  "@schedule_recurrence_daily": {
+    "description": "Label for schedule recurrence daily"
+  },
+  "schedule_recurrence_weekly": "Wekelijks",
+  "@schedule_recurrence_weekly": {
+    "description": "Label for schedule recurrence weekly"
+  },
+  "schedule_recurrence_monthly": "Maandelijks",
+  "@schedule_recurrence_monthly": {
+    "description": "Label for schedule recurrence monthly"
+  },
+  "schedule_recurrence_yearly": "Jaarlijks",
+  "@schedule_recurrence_yearly": {
+    "description": "Label for schedule recurrence yearly"
+  },
+  "schedule_time_zone_search_hint": "Tijdzone zoeken",
+  "@schedule_time_zone_search_hint": {
+    "description": "Label for schedule time zone search hint"
+  },
+  "schedule_time_zone_current": "Huidige tijdzone",
+  "@schedule_time_zone_current": {
+    "description": "Label for schedule time zone current"
+  },
+  "schedule_time_zone_selected": "Geselecteerde tijdzone",
+  "@schedule_time_zone_selected": {
+    "description": "Label for schedule time zone selected"
+  },
+  "month_jan": "Januari",
+  "@month_jan": {
+    "description": "Full month name for January"
+  },
+  "month_feb": "Februari",
+  "@month_feb": {
+    "description": "Full month name for February"
+  },
+  "month_mar": "Maart",
+  "@month_mar": {
+    "description": "Full month name for March"
+  },
+  "month_apr": "April",
+  "@month_apr": {
+    "description": "Full month name for April"
+  },
+  "month_may": "Mei",
+  "@month_may": {
+    "description": "Full month name for May"
+  },
+  "month_jun": "Juni",
+  "@month_jun": {
+    "description": "Full month name for June"
+  },
+  "month_jul": "Juli",
+  "@month_jul": {
+    "description": "Full month name for July"
+  },
+  "month_aug": "Augustus",
+  "@month_aug": {
+    "description": "Full month name for August"
+  },
+  "month_sep": "September",
+  "@month_sep": {
+    "description": "Full month name for September"
+  },
+  "month_oct": "Oktober",
+  "@month_oct": {
+    "description": "Full month name for October"
+  },
+  "month_nov": "November",
+  "@month_nov": {
+    "description": "Full month name for November"
+  },
+  "month_dec": "December",
+  "@month_dec": {
+    "description": "Full month name for December"
+  },
+  "weekday_monday": "Maandag",
+  "@weekday_monday": {
+    "description": "Weekday name for Monday"
+  },
+  "weekday_tuesday": "Dinsdag",
+  "@weekday_tuesday": {
+    "description": "Weekday name for Tuesday"
+  },
+  "weekday_wednesday": "Woensdag",
+  "@weekday_wednesday": {
+    "description": "Weekday name for Wednesday"
+  },
+  "weekday_thursday": "Donderdag",
+  "@weekday_thursday": {
+    "description": "Weekday name for Thursday"
+  },
+  "weekday_friday": "Vrijdag",
+  "@weekday_friday": {
+    "description": "Weekday name for Friday"
+  },
+  "weekday_saturday": "Zaterdag",
+  "@weekday_saturday": {
+    "description": "Weekday name for Saturday"
+  },
+  "weekday_sunday": "Zondag",
+  "@weekday_sunday": {
+    "description": "Weekday name for Sunday"
+  },
+  "calendar_system": "Aan telefoonagenda toevoegen",
+  "@calendar_system": {
+    "description": "Menu label for opening system calendar"
+  },
+  "calendar_google": "Aan Google-agenda toevoegen",
+  "@calendar_google": {
+    "description": "Menu label for opening Google Calendar"
+  },
+  "calendar_share_ics": "Afspraakbestand delen",
+  "@calendar_share_ics": {
+    "description": "Menu label for sharing ICS file"
+  },
+  "calendar_outlook": "Aan Outlook-agenda toevoegen",
+  "@calendar_outlook": {
+    "description": "Menu label for opening Outlook Calendar"
+  },
+  "calendar_proton": "Proton-agenda",
+  "@calendar_proton": {
+    "description": "Menu label for opening Proton Calendar"
+  },
+  "scheduled_meeting_share": "Delen",
+  "@scheduled_meeting_share": {
+    "description": "Share button label in scheduled meeting summary"
+  },
+  "scheduled_meeting_done": "Gereed",
+  "@scheduled_meeting_done": {
+    "description": "Done button label in scheduled meeting summary"
+  },
+  "scheduled_meeting_link": "Link",
+  "@scheduled_meeting_link": {
+    "description": "Link label in scheduled meeting summary"
+  },
+  "upcoming_today": "VANDAAG",
+  "@upcoming_today": {
+    "description": "Upcoming meetings header label for today"
+  },
+  "upcoming_tomorrow": "MORGEN",
+  "@upcoming_tomorrow": {
+    "description": "Upcoming meetings header label for tomorrow"
+  },
+  "on_yesterday": "GISTEREN",
+  "@on_yesterday": {
+    "description": "Meetings header label for yesterday"
+  },
+  "upcoming_prefix": "AANKOMEND",
+  "@upcoming_prefix": {
+    "description": "Prefix for upcoming meetings header label"
+  },
+  "ended_prefix": "BEËINDIGD",
+  "@ended_prefix": {
+    "description": "Prefix for ended/past meetings header label"
+  },
+  "ended_today": "Vandaag beëindigd",
+  "@ended_today": {
+    "description": "Label for meetings ended today"
+  },
+  "ended_yesterday": "Gisteren beëindigd",
+  "@ended_yesterday": {
+    "description": "Label for meetings ended yesterday"
+  },
+  "ended_on": "Beëindigd op",
+  "@ended_on": {
+    "description": "Label for meetings ended on a specific date"
+  },
+  "created_prefix": "AANGEMAAKT",
+  "@created_prefix": {
+    "description": "Prefix for newly created meetings header label"
+  },
+  "created_today": "Vandaag aangemaakt",
+  "@created_today": {
+    "description": "Label for meetings created today"
+  },
+  "created_yesterday": "Gisteren aangemaakt",
+  "@created_yesterday": {
+    "description": "Label for meetings created yesterday"
+  },
+  "created_last_week": "Vorige week aangemaakt",
+  "@created_last_week": {
+    "description": "Label for meetings created within the last week"
+  },
+  "created": "Aangemaakt op",
+  "@created": {
+    "description": "Label prefix for created time"
+  },
+  "last_used_today": "Vandaag laatst gebruikt",
+  "@last_used_today": {
+    "description": "Label for meetings last used today"
+  },
+  "last_used_yesterday": "Gisteren laatst gebruikt",
+  "@last_used_yesterday": {
+    "description": "Label for meetings last used yesterday"
+  },
+  "last_used": "Laatst gebruikt op",
+  "@last_used": {
+    "description": "Label prefix for last used time"
+  },
+  "created_on": "Aangemaakt op {day} {month} {year}",
+  "@created_on": {
+    "description": "Label for meetings created on a specific date",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      },
+      "day": {
+        "type": "int"
+      },
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "secure_meeting": "Beveiligde vergadering",
+  "@secure_meeting": {
+    "description": "Default meeting name when no title is set"
+  },
+  "share_with_people_you_trust": "Delen met mensen die u vertrouwt",
+  "@share_with_people_you_trust": {
+    "description": "Personal meeting hint text"
+  },
+  "time_am": "a.m.",
+  "@time_am": {
+    "description": "AM suffix for 12-hour time format"
+  },
+  "time_pm": "p.m.",
+  "@time_pm": {
+    "description": "PM suffix for 12-hour time format"
+  },
+  "start_typing_to_search": "Begin met typen om te zoeken...",
+  "@start_typing_to_search": {
+    "description": "Placeholder text shown when search query is empty"
+  },
+  "no_results_found_for": "Geen resultaten gevonden voor \\\"{searchQuery}\\\"",
+  "@no_results_found_for": {
+    "description": "Message shown when search returns no results",
+    "placeholders": {
+      "searchQuery": {
+        "type": "String",
+        "example": "meeting name"
+      }
+    }
+  },
+  "sort_newest": "Nieuwste",
+  "@sort_newest": {
+    "description": "Sort option label for newest items"
+  },
+  "sort_last_used": "Laatst gebruikt",
+  "@sort_last_used": {
+    "description": "Sort option label for last used items"
+  },
+  "sort_by": "Sorteren op {option}",
+  "@sort_by": {
+    "description": "Toast notification message when sort option is selected",
+    "placeholders": {
+      "option": {
+        "type": "String"
+      }
+    }
+  },
+  "sort_upcoming": "Aankomend",
+  "@sort_upcoming": {
+    "description": "Sort option label for upcoming meetings"
+  },
+  "sort_new_created": "Pas aangemaakt",
+  "@sort_new_created": {
+    "description": "Sort option label for newly created items"
+  },
+  "sort_past_meeting": "In het verleden",
+  "@sort_past_meeting": {
+    "description": "Sort option label for past meetings"
+  },
+  "version": "Versie {versionDisplay}",
+  "@version": {
+    "description": "Version text with version number",
+    "placeholders": {
+      "versionDisplay": {
+        "type": "String",
+        "example": "1.0.0-dev (00)"
+      }
+    }
+  },
+  "unable_to_reconnect": "Kan niet opnieuw verbinden",
+  "@unable_to_reconnect": {
+    "description": "Title shown when reconnection fails"
+  },
+  "reconnection_failed_message": "We konden de verbinding niet herstellen. Probeer opnieuw deel te nemen aan de vergadering",
+  "@reconnection_failed_message": {
+    "description": "Message shown when reconnection fails"
+  },
+  "connection": "Verbinding",
+  "@connection": {
+    "description": "Section title for connection settings"
+  },
+  "reconnect_meeting": "Opnieuw verbinden met vergadering",
+  "@reconnect_meeting": {
+    "description": "Button label to reconnect to meeting"
+  },
+  "always_show_status": "Status altijd tonen",
+  "@always_show_status": {
+    "description": "Setting label to always show connection status banner"
+  },
+  "connection_check_mls_checking": "Verbinding controleren\nMLS-status controleren...",
+  "@connection_check_mls_checking": {
+    "description": "Message shown when checking MLS sync status"
+  },
+  "connection_issue_restoring": "Verbindingsprobleem\nWe werken eraan om de volledige functionaliteit te herstellen...",
+  "@connection_issue_restoring": {
+    "description": "Message shown when connection issue is being resolved"
+  },
+  "connection_check_mls_failed": "Verbindingscontrole\nMLS-statuscontrole mislukt, opnieuw deelnemen wordt geactiveerd...",
+  "@connection_check_mls_failed": {
+    "description": "Message shown when MLS sync check fails"
+  },
+  "connection_check_mls_passed": "Verbindingscontrole\nMLS-statuscontrole geslaagd",
+  "@connection_check_mls_passed": {
+    "description": "Message shown when MLS sync check passes"
+  },
+  "trying_to_reconnect": "Proberen opnieuw te verbinden…",
+  "@trying_to_reconnect": {
+    "description": "Message shown when attempting to reconnect to meeting"
+  },
+  "sign_in_card_title": "Log in of maak een account aan",
+  "@sign_in_card_title": {
+    "description": "Title text for the sign-in card displayed on dashboard"
+  },
+  "sign_in_card_description": "om vergaderingen te plannen, uw persoonlijke ruimte te gebruiken en nieuwe ruimtes aan te maken.",
+  "@sign_in_card_description": {
+    "description": "Description text for the sign-in card explaining benefits of signing in"
+  },
+  "almost_there_title": "You are almost there",
+  "@almost_there_title": {
+    "description": "Title for the almost there bottom sheet"
+  },
+  "almost_there_content_before": "To schedule a meeting, create a free ",
+  "@almost_there_content_before": {
+    "description": "Content before Proton account in almost there bottom sheet (schedule meeting)"
+  },
+  "almost_there_content_before_create_room": "To create a room, create a free ",
+  "@almost_there_content_before_create_room": {
+    "description": "Content before Proton account in almost there bottom sheet (create room)"
+  },
+  "almost_there_content_before_personal_room": "To use your personal meeting room, create a free ",
+  "@almost_there_content_before_personal_room": {
+    "description": "Content before Proton account in almost there bottom sheet (personal meeting room)"
+  },
+  "almost_there_proton_account": "Proton account",
+  "@almost_there_proton_account": {
+    "description": "Proton account text in almost there bottom sheet"
+  },
+  "almost_there_content_after": ". You will return to Proton Meet automatically.",
+  "@almost_there_content_after": {
+    "description": "Content after Proton account in almost there bottom sheet"
+  }
+}

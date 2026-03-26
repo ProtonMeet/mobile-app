@@ -1,0 +1,49 @@
+// TODO: https://developer.android.com/build/migrate-to-kotlin-dsl#migrate-buildscript
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.12.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21")
+        classpath("com.google.dagger:hilt-android-gradle-plugin:2.53.1")
+        classpath("org.codehaus.groovy:groovy-json:3.0.19")
+    }
+}
+
+allprojects {
+    // Flutter projects (cryptography_flutter, ...) don't specify namespace using android { namespace ... }.
+    // This fix make sure all projects specify it if null.
+    subprojects {
+        afterEvaluate { project ->
+            if (project.hasProperty('android')) {
+                project.android {
+                    if (namespace == null) {
+                        namespace project.group
+                    }
+                }
+            }
+        }
+    }
+    
+    // Force Kotlin version consistency across all projects
+    configurations.all {
+        resolutionStrategy {
+            force "org.jetbrains.kotlin:kotlin-stdlib:2.0.21"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.0.21"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.0.21"
+            force "org.jetbrains.kotlin:kotlin-stdlib-common:2.0.21"
+        }
+    }
+}
+
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+    project.evaluationDependsOn(':app')
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}

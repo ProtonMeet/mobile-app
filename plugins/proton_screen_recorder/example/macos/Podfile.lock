@@ -1,0 +1,22 @@
+PODS:
+  - FlutterMacOS (1.0.0)
+  - proton_screen_recorder (0.0.1):
+    - FlutterMacOS
+
+DEPENDENCIES:
+  - FlutterMacOS (from `Flutter/ephemeral`)
+  - proton_screen_recorder (from `Flutter/ephemeral/.symlinks/plugins/proton_screen_recorder/macos`)
+
+EXTERNAL SOURCES:
+  FlutterMacOS:
+    :path: Flutter/ephemeral
+  proton_screen_recorder:
+    :path: Flutter/ephemeral/.symlinks/plugins/proton_screen_recorder/macos
+
+SPEC CHECKSUMS:
+  FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
+  proton_screen_recorder: 6f9149e3e42d9804f4ead9f1a40961e5af657a9c
+
+PODFILE CHECKSUM: a91fb34deb5f60a7260484cb65b25b8f1d960ac8
+
+COCOAPODS: 1.16.2

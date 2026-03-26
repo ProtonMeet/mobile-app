@@ -1,0 +1,25 @@
+[package]
+name = "proton-meet-app"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# used for generating and verifying JWT tokens
+jsonwebtoken = { version = "9.3.1" }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+confy = { version = "1.0.0" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+web-sys = { workspace = true, features = ["Window", "Storage"] }
+instant = { version = "0.1", features = ["wasm-bindgen"] }
+
+[features]
+default = []

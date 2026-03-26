@@ -1,0 +1,23 @@
+[package]
+name = "proton-meet-mls"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+## mls part
+mls-trait = { workspace = true, features = ["test-utils"] }
+mls-types = { workspace = true, features = ["test-utils"] }
+meet-identifiers.workspace = true
+
+serde_json = { workspace = true }
+
+anyhow.workspace = true
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+tokio = { workspace = true }
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+tokio = { version = "1.45.1", features = ["sync", "time"] }
+
+[features]
+default = []

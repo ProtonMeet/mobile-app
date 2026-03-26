@@ -1,0 +1,202 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/frb",
+    "crates/meet",
+    "crates/meet-calendar",
+    "crates/meet-core",
+    "crates/meet-crypto",
+    "crates/meet-mls",
+    "crates/meet-cli",
+    "crates/meet-chat",
+    "crates/meet-macro",
+    "crates/meet-common",
+]
+
+[workspace.metadata.cargo-machete]
+ignored = ["serde_bytes"]
+
+[workspace.dependencies]
+anyhow = { version = "1.0.97" }
+thiserror = { version = "2.0.17" }
+base64 = { version = "0.22.1" }
+
+# other proton internal dependencies
+proton-srp = { version = "0.8.0", default-features = false, registry = "proton_public" }
+proton-crypto = { registry = "proton_public", version = "0.8.0" }
+proton-crypto-account = { registry = "proton_public", version = "0.13.0" }
+proton-crypto-subtle = { registry = "proton_public", version = "0.2.0" }
+
+# MLS intergration
+mls-trait = { path = "../vendor/client/core/mls-trait" }
+mls-types = { path = "../vendor/client/core/mls-types" }
+identity = { path = "../vendor/client/core/identity" }
+
+tokio = { version = "1.45.1", features = ["full"] }
+muon = { version = "=1.4.0", registry = "proton_public", default-features = false }
+
+###
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter", "chrono"] }
+tracing-appender = "0.2"
+
+cfg-if = { version = "1.0.1" }
+
+rand = { version = "0.8.5" }                                        # only 0.8.x works with wasm
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = { version = "1.0.147", features = ["preserve_order"] }
+chrono = "0.4.40"
+
+openssl = { version = "*", features = ["vendored"] }
+
+### js dependencies wasm
+js-sys = { version = "0.3.77" }
+web-sys = { version = "0.3.77", features = ["console", "Storage", "Window"] }
+wasm-bindgen = { version = "0.2.100", features = ["serde-serialize"] }
+wasm-bindgen-futures = { version = "0.4.50" }
+wasm-bindgen-test = { version = "0.3.50" }
+serde-wasm-bindgen = { version = "0.6.5" }
+getrandom = { version = "0.3.3", features = ["wasm_js"] }
+
+###
+mockall = { version = "0.14.0" }
+
+## experimental
+livekit = { version = "0.7.11" }
+
+[workspace.dependencies.meet-type]
+git = "git+ssh://git@gitlab.protontech.ch/meet/meet-type.git"
+branch = "master"
+
+[workspace.dependencies.esdicawt]
+git = "https://github.com/beltram/esdicawt.git"
+rev = "v0.8.0"
+package = "esdicawt"
+
+[workspace.dependencies.cose-key-thumbprint]
+git = "https://github.com/beltram/esdicawt.git"
+tag = "v0.8.0"
+package = "cose-key-thumbprint"
+
+# Proton Claims
+[workspace.dependencies.proton-claims]
+git = "git+ssh://git@gitlab.protontech.ch/meet/meet-common.git"
+branch = "main"
+
+[workspace.dependencies.meet-mls]
+git = "git+ssh://git@gitlab.protontech.ch/meet/meet-common.git"
+branch = "main"
+
+[workspace.dependencies.meet-identifiers]
+git = "git+ssh://git@gitlab.protontech.ch/meet/meet-common.git"
+branch = "main"
+
+# --- mls-rs (Wickr) ---
+[workspace.dependencies.mls-rs]
+package = "mls-rs"
+git = "https://github.com/nexun-foundation/mls-rs.git"
+default-features = false
+features = [
+    "private_message",
+    "by_ref_proposal",
+    "serde",
+    "application_data",
+    "fast_serialize",
+    "out_of_order",
+    "prior_epoch",
+    "psk",
+    "std",
+    "tree_index",
+    "custom_proposal",
+]
+
+[workspace.dependencies.mls-rs-core]
+git = "https://github.com/nexun-foundation/mls-rs.git"
+
+[workspace.dependencies.mls-rs-crypto-rustcrypto]
+package = "mls-rs-crypto-rustcrypto"
+git = "https://github.com/nexun-foundation/mls-rs.git"
+
+[workspace.dependencies.mls-rs-codec]
+package = "mls-rs-codec"
+git = "https://github.com/nexun-foundation/mls-rs.git"
+
+# --- MIMI ---
+[workspace.dependencies.mimi-protocol-mls]
+git = "https://github.com/nexun-foundation/mimi-rs.git"
+package = "mimi-protocol-mls"
+features = ["mls-extensions"]
+
+[workspace.dependencies.mimi-content]
+git = "https://github.com/nexun-foundation/mimi-rs.git"
+package = "mimi-content"
+
+[workspace.dependencies.mimi-room-policy]
+git = "https://github.com/nexun-foundation/mimi-rs.git"
+package = "mimi-room-policy"
+
+[workspace.dependencies.mls-spec]
+git = "https://github.com/OtaK/mls-spec.git"
+branch = "feat/draft-galore"
+features = [
+    "tlspl-utils",
+    "draft-mahy-mls-ratchet-tree-options",
+    "draft-mahy-mls-semiprivatemessage",
+    "draft-mahy-mls-sd-cwt-credential",
+    "draft-ietf-mls-extensions",
+]
+
+[patch.crates-io.ciborium]
+git = "https://github.com/beltram/ciborium"
+branch = "simple-value+cde"
+
+[patch.crates-io.time]
+# need to patch time crate to fixed 0.3.41, 0.3.42+ will raise type annotations error when build wasm..
+git = "https://github.com/time-rs/time.git"
+rev = "v0.3.41"
+
+[workspace.lints.rust]
+nonstandard_style = "warn"
+future_incompatible = "warn"
+unexpected_cfgs = "warn"
+
+[workspace.lints.clippy]
+# Enforced Groups
+style = { level = "warn", priority = -1 }
+perf = { level = "warn", priority = -1 }
+suspicious = { level = "warn", priority = -1 }
+correctness = { level = "warn", priority = -1 }
+complexity = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+
+# Cherry Picks
+## Nursery
+missing_const_for_fn = "allow"
+derive_partial_eq_without_eq = "allow"
+significant_drop_tightening = "allow"  # Allowed to due false positives
+new_without_default = "allow"
+## restriction
+string_to_string = "warn"
+rc_mutex = "warn"
+## Pedantic
+needless_continue = "warn"
+needless_for_each = "warn"
+flat_map_option = "warn"
+filter_map_next = "warn"
+explicit_into_iter_loop = "warn"
+manual_ok_or = "warn"
+match_on_vec_items = "warn"
+unused_self = "warn"
+from_iter_instead_of_collect = "warn"
+implicit_clone = "warn"
+inefficient_to_string = "warn"
+large_types_passed_by_value = "warn"
+linkedlist = "warn"
+lossy_float_literal = "warn"
+match_same_arms = "warn"
+match_wild_err_arm = "warn"
+mut_mut = "warn"
+option_option = "warn"
+ref_option_ref = "warn"
+# unused_async = "warn"
+explicit_iter_loop = "warn"

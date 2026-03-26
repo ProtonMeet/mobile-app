@@ -1,0 +1,3 @@
+[submodule "vendor/client"]
+	path = vendor/client
+	url = git@gitlab.protontech.ch:meet/meet-client.git

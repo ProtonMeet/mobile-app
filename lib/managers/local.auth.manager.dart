@@ -1,0 +1,85 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:meet/helper/logger.dart';
+import 'package:meet/managers/manager.dart';
+
+class LocalAuthManager implements Manager {
+  static bool _initialized = false;
+  bool canCheckBiometrics = false;
+  static final LocalAuthentication auth = LocalAuthentication();
+
+  String? userID;
+
+  static bool isPlatformSupported() {
+    if (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.windows) {
+      return true;
+    }
+    logger.i(
+      "${Platform.operatingSystem} is not supported platform for LocalAuth",
+    );
+    return false;
+  }
+
+  @override
+  Future<void> init() async {
+    if (!isPlatformSupported()) {
+      return;
+    }
+    if (!_initialized) {
+      _initialized = true;
+      try {
+        canCheckBiometrics = await auth.canCheckBiometrics;
+      } on PlatformException catch (e) {
+        logger.e(e);
+      }
+    }
+  }
+
+  Future<bool> authenticate(String hint) async {
+    if (!isPlatformSupported()) {
+      return false;
+    }
+    if (!canCheckBiometrics) {
+      return false;
+    }
+    // final checkable = await auth.canCheckBiometrics;
+    bool authenticated = false;
+    try {
+      authenticated = await auth.authenticate(
+        localizedReason: hint,
+        biometricOnly: true,
+      );
+    } on PlatformException catch (e) {
+      logger.e(e);
+      return false;
+    }
+    return authenticated;
+  }
+
+  @override
+  Future<void> dispose() async {}
+
+  @override
+  Future<void> login(String userID) async {
+    this.userID = userID;
+  }
+
+  @override
+  Future<void> logout() async {
+    userID = null;
+  }
+
+  @override
+  Future<void> reload() async {}
+
+  @override
+  Priority getPriority() {
+    return Priority.level1;
+  }
+}
