@@ -11,4 +11,4 @@ PRODUCT_NAME = Proton Meet
 PRODUCT_BUNDLE_IDENTIFIER = me.proton.meet.macos
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2023 Proton Financial AG. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 Proton AG. All rights reserved.
