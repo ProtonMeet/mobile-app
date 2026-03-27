@@ -93,7 +93,7 @@ BEGIN
             VALUE "FileDescription", "wallet" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "wallet" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2023 Proton Financial AG. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Proton AG. All rights reserved." "\0"
             VALUE "OriginalFilename", "wallet.exe" "\0"
             VALUE "ProductName", "wallet" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

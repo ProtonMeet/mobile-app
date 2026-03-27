@@ -11,4 +11,4 @@ PRODUCT_NAME = proton_screen_recorder_example
 PRODUCT_BUNDLE_IDENTIFIER = com.proton.meet.protonScreenRecorderExample
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2025 com.proton.meet. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 Proton AG. All rights reserved.

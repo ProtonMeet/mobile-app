@@ -1,6 +1,6 @@
 # Proton Meet for mobile
 
-Copyright (c) 2025 Proton AG
+Copyright (c) 2026 Proton AG
 
 ## Building
 

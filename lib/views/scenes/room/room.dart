@@ -529,7 +529,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           await _leaveRoom(isShowLeftMeetingBottomSheet: false);
         } else if (event.reason == DisconnectReason.participantRemoved) {
           await _leaveRoom(
-            isShowLeftMeetingBottomSheet: true,
             leftMeetingBottomSheetShowRejoin: false,
             leftMeetingBottomSheetTitle:
                 context.local.kicked_out_bottom_sheet_title,
@@ -1425,10 +1424,13 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       child: MultiBlocListener(
         listeners: [
           BlocListener<RoomBloc, RoomState>(
+            // Show when both are true and at least one just became true. If
+            // showMeetingIsReady is set in _onRoomInitialized before tracks are
+            // sorted, isTrackInitialized flips later — the old listenWhen missed that.
             listenWhen: (prev, curr) =>
-                prev.showMeetingIsReady != curr.showMeetingIsReady &&
                 curr.showMeetingIsReady &&
-                curr.isTrackInitialized,
+                curr.isTrackInitialized &&
+                (!prev.showMeetingIsReady || !prev.isTrackInitialized),
             listener: (context, state) {
               if (state.showMeetingIsReady && state.isTrackInitialized) {
                 showRoomReadyBottomSheet(
