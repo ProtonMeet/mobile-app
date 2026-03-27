@@ -2756,7 +2756,7 @@ impl UserService for Service {
             mls_store.config.ciphersuite
         };
 
-        const JOIN_PROPOSAL_TIMEOUT: u64 = 9;
+        const JOIN_PROPOSAL_TIMEOUT: u64 = 15;
 
         // Retry logic for the whole join process
         const MAX_RETRIES: u32 = 2;
