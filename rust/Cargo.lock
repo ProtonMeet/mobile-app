@@ -5169,7 +5169,7 @@ dependencies = [
 
 [[package]]
 name = "proton-meet-core"
-version = "1.1.5-5"
+version = "1.1.6-1"
 dependencies = [
  "anyhow",
  "argon2",
