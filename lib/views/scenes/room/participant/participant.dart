@@ -231,6 +231,23 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
       });
       return;
     }
+
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final elapsedMs = nowMs - incoming.timestamp;
+    final needDisplay = (reactionDisplayDurationMs - elapsedMs) > 0;
+    if (!needDisplay) {
+      // Ignore stale reactions so they do not re-appear after re-render.
+      _hideReactionTimer?.cancel();
+      _currentReaction = null;
+      if (_displayReactionEmoji == null) {
+        return;
+      }
+      setState(() {
+        _displayReactionEmoji = null;
+      });
+      return;
+    }
+
     if (_currentReaction?.timestamp == incoming.timestamp) return;
 
     _currentReaction = incoming;
