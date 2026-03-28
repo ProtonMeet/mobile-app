@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
+import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
-import 'package:meet/views/components/alerts/base_bottom_sheet.dart';
+import 'package:meet/views/components/alerts/base_bottom_sheet_v2.dart';
 import 'package:meet/views/components/gradient_action_button.dart';
 
 typedef OnRejoinMeeting = void Function();
@@ -25,85 +26,55 @@ Future<void> showLeftMeetingBottomSheet(
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.transparent,
-    isDismissible: true,
     builder: (context) => LayoutBuilder(
       builder: (context, _) {
-        final maxHeight = context.height - 60;
+        final isLandscape = context.isLandscape;
+        final maxHeight = isLandscape
+            ? context.height - 20
+            : context.height - 160;
 
-        return BaseBottomSheet(
-          backgroundColor: context.colors.backgroundDark.withValues(
-            alpha: 0.60,
-          ),
-          blurSigma: 14,
+        return _LeftMeetingSheetModalBody(
+          key: ValueKey(meetingLink.id),
           maxHeight: maxHeight,
-          contentPadding: const EdgeInsets.only(bottom: 24),
-          onBackdropTap: () {
-            Navigator.of(context).maybePop();
+          onBackdropTap: () => Navigator.of(context).maybePop(),
+          isHost: isHost,
+          isPaidUser: isPaidUser,
+          isMeetMobileShowStartMeetingButtonEnabled:
+              isMeetMobileShowStartMeetingButtonEnabled,
+          showRejoin: showRejoin,
+          title: title,
+          content: content,
+          onRejoinMeeting: () {
+            Navigator.of(context).pop();
+            onRejoinMeeting();
           },
-          child: SizedBox(
-            height: maxHeight,
-            child: SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 8),
-                  _buildHandleBar(context),
-                  const SizedBox(height: 24),
-                  Expanded(
-                    child: _LeftMeetingContent(
-                      meetingLink: meetingLink,
-                      isHost: isHost,
-                      isPaidUser: isPaidUser,
-                      isMeetMobileShowStartMeetingButtonEnabled:
-                          isMeetMobileShowStartMeetingButtonEnabled,
-                      showRejoin: showRejoin,
-                      title: title,
-                      content: content,
-                      onRejoinMeeting: () {
-                        Navigator.of(context).pop();
-                        onRejoinMeeting();
-                      },
-                      onStartMeetingNow: () {
-                        Navigator.of(context).pop();
-                        onStartMeetingNow();
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          onStartMeetingNow: () {
+            Navigator.of(context).pop();
+            onStartMeetingNow();
+          },
         );
       },
     ),
   );
 }
 
-Widget _buildHandleBar(BuildContext context) {
-  return Container(
-    width: 36,
-    height: 4,
-    decoration: BoxDecoration(
-      color: context.colors.textWeak.withValues(alpha: 0.4),
-      borderRadius: BorderRadius.circular(100),
-    ),
-  );
-}
-
-class _LeftMeetingContent extends StatelessWidget {
-  const _LeftMeetingContent({
-    required this.meetingLink,
+class _LeftMeetingSheetModalBody extends StatelessWidget {
+  const _LeftMeetingSheetModalBody({
+    required this.maxHeight,
+    required this.onBackdropTap,
     required this.isHost,
     required this.isPaidUser,
     required this.isMeetMobileShowStartMeetingButtonEnabled,
     required this.showRejoin,
-    this.title,
-    this.content,
     required this.onRejoinMeeting,
     required this.onStartMeetingNow,
+    this.title,
+    this.content,
+    super.key,
   });
 
-  final FrbUpcomingMeeting meetingLink;
+  final double maxHeight;
+  final VoidCallback onBackdropTap;
   final bool isHost;
   final bool isPaidUser;
   final bool isMeetMobileShowStartMeetingButtonEnabled;
@@ -112,6 +83,66 @@ class _LeftMeetingContent extends StatelessWidget {
   final String? content;
   final VoidCallback onRejoinMeeting;
   final VoidCallback onStartMeetingNow;
+
+  @override
+  Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final isLandscape = mediaQuery.size.width > mediaQuery.size.height;
+
+    return BaseBottomSheetV2.withPinnedSliverScroll(
+      isLandscape: isLandscape,
+      modalOnBackdropTap: onBackdropTap,
+      modalMaxHeight: maxHeight,
+      innerEnableHandleDragPassthrough: false,
+      outerEnableHandleDragPassthrough: true,
+      blurSigma: 14,
+      borderSideAlpha: 0.04,
+      sheetBackgroundColor: context.colors.backgroundDark.withValues(
+        alpha: 0.60,
+      ),
+      slivers: [
+        SliverToBoxAdapter(
+          child: _LeftMeetingUpperContent(
+            isHost: isHost,
+            isPaidUser: isPaidUser,
+            isLandscape: isLandscape,
+            title: title,
+            content: content,
+          ),
+        ),
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: SafeArea(
+            child: _LeftMeetingLowerActions(
+              isHost: isHost,
+              isPaidUser: isPaidUser,
+              isMeetMobileShowStartMeetingButtonEnabled:
+                  isMeetMobileShowStartMeetingButtonEnabled,
+              showRejoin: showRejoin,
+              onRejoinMeeting: onRejoinMeeting,
+              onStartMeetingNow: onStartMeetingNow,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LeftMeetingUpperContent extends StatelessWidget {
+  const _LeftMeetingUpperContent({
+    required this.isHost,
+    required this.isPaidUser,
+    required this.isLandscape,
+    this.title,
+    this.content,
+  });
+
+  final bool isHost;
+  final bool isPaidUser;
+  final String? title;
+  final String? content;
+  final bool isLandscape;
 
   String _subtitleText(BuildContext context) {
     if (!isPaidUser && !isHost) {
@@ -126,8 +157,6 @@ class _LeftMeetingContent extends StatelessWidget {
     return context.local.left_meeting_subtitle_host_paid;
   }
 
-  bool get _showStartMeetingNowButton => !isPaidUser && !isHost && showRejoin;
-
   @override
   Widget build(BuildContext context) {
     final titleText = title ?? context.local.left_meeting_title;
@@ -136,23 +165,16 @@ class _LeftMeetingContent extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (!isLandscape) const SizedBox(height: 24),
         const SizedBox(height: 52),
-
-        /// Icon
         Container(
           width: 64,
           height: 64,
           clipBehavior: Clip.antiAlias,
           decoration: const BoxDecoration(),
-          child: context.images.iconDoorModalHeader.svg(
-            width: 64,
-            height: 64,
-            fit: BoxFit.fitWidth,
-          ),
+          child: context.images.iconDoorModalHeader.svg64(),
         ),
         const SizedBox(height: 52),
-
-        /// Title + subtitle
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Column(
@@ -173,8 +195,35 @@ class _LeftMeetingContent extends StatelessWidget {
             ],
           ),
         ),
-        Expanded(child: Container()),
+      ],
+    );
+  }
+}
 
+class _LeftMeetingLowerActions extends StatelessWidget {
+  const _LeftMeetingLowerActions({
+    required this.isHost,
+    required this.isPaidUser,
+    required this.isMeetMobileShowStartMeetingButtonEnabled,
+    required this.showRejoin,
+    required this.onRejoinMeeting,
+    required this.onStartMeetingNow,
+  });
+
+  final bool isHost;
+  final bool isPaidUser;
+  final bool isMeetMobileShowStartMeetingButtonEnabled;
+  final bool showRejoin;
+  final VoidCallback onRejoinMeeting;
+  final VoidCallback onStartMeetingNow;
+
+  bool get _showStartMeetingNowButton => !isPaidUser && !isHost && showRejoin;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Spacer(),
         if (_showStartMeetingNowButton &&
             isMeetMobileShowStartMeetingButtonEnabled) ...[
           Padding(
