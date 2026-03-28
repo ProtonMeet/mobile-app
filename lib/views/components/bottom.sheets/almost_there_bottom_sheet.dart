@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
-import 'package:meet/views/components/alerts/base_bottom_sheet.dart';
+import 'package:meet/helper/extension/svg_gen_image_extension.dart';
+import 'package:meet/views/components/alerts/base_bottom_sheet_v2.dart';
 import 'package:meet/views/components/gradient_action_button.dart';
 
 typedef OnCreateAccount = Future<void> Function();
@@ -20,7 +21,7 @@ Future<void> showAlmostThereBottomSheet(
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.transparent,
-    builder: (_) => AlmostThereModal(
+    builder: (context) => AlmostThereModal(
       almostThereContext: almostThereContext,
       onCreateAccount: onCreateAccount,
       onSignIn: onSignIn,
@@ -42,50 +43,71 @@ class AlmostThereModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxHeight = context.height - 60;
+    final isLandscape = context.isLandscape;
+    final maxHeight = isLandscape ? context.height - 20 : context.height - 100;
 
-    return BaseBottomSheet(
-      backgroundColor: context.colors.backgroundDark.withValues(alpha: 0.60),
+    return BaseBottomSheetV2.withPinnedSliverScroll(
+      isLandscape: isLandscape,
+      modalOnBackdropTap: () => Navigator.of(context).maybePop(),
+      modalMaxHeight: maxHeight,
+      innerEnableHandleDragPassthrough: false,
+      outerEnableHandleDragPassthrough: true,
       blurSigma: 14,
-      maxHeight: maxHeight,
-      contentPadding: const EdgeInsets.only(bottom: 24),
-      onBackdropTap: () {
-        Navigator.of(context).maybePop();
-      },
-      child: SizedBox(
-        height: maxHeight,
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 8),
-              _buildHandleBar(context),
-              const SizedBox(height: 24),
-              Expanded(
-                child: _AlmostThereContent(
-                  almostThereContext: almostThereContext,
-                  onCreateAccount: onCreateAccount,
-                  onSignIn: onSignIn,
+      borderSideAlpha: 0.04,
+      sheetBackgroundColor: context.colors.backgroundDark.withValues(
+        alpha: 0.60,
+      ),
+      slivers: [
+        SliverToBoxAdapter(
+          child: _AlmostThereUpper(almostThereContext: almostThereContext),
+        ),
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: SafeArea(
+            child: Column(
+              children: [
+                const Spacer(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GradientActionButton(
+                        text: context.local.signin_intro_create_account,
+                        onPressed: onCreateAccount,
+                        textStyle: ProtonStyles.body1Semibold(
+                          color: context.colors.textInverted,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      GradientActionButton(
+                        text: context.local.signin_intro_sign_in,
+                        onPressed: onSignIn,
+                        textStyle: ProtonStyles.body1Semibold(
+                          color: context.colors.textNorm,
+                        ),
+                        colors: [
+                          context.colors.interActionWeak,
+                          context.colors.interActionWeak,
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 52),
+              ],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 }
 
-class _AlmostThereContent extends StatelessWidget {
-  const _AlmostThereContent({
-    required this.almostThereContext,
-    required this.onCreateAccount,
-    required this.onSignIn,
-  });
+class _AlmostThereUpper extends StatelessWidget {
+  const _AlmostThereUpper({required this.almostThereContext});
 
   final AlmostThereContext almostThereContext;
-  final OnCreateAccount onCreateAccount;
-  final OnSignIn onSignIn;
 
   @override
   Widget build(BuildContext context) {
@@ -93,16 +115,8 @@ class _AlmostThereContent extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         const SizedBox(height: 52),
-
-        /// Icon
-        SizedBox(
-          width: 64,
-          height: 64,
-          child: _getImage(context, almostThereContext),
-        ),
+        _getImage(context, almostThereContext),
         const SizedBox(height: 52),
-
-        /// Title & subtitle
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Column(
@@ -141,53 +155,13 @@ class _AlmostThereContent extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
-        Expanded(child: Container()),
-
-        /// Action buttons
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              GradientActionButton(
-                text: context.local.signin_intro_create_account,
-                onPressed: onCreateAccount,
-                textStyle: ProtonStyles.body1Semibold(
-                  color: context.colors.textInverted,
-                ),
-              ),
-              const SizedBox(height: 8),
-              GradientActionButton(
-                text: context.local.signin_intro_sign_in,
-                onPressed: onSignIn,
-                textStyle: ProtonStyles.body1Semibold(
-                  color: context.colors.textNorm,
-                ),
-                colors: [
-                  context.colors.interActionWeak,
-                  context.colors.interActionWeak,
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 52),
       ],
     );
   }
-}
-
-Widget _buildHandleBar(BuildContext context) {
-  return Container(
-    width: 36,
-    height: 4,
-    decoration: BoxDecoration(
-      color: context.colors.textWeak.withValues(alpha: 0.4),
-      borderRadius: BorderRadius.circular(100),
-    ),
-  );
 }
 
 String _contentBeforeForContext(BuildContext context, AlmostThereContext ctx) {
@@ -208,5 +182,5 @@ Widget _getImage(BuildContext context, AlmostThereContext almostThereContext) {
     AlmostThereContext.personalRoom => context.images.iconPeopleModalHeader,
   };
 
-  return image.svg(width: 64, height: 64, fit: BoxFit.fitWidth);
+  return SizedBox(width: 64, height: 64, child: image.svg64());
 }

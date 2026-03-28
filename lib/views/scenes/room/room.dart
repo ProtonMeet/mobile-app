@@ -2009,17 +2009,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             optionalActionsBuilder: () {
               final isSpeakerMuted = state.isSpeakerMuted ?? false;
               return [
-                /// Emoji reactions
-                if (_bloc.isMeetMobileEnableEmojiReactionEnabled() &&
-                    state.room.localParticipant != null)
-                  ControlAction(
-                    icon: Icon(Icons.emoji_emotions_outlined, size: 24),
-                    tooltip: context.local.emoji_reactions,
-                    onPressed: () {
-                      unawaited(_showEmojiReactionMenu());
-                    },
-                  ),
-
                 /// Mute speaker
                 ControlAction(
                   activeIcon: context.images.iconSpeakerOn.svg(
@@ -2045,6 +2034,17 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                   isActive: !isSpeakerMuted,
                   inactiveBackgroundColor: context.colors.signalDangerMajor3,
                 ),
+
+                /// Emoji reactions
+                if (_bloc.isMeetMobileEnableEmojiReactionEnabled() &&
+                    state.room.localParticipant != null)
+                  ControlAction(
+                    icon: Icon(Icons.emoji_emotions_outlined, size: 24),
+                    tooltip: context.local.emoji_reactions,
+                    onPressed: () {
+                      unawaited(_showEmojiReactionMenu());
+                    },
+                  ),
 
                 /// PiP - only show if supported and feature flag is enabled
                 if (_bloc.isPictureInPictureFeatureEnabled() &&

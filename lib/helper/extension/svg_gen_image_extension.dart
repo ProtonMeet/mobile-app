@@ -80,6 +80,10 @@ extension SvgGenImageExtension on SvgGenImage {
     return svg(width: 70, height: 70);
   }
 
+  Widget svg64() {
+    return svg(width: 64, height: 64);
+  }
+
   Widget svg72() {
     return svg(width: 72, height: 72);
   }
