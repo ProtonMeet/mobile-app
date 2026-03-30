@@ -19,6 +19,10 @@
   "search": "Zoeken",
   "placeholder": "Plaatsaanduiding",
   "something_went_wrong": "Er is iets misgegaan",
+  "retry": "Retry",
+  "@retry": {
+    "description": "Retry loading dashboard after an error"
+  },
   "report_a_problem": "Probleem melden",
   "sign_in_to_proton_title": "Inloggen bij Proton",
   "sign_in_to_proton_subtitle": "Voer uw Proton-accountgegevens in.",
@@ -1073,6 +1077,14 @@
   "client_kicked_out_by_host": "De host heeft u uit de vergadering verwijderd",
   "@client_kicked_out_by_host": {
     "description": "Toast message shown when the host removes current user from the meeting"
+  },
+  "kicked_out_bottom_sheet_title": "You have been removed",
+  "@kicked_out_bottom_sheet_title": {
+    "description": "Title shown in left meeting bottom sheet when current user is removed by host"
+  },
+  "kicked_out_bottom_sheet_content": "The host removed you from the meeting.",
+  "@kicked_out_bottom_sheet_content": {
+    "description": "Content shown in left meeting bottom sheet when current user is removed by host"
   },
   "add_title": "Titel toevoegen",
   "@add_title": {

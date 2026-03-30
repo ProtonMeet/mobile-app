@@ -19,6 +19,10 @@
   "search": "Buscar",
   "placeholder": "Marcador de posición",
   "something_went_wrong": "Algo salió mal",
+  "retry": "Retry",
+  "@retry": {
+    "description": "Retry loading dashboard after an error"
+  },
   "report_a_problem": "Informar de un problema",
   "sign_in_to_proton_title": "Iniciar sesión en Proton",
   "sign_in_to_proton_subtitle": "Introduce los detalles de tu cuenta de Proton.",
@@ -1073,6 +1077,14 @@
   "client_kicked_out_by_host": "El anfitrión te ha eliminado de la reunión",
   "@client_kicked_out_by_host": {
     "description": "Toast message shown when the host removes current user from the meeting"
+  },
+  "kicked_out_bottom_sheet_title": "You have been removed",
+  "@kicked_out_bottom_sheet_title": {
+    "description": "Title shown in left meeting bottom sheet when current user is removed by host"
+  },
+  "kicked_out_bottom_sheet_content": "The host removed you from the meeting.",
+  "@kicked_out_bottom_sheet_content": {
+    "description": "Content shown in left meeting bottom sheet when current user is removed by host"
   },
   "add_title": "Añadir título",
   "@add_title": {
