@@ -33,7 +33,7 @@ Map<String, dynamic> _$FlutterSessionToJson(FlutterSession instance) =>
 UserInfo _$UserInfoFromJson(Map<String, dynamic> json) => UserInfo(
   userId: json['userId'] as String,
   userMail: json['userMail'] as String,
-  userName: json['userName'] as String,
+  userName: _stringFromNativeJson(json['userName']),
   userDisplayName: json['userDisplayName'] as String,
   sessionId: json['sessionId'] as String,
   accessToken: json['accessToken'] as String,

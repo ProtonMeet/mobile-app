@@ -3,6 +3,13 @@ import 'package:meet/rust/proton_meet/models/proton_user_session.dart';
 
 part 'native.session.model.g.dart';
 
+/// Native/iOS may send JSON `null` or omit keys for some string fields; keep models non-null.
+String _stringFromNativeJson(Object? json) {
+  if (json == null) return '';
+  if (json is String) return json;
+  return json.toString();
+}
+
 @JsonSerializable()
 class FlutterSession {
   String userId;
@@ -36,6 +43,7 @@ class FlutterSession {
 class UserInfo {
   final String userId;
   final String userMail;
+  @JsonKey(fromJson: _stringFromNativeJson)
   final String userName;
   final String userDisplayName;
   final String sessionId;
