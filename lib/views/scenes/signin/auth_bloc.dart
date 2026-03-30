@@ -16,6 +16,15 @@ import 'package:permission_handler/permission_handler.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
+/// Shown name: [ProtonUser.displayName], else non-empty [ProtonUser.name], else [ProtonUser.email].
+String _resolvedDisplayName(ProtonUser user) {
+  final dn = user.displayName;
+  if (dn != null && dn.isNotEmpty) return dn;
+  if (user.name.isNotEmpty) return user.name;
+  if (user.email.isNotEmpty) return user.email;
+  return '';
+}
+
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final UserAgent userAgent;
   final PlatformChannelManager nativeViewChannel;
@@ -88,12 +97,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             userId: appCoreManager.userID!,
           );
 
-          final displayName =
-              (user.displayName != null && user.displayName!.isNotEmpty)
-              ? user.displayName!
-              : user.name;
+          final displayName = _resolvedDisplayName(user);
           l.logger.i(
-            'onInitialized displayName: $displayName, user.name: ${user.name}, user.displayName: ${user.displayName}',
+            'onInitialized displayName: $displayName, user.name: ${user.name}, user.displayName: ${user.displayName}, user.email: ${user.email}',
           );
 
           emit(
@@ -140,12 +146,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       return;
     }
     final userConfig = await appCoreManager.appCore.getUserConfig();
-    final displayName =
-        (event.user.displayName != null && event.user.displayName!.isNotEmpty)
-        ? event.user.displayName!
-        : event.user.name;
+    final displayName = _resolvedDisplayName(event.user);
     l.logger.i(
-      'onLoggedInUser displayName: $displayName, user.name: ${event.user.name}, user.displayName: ${event.user.displayName}',
+      'onLoggedInUser displayName: $displayName, user.name: ${event.user.name}, user.displayName: ${event.user.displayName}, user.email: ${event.user.email}',
     );
 
     emit(
@@ -157,6 +160,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         user: event.user,
         initials: getInitials(displayName, defaultValue: ''),
         isLoggingIn: false,
+        error: '',
       ),
     );
   }
@@ -238,8 +242,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         );
         return;
       }
-      await appCoreManager.trySaveUserInfo(nativeState.userInfo);
-      await serviceManager.login(nativeState.userInfo.userId);
+      try {
+        await appCoreManager.trySaveUserInfo(nativeState.userInfo);
+        await serviceManager.login(nativeState.userInfo.userId);
+      } on Object catch (e, st) {
+        l.logger.e(
+          'Native handoff save/login failed: $e',
+          error: e,
+          stackTrace: st,
+        );
+        return;
+      }
       final loggedInUser = ProtonUser(
         id: nativeState.userInfo.userId,
         name: nativeState.userInfo.userName,

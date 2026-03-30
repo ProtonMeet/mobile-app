@@ -137,13 +137,42 @@ class PlatformChannelManager extends Bloc<ChannelEvent, NativeLoginState>
   Future<dynamic> _handleMethodCall(MethodCall call) async {
     switch (call.method) {
       case 'flutter.navigation.to.home':
-        final String data = call.arguments;
-        final Map<String, dynamic> map = json.decode(data);
-        final UserInfo userInfo = UserInfo.fromJson(map);
-        logger.d("Data received from Native: ${userInfo.userId}");
+        try {
+          final String data = call.arguments as String;
+          final Map<String, dynamic> map =
+              json.decode(data) as Map<String, dynamic>;
+          final UserInfo userInfo = UserInfo.fromJson(map);
+          logger.d("Data received from Native: ${userInfo.userId}");
 
-        directEmitExample(NativeLoginSuccess(userInfo));
+          directEmitExample(NativeLoginSuccess(userInfo));
+        } on Object catch (e, st) {
+          logger.e(
+            'flutter.navigation.to.home parse failed: $e',
+            error: e,
+            stackTrace: st,
+          );
+        }
+      case 'flutter.navigation.auth.error':
+        final message = _parseAuthErrorArguments(call.arguments);
+        logger.e('Native auth error: $message');
+      default:
+        return null;
     }
+    return null;
+  }
+
+  String _parseAuthErrorArguments(Object? arguments) {
+    const fallback = 'Sign in could not be completed. Please try again.';
+    if (arguments is String && arguments.isNotEmpty) {
+      try {
+        final map = json.decode(arguments) as Map<String, dynamic>;
+        final m = map['message'] as String?;
+        if (m != null && m.isNotEmpty) return m;
+      } on Object {
+        return arguments;
+      }
+    }
+    return fallback;
   }
 
   void directEmitExample(NativeLoginSuccess newState) {
