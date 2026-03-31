@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:meet/constants/assets.gen.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 
 class SplashView extends StatelessWidget {
@@ -11,9 +10,9 @@ class SplashView extends StatelessWidget {
       /// use system themed background before protonColor initialized
       color: context.colors.interActionWeakMinor3,
       child: Center(
-        child: Assets.images.logos.protonMeetBarLogoClean.image(
+        child: context.images.iconLeaveMeetingGuest.svg(
           fit: BoxFit.fitWidth,
-          width: context.width / 2,
+          width: context.width / 4,
         ),
       ),
     );
