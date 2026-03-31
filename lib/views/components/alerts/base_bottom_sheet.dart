@@ -81,7 +81,17 @@ class BaseBottomSheet extends StatelessWidget {
                     ),
                     child: SingleChildScrollView(
                       controller: scrollController,
-                      child: child,
+                      child: SafeArea(
+                        // ignore: avoid_redundant_argument_values
+                        top: true,
+                        // ignore: avoid_redundant_argument_values
+                        left: true,
+                        // ignore: avoid_redundant_argument_values
+                        right: true,
+                        // ignore: avoid_redundant_argument_values
+                        bottom: true,
+                        child: child,
+                      ),
                     ),
                   ),
                 ),
