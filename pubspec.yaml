@@ -86,7 +86,7 @@ dependencies:
   # this is for app version and user agent
   device_info_plus: ^12.2.0
   package_info_plus: ^9.0.0
-  livekit_client: ^2.6.5
+  livekit_client: ^2.7.0
   flutter_webrtc: any
 
   # livekit example dependencies

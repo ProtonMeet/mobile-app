@@ -976,10 +976,10 @@ packages:
     dependency: "direct main"
     description:
       name: livekit_client
-      sha256: "35cbf59d8d0909083db3ee02bc53f5397085ff34c48e33af6f1fcd20862d91a2"
+      sha256: "23a71bf6c94f83c0d1146c7ced8b863a5f8fe57c5e3007ea5f1b2881066b4126"
       url: "https://pub.dev"
     source: hosted
-    version: "2.6.5"
+    version: "2.7.0"
   local_auth:
     dependency: "direct main"
     description:
