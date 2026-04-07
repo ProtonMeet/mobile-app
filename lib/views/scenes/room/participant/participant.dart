@@ -33,6 +33,7 @@ abstract class ParticipantWidget extends StatefulWidget {
     bool isFullScreen = false,
     ParticipantReaction? reaction,
     bool isRaisedHand = false,
+    bool compactOverlay = false,
   }) {
     if (participantTrack.participant is LocalParticipant) {
       return LocalParticipantWidget(
@@ -47,6 +48,7 @@ abstract class ParticipantWidget extends StatefulWidget {
         isFullScreen: isFullScreen,
         reaction: reaction,
         isRaisedHand: isRaisedHand,
+        compactOverlay: compactOverlay,
       );
     } else if (participantTrack.participant is RemoteParticipant) {
       return RemoteParticipantWidget(
@@ -61,6 +63,7 @@ abstract class ParticipantWidget extends StatefulWidget {
         isFullScreen: isFullScreen,
         reaction: reaction,
         isRaisedHand: isRaisedHand,
+        compactOverlay: compactOverlay,
       );
     }
     throw UnimplementedError('Unknown participant type');
@@ -78,6 +81,7 @@ abstract class ParticipantWidget extends StatefulWidget {
   abstract final bool isFullScreen;
   abstract final ParticipantReaction? reaction;
   abstract final bool isRaisedHand;
+  abstract final bool compactOverlay;
   final VideoQuality quality;
 
   const ParticipantWidget({this.quality = VideoQuality.MEDIUM, super.key});
@@ -105,6 +109,8 @@ class LocalParticipantWidget extends ParticipantWidget {
   @override
   final bool isRaisedHand;
   @override
+  final bool compactOverlay;
+  @override
   final ParticipantDisplayColors displayColors;
 
   const LocalParticipantWidget(
@@ -119,6 +125,7 @@ class LocalParticipantWidget extends ParticipantWidget {
     this.isFullScreen = false,
     this.reaction,
     this.isRaisedHand = false,
+    this.compactOverlay = false,
 
     super.key,
   });
@@ -149,6 +156,8 @@ class RemoteParticipantWidget extends ParticipantWidget {
   @override
   final bool isRaisedHand;
   @override
+  final bool compactOverlay;
+  @override
   final ParticipantDisplayColors displayColors;
 
   const RemoteParticipantWidget(
@@ -163,6 +172,7 @@ class RemoteParticipantWidget extends ParticipantWidget {
     this.isFullScreen = false,
     this.reaction,
     this.isRaisedHand = false,
+    this.compactOverlay = false,
     super.key,
   });
 
@@ -285,6 +295,9 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
 
   /// Build top right widgets (connection quality icon + audio status)
   Widget _buildTopRightWidgets(BuildContext context) {
+    final avatarRadius = widget.compactOverlay ? 10.0 : 16.0;
+    final iconSize = widget.compactOverlay ? 10.0 : 16.0;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -301,11 +314,11 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
               borderRadius: BorderRadius.circular(16),
             ),
             child: CircleAvatar(
-              radius: 16,
+              radius: avatarRadius,
               backgroundColor: context.colors.backgroundNorm,
               child: context.images.iconConnectionPoor.svg(
-                width: 16,
-                height: 16,
+                width: iconSize,
+                height: iconSize,
               ),
             ),
           ),
@@ -317,6 +330,7 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
           isScreenShare: isScreenShare,
           type: ParticipantInfoType.kAudioStatus,
           activeAudioTrack: activeAudioTrack,
+          compact: widget.compactOverlay,
         ),
       ],
     );
@@ -374,6 +388,7 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
                       audioPublication?.subscribed == true,
                   type: ParticipantInfoType.kName,
                   isScreenShare: isScreenShare,
+                  compact: widget.compactOverlay,
                 ),
             ],
           ),

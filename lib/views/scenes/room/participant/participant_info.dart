@@ -37,6 +37,7 @@ class ParticipantInfoWidget extends StatelessWidget {
   final bool audioAvailable;
   final AudioTrack? activeAudioTrack;
   final bool isScreenShare;
+  final bool compact;
   final ParticipantInfoType type;
   const ParticipantInfoWidget({
     required this.type,
@@ -44,6 +45,7 @@ class ParticipantInfoWidget extends StatelessWidget {
     this.audioAvailable = true,
     this.activeAudioTrack,
     this.isScreenShare = false,
+    this.compact = false,
 
     super.key,
   });
@@ -59,17 +61,23 @@ class ParticipantInfoWidget extends StatelessWidget {
   }
 
   Widget _buildName(BuildContext context) {
+    final horizontalPadding = compact ? 6.0 : 12.0;
+    final verticalPadding = compact ? 6.0 : 12.0;
+    final textStyle = ProtonStyles.body1Regular(
+      color: context.colors.textNorm,
+    ).copyWith(fontSize: compact ? 10 : null);
+
     final content = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const SizedBox(width: 8),
+        SizedBox(width: compact ? 4 : 8),
         if (title != null)
           Flexible(
             child: Text(
               title ?? '',
-              maxLines: 2,
+              maxLines: compact ? 1 : 2,
               overflow: TextOverflow.ellipsis,
-              style: ProtonStyles.body1Regular(color: context.colors.textNorm),
+              style: textStyle,
             ),
           ),
       ],
@@ -81,7 +89,10 @@ class ParticipantInfoWidget extends StatelessWidget {
         child: IntrinsicWidth(
           child: Container(
             margin: const EdgeInsets.only(left: 12, bottom: 12),
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            padding: EdgeInsets.symmetric(
+              vertical: compact ? 6 : 12,
+              horizontal: compact ? 6 : 16,
+            ),
             decoration: BoxDecoration(
               color: context.colors.backgroundDark,
               borderRadius: BorderRadius.circular(16),
@@ -93,7 +104,10 @@ class ParticipantInfoWidget extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+      padding: EdgeInsets.symmetric(
+        vertical: verticalPadding,
+        horizontal: horizontalPadding,
+      ),
       color: Colors.transparent,
       child: content,
     );
@@ -101,12 +115,12 @@ class ParticipantInfoWidget extends StatelessWidget {
 
   Widget _buildAudioStatus(BuildContext context) => Container(
     color: Colors.transparent,
-    padding: const EdgeInsets.symmetric(
-      vertical: 12,
-      horizontal: 12,
-    ).copyWith(left: 6.0),
+    padding: EdgeInsets.symmetric(
+      vertical: compact ? 6 : 12,
+      horizontal: compact ? 6 : 12,
+    ).copyWith(left: compact ? 3 : 6.0),
     child: CircleAvatar(
-      radius: 16,
+      radius: compact ? 8 : 16,
       backgroundColor: isScreenShare
           ? context.colors.clear
           : context.colors.backgroundNorm,
@@ -117,13 +131,13 @@ class ParticipantInfoWidget extends StatelessWidget {
               key: ValueKey(activeAudioTrack!.hashCode),
               audioTrack: activeAudioTrack!,
               minHeight: 3,
-              maxHeight: 10,
+              maxHeight: compact ? 6 : 10,
               width: 1,
               barCount: 3,
             )
           : context.images.iconAudioOff.svg(
-              width: 14,
-              height: 14,
+              width: compact ? 10 : 14,
+              height: compact ? 10 : 14,
               colorFilter: ColorFilter.mode(
                 context.colors.textNorm,
                 BlendMode.srcIn,
