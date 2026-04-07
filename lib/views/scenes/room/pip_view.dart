@@ -105,6 +105,7 @@ class PipView extends StatelessWidget {
       participantTracks: participantTracks,
       room: room,
       hideNavigationIcons: true,
+      compactParticipantOverlay: true,
     );
   }
 }
