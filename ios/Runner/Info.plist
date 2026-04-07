@@ -10,8 +10,6 @@
 		<string>group.me.proton.meet</string>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
-		<key>CADisableMinimumFrameDurationOnPhone</key>
-		<true/>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
@@ -36,13 +34,6 @@
 		<string>public.app-category.business</string>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
-		<key>NSAppTransportSecurity</key>
-		<dict>
-			<key>NSAllowsArbitraryLoads</key>
-			<true/>
-			<key>NSAllowsArbitraryLoadsInWebContent</key>
-			<true/>
-		</dict>
 		<key>NSCameraUsageDescription</key>
 		<string>This app needs camera access for video meetings.</string>
 		<key>NSFaceIDUsageDescription</key>

@@ -59,6 +59,12 @@ MeetJoinLinkParseResult parseMeetJoinLink(
       uri != null && (uri.scheme == 'https' || uri.scheme == 'http');
   final isAllowedHost = isHttpUrl && uri.host == allowedHost;
 
+  // Use HTTPS for allowed host so links match strict App Transport Security.
+  final Uri? normalizedUri =
+      uri != null && uri.scheme == 'http' && uri.host == allowedHost
+      ? uri.replace(scheme: 'https')
+      : uri;
+
   // Room id parsing (accept /join, /guest/join, /u/<any>/join)
   String? roomId;
   if (uri != null) {
@@ -114,7 +120,7 @@ MeetJoinLinkParseResult parseMeetJoinLink(
   return MeetJoinLinkParseResult(
     raw: raw,
     trimmed: trimmed,
-    uri: uri,
+    uri: normalizedUri,
     roomId: roomId,
     passcode: pass,
     isHttpUrl: isHttpUrl,

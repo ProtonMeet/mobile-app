@@ -225,10 +225,6 @@ class _DashboardPageState extends State<DashboardPage> {
     final authState = widget.authBloc.state;
     if (authState.isLoading) return;
 
-    if (!authState.isSignedIn) {
-      _showSignInRequiredBottomSheet(AlmostThereContext.createRoom);
-      return;
-    }
     widget.dashboardBloc.add(CreateSecureMeetingEvent(goSecureMeeting: true));
   }
 
