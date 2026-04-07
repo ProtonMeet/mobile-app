@@ -1434,7 +1434,7 @@
   "@sign_in_card_title": {
     "description": "Title text for the sign-in card displayed on dashboard"
   },
-  "sign_in_card_description": "um Meetings zu planen, deinen persönlichen Raum zu nutzen und neue zu erstellen.",
+  "sign_in_card_description": "Schedule meetings, access your personal room, and create new rooms.",
   "@sign_in_card_description": {
     "description": "Description text for the sign-in card explaining benefits of signing in"
   },
