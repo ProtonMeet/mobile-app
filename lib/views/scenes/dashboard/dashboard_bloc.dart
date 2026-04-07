@@ -1600,6 +1600,7 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
           });
         case CalendarProvider.proton:
           final rRule = _mapRecurrenceToRRule(event.data.recurrence);
+          final userId = ManagerFactory().get<AppCoreManager>().userID ?? '';
           final protonUrl = Uri(
             scheme: 'proton-calendar',
             host: 'protonmail.com',
@@ -1613,17 +1614,17 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
               'timeZoneId': event.data.timeZone,
               'rRule': rRule,
               'allDay': 'false',
+              'userId': userId,
             },
           );
-          if (await canLaunchUrl(Uri.parse(protonUrl.toString()))) {
-            await launchUrl(
-              Uri.parse(protonUrl.toString()),
-              mode: LaunchMode.externalApplication,
-            );
+          final urlString = protonUrl.toString();
+          l.logger.i('[DashboardBloc] protonUrl: $urlString');
+          final url = Uri.parse(urlString);
+          if (await canLaunchUrl(url)) {
+            await launchUrl(url, mode: LaunchMode.externalApplication);
             return;
           }
           ExternalUrl.shared.launchProtonCalendar();
-          return;
       }
 
       if (await canLaunchUrl(Uri.parse(calendarUrl.toString()))) {

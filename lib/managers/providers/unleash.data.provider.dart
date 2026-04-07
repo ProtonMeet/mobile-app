@@ -33,6 +33,7 @@ enum UnleashFeature {
   meetUsePsk,
   meetMobileShowStartMeetingButton,
   meetMobileEnableEmojiReaction,
+  meetShowProtonCalendar,
 }
 
 /// Function to retrieve all default toggles
@@ -81,6 +82,8 @@ extension UnleashFeatureExt on UnleashFeature {
         return "MeetMobileShowStartMeetingButton";
       case UnleashFeature.meetMobileEnableEmojiReaction:
         return "MeetMobileEnableEmojiReaction";
+      case UnleashFeature.meetShowProtonCalendar:
+        return "MeetShowProtonCalendar";
     }
   }
 
@@ -104,6 +107,12 @@ extension UnleashFeatureExt on UnleashFeature {
           enabled: false,
           impressionData: false,
           variant: Variant(enabled: false, name: 'disabled'),
+        );
+      case UnleashFeature.meetShowProtonCalendar:
+        return ToggleConfig(
+          enabled: true,
+          impressionData: false,
+          variant: Variant(enabled: true, name: 'enabled'),
         );
       default:
         return null;
@@ -299,4 +308,8 @@ class UnleashDataProvider extends DataProvider {
       isFeatureEnabled(UnleashFeature.meetMobileShowStartMeetingButton);
   bool isMeetMobileEnableEmojiReaction() =>
       isFeatureEnabled(UnleashFeature.meetMobileEnableEmojiReaction);
+
+  /// "Add to Proton Calendar" in join / add-to-calendar flows.
+  bool isMeetShowProtonCalendar() =>
+      isFeatureEnabled(UnleashFeature.meetShowProtonCalendar);
 }

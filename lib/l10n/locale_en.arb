@@ -1182,6 +1182,54 @@
   "@month_dec": {
     "description": "Full month name for December"
   },
+  "month_short_jan": "Jan",
+  "@month_short_jan": {
+    "description": "Abbreviated month name January (order Jan–Dec)"
+  },
+  "month_short_feb": "Feb",
+  "@month_short_feb": {
+    "description": "Abbreviated month name February"
+  },
+  "month_short_mar": "Mar",
+  "@month_short_mar": {
+    "description": "Abbreviated month name March"
+  },
+  "month_short_apr": "Apr",
+  "@month_short_apr": {
+    "description": "Abbreviated month name April"
+  },
+  "month_short_may": "May",
+  "@month_short_may": {
+    "description": "Abbreviated month name May"
+  },
+  "month_short_jun": "Jun",
+  "@month_short_jun": {
+    "description": "Abbreviated month name June"
+  },
+  "month_short_jul": "Jul",
+  "@month_short_jul": {
+    "description": "Abbreviated month name July"
+  },
+  "month_short_aug": "Aug",
+  "@month_short_aug": {
+    "description": "Abbreviated month name August"
+  },
+  "month_short_sep": "Sep",
+  "@month_short_sep": {
+    "description": "Abbreviated month name September"
+  },
+  "month_short_oct": "Oct",
+  "@month_short_oct": {
+    "description": "Abbreviated month name October"
+  },
+  "month_short_nov": "Nov",
+  "@month_short_nov": {
+    "description": "Abbreviated month name November"
+  },
+  "month_short_dec": "Dec",
+  "@month_short_dec": {
+    "description": "Abbreviated month name December"
+  },
   "weekday_monday": "Monday",
   "@weekday_monday": {
     "description": "Weekday name for Monday"
@@ -1210,11 +1258,39 @@
   "@weekday_sunday": {
     "description": "Weekday name for Sunday"
   },
-  "calendar_system": "Add to phone calendar",
+  "weekday_short_monday": "Mon",
+  "@weekday_short_monday": {
+    "description": "Short weekday label Monday (list order Mon–Sun)"
+  },
+  "weekday_short_tuesday": "Tue",
+  "@weekday_short_tuesday": {
+    "description": "Short weekday label Tuesday"
+  },
+  "weekday_short_wednesday": "Wed",
+  "@weekday_short_wednesday": {
+    "description": "Short weekday label Wednesday"
+  },
+  "weekday_short_thursday": "Thu",
+  "@weekday_short_thursday": {
+    "description": "Short weekday label Thursday"
+  },
+  "weekday_short_friday": "Fri",
+  "@weekday_short_friday": {
+    "description": "Short weekday label Friday"
+  },
+  "weekday_short_saturday": "Sat",
+  "@weekday_short_saturday": {
+    "description": "Short weekday label Saturday"
+  },
+  "weekday_short_sunday": "Sun",
+  "@weekday_short_sunday": {
+    "description": "Short weekday label Sunday"
+  },
+  "calendar_system": "Add to Phone Calendar",
   "@calendar_system": {
     "description": "Menu label for opening system calendar"
   },
-  "calendar_google": "Add to Google calendar",
+  "calendar_google": "Add to Google Calendar",
   "@calendar_google": {
     "description": "Menu label for opening Google Calendar"
   },
@@ -1222,11 +1298,11 @@
   "@calendar_share_ics": {
     "description": "Menu label for sharing ICS file"
   },
-  "calendar_outlook": "Add to Outlook calendar",
+  "calendar_outlook": "Add to Outlook Calendar",
   "@calendar_outlook": {
     "description": "Menu label for opening Outlook Calendar"
   },
-  "calendar_proton": "Proton calendar",
+  "calendar_proton": "Add to Proton Calendar",
   "@calendar_proton": {
     "description": "Menu label for opening Proton Calendar"
   },
