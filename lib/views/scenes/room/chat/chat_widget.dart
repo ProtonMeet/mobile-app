@@ -936,10 +936,7 @@ class _ChatWidgetState extends State<ChatWidget> {
         messageTime.month == now.month &&
         messageTime.day == now.day;
 
-    final hour = _formatHour(messageTime.hour);
-    final period = messageTime.hour >= 12 ? 'PM' : 'AM';
-    final minute = messageTime.minute.toString().padLeft(2, '0');
-    final time = '$hour:$minute $period';
+    final time = context.formatLocalizedTime(messageTime);
 
     if (isToday) {
       return time;
@@ -948,11 +945,5 @@ class _ChatWidgetState extends State<ChatWidget> {
     final month = messageTime.month.toString().padLeft(2, '0');
     final day = messageTime.day.toString().padLeft(2, '0');
     return '$month-$day $time';
-  }
-
-  int _formatHour(int hour) {
-    if (hour > 12) return hour - 12;
-    if (hour == 0) return 12;
-    return hour;
   }
 }

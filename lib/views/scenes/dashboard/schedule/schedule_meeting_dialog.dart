@@ -756,12 +756,7 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
   }
 
   String _formatTime(TimeOfDay time) {
-    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
-    final minute = time.minute.toString().padLeft(2, '0');
-    final period = time.period == DayPeriod.am
-        ? context.local.time_am
-        : context.local.time_pm;
-    return '$hour:$minute $period';
+    return context.formatLocalizedTimeOfDay(time);
   }
 
   String _formatDuration(int minutes) {
