@@ -130,4 +130,33 @@ extension BuildContextExtension on BuildContext {
     local.weekday_short_saturday,
     local.weekday_short_sunday,
   ];
+
+  /// Formats [date]'s clock time using the platform 12/24-hour setting
+  /// (`MediaQuery.alwaysUse24HourFormat`, from iOS/Android system preferences).
+  ///
+  /// When [use24HourFormat] is non-null, it overrides the system preference.
+  String formatLocalizedTime(DateTime date, {bool? use24HourFormat}) {
+    final use24 = use24HourFormat ?? MediaQuery.of(this).alwaysUse24HourFormat;
+    final minute = date.minute.toString().padLeft(2, '0');
+    if (use24) {
+      final hour = date.hour.toString().padLeft(2, '0');
+      return '$hour:$minute';
+    }
+    final hour12 = date.hour % 12 == 0 ? 12 : date.hour % 12;
+    final suffix = date.hour >= 12 ? local.time_pm : local.time_am;
+    return '$hour12:$minute $suffix';
+  }
+
+  /// Same as [formatLocalizedTime] for a [TimeOfDay] value.
+  String formatLocalizedTimeOfDay(TimeOfDay time, {bool? use24HourFormat}) {
+    final use24 = use24HourFormat ?? MediaQuery.of(this).alwaysUse24HourFormat;
+    final minute = time.minute.toString().padLeft(2, '0');
+    if (use24) {
+      final hour = time.hour.toString().padLeft(2, '0');
+      return '$hour:$minute';
+    }
+    final hour12 = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final period = time.period == DayPeriod.am ? local.time_am : local.time_pm;
+    return '$hour12:$minute $period';
+  }
 }

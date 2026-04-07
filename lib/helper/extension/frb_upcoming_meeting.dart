@@ -28,7 +28,7 @@ extension FrbUpcomingMeetingExtension on FrbUpcomingMeeting {
   String formatStartDateTime(
     BuildContext context, {
     required bool useLocalTimezone,
-    bool? use24HourFormat = false,
+    bool? use24HourFormat,
     bool? twoLines = false,
   }) {
     // Convert to local timezone if requested, otherwise use meeting's timezone
@@ -36,13 +36,14 @@ extension FrbUpcomingMeetingExtension on FrbUpcomingMeeting {
     final start = fromUnixSecondsWithTimeZone(startTime, timeZoneToUse);
     if (start == null) return '';
     final end = fromUnixSecondsWithTimeZone(endTime, timeZoneToUse);
-    final use24 =
-        use24HourFormat ?? MediaQuery.of(context).alwaysUse24HourFormat;
     final weekday = context.weekdayNames[start.weekday - 1];
     final day = start.day;
     final month = context.monthNames[start.month - 1];
     final year = start.year;
-    final startTimeText = _formatTime(context, start, use24HourFormat: use24);
+    final startTimeText = context.formatLocalizedTime(
+      start,
+      use24HourFormat: use24HourFormat,
+    );
 
     if (end == null) {
       if (twoLines == true) {
@@ -51,7 +52,10 @@ extension FrbUpcomingMeetingExtension on FrbUpcomingMeeting {
       return '$weekday, $month $day $year, $startTimeText';
     }
 
-    final endTimeText = _formatTime(context, end, use24HourFormat: use24);
+    final endTimeText = context.formatLocalizedTime(
+      end,
+      use24HourFormat: use24HourFormat,
+    );
     if (twoLines == true) {
       return '$weekday, $month $day $year\n$startTimeText - $endTimeText';
     }
@@ -69,19 +73,23 @@ extension FrbUpcomingMeetingExtension on FrbUpcomingMeeting {
   String formatStartOnlyTime(
     BuildContext context, {
     required bool useLocalTimezone,
-    bool? use24HourFormat = false,
+    bool? use24HourFormat,
   }) {
     final timeZoneToUse = useLocalTimezone ? null : timeZone;
     final start = fromUnixSecondsWithTimeZone(startTime, timeZoneToUse);
     if (start == null) return '';
     final end = fromUnixSecondsWithTimeZone(endTime, timeZoneToUse);
-    final use24 =
-        use24HourFormat ?? MediaQuery.of(context).alwaysUse24HourFormat;
-    final startTimeText = _formatTime(context, start, use24HourFormat: use24);
+    final startTimeText = context.formatLocalizedTime(
+      start,
+      use24HourFormat: use24HourFormat,
+    );
     if (end == null) {
       return startTimeText;
     }
-    final endTimeText = _formatTime(context, end, use24HourFormat: use24);
+    final endTimeText = context.formatLocalizedTime(
+      end,
+      use24HourFormat: use24HourFormat,
+    );
     return '$startTimeText - $endTimeText';
   }
 
@@ -108,11 +116,7 @@ extension FrbUpcomingMeetingExtension on FrbUpcomingMeeting {
       localCreateTime.month,
       localCreateTime.day,
     );
-    final createdTimeText = _formatTime(
-      context,
-      localCreateTime,
-      use24HourFormat: false,
-    );
+    final createdTimeText = context.formatLocalizedTime(localCreateTime);
 
     final daysAgo = today.difference(createdDay).inDays;
 
@@ -153,11 +157,7 @@ extension FrbUpcomingMeetingExtension on FrbUpcomingMeeting {
       localLastUsedTime.day,
     );
     final daysAgo = today.difference(lastUsedDay).inDays;
-    final lastUsedTimeText = _formatTime(
-      context,
-      localLastUsedTime,
-      use24HourFormat: false,
-    );
+    final lastUsedTimeText = context.formatLocalizedTime(localLastUsedTime);
 
     if (daysAgo == 0) {
       return "${context.local.last_used_today} · $lastUsedTimeText";
@@ -197,11 +197,7 @@ extension FrbUpcomingMeetingExtension on FrbUpcomingMeeting {
       localLastUsedTime.day,
     );
     final daysAgo = today.difference(lastUsedDay).inDays;
-    final lastUsedTimeText = _formatTime(
-      context,
-      localLastUsedTime,
-      use24HourFormat: false,
-    );
+    final lastUsedTimeText = context.formatLocalizedTime(localLastUsedTime);
 
     if (daysAgo == 0) {
       return "${context.local.ended_today} · $lastUsedTimeText";
@@ -237,30 +233,6 @@ extension FrbUpcomingMeetingExtension on FrbUpcomingMeeting {
       localCreateTime.day,
       localCreateTime.year,
     );
-  }
-
-  /// Formats a DateTime object as a time string.
-  ///
-  /// Returns formatted time like "14:30" (24-hour) or "2:30 PM" (12-hour).
-  ///
-  /// [date] - The DateTime to format.
-  /// [use24HourFormat] - If true, uses 24-hour format; otherwise uses 12-hour format with AM/PM.
-  String _formatTime(
-    BuildContext context,
-    DateTime date, {
-    required bool use24HourFormat,
-  }) {
-    final minute = date.minute.toString().padLeft(2, '0');
-    if (use24HourFormat) {
-      final hour = date.hour.toString().padLeft(2, '0');
-      return '$hour:$minute';
-    }
-
-    final hour12 = date.hour % 12 == 0 ? 12 : date.hour % 12;
-    final suffix = date.hour >= 12
-        ? context.local.time_pm
-        : context.local.time_am;
-    return '$hour12:$minute $suffix';
   }
 
   /// Checks if this meeting is a scheduled or recurring meeting.
