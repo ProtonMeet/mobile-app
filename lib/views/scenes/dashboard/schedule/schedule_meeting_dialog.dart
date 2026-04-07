@@ -749,10 +749,10 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
   }
 
   String _formatDate(DateTime date) {
-    final weekday = context.weekdayNames[date.weekday - 1];
+    final weekday = context.weekdayNamesShort[date.weekday - 1];
     final currentYear = DateTime.now().year;
     final yearSuffix = date.year != currentYear ? ', ${date.year}' : '';
-    return '$weekday, ${context.monthNames[date.month - 1]} ${date.day}$yearSuffix';
+    return '$weekday, ${context.monthNamesShort[date.month - 1]} ${date.day}$yearSuffix';
   }
 
   String _formatTime(TimeOfDay time) {

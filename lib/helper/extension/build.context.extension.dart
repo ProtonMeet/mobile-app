@@ -75,7 +75,7 @@ extension BuildContextExtension on BuildContext {
         (isDarkMode ? darkColorsExtension : lightColorsExtension);
   }
 
-  /// Returns a list of localized month names.
+  /// Full localized month names (January–December). Index matches `[DateTime.month] - 1`.
   List<String> get monthNames => [
     local.month_jan,
     local.month_feb,
@@ -91,7 +91,24 @@ extension BuildContextExtension on BuildContext {
     local.month_dec,
   ];
 
-  /// Returns a list of localized weekday names (Monday through Sunday).
+  /// Abbreviated month labels (e.g. Jan–Dec in English). Same index order as [monthNames].
+  List<String> get monthNamesShort => [
+    local.month_short_jan,
+    local.month_short_feb,
+    local.month_short_mar,
+    local.month_short_apr,
+    local.month_short_may,
+    local.month_short_jun,
+    local.month_short_jul,
+    local.month_short_aug,
+    local.month_short_sep,
+    local.month_short_oct,
+    local.month_short_nov,
+    local.month_short_dec,
+  ];
+
+  /// Full localized weekday names (Monday–Sunday). Index matches
+  /// `[DateTime.weekday] - 1` (Monday = 0).
   List<String> get weekdayNames => [
     local.weekday_monday,
     local.weekday_tuesday,
@@ -100,5 +117,17 @@ extension BuildContextExtension on BuildContext {
     local.weekday_friday,
     local.weekday_saturday,
     local.weekday_sunday,
+  ];
+
+  /// Abbreviated weekday labels (e.g. Mon–Sun in English). Same index order as
+  /// [weekdayNames].
+  List<String> get weekdayNamesShort => [
+    local.weekday_short_monday,
+    local.weekday_short_tuesday,
+    local.weekday_short_wednesday,
+    local.weekday_short_thursday,
+    local.weekday_short_friday,
+    local.weekday_short_saturday,
+    local.weekday_short_sunday,
   ];
 }

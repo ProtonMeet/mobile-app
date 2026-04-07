@@ -6,6 +6,8 @@ import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
+import 'package:meet/managers/manager.factory.dart';
+import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/views/scenes/dashboard/dashboard_bloc.dart';
 import 'package:meet/views/scenes/dashboard/dashboard_event.dart';
@@ -267,6 +269,10 @@ List<Widget> _buildMeetingSlivers({
                         ? meeting.toScheduleMeetingData(useLocalTimezone: true)
                         : null;
                     final dashboardBloc = context.read<DashboardBloc>();
+                    final showProtonCalendar = ManagerFactory()
+                        .get<DataProviderManager>()
+                        .unleashDataProvider
+                        .isMeetShowProtonCalendar();
 
                     showJoinMeetingDialog(
                       context,
@@ -285,6 +291,7 @@ List<Widget> _buildMeetingSlivers({
                       rRule: meeting.rRule,
                       editable: false,
                       autofocus: false,
+                      showProtonCalendar: showProtonCalendar,
                       onAdd: isScheduledMeeting && scheduleData != null
                           ? () {
                               dashboardBloc.add(

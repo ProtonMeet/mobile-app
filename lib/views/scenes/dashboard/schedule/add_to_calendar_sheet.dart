@@ -123,19 +123,6 @@ class _AddToCalendarWidget extends StatelessWidget {
             },
           ),
           const SizedBox(height: 16),
-          const SizedBox(height: 16),
-          UpcomingMenuItem(
-            icon: context.images.iconUploadFile.svg20(
-              color: context.colors.interActionNorm,
-            ),
-            label: context.local.calendar_share_ics,
-            labelColor: context.colors.interActionNorm,
-            onTap: () {
-              Navigator.of(context).pop();
-              onShare();
-            },
-          ),
-          const SizedBox(height: 16),
           if (showOutlookCalendar) ...[
             const SizedBox(height: 16),
             UpcomingMenuItem(
@@ -166,6 +153,19 @@ class _AddToCalendarWidget extends StatelessWidget {
             ),
             const SizedBox(height: 16),
           ],
+          const SizedBox(height: 16),
+          UpcomingMenuItem(
+            icon: context.images.iconUploadFile.svg20(
+              color: context.colors.interActionNorm,
+            ),
+            label: context.local.calendar_share_ics,
+            labelColor: context.colors.interActionNorm,
+            onTap: () {
+              Navigator.of(context).pop();
+              onShare();
+            },
+          ),
+          const SizedBox(height: 16),
         ],
       ),
     );
