@@ -869,6 +869,7 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
     emit(
       state.copyWith(
         isRejoining: false,
+        isLiveKitReconnecting: false,
         // ignore: avoid_redundant_argument_values
         rejoinStatus: null,
         // ignore: avoid_redundant_argument_values
@@ -928,6 +929,7 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
       emit(
         state.copyWith(
           isRejoining: false,
+          isLiveKitReconnecting: false,
           // ignore: avoid_redundant_argument_values
           rejoinStatus: null,
           // ignore: avoid_redundant_argument_values
@@ -943,6 +945,7 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
       emit(
         state.copyWith(
           isRejoining: false,
+          isLiveKitReconnecting: false,
           rejoinStatus: RejoinStatus.error,
           rejoinError: event.error,
         ),
