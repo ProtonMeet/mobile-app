@@ -284,9 +284,6 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
     }
 
     emit(state.copyWith(isLoadingScheduledMeetings: false));
-    if (!await _ableToAccessEarlyAccess(emit)) {
-      return;
-    }
 
     emit(state.copyWith(isLoadingUpcomingMeetings: true));
 
@@ -452,9 +449,6 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         offerFetchUserStateRetry: false,
       ),
     );
-    if (!await _ableToAccessEarlyAccess(emit)) {
-      return;
-    }
 
     if (state.personalMeeting != null) {
       if (event.goPersonalMeeting) {
@@ -531,9 +525,6 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         offerFetchUserStateRetry: false,
       ),
     );
-    if (!await _ableToAccessEarlyAccess(emit)) {
-      return;
-    }
 
     final appCoreManager = ManagerFactory().get<AppCoreManager>();
     try {
@@ -597,10 +588,6 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       ),
     );
 
-    if (!await _ableToAccessEarlyAccess(emit)) {
-      return;
-    }
-
     emit(
       state.copyWith(
         isLoading: false,
@@ -608,25 +595,6 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         goSecureMeeting: true,
       ),
     );
-  }
-
-  Future<bool> _ableToAccessEarlyAccess(Emitter<DashboardState> emit) async {
-    final dataProviderManager = ManagerFactory().get<DataProviderManager>();
-    final isMeetEarlyAccess = dataProviderManager.unleashDataProvider
-        .isMeetEarlyAccess();
-    if (!isMeetEarlyAccess) {
-      emit(
-        state.copyWith(
-          showEarlyAccessDialog: true,
-          isLoadingPersonalMeeting: false,
-          isLoadingScheduledMeetings: false,
-          isLoadingSecureMeeting: false,
-          isLoading: false,
-        ),
-      );
-      return false;
-    }
-    return true;
   }
 
   void _onResetEarlyAccessDialogEvent(

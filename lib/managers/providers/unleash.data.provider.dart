@@ -16,7 +16,6 @@ import 'package:unleash_proxy_client_flutter/variant.dart';
 
 /// Enum for feature flags
 enum UnleashFeature {
-  meetEarlyAccess,
   meetSeamlessKeyRotationEnabled,
   meetNewJoinType,
   meetScreenShare,
@@ -30,9 +29,6 @@ enum UnleashFeature {
   meetScheduleInAdvance,
   meetAutoReconnection,
   meetMobileEnableNetworkTool,
-  meetUsePsk,
-  meetMobileShowStartMeetingButton,
-  meetMobileEnableEmojiReaction,
   meetShowProtonCalendar,
 }
 
@@ -48,8 +44,6 @@ Map<String, ToggleConfig> getDefaultToggles() {
 extension UnleashFeatureExt on UnleashFeature {
   String get name {
     switch (this) {
-      case UnleashFeature.meetEarlyAccess:
-        return "MeetEarlyAccess";
       case UnleashFeature.meetSeamlessKeyRotationEnabled:
         return "MeetSeamlessKeyRotationEnabled";
       case UnleashFeature.meetNewJoinType:
@@ -76,12 +70,6 @@ extension UnleashFeatureExt on UnleashFeature {
         return "MeetAutoReconnection";
       case UnleashFeature.meetMobileEnableNetworkTool:
         return "MeetMobileEnableNetworkTool";
-      case UnleashFeature.meetUsePsk:
-        return "MeetPreSharedKey";
-      case UnleashFeature.meetMobileShowStartMeetingButton:
-        return "MeetMobileShowStartMeetingButton";
-      case UnleashFeature.meetMobileEnableEmojiReaction:
-        return "MeetMobileEnableEmojiReaction";
       case UnleashFeature.meetShowProtonCalendar:
         return "MeetShowProtonCalendar";
     }
@@ -266,8 +254,6 @@ class UnleashDataProvider extends DataProvider {
   }
 
   /// Check specific feature flags
-  bool isMeetEarlyAccess() => isFeatureEnabled(UnleashFeature.meetEarlyAccess);
-
   bool isMeetSeamlessKeyRotationEnabled() =>
       isFeatureEnabled(UnleashFeature.meetSeamlessKeyRotationEnabled);
 
@@ -302,12 +288,6 @@ class UnleashDataProvider extends DataProvider {
 
   bool isMeetMobileEnableNetworkTool() =>
       isFeatureEnabled(UnleashFeature.meetMobileEnableNetworkTool);
-
-  bool isMeetUsePsk() => isFeatureEnabled(UnleashFeature.meetUsePsk);
-  bool isMeetMobileShowStartMeetingButton() =>
-      isFeatureEnabled(UnleashFeature.meetMobileShowStartMeetingButton);
-  bool isMeetMobileEnableEmojiReaction() =>
-      isFeatureEnabled(UnleashFeature.meetMobileEnableEmojiReaction);
 
   /// "Add to Proton Calendar" in join / add-to-calendar flows.
   bool isMeetShowProtonCalendar() =>

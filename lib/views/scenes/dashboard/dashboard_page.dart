@@ -18,7 +18,6 @@ import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/views/components/alerts/account_switcher_sheet.dart';
 import 'package:meet/views/components/alerts/create_room_dialog.dart';
 import 'package:meet/views/components/alerts/dashboard_error.dart';
-import 'package:meet/views/components/alerts/early_access_dialog.dart';
 import 'package:meet/views/components/alerts/force.upgrade.dialog.dart';
 import 'package:meet/views/components/alerts/signin_intro_sheet.dart';
 import 'package:meet/views/components/bottom.sheets/almost_there_bottom_sheet.dart'
@@ -152,46 +151,26 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _showSignInRequiredBottomSheet(AlmostThereContext almostThereContext) {
-    final isMeetEarlyAccess = ManagerFactory()
-        .get<DataProviderManager>()
-        .unleashDataProvider
-        .isMeetEarlyAccess();
-    if (!isMeetEarlyAccess) {
-      // If this is not in early access, ask user to login to have early access feature on
-      showUserLoginCheckBottomSheet(
-        context,
-        onLogin: () {
-          if (desktop) {
-            _showFlutterSignIn(context);
-          } else {
-            widget.authBloc.add(LoginWithNative());
-          }
-        },
-      );
-    } else {
-      // We will enable early access feature flag for all user after GA
-      // If this is in early access, show almost there bottom sheet to ask user to create account or sign in to have the create meeting / schedule meeting feature
-      showAlmostThereBottomSheet(
-        context,
-        almostThereContext: almostThereContext,
-        onCreateAccount: () async {
-          Navigator.of(context).maybePop();
-          if (desktop) {
-            _showFlutterSignIn(context);
-          } else {
-            widget.authBloc.add(SignupWithNative());
-          }
-        },
-        onSignIn: () async {
-          Navigator.of(context).maybePop();
-          if (desktop) {
-            _showFlutterSignIn(context);
-          } else {
-            widget.authBloc.add(LoginWithNative());
-          }
-        },
-      );
-    }
+    showAlmostThereBottomSheet(
+      context,
+      almostThereContext: almostThereContext,
+      onCreateAccount: () async {
+        Navigator.of(context).maybePop();
+        if (desktop) {
+          _showFlutterSignIn(context);
+        } else {
+          widget.authBloc.add(SignupWithNative());
+        }
+      },
+      onSignIn: () async {
+        Navigator.of(context).maybePop();
+        if (desktop) {
+          _showFlutterSignIn(context);
+        } else {
+          widget.authBloc.add(LoginWithNative());
+        }
+      },
+    );
   }
 
   void _handlePersonalMeeting() {
