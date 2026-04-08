@@ -27,10 +27,8 @@ pub fn spki_sha256(cert: &CertificateDer<'_>) -> Result<[u8; 32], Error> {
     Ok(Sha256::digest(parsed.public_key().raw).into())
 }
 
-/// A rustls `ServerCertVerifier` that layers SPKI SHA-256 pin enforcement on top
-/// of standard WebPki chain + hostname validation.
-///
-/// Runs the inner verifier first, then accepts if any cert in the chain matches a pin.
+/// A rustls `ServerCertVerifier` that enforces SPKI SHA-256 pin matching
+/// on the leaf certificate only.
 #[derive(Debug)]
 pub struct CertPinningVerifier {
     inner: Arc<dyn ServerCertVerifier>,
