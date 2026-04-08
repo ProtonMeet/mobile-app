@@ -65,20 +65,6 @@ mixin RoomFeatureFlagsHandlers on Bloc<RoomBlocEvent, RoomState> {
     }
   }
 
-  /// Check if Mobile Show Start Meeting Button feature is enabled via feature flag
-  bool isMeetMobileShowStartMeetingButtonEnabled() {
-    try {
-      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
-      return dataProviderManager.unleashDataProvider.isMeetMobileShowStartMeetingButton();
-    } catch (e) {
-      // If there's an error accessing the feature flag, default to false (hide feature)
-      l.logger.w(
-        '[RoomBloc] Error checking Mobile Show Start Meeting Button feature flag: $e',
-      );
-      return false;
-    }
-  }
-
   /// Check if Mobile Enable Network Tool feature is enabled via feature flag
   bool isMeetMobileEnableNetworkToolEnabled() {
     try {
@@ -94,18 +80,4 @@ mixin RoomFeatureFlagsHandlers on Bloc<RoomBlocEvent, RoomState> {
     }
   }
 
-  /// Check if Emoji Reaction feature is enabled via feature flag
-  bool isMeetMobileEnableEmojiReactionEnabled() {
-    try {
-      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
-      return dataProviderManager.unleashDataProvider
-          .isMeetMobileEnableEmojiReaction();
-    } catch (e) {
-      // If there's an error accessing the feature flag, default to false (hide feature)
-      l.logger.w(
-        '[RoomBloc] Error checking Mobile Enable Emoji Reaction feature flag: $e',
-      );
-      return false;
-    }
-  }
 }

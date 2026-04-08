@@ -967,7 +967,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   }
 
   Future<void> _showEmojiReactionMenu() async {
-    if (!_bloc.isMeetMobileEnableEmojiReactionEnabled()) return;
     if (!mounted) return;
     final localIdentity = _bloc.state.room.localParticipant?.identity;
     final isHandRaised = localIdentity != null
@@ -1236,15 +1235,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     if (rootContext != null &&
         rootContext.mounted &&
         isShowLeftMeetingBottomSheet) {
-      final isMeetMobileShowStartMeetingButtonEnabled = _bloc
-          .isMeetMobileShowStartMeetingButtonEnabled();
       await showLeftMeetingBottomSheet(
         rootContext,
         meetingLink: meetingLink,
         isHost: isHost,
         isPaidUser: isPaidUser,
-        isMeetMobileShowStartMeetingButtonEnabled:
-            isMeetMobileShowStartMeetingButtonEnabled,
+        isMeetMobileShowStartMeetingButtonEnabled: true,
         showRejoin: leftMeetingBottomSheetShowRejoin,
         title: leftMeetingBottomSheetTitle,
         content: leftMeetingBottomSheetContent,
@@ -2036,8 +2032,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                 ),
 
                 /// Emoji reactions
-                if (_bloc.isMeetMobileEnableEmojiReactionEnabled() &&
-                    state.room.localParticipant != null)
+                if (state.room.localParticipant != null)
                   ControlAction(
                     icon: Icon(Icons.emoji_emotions_outlined, size: 24),
                     tooltip: context.local.emoji_reactions,

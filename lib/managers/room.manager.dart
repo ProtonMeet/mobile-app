@@ -99,16 +99,6 @@ class RoomManager {
     return (isMeetNewJoinType, isMeetSwitchJoinType);
   }
 
-  Future<bool> getUsePsk() async {
-    try {
-      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
-      return dataProviderManager.unleashDataProvider.isMeetUsePsk();
-    } catch (e) {
-      l.logger.e("error getting use psk: $e");
-    }
-    return false;
-  }
-
   /// Get seamless key rotation feature flag
   Future<bool> getSeamlessKeyRotationEnabled() async {
     bool isMeetSeamlessKeyRotationEnabled = false;
@@ -273,8 +263,6 @@ class RoomManager {
     // Get feature flags
     final (isMeetNewJoinType, isMeetSwitchJoinType) = await getJoinTypeFlags();
 
-    final usePsk = await getUsePsk();
-
     FrbMeetInfo meetInfo;
     // Join meeting
     meetInfo = await appCoreManager.appCore.joinMeeting(
@@ -284,7 +272,7 @@ class RoomManager {
       isMeetNewJoinType: isMeetNewJoinType,
       isMeetSwitchJoinType: isMeetSwitchJoinType,
       reuseToken: reuseToken,
-      usePsk: usePsk,
+      usePsk: true,
     );
 
     // Update access token and websocket url, so we can reuse it for reconnection
