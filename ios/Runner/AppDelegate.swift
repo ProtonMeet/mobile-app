@@ -450,7 +450,6 @@ import app_links
         return WorkBeforeFlow(stepName: "Additional work creation...") {
             loginData, flowCompletion in
             DispatchQueue.global(qos: .userInitiated).async {
-                sleep(10)
                 flowCompletion(.success(()))
             }
         }
