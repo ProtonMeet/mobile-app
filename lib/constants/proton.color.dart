@@ -59,13 +59,6 @@ class ProtonColors extends ThemeExtension<ProtonColors> {
   final Color drawerBackground;
   final Color drawerBackgroundHighlight;
 
-  // Drawer wallet/account text colors
-  final Color drawerWalletOrange1Text;
-  final Color drawerWalletPink1Text;
-  final Color drawerWalletPurple1Text;
-  final Color drawerWalletBlue1Text;
-  final Color drawerWalletGreen1Text;
-
   // Avatar colors
   final Color avatarPurple1Text;
   final Color avatarPurple1Background;
@@ -142,11 +135,6 @@ class ProtonColors extends ThemeExtension<ProtonColors> {
     required this.protonBlue,
     required this.drawerBackground,
     required this.drawerBackgroundHighlight,
-    required this.drawerWalletOrange1Text,
-    required this.drawerWalletPink1Text,
-    required this.drawerWalletPurple1Text,
-    required this.drawerWalletBlue1Text,
-    required this.drawerWalletGreen1Text,
     required this.avatarOrange1Text,
     required this.avatarOrange1Background,
     required this.avatarRed1Text,
@@ -228,11 +216,6 @@ class ProtonColors extends ThemeExtension<ProtonColors> {
     Color? protonBlue,
     Color? drawerBackground,
     Color? drawerBackgroundHighlight,
-    Color? drawerWalletOrange1Text,
-    Color? drawerWalletPink1Text,
-    Color? drawerWalletPurple1Text,
-    Color? drawerWalletBlue1Text,
-    Color? drawerWalletGreen1Text,
     Color? avatarOrange1Text,
     Color? avatarOrange1Background,
     Color? avatarRed1Text,
@@ -331,16 +314,6 @@ class ProtonColors extends ThemeExtension<ProtonColors> {
       drawerBackground: drawerBackground ?? this.drawerBackground,
       drawerBackgroundHighlight:
           drawerBackgroundHighlight ?? this.drawerBackgroundHighlight,
-      drawerWalletOrange1Text:
-          drawerWalletOrange1Text ?? this.drawerWalletOrange1Text,
-      drawerWalletPink1Text:
-          drawerWalletPink1Text ?? this.drawerWalletPink1Text,
-      drawerWalletPurple1Text:
-          drawerWalletPurple1Text ?? this.drawerWalletPurple1Text,
-      drawerWalletBlue1Text:
-          drawerWalletBlue1Text ?? this.drawerWalletBlue1Text,
-      drawerWalletGreen1Text:
-          drawerWalletGreen1Text ?? this.drawerWalletGreen1Text,
       avatarOrange1Text: avatarOrange1Text ?? this.avatarOrange1Text,
       avatarOrange1Background:
           avatarOrange1Background ?? this.avatarOrange1Background,
@@ -527,31 +500,6 @@ class ProtonColors extends ThemeExtension<ProtonColors> {
       drawerBackgroundHighlight: Color.lerp(
         drawerBackgroundHighlight,
         other.drawerBackgroundHighlight,
-        t,
-      )!,
-      drawerWalletOrange1Text: Color.lerp(
-        drawerWalletOrange1Text,
-        other.drawerWalletOrange1Text,
-        t,
-      )!,
-      drawerWalletPink1Text: Color.lerp(
-        drawerWalletPink1Text,
-        other.drawerWalletPink1Text,
-        t,
-      )!,
-      drawerWalletPurple1Text: Color.lerp(
-        drawerWalletPurple1Text,
-        other.drawerWalletPurple1Text,
-        t,
-      )!,
-      drawerWalletBlue1Text: Color.lerp(
-        drawerWalletBlue1Text,
-        other.drawerWalletBlue1Text,
-        t,
-      )!,
-      drawerWalletGreen1Text: Color.lerp(
-        drawerWalletGreen1Text,
-        other.drawerWalletGreen1Text,
         t,
       )!,
       avatarOrange1Text: Color.lerp(
@@ -759,11 +707,6 @@ final lightColorsExtension = ProtonColors(
   protonBlue: const Color(0xFF767DFF),
   drawerBackground: const Color(0xFF222247),
   drawerBackgroundHighlight: const Color(0x2AFFFFFF),
-  drawerWalletOrange1Text: const Color(0xFFFF8D52),
-  drawerWalletPink1Text: const Color(0xFFFF68DE),
-  drawerWalletPurple1Text: const Color(0xff9553F9),
-  drawerWalletBlue1Text: const Color(0xFF536CFF),
-  drawerWalletGreen1Text: const Color(0xFF52CC9C),
   avatarOrange1Text: const Color(0xffFF6464),
   avatarOrange1Background: const Color(0xffffede4),
   avatarRed1Text: const Color(0xffFF8A8A),
@@ -843,11 +786,6 @@ final darkColorsExtension = ProtonColors(
   protonBlue: const Color(0xFFABABF8),
   drawerBackground: const Color(0xFF222247),
   drawerBackgroundHighlight: const Color(0x2AFFFFFF),
-  drawerWalletOrange1Text: const Color(0xFFFF8D52),
-  drawerWalletPink1Text: const Color(0xFFFF68DE),
-  drawerWalletPurple1Text: const Color(0xff9553F9),
-  drawerWalletBlue1Text: const Color(0xFF536CFF),
-  drawerWalletGreen1Text: const Color(0xFF52CC9C),
   avatarOrange1Text: const Color(0xFFFFB35F),
   avatarOrange1Background: const Color(0xFF523A2E),
   avatarRed1Text: const Color(0xffFF8A8A),
