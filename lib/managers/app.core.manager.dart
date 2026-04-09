@@ -5,9 +5,11 @@ import 'package:flutter/foundation.dart';
 import 'package:meet/constants/env.dart';
 import 'package:meet/helper/logger.dart';
 import 'package:meet/helper/user.agent.dart';
+import 'package:meet/managers/channels/platform_info_channel.dart';
 import 'package:meet/managers/manager.dart';
 import 'package:meet/managers/secure.storage/secure.storage.manager.dart';
 import 'package:meet/models/native.session.model.dart';
+import 'package:meet/rust/errors.dart';
 import 'package:meet/rust/proton_meet/core.dart';
 import 'package:meet/rust/proton_meet/meet_auth_store.dart';
 import 'package:meet/rust/proton_meet/models/mls_sync_state.dart';
@@ -35,6 +37,17 @@ class AppCoreManager implements Manager {
       _mlsGroupKeyStreamController.stream;
   Stream<(MlsSyncState, RejoinReason?)> get mlsSyncStateStream =>
       _mlsSyncStateStreamController.stream;
+
+  /// Last successful meet-api ping from [warmupMeetApiConnectionIfNeeded] only.
+  DateTime? _lastMeetApiWarmupSuccess;
+  Future<void>? _meetApiWarmupInFlight;
+
+  /// Muon keeps HTTP/2 connections alive across requests; repeated prejoin opens
+  /// do not need a new ping every time. Refresh periodically in case of GOAWAY,
+  /// idle timeout, or app backgrounding. Dashboard still calls [AppCore.ping] on
+  /// each init for force-upgrade checks (unthrottled).
+  static const Duration meetApiWarmupMinInterval = Duration(seconds: 30);
+
   AppCoreManager(this.env, this.storage);
 
   bool get isAuthenticated => userID != null && mailboxPassword != null;
@@ -87,6 +100,53 @@ class AppCoreManager implements Manager {
     await userKeyProvider.setGetPassphraseCallback(
       callback: userKeyProviderCallback,
     );
+    _resetMeetApiWarmupState();
+  }
+
+  /// Warms meet-api HTTP/2 (Muon). Coalesces concurrent callers and skips if a
+  /// recent successful ping already ran.
+  Future<void> warmupMeetApiConnectionIfNeeded({
+    void Function(BridgeError_ApiResponse error)? onForceUpgradeApiResponse,
+  }) async {
+    if (PlatformInfoChannel.isInForceUpgradeState()) {
+      return;
+    }
+    if (_meetApiWarmupInFlight != null) {
+      await _meetApiWarmupInFlight;
+      return;
+    }
+    final last = _lastMeetApiWarmupSuccess;
+    if (last != null &&
+        DateTime.now().difference(last) < meetApiWarmupMinInterval) {
+      return;
+    }
+
+    final future = _runMeetApiWarmup(onForceUpgradeApiResponse);
+    _meetApiWarmupInFlight = future;
+    try {
+      await future;
+    } finally {
+      _meetApiWarmupInFlight = null;
+    }
+  }
+
+  Future<void> _runMeetApiWarmup(
+    void Function(BridgeError_ApiResponse error)? onForceUpgradeApiResponse,
+  ) async {
+    try {
+      final rttMs = await appCore.ping();
+      _lastMeetApiWarmupSuccess = DateTime.now();
+      logger.d('[AppCoreManager] meet API warmup ping ok rtt_ms=$rttMs');
+    } on BridgeError_ApiResponse catch (e) {
+      onForceUpgradeApiResponse?.call(e);
+    } catch (e, st) {
+      logger.d('[AppCoreManager] meet API warmup ping: $e\n$st');
+    }
+  }
+
+  void _resetMeetApiWarmupState() {
+    _lastMeetApiWarmupSuccess = null;
+    _meetApiWarmupInFlight = null;
   }
 
   Future<String> sessionStoreCallback(ChildAuthSession session) async {
@@ -167,6 +227,7 @@ class AppCoreManager implements Manager {
     await appCore.setMlsSyncStateUpdateCallback(
       callback: mlsSyncStateUpdateCallback,
     );
+    _resetMeetApiWarmupState();
   }
 
   Future<void> loadSession() async {

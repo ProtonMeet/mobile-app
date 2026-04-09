@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/rust/flutter_logger.dart';
 import 'package:meet/rust/logger.dart' as rust_logger;
 import 'package:path/path.dart';
@@ -158,7 +159,7 @@ class LoggerService {
     rust_logger.initRustLogging(
       filePath: logsDir,
       fileName: 'app_rust_logs.log',
-      flutterLayer: kDebugMode ? true : false,
+      flutterLayer: (kDebugMode && mobile) ? true : false,
     );
   }
 
