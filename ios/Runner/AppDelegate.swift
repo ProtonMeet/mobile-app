@@ -25,7 +25,7 @@ import app_links
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
-
+    
     /// native code and this need to be refactored later
     private var apiService: PMAPIService?
     private var login: LoginAndSignup?
@@ -34,11 +34,11 @@ import app_links
     private var humanVerificationDelegate: HumanVerifyDelegate?
     private var authManager: AuthHelper?
     private let serviceDelegate = MeetApiServiceManager()
-
+    
     private var getInAppTheme: () -> InAppTheme {
         return { .matchSystem }
     }
-
+    
     /// Gets the root view controller from the active scene's window
     /// This is needed for UIScene-based apps where AppDelegate no longer manages the window
     private var rootViewController: UIViewController? {
@@ -50,7 +50,7 @@ import app_links
             // Fallback: try to get any window from any connected scene
             for scene in UIApplication.shared.connectedScenes {
                 if let windowScene = scene as? UIWindowScene,
-                    let window = windowScene.windows.first
+                   let window = windowScene.windows.first
                 {
                     return window.rootViewController
                 }
@@ -59,13 +59,13 @@ import app_links
         }
         return window.rootViewController
     }
-
+    
     override func application(
         _ app: UIApplication,
         continue userActivity: NSUserActivity,
         restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
     ) -> Bool {
-
+        
         // Handle App Intents from Dynamic Island
         if #available(iOS 16.2, *) {
             if userActivity.activityType.contains("ToggleMuteIntent") {
@@ -79,14 +79,14 @@ import app_links
                 return true
             }
         }
-
+        
         guard userActivity.activityType == NSUserActivityTypeBrowsingWeb,
-            let url = userActivity.webpageURL
+              let url = userActivity.webpageURL
         else { return false }
         print("userActivity: \(url)")
         return true
     }
-
+    
     private func _handleCallActivityAction(_ action: String) {
         // Send action to Flutter via method channel
         if let rootViewController = self.rootViewController as? FlutterViewController {
@@ -94,7 +94,7 @@ import app_links
                 name: "me.proton.meet/call_activity_action",
                 binaryMessenger: rootViewController.binaryMessenger
             )
-
+            
             switch action {
             case "toggleMute":
                 channel.invokeMethod("toggleMute", arguments: nil)
@@ -107,11 +107,11 @@ import app_links
             }
         }
     }
-
+    
     // In AppDelegate.swift
     override func applicationDidEnterBackground(_ application: UIApplication) {
     }
-
+    
     override func applicationWillTerminate(_ application: UIApplication) {
         // End any active call activities when app terminates
         if #available(iOS 16.2, *) {
@@ -128,24 +128,24 @@ import app_links
             //            CallActivityManager.shared.endAll(immediately: true)
         }
     }
-
+    
     override func application(
         _ application: UIApplication,
         open url: URL,
         options: [UIApplication.OpenURLOptionsKey: Any] = [:]
     ) -> Bool {
-
+        
         if url.scheme == "protonmeet" && url.host == "call" {
             let action = url.pathComponents.last ?? ""
             print("Call activity action: \(action)")
-
+            
             // Send action to Flutter via method channel
             if let rootViewController = self.rootViewController as? FlutterViewController {
                 let channel = FlutterMethodChannel(
                     name: "me.proton.meet/call_activity_action",
                     binaryMessenger: rootViewController.binaryMessenger
                 )
-
+                
                 switch action {
                 case "toggleMute":
                     channel.invokeMethod("toggleMute", arguments: nil)
@@ -159,20 +159,20 @@ import app_links
             }
             return true
         }
-
+        
         // Determine who sent the URL.
         let sendingAppID = options[.sourceApplication]
         print("source application = \(sendingAppID ?? "Unknown")")
-
+        
         // Process the URL.
         guard let components = NSURLComponents(url: url, resolvingAgainstBaseURL: true),
-            let albumPath = components.path,
-            let params = components.queryItems
+              let albumPath = components.path,
+              let params = components.queryItems
         else {
             print("Invalid URL or album path missing")
             return false
         }
-
+        
         if let photoIndex = params.first(where: { $0.name == "index" })?.value {
             print("albumPath = \(albumPath)")
             print("photoIndex = \(photoIndex)")
@@ -182,12 +182,12 @@ import app_links
             return false
         }
     }
-
+    
     override func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
-
+        
         // SentrySDK.start { options in
         //     optionsdsn = "https://f430ab6a50234e50ab7fc57174de1cbc@sentry-new.protontech.ch/69"
         //     options.debug = true  // Enabled debug when first installing is always helpful
@@ -195,33 +195,33 @@ import app_links
         //     options.tracesSampleRate = 1.0
         //     options.enableTracing = true
         // }
-
+        
         // Inject crypto with the default implementation.
         injectDefaultCryptoImplementation()
-
+        
         // FlutterLocalNotificationsPlugin.setPluginRegistrantCallback { (registry) in
         //     GeneratedPluginRegistrant.register(with: registry)
         // }
         if #available(iOS 10.0, *) {
             UNUserNotificationCenter.current().delegate = self as UNUserNotificationCenterDelegate
         }
-
-        Brand.currentBrand = .wallet
-
+        
+        Brand.currentBrand = .meet
+        
         // Clean up any stale Live Activities on app launch
         if #available(iOS 16.2, *) {
             CallActivityManager.shared.cleanupStaleActivities()
         }
-
+        
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
-
+    
     func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
         GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
-
+        
         let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "CallActivityChannel")!
         CallActivityChannel.register(with: registrar)
-
+        
         // Platform info channel for checking TestFlight status
         let platformInfoChannel = FlutterMethodChannel(
             name: "me.proton.meet/platform.info",
@@ -240,7 +240,7 @@ import app_links
                 result(FlutterMethodNotImplemented)
             }
         }
-
+        
         let nativeViewChannel = FlutterMethodChannel(
             name: "me.proton.meet/native.views",
             binaryMessenger: engineBridge.applicationRegistrar.messenger())
@@ -263,18 +263,18 @@ import app_links
                     PMLog.error("Call to native.navigation.plan.upgrade includes unknown arguments")
                     return
                 }
-
+                
                 guard let sessionKey = arguments[0] as? String else {
                     PMLog.error("Call to native.navigation.plan.upgrade is missing session-key")
                     return
                 }
-
+                
                 guard let authInfo = arguments[1] as? [String: Any] else {
                     PMLog.error(
                         "Call to native.navigation.plan.upgrade has malformed auth information")
                     return
                 }
-
+                
                 self.showSubscriptionManagementScreen(
                     sessionKey: sessionKey,
                     authInfo: authInfo)
@@ -297,8 +297,8 @@ import app_links
             case "native.navigation.report":
                 print("native.navigation.report triggered", call.arguments ?? "")
                 if let arguments = call.arguments as? [String: Any],
-                    let username = arguments["username"] as? String,
-                    let email = arguments["email"] as? String
+                   let username = arguments["username"] as? String,
+                   let email = arguments["email"] as? String
                 {
                     self.switchToBugReport(
                         username: username,
@@ -322,11 +322,11 @@ import app_links
                 result(FlutterMethodNotImplemented)
             }
         }
-
+        
         navigationChannel = FlutterMethodChannel(
             name: "me.proton.meet/app.view",
             binaryMessenger: engineBridge.applicationRegistrar.messenger())
-
+        
         //        // disable
         //        GeneratedPluginRegistrant.register(with: self)
         //
@@ -337,7 +337,7 @@ import app_links
         //     name: "pip_channel",
         //     binaryMessenger: controller.binaryMessenger
         // )
-
+        
         // Configure PiP with the Flutter root view
         // PipManager.shared.configureIfNeeded(rootView: controller.view)
         // channel.setMethodCallHandler { call, result in
@@ -355,43 +355,43 @@ import app_links
         //             remoteStreamId: remoteStreamId,
         //             result: result
         //         )
-
+        
         //     case "stopPiP":
         //         PipManager.shared.stopPiP()
         //         result(true)
-
+        
         //     case "disposePiP":
         //         PipManager.shared.disposePiP()
         //         result(true)
-
+        
         //     default:
         //         result(FlutterMethodNotImplemented)
         //     }
         // }
-
+        
     }
     func initAPIService(env: Environment) {
         PMAPIService.noTrustKit = true
-
+        
         let challengeParametersProvider = ChallengeParametersProvider.forAPIService(
-            clientApp: .wallet,
+            clientApp: .meet,
             challenge: PMChallenge())
         let apiService = PMAPIService.createAPIServiceWithoutSession(
             environment: env.toCoreEnv(),
             challengeParametersProvider: challengeParametersProvider)
-
+        
         self.authManager = AuthHelper()
         self.humanVerificationDelegate = HumanCheckHelper(
             apiService: apiService,
             inAppTheme: getInAppTheme,
-            clientApp: .wallet)
+            clientApp: .meet)
         apiService.authDelegate = authManager
         apiService.serviceDelegate = serviceDelegate
         apiService.humanDelegate = humanVerificationDelegate
-
+        
         self.apiService = apiService
     }
-
+    
     private func fetchUnauthFeatureFlags() {
         guard let apiService = self.apiService else {
             PMLog.error("APIService not set.")
@@ -399,7 +399,7 @@ import app_links
         }
         FeatureFlagsRepository.shared.setApiService(apiService)
         FeatureFlagsRepository.shared.setFlagOverride(CoreFeatureFlagType.dynamicPlan, true)
-
+        
         Task {
             do {
                 try await FeatureFlagsRepository.shared.fetchFlags()
@@ -408,17 +408,17 @@ import app_links
             }
         }
     }
-
+    
     func initLoginAndSignup() {
         guard let apiService = self.apiService else {
             PMLog.error("APIService not set.")
             return
         }
-
+        
         let appName = "Proton Meet"
         login = LoginAndSignup(
             appName: appName,
-            clientApp: .wallet,
+            clientApp: .meet,
             apiService: apiService,
             minimumAccountType: .external,
             isCloseButtonAvailable: true,
@@ -426,7 +426,7 @@ import app_links
             signupAvailability: getSignupAvailability
         )
     }
-
+    
     private var getSignupAvailability: SignupAvailability {
         let signupAvailability: SignupAvailability
         let summaryScreenVariant: SummaryScreenVariant = .noSummaryScreen
@@ -437,22 +437,13 @@ import app_links
                 summaryScreenVariant: summaryScreenVariant))
         return signupAvailability
     }
-
+    
     private var getShowWelcomeScreen: WelcomeScreenVariant? {
-        return .wallet(
+        return .meet(
             .init(
                 body:
                     "Create a new account or sign in with your existing Proton account to start using Proton Meet."
             ))
-    }
-
-    private var getAdditionalWork: WorkBeforeFlow? {
-        return WorkBeforeFlow(stepName: "Additional work creation...") {
-            loginData, flowCompletion in
-            DispatchQueue.global(qos: .userInitiated).async {
-                flowCompletion(.success(()))
-            }
-        }
     }
 
     func showAlert(
@@ -472,15 +463,15 @@ import app_links
                 }))
         over.present(alert, animated: true, completion: nil)
     }
-
+    
     func onButtonTap() {
         //  switchToFlutterView()
     }
-
+    
     private func sendDataToFlutter(jsonData: String) {
         navigationChannel?.invokeMethod("flutter.navigation.to.home", arguments: jsonData)
     }
-
+    
     func switchToFlutterView(loginData: LoginData) {
         let jsonObject: [String: Any?] = [
             "sessionId": loginData.credential.sessionID,
@@ -498,62 +489,60 @@ import app_links
             "mailboxpasswordKeySalt": loginData.credential.passwordKeySalt,
             "mailboxpassword": loginData.credential.mailboxpassword,
         ]
-
+        
         let jsonData = try! JSONSerialization.data(
             withJSONObject: jsonObject, options: .prettyPrinted)
         let convertedString = String(data: jsonData, encoding: .utf8)!
-
+        
         sendDataToFlutter(jsonData: convertedString)
     }
-
+    
     func switchToSignIn() {
         guard let rootViewController = self.rootViewController else {
             PMLog.error("rootViewController must be set before calling \(#function)")
             return
         }
-
+        
         print("Showing sign-in view")
         self.initLoginAndSignup()
         login?.presentLoginFlow(
             over: rootViewController,
             customization: LoginCustomizationOptions(
-                performBeforeFlow: getAdditionalWork,
                 inAppTheme: getInAppTheme
             ), updateBlock: processLoginResult)
     }
-
+    
     func switchToSignUp() {
         guard let rootViewController = self.rootViewController else {
             PMLog.error("rootViewController must be set before calling \(#function)")
             return
         }
-
+        
         print("Showing sign-up view")
         self.initLoginAndSignup()
         login?.presentSignupFlow(
             over: rootViewController,
             customization: LoginCustomizationOptions(
-                performBeforeFlow: getAdditionalWork,
                 inAppTheme: getInAppTheme
             ), updateBlock: processLoginResult)
     }
-
+    
     func showSubscriptionManagementScreen(sessionKey: String, authInfo: [String: Any]) {
         guard let userId = authInfo["userId"] as? String else {
             PMLog.error("Cannot show subscription management screen.  Missing userId.")
             return
         }
-
+        
         guard let apiService = self.apiService else {
             PMLog.error("Cannot show subscription management screen before APIService is set.")
             return
         }
-
+        
         guard let accessToken = authInfo["accessToken"] as? String else {
             PMLog.error("Cannot show subscription management screen.  Missing userId.")
             return
         }
-
+        
         guard let refreshToken = authInfo["refreshToken"] as? String else {
             PMLog.error("Cannot show subscription management screen.  Missing userId.")
             return
@@ -585,13 +574,12 @@ import app_links
             storage: UserDefaults(),
             apiService: apiService,
             authManager: authDelegate)
-
         self.paymentsManager?.upgradeSubscription(completion: { [weak self] result in
             guard self != nil else { return }
             // nothing for now
         })
     }
-
+    
     private func processLoginResult(_ result: LoginAndSignupResult) {
         switch result {
         case .loginStateChanged(.loginFinished):
@@ -599,13 +587,13 @@ import app_links
         case .signupStateChanged(.signupFinished):
             print("signupStateChanged(.signupFinished)")
         case .loginStateChanged(.dataIsAvailable(let loginData)),
-            .signupStateChanged(.dataIsAvailable(let loginData)):
+                .signupStateChanged(.dataIsAvailable(let loginData)):
             self.switchToFlutterView(loginData: loginData)
         case .dismissed:
             print("dismissed")
         }
     }
-
+    
     func switchToBugReport(username: String, email: String) {
         guard let rootViewController = self.rootViewController else {
             PMLog.error("rootViewController must be set before calling \(#function)")
@@ -622,16 +610,16 @@ import app_links
         )
         rootViewController.present(viewController, animated: true)
     }
-
+    
     func aMethodThatMightFail() throws {
         _ = try performRiskyOperation()
     }
-
+    
     func performRiskyOperation() throws -> String {
         // Simulate a possible failure
         throw NSError(
             domain: "SimulatedErrorDomain", code: 1,
             userInfo: [NSLocalizedDescriptionKey: "Simulated failure"])
     }
-
+    
 }
