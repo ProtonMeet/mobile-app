@@ -26,25 +26,28 @@ Future<void> testAcrossAllDevices(
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        localeOverrides: const [
-          Locale('en', ''),
-          ...S.supportedLocales,
-        ],
+        localeOverrides: const [Locale('en', ''), ...S.supportedLocales],
         theme: ThemeData(
           fontFamily: FontFamily.inter,
           brightness: Brightness.light,
-          pageTransitionsTheme: const PageTransitionsTheme(builders: {
-            TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
-            TargetPlatform.iOS: FadeUpwardsPageTransitionsBuilder(),
-          }),
+          pageTransitionsTheme: const PageTransitionsTheme(
+            builders: {
+              TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+              TargetPlatform.iOS: FadeUpwardsPageTransitionsBuilder(),
+            },
+          ),
         ),
       ),
       surfaceSize: device.size,
     );
 
-    await screenMatchesGolden(tester, fileName, customPump: (tester) async {
-      await tester.pumpAndSettle(const Duration(seconds: 10));
-    });
+    await screenMatchesGolden(
+      tester,
+      fileName,
+      customPump: (tester) async {
+        await tester.pumpAndSettle(const Duration(seconds: 10));
+      },
+    );
   }
 }
 
@@ -61,6 +64,10 @@ void testSnapshot(
 /// A wrapper around [testGoldens] that sets the tags to ['snapshot'].
 @isTest
 void testGolden(String description, ValueGetter<Widget> test) {
-  goldenTest(description,
-      fileName: "test_file_welcome", builder: test, tags: ['snapshot']);
+  goldenTest(
+    description,
+    fileName: "test_file_welcome",
+    builder: test,
+    tags: ['snapshot'],
+  );
 }

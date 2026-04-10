@@ -247,7 +247,7 @@ class DashboardScreenState extends State<DashboardScreen> {
               context.images.iconPinAngled.svg20(
                 color: context.colors.protonBlue,
               ),
-              const SizedBox(width: 2,),
+              const SizedBox(width: 2),
             ],
           ),
         ),
@@ -391,7 +391,6 @@ class DashboardScreenState extends State<DashboardScreen> {
                 },
                 onSignInTap: widget.onSignInTap,
                 onLogoutTap: widget.onLogoutTap,
-                hideSettings: true,
                 onSettingsTap: widget.onSettingsTap,
               ),
 
@@ -442,10 +441,9 @@ class DashboardScreenState extends State<DashboardScreen> {
                       isLoading: currentState.isDashboardFetchUiBusy,
                       onFetchReloadTap:
                           currentState.offerFetchUserStateRetry &&
-                                  !currentState.hasDashboardMutationInProgress
-                              ? () =>
-                                    widget.bloc.add(FetchUserStateEvent())
-                              : null,
+                              !currentState.hasDashboardMutationInProgress
+                          ? () => widget.bloc.add(FetchUserStateEvent())
+                          : null,
                     ),
                   ),
                 ),

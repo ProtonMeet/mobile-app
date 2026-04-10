@@ -21,7 +21,7 @@ class ExternalUrl {
       "https://account.proton.me/mail/encryption-keys";
   final String dataRecovery =
       "https://proton.me/support/recover-encrypted-messages-files";
-  final String privacy = "https://proton.me/meet/privacy-policy";
+  final String privacy = "https://proton.me/legal/privacy";
   final String meetHomepage =
       appConfig.apiEnv.baseUrl; // "https://meet.proton.me";
 

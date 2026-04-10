@@ -84,7 +84,17 @@ class DropdownButtonV3<T> extends StatelessWidget {
         controller: _textEditingController,
         readOnly: true,
         onTap: () {
-          showOptionsInBottomSheet(context);
+          showOptionsBottomSheet<T>(
+            context,
+            items: items,
+            itemsText: itemsText,
+            selected: selected,
+            onChanged: onChanged,
+            labelText: labelText,
+            itemsLeadingIcons: itemsLeadingIcons,
+            itemsMoreDetail: itemsMoreDetail,
+            itemsTextForDisplay: itemsTextForDisplay,
+          );
         },
         style:
             textStyle ??
@@ -111,10 +121,22 @@ class DropdownButtonV3<T> extends StatelessWidget {
     );
   }
 
-  void showOptionsInBottomSheet(BuildContext context) {
-    showModalBottomSheet(
+  /// Opens the same option sheet as tapping the embedded field (e.g. full-row
+  /// tappable language rows in settings).
+  static void showOptionsBottomSheet<T>(
+    BuildContext context, {
+    required List<T> items,
+    required List<String> itemsText,
+    required T selected,
+    required void Function(T) onChanged,
+    String? labelText,
+    List? itemsLeadingIcons,
+    List? itemsMoreDetail,
+    List? itemsTextForDisplay,
+  }) {
+    showModalBottomSheet<void>(
       context: context,
-      backgroundColor: context.colors.backgroundSecondary,
+      backgroundColor: context.colors.backgroundDark,
       constraints: BoxConstraints(
         minWidth: MediaQuery.of(context).size.width,
         maxHeight: MediaQuery.of(context).size.height * 0.8,
@@ -123,7 +145,7 @@ class DropdownButtonV3<T> extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
       ),
-      builder: (BuildContext context) {
+      builder: (BuildContext sheetContext) {
         return SafeArea(
           child: Container(
             padding: const EdgeInsets.all(defaultPadding),
@@ -131,23 +153,18 @@ class DropdownButtonV3<T> extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  /// Title and close
                   Row(
                     children: [
                       Expanded(child: Center(child: Text(labelText ?? ""))),
                       CloseButtonV1(
-                        backgroundColor: context.colors.backgroundNorm,
+                        backgroundColor: sheetContext.colors.backgroundCard,
                         onPressed: () {
-                          Navigator.of(context).pop();
+                          Navigator.of(sheetContext).pop();
                         },
                       ),
                     ],
                   ),
-
-                  ///
                   const SizedBox(height: 6),
-
-                  /// List of items
                   Expanded(
                     child: SingleChildScrollView(
                       child: Column(
@@ -168,7 +185,7 @@ class DropdownButtonV3<T> extends StatelessWidget {
                                       : null,
                                   leading: itemsMoreDetail != null
                                       ? CustomTooltip(
-                                          message: itemsMoreDetail![index],
+                                          message: itemsMoreDetail[index],
                                           child: Assets.images.icon.icInfoCircle
                                               .svg(
                                                 fit: BoxFit.fill,
@@ -180,14 +197,14 @@ class DropdownButtonV3<T> extends StatelessWidget {
                                   title: itemsLeadingIcons != null
                                       ? Row(
                                           children: [
-                                            itemsLeadingIcons?[index],
+                                            itemsLeadingIcons[index],
                                             const SizedBox(width: 6),
                                             Expanded(
                                               child: Text(
                                                 itemsText[index],
                                                 style:
                                                     ProtonStyles.body2Regular(
-                                                      color: context
+                                                      color: sheetContext
                                                           .colors
                                                           .textNorm,
                                                     ),
@@ -199,12 +216,12 @@ class DropdownButtonV3<T> extends StatelessWidget {
                                       : Text(
                                           itemsText[index],
                                           style: ProtonStyles.body2Regular(
-                                            color: context.colors.textNorm,
+                                            color: sheetContext.colors.textNorm,
                                           ),
                                         ),
                                   onTap: () {
                                     onChanged(items[index]);
-                                    Navigator.of(context).pop();
+                                    Navigator.of(sheetContext).pop();
                                   },
                                 ),
                                 const Divider(thickness: 0.2, height: 1),
