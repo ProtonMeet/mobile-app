@@ -11,6 +11,7 @@ import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/preferences/preferences.manager.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
+import 'package:meet/managers/services/force_upgrade.dart';
 import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/rust/proton_meet/user_config.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_event.dart';
@@ -129,6 +130,12 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     Emitter<PreJoinState> emit,
   ) async {
     final appCoreManager = serviceManager.get<AppCoreManager>();
+    unawaited(
+      appCoreManager.warmupMeetApiConnectionIfNeeded(
+        onForceUpgradeApiResponse: (e) =>
+            enterForceUpgradeFromApiIfNeeded(e.field0),
+      ),
+    );
     final isGuest = appCoreManager.userID == null;
     final userId = appCoreManager.userID;
 

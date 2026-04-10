@@ -1,5 +1,4 @@
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
-import 'package:meet/views/scenes/prejoin/prejoin_state.dart';
 import 'package:meet/views/scenes/signin/auth_bloc.dart';
 
 enum PrejoinRole { host, guest }

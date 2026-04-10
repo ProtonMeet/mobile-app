@@ -264,7 +264,7 @@ class RoomManager {
     final (isMeetNewJoinType, isMeetSwitchJoinType) = await getJoinTypeFlags();
 
     FrbMeetInfo meetInfo;
-    // Join meeting
+    final joinMlsStopwatch = Stopwatch()..start();
     meetInfo = await appCoreManager.appCore.joinMeeting(
       meetLinkName: config.meetLinkName,
       meetLinkPassword: config.meetLinkPassword,
@@ -273,6 +273,11 @@ class RoomManager {
       isMeetSwitchJoinType: isMeetSwitchJoinType,
       reuseToken: reuseToken,
       usePsk: true,
+    );
+    joinMlsStopwatch.stop();
+    l.logger.i(
+      '[RoomManager] joinMeeting (meet-server + MLS + signaling WS) '
+      '${joinMlsStopwatch.elapsedMilliseconds}ms',
     );
 
     // Update access token and websocket url, so we can reuse it for reconnection
@@ -349,20 +354,40 @@ class RoomManager {
     // Create listener
     final listener = room.createListener();
 
-    // Prepare connection
-    await room.prepareConnection(meetInfo.websocketUrl, meetInfo.accessToken);
+    final liveKitJoinStopwatch = Stopwatch()..start();
 
-    // Setup E2EE keys before connecting (after prepareConnection)
+    final phase = Stopwatch()..start();
+    await room.prepareConnection(meetInfo.websocketUrl, meetInfo.accessToken);
+    phase.stop();
+    final prepareMs = phase.elapsedMilliseconds;
+    l.logger.i('[RoomManager] LiveKit prepareConnection ${prepareMs}ms');
+
+    phase.reset();
+    phase.start();
     if (config.enableE2EE && !linux) {
       await setPreConnectE2EEKeys(room);
     }
+    phase.stop();
+    if (config.enableE2EE && !linux) {
+      l.logger.i(
+        '[RoomManager] LiveKit setPreConnectE2EEKeys ${phase.elapsedMilliseconds}ms',
+      );
+    }
 
-    // Create audio track after prepareConnection and pre-connect E2EE keys if callback provided
+    phase.reset();
+    phase.start();
     if (config.onCreateAudioTrack != null) {
       config.audioTrack = await config.onCreateAudioTrack!(room);
     }
+    phase.stop();
+    if (config.onCreateAudioTrack != null) {
+      l.logger.i(
+        '[RoomManager] LiveKit createAudioTrack ${phase.elapsedMilliseconds}ms',
+      );
+    }
 
-    // Connect to room
+    phase.reset();
+    phase.start();
     await connectRoom(
       room,
       meetInfo.websocketUrl,
@@ -370,10 +395,25 @@ class RoomManager {
       audioTrack: config.audioTrack,
       isAudioEnabled: config.isAudioEnabled,
     );
+    phase.stop();
+    final connectMs = phase.elapsedMilliseconds;
+    liveKitJoinStopwatch.stop();
+    l.logger.i('[RoomManager] LiveKit room.connect ${connectMs}ms');
+    l.logger.i(
+      '[RoomManager] LiveKit join total (prepare + E2EE pre + audio + connect) '
+      '${liveKitJoinStopwatch.elapsedMilliseconds}ms',
+    );
 
-    // Set E2EE keys after connecting
+    phase.reset();
+    phase.start();
     if (config.enableE2EE && !linux) {
       await setPostConnectE2EEKeys(room);
+    }
+    phase.stop();
+    if (config.enableE2EE && !linux) {
+      l.logger.i(
+        '[RoomManager] LiveKit setPostConnectE2EEKeys ${phase.elapsedMilliseconds}ms',
+      );
     }
 
     return RoomConnectionResult(
