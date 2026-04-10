@@ -120,13 +120,26 @@ class _PreJoinPageState extends State<PreJoinPage> {
             },
             listener: (context, state) {
               // Sync display name from BLoC state to controller if controller is empty
-              // This ensures placeholder names are shown in the text field
+              // (e.g. saved preference or auth name after init).
               if ((_displayNameController.text.isEmpty ||
                       state.shouldOverrideAuthDisplayName) &&
                   !_displayNameFocusNode.hasFocus &&
                   state.displayName.isNotEmpty) {
                 _displayNameController.text = state.displayName;
               }
+            },
+          ),
+          BlocListener<PreJoinBloc, PreJoinState>(
+            listenWhen: (prev, curr) =>
+                prev.isLoading &&
+                !curr.isLoading &&
+                curr.displayName.trim().isEmpty,
+            listener: (context, state) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  _displayNameFocusNode.requestFocus();
+                }
+              });
             },
           ),
           BlocListener<PreJoinBloc, PreJoinState>(

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
@@ -51,6 +50,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     );
 
     on<UpdateDisplayName>(_onUpdateDisplayName);
+    on<SetDisplayNameFieldError>(_onSetDisplayNameFieldError);
     on<ResetLoadingState>(_onResetLoadingState);
     on<SetSpeakerPhoneEnabled>(
       (event, emit) =>
@@ -72,11 +72,23 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     );
   }
 
+  void _onSetDisplayNameFieldError(
+    SetDisplayNameFieldError event,
+    Emitter<PreJoinState> emit,
+  ) {
+    emit(state.copyWith(displayNameFieldError: event.message));
+  }
+
   Future<void> _onUpdateDisplayName(
     UpdateDisplayName event,
     Emitter<PreJoinState> emit,
   ) async {
-    emit(state.copyWith(displayName: event.displayName));
+    emit(
+      state.copyWith(
+        displayName: event.displayName,
+        resetDisplayNameFieldError: true,
+      ),
+    );
 
     if (state.keepDisplayNameOnDevice) {
       final sp = serviceManager.get<PreferencesManager>();
@@ -119,12 +131,6 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     }
   }
 
-  String _generateAnonymousDisplayName() {
-    final random = Random.secure();
-    final number = random.nextInt(999) + 1; // Generate number between 1-9999
-    return 'Anonymous user$number';
-  }
-
   Future<void> _onInitialized(
     PreJoinInitialized event,
     Emitter<PreJoinState> emit,
@@ -160,10 +166,6 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       shouldOverride =
           true; // We have cached name, should override auth name even if auth name is not empty
     }
-    if (initialDisplayName.isEmpty) {
-      initialDisplayName = _generateAnonymousDisplayName();
-    }
-
     emit(
       state.copyWith(
         isLoading: true,

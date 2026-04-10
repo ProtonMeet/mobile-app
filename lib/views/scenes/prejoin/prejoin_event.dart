@@ -65,6 +65,11 @@ class UpdateDisplayName extends PreJoinEvent {
   UpdateDisplayName(this.displayName);
 }
 
+class SetDisplayNameFieldError extends PreJoinEvent {
+  final String message;
+  SetDisplayNameFieldError(this.message);
+}
+
 class ResetLoadingState extends PreJoinEvent {
   final bool isLoggingIn;
   final bool isLoggingOut;

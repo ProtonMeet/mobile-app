@@ -142,18 +142,25 @@ class PreJoinScreen extends StatelessWidget {
                               if (PlatformInfoChannel.isInForceUpgradeState()) {
                                 return;
                               }
-                              if (displayNameController.text.isEmpty ||
-                                  state.meetingLink == null) {
+                              final sanitizedDisplayName = displayNameController
+                                  .text
+                                  .sanitize(maxLength: maxDisplayNameLength);
+                              if (sanitizedDisplayName == null) {
+                                bloc.add(
+                                  SetDisplayNameFieldError(
+                                    context.local.display_name_required,
+                                  ),
+                                );
+                                displayNameFocusNode.requestFocus();
+                                return;
+                              }
+                              if (state.meetingLink == null) {
                                 LocalToast.showToast(
                                   context,
                                   context.local.please_enter_valid_meeting_link,
                                 );
                                 return;
                               }
-
-                              final sanitizedDisplayName =
-                                  displayNameController.text.sanitize() ??
-                                  'Anonymous user';
 
                               final args = JoinArgs(
                                 meetingLink: state.meetingLink!,
@@ -194,7 +201,6 @@ class PreJoinScreen extends StatelessWidget {
                               );
                             },
                             enable:
-                                state.displayName.isNotEmpty &&
                                 !PlatformInfoChannel.isInForceUpgradeState(),
                             text: context.local.join_meeting_button,
                             width: screenWidth - (padding * 2),
@@ -214,17 +220,18 @@ class PreJoinScreen extends StatelessWidget {
                               if (PlatformInfoChannel.isInForceUpgradeState()) {
                                 return;
                               }
-                              if (displayNameController.text.isEmpty) {
-                                LocalToast.showToast(
-                                  context,
-                                  context.local.please_enter_valid_meeting_link,
+                              final sanitizedDisplayName = displayNameController
+                                  .text
+                                  .sanitize(maxLength: maxDisplayNameLength);
+                              if (sanitizedDisplayName == null) {
+                                bloc.add(
+                                  SetDisplayNameFieldError(
+                                    context.local.display_name_required,
+                                  ),
                                 );
+                                displayNameFocusNode.requestFocus();
                                 return;
                               }
-
-                              final sanitizedDisplayName =
-                                  displayNameController.text.sanitize() ??
-                                  'Anonymous user';
 
                               final args = JoinArgs(
                                 meetingLink: null,
@@ -263,7 +270,6 @@ class PreJoinScreen extends StatelessWidget {
                               );
                             },
                             enable:
-                                state.displayName.isNotEmpty &&
                                 !PlatformInfoChannel.isInForceUpgradeState(),
                             text: context.local.create_meeting_button,
                             width: screenWidth - (padding * 2),
@@ -340,6 +346,7 @@ class PreJoinScreen extends StatelessWidget {
           TextFieldTextV2(
             textController: displayNameController,
             myFocusNode: displayNameFocusNode,
+            errorMessageOverride: state.displayNameFieldError,
             labelText: context.local.display_name,
             hintText: context.local.enter_display_name,
             backgroundColor: context.colors.backgroundCard,
@@ -387,6 +394,7 @@ class PreJoinScreen extends StatelessWidget {
                 hintFontSize: 16.0,
                 textController: displayNameController,
                 myFocusNode: displayNameFocusNode,
+                errorMessageOverride: state.displayNameFieldError,
                 labelText: context.local.display_name,
                 hintText: context.local.enter_display_name,
                 backgroundColor: context.colors.backgroundCard,
