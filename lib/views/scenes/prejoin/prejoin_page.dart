@@ -34,6 +34,17 @@ class _PreJoinPageState extends State<PreJoinPage> {
   late final FocusNode _displayNameFocusNode;
   late final FocusNode _meetingLinkFocusNode;
 
+  /// Route args (e.g. rejoin from room) carry the last in-meeting name; auth may
+  /// be empty for guests. Prefer args over auth so PreJoinInitialized can load
+  /// prefs / fallbacks correctly.
+  String get _displayNameForBlocInit {
+    final fromArgs = (widget.joinArgs?.displayName ?? '').trim();
+    if (fromArgs.isNotEmpty) {
+      return fromArgs;
+    }
+    return widget.authBloc.state.displayName;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -41,7 +52,7 @@ class _PreJoinPageState extends State<PreJoinPage> {
     _roomNameController = TextEditingController();
     _displayNameFocusNode = FocusNode();
     _meetingLinkFocusNode = FocusNode();
-    _displayNameController.text = widget.authBloc.state.displayName;
+    _displayNameController.text = _displayNameForBlocInit;
 
     // Defer heavy initialization until after first frame to make navigation feel instant
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -49,10 +60,7 @@ class _PreJoinPageState extends State<PreJoinPage> {
         // Dispatch initialization event after page is shown
         if (widget.joinArgs != null) {
           widget.bloc.add(
-            PreJoinInitialized(
-              widget.joinArgs!,
-              widget.authBloc.state.displayName,
-            ),
+            PreJoinInitialized(widget.joinArgs!, _displayNameForBlocInit),
           );
         }
 

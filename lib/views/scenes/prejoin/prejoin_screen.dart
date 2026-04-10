@@ -165,6 +165,9 @@ class PreJoinScreen extends StatelessWidget {
                                 isSpeakerPhoneEnabled:
                                     state.isSpeakerPhoneEnabled,
                               );
+                              // Persist when "remember" is on; joining did not always
+                              // dispatch UpdateDisplayName (typed name only in controller).
+                              bloc.add(UpdateDisplayName(sanitizedDisplayName));
                               await Navigator.push<void>(
                                 context,
                                 MaterialPageRoute(
@@ -233,6 +236,7 @@ class PreJoinScreen extends StatelessWidget {
                                 isSpeakerPhoneEnabled:
                                     state.isSpeakerPhoneEnabled,
                               );
+                              bloc.add(UpdateDisplayName(sanitizedDisplayName));
                               await Navigator.push<void>(
                                 context,
                                 MaterialPageRoute(
