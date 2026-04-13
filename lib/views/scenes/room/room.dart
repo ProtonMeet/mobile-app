@@ -62,6 +62,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'camera_layout.dart';
 import 'controls_bar/controls_action.dart';
+import 'envelope_sender.dart';
 import 'info/meeting_info_panel.dart';
 import 'message_topic.dart';
 import 'pip_view.dart';
@@ -610,18 +611,50 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     return test;
   }
 
-  Future<String?> decryptMessage(
-    String encryptedText, {
-    String? identity,
-    String? name,
-  }) async {
+  Future<({String plaintext, String mlsSenderId})?> decryptMessage(
+    String encryptedText,
+  ) async {
     final bytes = Uint8List.fromList(
       encryptedText.codeUnits.map((c) => c & 0xFF).toList(),
     );
+    try {
+      final (decryptedMessage, senderId) = await appCoreManager.appCore
+          .decryptMessage(data: bytes);
+      return (plaintext: decryptedMessage, mlsSenderId: senderId);
+    } catch (e) {
+      l.logger.e('Error decrypting message: $e');
+      return null;
+    }
+  }
 
-    final (decryptedMessage, senderId) = await appCoreManager.appCore
-        .decryptMessage(data: bytes);
-    return decryptedMessage;
+  Participant? _participantWithIdentity(String identity) {
+    final room = _bloc.state.room;
+    final local = room.localParticipant;
+    if (local != null && local.identity == identity) {
+      return local;
+    }
+    for (final p in room.remoteParticipants.values) {
+      if (p.identity == identity) {
+        return p;
+      }
+    }
+    return null;
+  }
+
+  String _displayNameForTrustedSender(
+    String trustedId,
+    DataReceivedEvent event,
+    String fallbackName,
+  ) {
+    final p = _participantWithIdentity(trustedId);
+    if (p != null) {
+      return _bloc.getParticipantDisplayName(p);
+    }
+    if (event.participant != null &&
+        event.participant!.identity == trustedId) {
+      return _bloc.getParticipantDisplayName(event.participant!);
+    }
+    return fallbackName;
   }
 
   void _setActiveReaction({
@@ -857,23 +890,32 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   Future<void> _handleE2EEMessage(DataReceivedEvent event) async {
     try {
       final name = event.participant?.name ?? context.local.unknown;
-      final identity = event.participant?.identity ?? context.local.unknown;
+      final liveKitIdentity = event.participant?.identity;
       final encryptedMessage = utf8.decode(event.data);
-      final message = await decryptMessage(
-        encryptedMessage,
-        identity: identity,
-        name: name,
-      );
-      if (message == null) {
-        l.logger.e("Cannot decrypt message");
+      final result = await decryptMessage(encryptedMessage);
+      if (result == null) {
+        l.logger.e('Cannot decrypt message');
         return;
       }
-      addMessage(message, identity, name);
+      if (liveKitIdentity != null &&
+          liveKitIdentity != result.mlsSenderId) {
+        l.logger.w(
+          '[RoomPage] Legacy E2EE: MLS sender ${result.mlsSenderId} != '
+          'LiveKit identity $liveKitIdentity',
+        );
+      }
+      final trustedId = result.mlsSenderId;
+      final displayName = _displayNameForTrustedSender(
+        trustedId,
+        event,
+        name,
+      );
+      addMessage(result.plaintext, trustedId, displayName);
       if (context.mounted && mounted && !_showChatBubble) {
         LocalToast.showToastification(
           context,
-          name,
-          message,
+          displayName,
+          result.plaintext,
           onTap: (_) {
             setState(() {
               _showChatBubble = true;
@@ -896,33 +938,77 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       return;
     }
 
-    final messageJson = jsonDecode(data);
+    final decoded = jsonDecode(data);
+    if (decoded is! Map) {
+      l.logger.w('Invalid message: expected JSON object');
+      return;
+    }
+    final messageJson = Map<String, dynamic>.from(decoded);
     final dataType = PublishableDataType.fromString(
       messageJson['type']?.toString(),
     );
+
     final message = messageJson['message'];
     final name = event.participant?.name ?? context.local.unknown;
-    final identity = event.participant?.identity ?? context.local.unknown;
-    final displayName = event.participant != null
+    final fallbackDisplayName = event.participant != null
         ? _bloc.getParticipantDisplayName(event.participant!)
         : name;
+
+    const mlsPayloadTypes = <PublishableDataType>{
+      PublishableDataType.message,
+      PublishableDataType.emojiReaction,
+      PublishableDataType.raiseHand,
+      PublishableDataType.chatMessageReaction,
+    };
+
+    final encryptedText = message is String ? message : null;
     String? decryptedMessage;
-    try {
-      decryptedMessage = await decryptMessage(message);
-    } catch (e) {
-      l.logger.e('Error decrypting message: $e');
+    String? trustedSenderId;
+
+    final isMlsPayload =
+        dataType != null && mlsPayloadTypes.contains(dataType);
+    if (isMlsPayload) {
+      if (encryptedText != null) {
+        final result = await decryptMessage(encryptedText);
+        if (result != null) {
+          final claimed = claimedParticipantIdFromEnvelope(messageJson);
+          if (claimed == null) {
+            l.logger.w(
+              '[RoomPage] MLS envelope missing or invalid claimed sender id',
+            );
+          } else if (claimed != result.mlsSenderId) {
+            l.logger.e(
+              '[RoomPage] MLS envelope sender mismatch: claimed=$claimed '
+              'mlsSenderId=${result.mlsSenderId}',
+            );
+          } else {
+            decryptedMessage = result.plaintext;
+            trustedSenderId = result.mlsSenderId;
+          }
+        }
+      } else {
+        l.logger.w(
+          '[RoomPage] Expected encrypted string in message for $dataType',
+        );
+      }
     }
+
     switch (dataType) {
-      case PublishableDataType.recordingStatus:
-        await _handleRecordingStatus(event);
-        return;
       case PublishableDataType.message:
-        addMessage(decryptedMessage ?? message, identity, displayName);
+        if (decryptedMessage == null || trustedSenderId == null) {
+          return;
+        }
+        final displayName = _displayNameForTrustedSender(
+          trustedSenderId,
+          event,
+          fallbackDisplayName,
+        );
+        addMessage(decryptedMessage, trustedSenderId, displayName);
         if (mounted && context.mounted && !_showChatBubble) {
           LocalToast.showToastification(
             context,
             displayName,
-            decryptedMessage ?? message,
+            decryptedMessage,
             onTap: (_) {
               setState(() {
                 _showChatBubble = true;
@@ -934,29 +1020,55 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         return;
       case PublishableDataType.emojiReaction:
         try {
-          if (decryptedMessage != null) {
-            await _handleEmojiReaction(decryptedMessage, identity, displayName);
+          if (decryptedMessage != null && trustedSenderId != null) {
+            final displayName = _displayNameForTrustedSender(
+              trustedSenderId,
+              event,
+              fallbackDisplayName,
+            );
+            await _handleEmojiReaction(
+              decryptedMessage,
+              trustedSenderId,
+              displayName,
+            );
           }
         } catch (_) {}
         return;
       case PublishableDataType.raiseHand:
         try {
-          if (decryptedMessage != null) {
-            await _handleRaiseHand(decryptedMessage, identity, displayName);
+          if (decryptedMessage != null && trustedSenderId != null) {
+            final displayName = _displayNameForTrustedSender(
+              trustedSenderId,
+              event,
+              fallbackDisplayName,
+            );
+            await _handleRaiseHand(
+              decryptedMessage,
+              trustedSenderId,
+              displayName,
+            );
           }
         } catch (_) {}
         return;
       case PublishableDataType.chatMessageReaction:
         try {
-          if (decryptedMessage != null) {
+          if (decryptedMessage != null && trustedSenderId != null) {
+            final displayName = _displayNameForTrustedSender(
+              trustedSenderId,
+              event,
+              fallbackDisplayName,
+            );
             await _handleChatMessageReaction(
               decryptedMessage,
-              identity,
+              trustedSenderId,
               displayName,
             );
           }
         } catch (_) {}
 
+        return;
+      case PublishableDataType.recordingStatus:
+        await _handleRecordingStatus(event);
         return;
       case null:
         l.logger.w(
