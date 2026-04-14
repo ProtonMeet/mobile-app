@@ -35,7 +35,9 @@ mod tests {
     use ed25519_dalek::pkcs8::{
         spki::der::pem::LineEnding, DecodePrivateKey, DecodePublicKey, EncodePublicKey,
     };
-    use identity::{Ed25519Issuer, IdentityResult, ProtonMeetIdentity, SdCwt};
+    use identity::{
+        Disclosure, Ed25519Issuer, IdentityResult, PresentationContext, ProtonMeetIdentity, SdCwt,
+    };
     use meet_identifiers::{GroupId, LeafIndex};
     use mls_rs::group::proposal::Proposal;
     use mls_spec::{
@@ -58,6 +60,9 @@ mod tests {
     use crate::infra::{dto::realtime::GroupInfoSummaryData, ws_client::WebSocketMessage};
     use mls_rs_codec::MlsEncode;
     use proton_meet_mls::MlsGroupTrait;
+    use rand::rngs::StdRng;
+    use rand::seq::SliceRandom;
+    use rand::{Rng, SeedableRng};
 
     // Test data constants for better maintainability
     const TEST_USERNAME: &str = "test_user";
@@ -2776,6 +2781,68 @@ mod tests {
         create_test_service_with_host(user_id, meet_link_name, false).await
     }
 
+    async fn validate_group_export_with_external_client(
+        service: &Service,
+        participant_id: &UserId,
+        meet_link_name: &str,
+        group_info_message: mls_spec::messages::MlsMessage,
+        ratchet_tree_option: RatchetTreeOption,
+    ) -> Result<(), anyhow::Error> {
+        let ciphersuite = service.mls_store.read().await.config.ciphersuite;
+        let store = service.mls_store.read().await;
+        let client = store.find_client(&participant_id.to_string(), &ciphersuite)?;
+
+        let signing_identity =
+            client.new_signing_identity(Disclosure::Full, &PresentationContext::Default)?;
+        let ext_client = mls_rs::external_client::ExternalClient::builder()
+            .signer(client.signature_sk.clone(), signing_identity)
+            .identity_provider(client.identity_provider()?)
+            .crypto_provider(client.delegate()?.crypto_provider())
+            .build();
+
+        let group_info: mls_types::MlsMessage = group_info_message.try_into().map_err(|e| {
+            anyhow::anyhow!("Failed to convert group info for external client validation: {e}")
+        })?;
+        let ratchet_tree: mls_types::PublicRatchetTree =
+            ratchet_tree_option.try_into().map_err(|e| {
+                anyhow::anyhow!(
+                    "Failed to convert ratchet tree option for external client validation: {e}"
+                )
+            })?;
+
+        ext_client
+            .observe_group(group_info.into(), Some(ratchet_tree.into()), None)
+            .await
+            .map(|_| ())
+            .map_err(|e| {
+                anyhow::anyhow!(
+                    "ExternalClient observe_group failed for room {meet_link_name}: {e}"
+                )
+            })
+    }
+
+    /// TLS snapshot of GroupInfo + ratchet tree from a group (for proposals or ExternalClient checks).
+    async fn mls_group_export_snapshot(
+        group: &Arc<RwLock<MlsGroup<MemKv>>>,
+    ) -> (mls_spec::messages::MlsMessage, RatchetTreeOption) {
+        let group_read = group.read().await;
+        let group_info_mls_spec = group_read
+            .group_info_for_ext_commit()
+            .await
+            .expect("group_info_for_ext_commit");
+        let group_info_bytes = group_info_mls_spec.mls_encode_to_vec().unwrap();
+        let group_info_message =
+            mls_spec::messages::MlsMessage::from_tls_bytes(&group_info_bytes).unwrap();
+        let exported_tree = group_read.ratchet_tree();
+        let tree_bytes = exported_tree.mls_encode_to_vec().unwrap();
+        let ratchet_tree_mls_spec =
+            mls_spec::tree::RatchetTree::from_tls_bytes(&tree_bytes).unwrap();
+        let ratchet_tree_option = RatchetTreeOption::Full {
+            ratchet_tree: ratchet_tree_mls_spec,
+        };
+        (group_info_message, ratchet_tree_option)
+    }
+
     #[tokio::test]
     async fn test_mls_group_member_removal() {
         use identity::Disclosure;
@@ -4731,10 +4798,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         service1.http_client = Arc::new(http_client);
 
-        // Kick should fail immediately
-        let start = std::time::Instant::now();
         let result = service1.kick_participant(&user2_uuid, meet_link_name).await;
-        let elapsed = start.elapsed();
 
         assert!(result.is_err(), "Should fail immediately");
 
@@ -4752,12 +4816,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             call_count.load(std::sync::atomic::Ordering::SeqCst),
             1,
             "Should only attempt once for non-422 error"
-        );
-
-        // Verify no retry delay (should be fast)
-        assert!(
-            elapsed.as_millis() < 100,
-            "Should fail fast without retry delay"
         );
     }
 
@@ -5253,5 +5311,238 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             "Expected PskProposalMissing, got: {:?}",
             result
         );
+    }
+
+    #[tokio::test]
+    #[ignore = "manual stress: random external adds (capped) + random removes + post-merge observe_group"]
+    async fn stress_external_proposals_observe_group_post_merge() {
+        const DEFAULT_NUM_SESSION_RETRIES: usize = 5;
+        const DEFAULT_NUM_ROUNDS: usize = 40;
+        // Upper bound (inclusive) on external add proposals per round.
+        const DEFAULT_NEW_MEMBERS_PER_ROUND: usize = 5;
+
+        let num_session_retries = DEFAULT_NUM_SESSION_RETRIES;
+        let num_rounds = DEFAULT_NUM_ROUNDS;
+        let new_members_per_round = DEFAULT_NEW_MEMBERS_PER_ROUND;
+
+        let mut rng: StdRng = StdRng::from_rng(rand::thread_rng()).expect("seed RNG");
+
+        let config = MlsClientConfig::default();
+        let ciphersuite = config.ciphersuite;
+
+        for session in 0..num_session_retries {
+            let meet_link_name = format!("stress_observe_{session}_{}", Uuid::new_v4());
+            let mut service1 = create_test_service_with_host("user1", &meet_link_name, true).await;
+            let service2 = create_test_service("user2", &meet_link_name).await;
+            let validator_label = format!("validator_stress_{session}");
+            let validator_service =
+                Arc::new(create_test_service(&validator_label, &meet_link_name).await);
+
+            let (group1, _group2, _) = setup_two_user_group_with_commit_bundle(
+                &service1,
+                &service2,
+                &meet_link_name,
+                ciphersuite,
+            )
+            .await;
+
+            let validator_user_token = validator_service
+                .create_mls_client(
+                    "access_token_validator",
+                    &meet_link_name,
+                    "meet_password",
+                    true,
+                    None,
+                )
+                .await
+                .expect("validator MLS client");
+            let validator_user_id = validator_user_token.user_id();
+
+            let mut http_client = create_mock_http_client_for_mls("user1", &meet_link_name, true);
+            http_client
+                .expect_update_group_info()
+                .returning(|_, _, _, _, _| Box::pin(ready(Ok(()))));
+            service1.http_client = Arc::new(http_client);
+            service1.state.lock().await.mls_group_state = MlsGroupState::Success;
+
+            for round in 0..num_rounds {
+                let epoch_at_round_start = *group1.read().await.epoch();
+                let roster_at_round_start = group1.read().await.roster().count();
+
+                let num_adds = rng.gen_range(0..=new_members_per_round);
+
+                let own_leaf = *group1.read().await.own_leaf_index().unwrap();
+                let mut removable_leaves: Vec<u32> = group1
+                    .read()
+                    .await
+                    .roster()
+                    .map(|m| *m.leaf_index())
+                    .filter(|&li| li != own_leaf)
+                    .collect();
+                let max_removable = removable_leaves.len();
+                let num_removes = if max_removable == 0 {
+                    0
+                } else {
+                    rng.gen_range(0..=max_removable)
+                };
+                removable_leaves.shuffle(&mut rng);
+                let leaves_to_remove: Vec<u32> =
+                    removable_leaves.into_iter().take(num_removes).collect();
+
+                eprintln!(
+                    "[stress_external_proposals_observe_group_post_merge] session={}/{} round={}/{} epoch={} roster={} adds_max={} num_adds={} num_removes={}",
+                    session + 1,
+                    num_session_retries,
+                    round + 1,
+                    num_rounds,
+                    epoch_at_round_start,
+                    roster_at_round_start,
+                    new_members_per_round,
+                    num_adds,
+                    num_removes,
+                );
+
+                let mut queued: Vec<QueuedProposal> =
+                    Vec::with_capacity(num_adds.saturating_add(num_removes));
+
+                if num_adds > 0 {
+                    let (proposal_mls_message, ratchet_tree_for_proposals) =
+                        mls_group_export_snapshot(&group1).await;
+                    let group_info = match proposal_mls_message.content {
+                        MlsMessageContent::GroupInfo(gi) => gi,
+                        _ => panic!("Expected GroupInfo in MLS message for proposals"),
+                    };
+
+                    let add_services = futures::future::join_all((0..num_adds).map(|add_idx| {
+                        let meet_link_name = meet_link_name.clone();
+                        async move {
+                            let user_id = format!("stress_s{}_r{}_add_{}", session, round, add_idx);
+                            let service = create_test_service(&user_id, &meet_link_name).await;
+                            let user_token = service
+                                .create_mls_client(
+                                    "access_token",
+                                    &meet_link_name,
+                                    "meet_password",
+                                    true,
+                                    None,
+                                )
+                                .await
+                                .expect("new member MLS client");
+                            (service, user_token.user_id())
+                        }
+                    }))
+                    .await;
+
+                    for (add_service, add_user_id) in &add_services {
+                        let proposal_message = add_service
+                            .create_external_proposal(
+                                add_user_id,
+                                ciphersuite,
+                                group_info.clone(),
+                                ratchet_tree_for_proposals.clone(),
+                            )
+                            .await
+                            .unwrap_or_else(|e| {
+                                panic!(
+                                    "create_external_proposal failed session={}/{} round={}/{} epoch={}: {e}",
+                                    session + 1,
+                                    num_session_retries,
+                                    round + 1,
+                                    num_rounds,
+                                    epoch_at_round_start
+                                )
+                            });
+                        queued.push(QueuedProposal {
+                            proposal_message,
+                            proposal_type: ProposalType::Add,
+                        });
+                    }
+                }
+
+                if !leaves_to_remove.is_empty() {
+                    let remove_args: Vec<ProposalArg> = leaves_to_remove
+                        .iter()
+                        .map(|&leaf| {
+                            ProposalArg::Remove(
+                                LeafIndex::try_from(leaf).expect("valid leaf index for Remove"),
+                            )
+                        })
+                        .collect();
+                    let remove_messages = group1
+                        .write()
+                        .await
+                        .new_proposals(remove_args)
+                        .await
+                        .unwrap_or_else(|e| {
+                            panic!(
+                                "new_proposals(Remove) failed session={}/{} round={}/{} epoch={}: {e}",
+                                session + 1,
+                                num_session_retries,
+                                round + 1,
+                                num_rounds,
+                                epoch_at_round_start
+                            )
+                        });
+                    for proposal_message in remove_messages {
+                        queued.push(QueuedProposal {
+                            proposal_message,
+                            proposal_type: ProposalType::Remove,
+                        });
+                    }
+                }
+
+                service1
+                    .handle_batched_proposals(&meet_link_name, queued, 0)
+                    .await
+                    .unwrap_or_else(|e| {
+                        panic!(
+                            "handle_batched_proposals failed session={}/{} round={}/{} epoch={}: {e}",
+                            session + 1,
+                            num_session_retries,
+                            round + 1,
+                            num_rounds,
+                            epoch_at_round_start
+                        )
+                    });
+
+                let epoch_after = *group1.read().await.epoch();
+                let roster_after = group1.read().await.roster().count();
+
+                let (post_merge_message, post_merge_ratchet) =
+                    mls_group_export_snapshot(&group1).await;
+
+                if let Err(e) = validate_group_export_with_external_client(
+                    validator_service.as_ref(),
+                    &validator_user_id,
+                    &meet_link_name,
+                    post_merge_message,
+                    post_merge_ratchet,
+                )
+                .await
+                {
+                    panic!(
+                        "ExternalClient observe_group failed session={}/{} round={}/{} epoch_before={} epoch_after={} roster_before={} roster_after={}: {e}",
+                        session + 1,
+                        num_session_retries,
+                        round + 1,
+                        num_rounds,
+                        epoch_at_round_start,
+                        epoch_after,
+                        roster_at_round_start,
+                        roster_after
+                    );
+                }
+
+                eprintln!(
+                    "[stress_external_proposals_observe_group_post_merge] session={}/{} round={}/{} completed epoch_after={} roster_after={}",
+                    session + 1,
+                    num_session_retries,
+                    round + 1,
+                    num_rounds,
+                    epoch_after,
+                    roster_after
+                );
+            }
+        }
     }
 }

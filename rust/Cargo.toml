@@ -65,8 +65,8 @@ mockall = { version = "0.14.0" }
 livekit = { version = "0.7.11" }
 
 [workspace.dependencies.meet-type]
-git = "git+ssh://git@gitlab.protontech.ch/meet/meet-type.git"
-branch = "master"
+git = "https://github.com/ProtonMeet/meet-type.git"
+branch = "main"
 
 [workspace.dependencies.esdicawt]
 git = "https://github.com/beltram/esdicawt.git"
@@ -80,15 +80,15 @@ package = "cose-key-thumbprint"
 
 # Proton Claims
 [workspace.dependencies.proton-claims]
-git = "git+ssh://git@gitlab.protontech.ch/meet/meet-common.git"
+git = "https://github.com/ProtonMeet/meet-common.git"
 branch = "main"
 
 [workspace.dependencies.meet-mls]
-git = "git+ssh://git@gitlab.protontech.ch/meet/meet-common.git"
+git = "https://github.com/ProtonMeet/meet-common.git"
 branch = "main"
 
 [workspace.dependencies.meet-identifiers]
-git = "git+ssh://git@gitlab.protontech.ch/meet/meet-common.git"
+git = "https://github.com/ProtonMeet/meet-common.git"
 branch = "main"
 
 # --- mls-rs (Wickr) ---
@@ -108,6 +108,7 @@ features = [
     "std",
     "tree_index",
     "custom_proposal",
+    "external_client",
 ]
 
 [workspace.dependencies.mls-rs-core]
