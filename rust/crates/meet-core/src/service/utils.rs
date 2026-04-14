@@ -142,6 +142,32 @@ pub fn restore_to_queue<T>(
     }
 }
 
+/// Restores items to the queue synchronously in the current task.
+/// Items are appended to existing queue entries, not replaced.
+pub async fn restore_to_queue_sync<T>(
+    queue: Arc<Mutex<HashMap<String, Vec<T>>>>,
+    room_id: String,
+    items: Vec<T>,
+    error_context: &str,
+) where
+    T: Send,
+{
+    if !items.is_empty() {
+        let items_count = items.len();
+        let mut queue_lock = queue.lock().await;
+        tracing::warn!(
+            "{}: restoring {} items to queue for room {}",
+            error_context,
+            items_count,
+            room_id
+        );
+        queue_lock
+            .entry(room_id)
+            .or_insert_with(Vec::new)
+            .extend(items);
+    }
+}
+
 #[cfg(not(target_family = "wasm"))]
 #[cfg(test)]
 #[path = "utils_test.rs"]

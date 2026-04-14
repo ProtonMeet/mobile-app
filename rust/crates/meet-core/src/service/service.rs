@@ -172,6 +172,8 @@ pub struct Service {
     state: Arc<Mutex<ServiceState>>,
     message_cache: Arc<Mutex<MlsMessageCache>>,
     proposal_queue: Arc<Mutex<HashMap<String, Vec<QueuedProposal>>>>,
+    // Serializes proposal/commit queue consumption per room to avoid cross-task drains.
+    room_processing_locks: Arc<Mutex<HashMap<String, Arc<Mutex<()>>>>>,
     proposal_timer: Arc<Mutex<HashMap<String, u64>>>, // room_id -> epoch_at
     // MLS message service for processing commits and proposals
     mls_service: Arc<crate::domain::mls::mls_message_service::MlsMessageService>,
@@ -276,6 +278,7 @@ impl Service {
             state,
             message_cache,
             proposal_queue: Arc::new(Mutex::new(HashMap::new())),
+            room_processing_locks: Arc::new(Mutex::new(HashMap::new())),
             proposal_timer: Arc::new(Mutex::new(HashMap::new())),
             mls_service,
             handling_offline_members: Arc::new(Mutex::new(false)),
@@ -285,6 +288,14 @@ impl Service {
 }
 
 impl Service {
+    async fn room_processing_lock(&self, room_id: &str) -> Arc<Mutex<()>> {
+        let mut room_locks = self.room_processing_locks.lock().await;
+        room_locks
+            .entry(room_id.to_string())
+            .or_insert_with(|| Arc::new(Mutex::new(())))
+            .clone()
+    }
+
     /// Generates a unique group id by appending a UUID suffix.
     /// This is used to avoid conflicts when creating MLS groups with the same base name.
     fn generate_unique_group_id(base_name: &str) -> String {
@@ -315,29 +326,24 @@ impl Service {
         queued_proposals: Vec<QueuedProposal>,
         mls_rank_group: u64,
     ) -> Result<(), anyhow::Error> {
-        // lock whole handle_batched_proposals
-        let proposal_lock = self.proposal_queue.lock().await;
         if queued_proposals.is_empty() {
             return Ok(());
         }
+
+        let mls_group_lock = {
+            let store_lock = self.mls_store.read().await;
+            store_lock
+                .group_map
+                .get(room_id)
+                .ok_or_else(|| anyhow::anyhow!("Failed to find mls group for room {room_id}"))?
+                .clone()
+        };
+        let mut mls_group = mls_group_lock.write().await;
 
         // separate add and remove proposals
         let mut add_proposals = Vec::new();
         let mut remove_proposals = Vec::new();
         let mut app_data_update_proposals = Vec::new();
-
-        let mls_group = {
-            let mls_group_lock = {
-                let store_lock = self.mls_store.read().await;
-                store_lock
-                    .group_map
-                    .get(room_id)
-                    .ok_or_else(|| anyhow::anyhow!("Failed to find mls group for room {room_id}"))?
-                    .clone()
-            };
-            let mls_group = mls_group_lock.read().await;
-            mls_group.clone()
-        };
 
         // prepare indices for remove proposal validation
         let own_leaf_index = *mls_group.own_leaf_index()?;
@@ -347,11 +353,32 @@ impl Service {
             .collect();
 
         for queued_proposal in &queued_proposals {
-            let result = self
-                .handle_proposal(room_id, queued_proposal.proposal_message.clone())
+            let result = mls_group
+                .decrypt_message(queued_proposal.proposal_message.clone())
                 .await;
 
-            if result.is_ok() {
+            let is_ok = match &result {
+                Ok((ReceivedMessage::Proposal, _)) => true,
+                Ok((ReceivedMessage::Duplicate, _)) => {
+                    #[cfg(debug_assertions)]
+                    tracing::warn!("Received duplicate proposal in batched processing");
+                    false
+                }
+                Ok((msg, _)) => {
+                    #[cfg(debug_assertions)]
+                    tracing::error!(
+                        "Unexpected message type in batched proposal processing: {:?}",
+                        msg
+                    );
+                    false
+                }
+                Err(e) => {
+                    tracing::warn!("Failed to decrypt proposal in batched processing: {:?}", e);
+                    false
+                }
+            };
+
+            if is_ok {
                 match queued_proposal.proposal_type {
                     ProposalType::AppDataUpdate => app_data_update_proposals.push(queued_proposal),
                     ProposalType::Add => add_proposals.push(queued_proposal),
@@ -393,21 +420,6 @@ impl Service {
             }
         }
 
-        // get the mls group again to ensure the mls group is up to date
-        // since we had handle proposal in the loop, the mls group might be updated
-        let mut mls_group = {
-            let mls_group_lock = {
-                let store_lock = self.mls_store.read().await;
-                store_lock
-                    .group_map
-                    .get(room_id)
-                    .ok_or_else(|| anyhow::anyhow!("Failed to find mls group for room {room_id}"))?
-                    .clone()
-            };
-            let mls_group = mls_group_lock.read().await;
-            mls_group.clone()
-        };
-
         // combine all proposals
         let all_proposals: Vec<_> = add_proposals
             .into_iter()
@@ -423,7 +435,6 @@ impl Service {
             mls_group.roster().count()
         );
 
-        // prepare all proposals for the commit (cached proposals are already added to the group via new_proposals)
         let mut proposal_infos = vec![];
         for queued_proposal in &all_proposals {
             match convert_mls_types_to_spec(&queued_proposal.proposal_message) {
@@ -580,7 +591,10 @@ impl Service {
             }
             Err(e) => {
                 tracing::info!("Update group info failed: {:?}", e);
-                // return error because we cannot update group info correctly
+                // Clean up the stored group's state so MemKv stays consistent
+                mls_group.clear_pending_commit();
+                mls_group.clear_pending_proposals();
+                mls_group.write_to_storage().await?;
                 return Err(e.into());
             }
         }
@@ -596,15 +610,7 @@ impl Service {
 
         let new_epoch_u32 = new_epoch as u32;
 
-        // save the mls group
-        self.mls_store
-            .write()
-            .await
-            .group_map
-            .entry(room_id.to_string())
-            .and_modify(|group| {
-                *group = Arc::new(RwLock::new(mls_group));
-            });
+        drop(mls_group);
 
         // Check if epoch advanced and update host role if needed
         if new_epoch > old_epoch {
@@ -627,7 +633,6 @@ impl Service {
             let mut handler = handler.lock().await;
             handler(room_id.to_string()).await;
         }
-        drop(proposal_lock);
         Ok(())
     }
 
@@ -722,6 +727,9 @@ impl Service {
                 }
             }
 
+            let room_processing_lock = service_clone.room_processing_lock(&room_id_clone).await;
+            let _room_processing_guard = room_processing_lock.lock().await;
+
             // Swap queue: take proposals out first to minimize lock time
             let queued_proposals = {
                 let mut queue_lock = service_clone.proposal_queue.lock().await;
@@ -738,12 +746,13 @@ impl Service {
                     let filtered_queued_proposals =
                         service_clone.filter_queued_proposals(current_epoch, queued_proposals);
                     if !filtered_queued_proposals.is_empty() {
-                        crate::service::utils::restore_to_queue(
+                        crate::service::utils::restore_to_queue_sync(
                             service_clone.proposal_queue.clone(),
                             room_id_clone.clone(),
                             filtered_queued_proposals,
                             "Batched proposal timer failed",
-                        );
+                        )
+                        .await;
                     }
                 }
             }
@@ -766,10 +775,21 @@ impl Service {
             .collect()
     }
 
-    /// Returns the deterministic rank of `own_leaf_index` in the roster.
-    /// The roster is sorted and shuffled using `epoch_at` as seed.
-    /// Returns the position of `own_leaf_index` in the shuffled list.
-    /// The deterministic rank is used purely for commit scheduling and does not participate in any cryptographic operation or entropy generation.
+    async fn restore_proposal_queue_on_failure(
+        &self,
+        room_id: &str,
+        queued_proposals: &mut Vec<QueuedProposal>,
+        error_context: &str,
+    ) {
+        crate::service::utils::restore_to_queue_sync(
+            self.proposal_queue.clone(),
+            room_id.to_string(),
+            std::mem::take(queued_proposals),
+            error_context,
+        )
+        .await;
+    }
+
     /// Returns the deterministic rank of `own_leaf_index` in the roster.
     /// The roster is sorted and shuffled using `epoch_at` as seed.
     /// Returns the position of `own_leaf_index` in the shuffled list.
@@ -1841,6 +1861,7 @@ impl UserService for Service {
                 Err(e) => {
                     mls_group.clear_pending_commit();
                     mls_group.clear_pending_proposals();
+                    mls_group.write_to_storage().await?;
 
                     drop(mls_group);
 
@@ -3698,10 +3719,13 @@ impl Service {
             }
         }
 
-        // lock whole process_commit_message
-        let mut proposal_lock = self.proposal_queue.lock().await;
-        let mut queued_proposals: Vec<QueuedProposal> =
-            proposal_lock.remove(room_id).unwrap_or_else(Vec::new);
+        let room_processing_lock = self.room_processing_lock(room_id).await;
+        let _room_processing_guard = room_processing_lock.lock().await;
+
+        let mut queued_proposals: Vec<QueuedProposal> = {
+            let mut proposal_lock = self.proposal_queue.lock().await;
+            proposal_lock.remove(room_id).unwrap_or_default()
+        };
 
         // Process proposals outside the lock
         // handle the proposals in the queue before we process the commit message
@@ -3744,22 +3768,20 @@ impl Service {
             .ok_or_else(|| anyhow::anyhow!("Failed to find mls group for room {room_id}"))?
             .write()
             .await;
-
         let use_psk = {
             let guard = self.use_psk.lock().await;
             *guard
         };
         if use_psk {
             if let Err(e) = Self::validate_psk_proposal(commit_message.clone(), room_id) {
-                // PSK validation failed: stop the group and discard queued proposals.
-                drop(proposal_lock);
+                // PSK validation failed: restore queue and return.
                 drop(mls_group);
-                crate::service::utils::restore_to_queue(
-                    self.proposal_queue.clone(),
-                    room_id.to_string(),
-                    std::mem::take(&mut queued_proposals),
+                self.restore_proposal_queue_on_failure(
+                    room_id,
+                    &mut queued_proposals,
                     "Failed to process commit message",
-                );
+                )
+                .await;
                 return Err(e);
             }
         }
@@ -3769,13 +3791,12 @@ impl Service {
             Ok((received_message, reinit)) => (received_message, reinit),
             Err(e) => {
                 tracing::error!("Failed to decrypt commit message: {:?}", e);
-                drop(proposal_lock);
-                crate::service::utils::restore_to_queue(
-                    self.proposal_queue.clone(),
-                    room_id.to_string(),
-                    std::mem::take(&mut queued_proposals),
+                self.restore_proposal_queue_on_failure(
+                    room_id,
+                    &mut queued_proposals,
                     "Failed to process commit message",
-                );
+                )
+                .await;
                 return Err(anyhow::Error::from(e));
             }
         };
@@ -3793,14 +3814,13 @@ impl Service {
                     });
                     if !has_psk {
                         tracing::error!("Commit missing required PSK proposal for room {room_id}");
-                        drop(proposal_lock);
                         drop(mls_group);
-                        crate::service::utils::restore_to_queue(
-                            self.proposal_queue.clone(),
-                            room_id.to_string(),
-                            std::mem::take(&mut queued_proposals),
+                        self.restore_proposal_queue_on_failure(
+                            room_id,
+                            &mut queued_proposals,
                             "Commit missing PSK proposal",
-                        );
+                        )
+                        .await;
                         return Err(anyhow::Error::from(ServiceError::PskProposalMissing));
                     }
                 }
@@ -3810,35 +3830,32 @@ impl Service {
             )) => {
                 tracing::error!("Proposal not found in commit message");
                 self.cache_commit_message(room_id, commit_message).await?;
-                drop(proposal_lock);
-                crate::service::utils::restore_to_queue(
-                    self.proposal_queue.clone(),
-                    room_id.to_string(),
-                    std::mem::take(&mut queued_proposals),
+                self.restore_proposal_queue_on_failure(
+                    room_id,
+                    &mut queued_proposals,
                     "Failed to process commit message",
-                );
+                )
+                .await;
                 return Err(anyhow::Error::from(ServiceError::ProposalNotFound));
             }
             ReceivedMessage::Duplicate => {
                 tracing::info!("Received duplicated commit message");
-                drop(proposal_lock);
-                crate::service::utils::restore_to_queue(
-                    self.proposal_queue.clone(),
-                    room_id.to_string(),
-                    std::mem::take(&mut queued_proposals),
+                self.restore_proposal_queue_on_failure(
+                    room_id,
+                    &mut queued_proposals,
                     "Received duplicated commit message",
-                );
+                )
+                .await;
                 return Ok(CommitProcessingOutcome::NoStateChange);
             }
             _ => {
                 tracing::error!("Received message is not a commit: {:?}", received_message);
-                drop(proposal_lock);
-                crate::service::utils::restore_to_queue(
-                    self.proposal_queue.clone(),
-                    room_id.to_string(),
-                    std::mem::take(&mut queued_proposals),
+                self.restore_proposal_queue_on_failure(
+                    room_id,
+                    &mut queued_proposals,
                     "Failed to process commit message",
-                );
+                )
+                .await;
                 return Err(anyhow::Error::from(ServiceError::InvalidMlsMessageType));
             }
         }
@@ -3846,7 +3863,6 @@ impl Service {
         let new_epoch = *mls_group.epoch();
         tracing::info!("Commit message processed. epoch: {:?}", new_epoch);
 
-        drop(proposal_lock);
         drop(mls_group);
 
         // trigger the group update callback outside of locks to prevent lock inversion
@@ -3966,18 +3982,15 @@ impl Service {
             }
         }
 
-        let mls_group = {
-            let mls_group_lock = {
-                let store_lock = self.mls_store.read().await;
-                store_lock
-                    .group_map
-                    .get(room_id)
-                    .ok_or_else(|| anyhow::anyhow!("Failed to find mls group for room {room_id}"))?
-                    .clone()
-            };
-            let mls_group = mls_group_lock.read().await;
-            mls_group.clone()
+        let mls_group_lock = {
+            let store_lock = self.mls_store.read().await;
+            store_lock
+                .group_map
+                .get(room_id)
+                .ok_or_else(|| anyhow::anyhow!("Failed to find mls group for room {room_id}"))?
+                .clone()
         };
+        let mls_group = mls_group_lock.read().await;
 
         let self_leaf_index = mls_group.own_leaf_index()?;
         let epoch_at = *mls_group.epoch();
@@ -3988,6 +4001,8 @@ impl Service {
                 mls_group.roster().collect::<Vec<_>>(),
             )
             .await?;
+        drop(mls_group);
+
         let rank_group = deterministic_random_rank / RANK_GROUP_SIZE;
 
         tracing::debug!(
@@ -4084,18 +4099,15 @@ impl Service {
     }
 
     async fn handle_offline_members_impl(&self, room_id: &str) -> Result<(), anyhow::Error> {
-        let mut mls_group: MlsGroup<MemKv> = {
-            let mls_group_lock = {
-                let store_lock = self.mls_store.read().await;
-                store_lock
-                    .group_map
-                    .get(room_id)
-                    .ok_or_else(|| anyhow::anyhow!("Failed to find mls group for room {room_id}"))?
-                    .clone()
-            };
-            let mls_group = mls_group_lock.read().await;
-            mls_group.clone()
+        let mls_group_lock = {
+            let store_lock = self.mls_store.read().await;
+            store_lock
+                .group_map
+                .get(room_id)
+                .ok_or_else(|| anyhow::anyhow!("Failed to find mls group for room {room_id}"))?
+                .clone()
         };
+        let mut mls_group = mls_group_lock.write().await;
         let epoch = *mls_group.epoch();
 
         // Skip if we've already handled offline members for this epoch
@@ -4221,20 +4233,13 @@ impl Service {
         {
             Ok(_) => {
                 mls_group.merge_pending_commit().await?;
-                self.mls_store
-                    .write()
-                    .await
-                    .group_map
-                    .entry(room_id.to_string())
-                    .and_modify(|group| {
-                        *group = Arc::new(RwLock::new(mls_group));
-                    });
                 let mut state_lock = self.state.lock().await;
                 state_lock.mark_offline_members_handled_for_epoch(epoch);
             }
             Err(e) => {
                 mls_group.clear_pending_commit();
                 mls_group.clear_pending_proposals();
+                mls_group.write_to_storage().await?;
                 return Err(e.into());
             }
         }
