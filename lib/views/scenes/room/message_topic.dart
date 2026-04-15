@@ -12,6 +12,7 @@ enum PublishableDataType {
   message('message'),
   emojiReaction('emojiReaction'),
   raiseHand('raiseHand'),
+  lowerHandAdmin('lowerHandAdmin'),
   chatMessageReaction('chatMessageReaction');
 
   const PublishableDataType(this.value);

@@ -216,6 +216,8 @@ class RoomState extends Equatable {
     return isAdmin || isHostValue;
   }
 
+  bool get isLocalParticipantAdminOrHost => isHost;
+
   const RoomState({
     required this.room,
     required this.listener,

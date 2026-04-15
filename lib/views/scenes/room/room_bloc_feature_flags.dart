@@ -80,4 +80,15 @@ mixin RoomFeatureFlagsHandlers on Bloc<RoomBlocEvent, RoomState> {
     }
   }
 
+  /// Check if users can lower their own raised hand.
+  bool isMeetAdminLowerHandEnabled() {
+    try {
+      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
+      return dataProviderManager.unleashDataProvider.isMeetAdminLowerHand();
+    } catch (e) {
+      // If there's an error accessing the feature flag, default to false.
+      l.logger.w('[RoomBloc] Error checking MeetAdminLowerHand flag: $e');
+      return false;
+    }
+  }
 }

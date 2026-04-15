@@ -34,6 +34,7 @@ abstract class ParticipantWidget extends StatefulWidget {
     ParticipantReaction? reaction,
     bool isRaisedHand = false,
     bool compactOverlay = false,
+    VoidCallback? onLowerHand,
   }) {
     if (participantTrack.participant is LocalParticipant) {
       return LocalParticipantWidget(
@@ -49,6 +50,7 @@ abstract class ParticipantWidget extends StatefulWidget {
         reaction: reaction,
         isRaisedHand: isRaisedHand,
         compactOverlay: compactOverlay,
+        onLowerHand: onLowerHand,
       );
     } else if (participantTrack.participant is RemoteParticipant) {
       return RemoteParticipantWidget(
@@ -64,6 +66,7 @@ abstract class ParticipantWidget extends StatefulWidget {
         reaction: reaction,
         isRaisedHand: isRaisedHand,
         compactOverlay: compactOverlay,
+        onLowerHand: onLowerHand,
       );
     }
     throw UnimplementedError('Unknown participant type');
@@ -82,6 +85,7 @@ abstract class ParticipantWidget extends StatefulWidget {
   abstract final ParticipantReaction? reaction;
   abstract final bool isRaisedHand;
   abstract final bool compactOverlay;
+  abstract final VoidCallback? onLowerHand;
   final VideoQuality quality;
 
   const ParticipantWidget({this.quality = VideoQuality.MEDIUM, super.key});
@@ -110,6 +114,7 @@ class LocalParticipantWidget extends ParticipantWidget {
   final bool isRaisedHand;
   @override
   final bool compactOverlay;
+  final VoidCallback? onLowerHand;
   @override
   final ParticipantDisplayColors displayColors;
 
@@ -126,6 +131,7 @@ class LocalParticipantWidget extends ParticipantWidget {
     this.reaction,
     this.isRaisedHand = false,
     this.compactOverlay = false,
+    this.onLowerHand,
 
     super.key,
   });
@@ -157,6 +163,7 @@ class RemoteParticipantWidget extends ParticipantWidget {
   final bool isRaisedHand;
   @override
   final bool compactOverlay;
+  final VoidCallback? onLowerHand;
   @override
   final ParticipantDisplayColors displayColors;
 
@@ -173,6 +180,7 @@ class RemoteParticipantWidget extends ParticipantWidget {
     this.reaction,
     this.isRaisedHand = false,
     this.compactOverlay = false,
+    this.onLowerHand,
     super.key,
   });
 
@@ -399,34 +407,58 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
         Positioned(
           top: 12,
           left: 12,
-          child: IgnorePointer(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 220),
-              reverseDuration: const Duration(milliseconds: 160),
-              switchInCurve: Curves.easeOutBack,
-              switchOutCurve: Curves.easeIn,
-              transitionBuilder: (child, animation) {
-                final offsetAnimation = Tween<Offset>(
-                  begin: const Offset(0, 0.12),
-                  end: Offset.zero,
-                ).animate(animation);
-                return FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(
-                    position: offsetAnimation,
-                    child: ScaleTransition(scale: animation, child: child),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            reverseDuration: const Duration(milliseconds: 160),
+            switchInCurve: Curves.easeOutBack,
+            switchOutCurve: Curves.easeIn,
+            transitionBuilder: (child, animation) {
+              final offsetAnimation = Tween<Offset>(
+                begin: const Offset(0, 0.12),
+                end: Offset.zero,
+              ).animate(animation);
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: offsetAnimation,
+                  child: ScaleTransition(scale: animation, child: child),
+                ),
+              );
+            },
+            child: widget.isRaisedHand
+                ? widget.onLowerHand == null
+                      ? const Text(
+                          raisedHandEmoji,
+                          key: ValueKey('raised-hand-display'),
+                          style: TextStyle(fontSize: 30),
+                        )
+                      : Tooltip(
+                          message: ctx.local.lower_participant_hand,
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: InkWell(
+                              key: const ValueKey('raised-hand-lower-action'),
+                              onTap: widget.onLowerHand,
+                              borderRadius: BorderRadius.circular(999),
+                              child: const Padding(
+                                padding: EdgeInsets.all(2),
+                                child: Text(
+                                  raisedHandEmoji,
+                                  style: TextStyle(fontSize: 30),
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                : IgnorePointer(
+                    child: _displayReactionEmoji == null
+                        ? const SizedBox.shrink(key: ValueKey('no-reaction'))
+                        : Text(
+                            _displayReactionEmoji!,
+                            key: const ValueKey('reaction-emoji'),
+                            style: const TextStyle(fontSize: 30),
+                          ),
                   ),
-                );
-              },
-              child: widget.isRaisedHand
-                  ? Text(raisedHandEmoji, style: TextStyle(fontSize: 30))
-                  : _displayReactionEmoji == null
-                  ? const SizedBox.shrink(key: ValueKey('no-reaction'))
-                  : Text(
-                      _displayReactionEmoji!,
-                      style: const TextStyle(fontSize: 30),
-                    ),
-            ),
           ),
         ),
         if (widget.showStatsLayer)
