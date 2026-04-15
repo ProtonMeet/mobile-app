@@ -65,10 +65,73 @@ impl UserState {
     }
 }
 
+/// Picks the user key most likely to unlock with the mailbox password for crypto
+/// (e.g. OpenPGP self-encryption when creating a meeting).
+///
+/// Order: primary+active → any active → any primary → first in list.
+pub(crate) fn preferred_user_key_for_crypto(keys: &[ProtonUserKey]) -> Option<&ProtonUserKey> {
+    if keys.is_empty() {
+        return None;
+    }
+    keys.iter()
+        .find(|k| k.primary != 0 && k.active != 0)
+        .or_else(|| keys.iter().find(|k| k.active != 0))
+        .or_else(|| keys.iter().find(|k| k.primary != 0))
+        .or_else(|| keys.first())
+}
+
 /// Helper struct containing user authentication and address information
 /// extracted from the active user state
 pub struct UserStateInfo {
     pub active_user_key: ProtonUserKey,
     pub user_id: String,
     pub primary_address: Address,
+}
+
+#[cfg(test)]
+mod preferred_user_key_tests {
+    use super::*;
+
+    fn key(id: &str, primary: u32, active: u32) -> ProtonUserKey {
+        ProtonUserKey {
+            id: id.to_string(),
+            version: 0,
+            private_key: String::new(),
+            recovery_secret: None,
+            recovery_secret_signature: None,
+            token: None,
+            fingerprint: String::new(),
+            signature: None,
+            primary,
+            active,
+        }
+    }
+
+    #[test]
+    fn prefers_primary_and_active() {
+        let keys = vec![
+            key("old", 0, 0),
+            key("primary_active", 1, 1),
+            key("active_only", 0, 1),
+        ];
+        assert_eq!(preferred_user_key_for_crypto(&keys).unwrap().id, "primary_active");
+    }
+
+    #[test]
+    fn falls_back_to_first_active() {
+        let keys = vec![key("a", 0, 0), key("b", 0, 1), key("c", 0, 0)];
+        assert_eq!(preferred_user_key_for_crypto(&keys).unwrap().id, "b");
+    }
+
+    #[test]
+    fn falls_back_to_primary_when_no_active() {
+        let keys = vec![key("a", 0, 0), key("b", 1, 0)];
+        assert_eq!(preferred_user_key_for_crypto(&keys).unwrap().id, "b");
+    }
+
+    #[test]
+    fn falls_back_to_first_key() {
+        let keys = vec![key("only", 0, 0)];
+        assert_eq!(preferred_user_key_for_crypto(&keys).unwrap().id, "only");
+    }
 }

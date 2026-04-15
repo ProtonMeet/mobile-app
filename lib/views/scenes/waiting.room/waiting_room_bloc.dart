@@ -6,6 +6,7 @@ import 'package:meet/constants/constants.dart';
 import 'package:meet/helper/extension/bridge_error.extension.dart';
 import 'package:meet/helper/extension/local_video_track_extension.dart';
 import 'package:meet/helper/logger.dart' as l;
+import 'package:meet/helper/sentry_create_room.dart';
 import 'package:meet/helper/video_track_publisher.dart';
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/channels/platform_info_channel.dart';
@@ -110,8 +111,16 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
             meetingType: MeetingType.instant,
           );
           emit(state.copyWith(meetLink: meetLink));
-        } catch (e) {
+        } catch (e, stackTrace) {
           logBridgeError('WaitingRoomBloc', 'Error creating meeting', e);
+          captureCreateRoomFailureToSentry(
+            flow: 'waiting_room_instant_create',
+            error: e,
+            stackTrace: stackTrace,
+            meetingType: MeetingType.instant,
+            hasSession: appCoreManager.isAuthenticated,
+            meetingNameLength: meetingName.length,
+          );
           emit(state.copyWith(error: extractErrorMessage(e)));
           return;
         }

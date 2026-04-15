@@ -256,7 +256,8 @@ impl UserRepository for Persister {
         {
             use proton_meet_common::models::ProtonUserKey;
 
-            let query_str = "SELECT * FROM user_keys WHERE user_id = ?";
+            let query_str =
+                "SELECT * FROM user_keys WHERE user_id = ? ORDER BY is_primary DESC, active DESC";
             let mut stmt = guard.prepare(query_str)?;
             let rows = stmt.query_map([user_id], |row| {
                 Ok(UserKeyEntity {
@@ -282,8 +283,13 @@ impl UserRepository for Persister {
                 .await
                 .map_err(|e| anyhow::anyhow!("Failed to query user keys: {}", e))?;
 
-            let keys: Vec<ProtonUserKey> =
+            let mut keys: Vec<ProtonUserKey> =
                 entities.into_iter().map(|entity| entity.into()).collect();
+            keys.sort_by(|a, b| {
+                b.primary
+                    .cmp(&a.primary)
+                    .then_with(|| b.active.cmp(&a.active))
+            });
             Ok(keys)
         }
     }
