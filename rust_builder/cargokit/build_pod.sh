@@ -51,6 +51,14 @@ do
   fi
 done
 
+# gopenpgp-sys (proton-crypto) references CoreFoundation. Cargokit runs cargo with cwd under
+# DerivedData, so rust/.cargo/config.toml is never loaded — linker flags must be in RUSTFLAGS.
+# Setting RUSTFLAGS overrides merged rustflags from cargokit.yaml (--cfg mls_build_async); without
+# that cfg, mls-rs uses sync KeyPackage::to_reference and mls-types fails to compile.
+if [ "$PLATFORM_NAME" = "iphoneos" ] || [ "$PLATFORM_NAME" = "iphonesimulator" ]; then
+  export RUSTFLAGS="${RUSTFLAGS:+${RUSTFLAGS} }--cfg mls_build_async -C link-arg=-framework -C link-arg=CoreFoundation"
+fi
+
 "$BASEDIR/run_build_tool.sh" build-pod "$@"
 
 # Make a symlink from built framework to phony file, which will be used as input to
