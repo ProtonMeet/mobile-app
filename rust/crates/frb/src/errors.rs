@@ -126,10 +126,17 @@ impl From<MeetCoreError> for BridgeError {
                 error: message,
                 details: details.unwrap_or_default(),
             }),
+            MeetCoreError::ServiceError { message, details } => BridgeError::MeetCore(format!(
+                "MeetCoreError::ServiceError\nmessage: {message}\ndetails: {}",
+                details.as_deref().unwrap_or("(none)")
+            )),
             _ => BridgeError::MeetCore(format!(
                 "MeetCoreError: message: {:?}, source: {:?}",
                 value.to_string(),
-                value.source()
+                value
+                    .source()
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| "(none)".to_string())
             )),
         }
     }

@@ -19,7 +19,7 @@ use ed25519_dalek::pkcs8::DecodePublicKey;
 use meet_mls::reexports::meet_policy::UserRole;
 use meet_type::RejoinReason;
 use mls_rs::{
-    framing::{Content, FramedContent, MlsMessagePayload},
+    framing::{Content, MlsMessagePayload},
     group::proposal::{Proposal, ProposalOrRef},
 };
 use mls_rs_codec::MlsEncode;

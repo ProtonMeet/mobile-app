@@ -1,4 +1,4 @@
-use crate::app_state::{AppState, UserState, UserStateInfo};
+use crate::app_state::{preferred_user_key_for_crypto, AppState, UserState, UserStateInfo};
 use crate::domain::room::RoomService;
 use crate::domain::user::models::meet_link_info::{MeetInfo, MeetParticipant};
 use crate::domain::user::models::meeting::{
@@ -13,6 +13,7 @@ use crate::domain::user::ports::{
     ArcWebSocketClient, ConnectionState, HttpClient, UnleashApi, UserService, WebSocketClient,
 };
 use crate::errors::core::MeetCoreError;
+use crate::errors::create_meeting::{map_create_meeting_service_error, CreateMeetingErrorContext};
 use crate::infra::auth_store::AuthStore;
 use crate::infra::crypto_client::MeetCryptoClient;
 use crate::infra::dto::proton_user::UserData;
@@ -100,9 +101,7 @@ impl App {
             .active_user
             .as_ref()
             .ok_or(MeetCoreError::NoActiveUser)?;
-        let active_user_key = user_state
-            .user_keys
-            .first()
+        let active_user_key = preferred_user_key_for_crypto(&user_state.user_keys)
             .ok_or(MeetCoreError::NoUserKeys)?
             .clone();
         let user_id = user_state.user_data.id.clone();
@@ -1162,6 +1161,14 @@ impl App {
                     message: format!("Failed to get mailbox password: {e}"),
                     details: None,
                 })?;
+            let key = &auth_info.active_user_key;
+            let create_ctx = CreateMeetingErrorContext {
+                meeting_type,
+                has_session: true,
+                mailbox_password_empty: mailbox_password.is_empty(),
+                signing_key_primary: key.primary != 0,
+                signing_key_active: key.active != 0,
+            };
             self.room_service
                 .create_meeting(
                     &meeting_name,
@@ -1177,9 +1184,16 @@ impl App {
                     r_rule,
                 )
                 .await
-                .map_err(MeetCoreError::from)?
+                .map_err(|e| map_create_meeting_service_error(e, &create_ctx))?
         } else {
             debug!("create_meeting without session");
+            let create_ctx = CreateMeetingErrorContext {
+                meeting_type: MeetingType::Instant,
+                has_session: false,
+                mailbox_password_empty: true,
+                signing_key_primary: false,
+                signing_key_active: false,
+            };
             self.room_service
                 .create_meeting(
                     &meeting_name,
@@ -1195,7 +1209,7 @@ impl App {
                     None,
                 )
                 .await
-                .map_err(MeetCoreError::from)?
+                .map_err(|e| map_create_meeting_service_error(e, &create_ctx))?
         };
         Ok(meeting)
     }
@@ -1304,6 +1318,14 @@ impl App {
                 details: None,
             })?;
 
+        let key = &auth_info.active_user_key;
+        let create_ctx = CreateMeetingErrorContext {
+            meeting_type: MeetingType::Personal,
+            has_session: true,
+            mailbox_password_empty: mailbox_password.is_empty(),
+            signing_key_primary: key.primary != 0,
+            signing_key_active: key.active != 0,
+        };
         let meeting = self
             .room_service
             .create_meeting(
@@ -1319,7 +1341,8 @@ impl App {
                 None,
                 None,
             )
-            .await?;
+            .await
+            .map_err(|e| map_create_meeting_service_error(e, &create_ctx))?;
 
         Ok(meeting)
     }

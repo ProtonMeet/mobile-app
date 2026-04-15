@@ -10,6 +10,7 @@ import 'package:meet/helper/extension/frb_upcoming_meetings.dart';
 import 'package:meet/helper/extension/response_error.extension.dart';
 import 'package:meet/helper/external.url.dart';
 import 'package:meet/helper/logger.dart' as l;
+import 'package:meet/helper/sentry_create_room.dart';
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/app.state.manager.dart';
 import 'package:meet/managers/channels/platform_info_channel.dart';
@@ -352,9 +353,9 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       );
       add(UpdateUpcomingStateEvent(upcomingTab: MeetUpcomingTab.myMeetings));
     } else {
+      final displayName = userState.userData.name;
+      final personalMeetingName = "$displayName's personal meeting";
       try {
-        final displayName = userState.userData.name;
-        final personalMeetingName = "$displayName's personal meeting";
         final personalMeeting = await appCoreManager.appCore
             .createPersonalMeeting(
               meetingName: personalMeetingName,
@@ -371,6 +372,14 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         );
         add(UpdateUpcomingStateEvent(upcomingTab: MeetUpcomingTab.myMeetings));
       } catch (error, stackTrace) {
+        captureCreateRoomFailureToSentry(
+          flow: 'dashboard_bootstrap_personal_meeting',
+          error: error,
+          stackTrace: stackTrace,
+          meetingType: MeetingType.personal,
+          hasSession: true,
+          meetingNameLength: personalMeetingName.length,
+        );
         if (error is BridgeError_ApiResponse) {
           l.logger.e(
             '[DashboardBloc] Error creating personal meeting: ${error.field0.detailString}',
@@ -479,6 +488,15 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         ),
       );
     } catch (error, stackTrace) {
+      const nameLen = 'Personal Meeting'.length;
+      captureCreateRoomFailureToSentry(
+        flow: 'dashboard_create_personal_meeting',
+        error: error,
+        stackTrace: stackTrace,
+        meetingType: MeetingType.personal,
+        hasSession: true,
+        meetingNameLength: nameLen,
+      );
       if (error is BridgeError_ApiResponse) {
         l.logger.e(
           '[DashboardBloc] Error creating personal meeting: ${error.field0.detailString}',
@@ -541,6 +559,15 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         ),
       );
     } catch (error, stackTrace) {
+      const nameLen = 'Personal Meeting'.length;
+      captureCreateRoomFailureToSentry(
+        flow: 'dashboard_rotate_personal_meeting',
+        error: error,
+        stackTrace: stackTrace,
+        meetingType: MeetingType.personal,
+        hasSession: true,
+        meetingNameLength: nameLen,
+      );
       if (error is BridgeError_ApiResponse) {
         l.logger.e(
           '[DashboardBloc] Error rotating personal meeting link: ${error.field0.detailString}',
@@ -753,9 +780,17 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         ),
       );
       add(UpdateUpcomingStateEvent(upcomingTab: MeetUpcomingTab.myRooms));
-    } on BridgeError_ApiResponse catch (error) {
+    } on BridgeError_ApiResponse catch (error, stackTrace) {
       operationCompleted = true;
       timeoutTimer.cancel();
+      captureCreateRoomFailureToSentry(
+        flow: 'dashboard_create_permanent_room',
+        error: error,
+        stackTrace: stackTrace,
+        meetingType: MeetingType.permanent,
+        hasSession: true,
+        meetingNameLength: event.roomName.length,
+      );
       if (!isClosed) {
         l.logger.e('[DashboardBloc] Error creating meeting: $error');
         emit(
@@ -1124,11 +1159,23 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         ),
       );
       add(UpdateUpcomingStateEvent(upcomingTab: MeetUpcomingTab.myMeetings));
-    } on BridgeError_ApiResponse catch (error) {
+    } on BridgeError_ApiResponse catch (error, stackTrace) {
       operationCompleted = true;
       timeoutTimer.cancel();
       if (!isClosed) {
         l.logger.e('[DashboardBloc] Error scheduling meeting: $error');
+        final meetingType = event.data.recurrence == RecurrenceFrequency.none
+            ? MeetingType.scheduled
+            : MeetingType.recurring;
+        captureCreateRoomFailureToSentry(
+          flow: 'dashboard_schedule_meeting',
+          error: error,
+          stackTrace: stackTrace,
+          meetingType: meetingType,
+          hasSession: true,
+          meetingNameLength: event.data.title.length,
+          scheduledMeeting: true,
+        );
         emit(
           state.copyWith(
             isLoadingScheduleMeeting: false,
@@ -1145,6 +1192,18 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         final errorMessage = 'Failed to schedule meeting: $error';
         l.logger.e(
           '[DashboardBloc] Error scheduling meeting: $error, $stackTrace',
+        );
+        final meetingType = event.data.recurrence == RecurrenceFrequency.none
+            ? MeetingType.scheduled
+            : MeetingType.recurring;
+        captureCreateRoomFailureToSentry(
+          flow: 'dashboard_schedule_meeting',
+          error: error,
+          stackTrace: stackTrace,
+          meetingType: meetingType,
+          hasSession: true,
+          meetingNameLength: event.data.title.length,
+          scheduledMeeting: true,
         );
         emit(
           state.copyWith(
