@@ -269,10 +269,6 @@ List<Widget> _buildMeetingSlivers({
                         ? meeting.toScheduleMeetingData(useLocalTimezone: true)
                         : null;
                     final dashboardBloc = context.read<DashboardBloc>();
-                    final showProtonCalendar = ManagerFactory()
-                        .get<DataProviderManager>()
-                        .unleashDataProvider
-                        .isMeetShowProtonCalendar();
 
                     showJoinMeetingDialog(
                       context,
@@ -291,7 +287,6 @@ List<Widget> _buildMeetingSlivers({
                       rRule: meeting.rRule,
                       editable: false,
                       autofocus: false,
-                      showProtonCalendar: showProtonCalendar,
                       onAdd: isScheduledMeeting && scheduleData != null
                           ? () {
                               dashboardBloc.add(

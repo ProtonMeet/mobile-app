@@ -98,7 +98,7 @@ extension UnleashFeatureExt on UnleashFeature {
         );
       case UnleashFeature.meetShowProtonCalendar:
         return ToggleConfig(
-          enabled: true,
+          enabled: false,
           impressionData: false,
           variant: Variant(enabled: true, name: 'enabled'),
         );
