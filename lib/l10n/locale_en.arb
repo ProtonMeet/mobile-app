@@ -990,6 +990,10 @@
   "@emoji_reactions": {
     "description": "Emoji reactions tooltip"
   },
+  "lower_participant_hand": "Lower participant's hand",
+  "@lower_participant_hand": {
+    "description": "Tooltip text for lowering a participant's raised hand"
+  },
   "edit_room": "Edit room",
   "@edit_room": {
     "description": "Menu item label to edit a room"

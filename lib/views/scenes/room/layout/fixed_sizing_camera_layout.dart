@@ -8,12 +8,14 @@ class FixedSizingCameraLayout extends StatefulWidget {
   final double spacing;
   final Map<String, ParticipantReaction> reactionsByIdentity;
   final Map<String, bool> raisedHandsByIdentity;
+  final void Function(String)? onLowerHandByIdentity;
 
   const FixedSizingCameraLayout({
     required this.participantTracks,
     this.spacing = 0.4,
     this.reactionsByIdentity = const {},
     this.raisedHandsByIdentity = const {},
+    this.onLowerHandByIdentity,
     super.key,
   });
 
@@ -132,6 +134,13 @@ class _FixedSizingCameraLayoutState extends State<FixedSizingCameraLayout> {
                                   .participant
                                   .identity] ==
                               true,
+                          onLowerHand: widget.onLowerHandByIdentity == null
+                              ? null
+                              : () {
+                                  widget.onLowerHandByIdentity!(
+                                    currentWidgets[index].participant.identity,
+                                  );
+                                },
                         ),
                       ),
                     );

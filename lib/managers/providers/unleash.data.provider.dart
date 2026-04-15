@@ -29,6 +29,7 @@ enum UnleashFeature {
   meetScheduleInAdvance,
   meetAutoReconnection,
   meetMobileEnableNetworkTool,
+  meetAdminLowerHand,
   meetShowProtonCalendar,
 }
 
@@ -70,6 +71,8 @@ extension UnleashFeatureExt on UnleashFeature {
         return "MeetAutoReconnection";
       case UnleashFeature.meetMobileEnableNetworkTool:
         return "MeetMobileEnableNetworkTool";
+      case UnleashFeature.meetAdminLowerHand:
+        return "MeetAdminLowerHand";
       case UnleashFeature.meetShowProtonCalendar:
         return "MeetShowProtonCalendar";
     }
@@ -101,6 +104,12 @@ extension UnleashFeatureExt on UnleashFeature {
           enabled: false,
           impressionData: false,
           variant: Variant(enabled: true, name: 'enabled'),
+        );
+      case UnleashFeature.meetAdminLowerHand:
+        return ToggleConfig(
+          enabled: false,
+          impressionData: false,
+          variant: Variant(enabled: false, name: 'disabled'),
         );
       default:
         return null;
@@ -288,6 +297,9 @@ class UnleashDataProvider extends DataProvider {
 
   bool isMeetMobileEnableNetworkTool() =>
       isFeatureEnabled(UnleashFeature.meetMobileEnableNetworkTool);
+
+  bool isMeetAdminLowerHand() =>
+      isFeatureEnabled(UnleashFeature.meetAdminLowerHand);
 
   /// "Add to Proton Calendar" in join / add-to-calendar flows.
   bool isMeetShowProtonCalendar() =>

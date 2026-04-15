@@ -650,8 +650,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     if (p != null) {
       return _bloc.getParticipantDisplayName(p);
     }
-    if (event.participant != null &&
-        event.participant!.identity == trustedId) {
+    if (event.participant != null && event.participant!.identity == trustedId) {
       return _bloc.getParticipantDisplayName(event.participant!);
     }
     return fallbackName;
@@ -683,6 +682,27 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       }
     } catch (_) {}
     return null;
+  }
+
+  String? _parseAdminLowerHandIdentity(String message) {
+    try {
+      final decoded = jsonDecode(message);
+      if (decoded is Map<String, dynamic>) {
+        final identity = decoded['identity'];
+        if (identity is String && identity.isNotEmpty) {
+          return identity;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  bool _isParticipantAdminOrHost(String identity) {
+    final participant = _bloc.state.frbParticipantsMap[identity];
+    if (participant == null) {
+      return false;
+    }
+    return participant.isAdmin == 1 || participant.isHost == 1;
   }
 
   Future<void> _handleEmojiReaction(
@@ -759,6 +779,34 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
+  Future<void> _handleAdminLowerHand(
+    String message,
+    String senderIdentity,
+    String senderName,
+  ) async {
+    final targetIdentity = _parseAdminLowerHandIdentity(message);
+    if (targetIdentity == null) {
+      l.logger.w(
+        '[RoomPage] _handleAdminLowerHand ignored malformed payload: $message',
+      );
+      return;
+    }
+
+    if (!_isParticipantAdminOrHost(senderIdentity)) {
+      l.logger.w(
+        '[RoomPage] _handleAdminLowerHand ignored unauthorized sender: identity=$senderIdentity, name=$senderName',
+      );
+      return;
+    }
+
+    _bloc.add(
+      SetParticipantRaisedHand(identity: targetIdentity, raised: false),
+    );
+    l.logger.d(
+      '[RoomPage] _handleAdminLowerHand: sender=$senderIdentity, target=$targetIdentity',
+    );
+  }
+
   Future<void> useRaiseHand({required bool raised}) async {
     final room = _bloc.state.room;
     final localParticipant = room.localParticipant;
@@ -786,6 +834,48 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
 
     _bloc.add(SetParticipantRaisedHand(identity: identity, raised: raised));
+  }
+
+  Future<void> publishAdminLowerHand(String identity) async {
+    final room = _bloc.state.room;
+    final localParticipant = room.localParticipant;
+    final localIdentity = localParticipant?.identity;
+    if (localParticipant == null || localIdentity == null) {
+      l.logger.w(
+        '[RoomPage] Cannot send lower hand admin message: localParticipant null',
+      );
+      return;
+    }
+    if (!_bloc.state.isLocalParticipantAdminOrHost) {
+      l.logger.w(
+        '[RoomPage] Cannot send lower hand admin message: local participant is not admin/host',
+      );
+      return;
+    }
+
+    _bloc.add(SetParticipantRaisedHand(identity: identity, raised: false));
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+
+    try {
+      final encryptedMessage = await encryptMessage(
+        jsonEncode({'identity': identity}),
+      );
+      final envelope = <String, dynamic>{
+        'type': PublishableDataType.lowerHandAdmin.value,
+        'id': '$localIdentity-$timestamp',
+        'message': encryptedMessage,
+        'timestamp': timestamp,
+      };
+
+      await localParticipant.publishData(
+        utf8.encode(jsonEncode(envelope)),
+        reliable: true,
+        topic: PublishableDataType.lowerHandAdmin.value,
+      );
+    } catch (e) {
+      l.logger.e('[RoomPage] publishAdminLowerHand failed: $e');
+      _bloc.add(SetParticipantRaisedHand(identity: identity, raised: true));
+    }
   }
 
   Future<void> _handleChatMessageReaction(
@@ -897,19 +987,14 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         l.logger.e('Cannot decrypt message');
         return;
       }
-      if (liveKitIdentity != null &&
-          liveKitIdentity != result.mlsSenderId) {
+      if (liveKitIdentity != null && liveKitIdentity != result.mlsSenderId) {
         l.logger.w(
           '[RoomPage] Legacy E2EE: MLS sender ${result.mlsSenderId} != '
           'LiveKit identity $liveKitIdentity',
         );
       }
       final trustedId = result.mlsSenderId;
-      final displayName = _displayNameForTrustedSender(
-        trustedId,
-        event,
-        name,
-      );
+      final displayName = _displayNameForTrustedSender(trustedId, event, name);
       addMessage(result.plaintext, trustedId, displayName);
       if (context.mounted && mounted && !_showChatBubble) {
         LocalToast.showToastification(
@@ -965,8 +1050,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     String? decryptedMessage;
     String? trustedSenderId;
 
-    final isMlsPayload =
-        dataType != null && mlsPayloadTypes.contains(dataType);
+    final isMlsPayload = dataType != null && mlsPayloadTypes.contains(dataType);
     if (isMlsPayload) {
       if (encryptedText != null) {
         final result = await decryptMessage(encryptedText);
@@ -1043,6 +1127,22 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               fallbackDisplayName,
             );
             await _handleRaiseHand(
+              decryptedMessage,
+              trustedSenderId,
+              displayName,
+            );
+          }
+        } catch (_) {}
+        return;
+      case PublishableDataType.lowerHandAdmin:
+        try {
+          if (decryptedMessage != null && trustedSenderId != null) {
+            final displayName = _displayNameForTrustedSender(
+              trustedSenderId,
+              event,
+              fallbackDisplayName,
+            );
+            await _handleAdminLowerHand(
               decryptedMessage,
               trustedSenderId,
               displayName,
@@ -1160,6 +1260,14 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     }
 
     final room = _bloc.state.room;
+    final showLowerHand =
+        _bloc.state.isLocalParticipantAdminOrHost &&
+        _bloc.isMeetAdminLowerHandEnabled();
+    final void Function(String)? onLowerHandByIdentity = showLowerHand
+        ? (identity) {
+            unawaited(publishAdminLowerHand(identity));
+          }
+        : null;
     switch (_layout) {
       case CameraLayout.grid:
         return ResponsiveCameraLayout(
@@ -1167,12 +1275,14 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           room: room,
           reactionsByIdentity: _activeReactions,
           raisedHandsByIdentity: raisedHandsByIdentity,
+          onLowerHandByIdentity: onLowerHandByIdentity,
         );
       case CameraLayout.fixedSizing:
         return FixedSizingCameraLayout(
           participantTracks: participantTracks,
           reactionsByIdentity: _activeReactions,
           raisedHandsByIdentity: raisedHandsByIdentity,
+          onLowerHandByIdentity: onLowerHandByIdentity,
         );
       case CameraLayout.speaker:
 
@@ -1182,6 +1292,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             participantTracks: participantTracks,
             reactionsByIdentity: _activeReactions,
             raisedHandsByIdentity: raisedHandsByIdentity,
+            onLowerHandByIdentity: onLowerHandByIdentity,
           );
         }
 
@@ -1205,6 +1316,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             participantTracks: participantTracks,
             reactionsByIdentity: _activeReactions,
             raisedHandsByIdentity: raisedHandsByIdentity,
+            onLowerHandByIdentity: onLowerHandByIdentity,
           );
         }
 
@@ -1229,6 +1341,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     List<ParticipantInfo> participantTracksWithoutSpeaker,
     Map<String, bool> raisedHandsByIdentity,
   ) {
+    final showLowerHand =
+        _bloc.state.isLocalParticipantAdminOrHost &&
+        _bloc.isMeetAdminLowerHandEnabled();
     return Column(
       children: [
         SizedBox(
@@ -1257,6 +1372,17 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                           .participant
                           .identity] ==
                       true,
+                  onLowerHand: showLowerHand
+                      ? () {
+                          unawaited(
+                            publishAdminLowerHand(
+                              participantTracksWithoutSpeaker[index]
+                                  .participant
+                                  .identity,
+                            ),
+                          );
+                        }
+                      : null,
                 ),
               ),
             ),
@@ -1267,6 +1393,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             participantTracks: speakerTracks,
             reactionsByIdentity: _activeReactions,
             raisedHandsByIdentity: raisedHandsByIdentity,
+            onLowerHandByIdentity: showLowerHand
+                ? (identity) {
+                    unawaited(publishAdminLowerHand(identity));
+                  }
+                : null,
           ),
         ),
       ],
@@ -1853,6 +1984,10 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
                         final safeIndex = min(index, tracks.length - 1);
 
+                        final showLowerHand =
+                            _bloc.state.isLocalParticipantAdminOrHost &&
+                            _bloc.isMeetAdminLowerHandEnabled();
+
                         return GestureDetector(
                           onTap: () {
                             // Immediately enter full screen when tapping screen share
@@ -1882,6 +2017,17 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                                       .participant
                                       .identity] ==
                                   true,
+                              onLowerHand: showLowerHand
+                                  ? () {
+                                      unawaited(
+                                        publishAdminLowerHand(
+                                          tracks[safeIndex]
+                                              .participant
+                                              .identity,
+                                        ),
+                                      );
+                                    }
+                                  : null,
                             ),
                           ),
                         );
@@ -2267,6 +2413,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   Widget buildParticipantsCameraWehnScreenSharing(BuildContext context) {
     final participantTracksWhenScreenSharing = _bloc
         .getParticipantTracksWhenScreenSharing();
+    final showLowerHand =
+        _bloc.state.isLocalParticipantAdminOrHost &&
+        _bloc.isMeetAdminLowerHandEnabled();
     if (_layout == CameraLayout.speaker ||
         _layout == CameraLayout.mutliSpeaker) {
       if (participantTracksWhenScreenSharing.isEmpty) {
@@ -2305,6 +2454,17 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                         .participant
                         .identity] ==
                     true,
+                onLowerHand: showLowerHand
+                    ? () {
+                        unawaited(
+                          publishAdminLowerHand(
+                            participantTracksWhenScreenSharing[index]
+                                .participant
+                                .identity,
+                          ),
+                        );
+                      }
+                    : null,
               ),
             ),
           ),
@@ -2338,6 +2498,17 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                       .participant
                       .identity] ==
                   true,
+              onLowerHand: showLowerHand
+                  ? () {
+                      unawaited(
+                        publishAdminLowerHand(
+                          participantTracksWhenScreenSharing[index]
+                              .participant
+                              .identity,
+                        ),
+                      );
+                    }
+                  : null,
             ),
           ),
         ),
