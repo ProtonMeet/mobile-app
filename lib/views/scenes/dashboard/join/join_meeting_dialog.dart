@@ -12,6 +12,7 @@ import 'package:meet/helper/local_toast.dart';
 import 'package:meet/helper/meet_join_link_parser.dart' as meet_link;
 import 'package:meet/managers/app.state.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
+import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/views/components/alerts/base_bottom_sheet.dart';
 import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart';
 import 'package:meet/views/scenes/dashboard/dashboard_bloc.dart';
@@ -50,12 +51,16 @@ Future<void> showJoinMeetingDialog(
   VoidCallback? onOpenOutlook,
   VoidCallback? onOpenGoogle,
   VoidCallback? onOpenProton,
-  bool showProtonCalendar = false,
   bool showOutlookCalendar = false,
 }) {
   // Block dialog when in force upgrade state
   final appStateManager = ManagerFactory().get<AppStateManager>();
   final currentState = appStateManager.state;
+
+  final showProtonCalendar = ManagerFactory()
+      .get<DataProviderManager>()
+      .unleashDataProvider
+      .isMeetShowProtonCalendar();
   if (currentState is AppForceUpgradeState) {
     return Future.value();
   }
@@ -117,6 +122,7 @@ Future<void> showJoinPersonalMeetingDialog(
 
   // Read bloc from context before showing modal (context won't be available in builder)
   final dialog = JoinMeetingModel(
+    showProtonCalendar: false,
     onJoin: onJoin,
     initialUrl: initialUrl,
     editable: editable,
@@ -141,6 +147,7 @@ class JoinMeetingModel extends StatefulWidget {
   const JoinMeetingModel({
     required this.title,
     required this.subtitle,
+    required this.showProtonCalendar,
     super.key,
     this.initialUrl,
     this.rRule,
@@ -158,7 +165,6 @@ class JoinMeetingModel extends StatefulWidget {
     this.onOpenOutlook,
     this.onOpenGoogle,
     this.onOpenProton,
-    this.showProtonCalendar = false,
     this.showOutlookCalendar = false,
     this.bloc,
   });
