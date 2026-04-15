@@ -68,6 +68,7 @@ class PreJoinState {
   final bool keepDisplayNameOnDevice;
   final bool
   shouldOverrideAuthDisplayName; // true if we have cached display name to override auth name
+  final String? displayNameFieldError;
 
   PreJoinState({
     this.roomName = '',
@@ -109,6 +110,7 @@ class PreJoinState {
     this.isMeetMobileSpeakerToggleEnabled = false,
     this.keepDisplayNameOnDevice = false,
     this.shouldOverrideAuthDisplayName = false,
+    this.displayNameFieldError,
   });
 
   PreJoinState copyWith({
@@ -152,6 +154,8 @@ class PreJoinState {
     bool? isMeetMobileSpeakerToggleEnabled,
     bool? keepDisplayNameOnDevice,
     bool? shouldOverrideAuthDisplayName,
+    bool resetDisplayNameFieldError = false,
+    String? displayNameFieldError,
   }) {
     return PreJoinState(
       roomName: roomName ?? this.roomName,
@@ -206,6 +210,9 @@ class PreJoinState {
           keepDisplayNameOnDevice ?? this.keepDisplayNameOnDevice,
       shouldOverrideAuthDisplayName:
           shouldOverrideAuthDisplayName ?? this.shouldOverrideAuthDisplayName,
+      displayNameFieldError: resetDisplayNameFieldError
+          ? null
+          : (displayNameFieldError ?? this.displayNameFieldError),
     );
   }
 }

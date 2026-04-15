@@ -36,6 +36,9 @@ class TextFieldTextV2 extends StatefulWidget {
   final double? labelFontSize;
   final double? hintFontSize;
 
+  /// When non-empty, shows error border and message without waiting for blur validation.
+  final String? errorMessageOverride;
+
   const TextFieldTextV2({
     required this.textController,
     required this.myFocusNode,
@@ -69,6 +72,7 @@ class TextFieldTextV2 extends StatefulWidget {
     this.hideBottomBorder = false,
     this.labelFontSize = 15.0,
     this.hintFontSize = 15.0,
+    this.errorMessageOverride,
   });
 
   @override
@@ -79,6 +83,21 @@ class TextFieldTextV2State extends State<TextFieldTextV2> {
   bool isError = false;
   String errorString = "";
   bool isObscureText = true;
+
+  @override
+  void didUpdateWidget(TextFieldTextV2 oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final hadOverride =
+        (oldWidget.errorMessageOverride ?? '').isNotEmpty;
+    final hasOverride =
+        (widget.errorMessageOverride ?? '').isNotEmpty;
+    if (hadOverride && !hasOverride) {
+      setState(() {
+        isError = false;
+        errorString = '';
+      });
+    }
+  }
 
   Color getBorderColor({required bool isFocus}) {
     if (widget.readOnly) {
@@ -93,6 +112,12 @@ class TextFieldTextV2State extends State<TextFieldTextV2> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final hasOverrideError =
+            widget.errorMessageOverride != null &&
+            widget.errorMessageOverride!.isNotEmpty;
+        final showError = hasOverrideError || isError;
+        final bottomErrorText =
+            hasOverrideError ? widget.errorMessageOverride! : errorString;
         return SizedBox(
           width: constraints.maxWidth, // 或 double.infinity
           child: Column(
@@ -147,21 +172,21 @@ class TextFieldTextV2State extends State<TextFieldTextV2> {
                       border: widget.hideBottomBorder
                           ? Border(
                               top: BorderSide(
-                                color: isError
+                                color: showError
                                     ? context.colors.notificationError
                                     : getBorderColor(
                                         isFocus: widget.myFocusNode.hasFocus,
                                       ),
                               ),
                               left: BorderSide(
-                                color: isError
+                                color: showError
                                     ? context.colors.notificationError
                                     : getBorderColor(
                                         isFocus: widget.myFocusNode.hasFocus,
                                       ),
                               ),
                               right: BorderSide(
-                                color: isError
+                                color: showError
                                     ? context.colors.notificationError
                                     : getBorderColor(
                                         isFocus: widget.myFocusNode.hasFocus,
@@ -169,7 +194,7 @@ class TextFieldTextV2State extends State<TextFieldTextV2> {
                               ),
                             )
                           : Border.all(
-                              color: isError
+                              color: showError
                                   ? context.colors.notificationError
                                   : getBorderColor(
                                       isFocus: widget.myFocusNode.hasFocus,
@@ -265,7 +290,7 @@ class TextFieldTextV2State extends State<TextFieldTextV2> {
                           fontSize: widget.hintFontSize ?? 15.0,
                         ),
                         labelText: widget.labelText,
-                        labelStyle: isError
+                        labelStyle: showError
                             ? ProtonStyles.body2Regular(
                                 color: context.colors.notificationError,
                                 fontSize: widget.labelFontSize ?? 15.0,
@@ -292,11 +317,11 @@ class TextFieldTextV2State extends State<TextFieldTextV2> {
                 ),
               ),
               Visibility(
-                visible: isError ? true : false,
+                visible: showError,
                 child: Container(
                   padding: const EdgeInsets.only(left: 15.0, top: 2.0),
                   child: Text(
-                    errorString,
+                    bottomErrorText,
                     style: ProtonStyles.body2Regular(
                       color: context.colors.notificationError,
                     ),
