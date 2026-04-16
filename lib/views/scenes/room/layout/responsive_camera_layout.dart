@@ -395,7 +395,7 @@ class _ResponsiveCameraLayoutState extends State<ResponsiveCameraLayout> {
                               itemHeight,
                               getParticipantDisplayColors(
                                 context,
-                                currentWidgets.indexOf(participantTrack),
+                                participantTrack.participant.identity.hashCode,
                               ),
                               participantTrack,
                               showStatsLayer: false,

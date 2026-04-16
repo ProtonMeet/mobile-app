@@ -77,6 +77,9 @@ class _ChatWidgetState extends State<ChatWidget> {
   final ScrollController _scrollController = ScrollController();
   final ScrollController _inputScrollController = ScrollController();
   final FocusNode _inputFocusNode = FocusNode();
+  final Map<String, ({Color backgroundColor, Color profileTextColor})>
+  _colorCache = {};
+  final Map<String, String> _initialsCache = {};
   bool _isAtTop = true;
 
   // Cache reversed messages to avoid recalculating on every build
@@ -744,13 +747,18 @@ class _ChatWidgetState extends State<ChatWidget> {
   Widget _buildMessageBubble(types.TextMessage message) {
     final authorName = message.author.firstName ?? context.local.unknown;
     final authorId = message.author.id;
-    final initials = getInitials(authorName);
-    // Use index-based colors matching WebApp pattern
-    final colors = getParticipantDisplayColorsByIdentity(
-      context,
-      authorId,
-      widget.participantTracks,
+
+    final initials = _initialsCache.putIfAbsent(
+      authorName,
+      () => getInitials(authorName),
     );
+    final colors = _colorCache.putIfAbsent(authorId, () {
+      final c = getParticipantDisplayColors(context, authorId.hashCode);
+      return (
+        backgroundColor: c.backgroundColor,
+        profileTextColor: c.profileTextColor,
+      );
+    });
 
     return Container(
       width: double.infinity,
@@ -840,13 +848,18 @@ class _ChatWidgetState extends State<ChatWidget> {
   Widget _buildSystemMessageBubble(types.SystemMessage message) {
     final authorName = message.author.firstName ?? context.local.unknown;
     final authorId = message.author.id;
-    final initials = getInitials(authorName);
-    // Use index-based colors matching WebApp pattern
-    final colors = getParticipantDisplayColorsByIdentity(
-      context,
-      authorId,
-      widget.participantTracks,
+
+    final initials = _initialsCache.putIfAbsent(
+      authorName,
+      () => getInitials(authorName),
     );
+    final colors = _colorCache.putIfAbsent(authorId, () {
+      final c = getParticipantDisplayColors(context, authorId.hashCode);
+      return (
+        backgroundColor: c.backgroundColor,
+        profileTextColor: c.profileTextColor,
+      );
+    });
 
     return Container(
       width: double.infinity,

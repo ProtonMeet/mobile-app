@@ -121,7 +121,10 @@ class _FixedSizingCameraLayoutState extends State<FixedSizingCameraLayout> {
                         child: ParticipantWidget.widgetFor(
                           itemWidth - widget.spacing * 2,
                           itemHeight - widget.spacing * 2,
-                          getParticipantDisplayColors(context, index),
+                          getParticipantDisplayColors(
+                            context,
+                            currentWidgets[index].participant.identity.hashCode,
+                          ),
                           currentWidgets[index],
                           showStatsLayer: false,
                           roundedBorder: false,

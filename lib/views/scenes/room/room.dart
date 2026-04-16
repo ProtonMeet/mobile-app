@@ -1250,7 +1250,13 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                 child: ParticipantWidget.widgetFor(
                   224,
                   126,
-                  getParticipantDisplayColors(context, index),
+                  getParticipantDisplayColors(
+                    context,
+                    participantTracksWithoutSpeaker[index]
+                        .participant
+                        .identity
+                        .hashCode,
+                  ),
                   participantTracksWithoutSpeaker[index],
                   showStatsLayer: false,
                   reaction:
@@ -1893,7 +1899,10 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                             child: ParticipantWidget.widgetFor(
                               context.width,
                               context.height,
-                              getParticipantDisplayColors(context, safeIndex),
+                              getParticipantDisplayColors(
+                                context,
+                                tracks[safeIndex].participant.identity.hashCode,
+                              ),
                               tracks[safeIndex],
                               showStatsLayer: false,
                               roundedBorder: false,
@@ -2330,7 +2339,13 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               child: ParticipantWidget.widgetFor(
                 152,
                 192,
-                getParticipantDisplayColors(context, index),
+                getParticipantDisplayColors(
+                  context,
+                  participantTracksWhenScreenSharing[index]
+                      .participant
+                      .identity
+                      .hashCode,
+                ),
                 participantTracksWhenScreenSharing[index],
                 showStatsLayer: false,
                 reaction:
@@ -2374,7 +2389,13 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             child: ParticipantWidget.widgetFor(
               160,
               90,
-              getParticipantDisplayColors(context, index),
+              getParticipantDisplayColors(
+                context,
+                participantTracksWhenScreenSharing[index]
+                    .participant
+                    .identity
+                    .hashCode,
+              ),
               participantTracksWhenScreenSharing[index],
               showStatsLayer: false,
               reaction:

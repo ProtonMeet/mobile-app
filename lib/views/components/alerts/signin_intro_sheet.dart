@@ -117,7 +117,7 @@ class SignInIntroSheet extends StatelessWidget {
                       const SizedBox(height: 8),
                       GradientActionButton(
                         text: context.local.signin_intro_sign_in,
-                        textStyle: ProtonStyles.body2Medium(
+                        textStyle: ProtonStyles.body1Medium(
                           color: context.colors.textNorm,
                         ),
                         colors: [

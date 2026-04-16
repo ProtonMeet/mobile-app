@@ -134,19 +134,26 @@ class _ParticipantListState extends State<ParticipantList> {
             ? _ParticipantListConstants.spacingMedium
             : _ParticipantListConstants.handleHeight);
 
-    return Container(
-      width: double.infinity,
+    return Padding(
       padding: const EdgeInsets.only(bottom: 24),
-      clipBehavior: Clip.antiAlias,
-      decoration: _buildContainerDecoration(context),
-      child: RepaintBoundary(
-        child: ClipRRect(
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(_ParticipantListConstants.borderRadiusLarge),
+          topRight: Radius.circular(
+            _ParticipantListConstants.borderRadiusLarge,
+          ),
+        ),
+        child: RepaintBoundary(
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: _buildParticipantScrollView(
-              context,
-              isLandscape,
-              navBarHeight,
+            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+            child: Container(
+              width: double.infinity,
+              decoration: _buildContainerDecoration(context),
+              child: _buildParticipantScrollView(
+                context,
+                isLandscape,
+                navBarHeight,
+              ),
             ),
           ),
         ),
@@ -313,7 +320,7 @@ class _ParticipantListState extends State<ParticipantList> {
                     participant.participant?.identity ?? participant.name;
                 return RepaintBoundary(
                   key: ValueKey(key),
-                  child: _buildParticipantItem(context, participant, index),
+                  child: _buildParticipantItem(context, participant),
                 );
               },
               childCount: participants.length,
@@ -413,15 +420,11 @@ class _ParticipantListState extends State<ParticipantList> {
     );
   }
 
-  Widget _buildParticipantItem(
-    BuildContext context,
-    ParticipantDetail p,
-    int index,
-  ) {
+  Widget _buildParticipantItem(BuildContext context, ParticipantDetail p) {
     // Cache colors and initials to avoid recalculating on every build
-    final colorKey = '${p.participant?.identity ?? p.name}_$index';
-    final colors = _colorCache.putIfAbsent(colorKey, () {
-      final c = getParticipantDisplayColors(context, index);
+    final participantId = p.participant?.identity ?? p.name;
+    final colors = _colorCache.putIfAbsent(participantId, () {
+      final c = getParticipantDisplayColors(context, participantId.hashCode);
       return (
         backgroundColor: c.backgroundColor,
         profileTextColor: c.profileTextColor,
