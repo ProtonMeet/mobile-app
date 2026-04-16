@@ -82,7 +82,7 @@ class RoomTopBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _buildLeadingWidget(BuildContext context) {
-    final textStyle = ProtonStyles.body2Medium(color: context.colors.textNorm);
+    final textStyle = ProtonStyles.body1Semibold(color: context.colors.interActionNorm);
 
     if (shareScreenWidget != null) {
       return shareScreenWidget!;

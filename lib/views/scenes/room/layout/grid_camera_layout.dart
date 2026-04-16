@@ -112,7 +112,7 @@ class _GridCameraLayoutState extends State<GridCameraLayout> {
                           itemHeight - 16.0,
                           getParticipantDisplayColors(
                             context,
-                            currentWidgets.indexOf(participantTrack),
+                            participantTrack.participant.identity.hashCode,
                           ),
                           participantTrack,
                           showStatsLayer: false,

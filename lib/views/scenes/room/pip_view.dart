@@ -57,7 +57,10 @@ class PipView extends StatelessWidget {
                 child: ParticipantWidget.widgetFor(
                   MediaQuery.of(context).size.width,
                   MediaQuery.of(context).size.height,
-                  getParticipantDisplayColors(context, safeIndex),
+                  getParticipantDisplayColors(
+                    context,
+                    tracks[safeIndex].participant.identity.hashCode,
+                  ),
                   tracks[safeIndex],
                   showStatsLayer: false,
                   roundedBorder: false,

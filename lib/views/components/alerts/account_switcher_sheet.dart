@@ -118,12 +118,7 @@ class AccountSwitcherView extends StatelessWidget {
                     child: Container(
                       width: double.infinity,
                       height: 64,
-                      padding: const EdgeInsets.only(
-                        top: 20,
-                        left: 24,
-                        right: 12,
-                        bottom: 20,
-                      ),
+                      padding: const EdgeInsets.only(left: 24, right: 12),
                       decoration: ShapeDecoration(
                         color: context.colors.backgroundCard,
                         shape: RoundedRectangleBorder(
@@ -160,7 +155,7 @@ class AccountSwitcherView extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 36),
+        const SizedBox(height: 22),
 
         /// Sign out button
         _SignOut(onLogout: onLogout),
