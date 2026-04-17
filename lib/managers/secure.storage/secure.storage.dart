@@ -35,7 +35,10 @@ class SecureStorage implements SecureStorageInterface {
     groupId: 'group.me.proton.meet',
   );
 
-  MacOsOptions getMacOsOptions() => const MacOsOptions();
+  MacOsOptions getMacOsOptions() => const MacOsOptions(
+    accessibility: KeychainAccessibility.first_unlock_this_device,
+    groupId: 'group.me.proton.meet',
+  );
 
   WindowsOptions getWindowsOptions() => const WindowsOptions();
 

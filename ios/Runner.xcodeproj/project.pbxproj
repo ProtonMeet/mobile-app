@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -126,6 +126,7 @@
 		7548DAEC2B1828CB002588F4 /* AppVersionHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVersionHeader.swift; sourceTree = "<group>"; };
 		7568C1752EB0B07D00B469D6 /* Broadcast Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Broadcast Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 		7568C1762EB0B07D00B469D6 /* ReplayKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ReplayKit.framework; path = System/Library/Frameworks/ReplayKit.framework; sourceTree = SDKROOT; };
+		757FFFE02F90BD8E00D61F70 /* RunnerRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RunnerRelease.entitlements; sourceTree = "<group>"; };
 		7594AEF42D8ABC0000FFE3B9 /* Profile.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Profile.xcconfig; path = Flutter/Profile.xcconfig; sourceTree = "<group>"; };
 		759E127C2BB56F1E00B3400B /* FirebaseCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FirebaseCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		75D38E3E2EC1CBD30003D747 /* CallActivityWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CallActivityWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -380,6 +381,7 @@
 				97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */,
 				8BB31FAF2C2C1B43009D3FC8 /* Runner-Black.entitlements */,
 				3F4908122BE391C000999F61 /* Runner.entitlements */,
+				757FFFE02F90BD8E00D61F70 /* RunnerRelease.entitlements */,
 				97C147021CF9000F007C117D /* Info.plist */,
 				1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */,
 				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
@@ -1377,7 +1379,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = AppIcon;
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = NO;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Runner/RunnerRelease.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = 2SB5Z68H26;
 				ENABLE_BITCODE = NO;
