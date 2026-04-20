@@ -990,6 +990,10 @@
   "@emoji_reactions": {
     "description": "Emoji reactions tooltip"
   },
+  "lower_participant_hand": "Lower participant's hand",
+  "@lower_participant_hand": {
+    "description": "Tooltip text for lowering a participant's raised hand"
+  },
   "edit_room": "Raum bearbeiten",
   "@edit_room": {
     "description": "Menu item label to edit a room"
@@ -1537,5 +1541,41 @@
   "almost_there_content_after": ". You will return to Proton Meet automatically.",
   "@almost_there_content_after": {
     "description": "Content after Proton account in almost there bottom sheet"
+  },
+  "app_settings_title": "App settings",
+  "@app_settings_title": {
+    "description": "Title for the app settings bottom sheet"
+  },
+  "settings_section_general": "General",
+  "@settings_section_general": {
+    "description": "Section header in app settings"
+  },
+  "settings_section_support": "Support",
+  "@settings_section_support": {
+    "description": "Section header for support links in app settings"
+  },
+  "settings_section_legal": "Legal",
+  "@settings_section_legal": {
+    "description": "Section header for legal links in app settings"
+  },
+  "languages": "Languages",
+  "@languages": {
+    "description": "Label for language selection in settings"
+  },
+  "privacy_policy": "Privacy policy",
+  "@privacy_policy": {
+    "description": "Link to privacy policy"
+  },
+  "terms_and_conditions": "Terms and conditions",
+  "@terms_and_conditions": {
+    "description": "Link to terms and conditions"
+  },
+  "knowledge_base": "Knowledge base",
+  "@knowledge_base": {
+    "description": "Link to help center / knowledge base"
+  },
+  "system_default_mode": "System default",
+  "@system_default_mode": {
+    "description": "Use device language for app UI"
   }
 }
