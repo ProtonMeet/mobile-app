@@ -4,3 +4,4 @@ gem "fastlane"
 gem "abbrev"
 gem "mutex_m"
 gem "ostruct"
+gem 'cocoapods', '~> 1.16', '>= 1.16.2'
