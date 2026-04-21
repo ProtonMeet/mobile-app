@@ -766,6 +766,7 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
         meetingInfo: state.meetingInfo,
         currentCameraPosition: state.currentCameraPosition,
         audioDeviceCount: state.audioDeviceCount,
+        hasExternalAudioOutput: state.hasExternalAudioOutput,
         isRoomInitialized: state.isRoomInitialized,
         isTrackInitialized: state.isTrackInitialized,
         isRejoining: state.isRejoining,

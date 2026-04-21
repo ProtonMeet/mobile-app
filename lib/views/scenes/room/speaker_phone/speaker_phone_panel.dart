@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
+import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart';
 import 'package:meet/views/scenes/room/room_bloc.dart';
 import 'package:meet/views/scenes/room/room_event.dart';
@@ -115,21 +116,27 @@ class _SpeakerPhonePanelState extends State<SpeakerPhonePanel> {
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   /// Meeting details section
-                  BlocSelector<RoomBloc, RoomState, bool>(
-                    selector: (state) => state.isSpeakerPhone,
-                    builder: (context, isSpeakerPhone) {
+                  BlocSelector<RoomBloc, RoomState, (bool, bool)>(
+                    selector: (state) =>
+                        (state.isSpeakerPhone, state.hasExternalAudioOutput),
+                    builder: (context, data) {
+                      final isSpeakerPhone = data.$1;
+                      final hasExternalAudioOutput = data.$2;
                       return Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildMenuItem(
                             context,
-                            icon: Icon(
-                              Icons.headphones,
-                              size: 24,
-                              color: context.colors.interActionNorm,
-                            ),
-                            label: 'Default device',
+                            icon: hasExternalAudioOutput
+                                ? context.images.iconAudioOutputHeadphones
+                                      .svg24(
+                                        color: context.colors.interActionNorm,
+                                      )
+                                : context.images.iconAudioOutputPhone.svg24(
+                                    color: context.colors.interActionNorm,
+                                  ),
+                            label: context.local.audio_output_default_device,
                             selected: !isSpeakerPhone,
                             onTap: () {
                               context.read<RoomBloc>().add(
@@ -139,12 +146,9 @@ class _SpeakerPhonePanelState extends State<SpeakerPhonePanel> {
                           ),
                           _buildMenuItem(
                             context,
-                            icon: Icon(
-                              Icons.volume_up_rounded,
-                              size: 24,
-                              color: context.colors.interActionNorm,
-                            ),
-                            label: 'Phone speakers',
+                            icon: context.images.iconAudioOutputSpeakerphone
+                                .svg24(color: context.colors.interActionNorm),
+                            label: context.local.audio_output_phone_speakers,
                             selected: isSpeakerPhone,
                             onTap: () {
                               context.read<RoomBloc>().add(

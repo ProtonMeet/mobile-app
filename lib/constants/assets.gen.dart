@@ -48,6 +48,18 @@ class $AssetsImagesIconGen {
   SvgGenImage get icArrowsRotate =>
       const SvgGenImage('assets/images/icon/ic-arrows-rotate.svg');
 
+  /// File path: assets/images/icon/ic-audio-output-headphones.svg
+  SvgGenImage get icAudioOutputHeadphones =>
+      const SvgGenImage('assets/images/icon/ic-audio-output-headphones.svg');
+
+  /// File path: assets/images/icon/ic-audio-output-phone.svg
+  SvgGenImage get icAudioOutputPhone =>
+      const SvgGenImage('assets/images/icon/ic-audio-output-phone.svg');
+
+  /// File path: assets/images/icon/ic-audio-output-speakerphone.svg
+  SvgGenImage get icAudioOutputSpeakerphone =>
+      const SvgGenImage('assets/images/icon/ic-audio-output-speakerphone.svg');
+
   /// File path: assets/images/icon/ic-audio-wave.svg
   SvgGenImage get icAudioWave =>
       const SvgGenImage('assets/images/icon/ic-audio-wave.svg');
@@ -298,6 +310,9 @@ class $AssetsImagesIconGen {
   List<SvgGenImage> get values => [
     icAppNoWord,
     icArrowsRotate,
+    icAudioOutputHeadphones,
+    icAudioOutputPhone,
+    icAudioOutputSpeakerphone,
     icAudioWave,
     icCalendarModalHeader,
     icCalendarTitle,

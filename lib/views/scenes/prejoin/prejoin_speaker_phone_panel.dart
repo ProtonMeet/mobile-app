@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
+import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_bloc.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_event.dart';
@@ -65,21 +66,26 @@ class PreJoinSpeakerPhonePanel extends StatelessWidget {
         if (!isLandscape) const BottomSheetHandleBar(),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: BlocSelector<PreJoinBloc, PreJoinState, bool>(
-            selector: (state) => state.isSpeakerPhoneEnabled,
-            builder: (context, isSpeakerPhone) {
+          child: BlocSelector<PreJoinBloc, PreJoinState, (bool, bool)>(
+            selector: (state) =>
+                (state.isSpeakerPhoneEnabled, state.hasExternalAudioOutput),
+            builder: (context, data) {
+              final isSpeakerPhone = data.$1;
+              final hasExternalAudioOutput = data.$2;
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildMenuItem(
                     context,
-                    icon: Icon(
-                      Icons.headphones,
-                      size: 24,
-                      color: context.colors.interActionNorm,
-                    ),
-                    label: 'Default device',
+                    icon: hasExternalAudioOutput
+                        ? context.images.iconAudioOutputHeadphones.svg24(
+                            color: context.colors.interActionNorm,
+                          )
+                        : context.images.iconAudioOutputPhone.svg24(
+                            color: context.colors.interActionNorm,
+                          ),
+                    label: context.local.audio_output_default_device,
                     selected: !isSpeakerPhone,
                     onTap: () {
                       context.read<PreJoinBloc>().add(
@@ -90,12 +96,10 @@ class PreJoinSpeakerPhonePanel extends StatelessWidget {
                   ),
                   _buildMenuItem(
                     context,
-                    icon: Icon(
-                      Icons.volume_up_rounded,
-                      size: 24,
+                    icon: context.images.iconAudioOutputSpeakerphone.svg24(
                       color: context.colors.interActionNorm,
                     ),
-                    label: 'Phone speakers',
+                    label: context.local.audio_output_phone_speakers,
                     selected: isSpeakerPhone,
                     onTap: () {
                       context.read<PreJoinBloc>().add(

@@ -10,6 +10,7 @@ import 'package:logger/logger.dart';
 import 'package:meet/constants/constants.dart';
 import 'package:meet/helper/extension/bridge_error.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
+import 'package:meet/helper/extension/media_device_list_ext.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/extension/proton.meet.key.extension.dart';
 import 'package:meet/helper/logger.dart' as l;
@@ -417,6 +418,13 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       l.logger.w('[RoomBloc] Error logging joined room: $e');
     }
 
+    // check if there is any external audio output
+    final devices = await Hardware.instance.enumerateDevices();
+    final hasExternalAudioOutput = devices
+        .where((d) => d.kind == 'audiooutput')
+        .hasLabelSuggestingExternalAudioOutput;
+    emit(state.copyWith(hasExternalAudioOutput: hasExternalAudioOutput));
+
     _deviceChangeSub = Hardware.instance.onDeviceChange.stream.listen((value) {
       // skip when rejoin is in progress
       if (state.isRejoining) {
@@ -439,8 +447,16 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
           l.logger.e('[RoomBloc] Error reapplying speakerphone state: $e');
         });
       }
+      final hasExternalAudioOutput = value
+          .where((d) => d.kind == 'audiooutput')
+          .hasLabelSuggestingExternalAudioOutput;
 
-      emit(state.copyWith(audioDeviceCount: currentAudioDeviceCount));
+      emit(
+        state.copyWith(
+          audioDeviceCount: currentAudioDeviceCount,
+          hasExternalAudioOutput: hasExternalAudioOutput,
+        ),
+      );
     });
 
     /// re-sorting participants periodically (longer interval for large groups)
