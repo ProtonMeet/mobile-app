@@ -31,7 +31,7 @@ use mls_spec::{
     Parsable, Serializable,
 };
 use mls_trait::{types::ReceivedMessage, AuthorizerExt, ProposalArg, ProtonMeetIdentityProvider};
-use mls_types::{ContentType, ExternalPskId, MediaType, Member};
+use mls_types::{ContentType, Credential, ExternalPskId, MediaType, Member};
 use proton_claims::reexports::{cose_key_set::CoseKeySet, CwtAny};
 use proton_meet_common::models::{ProtonUser, ProtonUserKey};
 use proton_meet_macro::async_trait;
@@ -2038,9 +2038,14 @@ impl UserService for Service {
             } => {
                 let content_string = String::from_utf8(content)
                     .map_err(|e| anyhow::anyhow!("Failed to convert content to UTF-8: {e}"))?;
-                let mut sender = mls_group.find_member(sender)?;
-                let sender_user_id = sender.credential.user_id()?;
-                Ok((content_string, UserId::new(sender_user_id.id.to_string())))
+                let sender = mls_group.find_member(sender)?;
+                if let Credential::SdCwtDraft04 { claimset, .. } = sender.credential() {
+                    if let Some(claimset) = claimset {
+                        let uuid = Uuid::from_bytes(claimset.uuid);
+                        return Ok((content_string, UserId::new(uuid.to_string())));
+                    }
+                }
+                return Err(anyhow::anyhow!("Failed to get participant id from credential"));
             }
             _ => Err(anyhow::anyhow!(
                 "Expected ApplicationMessage but received different message type: {decrypted_message:?}"
