@@ -323,7 +323,7 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
             ),
             child: CircleAvatar(
               radius: avatarRadius,
-              backgroundColor: context.colors.backgroundNorm,
+              backgroundColor: context.colors.signalDangerMajor3,
               child: context.images.iconConnectionPoor.svg(
                 width: iconSize,
                 height: iconSize,

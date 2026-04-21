@@ -144,6 +144,9 @@ class RoomState extends Equatable {
   /// Audio device count for tracking audio device changes
   final int audioDeviceCount;
 
+  /// True when headphones / headset / Bluetooth audio output is present (from device labels).
+  final bool hasExternalAudioOutput;
+
   /// Room initialized state - true when initial setup is complete and room is ready to display
   final bool isRoomInitialized;
 
@@ -267,6 +270,7 @@ class RoomState extends Equatable {
     this.meetingInfo,
     this.currentCameraPosition,
     this.audioDeviceCount = 0,
+    this.hasExternalAudioOutput = false,
     this.isRoomInitialized = false,
     this.isTrackInitialized = false,
     this.isRejoining = false,
@@ -332,6 +336,7 @@ class RoomState extends Equatable {
     FrbMeetingInfo? meetingInfo,
     CameraPosition? currentCameraPosition,
     int? audioDeviceCount,
+    bool? hasExternalAudioOutput,
     bool? isRoomInitialized,
     bool? isTrackInitialized,
     bool? isRejoining,
@@ -406,6 +411,8 @@ class RoomState extends Equatable {
       currentCameraPosition:
           currentCameraPosition ?? this.currentCameraPosition,
       audioDeviceCount: audioDeviceCount ?? this.audioDeviceCount,
+      hasExternalAudioOutput:
+          hasExternalAudioOutput ?? this.hasExternalAudioOutput,
       isRoomInitialized: isRoomInitialized ?? this.isRoomInitialized,
       isTrackInitialized: isTrackInitialized ?? this.isTrackInitialized,
       isRejoining: isRejoining ?? this.isRejoining,
@@ -487,6 +494,7 @@ class RoomState extends Equatable {
     meetingInfo,
     currentCameraPosition,
     audioDeviceCount,
+    hasExternalAudioOutput,
     isRoomInitialized,
     isTrackInitialized,
     isRejoining,

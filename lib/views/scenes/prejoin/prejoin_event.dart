@@ -81,6 +81,11 @@ class SetSpeakerPhoneEnabled extends PreJoinEvent {
   SetSpeakerPhoneEnabled({required this.enabled});
 }
 
+class PreJoinAudioOutputDevicesChanged extends PreJoinEvent {
+  final bool hasExternalAudioOutput;
+  PreJoinAudioOutputDevicesChanged({required this.hasExternalAudioOutput});
+}
+
 class SwapVideo extends PreJoinEvent {}
 
 class ToggleKeepDisplayName extends PreJoinEvent {

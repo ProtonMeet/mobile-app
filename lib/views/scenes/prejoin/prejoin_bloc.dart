@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/helper/extension/local_video_track_extension.dart';
+import 'package:meet/helper/extension/media_device_list_ext.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/user.agent.dart';
@@ -21,6 +22,8 @@ import 'prejoin_state.dart';
 class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
   final UserAgent userAgent;
   final ManagerFactory serviceManager;
+
+  StreamSubscription? _deviceChangeSub;
 
   PreJoinBloc(this.userAgent, this.serviceManager) : super(PreJoinState()) {
     on<PreJoinInitialized>(_onInitialized);
@@ -56,8 +59,19 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       (event, emit) =>
           emit(state.copyWith(isSpeakerPhoneEnabled: event.enabled)),
     );
+    on<PreJoinAudioOutputDevicesChanged>(
+      (event, emit) => emit(
+        state.copyWith(hasExternalAudioOutput: event.hasExternalAudioOutput),
+      ),
+    );
     on<SwapVideo>(_onSwapVideo);
     on<ToggleKeepDisplayName>(_onToggleKeepDisplayName);
+  }
+
+  @override
+  Future<void> close() async {
+    await _deviceChangeSub?.cancel();
+    return super.close();
   }
 
   Future<void> _onResetLoadingState(
@@ -256,6 +270,8 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       final speakerDevices = devices
           .where((d) => d.kind == 'audiooutput')
           .toList();
+      final hasExternalAudioOutput =
+          speakerDevices.hasLabelSuggestingExternalAudioOutput;
 
       LocalAudioTrack? audioTrack;
       LocalVideoTrack? videoTrack;
@@ -304,9 +320,24 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
           userConfig: userConfig,
           versionDisplay: versionDisplay,
           isMeetMobileSpeakerToggleEnabled: isMeetMobileSpeakerToggleEnabled,
+          hasExternalAudioOutput: hasExternalAudioOutput,
           videoCodec: preferredCodec, // Set based on unleash flag
         ),
       );
+
+      await _deviceChangeSub?.cancel();
+      _deviceChangeSub = Hardware.instance.onDeviceChange.stream.listen((
+        value,
+      ) {
+        final nextHasExternal = value
+            .where((d) => d.kind == 'audiooutput')
+            .hasLabelSuggestingExternalAudioOutput;
+        add(
+          PreJoinAudioOutputDevicesChanged(
+            hasExternalAudioOutput: nextHasExternal,
+          ),
+        );
+      });
     } catch (e) {
       emit(state.copyWith(isLoading: false, error: e.toString()));
     }

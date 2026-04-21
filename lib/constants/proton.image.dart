@@ -36,6 +36,9 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
   final SvgGenImage iconSpeakerOn;
   final SvgGenImage iconSpeakerOff;
   final SvgGenImage iconSpeakerPhone;
+  final SvgGenImage iconAudioOutputPhone;
+  final SvgGenImage iconAudioOutputHeadphones;
+  final SvgGenImage iconAudioOutputSpeakerphone;
   final SvgGenImage iconMore;
   final SvgGenImage iconReload;
 
@@ -124,6 +127,9 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
     required this.iconSpeakerOn,
     required this.iconSpeakerOff,
     required this.iconSpeakerPhone,
+    required this.iconAudioOutputPhone,
+    required this.iconAudioOutputHeadphones,
+    required this.iconAudioOutputSpeakerphone,
     required this.iconReload,
     required this.iconAudioOn,
     required this.iconAudioOff,
@@ -203,6 +209,9 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
     SvgGenImage? iconSpeakerOn,
     SvgGenImage? iconSpeakerOff,
     SvgGenImage? iconSpeakerPhone,
+    SvgGenImage? iconAudioOutputPhone,
+    SvgGenImage? iconAudioOutputHeadphones,
+    SvgGenImage? iconAudioOutputSpeakerphone,
     SvgGenImage? iconReload,
     SvgGenImage? iconAudioOn,
     SvgGenImage? iconAudioOff,
@@ -280,6 +289,11 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
       iconSpeakerOn: iconSpeakerOn ?? this.iconSpeakerOn,
       iconSpeakerOff: iconSpeakerOff ?? this.iconSpeakerOff,
       iconSpeakerPhone: iconSpeakerPhone ?? this.iconSpeakerPhone,
+      iconAudioOutputPhone: iconAudioOutputPhone ?? this.iconAudioOutputPhone,
+      iconAudioOutputHeadphones:
+          iconAudioOutputHeadphones ?? this.iconAudioOutputHeadphones,
+      iconAudioOutputSpeakerphone:
+          iconAudioOutputSpeakerphone ?? this.iconAudioOutputSpeakerphone,
       iconAudioOn: iconAudioOn ?? this.iconAudioOn,
       iconAudioOff: iconAudioOff ?? this.iconAudioOff,
       iconVideoOn: iconVideoOn ?? this.iconVideoOn,
@@ -368,6 +382,9 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
       iconSpeakerOn: other.iconSpeakerOn,
       iconSpeakerOff: other.iconSpeakerOff,
       iconSpeakerPhone: other.iconSpeakerPhone,
+      iconAudioOutputPhone: other.iconAudioOutputPhone,
+      iconAudioOutputHeadphones: other.iconAudioOutputHeadphones,
+      iconAudioOutputSpeakerphone: other.iconAudioOutputSpeakerphone,
       iconAudioOn: other.iconAudioOn,
       iconAudioOff: other.iconAudioOff,
       iconVideoOn: other.iconVideoOn,
@@ -446,6 +463,9 @@ final lightImageExtension = ProtonImages(
   iconClose: Assets.images.icon.icCross,
   iconSwapCamera: Assets.images.icon.icSwapCam,
   iconSpeakerPhone: Assets.images.icon.icSpeakerPhone,
+  iconAudioOutputPhone: Assets.images.icon.icAudioOutputPhone,
+  iconAudioOutputHeadphones: Assets.images.icon.icAudioOutputHeadphones,
+  iconAudioOutputSpeakerphone: Assets.images.icon.icAudioOutputSpeakerphone,
   iconAudioOn: Assets.images.icon.icMicOn,
   iconAudioOff: Assets.images.icon.icMicOff,
   iconVideoOn: Assets.images.icon.icVideoOn,
@@ -524,6 +544,9 @@ final darkImageExtension = ProtonImages(
   iconClose: Assets.images.icon.icCross,
   iconSwapCamera: Assets.images.icon.icSwapCam,
   iconSpeakerPhone: Assets.images.icon.icSpeakerPhone,
+  iconAudioOutputPhone: Assets.images.icon.icAudioOutputPhone,
+  iconAudioOutputHeadphones: Assets.images.icon.icAudioOutputHeadphones,
+  iconAudioOutputSpeakerphone: Assets.images.icon.icAudioOutputSpeakerphone,
   iconAudioOn: Assets.images.icon.icMicOn,
   iconAudioOff: Assets.images.icon.icMicOff,
   iconVideoOn: Assets.images.icon.icVideoOn,
