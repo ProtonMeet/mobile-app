@@ -237,8 +237,11 @@ mod tests {
         let service1 = create_test_service("user_id", meet_link_name).await;
         let service2 = create_test_service("user_id2", meet_link_name).await;
 
-        let (group, _group2) =
+        let (group1, _group2) =
             setup_two_user_group(&service1, &service2, meet_link_name, config.ciphersuite).await;
+
+        // Sender is service1: same ProtonMeetClaims.uuid as service1's own leaf on their group.
+        let expected_sender_uuid = proton_claims_uuid_for_group_own_leaf(&group1).await;
 
         // Test message encryption/decryption
         let message = "Hello, world!";
@@ -253,10 +256,10 @@ mod tests {
             .unwrap();
 
         assert_eq!(decrypted_message, message);
-        assert_eq!(sender_id, UserId::new("user_id".to_string()));
+        assert_eq!(sender_id, UserId::new(expected_sender_uuid.to_string()));
 
         // Verify group state
-        assert_eq!(group.read().await.roster().count(), 2);
+        assert_eq!(group1.read().await.roster().count(), 2);
     }
 
     #[tokio::test]
@@ -446,7 +449,7 @@ mod tests {
         assert_eq!(decrypted, message);
         assert_eq!(
             sender_id.to_string(),
-            user_token_info1.user_identifier.id.to_string()
+            proton_claims_uuid_for_group_own_leaf(&group1).await.to_string()
         );
 
         // Verify reverse direction
@@ -464,7 +467,7 @@ mod tests {
         assert_eq!(decrypted2, message2);
         assert_eq!(
             sender_id2.to_string(),
-            user_token_info2.user_identifier.id.to_string()
+            proton_claims_uuid_for_group_own_leaf(&group2).await.to_string()
         );
 
         // ========== Part 2: Add User3 and User4 in a single commit ==========
@@ -763,7 +766,7 @@ mod tests {
         assert_eq!(decrypted_by_1, message_from_3);
         assert_eq!(
             sender_from_3.to_string(),
-            user_token_info3.user_identifier.id.to_string()
+            proton_claims_uuid_for_group_own_leaf(&group3).await.to_string()
         );
 
         let (decrypted_by_4, sender_from_3_to_4) = service4
@@ -773,7 +776,7 @@ mod tests {
         assert_eq!(decrypted_by_4, message_from_3);
         assert_eq!(
             sender_from_3_to_4.to_string(),
-            user_token_info3.user_identifier.id.to_string()
+            proton_claims_uuid_for_group_own_leaf(&group3).await.to_string()
         );
 
         // Verify user4 can also send messages
@@ -790,7 +793,7 @@ mod tests {
         assert_eq!(decrypted_by_2, message_from_4);
         assert_eq!(
             sender_from_4.to_string(),
-            user_token_info4.user_identifier.id.to_string()
+            proton_claims_uuid_for_group_own_leaf(&group4).await.to_string()
         );
     }
 
@@ -2471,6 +2474,33 @@ mod tests {
         // Roster sizes should be reasonable (between 2-3 depending on processing order)
         assert!(group1_roster_size == 2, "Group1 roster size should be 2");
         assert!(group2_roster_size == 2, "Group2 roster size should be 2");
+    }
+
+    /// Matches [`Service::decrypt_application_message`](crate::service::service::Service::decrypt_application_message):
+    /// sender id is `ProtonMeetClaims.uuid` on the MLS credential.
+    fn proton_claims_uuid_from_member(member: &mls_types::Member) -> Uuid {
+        match member.credential() {
+            mls_types::Credential::SdCwtDraft04 {
+                claimset: Some(claims),
+                ..
+            } => Uuid::from_bytes(claims.uuid),
+            _ => panic!("expected SdCwtDraft04 credential with claimset"),
+        }
+    }
+
+    /// Claim UUID for this group's **local** member (own leaf) — i.e. the encrypting peer's
+    /// `ProtonMeetClaims.uuid` when passed that peer's `MlsGroup`.
+    async fn proton_claims_uuid_for_group_own_leaf(
+        group: &Arc<RwLock<MlsGroup<MemKv>>>,
+    ) -> Uuid {
+        let g = group.read().await;
+        let own = g.own_leaf_index().unwrap();
+        let members: Vec<_> = g.roster().collect();
+        members
+            .iter()
+            .find(|m| m.leaf_index() == own)
+            .map(|m| proton_claims_uuid_from_member(m))
+            .expect("own leaf in roster")
     }
 
     async fn setup_two_user_group(
