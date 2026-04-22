@@ -233,8 +233,9 @@ class _ParticipantListState extends State<ParticipantList> {
                   final isPaidUser = data.$2;
                   final meetingInfo = data.$3;
                   final participantCount = widget.participants.length;
+                  final isGuestMeetingRoom = _isGuestMeetingRoom(meetingInfo);
 
-                  if (!isHost || meetingInfo == null) {
+                  if ((!isHost && !isGuestMeetingRoom) || meetingInfo == null) {
                     return const SizedBox.shrink();
                   }
 
@@ -333,6 +334,10 @@ class _ParticipantListState extends State<ParticipantList> {
     );
   }
 
+  bool _isGuestMeetingRoom(FrbMeetingInfo? meetingInfo) {
+    return (meetingInfo?.maxParticipants ?? 4) <= 4;
+  }
+
   Widget _buildHeader(BuildContext context) {
     return RepaintBoundary(
       child: Container(
@@ -374,7 +379,9 @@ class _ParticipantListState extends State<ParticipantList> {
                 // From design, we only show the max participants count if the user is the host
                 final isHost = data.$2;
                 final participantCount = widget.participants.length;
-                final countText = (meetingInfo != null && isHost)
+                final isGuestMeetingRoom = _isGuestMeetingRoom(meetingInfo);
+                final countText =
+                    (meetingInfo != null && (isHost || isGuestMeetingRoom))
                     ? '($participantCount/${meetingInfo.maxParticipants})'
                     : '($participantCount)';
                 final isAtLimit =
