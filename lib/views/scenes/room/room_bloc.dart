@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -418,14 +419,50 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       l.logger.w('[RoomBloc] Error logging joined room: $e');
     }
 
-    // check if there is any external audio output
+    // check if there is any external audio output (label heuristic and/or audio session)
     final devices = await Hardware.instance.enumerateDevices();
-    final hasExternalAudioOutput = devices
-        .where((d) => d.kind == 'audiooutput')
-        .hasLabelSuggestingExternalAudioOutput;
+    final speakerDevices = devices.where((d) => d.kind == 'audiooutput');
+    final hasLabelSuggestingExternalAudioOutput =
+        speakerDevices.hasLabelSuggestingExternalAudioOutput;
+
+    bool hasExternalAudioOutputFromAudioSession = false;
+    try {
+      final audioSession = await AudioSession.instance;
+      final sessionDevices = await audioSession.getDevices();
+      hasExternalAudioOutputFromAudioSession = sessionDevices.any(
+        (device) => device.type.isExternalAudioOutput,
+      );
+
+      // listen to audio session devices changed event as well, or device change event from hardware may triggered faster than audio session devices changed event
+      audioSession.devicesChangedEventStream.listen((event) async {
+        final sessionDevices = await audioSession.getDevices();
+        final audioSessionHasExternal = sessionDevices.any(
+          (device) => device.type.isExternalAudioOutput,
+        );
+        final hardwareDevices = await Hardware.instance.enumerateDevices();
+        final labelSuggestingExternalAudioOutput = hardwareDevices
+            .where((d) => d.kind == 'audiooutput')
+            .hasLabelSuggestingExternalAudioOutput;
+
+        final hasExternalAudioOutput =
+            labelSuggestingExternalAudioOutput || audioSessionHasExternal;
+        if (hasExternalAudioOutput != state.hasExternalAudioOutput) {
+          emit(state.copyWith(hasExternalAudioOutput: hasExternalAudioOutput));
+        }
+      });
+    } catch (e) {
+      l.logger.w('[RoomBloc] Error checking audio session: $e');
+    }
+
+    // Identify if there is any external audio output devic based on label or audio session
+    final hasExternalAudioOutput =
+        hasLabelSuggestingExternalAudioOutput ||
+        hasExternalAudioOutputFromAudioSession;
     emit(state.copyWith(hasExternalAudioOutput: hasExternalAudioOutput));
 
-    _deviceChangeSub = Hardware.instance.onDeviceChange.stream.listen((value) {
+    _deviceChangeSub = Hardware.instance.onDeviceChange.stream.listen((
+      value,
+    ) async {
       // skip when rejoin is in progress
       if (state.isRejoining) {
         l.logger.d(
@@ -447,9 +484,24 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
           l.logger.e('[RoomBloc] Error reapplying speakerphone state: $e');
         });
       }
-      final hasExternalAudioOutput = value
+      final nextHasExternal = value
           .where((d) => d.kind == 'audiooutput')
           .hasLabelSuggestingExternalAudioOutput;
+
+      bool hasExternalAudioOutputFromAudioSession = false;
+      try {
+        final audioSession = await AudioSession.instance;
+        final sessionDevices = await audioSession.getDevices();
+        hasExternalAudioOutputFromAudioSession = sessionDevices.any(
+          (device) => device.type.isExternalAudioOutput,
+        );
+      } catch (e) {
+        l.logger.w('[RoomBloc] Error checking audio session: $e');
+      }
+
+      // Identify if there is any external audio output devic based on label or audio session
+      final hasExternalAudioOutput =
+          nextHasExternal || hasExternalAudioOutputFromAudioSession;
 
       emit(
         state.copyWith(
