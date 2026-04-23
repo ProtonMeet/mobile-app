@@ -137,6 +137,9 @@ dependencies:
   add_2_calendar: ^3.0.1
   flutter_sticky_header: ^0.8.0
 
+  # check audio session and devices
+  audio_session: ^0.2.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

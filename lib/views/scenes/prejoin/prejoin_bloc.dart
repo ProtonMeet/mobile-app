@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/helper/extension/local_video_track_extension.dart';
@@ -270,8 +271,45 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       final speakerDevices = devices
           .where((d) => d.kind == 'audiooutput')
           .toList();
-      final hasExternalAudioOutput =
+      final hasLabelSuggestingExternalAudioOutput =
           speakerDevices.hasLabelSuggestingExternalAudioOutput;
+
+      bool hasExternalAudioOutputFromAudioSession = false;
+      try {
+        final audioSession = await AudioSession.instance;
+        final devices = await audioSession.getDevices();
+        hasExternalAudioOutputFromAudioSession = devices.any(
+          (device) => device.type.isExternalAudioOutput,
+        );
+        // listen to audio session devices changed event as well, or device change event from hardware may triggered faster than audio session devices changed event
+        audioSession.devicesChangedEventStream.listen((event) async {
+          final sessionDevices = await audioSession.getDevices();
+          final audioSessionHasExternal = sessionDevices.any(
+            (device) => device.type.isExternalAudioOutput,
+          );
+          final hardwareDevices = await Hardware.instance.enumerateDevices();
+          final labelSuggestingExternalAudioOutput = hardwareDevices
+              .where((d) => d.kind == 'audiooutput')
+              .hasLabelSuggestingExternalAudioOutput;
+
+          final hasExternalAudioOutput =
+              labelSuggestingExternalAudioOutput || audioSessionHasExternal;
+          if (hasExternalAudioOutput != state.hasExternalAudioOutput) {
+            add(
+              PreJoinAudioOutputDevicesChanged(
+                hasExternalAudioOutput: hasExternalAudioOutput,
+              ),
+            );
+          }
+        });
+      } catch (e) {
+        l.logger.w('[PreJoinBloc] Error checking audio session: $e');
+      }
+
+      // Identify if there is any external audio output devic based on label or audio session
+      final hasExternalAudioOutput =
+          hasLabelSuggestingExternalAudioOutput ||
+          hasExternalAudioOutputFromAudioSession;
 
       LocalAudioTrack? audioTrack;
       LocalVideoTrack? videoTrack;
@@ -328,13 +366,28 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       await _deviceChangeSub?.cancel();
       _deviceChangeSub = Hardware.instance.onDeviceChange.stream.listen((
         value,
-      ) {
+      ) async {
         final nextHasExternal = value
             .where((d) => d.kind == 'audiooutput')
             .hasLabelSuggestingExternalAudioOutput;
+        bool hasExternalAudioOutputFromAudioSession = false;
+        try {
+          final audioSession = await AudioSession.instance;
+          final devices = await audioSession.getDevices();
+          hasExternalAudioOutputFromAudioSession = devices.any(
+            (device) => device.type.isExternalAudioOutput,
+          );
+        } catch (e) {
+          l.logger.w('[PreJoinBloc] Error checking audio session: $e');
+        }
+
+        // Identify if there is any external audio output devic based on label or audio session
+        final hasExternalAudioOutput =
+            nextHasExternal || hasExternalAudioOutputFromAudioSession;
+
         add(
           PreJoinAudioOutputDevicesChanged(
-            hasExternalAudioOutput: nextHasExternal,
+            hasExternalAudioOutput: hasExternalAudioOutput,
           ),
         );
       });

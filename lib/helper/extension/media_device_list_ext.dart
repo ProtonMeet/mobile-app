@@ -1,3 +1,6 @@
+// ignore_for_file: experimental_member_use
+
+import 'package:audio_session/audio_session.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 extension MediaDeviceIterableExtension on Iterable<MediaDevice> {
@@ -38,6 +41,26 @@ extension MediaDeviceListExtension on List<MediaDevice> {
       return firstWhere((d) => d.deviceId == deviceId);
     } catch (e) {
       return null;
+    }
+  }
+}
+
+/// Extension to check if the audio device type is a headset.
+///
+/// Note: AudioDeviceType is experimental and may change in future versions.
+/// This mapping is based on current known behaviors and should be reviewed
+/// when updating the underlying audio plugin.
+extension AudioDeviceTypeX on AudioDeviceType {
+  bool get isExternalAudioOutput {
+    switch (this) {
+      case AudioDeviceType.wiredHeadset:
+      case AudioDeviceType.wiredHeadphones:
+      case AudioDeviceType.bluetoothA2dp:
+      case AudioDeviceType.bluetoothSco:
+      case AudioDeviceType.hearingAid:
+        return true;
+      default:
+        return false;
     }
   }
 }
