@@ -23,9 +23,8 @@ class ExpandableStart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sigma = 3.0;
-    final bgColor = context.colors.interActionWeekMinor2.withValues(
-      alpha: 0.40,
-    );
+    final bgColor = Colors.white.withValues(alpha: 0.18);
+    final borderColor = Colors.white.withValues(alpha: 0.04);
     return Align(
       alignment: Alignment.bottomCenter,
       child: Padding(
@@ -46,7 +45,7 @@ class ExpandableStart extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         decoration: BoxDecoration(
                           color: bgColor,
-                          border: Border.all(color: bgColor),
+                          border: Border.all(color: borderColor),
                           borderRadius: BorderRadius.circular(40),
                         ),
                         child: Center(
@@ -63,7 +62,7 @@ class ExpandableStart extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
-                      border: Border.all(color: bgColor),
+                      border: Border.all(color: borderColor),
                       borderRadius: BorderRadius.circular(40),
                       color: bgColor,
                     ),
