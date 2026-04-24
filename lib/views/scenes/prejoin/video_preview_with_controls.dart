@@ -4,6 +4,7 @@ import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
+import 'package:meet/views/components/custom.loading.dart';
 import 'package:meet/views/components/safe_video_track_renderer.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_bloc.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_speaker_phone_panel.dart';
@@ -109,6 +110,7 @@ class VideoPreviewWithControls extends StatelessWidget {
                                       child: Container(
                                         width: 72,
                                         height: 72,
+                                        alignment: Alignment.center,
                                         decoration: ShapeDecoration(
                                           color: context
                                               .colors
@@ -119,22 +121,20 @@ class VideoPreviewWithControls extends StatelessWidget {
                                             ),
                                           ),
                                         ),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              getInitials(displayName),
-                                              textAlign: TextAlign.center,
-                                              style: ProtonStyles.body2Medium(
-                                                fontSize: 18.0,
-                                                color:
-                                                    context.colors.textInverted,
+                                        child:
+                                            (displayName?.trim().isEmpty ??
+                                                true)
+                                            ? const SizedBox.shrink()
+                                            : Text(
+                                                getInitials(displayName),
+                                                textAlign: TextAlign.center,
+                                                style: ProtonStyles.body2Medium(
+                                                  fontSize: 18.0,
+                                                  color: context
+                                                      .colors
+                                                      .textInverted,
+                                                ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
                                       ),
                                     ),
                             ),
