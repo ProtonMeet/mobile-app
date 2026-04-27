@@ -579,6 +579,14 @@
   "@switch_speakerphone_off": {
     "description": "Tooltip for switching audio output back to the default device"
   },
+  "audio_output_default_device": "Default device",
+  "@audio_output_default_device": {
+    "description": "Bottom sheet option: use default audio output routing (e.g. earpiece or headphones)"
+  },
+  "audio_output_phone_speakers": "Phone speakers",
+  "@audio_output_phone_speakers": {
+    "description": "Bottom sheet option: use the phone built-in loudspeaker"
+  },
   "please_grant_camera_permission": "Conceda permissão de câmera para continuar",
   "@please_grant_camera_permission": {
     "description": "Message requesting camera permission"
