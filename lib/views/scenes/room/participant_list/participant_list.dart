@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
@@ -9,6 +7,7 @@ import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/local_toast.dart';
 
 import 'package:meet/rust/proton_meet/models/meeting_info.dart';
+import 'package:meet/views/components/alerts/base_bottom_sheet_v2.dart';
 import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 import 'package:meet/views/scenes/room/room_bloc.dart';
@@ -54,7 +53,6 @@ class _ParticipantListConstants {
   static const double spacingSmall = 4.0;
   static const double spacingMedium = 8.0;
   static const double spacingLarge = 16.0;
-  static const double borderRadiusLarge = 40.0;
   static const double borderRadiusMedium = 24.0;
   static const double borderRadiusAvatar = 20002.0;
 }
@@ -64,61 +62,16 @@ class _ParticipantListState extends State<ParticipantList> {
   final Map<String, ({Color backgroundColor, Color profileTextColor})>
   _colorCache = {};
   final Map<String, String> _initialsCache = {};
-  final ScrollController _scrollController = ScrollController();
-  bool _isAtTop = true;
 
   List<ParticipantDetail> get _filteredParticipants => widget.participants;
 
   @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_onScroll);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-  }
-
-  @override
-  void dispose() {
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _onScroll() {
-    final isAtTop = _scrollController.position.pixels <= 0;
-    if (_isAtTop != isAtTop) {
-      setState(() {
-        _isAtTop = isAtTop;
-      });
-    }
-  }
-
-  @override
   void didUpdateWidget(ParticipantList oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Clear cache if participants list changed significantly
     if (widget.participants.length != oldWidget.participants.length) {
       _colorCache.clear();
       _initialsCache.clear();
     }
-  }
-
-  Decoration _buildContainerDecoration(BuildContext context) {
-    return ShapeDecoration(
-      color: context.colors.blurBottomSheetBackground,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.03)),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(_ParticipantListConstants.borderRadiusLarge),
-          topRight: Radius.circular(
-            _ParticipantListConstants.borderRadiusLarge,
-          ),
-        ),
-      ),
-    );
   }
 
   @override
@@ -134,204 +87,133 @@ class _ParticipantListState extends State<ParticipantList> {
             ? _ParticipantListConstants.spacingMedium
             : _ParticipantListConstants.handleHeight);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(_ParticipantListConstants.borderRadiusLarge),
-          topRight: Radius.circular(
-            _ParticipantListConstants.borderRadiusLarge,
-          ),
-        ),
-        child: RepaintBoundary(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-            child: Container(
-              width: double.infinity,
-              decoration: _buildContainerDecoration(context),
-              child: _buildParticipantScrollView(
-                context,
-                isLandscape,
-                navBarHeight,
-              ),
-            ),
-          ),
-        ),
-      ),
+    return BaseBottomSheetV2.withPinnedSliverScroll(
+      isLandscape: isLandscape,
+      blurSigma: 14,
+      toolbarHeight: navBarHeight,
+      flexibleSpaceChild: _buildPinnedHeader(context, isLandscape),
+      slivers: _buildSlivers(context),
     );
   }
 
-  Widget _buildParticipantScrollView(
-    BuildContext context,
-    bool isLandscape,
-    double navBarHeight,
-  ) {
-    final participants = _filteredParticipants;
-    final topSpacing = isLandscape
-        ? _ParticipantListConstants.spacingMedium
-        : _ParticipantListConstants.handleHeight;
-
-    return CustomScrollView(
-      controller: _scrollController,
-      physics: const ClampingScrollPhysics(),
-      slivers: [
-        SliverAppBar(
-          pinned: true,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          automaticallyImplyLeading: false,
-          toolbarHeight: navBarHeight,
-          expandedHeight: navBarHeight,
-          flexibleSpace: SizedBox.expand(
-            child: ClipRRect(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(
-                  _ParticipantListConstants.borderRadiusMedium,
-                ),
-                topRight: Radius.circular(
-                  _ParticipantListConstants.borderRadiusMedium,
-                ),
-              ),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: DecoratedBox(
-                  decoration: ShapeDecoration(
-                    color: context.colors.clear,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(
-                          _ParticipantListConstants.borderRadiusMedium,
-                        ),
-                        topRight: Radius.circular(
-                          _ParticipantListConstants.borderRadiusMedium,
-                        ),
-                      ),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (!isLandscape)
-                        const BottomSheetHandleBar()
-                      else
-                        SizedBox(height: topSpacing),
-                      _buildHeader(context),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child:
-              BlocSelector<RoomBloc, RoomState, (bool, bool, FrbMeetingInfo?)>(
-                selector: (state) =>
-                    (state.isHost, state.isPaidUser, state.meetingInfo),
-                builder: (context, data) {
-                  final isHost = data.$1;
-                  final isPaidUser = data.$2;
-                  final meetingInfo = data.$3;
-                  final participantCount = widget.participants.length;
-                  final isGuestMeetingRoom = _isGuestMeetingRoom(meetingInfo);
-
-                  if ((!isHost && !isGuestMeetingRoom) || meetingInfo == null) {
-                    return const SizedBox.shrink();
-                  }
-
-                  final isAtLimit =
-                      participantCount >= meetingInfo.maxParticipants;
-
-                  return Container(
-                    margin: const EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      bottom: 16,
-                    ),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.04),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isPaidUser
-                              ? context.local.you_are_using_paid_meet_plan
-                              : context.local.you_are_using_free_meet_plan,
-                          style: ProtonStyles.body2Medium(
-                            color: isAtLimit
-                                ? context.colors.notificationError
-                                : context.colors.protonBlue,
-                          ),
-                        ),
-                        RichText(
-                          text: TextSpan(
-                            style: ProtonStyles.body2Regular(
-                              color: context.colors.textWeak,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: isAtLimit
-                                    ? context.local.call_reached_limit
-                                    : context.local.call_supports_up_to,
-                              ),
-                              TextSpan(
-                                text: '${meetingInfo.maxParticipants}',
-                                style: ProtonStyles.body2Regular(
-                                  color: context.colors.textWeak,
-                                ),
-                              ),
-                              TextSpan(
-                                text: isAtLimit
-                                    ? context
-                                          .local
-                                          .participants_reached_limit_suffix
-                                    : context.local.participants_suffix,
-                              ),
-                              if (isAtLimit) ...[
-                                const TextSpan(text: '\n'),
-                                TextSpan(
-                                  text: context
-                                      .local
-                                      .no_more_participants_can_join,
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-        ),
-        if (participants.isEmpty)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: _buildEmptyState(context),
-          )
+  Widget _buildPinnedHeader(BuildContext context, bool isLandscape) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (!isLandscape)
+          const BottomSheetHandleBar()
         else
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final participant = participants[index];
-                final key =
-                    participant.participant?.identity ?? participant.name;
-                return RepaintBoundary(
-                  key: ValueKey(key),
-                  child: _buildParticipantItem(context, participant),
-                );
-              },
-              childCount: participants.length,
-              addAutomaticKeepAlives: false,
-              addRepaintBoundaries:
-                  false, // We're adding RepaintBoundary manually
-            ),
-          ),
+          const SizedBox(height: _ParticipantListConstants.spacingMedium),
+        _buildHeader(context),
       ],
     );
+  }
+
+  List<Widget> _buildSlivers(BuildContext context) {
+    final participants = _filteredParticipants;
+    return [
+      SliverToBoxAdapter(
+        child: BlocSelector<RoomBloc, RoomState, (bool, bool, FrbMeetingInfo?)>(
+          selector: (state) =>
+              (state.isHost, state.isPaidUser, state.meetingInfo),
+          builder: (context, data) {
+            final isHost = data.$1;
+            final isPaidUser = data.$2;
+            final meetingInfo = data.$3;
+            final participantCount = widget.participants.length;
+            final isGuestMeetingRoom = _isGuestMeetingRoom(meetingInfo);
+
+            if ((!isHost && !isGuestMeetingRoom) || meetingInfo == null) {
+              return const SizedBox.shrink();
+            }
+
+            final isAtLimit = participantCount >= meetingInfo.maxParticipants;
+
+            return Container(
+              margin: const EdgeInsets.only(
+                left: 16,
+                right: 16,
+                bottom: 16,
+              ),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isPaidUser
+                        ? context.local.you_are_using_paid_meet_plan
+                        : context.local.you_are_using_free_meet_plan,
+                    style: ProtonStyles.body2Medium(
+                      color: isAtLimit
+                          ? context.colors.notificationError
+                          : context.colors.protonBlue,
+                    ),
+                  ),
+                  RichText(
+                    text: TextSpan(
+                      style: ProtonStyles.body2Regular(
+                        color: context.colors.textWeak,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: isAtLimit
+                              ? context.local.call_reached_limit
+                              : context.local.call_supports_up_to,
+                        ),
+                        TextSpan(
+                          text: '${meetingInfo.maxParticipants}',
+                          style: ProtonStyles.body2Regular(
+                            color: context.colors.textWeak,
+                          ),
+                        ),
+                        TextSpan(
+                          text: isAtLimit
+                              ? context.local.participants_reached_limit_suffix
+                              : context.local.participants_suffix,
+                        ),
+                        if (isAtLimit) ...[
+                          const TextSpan(text: '\n'),
+                          TextSpan(
+                            text: context.local.no_more_participants_can_join,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+      if (participants.isEmpty)
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: _buildEmptyState(context),
+        )
+      else
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final participant = participants[index];
+              final key =
+                  participant.participant?.identity ?? participant.name;
+              return RepaintBoundary(
+                key: ValueKey(key),
+                child: _buildParticipantItem(context, participant),
+              );
+            },
+            childCount: participants.length,
+            addAutomaticKeepAlives: false,
+            addRepaintBoundaries: false,
+          ),
+        ),
+    ];
   }
 
   bool _isGuestMeetingRoom(FrbMeetingInfo? meetingInfo) {
