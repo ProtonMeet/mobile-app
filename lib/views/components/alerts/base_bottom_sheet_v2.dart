@@ -122,6 +122,11 @@ class BaseBottomSheetV2 extends StatelessWidget {
   /// [scrollController] is optional; omit unless you need programmatic scrolling.
   ///
   /// [isLandscape] adjusts handle vertical padding only ([_PinnedHandleHeader]).
+  ///
+  /// [flexibleSpaceChild] replaces the default [_PinnedHandleHeader] when the
+  /// pinned header needs custom content (e.g. a title row below the handle bar).
+  /// Pair with a matching [toolbarHeight] so the [AbsorbPointer] passthrough
+  /// strip covers the full custom header area.
   factory BaseBottomSheetV2.withPinnedSliverScroll({
     required bool isLandscape,
     required List<Widget> slivers,
@@ -143,8 +148,10 @@ class BaseBottomSheetV2 extends StatelessWidget {
     VoidCallback? modalOnBackdropTap,
     double? modalMaxHeight,
     double modalMaxWidth = maxMobileSheetWidth,
+    Widget? flexibleSpaceChild,
   }) {
-    final Widget flexChild = _PinnedHandleHeader(isLandscape: isLandscape);
+    final Widget flexChild =
+        flexibleSpaceChild ?? _PinnedHandleHeader(isLandscape: isLandscape);
 
     return BaseBottomSheetV2(
       key: key,
