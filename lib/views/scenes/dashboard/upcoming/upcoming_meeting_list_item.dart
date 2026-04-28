@@ -8,6 +8,7 @@ import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/rust/proton_meet/models/meeting_type.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
+import 'package:meet/rust/proton_meet/user_subscription.dart' as user_sub;
 import 'package:meet/views/components/alerts/create_room_dialog.dart';
 import 'package:meet/views/components/alerts/delete_meeting_dialog.dart';
 import 'package:meet/views/scenes/dashboard/dashboard_bloc.dart';
@@ -111,15 +112,26 @@ class UpcomingMeetingListItem extends StatelessWidget {
                     // first line
                     Opacity(
                       opacity: 0.90,
-                      child: Text(
-                        _resolveDisplayName(context),
-                        style: ProtonStyles.body1Semibold(
-                          color: meeting.isPersonalMeeting
-                              ? context.colors.interActionNorm
-                              : context.colors.textNorm,
-                        ),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
+                      child: BlocSelector<AuthBloc, AuthState, bool>(
+                        selector: (state) {
+                          final user = state.user;
+                          return user != null && user_sub.isPaid(user: user);
+                        },
+                        builder: (context, isPaidUser) {
+                          return Text(
+                            _resolveDisplayName(
+                              context,
+                              isPaidUser: isPaidUser,
+                            ),
+                            style: ProtonStyles.body1Semibold(
+                              color: meeting.isPersonalMeeting
+                                  ? context.colors.interActionNorm
+                                  : context.colors.textNorm,
+                            ),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          );
+                        },
                       ),
                     ),
                     // second line
@@ -207,14 +219,24 @@ class UpcomingMeetingListItem extends StatelessWidget {
   /// - Personal meeting room: prefers the user-set name, falls back to the
   ///   localized "Personal meeting room" placeholder when no custom name is
   ///   set.
-  /// - Other meetings/rooms: prefers the user-set name, falls back to the
-  ///   localized "Secure meeting" placeholder when the name is empty.
-  String _resolveDisplayName(BuildContext context) {
+  /// - Other meetings/rooms with a name: shows the user-set name as-is.
+  /// - Other meetings/rooms without a name: falls back to a localized
+  ///   placeholder that depends on the user's subscription status — paid
+  ///   users see "Premium meeting", everyone else (including unauth users)
+  ///   sees "Free meeting". This mirrors the default name written by
+  ///   `_defaultInstantMeetingName` in `waiting_room_bloc.dart` for legacy
+  ///   meetings created before the default name flow existed.
+  String _resolveDisplayName(BuildContext context, {required bool isPaidUser}) {
     final name = meeting.meetingName;
     if (meeting.isPersonalMeeting) {
       return name.isEmpty ? context.local.personal_meeting_room : name;
     }
-    return name.isEmpty ? context.local.secure_meeting : name;
+    if (name.isNotEmpty) {
+      return name;
+    }
+    return isPaidUser
+        ? context.local.premium_meeting
+        : context.local.free_meeting;
   }
 
   /// Trailing action shown after the meeting name.

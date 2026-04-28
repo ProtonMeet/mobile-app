@@ -978,6 +978,8 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         updatedMeetings[updatedIndex] = updatedMeeting;
       }
 
+      final isPersonalMeetingUpdate = updatedMeeting.isPersonalMeeting;
+
       operationCompleted = true;
       timeoutTimer.cancel();
 
@@ -987,6 +989,9 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
             isLoadingUpdateMeeting: false,
             isLoading: false,
             upcomingMeetings: updatedMeetings,
+            personalMeeting: isPersonalMeetingUpdate
+                ? updatedMeeting
+                : state.personalMeeting,
           ),
         );
         add(UpdateUpcomingStateEvent(upcomingTab: state.upcomingTab));
