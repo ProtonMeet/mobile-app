@@ -389,18 +389,34 @@ class _ChatWidgetState extends State<ChatWidget> {
     );
   }
 
-  Widget _buildHeaderWithoutHandle(bool isLandscape) {
+  /// Pinned header content (handle bar + title) rendered inside the
+  /// [SliverAppBar.flexibleSpace]. Mirrors the structure used by
+  /// `BaseBottomSheetV2.withPinnedSliverScroll` in participant_list so the
+  /// title is rendered exactly once and stays in sync with the blurred header
+  /// background.
+  Widget _buildPinnedHeader(BuildContext context, bool isLandscape) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (!isLandscape)
+          const BottomSheetHandleBar()
+        else
+          const SizedBox(height: _ChatWidgetConstants.spacingMedium),
+        _buildHeaderTitle(context),
+      ],
+    );
+  }
+
+  Widget _buildHeaderTitle(BuildContext context) {
     return RepaintBoundary(
       child: Container(
         width: double.infinity,
-        height:
-            _ChatWidgetConstants.headerHeight +
-            (!isLandscape ? 36.0 : _ChatWidgetConstants.spacingMedium),
-        padding: EdgeInsets.only(
+        height: _ChatWidgetConstants.headerHeight,
+        padding: const EdgeInsets.only(
           left: _ChatWidgetConstants.horizontalPadding,
           right: _ChatWidgetConstants.horizontalPadding,
           bottom: _ChatWidgetConstants.horizontalPadding,
-          top: !isLandscape ? 36.0 : _ChatWidgetConstants.spacingMedium,
         ),
         child: Align(
           alignment: Alignment.centerLeft,
@@ -579,6 +595,10 @@ class _ChatWidgetState extends State<ChatWidget> {
   ) {
     final filteredMessages = _filteredMessages;
 
+    final toolbarHeight =
+        _ChatWidgetConstants.headerHeight +
+        (!isLandscape ? 36.0 : _ChatWidgetConstants.spacingMedium);
+
     return Stack(
       children: [
         CustomScrollView(
@@ -589,13 +609,18 @@ class _ChatWidgetState extends State<ChatWidget> {
               pinned: true,
               backgroundColor: Colors.transparent,
               elevation: 0,
+              // Material 3 adds an elevation overlay + surface tint whenever
+              // content is scrolled under the app bar. With our custom
+              // blurred header that overlay shows up as a phantom shadow
+              // band, most visibly when over-scrolling. Disable all three
+              // to keep the pinned header purely transparent regardless of
+              // scroll position. Mirrors the fix in BaseBottomSheetV2.
+              scrolledUnderElevation: 0,
+              shadowColor: Colors.transparent,
+              surfaceTintColor: Colors.transparent,
               automaticallyImplyLeading: false,
-              toolbarHeight:
-                  _ChatWidgetConstants.headerHeight +
-                  (!isLandscape ? 36.0 : _ChatWidgetConstants.spacingMedium),
-              expandedHeight:
-                  _ChatWidgetConstants.headerHeight +
-                  (!isLandscape ? 36.0 : _ChatWidgetConstants.spacingMedium),
+              toolbarHeight: toolbarHeight,
+              expandedHeight: toolbarHeight,
               flexibleSpace: SizedBox.expand(
                 child: ClipRRect(
                   borderRadius: BorderRadius.only(
@@ -622,7 +647,7 @@ class _ChatWidgetState extends State<ChatWidget> {
                           ),
                         ),
                       ),
-                      child: _buildHeaderWithoutHandle(isLandscape),
+                      child: _buildPinnedHeader(context, isLandscape),
                     ),
                   ),
                 ),
@@ -663,53 +688,18 @@ class _ChatWidgetState extends State<ChatWidget> {
               ),
           ],
         ),
-        // Handle area that allows bottom sheet drag to work.
-        // Wrap in AbsorbPointer so gestures bypass the chat content
-        // and bubble up to the modal sheet for dragging.
+        // Handle drag passthrough: a transparent strip over the pinned
+        // header so vertical drags participate with the modal sheet's
+        // drag-to-dismiss instead of being claimed by the scroll view.
+        // The handle bar + title visuals live inside the SliverAppBar
+        // above; do NOT duplicate them here (the duplicate caused the
+        // "phantom header shadow" with the M3 surface tint).
         Positioned(
           top: 0,
           left: 0,
           right: 0,
-          height:
-              _ChatWidgetConstants.headerHeight +
-              (!isLandscape ? 36.0 : _ChatWidgetConstants.spacingMedium),
-          child: AbsorbPointer(
-            child: Stack(
-              children: [
-                if (!isLandscape)
-                  const Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 36.0,
-                    child: BottomSheetHandleBar(),
-                  ),
-                Positioned(
-                  top: !isLandscape ? 36.0 : _ChatWidgetConstants.spacingMedium,
-                  left: 0,
-                  right: 0,
-                  height: _ChatWidgetConstants.headerHeight,
-                  child: Container(
-                    padding: const EdgeInsets.only(
-                      left: _ChatWidgetConstants.horizontalPadding,
-                      right: _ChatWidgetConstants.horizontalPadding,
-                      bottom: _ChatWidgetConstants.horizontalPadding,
-                    ),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Chat',
-                        style: ProtonStyles.headline(
-                          fontSize: 18,
-                          color: context.colors.textNorm,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          height: toolbarHeight,
+          child: AbsorbPointer(child: Container(color: Colors.transparent)),
         ),
       ],
     );

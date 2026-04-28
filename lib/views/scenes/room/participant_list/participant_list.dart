@@ -131,11 +131,7 @@ class _ParticipantListState extends State<ParticipantList> {
             final isAtLimit = participantCount >= meetingInfo.maxParticipants;
 
             return Container(
-              margin: const EdgeInsets.only(
-                left: 16,
-                right: 16,
-                bottom: 16,
-              ),
+              margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.04),
@@ -201,8 +197,7 @@ class _ParticipantListState extends State<ParticipantList> {
           delegate: SliverChildBuilderDelegate(
             (context, index) {
               final participant = participants[index];
-              final key =
-                  participant.participant?.identity ?? participant.name;
+              final key = participant.participant?.identity ?? participant.name;
               return RepaintBoundary(
                 key: ValueKey(key),
                 child: _buildParticipantItem(context, participant),
@@ -213,6 +208,12 @@ class _ParticipantListState extends State<ParticipantList> {
             addRepaintBoundaries: false,
           ),
         ),
+      // Add padding to avoid last item being cut off
+      SliverPadding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewPadding.bottom,
+        ),
+      ),
     ];
   }
 

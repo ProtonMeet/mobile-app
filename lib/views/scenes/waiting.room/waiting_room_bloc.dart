@@ -103,7 +103,7 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
 
       FrbUpcomingMeeting? meetLink = event.args.meetingLink;
       if (event.preJoinType == PreJoinType.create) {
-        final meetingName = isPaidUser ? "Secure meeting" : "Free meeting";
+        final meetingName = isPaidUser ? "Premium meeting" : "Free meeting";
         try {
           meetLink = await appCoreManager.appCore.createMeeting(
             meetingName: meetingName,
