@@ -1920,12 +1920,16 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                         List<ParticipantInfo> participantTracks,
                         List<ParticipantInfo> speakerTracks,
                         Map<String, bool> raisedHandsByIdentity,
+                        bool isRejoining,
+                        bool isLiveKitReconnecting,
                       )
                     >(
                       selector: (state) => (
                         state.participantTracks,
                         state.speakerTracks,
                         state.raisedHandsByIdentity,
+                        state.isRejoining,
+                        state.isLiveKitReconnecting,
                       ),
                       builder: (context, data) =>
                           buildCameraLayout(context, data.$1, data.$2, data.$3),

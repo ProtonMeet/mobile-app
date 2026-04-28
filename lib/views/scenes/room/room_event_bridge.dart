@@ -158,6 +158,15 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState> {
         l.logger.d(
           '[LiveKit] Participant disconnected: ${event.participant.identity}',
         );
+        // During rejoin, the old room is torn down and may emit stale ParticipantDisconnectedEvent.
+        // Ignore these to avoid surfacing false leave/chat events.
+        if (state.isRejoining || state.isLiveKitReconnecting) {
+          l.logger.w(
+            '[LiveKit] Skip disconnect side effects during rejoin for '
+            '${event.participant.identity}',
+          );
+          return;
+        }
         add(BridgeParticipantDisconnected(event));
         add(
           AddSystemMessage(

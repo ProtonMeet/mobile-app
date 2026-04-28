@@ -785,6 +785,8 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
       );
       emit(newState);
 
+      // Update participant list to reflect the new room
+      add(SortParticipants());
       if (!isClosed) {
         add(RejoinMeetingCompleted());
       }
