@@ -15,6 +15,8 @@ import 'package:meet/views/scenes/dashboard/dashboard_event.dart';
 import 'package:meet/views/scenes/dashboard/schedule/schedule_meeting_dialog.dart';
 import 'package:meet/views/scenes/dashboard/search/sort_sheet.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
+import 'package:meet/views/scenes/signin/auth_bloc.dart';
+import 'package:meet/views/scenes/signin/auth_state.dart';
 
 import 'meet_upcoming_title.dart';
 import 'upcoming_menu_item.dart';
@@ -110,11 +112,7 @@ class UpcomingMeetingListItem extends StatelessWidget {
                     Opacity(
                       opacity: 0.90,
                       child: Text(
-                        meeting.isPersonalMeeting
-                            ? context.local.personal_meeting_room
-                            : meeting.meetingName.isEmpty
-                            ? context.local.secure_meeting
-                            : meeting.meetingName,
+                        _resolveDisplayName(context),
                         style: ProtonStyles.body1Semibold(
                           color: meeting.isPersonalMeeting
                               ? context.colors.interActionNorm
@@ -196,87 +194,124 @@ class UpcomingMeetingListItem extends StatelessWidget {
                   ],
                 ),
               ),
-              // Keep a right-side icon for personal meeting for visual consistency.
-              if (meeting.meetingType == MeetingType.personal)
-                Row(
-                  children: [
-                    context.images.iconPinAngled.svg20(
-                      color: context.colors.protonBlue,
-                    ),
-                    const SizedBox(width: 2),
-                  ],
-                )
-              else
-                PopupMenuButton<String>(
-                  icon: context.images.iconMore.svg20(
-                    color: context.colors.textDisable,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  elevation: 0,
-                  color: Colors.transparent,
-                  itemBuilder: (BuildContext context) => [
-                    PopupMenuItem<String>(
-                      enabled: false,
-                      padding: EdgeInsets.zero,
-                      height: 0,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                          child: Container(
-                            padding: const EdgeInsets.only(
-                              top: 24,
-                              left: 24,
-                              right: 32,
-                              bottom: 24,
-                            ),
-                            decoration: ShapeDecoration(
-                              color: context.colors.backgroundPopupMenu,
-                              shape: RoundedRectangleBorder(
-                                side: BorderSide(
-                                  color: Colors.white.withValues(alpha: 0.04),
-                                ),
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (showEditButton) ...[
-                                  UpcomingMenuItem(
-                                    icon: context.images.iconEdit.svg20(
-                                      color: context.colors.textNorm,
-                                    ),
-                                    label: currentTab == MeetUpcomingTab.myRooms
-                                        ? context.local.edit_room
-                                        : context.local.edit_meeting,
-                                    labelColor: context.colors.textNorm,
-                                    onTap: () => _handleEdit(context),
-                                  ),
-                                  const SizedBox(height: 24),
-                                ],
-
-                                UpcomingMenuItem(
-                                  icon: context.images.iconDelete.svg20(
-                                    color: context.colors.signalDanger,
-                                  ),
-                                  label: context.local.delete,
-                                  labelColor: context.colors.signalDanger,
-                                  onTap: () => _handleDelete(context),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              _buildTrailingAction(context),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  /// Resolves the title to show on the first line of the row.
+  ///
+  /// - Personal meeting room: prefers the user-set name, falls back to the
+  ///   localized "Personal meeting room" placeholder when no custom name is
+  ///   set.
+  /// - Other meetings/rooms: prefers the user-set name, falls back to the
+  ///   localized "Secure meeting" placeholder when the name is empty.
+  String _resolveDisplayName(BuildContext context) {
+    final name = meeting.meetingName;
+    if (meeting.isPersonalMeeting) {
+      return name.isEmpty ? context.local.personal_meeting_room : name;
+    }
+    return name.isEmpty ? context.local.secure_meeting : name;
+  }
+
+  /// Trailing action shown after the meeting name.
+  ///
+  /// - Personal meeting room (signed-in user): same overflow menu as other
+  ///   rooms but with **only** the edit option (no delete).
+  /// - Personal meeting room (unauth user): the legacy pin icon, since
+  ///   editing requires sign-in.
+  /// - All other meetings: overflow menu with edit + delete.
+  Widget _buildTrailingAction(BuildContext context) {
+    if (meeting.isPersonalMeeting) {
+      return BlocSelector<AuthBloc, AuthState, bool>(
+        selector: (state) => state.isSignedIn,
+        builder: (context, isSignedIn) {
+          if (!isSignedIn) {
+            return Row(
+              children: [
+                context.images.iconPinAngled.svg20(
+                  color: context.colors.protonBlue,
+                ),
+                const SizedBox(width: 2),
+              ],
+            );
+          }
+          return _buildOverflowMenu(context, allowDelete: false);
+        },
+      );
+    }
+    return _buildOverflowMenu(context, allowDelete: true);
+  }
+
+  Widget _buildOverflowMenu(BuildContext context, {required bool allowDelete}) {
+    return PopupMenuButton<String>(
+      icon: context.images.iconMore.svg20(color: context.colors.textDisable),
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
+      elevation: 0,
+      color: Colors.transparent,
+      itemBuilder: (BuildContext context) => [
+        PopupMenuItem<String>(
+          enabled: false,
+          padding: EdgeInsets.zero,
+          height: 0,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+              child: Container(
+                padding: const EdgeInsets.only(
+                  top: 24,
+                  left: 24,
+                  right: 32,
+                  bottom: 24,
+                ),
+                decoration: ShapeDecoration(
+                  color: context.colors.backgroundPopupMenu,
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.04),
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (showEditButton)
+                      UpcomingMenuItem(
+                        icon: context.images.iconEdit.svg20(
+                          color: context.colors.textNorm,
+                        ),
+                        label:
+                            (meeting.isPersonalMeeting ||
+                                currentTab == MeetUpcomingTab.myRooms)
+                            ? context.local.edit_room
+                            : context.local.edit_meeting,
+                        labelColor: context.colors.textNorm,
+                        onTap: () => _handleEdit(context),
+                      ),
+                    if (showEditButton && allowDelete)
+                      const SizedBox(height: 24),
+                    if (allowDelete)
+                      UpcomingMenuItem(
+                        icon: context.images.iconDelete.svg20(
+                          color: context.colors.signalDanger,
+                        ),
+                        label: context.local.delete,
+                        labelColor: context.colors.signalDanger,
+                        onTap: () => _handleDelete(context),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
