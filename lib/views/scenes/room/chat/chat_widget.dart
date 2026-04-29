@@ -599,95 +599,95 @@ class _ChatWidgetState extends State<ChatWidget> {
         _ChatWidgetConstants.headerHeight +
         (!isLandscape ? 36.0 : _ChatWidgetConstants.spacingMedium);
 
-    return Stack(
-      children: [
-        CustomScrollView(
-          controller: _scrollController,
-          physics: const ClampingScrollPhysics(),
-          slivers: [
-            SliverAppBar(
-              pinned: true,
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              // Material 3 adds an elevation overlay + surface tint whenever
-              // content is scrolled under the app bar. With our custom
-              // blurred header that overlay shows up as a phantom shadow
-              // band, most visibly when over-scrolling. Disable all three
-              // to keep the pinned header purely transparent regardless of
-              // scroll position. Mirrors the fix in BaseBottomSheetV2.
-              scrolledUnderElevation: 0,
-              shadowColor: Colors.transparent,
-              surfaceTintColor: Colors.transparent,
-              automaticallyImplyLeading: false,
-              toolbarHeight: toolbarHeight,
-              expandedHeight: toolbarHeight,
-              flexibleSpace: SizedBox.expand(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(
-                      _ChatWidgetConstants.borderRadiusMedium,
-                    ),
-                    topRight: Radius.circular(
-                      _ChatWidgetConstants.borderRadiusMedium,
-                    ),
+    // Disable the overscroll indicator
+    final scrollView = ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(overscroll: false),
+      child: CustomScrollView(
+        controller: _scrollController,
+        physics: const ClampingScrollPhysics(),
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            shadowColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
+            automaticallyImplyLeading: false,
+            toolbarHeight: toolbarHeight,
+            expandedHeight: toolbarHeight,
+            flexibleSpace: SizedBox.expand(
+              child: ClipRRect(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(
+                    _ChatWidgetConstants.borderRadiusMedium,
                   ),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                    child: DecoratedBox(
-                      decoration: ShapeDecoration(
-                        color: context.colors.clear,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(
-                              _ChatWidgetConstants.borderRadiusMedium,
-                            ),
-                            topRight: Radius.circular(
-                              _ChatWidgetConstants.borderRadiusMedium,
-                            ),
+                  topRight: Radius.circular(
+                    _ChatWidgetConstants.borderRadiusMedium,
+                  ),
+                ),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: DecoratedBox(
+                    decoration: ShapeDecoration(
+                      color: context.colors.clear,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(
+                            _ChatWidgetConstants.borderRadiusMedium,
+                          ),
+                          topRight: Radius.circular(
+                            _ChatWidgetConstants.borderRadiusMedium,
                           ),
                         ),
                       ),
-                      child: _buildPinnedHeader(context, isLandscape),
                     ),
+                    child: _buildPinnedHeader(context, isLandscape),
                   ),
                 ),
               ),
             ),
-            if (filteredMessages.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: _buildEmptyState(context),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: _ChatWidgetConstants.horizontalPadding,
-                ),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final message = _reversedMessages[index];
-                      if (message is types.TextMessage) {
-                        return RepaintBoundary(
-                          child: _buildMessageBubble(message),
-                        );
-                      }
-                      if (message is types.SystemMessage) {
-                        return RepaintBoundary(
-                          child: _buildSystemMessageBubble(message),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                    childCount: filteredMessages.length,
-                    addAutomaticKeepAlives: false,
-                    addRepaintBoundaries:
-                        false, // We're adding RepaintBoundary manually
-                  ),
+          ),
+          if (filteredMessages.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: _buildEmptyState(context),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: _ChatWidgetConstants.horizontalPadding,
+              ),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final message = _reversedMessages[index];
+                    if (message is types.TextMessage) {
+                      return RepaintBoundary(
+                        child: _buildMessageBubble(message),
+                      );
+                    }
+                    if (message is types.SystemMessage) {
+                      return RepaintBoundary(
+                        child: _buildSystemMessageBubble(message),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                  childCount: filteredMessages.length,
+                  addAutomaticKeepAlives: false,
+                  addRepaintBoundaries:
+                      false, // We're adding RepaintBoundary manually
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
+      ),
+    );
+
+    return Stack(
+      children: [
+        scrollView,
         // Handle drag passthrough: a transparent strip over the pinned
         // header so vertical drags participate with the modal sheet's
         // drag-to-dismiss instead of being claimed by the scroll view.

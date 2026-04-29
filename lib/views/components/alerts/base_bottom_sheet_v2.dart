@@ -375,10 +375,14 @@ class _SliverScrollBody extends StatelessWidget {
       ...slivers,
     ];
 
-    final scrollView = CustomScrollView(
-      controller: controller,
-      physics: const ClampingScrollPhysics(),
-      slivers: scrollSlivers,
+    // Disable the overscroll indicator
+    final scrollView = ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(overscroll: false),
+      child: CustomScrollView(
+        controller: controller,
+        physics: const ClampingScrollPhysics(),
+        slivers: scrollSlivers,
+      ),
     );
 
     if (showPinnedHeader && enableHandleDragPassthrough) {
