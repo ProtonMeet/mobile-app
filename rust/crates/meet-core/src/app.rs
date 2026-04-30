@@ -2369,6 +2369,7 @@ impl App {
             .with_writer(tracing_web::MakeWebConsoleWriter::new().with_pretty_level())
             .with_level(false) // Level is part of the "pretty level" in the console writer
             .try_init();
+        console_error_panic_hook::set_once();
     }
 }
 
