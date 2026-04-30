@@ -56,10 +56,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     on<UpdateDisplayName>(_onUpdateDisplayName);
     on<SetDisplayNameFieldError>(_onSetDisplayNameFieldError);
     on<ResetLoadingState>(_onResetLoadingState);
-    on<SetSpeakerPhoneEnabled>(
-      (event, emit) =>
-          emit(state.copyWith(isSpeakerPhoneEnabled: event.enabled)),
-    );
+    on<SetSpeakerPhoneEnabled>(_onSetSpeakerPhoneEnabled);
     on<PreJoinAudioOutputDevicesChanged>(
       (event, emit) => emit(
         state.copyWith(hasExternalAudioOutput: event.hasExternalAudioOutput),
@@ -118,6 +115,19 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     }
   }
 
+  Future<void> _onSetSpeakerPhoneEnabled(
+    SetSpeakerPhoneEnabled event,
+    Emitter<PreJoinState> emit,
+  ) async {
+    emit(state.copyWith(isSpeakerPhoneEnabled: event.enabled));
+    try {
+      final sp = serviceManager.get<PreferencesManager>();
+      await sp.setSpeakerPhoneEnabled(enabled: event.enabled);
+    } catch (e) {
+      l.logger.w('[PreJoinBloc] Error persisting speakerphone preference: $e');
+    }
+  }
+
   Future<void> _onToggleKeepDisplayName(
     ToggleKeepDisplayName event,
     Emitter<PreJoinState> emit,
@@ -171,6 +181,8 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       userId: userId,
     );
 
+    final savedSpeakerPhoneEnabled = await sp.getSpeakerPhoneEnabled();
+
     String initialDisplayName = event.displayName;
     bool shouldOverride = false;
 
@@ -193,6 +205,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         meetingLink: event.args.meetingLink,
         meetingLinkUrl: event.args.meetingLinkUrl,
         preJoinType: event.args.type,
+        isSpeakerPhoneEnabled: savedSpeakerPhoneEnabled,
       ),
     );
 

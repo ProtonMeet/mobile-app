@@ -23,7 +23,6 @@ class RoomInitialized extends RoomBlocEvent {
   final String displayName;
   final PreJoinType preJoinType;
   final FrbUpcomingMeeting meetingLink;
-  final bool isSpeakerPhoneEnabled;
 
   const RoomInitialized({
     required this.room,
@@ -33,7 +32,6 @@ class RoomInitialized extends RoomBlocEvent {
     required this.displayName,
     required this.preJoinType,
     required this.meetingLink,
-    this.isSpeakerPhoneEnabled = false,
   });
 
   @override
@@ -45,7 +43,6 @@ class RoomInitialized extends RoomBlocEvent {
     displayName,
     preJoinType,
     meetingLink,
-    isSpeakerPhoneEnabled,
   ];
 }
 

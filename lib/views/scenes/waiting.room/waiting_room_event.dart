@@ -14,7 +14,6 @@ class WaitingRoomInitialized extends WaitingRoomEvent {
   final MediaDevice? selectedSpeakerDevice;
   final CameraPosition? selectedVideoPosition;
   final VideoParameters selectedVideoParameters;
-  final bool isSpeakerPhoneEnabled;
 
   WaitingRoomInitialized({
     required this.args,
@@ -27,7 +26,6 @@ class WaitingRoomInitialized extends WaitingRoomEvent {
     this.selectedSpeakerDevice,
     this.selectedVideoPosition,
     this.selectedVideoParameters = VideoParametersPresets.h720_169,
-    this.isSpeakerPhoneEnabled = false,
   });
 }
 

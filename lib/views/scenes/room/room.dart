@@ -84,7 +84,6 @@ class RoomPage extends StatefulWidget {
   final FrbMeetInfo meetInfo;
   final FrbUpcomingMeeting meetLink;
   final PreJoinType preJoinType;
-  final bool isSpeakerPhoneEnabled;
   final AuthBloc? authBloc;
   const RoomPage(
     this.room,
@@ -95,7 +94,6 @@ class RoomPage extends StatefulWidget {
     this.meetInfo,
     this.meetLink,
     this.preJoinType, {
-    this.isSpeakerPhoneEnabled = false,
     this.authBloc,
     super.key,
   });
@@ -156,7 +154,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           displayName: widget.displayName,
           preJoinType: widget.preJoinType,
           meetingLink: widget.meetLink,
-          isSpeakerPhoneEnabled: widget.isSpeakerPhoneEnabled,
         ),
       );
 
@@ -191,7 +188,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       if (_bloc.isPictureInPictureFeatureEnabled()) {
         _bloc.add(InitializePip(roomName: widget.meetInfo.meetName));
       }
-      _bloc.add(SetSpeakerPhone(enabled: widget.isSpeakerPhoneEnabled));
     }
 
     // Load video devices for swap camera functionality

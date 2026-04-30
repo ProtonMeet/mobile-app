@@ -16,6 +16,9 @@ class PreferenceKeys {
   /// Last ApiEnv.cacheIsolationKey used for cold start; drives env-change wipe.
   static const String lastApiEnvCacheKey =
       "proton_meet_app_k_last_api_env_cache_isolation";
+
+  static const String speakerPhoneEnabled =
+      "proton_meet_app_k_speaker_phone_enabled";
 }
 
 /// Keys that persist across logout and should only reset on reinstall

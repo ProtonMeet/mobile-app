@@ -170,6 +170,22 @@ class PreferencesManager implements Manager {
 
   // ========================== End of Display Name Methods ==========================
 
+  /// read speakerphone state from SharedPreferences (defaults to false)
+  Future<bool> getSpeakerPhoneEnabled() async {
+    try {
+      final value = await storage.read(PreferenceKeys.speakerPhoneEnabled);
+      if (value is bool) return value;
+      return false;
+    } catch (e) {
+      logger.e("error getting speakerphone preference: $e");
+      return false;
+    }
+  }
+
+  Future<void> setSpeakerPhoneEnabled({required bool enabled}) async {
+    await storage.write(PreferenceKeys.speakerPhoneEnabled, enabled);
+  }
+
   @override
   Future<void> reload() async {}
 

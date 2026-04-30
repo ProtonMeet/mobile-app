@@ -18,6 +18,7 @@ import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/channels/call_activity_channel.dart';
 import 'package:meet/managers/manager.factory.dart';
+import 'package:meet/managers/preferences/preferences.manager.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/managers/room.manager.dart';
 import 'package:meet/rust/proton_meet/models/meet_info.dart';
@@ -366,15 +367,21 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     final _isMeetMobileSpeakerToggleEnabled =
         isMeetMobileSpeakerToggleEnabled();
 
+    /// Read speakerphone state from SharedPreferences (defaults to false)
+    final prefs = ManagerFactory().get<PreferencesManager>();
+    final persistedSpeakerPhone = await prefs.getSpeakerPhoneEnabled();
+
     emit(
       state.copyWith(
         roomKey: event.roomKey,
         displayName: event.displayName,
         isCameraEnabled: initialCameraEnabled,
         isMeetMobileSpeakerToggleEnabled: _isMeetMobileSpeakerToggleEnabled,
-        isSpeakerPhone: event.isSpeakerPhoneEnabled,
+        isSpeakerPhone: persistedSpeakerPhone,
       ),
     );
+
+    add(SetSpeakerPhone(enabled: persistedSpeakerPhone));
 
     // Track call start time for accurate elapsed time calculation
     _callStartTime = DateTime.now();
@@ -910,6 +917,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
 
       await Hardware.instance.setSpeakerphoneOn(newState);
       emit(state.copyWith(isSpeakerPhone: newState));
+      await _persistSpeakerPhonePreference(newState);
 
       l.logger.d('Speakerphone ${newState ? "enabled" : "disabled"}');
     } catch (e) {
@@ -938,10 +946,20 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     try {
       await Hardware.instance.setSpeakerphoneOn(event.enabled);
       emit(state.copyWith(isSpeakerPhone: event.enabled));
+      await _persistSpeakerPhonePreference(event.enabled);
 
       l.logger.d('Speakerphone ${event.enabled ? "enabled" : "disabled"}');
     } catch (e) {
       l.logger.e('Error setting speakerphone: $e');
+    }
+  }
+
+  Future<void> _persistSpeakerPhonePreference(bool enabled) async {
+    try {
+      final prefs = ManagerFactory().get<PreferencesManager>();
+      await prefs.setSpeakerPhoneEnabled(enabled: enabled);
+    } catch (e) {
+      l.logger.w('[RoomBloc] Error persisting speakerphone preference: $e');
     }
   }
 
