@@ -4,6 +4,7 @@ use proton_meet_common::models::{ProtonUser, ProtonUserKey};
 use proton_meet_macro::async_trait;
 use std::{
     collections::HashMap,
+    io::ErrorKind,
     sync::{Arc, Mutex, RwLock},
 };
 
@@ -45,6 +46,31 @@ impl Persister {
             db_cache: Arc::new(cache),
             db_path,
         })
+    }
+
+    /// Best-effort removal of on-disk SQLite files for [safe_name] (main + WAL/SHM/journal).
+    #[cfg(not(target_family = "wasm"))]
+    fn remove_user_sqlite_bundle(db_path: &str, safe_name: &str) {
+        let main = format!("{db_path}/{safe_name}.sqlite");
+        let extras = [
+            format!("{main}-wal"),
+            format!("{main}-shm"),
+            format!("{main}-journal"),
+        ];
+        for path in std::iter::once(main).chain(extras.into_iter()) {
+            match std::fs::remove_file(&path) {
+                Ok(()) => {}
+                Err(e) if e.kind() == ErrorKind::NotFound => {}
+                Err(e) => {
+                    tracing::warn!(
+                        target: "meet_core::storage",
+                        path = %path,
+                        error = %e,
+                        "remove_user_sqlite_file"
+                    );
+                }
+            }
+        }
     }
 
     /// Sanitizes a filename to prevent path traversal attacks and other security issues.
@@ -230,18 +256,30 @@ impl UserRepository for Persister {
     }
 
     async fn delete_user(&self, user_id: &str) -> Result<usize, StorageError> {
-        let db = self.get(user_id)?;
-        let guard = db.lock()?;
+        #[cfg_attr(target_family = "wasm", allow(unused_variables))]
+        let safe_name = Self::sanitize_filename(user_id)?;
 
         #[cfg(not(target_family = "wasm"))]
         {
-            guard.delete(UserEntity::TABLE_NAME, user_id)
+            // Drop the cached [rusqlite::Connection] so the file is not locked (Windows) and
+            // reopen after logout gets a clean database.
+            let _ = self.close(user_id).await;
+            Self::remove_user_sqlite_bundle(&self.db_path, &safe_name);
+            return Ok(1);
         }
 
         #[cfg(target_family = "wasm")]
         {
-            guard.delete(UserEntity::TABLE_NAME, user_id).await?;
-            Ok(0)
+            match self.get(user_id) {
+                Ok(db) => {
+                    let guard = db.lock()?;
+                    guard.delete(UserEntity::TABLE_NAME, user_id).await?;
+                    let _ = self.close(user_id).await;
+                    Ok(1)
+                }
+                Err(StorageError::DbNotFound { .. }) => Ok(1),
+                Err(e) => Err(e),
+            }
         }
     }
 
@@ -616,7 +654,10 @@ mod tests {
 
         // Test non-existent user deletion
         let delete_result = persister.delete_user(&non_existent_id).await?;
-        assert_eq!(delete_result, 0, "Non-existent user should return an error");
+        assert_eq!(
+            delete_result, 1,
+            "Deleting a user with no DB should still succeed (no-op file removal)"
+        );
         let deleted_non_existent_user = persister.get_user(&non_existent_id).await?;
         assert!(
             deleted_non_existent_user.is_none(),
@@ -888,7 +929,10 @@ mod wasm_tests {
             .delete_user(&non_existent_id)
             .await
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
-        assert_eq!(delete_result, 0, "Non-existent user should return an error");
+        assert_eq!(
+            delete_result, 1,
+            "Deleting a user with no DB should still succeed (no-op file removal)"
+        );
 
         let deleted_non_existent_user = persister
             .get_user(&non_existent_id)

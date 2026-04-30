@@ -45,7 +45,13 @@ class AppMigrationManager implements Manager {
       PreferenceKeys.appRustDatabaseForceVersion,
       rustDatabaseVersion,
       () async {
-        // rebuild
+        try {
+          await deleteApplicationDatabasesFolder();
+        } catch (e) {
+          logger.w(
+            'Failed to clear Rust databases folder after version bump: $e',
+          );
+        }
       },
     );
   }
@@ -70,6 +76,11 @@ class AppMigrationManager implements Manager {
         await documentsCacheService.clearDocumentsCache();
       } catch (e) {
         logger.w('Failed to clear documents cache files: $e');
+      }
+      try {
+        await deleteApplicationDatabasesFolder();
+      } catch (e) {
+        logger.w('Failed to clear Rust databases folder on first run: $e');
       }
     });
   }
