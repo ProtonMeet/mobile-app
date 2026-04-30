@@ -25,7 +25,6 @@ class WaitingRoomPage extends StatefulWidget {
   final MediaDevice? selectedSpeakerDevice;
   final CameraPosition? selectedVideoPosition;
   final VideoParameters selectedVideoParameters;
-  final bool isSpeakerPhoneEnabled;
 
   const WaitingRoomPage(
     this.args, {
@@ -38,7 +37,6 @@ class WaitingRoomPage extends StatefulWidget {
     this.selectedSpeakerDevice,
     this.selectedVideoPosition,
     this.selectedVideoParameters = VideoParametersPresets.h720_169,
-    this.isSpeakerPhoneEnabled = false,
     super.key,
   });
 
@@ -89,7 +87,6 @@ class _WaitingRoomPageState extends State<WaitingRoomPage>
             selectedSpeakerDevice: widget.selectedSpeakerDevice,
             selectedVideoPosition: widget.selectedVideoPosition,
             selectedVideoParameters: widget.selectedVideoParameters,
-            isSpeakerPhoneEnabled: widget.isSpeakerPhoneEnabled,
           ),
         ),
       child: MultiBlocListener(
@@ -183,7 +180,6 @@ class _WaitingRoomPageState extends State<WaitingRoomPage>
       state.meetInfo!,
       state.meetLink!,
       widget.preJoinType,
-      isSpeakerPhoneEnabled: widget.isSpeakerPhoneEnabled,
     );
 
     // Use a custom fade transition for smoother animation

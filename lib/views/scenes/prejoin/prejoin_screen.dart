@@ -169,8 +169,6 @@ class PreJoinScreen extends StatelessWidget {
                                 isAudioEnabled: state.isAudioEnabled,
                                 e2ee: state.enableE2EE,
                                 preferredCodec: state.videoCodec.toString(),
-                                isSpeakerPhoneEnabled:
-                                    state.isSpeakerPhoneEnabled,
                               );
                               // Persist when "remember" is on; joining did not always
                               // dispatch UpdateDisplayName (typed name only in controller).
@@ -194,8 +192,6 @@ class PreJoinScreen extends StatelessWidget {
                                         state.selectedVideoPosition,
                                     selectedVideoParameters:
                                         state.selectedVideoParameters,
-                                    isSpeakerPhoneEnabled:
-                                        state.isSpeakerPhoneEnabled,
                                   ),
                                 ),
                               );
@@ -240,8 +236,6 @@ class PreJoinScreen extends StatelessWidget {
                                 isAudioEnabled: state.isAudioEnabled,
                                 e2ee: state.enableE2EE,
                                 preferredCodec: state.videoCodec.toString(),
-                                isSpeakerPhoneEnabled:
-                                    state.isSpeakerPhoneEnabled,
                               );
                               bloc.add(UpdateDisplayName(sanitizedDisplayName));
                               await Navigator.push<void>(
@@ -263,8 +257,6 @@ class PreJoinScreen extends StatelessWidget {
                                         state.selectedVideoPosition,
                                     selectedVideoParameters:
                                         state.selectedVideoParameters,
-                                    isSpeakerPhoneEnabled:
-                                        state.isSpeakerPhoneEnabled,
                                   ),
                                 ),
                               );

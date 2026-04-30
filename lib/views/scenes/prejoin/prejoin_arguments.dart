@@ -29,7 +29,6 @@ class JoinArgs {
     this.enableBackupVideoCodec = true,
     this.isVideoEnabled = true,
     this.isAudioEnabled = true,
-    this.isSpeakerPhoneEnabled = false,
   });
 
   final String displayName;
@@ -44,7 +43,6 @@ class JoinArgs {
   final bool enableBackupVideoCodec;
   final bool isVideoEnabled;
   final bool isAudioEnabled;
-  final bool isSpeakerPhoneEnabled;
   final FrbUpcomingMeeting? meetingLink;
   final String meetingLinkUrl;
 }
