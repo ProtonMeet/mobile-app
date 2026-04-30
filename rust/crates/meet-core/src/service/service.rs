@@ -3175,18 +3175,17 @@ impl UserService for Service {
                 .clone()
         };
 
-        // Get state lock first to prevent holding the mls_group lock for too long
-        let state_lock = self.state.lock().await;
-
         let mut mls_group = mls_group_lock.write().await;
         let epoch = *mls_group.epoch();
 
         // Check if we've already sent a proposal for this epoch
-        if state_lock.has_sent_host_role_update_for_epoch(epoch) {
-            tracing::debug!("Already sent host role update proposal for epoch {}", epoch);
-            return Ok(());
+        {
+            let state_lock = self.state.lock().await;
+            if state_lock.has_sent_host_role_update_for_epoch(epoch) {
+                tracing::debug!("Already sent host role update proposal for epoch {}", epoch);
+                return Ok(());
+            }
         }
-        drop(state_lock);
 
         let is_host = Self::is_host_from_credential(&mls_group)?;
         if !is_host {

@@ -38,6 +38,7 @@ const MAX_RETRY_COUNT: u32 = 5;
 const RETRY_DELAY_SECONDS: u64 = 1;
 const DEFAULT_PING_INTERVAL_SECONDS: u64 = 5;
 const DEFAULT_MAX_PING_FAILURES: u32 = 2;
+const HANDLER_WATCHDOG_SECS: u64 = 10;
 const DEFAULT_PONG_TIMEOUT_SECONDS: u64 = 3;
 
 // Heartbeat message types
@@ -868,8 +869,26 @@ impl WebSocketClient for WsClient {
 
                                 // Clone handler Arc outside lock
                                 if let Some(handler) = handler_arc.lock().await.clone() {
-                                    handler(wrapped_msg).await;
-                                    tracing::info!("Message handler called");
+                                    let handler_fut = Box::pin(handler(wrapped_msg));
+                                    let watchdog_fut =
+                                        Box::pin(sleep(Duration::from_secs(HANDLER_WATCHDOG_SECS)));
+                                    match futures::future::select(handler_fut, watchdog_fut).await {
+                                        futures::future::Either::Left(_) => {
+                                            tracing::info!("Message handler called");
+                                        }
+                                        futures::future::Either::Right((_, remaining_handler)) => {
+                                            tracing::warn!(
+                                                "Message handler has not completed after {}s — possible deadlock or slow handler",
+                                                HANDLER_WATCHDOG_SECS,
+                                            );
+                                            let start = Instant::now();
+                                            remaining_handler.await;
+                                            tracing::warn!(
+                                                "Message handler eventually completed after an additional {:.1}s",
+                                                start.elapsed().as_secs_f32(),
+                                            );
+                                        }
+                                    }
                                 } else {
                                     tracing::error!("No message handler set");
                                 }
