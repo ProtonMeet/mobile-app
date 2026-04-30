@@ -292,10 +292,13 @@ class AppCoreManager implements Manager {
 
   @override
   Future<void> logout() async {
-    try {
-      await appCore.logout(userId: userID!);
-    } catch (e) {
-      logger.e("Error logging out: $e");
+    final uid = userID;
+    if (uid != null && uid.isNotEmpty) {
+      try {
+        await appCore.logout(userId: uid);
+      } catch (e) {
+        logger.e("Error logging out: $e");
+      }
     }
     await storage.deleteAll();
     userID = null;
