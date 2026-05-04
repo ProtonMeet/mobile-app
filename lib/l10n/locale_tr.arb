@@ -1413,6 +1413,14 @@
   "@secure_meeting": {
     "description": "Default meeting name when no title is set"
   },
+  "premium_meeting": "Premium meeting",
+  "@premium_meeting": {
+    "description": "Default meeting name for paid meeting"
+  },
+  "free_meeting": "Free meeting",
+  "@free_meeting": {
+    "description": "Default meeting name for free meeting"
+  },
   "share_with_people_you_trust": "Güvendiğiniz kişilerle paylaşın",
   "@share_with_people_you_trust": {
     "description": "Personal meeting hint text"
