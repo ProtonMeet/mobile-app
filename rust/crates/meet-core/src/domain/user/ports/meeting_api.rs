@@ -47,6 +47,14 @@ pub trait MeetingApi: Send + Sync {
 
     /// Unlock a meeting to allow new participants to join (meeting host only)
     async fn unlock_meeting(&self, meet_link_name: &str) -> Result<(), HttpClientError>;
+
+    /// Submit end-of-call quality feedback for a meeting link.
+    async fn send_meeting_feedback(
+        &self,
+        meeting_link_name: &str,
+        score: u8,
+        feedback: &str,
+    ) -> Result<(), HttpClientError>;
 }
 
 #[cfg(test)]
@@ -245,5 +253,17 @@ mod tests {
 
         let result = mock.fetch_meeting("id-4").await.unwrap();
         assert_eq!(result.id, "id-4");
+    }
+
+    #[unified_test]
+    async fn test_send_meeting_feedback_success() {
+        let mut mock = MockMeetingApi::new();
+
+        mock.expect_send_meeting_feedback()
+            .withf(|name, score, fb| name == "my-link" && *score == 4 && fb == "a, b")
+            .returning(|_, _, _| Box::pin(async { Ok(()) }));
+
+        let result = mock.send_meeting_feedback("my-link", 4, "a, b").await;
+        assert!(result.is_ok());
     }
 }

@@ -11,6 +11,7 @@ use crate::infra::dto::meeting::{
     MeetingInfoResponse, UpcomingMeetingsResponse, UpdateMeetingResponse,
     UpdateMeetingScheduleRequest,
 };
+use crate::infra::dto::meeting_feedback::MeetingFeedbackRequest;
 use crate::infra::http_client::ProtonHttpClient;
 use crate::infra::http_client_util::HttpClientUtil;
 use crate::infra::proton_response_ext::ProtonResponseExt;
@@ -125,6 +126,26 @@ impl MeetingApi for ProtonHttpClient {
 
     async fn unlock_meeting(&self, meet_link_name: &str) -> Result<(), HttpClientError> {
         let req = self.post(format!("/meet/v1/meetings/links/{meet_link_name}/unlock"));
+        let res = self.get_session().send(req).await?;
+        let _ = res.parse_response::<ProtonEmptyResponse>()?;
+        Ok(())
+    }
+
+    async fn send_meeting_feedback(
+        &self,
+        meeting_link_name: &str,
+        score: u8,
+        feedback: &str,
+    ) -> Result<(), HttpClientError> {
+        let body = MeetingFeedbackRequest {
+            score,
+            feedback: feedback.to_string(),
+        };
+        let req = self
+            .post(format!(
+                "/meet/v1/meetings/links/{meeting_link_name}/feedback"
+            ))
+            .body_json(body)?;
         let res = self.get_session().send(req).await?;
         let _ = res.parse_response::<ProtonEmptyResponse>()?;
         Ok(())

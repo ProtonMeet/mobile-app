@@ -637,6 +637,26 @@ impl App {
         Ok(())
     }
 
+    /// Submits call-quality feedback for the given meeting link (same contract as the web app).
+    pub async fn send_meeting_feedback(
+        &self,
+        meeting_link_name: &str,
+        score: u8,
+        feedback_parts: Vec<String>,
+    ) -> Result<(), MeetCoreError> {
+        if !(1..=5).contains(&score) {
+            return Err(MeetCoreError::InvalidInput {
+                field: "score".to_string(),
+                reason: "must be between 1 and 5".to_string(),
+            });
+        }
+        let feedback = feedback_parts.join(", ");
+        self.http_client
+            .send_meeting_feedback(meeting_link_name, score, &feedback)
+            .await?;
+        Ok(())
+    }
+
     pub async fn update_participant_track_settings(
         &self,
         participant_uuid: String,

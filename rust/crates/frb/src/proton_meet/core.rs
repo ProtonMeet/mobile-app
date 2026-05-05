@@ -712,6 +712,18 @@ impl AppCore {
         Ok(())
     }
 
+    pub async fn send_meeting_feedback(
+        &self,
+        meeting_link_name: String,
+        score: u8,
+        feedback_parts: Vec<String>,
+    ) -> Result<(), BridgeError> {
+        self.inner
+            .send_meeting_feedback(&meeting_link_name, score, feedback_parts)
+            .await?;
+        Ok(())
+    }
+
     pub async fn get_meeting_info(
         &self,
         meeting_link_name: String,

@@ -16,7 +16,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.2+91
+version: 1.0.3+92
 
 environment:
   sdk: ">=3.8.0 <4.0.0"
@@ -109,6 +109,8 @@ dependencies:
   #deeplinks
   app_links: ^7.0.0
 
+  in_app_review: ^2.0.10
+
   unleash_proxy_client_flutter: ^1.9.8
 
   # Screen recording plugin
@@ -193,6 +195,9 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   generate: true
+
+  config:
+    enable-lldb-debugging: false
 
   # To add assets to your application, add an assets section, like this:
   assets:

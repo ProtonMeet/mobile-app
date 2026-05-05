@@ -19,6 +19,7 @@ import 'package:meet/managers/meeting.event.loop.manager.dart';
 import 'package:meet/managers/preferences/preferences.manager.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/managers/services/force_upgrade.dart';
+import 'package:meet/managers/user_activity.manager.dart';
 import 'package:meet/rust/errors.dart';
 import 'package:meet/rust/proton_meet/models/meeting_type.dart';
 import 'package:meet/rust/proton_meet/models/recurrence_frequency.dart'
@@ -134,6 +135,18 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       l.logger.d('[DashboardBloc] $operation blocked: force upgrade');
     }
     return true;
+  }
+
+  void _recordMeetingCreatedForUserActivity() {
+    unawaited(() async {
+      try {
+        await ManagerFactory()
+            .get<UserActivityManager>()
+            .recordMeetingCreatedSuccessfully();
+      } catch (e) {
+        l.logger.d('[DashboardBloc] user activity create: $e');
+      }
+    }());
   }
 
   Future<void> _onInitDashboardEvent(
@@ -371,6 +384,7 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
           ),
         );
         add(UpdateUpcomingStateEvent(upcomingTab: MeetUpcomingTab.myMeetings));
+        _recordMeetingCreatedForUserActivity();
       } catch (error, stackTrace) {
         captureCreateRoomFailureToSentry(
           flow: 'dashboard_bootstrap_personal_meeting',
@@ -487,6 +501,7 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
           goPersonalMeeting: event.goPersonalMeeting,
         ),
       );
+      _recordMeetingCreatedForUserActivity();
     } catch (error, stackTrace) {
       const nameLen = 'Personal Meeting'.length;
       captureCreateRoomFailureToSentry(
@@ -780,6 +795,7 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         ),
       );
       add(UpdateUpcomingStateEvent(upcomingTab: MeetUpcomingTab.myRooms));
+      _recordMeetingCreatedForUserActivity();
     } on BridgeError_ApiResponse catch (error, stackTrace) {
       operationCompleted = true;
       timeoutTimer.cancel();
@@ -1164,6 +1180,7 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         ),
       );
       add(UpdateUpcomingStateEvent(upcomingTab: MeetUpcomingTab.myMeetings));
+      _recordMeetingCreatedForUserActivity();
     } on BridgeError_ApiResponse catch (error, stackTrace) {
       operationCompleted = true;
       timeoutTimer.cancel();

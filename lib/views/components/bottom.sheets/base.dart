@@ -176,7 +176,7 @@ class HomeModalBottomSheet {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (header != null) header,
+        ?header,
         Expanded(
           child: SingleChildScrollView(
             controller: scrollController,

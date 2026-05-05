@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:in_app_review/in_app_review.dart' show InAppReview;
 import 'package:meet/constants/env.dart';
 import 'package:meet/helper/extension/response_error.extension.dart';
 import 'package:meet/helper/logger.dart';
@@ -31,6 +32,8 @@ enum UnleashFeature {
   meetMobileEnableNetworkTool,
   meetAdminLowerHand,
   meetShowProtonCalendar,
+  meetFeedbackOnSkip,
+  meetInAppStoreReview,
 }
 
 /// Function to retrieve all default toggles
@@ -75,6 +78,10 @@ extension UnleashFeatureExt on UnleashFeature {
         return "MeetAdminLowerHand";
       case UnleashFeature.meetShowProtonCalendar:
         return "MeetShowProtonCalendar";
+      case UnleashFeature.meetFeedbackOnSkip:
+        return "MeetFeedbackOnSkip";
+      case UnleashFeature.meetInAppStoreReview:
+        return "MeetInAppStoreReview";
     }
   }
 
@@ -103,7 +110,7 @@ extension UnleashFeatureExt on UnleashFeature {
         return ToggleConfig(
           enabled: false,
           impressionData: false,
-          variant: Variant(enabled: true, name: 'enabled'),
+          variant: Variant(enabled: false, name: 'disabled'),
         );
       case UnleashFeature.meetAdminLowerHand:
         return ToggleConfig(
@@ -111,6 +118,7 @@ extension UnleashFeatureExt on UnleashFeature {
           impressionData: false,
           variant: Variant(enabled: false, name: 'disabled'),
         );
+
       default:
         return null;
     }
@@ -304,4 +312,12 @@ class UnleashDataProvider extends DataProvider {
   /// "Add to Proton Calendar" in join / add-to-calendar flows.
   bool isMeetShowProtonCalendar() =>
       isFeatureEnabled(UnleashFeature.meetShowProtonCalendar);
+
+  /// When enabled, leaving the low-rating feedback flow via Skip still submits score + tags.
+  bool isMeetFeedbackOnSkip() =>
+      isFeatureEnabled(UnleashFeature.meetFeedbackOnSkip);
+
+  /// When false, deferred / store [InAppReview] flows are disabled (Unleash kill switch).
+  bool isMeetInAppStoreReviewEnabled() =>
+      isFeatureEnabled(UnleashFeature.meetInAppStoreReview);
 }
