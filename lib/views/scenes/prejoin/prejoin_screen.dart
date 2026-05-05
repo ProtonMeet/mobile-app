@@ -11,6 +11,7 @@ import 'package:meet/views/components/button.v5.dart';
 import 'package:meet/views/components/textfield.text.v2.dart';
 import 'package:meet/views/scenes/prejoin/meeting_link_action.dart';
 import 'package:meet/views/scenes/prejoin/remember_checkbox.dart';
+import 'package:meet/views/scenes/signin/auth_bloc.dart';
 import 'package:meet/views/scenes/waiting.room/waiting_room_view.dart';
 
 import 'prejoin_arguments.dart';
@@ -22,6 +23,7 @@ import 'video_preview_with_controls.dart';
 class PreJoinScreen extends StatelessWidget {
   const PreJoinScreen({
     required this.bloc,
+    required this.authBloc,
     required this.displayNameController,
     required this.roomNameController,
     required this.displayNameFocusNode,
@@ -31,6 +33,7 @@ class PreJoinScreen extends StatelessWidget {
 
   @protected
   final PreJoinBloc bloc;
+  final AuthBloc authBloc;
 
   final TextEditingController displayNameController;
   final TextEditingController roomNameController;
@@ -169,6 +172,7 @@ class PreJoinScreen extends StatelessWidget {
                                 isAudioEnabled: state.isAudioEnabled,
                                 e2ee: state.enableE2EE,
                                 preferredCodec: state.videoCodec.toString(),
+                                authBloc: authBloc,
                               );
                               // Persist when "remember" is on; joining did not always
                               // dispatch UpdateDisplayName (typed name only in controller).
@@ -236,6 +240,7 @@ class PreJoinScreen extends StatelessWidget {
                                 isAudioEnabled: state.isAudioEnabled,
                                 e2ee: state.enableE2EE,
                                 preferredCodec: state.videoCodec.toString(),
+                                authBloc: authBloc,
                               );
                               bloc.add(UpdateDisplayName(sanitizedDisplayName));
                               await Navigator.push<void>(

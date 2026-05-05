@@ -5,6 +5,13 @@ import 'package:meet/constants/constants.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart';
 
+/// Start inset (leading) for the optional pinned-header back control.
+const double _kPinnedHeaderBackStartInset = 24;
+
+/// Minimum square tap target for the pinned back control (Material suggests ≥48;
+/// larger is easier to hit next to the drag handle).
+const double _kPinnedHeaderBackHitExtent = 64;
+
 // --- Overview ---------------------------------------------------------------
 //
 // In-call style bottom sheets: frosted glass (BackdropFilter), rounded top
@@ -89,7 +96,10 @@ class BaseBottomSheetV2ModalWrap extends StatelessWidget {
 /// **Scrollable content + pinned drag handle:** use the factory
 /// [BaseBottomSheetV2.withPinnedSliverScroll] and supply `slivers` (your body
 /// as [SliverToBoxAdapter] / [SliverList] / etc.). The factory inserts a pinned
-/// [SliverAppBar] whose flexible space is only [BottomSheetHandleBar].
+/// [SliverAppBar] whose flexible space is [BottomSheetHandleBar], optionally with
+/// a leading back control when [BaseBottomSheetV2.withPinnedSliverScroll]'s
+// ignore: comment_references
+/// [onPinnedHeaderBack] is set.
 ///
 /// Private widgets in this file ([_PinnedHandleHeader], [_SliverScrollBody])
 /// implement that layout; callers should not depend on them.
@@ -103,11 +113,17 @@ class BaseBottomSheetV2 extends StatelessWidget {
     this.borderSideAlpha = 0.03,
     this.enableHandleDragPassthrough = false,
     this.handlePassthroughHeight = 88,
+
+    /// When [enableHandleDragPassthrough] is true, the top strip starts this many
+    /// logical px from the **start** edge so leading controls (e.g. pinned back)
+    /// still receive taps (matches inner [pinnedHeaderLeadingReserve]).
+    this.outerPassthroughLeadingInset = 0,
     this.sheetBackgroundColor,
     this.contentHorizontalPadding,
     this.modalOnBackdropTap,
     this.modalMaxHeight,
     this.modalMaxWidth = maxMobileSheetWidth,
+    this.modalFillMaxHeight = true,
   });
 
   /// Pinned handle header + [CustomScrollView] built from [slivers].
@@ -118,6 +134,8 @@ class BaseBottomSheetV2 extends StatelessWidget {
   ///
   /// **Modal usage:** pass [modalOnBackdropTap] and [modalMaxHeight] together to
   /// auto-wrap in [BaseBottomSheetV2ModalWrap] (tap outside dismiss + height cap).
+  /// Set [modalFillMaxHeight] to false for a sheet that only grows with content
+  /// up to [modalMaxHeight] (instead of always filling that height).
   ///
   /// [scrollController] is optional; omit unless you need programmatic scrolling.
   ///
@@ -127,6 +145,13 @@ class BaseBottomSheetV2 extends StatelessWidget {
   /// pinned header needs custom content (e.g. a title row below the handle bar).
   /// Pair with a matching [toolbarHeight] so the [AbsorbPointer] passthrough
   /// strip covers the full custom header area.
+  /// When [onPinnedHeaderBack] is non-null, a leading back [IconButton] is shown in
+  /// the pinned header (vertically centered, [_kPinnedHeaderBackStartInset] from
+  /// the start edge). [pinnedHeaderBackEnabled] toggles whether it is tappable.
+  /// If [innerEnableHandleDragPassthrough] is true, the drag passthrough strip
+  /// skips the leading region so the back control still receives taps. The back
+  /// control uses a 64×64 minimum tap target; if [toolbarHeight] is smaller, it
+  /// is raised to 64 when the back callback is set.
   factory BaseBottomSheetV2.withPinnedSliverScroll({
     required bool isLandscape,
     required List<Widget> slivers,
@@ -149,9 +174,23 @@ class BaseBottomSheetV2 extends StatelessWidget {
     double? modalMaxHeight,
     double modalMaxWidth = maxMobileSheetWidth,
     Widget? flexibleSpaceChild,
+    bool modalFillMaxHeight = true,
+    VoidCallback? onPinnedHeaderBack,
+    bool pinnedHeaderBackEnabled = true,
   }) {
-    final Widget flexChild =
-        flexibleSpaceChild ?? _PinnedHandleHeader(isLandscape: isLandscape);
+    final leadingReserve = onPinnedHeaderBack != null
+        ? _kPinnedHeaderBackStartInset + _kPinnedHeaderBackHitExtent
+        : 0.0;
+    final effectiveToolbarHeight =
+        onPinnedHeaderBack != null &&
+            toolbarHeight < _kPinnedHeaderBackHitExtent
+        ? _kPinnedHeaderBackHitExtent
+        : toolbarHeight;
+    final Widget flexChild = _PinnedHandleHeader(
+      isLandscape: isLandscape,
+      onBack: onPinnedHeaderBack,
+      backEnabled: pinnedHeaderBackEnabled,
+    );
 
     return BaseBottomSheetV2(
       key: key,
@@ -161,19 +200,26 @@ class BaseBottomSheetV2 extends StatelessWidget {
       borderSideAlpha: borderSideAlpha,
       enableHandleDragPassthrough: outerEnableHandleDragPassthrough,
       handlePassthroughHeight: outerHandlePassthroughHeight,
+      outerPassthroughLeadingInset:
+          outerEnableHandleDragPassthrough && onPinnedHeaderBack != null
+          ? leadingReserve
+          : 0,
       sheetBackgroundColor: sheetBackgroundColor,
       contentHorizontalPadding: contentHorizontalPadding,
       modalOnBackdropTap: modalOnBackdropTap,
       modalMaxHeight: modalMaxHeight,
       modalMaxWidth: modalMaxWidth,
+      modalFillMaxHeight: modalFillMaxHeight,
       child: _SliverScrollBody(
         controller: scrollController,
         showPinnedHeader: showPinnedHeader,
-        toolbarHeight: toolbarHeight,
+        toolbarHeight: effectiveToolbarHeight,
         innerCornerRadius: innerCornerRadius,
         flexibleSpaceChild: flexChild,
         enableHandleDragPassthrough: innerEnableHandleDragPassthrough,
         headerBlurSigma: headerBlurSigma,
+        shrinkWrap: !modalFillMaxHeight,
+        pinnedHeaderLeadingReserve: leadingReserve,
         slivers: slivers,
       ),
     );
@@ -204,6 +250,9 @@ class BaseBottomSheetV2 extends StatelessWidget {
   /// Height of the outer passthrough strip from the top of the blurred shell.
   final double handlePassthroughHeight;
 
+  /// Leading width skipped by the **outer** drag passthrough strip (see [child]).
+  final double outerPassthroughLeadingInset;
+
   /// Symmetric horizontal inset for [child]. Null means edge-to-edge inside the shell.
   final double? contentHorizontalPadding;
 
@@ -212,6 +261,11 @@ class BaseBottomSheetV2 extends StatelessWidget {
   final VoidCallback? modalOnBackdropTap;
   final double? modalMaxHeight;
   final double modalMaxWidth;
+
+  /// When [modalMaxHeight] is set: if true (default), the modal sheet is exactly
+  /// that tall; if false, height is intrinsic to content up to [modalMaxHeight]
+  /// (short sheets do not fill the screen).
+  final bool modalFillMaxHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -253,14 +307,16 @@ class BaseBottomSheetV2 extends StatelessWidget {
     Widget result = body;
     if (enableHandleDragPassthrough) {
       // Keep hit target; block scroll/descendants from taking the drag.
+      // Leave [outerPassthroughLeadingInset] clear so pinned leading controls work.
       result = Stack(
         clipBehavior: Clip.none,
         children: [
           body,
-          Positioned(
+          Positioned.directional(
+            textDirection: Directionality.of(context),
             top: 0,
-            left: 0,
-            right: 0,
+            start: outerPassthroughLeadingInset,
+            end: 0,
             height: handlePassthroughHeight,
             child: AbsorbPointer(child: Container(color: Colors.transparent)),
           ),
@@ -269,11 +325,14 @@ class BaseBottomSheetV2 extends StatelessWidget {
     }
 
     if (modalOnBackdropTap != null && modalMaxHeight != null) {
+      final sheet = modalFillMaxHeight
+          ? SizedBox(height: modalMaxHeight!, child: result)
+          : result;
       return BaseBottomSheetV2ModalWrap(
         onBackdropTap: modalOnBackdropTap!,
         maxHeight: modalMaxHeight!,
         maxWidth: modalMaxWidth,
-        sheet: SizedBox(height: modalMaxHeight!, child: result),
+        sheet: sheet,
       );
     }
 
@@ -283,23 +342,64 @@ class BaseBottomSheetV2 extends StatelessWidget {
 
 // --- Private layout pieces ---------------------------------------------------
 
-/// Visual drag handle centered in the pinned app bar’s flexible space.
+/// Drag handle centered in the pinned app bar’s flexible space; optional
+/// leading back control when [onBack] is set.
 class _PinnedHandleHeader extends StatelessWidget {
-  const _PinnedHandleHeader({required this.isLandscape});
+  const _PinnedHandleHeader({
+    required this.isLandscape,
+    this.onBack,
+    this.backEnabled = true,
+  });
 
   final bool isLandscape;
+  final VoidCallback? onBack;
+  final bool backEnabled;
 
   @override
   Widget build(BuildContext context) {
+    final handle = Align(
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: EdgeInsets.only(top: isLandscape ? 4 : 0),
+        child: const BottomSheetHandleBar(),
+      ),
+    );
+
     return RepaintBoundary(
       child: SizedBox.expand(
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: Padding(
-            padding: EdgeInsets.only(top: isLandscape ? 4 : 0),
-            child: const BottomSheetHandleBar(),
-          ),
-        ),
+        child: onBack == null
+            ? handle
+            : Stack(
+                fit: StackFit.expand,
+                children: [
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.only(
+                        start: _kPinnedHeaderBackStartInset,
+                      ),
+                      child: IconButton(
+                        style: IconButton.styleFrom(
+                          minimumSize: const Size(
+                            _kPinnedHeaderBackHitExtent,
+                            _kPinnedHeaderBackHitExtent,
+                          ),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          padding: const EdgeInsets.all(12),
+                          visualDensity: VisualDensity.standard,
+                        ),
+                        onPressed: backEnabled ? onBack : null,
+                        icon: Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          color: context.colors.textNorm,
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                  ),
+                  handle,
+                ],
+              ),
       ),
     );
   }
@@ -320,6 +420,8 @@ class _SliverScrollBody extends StatelessWidget {
     this.flexibleSpaceChild,
     this.enableHandleDragPassthrough = true,
     this.headerBlurSigma = 10,
+    this.shrinkWrap = false,
+    this.pinnedHeaderLeadingReserve = 0,
   });
 
   final ScrollController? controller;
@@ -330,6 +432,11 @@ class _SliverScrollBody extends StatelessWidget {
   final Widget? flexibleSpaceChild;
   final bool enableHandleDragPassthrough;
   final double headerBlurSigma;
+  final bool shrinkWrap;
+
+  /// Width skipped by the inner drag passthrough strip so leading controls (e.g.
+  /// pinned back) remain interactive.
+  final double pinnedHeaderLeadingReserve;
 
   @override
   Widget build(BuildContext context) {
@@ -380,6 +487,7 @@ class _SliverScrollBody extends StatelessWidget {
       behavior: ScrollConfiguration.of(context).copyWith(overscroll: false),
       child: CustomScrollView(
         controller: controller,
+        shrinkWrap: shrinkWrap,
         physics: const ClampingScrollPhysics(),
         slivers: scrollSlivers,
       ),
@@ -389,10 +497,11 @@ class _SliverScrollBody extends StatelessWidget {
       return Stack(
         children: [
           scrollView,
-          Positioned(
+          Positioned.directional(
+            textDirection: Directionality.of(context),
             top: 0,
-            left: 0,
-            right: 0,
+            start: pinnedHeaderLeadingReserve,
+            end: 0,
             height: toolbarHeight,
             child: AbsorbPointer(child: Container(color: Colors.transparent)),
           ),

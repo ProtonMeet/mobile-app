@@ -180,6 +180,7 @@ class _WaitingRoomPageState extends State<WaitingRoomPage>
       state.meetInfo!,
       state.meetLink!,
       widget.preJoinType,
+      authBloc: widget.args.authBloc,
     );
 
     // Use a custom fade transition for smoother animation

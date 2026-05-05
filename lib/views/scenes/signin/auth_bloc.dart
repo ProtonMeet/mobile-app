@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
+import 'package:meet/helper/external.url.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/user.agent.dart';
 import 'package:meet/managers/app.core.manager.dart';
@@ -282,5 +283,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       l.logger.e("AppCoreManager unavailable: $e");
       return null;
     }
+  }
+
+  /// Opens native bug report when not [desktop];
+  /// otherwise opens the Proton help center (same as settings "Report a problem").
+  Future<void> reportProblem() async {
+    if (desktop) {
+      ExternalUrl.shared.launchProtonHelpCenter();
+      return;
+    }
+    await nativeViewChannel.nativeReportBugs(state.displayName, state.email);
   }
 }

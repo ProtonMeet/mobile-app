@@ -161,3 +161,6 @@ test_proton_meet_rust_db.*
 
 
 backup_files/
+
+
+.cursor/

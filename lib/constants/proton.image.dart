@@ -118,6 +118,10 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
   /// icons for early access dialog
   final SvgGenImage iconEarlyAccess;
 
+  /// icons for feedbacks
+  final SvgGenImage iconFeedbackStar;
+  final SvgGenImage iconFeedbackStarBorder;
+
   const ProtonImages({
     required this.protonMeetBarLogo,
     required this.iconSettings,
@@ -197,6 +201,8 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
     required this.iconUploadFile,
     required this.defaultRoomLogo,
     required this.iconValidLink,
+    required this.iconFeedbackStar,
+    required this.iconFeedbackStarBorder,
   });
 
   @override
@@ -279,6 +285,8 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
     SvgGenImage? iconUploadFile,
     SvgGenImage? defaultRoomLogo,
     SvgGenImage? iconValidLink,
+    SvgGenImage? iconFeedbackStar,
+    SvgGenImage? iconFeedbackStarBorder,
   }) {
     return ProtonImages(
       protonMeetBarLogo: protonMeetBarLogo ?? this.protonMeetBarLogo,
@@ -365,6 +373,9 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
       iconUploadFile: iconUploadFile ?? this.iconUploadFile,
       defaultRoomLogo: defaultRoomLogo ?? this.defaultRoomLogo,
       iconValidLink: iconValidLink ?? this.iconValidLink,
+      iconFeedbackStar: iconFeedbackStar ?? this.iconFeedbackStar,
+      iconFeedbackStarBorder:
+          iconFeedbackStarBorder ?? this.iconFeedbackStarBorder,
     );
   }
 
@@ -452,6 +463,8 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
       iconUploadFile: other.iconUploadFile,
       defaultRoomLogo: other.defaultRoomLogo,
       iconValidLink: other.iconValidLink,
+      iconFeedbackStar: other.iconFeedbackStar,
+      iconFeedbackStarBorder: other.iconFeedbackStarBorder,
     );
   }
 }
@@ -535,6 +548,8 @@ final lightImageExtension = ProtonImages(
   iconUploadFile: Assets.images.icon.icDataUpload,
   defaultRoomLogo: Assets.images.logos.meetingRoomPurple1,
   iconValidLink: Assets.images.icon.icValidLink,
+  iconFeedbackStar: Assets.images.icon.icStarRateFilled,
+  iconFeedbackStarBorder: Assets.images.icon.icStarRateEmpty,
 );
 
 final darkImageExtension = ProtonImages(
@@ -616,4 +631,6 @@ final darkImageExtension = ProtonImages(
   iconUploadFile: Assets.images.icon.icDataUpload,
   defaultRoomLogo: Assets.images.logos.meetingRoomPurple1,
   iconValidLink: Assets.images.icon.icValidLink,
+  iconFeedbackStar: Assets.images.icon.icStarRateFilled,
+  iconFeedbackStarBorder: Assets.images.icon.icStarRateEmpty,
 );

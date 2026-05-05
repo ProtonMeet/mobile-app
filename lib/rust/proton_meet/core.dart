@@ -230,6 +230,12 @@ abstract class AppCore implements RustOpaqueInterface {
 
   Future<void> removeParticipant({required String participantUuid});
 
+  Future<void> sendMeetingFeedback({
+    required String meetingLinkName,
+    required int score,
+    required List<String> feedbackParts,
+  });
+
   Future<void> setLivekitActiveUuids({required List<String> activeUuids});
 
   Future<void> setLivekitAdminChangeCallback({

@@ -24,6 +24,9 @@ import 'package:meet/managers/channels/physical_key_channel.dart';
 import 'package:meet/managers/channels/platform.channel.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/notification_service.dart';
+import 'package:meet/managers/providers/data.provider.manager.dart';
+import 'package:meet/managers/services/in_app_review_service.dart';
+import 'package:meet/managers/user_activity.manager.dart';
 import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/platform/html.window.dart';
 import 'package:meet/rust/errors.dart';
@@ -33,13 +36,14 @@ import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/rust/proton_meet/user_config.dart';
 import 'package:meet/views/components/alerts/meeting_will_end_dialog.dart';
 import 'package:meet/views/components/bottom.sheets/leave_room_bottom_sheet.dart';
-import 'package:meet/views/components/bottom.sheets/left_meeting_bottom_sheet.dart';
 import 'package:meet/views/components/button.inline.dart';
 import 'package:meet/views/components/loading_view.dart';
 import 'package:meet/views/scenes/app/app.router.dart';
 import 'package:meet/views/scenes/core/coordinator.dart';
 import 'package:meet/views/scenes/core/responsive_v2.dart';
 import 'package:meet/views/scenes/exts.dart';
+import 'package:meet/views/scenes/feedbacks/left_meeting_feedback_sheet.dart';
+import 'package:meet/views/scenes/feedbacks/pre_rating_sheet.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
 import 'package:meet/views/scenes/room/chat/chat_bubble.dart';
 import 'package:meet/views/scenes/room/controls_bar/controls_bar_responsive.dart';
@@ -135,11 +139,15 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
   List<MediaDevice> _videoInputs = [];
   bool _isLeavingByUser = false;
+
+  /// LiveKit transport reconnects during this meeting (for store-review quality).
+  bool _hadLiveKitTransportIssuesThisMeeting = false;
   final Map<String, ParticipantReaction> _activeReactions = {};
 
   @override
   void initState() {
     super.initState();
+    _hadLiveKitTransportIssuesThisMeeting = false;
     WidgetsBinding.instance.addObserver(this);
     // Avoid showing "unknown route" UI while in an active meeting.
     Coordinator.suppressUnknownRouteUi = true;
@@ -491,6 +499,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
   /// for more information, see [event types](https://docs.livekit.io/client/events/#events)
   void setUpListeners(EventsListener<RoomEvent> listener) => listener
+    ..on<RoomAttemptReconnectEvent>((_) {
+      _hadLiveKitTransportIssuesThisMeeting = true;
+    })
+    ..on<RoomReconnectingEvent>((_) {
+      _hadLiveKitTransportIssuesThisMeeting = true;
+    })
     ..on<RoomDisconnectedEvent>((event) async {
       if (event.reason != null) {
         // Room disconnected
@@ -525,13 +539,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           // Do not show left meeting bottom sheet when meeting is ended by host
           await _leaveRoom(isShowLeftMeetingBottomSheet: false);
         } else if (event.reason == DisconnectReason.participantRemoved) {
-          await _leaveRoom(
-            leftMeetingBottomSheetShowRejoin: false,
-            leftMeetingBottomSheetTitle:
-                context.local.kicked_out_bottom_sheet_title,
-            leftMeetingBottomSheetContent:
-                context.local.kicked_out_bottom_sheet_content,
-          );
+          await _leaveRoom(leftMeetingBottomSheetIsKickedOut: true);
         } else if (event.reason == DisconnectReason.stateMismatch) {
           // auto rejoin when disconnect reason is state mismatch
           _bloc.add(const StartRejoinMeeting());
@@ -1410,6 +1418,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   Future<void> _leaveRoom({
     bool isShowLeftMeetingBottomSheet = true,
     bool leftMeetingBottomSheetShowRejoin = true,
+    bool leftMeetingBottomSheetIsKickedOut = false,
     String? leftMeetingBottomSheetTitle,
     String? leftMeetingBottomSheetContent,
   }) async {
@@ -1468,6 +1477,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     final meetingLink = widget.meetLink;
     final isHost = _bloc.state.isHost;
     final isPaidUser = _bloc.state.isPaidUser;
+    final meetLinkName = _bloc.state.meetInfo.meetLinkName;
 
     Navigator.of(
       context,
@@ -1480,22 +1490,81 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     if (rootContext != null &&
         rootContext.mounted &&
         isShowLeftMeetingBottomSheet) {
-      await showLeftMeetingBottomSheet(
-        rootContext,
-        meetingLink: meetingLink,
-        isHost: isHost,
-        isPaidUser: isPaidUser,
-        isMeetMobileShowStartMeetingButtonEnabled: true,
-        showRejoin: leftMeetingBottomSheetShowRejoin,
-        title: leftMeetingBottomSheetTitle,
-        content: leftMeetingBottomSheetContent,
-        onRejoinMeeting: () {
-          _navigateToPreJoin(rootContext, meetingLink);
-        },
-        onStartMeetingNow: () {
-          _navigateToStartMeeting(rootContext);
-        },
-      );
+      var meetFeedbackOnSkip = false;
+      try {
+        meetFeedbackOnSkip = ManagerFactory()
+            .get<DataProviderManager>()
+            .unleashDataProvider
+            .isMeetFeedbackOnSkip();
+      } catch (e, st) {
+        l.logger.w('[Room] Unleash for feedback skip: $e', stackTrace: st);
+      }
+      // Record the completion BEFORE showing the feedback bottom sheet so the
+      // star score the user submits inside the sheet lands on this meeting's
+      // [completedFeedbackScores] slot (otherwise withFeedback only sees prior
+      // completions and writes to the wrong row).
+      if (leftMeetingBottomSheetTitle == null &&
+          !leftMeetingBottomSheetIsKickedOut) {
+        try {
+          final hadBadConnection =
+              _hadLiveKitTransportIssuesThisMeeting ||
+              _bloc.state.rejoinCount > 0;
+          final wasInterrupted = _bloc.state.rejoinCount > 0;
+          await ManagerFactory()
+              .get<UserActivityManager>()
+              .recordMeetingCompletedAndRequestDeferredReview(
+                hadBadConnection: hadBadConnection,
+                wasInterrupted: wasInterrupted,
+              );
+        } catch (e, st) {
+          l.logger.w('[Room] record completion (leave): $e', stackTrace: st);
+        }
+      }
+      if (rootContext.mounted) {
+        final skipStoreReviewPrompt = await showLeftMeetingBottomSheet(
+          rootContext,
+          meetingLink: meetingLink,
+          isHost: isHost,
+          isPaidUser: isPaidUser,
+          isMeetMobileShowStartMeetingButtonEnabled: true,
+          isKickedOut: leftMeetingBottomSheetIsKickedOut,
+          showRejoin: leftMeetingBottomSheetShowRejoin,
+          title: leftMeetingBottomSheetTitle,
+          content: leftMeetingBottomSheetContent,
+          meetingLinkName: meetLinkName,
+          meetFeedbackOnSkipEnabled: meetFeedbackOnSkip,
+          onRejoinMeeting: () {
+            _navigateToPreJoin(rootContext, meetingLink);
+          },
+          onStartMeetingNow: () {
+            _navigateToStartMeeting(rootContext);
+          },
+        );
+        if (leftMeetingBottomSheetTitle == null &&
+            !leftMeetingBottomSheetIsKickedOut) {
+          try {
+            if (!skipStoreReviewPrompt) {
+              final canShowStoreReview =
+                  await InAppReviewService.canShowStoreReview();
+              if (canShowStoreReview && rootContext.mounted) {
+                await PreRatingSheet.show(
+                  rootContext,
+                  onPositiveAction: () => InAppReviewService.tryRequestReview(
+                    thanksToastContext: rootContext,
+                  ),
+                  onNegativeAction: () async => {
+                    await InAppReviewService.onPreRatingNegativeAction(),
+                    await widget.authBloc?.reportProblem(),
+                  },
+                );
+              }
+            }
+            _hadLiveKitTransportIssuesThisMeeting = false;
+          } catch (e, st) {
+            l.logger.w('[Room] store review (leave): $e', stackTrace: st);
+          }
+        }
+      }
     }
     _isLeavingByUser = false;
   }
@@ -1539,10 +1608,88 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     await _hideNotification('ending meeting');
 
     if (!mounted) return;
+
+    final meetingLink = widget.meetLink;
+    final isHost = _bloc.state.isHost;
+    final isPaidUser = _bloc.state.isPaidUser;
+    final meetLinkName = _bloc.state.meetInfo.meetLinkName;
+
     Navigator.of(
       context,
       rootNavigator: true,
     ).popUntil((route) => route.isFirst);
+
+    final rootContext =
+        Coordinator.rootNavigatorKey.currentState?.overlay?.context ??
+        Coordinator.rootNavigatorKey.currentContext;
+    if (rootContext != null && rootContext.mounted && meetLinkName.isNotEmpty) {
+      var meetFeedbackOnSkip = false;
+      try {
+        meetFeedbackOnSkip = ManagerFactory()
+            .get<DataProviderManager>()
+            .unleashDataProvider
+            .isMeetFeedbackOnSkip();
+      } catch (e, st) {
+        l.logger.w('[Room] Unleash for feedback skip: $e', stackTrace: st);
+      }
+      // See `_leaveRoom`: completion must be recorded before the sheet so that
+      // withFeedback can match the just-ended meeting's slot.
+      try {
+        final hadBadConnection =
+            _hadLiveKitTransportIssuesThisMeeting ||
+            _bloc.state.rejoinCount > 0;
+        final wasInterrupted = _bloc.state.rejoinCount > 0;
+        await ManagerFactory()
+            .get<UserActivityManager>()
+            .recordMeetingCompletedAndRequestDeferredReview(
+              hadBadConnection: hadBadConnection,
+              wasInterrupted: wasInterrupted,
+            );
+      } catch (e, st) {
+        l.logger.w(
+          '[Room] record completion (end-for-all): $e',
+          stackTrace: st,
+        );
+      }
+      if (rootContext.mounted) {
+        final skipStoreReviewPrompt = await showLeftMeetingBottomSheet(
+          rootContext,
+          meetingLink: meetingLink,
+          isHost: isHost,
+          isPaidUser: isPaidUser,
+          isMeetMobileShowStartMeetingButtonEnabled: true,
+          meetingLinkName: meetLinkName,
+          meetFeedbackOnSkipEnabled: meetFeedbackOnSkip,
+          onRejoinMeeting: () {
+            _navigateToPreJoin(rootContext, meetingLink);
+          },
+          onStartMeetingNow: () {
+            _navigateToStartMeeting(rootContext);
+          },
+        );
+        try {
+          if (!skipStoreReviewPrompt) {
+            final canShowStoreReview =
+                await InAppReviewService.canShowStoreReview();
+            if (canShowStoreReview && rootContext.mounted) {
+              await PreRatingSheet.show(
+                rootContext,
+                onPositiveAction: () => InAppReviewService.tryRequestReview(
+                  thanksToastContext: rootContext,
+                ),
+                onNegativeAction: () async => {
+                  await InAppReviewService.onPreRatingNegativeAction(),
+                  await widget.authBloc?.reportProblem(),
+                },
+              );
+            }
+          }
+          _hadLiveKitTransportIssuesThisMeeting = false;
+        } catch (e, st) {
+          l.logger.w('[Room] store review (end-for-all): $e', stackTrace: st);
+        }
+      }
+    }
     _isLeavingByUser = false;
   }
 

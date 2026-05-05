@@ -67,6 +67,7 @@ class AppRouter {
             isAudioEnabled: isAudioEnabled,
             isVideoEnabled: isVideoEnabled,
             e2ee: isE2EEEnabled,
+            authBloc: authBloc,
           );
 
           final bloc = PreJoinBloc(UserAgent(), serviceManager);
@@ -89,6 +90,7 @@ class AppRouter {
           meetingLink: null,
           isVideoEnabled: false,
           isAudioEnabled: false,
+          authBloc: preJoinArgs.authBloc,
         );
 
         final bloc = PreJoinBloc(UserAgent(), serviceManager);

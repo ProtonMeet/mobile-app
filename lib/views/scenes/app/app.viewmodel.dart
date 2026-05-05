@@ -24,6 +24,7 @@ import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/managers/secure.storage/secure.storage.dart';
 import 'package:meet/managers/secure.storage/secure.storage.manager.dart';
 import 'package:meet/managers/secure.storage/secure.storage.memory.dart';
+import 'package:meet/managers/user_activity.manager.dart';
 import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/provider/theme.provider.dart';
 import 'package:meet/views/scenes/app/app.coordinator.dart';
@@ -129,6 +130,9 @@ class AppViewModelImpl extends AppViewModel {
       await hiveImpl.init();
       final shared = PreferencesManager(hiveImpl);
       serviceManager.register(shared);
+
+      final userActivityManager = UserActivityManager(shared);
+      serviceManager.register(userActivityManager);
 
       /// documents cache service
       final documentsCacheService = DocumentsCacheService();

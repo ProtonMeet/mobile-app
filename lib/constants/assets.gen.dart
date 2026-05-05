@@ -263,6 +263,14 @@ class $AssetsImagesIconGen {
   SvgGenImage get icSquares =>
       const SvgGenImage('assets/images/icon/ic-squares.svg');
 
+  /// File path: assets/images/icon/ic-star-rate-empty.svg
+  SvgGenImage get icStarRateEmpty =>
+      const SvgGenImage('assets/images/icon/ic-star-rate-empty.svg');
+
+  /// File path: assets/images/icon/ic-star-rate-filled.svg
+  SvgGenImage get icStarRateFilled =>
+      const SvgGenImage('assets/images/icon/ic-star-rate-filled.svg');
+
   /// File path: assets/images/icon/ic-star-shield.svg
   SvgGenImage get icStarShield =>
       const SvgGenImage('assets/images/icon/ic-star-shield.svg');
@@ -365,6 +373,8 @@ class $AssetsImagesIconGen {
     icSpeakerPhone,
     icSquareArrowUpRight,
     icSquares,
+    icStarRateEmpty,
+    icStarRateFilled,
     icStarShield,
     icSwapCam,
     icTextAlignLeft,

@@ -18,6 +18,8 @@ PODS:
     - FlutterMacOS
     - WebRTC-SDK (= 144.7559.01)
   - FlutterMacOS (1.0.0)
+  - in_app_review (2.0.0):
+    - FlutterMacOS
   - livekit_client (2.7.0):
     - flutter_webrtc
     - FlutterMacOS
@@ -55,6 +57,7 @@ DEPENDENCIES:
   - flutter_timezone (from `Flutter/ephemeral/.symlinks/plugins/flutter_timezone/macos`)
   - flutter_webrtc (from `Flutter/ephemeral/.symlinks/plugins/flutter_webrtc/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
+  - in_app_review (from `Flutter/ephemeral/.symlinks/plugins/in_app_review/macos`)
   - livekit_client (from `Flutter/ephemeral/.symlinks/plugins/livekit_client/macos`)
   - local_auth_darwin (from `Flutter/ephemeral/.symlinks/plugins/local_auth_darwin/darwin`)
   - package_info_plus (from `Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos`)
@@ -89,6 +92,8 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/flutter_webrtc/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
+  in_app_review:
+    :path: Flutter/ephemeral/.symlinks/plugins/in_app_review/macos
   livekit_client:
     :path: Flutter/ephemeral/.symlinks/plugins/livekit_client/macos
   local_auth_darwin:
@@ -120,6 +125,7 @@ SPEC CHECKSUMS:
   flutter_timezone: d272288c69082ad571630e0d17140b3d6b93dc0c
   flutter_webrtc: f1fb1a00c6080461bb2bc6caa5b93d07ddb68466
   FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
+  in_app_review: 66e7680752b632d83f4f0e88b34d52ed303fbff4
   livekit_client: 3e024a31e364d4a2e0deda1b3908e93933dbf6dc
   local_auth_darwin: c3ee6cce0a8d56be34c8ccb66ba31f7f180aaebb
   package_info_plus: f0052d280d17aa382b932f399edf32507174e870

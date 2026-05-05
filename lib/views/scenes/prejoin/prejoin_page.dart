@@ -190,6 +190,7 @@ class _PreJoinPageState extends State<PreJoinPage> {
                       color: context.colors.clear,
                       child: PreJoinScreen(
                         bloc: widget.bloc,
+                        authBloc: widget.authBloc,
                         displayNameController: _displayNameController,
                         roomNameController: _roomNameController,
                         displayNameFocusNode: _displayNameFocusNode,

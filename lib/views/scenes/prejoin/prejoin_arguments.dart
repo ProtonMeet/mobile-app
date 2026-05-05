@@ -15,6 +15,7 @@ class PreJoinArgs {
 class JoinArgs {
   JoinArgs({
     required this.meetingLink,
+    this.authBloc,
     this.meetingLinkUrl = '',
     this.displayName = '',
     this.role = PrejoinRole.guest,
@@ -45,4 +46,7 @@ class JoinArgs {
   final bool isAudioEnabled;
   final FrbUpcomingMeeting? meetingLink;
   final String meetingLinkUrl;
+
+  /// Same instance as dashboard / pre-join when the user came through that flow.
+  final AuthBloc? authBloc;
 }

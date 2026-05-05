@@ -1,12 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
-import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/external.url.dart';
 import 'package:meet/l10n/generated/locale.dart';
 import 'package:meet/provider/locale.provider.dart';
 import 'package:meet/views/components/alerts/base_bottom_sheet_v2.dart';
 import 'package:meet/views/components/dropdown.button.v3.dart';
+import 'package:meet/views/scenes/settings/debug/debug_sections.dart';
 import 'package:meet/views/scenes/settings/settings_action_item.dart';
 import 'package:meet/views/scenes/settings/settings_section_header.dart';
 import 'package:meet/views/scenes/signin/auth_bloc.dart';
@@ -49,14 +50,7 @@ class AppSettingsBottomSheet extends StatelessWidget {
       ExternalUrl.shared.launchProtonHelpCenter();
       return;
     }
-    if (desktop) {
-      ExternalUrl.shared.launchProtonHelpCenter();
-      return;
-    }
-    await bloc.nativeViewChannel.nativeReportBugs(
-      bloc.state.displayName,
-      bloc.state.email,
-    );
+    await bloc.reportProblem();
   }
 
   @override
@@ -121,6 +115,10 @@ class AppSettingsBottomSheet extends StatelessWidget {
                 onTap: () => ExternalUrl.shared.lanuchTerms(),
                 isLast: true,
               ),
+
+              if (kDebugMode) ...[
+                ...AppSettingsDebugSection.items(context, authBloc),
+              ],
             ]),
           ),
         ),

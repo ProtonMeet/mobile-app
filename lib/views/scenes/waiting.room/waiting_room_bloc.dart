@@ -14,6 +14,7 @@ import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/managers/room.manager.dart';
 import 'package:meet/managers/services/force_upgrade.dart';
+import 'package:meet/managers/user_activity.manager.dart';
 import 'package:meet/rust/errors.dart';
 import 'package:meet/rust/proton_meet/models/meeting_type.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
@@ -111,6 +112,13 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
             meetingType: MeetingType.instant,
           );
           emit(state.copyWith(meetLink: meetLink));
+          unawaited(() async {
+            try {
+              await ManagerFactory()
+                  .get<UserActivityManager>()
+                  .recordMeetingCreatedSuccessfully();
+            } catch (_) {}
+          }());
         } catch (e, stackTrace) {
           logBridgeError('WaitingRoomBloc', 'Error creating meeting', e);
           captureCreateRoomFailureToSentry(
