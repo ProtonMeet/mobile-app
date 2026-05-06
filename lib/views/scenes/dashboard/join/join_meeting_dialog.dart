@@ -206,14 +206,34 @@ class _JoinMeetingModelState extends State<JoinMeetingModel> {
   String? _passcode;
   String? _message;
 
+  MeetUpcomingTab? _tab;
+  ParticipantDisplayColors? _displayColors;
+  String? _title;
+  String? _subtitle;
+
   LinkStatus _status = LinkStatus.empty;
   Timer? _debounceTimer;
   bool _hasFocus = false;
   bool _hasInitialized = false;
   String? _previousPersonalMeetingLink;
 
+  void _replaceLinkFromDeepLink(String newLink) {
+    if (newLink.isEmpty || _ctrl.text == newLink) return;
+    _tab = null;
+    _displayColors = null;
+    _title = context.local.join_a_meeting;
+    _subtitle = context.local.join_meeting_subtitle;
+    _ctrl.text = newLink;
+    _ctrl.selection = TextSelection.collapsed(offset: newLink.length);
+    _revalidate(newLink);
+  }
+
   @override
   void initState() {
+    _tab = widget.tab;
+    _displayColors = widget.displayColors;
+    _title = widget.title;
+    _subtitle = widget.subtitle;
     super.initState();
     _focus.addListener(_onFocusChange);
     _ctrl.addListener(_onTextChanged);
@@ -377,18 +397,27 @@ class _JoinMeetingModelState extends State<JoinMeetingModel> {
       );
     }
 
-    return _buildContent(context, false);
+    return BlocListener<DashboardBloc, DashboardState>(
+      listenWhen: (previous, current) =>
+          previous.joinMeetingWithLinkUrl != current.joinMeetingWithLinkUrl &&
+          current.joinMeetingWithLinkUrl.isNotEmpty,
+      listener: (context, state) {
+        _replaceLinkFromDeepLink(state.joinMeetingWithLinkUrl);
+      },
+      child: _buildContent(context, false),
+    );
   }
 
   Widget _buildContent(BuildContext context, bool isRegenerating) {
     final hintText = appConfig.apiEnv.baseUrl.meetingLinkHint;
     final meetingLogo = _getMeetingLogo();
     final showCalendarButton =
-        widget.onAdd != null ||
-        widget.onShare != null ||
-        widget.onOpenOutlook != null ||
-        widget.onOpenGoogle != null ||
-        widget.onOpenProton != null;
+        (widget.onAdd != null ||
+            widget.onShare != null ||
+            widget.onOpenOutlook != null ||
+            widget.onOpenGoogle != null ||
+            widget.onOpenProton != null) &&
+        _tab != null;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -419,8 +448,8 @@ class _JoinMeetingModelState extends State<JoinMeetingModel> {
 
                 /// Title & subtitle
                 HeaderTitle(
-                  title: widget.title,
-                  subtitle: widget.subtitle,
+                  title: _title ?? '',
+                  subtitle: _subtitle ?? '',
                   isPersonalMeeting: widget.isPersonalMeeting,
                   recurrenceFrequency: _getRecurrenceFrequency(),
                 ),
@@ -435,7 +464,7 @@ class _JoinMeetingModelState extends State<JoinMeetingModel> {
                   hintText: hintText,
                   editable: widget.editable,
                   autofocus: widget.autofocus,
-                  displayColors: widget.displayColors,
+                  displayColors: _displayColors,
                   onSubmitted: _submit,
                   onCopy: _onCopy,
                 ),
@@ -458,8 +487,8 @@ class _JoinMeetingModelState extends State<JoinMeetingModel> {
                   showProtonCalendar: widget.showProtonCalendar,
                   showOutlookCalendar: widget.showOutlookCalendar,
                   isPersonalMeeting: widget.isPersonalMeeting,
-                  tab: widget.tab,
-                  displayColors: widget.displayColors,
+                  tab: _tab,
+                  displayColors: _displayColors,
                 ),
                 const SizedBox(height: 24),
               ],
@@ -472,24 +501,22 @@ class _JoinMeetingModelState extends State<JoinMeetingModel> {
 
   SvgGenImage _getMeetingLogo() {
     /// when no tab, it is join meeting
-    if (widget.tab == null) {
+    if (_tab == null) {
       return context.images.iconValidLink;
     }
 
     /// when tab is my meetings, it is meeting logo
-    if (widget.tab == MeetUpcomingTab.myMeetings) {
-      return widget.displayColors?.meetingLogo ??
-          context.images.defaultRoomLogo;
+    if (_tab == MeetUpcomingTab.myMeetings) {
+      return _displayColors?.meetingLogo ?? context.images.defaultRoomLogo;
     }
 
     /// when it is my room and when is personal meeting, it is personal logo
     if (widget.isPersonalMeeting) {
-      return widget.displayColors?.personalLogo ??
-          context.images.defaultRoomLogo;
+      return _displayColors?.personalLogo ?? context.images.defaultRoomLogo;
     }
 
     /// when it is other room, it is room logo
-    return widget.displayColors?.roomLogo ?? context.images.defaultRoomLogo;
+    return _displayColors?.roomLogo ?? context.images.defaultRoomLogo;
   }
 
   String? _getRecurrenceFrequency() {
