@@ -39,6 +39,17 @@ pub struct MeetingEventItem {
     pub action: EventAction,
 }
 
+/// Meeting event item containing ID and action
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct UserEventItem {
+    /// Meeting ID
+    #[serde(rename = "ID")]
+    pub id: String,
+    /// Action that occurred
+    pub action: EventAction,
+}
+
 /// Meeting events payload
 /// The API returns MeetMeetings as a direct array: [{"ID":"...","Action":1}]
 /// This is a wrapper to handle the array format
@@ -47,6 +58,14 @@ pub struct MeetingEventItem {
 pub struct MeetMeetingsEvent {
     /// List of meeting events with ID and Action
     pub meetings: Vec<MeetingEventItem>,
+}
+
+/// User events payload (`Users` in API JSON; inner `Users` holds the list).
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct UserEvent {
+    /// List of user events with ID and Action
+    pub users: Vec<UserEventItem>,
 }
 
 /// Response payload for getting the latest event ID
@@ -66,6 +85,8 @@ pub struct LatestEventIdResponse {
 pub struct EventsResponse {
     /// Meeting events (null if no meeting updates)
     pub meet_meetings: Option<MeetMeetingsEvent>,
+    /// User events (null if no user updates)
+    pub users: Option<UserEvent>,
 
     /// Whether there are more events available
     pub more: bool,
@@ -86,6 +107,14 @@ impl EventsResponse {
             .map(|e| e.meetings.clone())
             .filter(|v| !v.is_empty())
     }
+
+    /// Extract user events (ID and Action) from the response if present
+    pub fn users(&self) -> Option<Vec<UserEventItem>> {
+        self.users
+            .as_ref()
+            .map(|e| e.users.clone())
+            .filter(|v| !v.is_empty())
+    }
 }
 
 /// Response data for get_events API call
@@ -93,6 +122,8 @@ impl EventsResponse {
 pub struct GetEventsResponse {
     /// Meeting events (ID and Action) if any
     pub meeting_events: Option<Vec<MeetingEventItem>>,
+    /// User data if any
+    pub users: Option<Vec<UserEventItem>>,
     /// Whether there are more events available
     pub more: bool,
     /// Whether a full refresh is needed
@@ -105,9 +136,125 @@ impl From<EventsResponse> for GetEventsResponse {
     fn from(response: EventsResponse) -> Self {
         Self {
             meeting_events: response.meeting_events(),
+            users: response.users(),
             more: response.more,
             refresh: response.refresh,
             event_id: response.event_id,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    /// Mirrors real API payloads: extra top-level keys are ignored; `Users` / `MeetMeetings` null.
+    #[test]
+    fn events_response_deserializes_sample_with_unknown_fields_and_null_users() {
+        let j = json!({
+            "Users": null,
+            "Addresses": [{"ID": "addr-1", "Action": 0}],
+            "UserSettings": null,
+            "Domains": null,
+            "Members": null,
+            "MeetMeetings": null,
+            "More": true,
+            "Refresh": true,
+            "EventID": "evt-sample-1",
+            "EventOrder": 0,
+            "Code": 1000
+        });
+        let parsed: EventsResponse = serde_json::from_value(j).expect("deserialize EventsResponse");
+        assert!(parsed.users.is_none());
+        assert!(parsed.meet_meetings.is_none());
+        assert!(parsed.more);
+        assert!(parsed.refresh);
+        assert_eq!(parsed.event_id, "evt-sample-1");
+        assert_eq!(parsed.code, 1000);
+        assert!(parsed.meeting_events().is_none());
+        assert!(parsed.users().is_none());
+    }
+
+    #[test]
+    fn events_response_deserializes_meet_meetings_as_direct_array() {
+        let j = json!({
+            "MeetMeetings": [
+                {"ID": "meet-a", "Action": 1},
+                {"ID": "meet-b", "Action": 2}
+            ],
+            "Users": null,
+            "More": false,
+            "Refresh": false,
+            "EventID": "evt-2",
+            "Code": 1000
+        });
+        let parsed: EventsResponse = serde_json::from_value(j).unwrap();
+        let meetings = parsed.meeting_events().expect("meetings");
+        assert_eq!(meetings.len(), 2);
+        assert_eq!(meetings[0].id, "meet-a");
+        assert_eq!(meetings[0].action, EventAction::Create);
+        assert_eq!(meetings[1].id, "meet-b");
+        assert_eq!(meetings[1].action, EventAction::Update);
+    }
+
+    /// `UserEvent` is an object with a `Users` array (PascalCase on both levels).
+    #[test]
+    fn events_response_deserializes_nested_users_wrapper() {
+        let j = json!({
+            "Users": {
+                "Users": [
+                    {"ID": "user-1", "Action": 0},
+                    {"ID": "user-2", "Action": 3}
+                ]
+            },
+            "MeetMeetings": null,
+            "More": false,
+            "Refresh": true,
+            "EventID": "evt-3",
+            "Code": 1000
+        });
+        let parsed: EventsResponse = serde_json::from_value(j).unwrap();
+        let users = parsed.users().expect("user events");
+        assert_eq!(users.len(), 2);
+        assert_eq!(users[0].id, "user-1");
+        assert_eq!(users[0].action, EventAction::Delete);
+        assert_eq!(users[1].id, "user-2");
+        assert_eq!(users[1].action, EventAction::UpdateFlags);
+    }
+
+    #[test]
+    fn get_events_response_from_combines_meet_and_users() {
+        let j = json!({
+            "MeetMeetings": [{"ID": "m1", "Action": 1}],
+            "Users": {"Users": [{"ID": "u1", "Action": 2}]},
+            "More": true,
+            "Refresh": false,
+            "EventID": "evt-4",
+            "Code": 1000
+        });
+        let parsed: EventsResponse = serde_json::from_value(j).unwrap();
+        let ge: GetEventsResponse = parsed.into();
+        let m = ge.meeting_events.as_ref().unwrap();
+        let u = ge.users.as_ref().unwrap();
+        assert_eq!(m.len(), 1);
+        assert_eq!(m[0].id, "m1");
+        assert_eq!(u.len(), 1);
+        assert_eq!(u[0].id, "u1");
+        assert_eq!(u[0].action, EventAction::Update);
+    }
+
+    #[test]
+    fn meeting_events_omitted_when_meet_meetings_empty_array() {
+        let j = json!({
+            "MeetMeetings": [],
+            "Users": null,
+            "More": false,
+            "Refresh": false,
+            "EventID": "evt-5",
+            "Code": 1000
+        });
+        let parsed: EventsResponse = serde_json::from_value(j).unwrap();
+        assert!(parsed.meeting_events().is_none());
     }
 }

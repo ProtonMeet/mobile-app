@@ -168,83 +168,42 @@ impl From<crate::infra::storage::error::StorageError> for MeetCoreError {
 
 impl From<crate::errors::service::ServiceError> for MeetCoreError {
     fn from(error: crate::errors::service::ServiceError) -> Self {
-        if let Some(inner_error) = find_error_type::<HttpClientError>(&error) {
-            match inner_error {
-                HttpClientError::MeetingLocked => {
-                    return Self::MeetingLocked;
+        use crate::errors::service::ServiceError;
+        // `ServiceError::HttpClientError` (and nested `HttpClientError` in `source()`)
+        // must become `MeetCoreError::HttpClientError` so the FRB layer can classify
+        // Muon auth/session strings (e.g. "non-existent auth session"). Previously only
+        // `ErrorCode` and `MeetingLocked` were lifted; `AuthSession` / `AuthRefresh` / etc.
+        // fell through to `ServiceError` and surfaced as generic `BridgeError::MeetCore`.
+        match error {
+            ServiceError::HttpClientError(http) => Self::from(http),
+            other => {
+                if let Some(inner_error) = find_error_type::<HttpClientError>(&other) {
+                    match inner_error {
+                        HttpClientError::MeetingLocked => Self::MeetingLocked,
+                        HttpClientError::ErrorCode(_, error_detail) => Self::HttpClientError {
+                            status: error_detail.code,
+                            message: error_detail.error.clone(),
+                            details: Some(format!("{:?}", error_detail.details)),
+                        },
+                        HttpClientError::MlsStatusCode(status) => {
+                            return Self::MlsStatusCode(*status);
+                        }
+                        _ => Self::HttpClientError {
+                            status: 0,
+                            message: inner_error.to_string(),
+                            details: None,
+                        },
+                    }
+                } else {
+                    Self::ServiceError {
+                        message: other.to_string(),
+                        details: Some(format!("{:?}", other.source())),
+                    }
                 }
-                HttpClientError::ErrorCode(_, error) => {
-                    return Self::HttpClientError {
-                        status: error.code,
-                        message: error.error.clone(),
-                        details: Some(format!("{:?}", error.details)),
-                    };
-                }
-                HttpClientError::MlsStatusCode(status) => {
-                    return Self::MlsStatusCode(*status);
-                }
-                _ => {}
             }
-        }
-
-        Self::ServiceError {
-            message: error.to_string(),
-            details: Some(format!("{:?}", error.source())),
         }
     }
 }
-
-// impl MeetCoreError {
-//     /// Creates a new authentication failed error
-//     pub fn auth_failed<S: Into<String>>(message: S) -> Self {
-//         Self::AuthenticationFailed {
-//             message: message.into(),
-//         }
-//     }
-
-//     /// Creates a new HTTP error
-//     pub fn http_error<S: Into<String>>(message: S) -> Self {
-//         Self::HttpError {
-//             message: message.into(),
-//         }
-//     }
-
-//     /// Creates a new WebSocket error
-//     pub fn websocket_error<S: Into<String>>(message: S) -> Self {
-//         Self::WebSocketError {
-//             message: message.into(),
-//         }
-//     }
-
-//     /// Creates a new database error
-//     pub fn database_error<S: Into<String>>(operation: S) -> Self {
-//         Self::DatabaseError {
-//             operation: operation.into(),
-//         }
-//     }
-
-//     /// Creates a new internal error
-//     pub fn internal_error<S: Into<String>>(message: S) -> Self {
-//         Self::InternalError {
-//             message: message.into(),
-//             details: None,
-//         }
-//     }
-
-//     /// Creates a new MLS protocol error
-//     pub fn mls_protocol_error<S: Into<String>>(message: S) -> Self {
-//         Self::MlsProtocolError {
-//             message: message.into(),
-//         }
-//     }
-
-//     /// Creates a new MLS spec error
-//     pub fn mls_spec_error<S: Into<String>>(message: S) -> Self {
-//         Self::MlsSpecError {
-//             message: message.into(),
-//         }
-//     }
-// }
 
 // Conversion implementations for existing error types
 impl From<crate::errors::login::LoginError> for MeetCoreError {
@@ -281,40 +240,6 @@ impl From<crate::errors::login::LoginError> for MeetCoreError {
         }
     }
 }
-
-// impl From<crate::infra::storage::error::StorageError> for MeetCoreError {
-//     fn from(error: crate::infra::storage::error::StorageError) -> Self {
-//         match error {
-//             crate::infra::storage::error::StorageError::FailedToLockDbCache => {
-//                 Self::InternalError {
-//                     message: "Failed to lock db cache".to_string(),
-//                 }
-//             }
-//             crate::infra::storage::error::StorageError::DbNotFound { name } => Self::DataNotFound {
-//                 key: name.to_string(),
-//             },
-//             crate::infra::storage::error::StorageError::Db { source } => Self::DatabaseError {
-//                 operation: source.to_string(),
-//             },
-//             crate::infra::storage::error::StorageError::Serde(msg) => {
-//                 Self::SerializationError { context: msg }
-//             }
-//             crate::infra::storage::error::StorageError::NotFound { table, key } => {
-//                 Self::DataNotFound {
-//                     key: format!("{table}.{key}"),
-//                 }
-//             }
-//             crate::infra::storage::error::StorageError::DatabaseNameEmpty => Self::InternalError {
-//                 message: "Database name cannot be empty".to_string(),
-//             },
-//             crate::infra::storage::error::StorageError::DatabaseNameInvalidCharacters => {
-//                 Self::InternalError {
-//                     message: "Database name contains only invalid characters".to_string(),
-//                 }
-//             }
-//         }
-//     }
-// }
 
 //TODO:: should remove anyhow::Error
 impl From<anyhow::Error> for MeetCoreError {

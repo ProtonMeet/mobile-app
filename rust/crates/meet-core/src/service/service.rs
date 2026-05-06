@@ -1122,6 +1122,26 @@ impl Service {
         state.reset();
         drop(state);
     }
+
+    /// Clears the persisted Proton user row and keys so [`UserService::get_user`] /
+    /// [`UserService::get_user_keys`] load from the API again (meet-server may have
+    /// changed user data when the event stream sets `refresh`).
+    pub async fn clear_local_user_profile_cache(
+        &self,
+        user_id: &UserId,
+    ) -> Result<(), MeetCoreError> {
+        // On native, `delete_user` removes the whole per-user DB bundle; clear keys first
+        // so `delete_user_keys` can still open the DB. On WASM, order is harmless.
+        self.user_repository
+            .delete_user_keys(user_id.as_str())
+            .await
+            .map_err(MeetCoreError::from)?;
+        self.user_repository
+            .delete_user(user_id.as_str())
+            .await
+            .map_err(MeetCoreError::from)?;
+        Ok(())
+    }
 }
 
 #[async_trait]

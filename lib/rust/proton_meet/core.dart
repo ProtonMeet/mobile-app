@@ -228,6 +228,8 @@ abstract class AppCore implements RustOpaqueInterface {
   /// Lightweight server reachability check (e.g. when logged out). Surfaces API errors such as force upgrade.
   Future<BigInt> ping();
 
+  Future<UserState> refreshUserStateFromApi({required String userId});
+
   Future<void> removeParticipant({required String participantUuid});
 
   Future<void> sendMeetingFeedback({

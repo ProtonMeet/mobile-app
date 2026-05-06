@@ -28,6 +28,7 @@ pub enum BridgeError {
     #[error("An error occurred in api lock: {0}")]
     ApiLock(String),
 
+    /// this is livekit access token error
     #[error("An error occurred in access token: {0}")]
     AccessToken(String),
 
@@ -113,6 +114,41 @@ impl From<ChatError> for BridgeError {
     }
 }
 
+/// Wallet maps `AndromedaApiError` variants directly in `From<AndromedaApiError> for BridgeError`.
+/// Meet does not: `From<HttpClientError> for MeetCoreError` collapses everything into
+/// `MeetCoreError::HttpClientError { message: HttpClientError::to_string(), .. }`, so the FRB
+/// layer cannot `match` on variants. We detect cases by substrings from meet-core's `thiserror`
+/// text on [`proton_meet_core::errors::http_client::HttpClientError`], then emit the same
+/// `BridgeError` **discriminants** as wallet. Payload strings for auth/fork are formatted like
+/// wallet where we can; `MuonClient` / `MuonSession` still differ (meet has no `MuonError`
+/// value + source like wallet, and no active `MuonAppVersion` / `MuonStatus` arms in meet-core).
+fn bridge_error_from_meet_core_http_client(
+    status: u16,
+    message: String,
+    details: Option<String>,
+) -> BridgeError {
+    if message.contains("non-existent auth session") {
+        return BridgeError::MuonAuthSession(format!("AuthSession: {message}"));
+    }
+    if message.contains("failed auth refresh") {
+        return BridgeError::MuonAuthRefresh(format!("AuthRefresh: {message}"));
+    }
+    if message.contains("failed auth via forked session") {
+        return BridgeError::Fork("ForkAuthSession error occurred".to_string());
+    }
+    if message.contains("failed fork session") {
+        return BridgeError::Fork("ForkSession error occurred".to_string());
+    }
+    if message.contains("An error from Muon occurred") {
+        return BridgeError::MuonClient(message);
+    }
+    BridgeError::ApiResponse(ResponseError {
+        code: status,
+        error: message,
+        details: details.unwrap_or_default(),
+    })
+}
+
 impl From<MeetCoreError> for BridgeError {
     fn from(value: MeetCoreError) -> Self {
         match value {
@@ -121,11 +157,7 @@ impl From<MeetCoreError> for BridgeError {
                 status,
                 message,
                 details,
-            } => BridgeError::ApiResponse(ResponseError {
-                code: status,
-                error: message,
-                details: details.unwrap_or_default(),
-            }),
+            } => bridge_error_from_meet_core_http_client(status, message, details),
             MeetCoreError::ServiceError { message, details } => BridgeError::MeetCore(format!(
                 "MeetCoreError::ServiceError\nmessage: {message}\ndetails: {}",
                 details.as_deref().unwrap_or("(none)")

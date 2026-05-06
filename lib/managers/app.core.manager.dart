@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:meet/constants/env.dart';
+import 'package:meet/helper/extension/bridge_session_check.extension.dart';
 import 'package:meet/helper/logger.dart';
 import 'package:meet/helper/user.agent.dart';
 import 'package:meet/managers/channels/platform_info_channel.dart';
@@ -137,8 +138,15 @@ class AppCoreManager implements Manager {
       final rttMs = await appCore.ping();
       _lastMeetApiWarmupSuccess = DateTime.now();
       logger.d('[AppCoreManager] meet API warmup ping ok rtt_ms=$rttMs');
-    } on BridgeError_ApiResponse catch (e) {
-      onForceUpgradeApiResponse?.call(e);
+    } on BridgeError catch (e) {
+      if (e.consumeBridgeSessionIfNeeded()) {
+        return;
+      }
+      if (e is BridgeError_ApiResponse) {
+        onForceUpgradeApiResponse?.call(e);
+      } else {
+        logger.d('[AppCoreManager] meet API warmup ping: $e');
+      }
     } catch (e, st) {
       logger.d('[AppCoreManager] meet API warmup ping: $e\n$st');
     }
@@ -296,8 +304,8 @@ class AppCoreManager implements Manager {
     if (uid != null && uid.isNotEmpty) {
       try {
         await appCore.logout(userId: uid);
-      } catch (e) {
-        logger.e("Error logging out: $e");
+      } catch (e, st) {
+        logger.e('Error logging out: $e', error: e, stackTrace: st);
       }
     }
     await storage.deleteAll();

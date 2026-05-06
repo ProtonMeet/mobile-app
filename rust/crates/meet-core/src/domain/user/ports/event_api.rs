@@ -75,6 +75,7 @@ mod tests {
                 Box::pin(async {
                     Ok(GetEventsResponse {
                         meeting_events: Some(events),
+                        users: None,
                         more: false,
                         refresh: false,
                         event_id: "event-id-124".to_string(),
@@ -100,6 +101,7 @@ mod tests {
                 Box::pin(async {
                     Ok(GetEventsResponse {
                         meeting_events: None,
+                        users: None,
                         more: true,
                         refresh: false,
                         event_id: "event-id-124".to_string(),

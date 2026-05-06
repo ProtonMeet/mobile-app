@@ -15,7 +15,7 @@ const Duration defaultAnimationDurationLong = Duration(milliseconds: 500);
 
 /// database versions
 const int driftDatabaseVersion = 1;
-const int rustDatabaseVersion = 1;
+const int rustDatabaseVersion = 2;
 
 /// meet
 const String systemMessageIdentity = "ProtonMeetSystemMessageIdentity";

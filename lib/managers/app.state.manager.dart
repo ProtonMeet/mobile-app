@@ -1,5 +1,8 @@
 import 'dart:math';
 
+import 'package:meet/helper/extension/bridge_error.extension.dart';
+import 'package:meet/helper/extension/bridge_error_session.extension.dart';
+import 'package:meet/helper/extension/response_error.extension.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/managers/manager.dart';
 import 'package:meet/managers/manager.factory.dart';
@@ -9,6 +12,7 @@ import 'package:meet/managers/secure.storage/secure.storage.manager.dart';
 import 'package:meet/managers/services/force_upgrade.dart';
 import 'package:meet/models/unlock.timer.dart';
 import 'package:meet/models/unlock.type.dart';
+import 'package:meet/rust/errors.dart';
 
 enum LoadingTask {
   eligible,
@@ -104,40 +108,60 @@ class AppStateManager extends DataProvider implements Manager {
   /// constructor
   AppStateManager(this.secureStore, this.shared);
 
-  // bool updateStateFrom(BridgeError exception) {
-  //   handleMuonClientError(exception);
-  //   if (handleSessionError(exception)) {
-  //     return true;
-  //   }
-  //   if (handleForceUpgrade(exception)) {
-  //     return true;
-  //   }
-  //   return false;
-  // }
+  /// Central handling for [BridgeError] from Rust (Muon, HTTP, access token).
+  ///
+  /// Returns `true` when [exception] was consumed as a **session** or **force-upgrade**
+  /// signal (caller should usually stop retries / avoid generic error UI).
+  bool updateStateFrom(BridgeError exception) {
+    handleMuonClientError(exception);
+    if (handleSessionError(exception)) {
+      return true;
+    }
+    if (handleForceUpgrade(exception)) {
+      return true;
+    }
+    return false;
+  }
 
-  // void handleMuonClientError(BridgeError exception) {
-  //   if (ifMuonClientError(exception)) {
-  //     isConnectivityOK = false;
-  //   }
-  // }
+  void handleMuonClientError(BridgeError exception) {
+    if (exception.isMuonClientError) {
+      isConnectivityOK = false;
+    }
+  }
 
-  // bool handleAppCryptoError(BridgeError exception) {
-  //   final message = parseAppCryptoError(exception);
-  //   if (message != null) {
-  //     emitState(AppCryptoFailed(message: message));
-  //     return true;
-  //   }
-  //   return false;
-  // }
+  bool handleSessionError(BridgeError exception) {
+    final message = exception.sessionExpireMessage;
+    if (message != null) {
+      l.logger.w(
+        '[AppStateManager] Session invalid — emitting AppSessionFailed '
+        '(bridge=${exception.detailMessage})',
+      );
+      emitState(AppSessionFailed(message: message));
+      return true;
+    }
+    return false;
+  }
 
-  // bool handleSessionError(BridgeError exception) {
-  //   final message = parseSessionExpireError(exception);
-  //   if (message != null) {
-  //     emitState(AppSessionFailed(message: message));
-  //     return true;
-  //   }
-  //   return false;
-  // }
+  bool handleForceUpgrade(BridgeError exception) {
+    final error = exception.apiResponseError;
+    if (error != null && error.indicatesForceUpgrade) {
+      if (state is AppForceUpgradeState) {
+        l.logger.d(
+          '[AppStateManager] Force-upgrade API ${error.detailString}; '
+          'already in AppForceUpgradeState',
+        );
+        return true;
+      }
+      l.logger.w(
+        '[AppStateManager] Force-upgrade required — emitting AppForceUpgradeState '
+        '${error.detailString}',
+      );
+      emitState(AppForceUpgradeState(message: kDefaultForceUpgradeMessage));
+      haltBackgroundTasksForForceUpgrade();
+      return true;
+    }
+    return false;
+  }
 
   Future<UnlockModel> getUnlockType() async {
     final saved = await secureStore.get(unlockKey);
@@ -261,8 +285,13 @@ class AppStateManager extends DataProvider implements Manager {
 
   @override
   Future<void> logout() async {
+    isHomeInitialed = false;
+    isHomeLoading = false;
+    isConnectivityOK = true;
     isLocked = false;
     isAuthenticating = false;
+    failedTask.clear();
+    emitState(DataInitial());
   }
 
   @override
