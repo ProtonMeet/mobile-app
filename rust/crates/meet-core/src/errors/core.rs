@@ -9,7 +9,7 @@ use std::error::Error;
 #[cfg(target_family = "wasm")]
 use wasm_bindgen::prelude::*;
 
-use crate::errors::http_client::HttpClientError;
+use crate::{errors::http_client::HttpClientError, service::mls_service::MlsServiceError};
 
 /// The primary error type for the meet-core crate.
 ///
@@ -143,6 +143,18 @@ pub enum MeetCoreError {
 
     #[error("User is not RoomAdmin")]
     NotRoomAdmin,
+
+    #[error("Unexpected MLS message content: {content_type:?}")]
+    UnExpectedMlsMessageContent { content_type: Option<String> },
+
+    #[error("Ratchet tree not found")]
+    RatchetTreeNotFound,
+
+    #[error("Mls service error: {0}")]
+    MlsServiceError(#[from] MlsServiceError),
+
+    #[error("Mls status code: {0}")]
+    MlsStatusCode(u32),
 }
 
 impl From<crate::infra::storage::error::StorageError> for MeetCoreError {
@@ -167,6 +179,9 @@ impl From<crate::errors::service::ServiceError> for MeetCoreError {
                         message: error.error.clone(),
                         details: Some(format!("{:?}", error.details)),
                     };
+                }
+                HttpClientError::MlsStatusCode(status) => {
+                    return Self::MlsStatusCode(*status);
                 }
                 _ => {}
             }
@@ -551,6 +566,7 @@ impl From<HttpClientError> for MeetCoreError {
                 message: err.error.clone(),
                 details: Some(err.details.to_string()),
             },
+            HttpClientError::MlsStatusCode(status) => Self::MlsStatusCode(status),
             _ => Self::HttpClientError {
                 status: 0,
                 message: error.to_string(),
@@ -611,6 +627,7 @@ pub enum MeetCoreErrorEnum {
     MeetingLocked,
     UuidError,
     NotRoomAdmin,
+    MlsStatusCode,
 }
 
 #[cfg(target_family = "wasm")]
@@ -653,6 +670,10 @@ impl From<MeetCoreError> for MeetCoreErrorEnum {
             MeetCoreError::MeetingLocked => Self::MeetingLocked,
             MeetCoreError::UuidError(_) => Self::UuidError,
             MeetCoreError::NotRoomAdmin => Self::NotRoomAdmin,
+            MeetCoreError::UnExpectedMlsMessageContent { .. } => Self::MlsSpecError,
+            MeetCoreError::RatchetTreeNotFound => Self::MlsProtocolError,
+            MeetCoreError::MlsServiceError(_) => Self::InternalError,
+            MeetCoreError::MlsStatusCode(status) => Self::MlsStatusCode,
         }
     }
 }

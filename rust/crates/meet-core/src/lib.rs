@@ -1,3 +1,7 @@
+/// Participant / MLS member count at or above which external-proposal join is used when
+/// join-type switching is enabled. Must stay aligned with [`app::App::get_join_type`].
+pub(crate) const JOIN_TYPE_SWITCH_THRESHOLD: u32 = 20;
+
 pub mod app;
 pub mod app_state;
 pub mod domain;

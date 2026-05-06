@@ -1,3 +1,4 @@
+pub mod access_token;
 pub mod address;
 pub mod email_settings;
 pub mod flags_settings;
@@ -6,6 +7,8 @@ pub mod login;
 pub mod meet_link;
 pub mod meet_link_info;
 pub mod meeting;
+pub mod meeting_link_name;
+pub mod meeting_password;
 pub mod participant_track_settings;
 pub mod password_settings;
 pub mod phone_settings;

@@ -30,16 +30,22 @@ pub struct MlsStore {
     pub config: MlsClientConfig,
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum MlsStoreError {
+    #[error("Mls client not found")]
+    MlsClientNotFound,
+}
+
 impl MlsStore {
     /// Retrieves the MLS client of the given `user_id` and `ciphersuite`
     pub fn find_client(
         &self,
         user_id: &String,
         cs: &CipherSuite,
-    ) -> Result<&MlsClient<MemKv>, anyhow::Error> {
+    ) -> Result<&MlsClient<MemKv>, MlsStoreError> {
         self.clients
             .get(user_id)
             .and_then(|m| m.get(cs))
-            .ok_or_else(|| anyhow::anyhow!("Mls client not found"))
+            .ok_or(MlsStoreError::MlsClientNotFound)
     }
 }

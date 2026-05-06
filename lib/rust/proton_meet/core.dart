@@ -133,8 +133,8 @@ abstract class AppCore implements RustOpaqueInterface {
     String? sessionId,
     required bool isMeetNewJoinType,
     required bool isMeetSwitchJoinType,
+    required bool isMeetNewSwitchJoinType,
     required bool reuseToken,
-    required bool usePsk,
   });
 
   Future<void> joinMeetingWithAccessToken({
