@@ -423,6 +423,22 @@ impl App {
         Ok(user_state)
     }
 
+    /// Clears the Rust-side local user/keys cache, then reloads [`UserState`] from the API
+    /// and updates in-memory [`AppState::active_user`]. Use when the event API reports
+    /// `refresh` or other signals that server-side user data may have changed.
+    pub async fn refresh_user_state_from_api(
+        &self,
+        user_id: String,
+    ) -> Result<UserState, MeetCoreError> {
+        let id = UserId::new(user_id.clone());
+        self.user_service
+            .write()
+            .await
+            .clear_local_user_profile_cache(&id)
+            .await?;
+        self.fetch_user_state(user_id).await
+    }
+
     pub async fn login(
         &self,
         username: String,

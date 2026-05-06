@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:meet/managers/services/in_app_review_service.dart';
+import 'package:meet/views/components/alerts/session_expired_dialog.dart';
 import 'package:meet/views/scenes/feedbacks/pre_rating_sheet.dart';
 import 'package:meet/views/scenes/settings/debug/left_meeting_sheet_menu.dart';
 import 'package:meet/views/scenes/settings/settings_action_item.dart';
@@ -30,6 +31,22 @@ final class AppSettingsDebugSection {
       SettingsActionItem(
         title: 'In-app review',
         onTap: () => {InAppReviewService.tryRequestReviewForDebug()},
+      ),
+      const SizedBox(height: 1),
+      SettingsActionItem(
+        title: 'Session expired sheet debug',
+        onTap: () {
+          Navigator.of(context).pop();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            unawaited(
+              showSessionErrorDialog(
+                context,
+                onSignIn: () async {},
+                onContinueWithoutSignIn: () async {},
+              ),
+            );
+          });
+        },
       ),
 
       const SizedBox(height: 1),

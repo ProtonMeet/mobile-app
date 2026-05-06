@@ -236,6 +236,10 @@ class $AssetsImagesIconGen {
   SvgGenImage get icSecurityIndicator =>
       const SvgGenImage('assets/images/icon/ic-security-indicator.svg');
 
+  /// File path: assets/images/icon/ic-session-expired.svg
+  SvgGenImage get icSessionExpired =>
+      const SvgGenImage('assets/images/icon/ic-session-expired.svg');
+
   /// File path: assets/images/icon/ic-share-screen.svg
   SvgGenImage get icShareScreen =>
       const SvgGenImage('assets/images/icon/ic-share-screen.svg');
@@ -366,6 +370,7 @@ class $AssetsImagesIconGen {
     icRecurring,
     icReload,
     icSecurityIndicator,
+    icSessionExpired,
     icShareScreen,
     icSort,
     icSpeakerOff,

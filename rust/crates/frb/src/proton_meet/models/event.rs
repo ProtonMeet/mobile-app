@@ -1,4 +1,5 @@
 use flutter_rust_bridge::frb;
+use proton_meet_core::infra::dto::event::UserEventItem;
 pub use proton_meet_core::infra::dto::event::{EventAction, GetEventsResponse, MeetingEventItem};
 
 /// Event action type indicating what happened to the model
@@ -19,14 +20,14 @@ pub enum _EventAction {
 
 /// Meeting event item containing ID and action
 #[derive(Debug, Clone)]
-pub struct FrbMeetingEventItem {
+pub struct FrbEventItem {
     /// Meeting ID
     pub id: String,
     /// Action that occurred
     pub action: EventAction,
 }
 
-impl From<MeetingEventItem> for FrbMeetingEventItem {
+impl From<MeetingEventItem> for FrbEventItem {
     fn from(item: MeetingEventItem) -> Self {
         Self {
             id: item.id,
@@ -35,11 +36,21 @@ impl From<MeetingEventItem> for FrbMeetingEventItem {
     }
 }
 
+impl From<UserEventItem> for FrbEventItem {
+    fn from(item: UserEventItem) -> Self {
+        Self {
+            id: item.id,
+            action: item.action,
+        }
+    }
+}
 /// Response for get_events API call
 #[derive(Debug, Clone)]
 pub struct FrbGetEventsResponse {
     /// Meeting events (ID and Action) if any
-    pub meeting_events: Option<Vec<FrbMeetingEventItem>>,
+    pub meeting_events: Option<Vec<FrbEventItem>>,
+    pub users: Option<Vec<FrbEventItem>>,
+
     /// Whether there are more events available
     pub more: bool,
     /// Whether a full refresh is needed
@@ -53,6 +64,9 @@ impl From<GetEventsResponse> for FrbGetEventsResponse {
         Self {
             meeting_events: response
                 .meeting_events
+                .map(|e| e.into_iter().map(|item| item.into()).collect()),
+            users: response
+                .users
                 .map(|e| e.into_iter().map(|item| item.into()).collect()),
             more: response.more,
             refresh: response.refresh,

@@ -59,8 +59,12 @@
   "user_name": "User name",
   "account": "Account",
   "password": "Password",
-  "session_expired_content": "Your session has expired. Please log in to continue.",
+  "session_expired_content": "For your security, your session timed out. Sign in again to continue managing your meetings.",
   "session_expired_title": "Session expired!",
+  "session_expired_continue_without_signing_in": "Continue without signing in",
+  "@session_expired_continue_without_signing_in": {
+    "description": "Secondary button label for session expired bottom sheet"
+  },
   "force_upgrade": "Force Upgrade",
   "upgrade": "Upgrade",
   "search_participants": "Search participants...",

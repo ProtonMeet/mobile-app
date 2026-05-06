@@ -1,4 +1,5 @@
 import 'package:livekit_client/livekit_client.dart';
+import 'package:meet/managers/app.state.manager.dart' show AppStateManager;
 import 'package:meet/rust/proton_meet/models/meet_info.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
@@ -20,6 +21,10 @@ class WaitingRoomState {
   final LocalVideoTrack? videoTrack;
   final CameraPosition? selectedVideoPosition;
   final bool shouldNavigateToRoom;
+
+  /// When true, the view should 'Navigator.pop' back to the prior route (e.g. prejoin)
+  /// after [AppStateManager] handled a consumed bridge session / force-upgrade signal.
+  final bool shouldPopAfterBridgeSession;
   final FrbMeetInfo? meetInfo;
   final FrbUpcomingMeeting? meetLink;
   final BaseKeyProvider? keyProvider;
@@ -41,6 +46,7 @@ class WaitingRoomState {
     this.videoTrack,
     this.selectedVideoPosition,
     this.shouldNavigateToRoom = false,
+    this.shouldPopAfterBridgeSession = false,
     this.meetInfo,
     this.meetLink,
   });
@@ -61,6 +67,7 @@ class WaitingRoomState {
     LocalVideoTrack? videoTrack,
     CameraPosition? selectedVideoPosition,
     bool? shouldNavigateToRoom,
+    bool? shouldPopAfterBridgeSession,
     FrbMeetInfo? meetInfo,
     FrbUpcomingMeeting? meetLink,
     BaseKeyProvider? keyProvider,
@@ -82,6 +89,8 @@ class WaitingRoomState {
       selectedVideoPosition:
           selectedVideoPosition ?? this.selectedVideoPosition,
       shouldNavigateToRoom: shouldNavigateToRoom ?? this.shouldNavigateToRoom,
+      shouldPopAfterBridgeSession:
+          shouldPopAfterBridgeSession ?? this.shouldPopAfterBridgeSession,
       meetInfo: meetInfo ?? this.meetInfo,
       meetLink: meetLink ?? this.meetLink,
       keyProvider: keyProvider ?? this.keyProvider,

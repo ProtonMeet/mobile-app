@@ -19,12 +19,14 @@ import 'package:meet/views/components/alerts/account_switcher_sheet.dart';
 import 'package:meet/views/components/alerts/create_room_dialog.dart';
 import 'package:meet/views/components/alerts/dashboard_error.dart';
 import 'package:meet/views/components/alerts/force.upgrade.dialog.dart';
+import 'package:meet/views/components/alerts/session_expired_dialog.dart';
 import 'package:meet/views/components/alerts/signin_intro_sheet.dart';
 import 'package:meet/views/components/bottom.sheets/almost_there_bottom_sheet.dart'
     show AlmostThereContext, showAlmostThereBottomSheet;
 import 'package:meet/views/components/local.toast.view.dart';
 import 'package:meet/views/scenes/account_deletion/account_deletion_view.dart';
 import 'package:meet/views/scenes/app/app.router.dart';
+import 'package:meet/views/scenes/core/coordinator.dart';
 import 'package:meet/views/scenes/dashboard/join/join_meeting_dialog.dart';
 import 'package:meet/views/scenes/dashboard/upcoming/meet_upcoming_title.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
@@ -85,6 +87,16 @@ class _DashboardPageState extends State<DashboardPage> {
           // No logout action needed, just show upgrade dialog
         });
       }
+
+      if (state is AppSessionFailed && mounted) {
+        widget.authBloc.add(SignOutUser());
+        // Only defer to Room flow. Other overlays/routes should still show
+        // session-expired on dashboard.
+        if (!context.isTopMostRoute && Coordinator.suppressUnknownRouteUi) {
+          return;
+        }
+        showSessionErrorDialog(context, onSignIn: _startSignInFlow);
+      }
     });
   }
 
@@ -142,6 +154,24 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  /// Start the sign in flow
+  Future<void> _startSignInFlow() async {
+    if (desktop) {
+      _showFlutterSignIn(context);
+    } else {
+      widget.authBloc.add(LoginWithNative());
+    }
+  }
+
+  /// Start the sign up flow
+  Future<void> _startSignUpFlow() async {
+    if (desktop) {
+      _showFlutterSignIn(context);
+    } else {
+      widget.authBloc.add(SignupWithNative());
+    }
+  }
+
   void _handleJoinMeeting() {
     showJoinMeetingDialog(
       context,
@@ -156,19 +186,11 @@ class _DashboardPageState extends State<DashboardPage> {
       almostThereContext: almostThereContext,
       onCreateAccount: () async {
         Navigator.of(context).maybePop();
-        if (desktop) {
-          _showFlutterSignIn(context);
-        } else {
-          widget.authBloc.add(SignupWithNative());
-        }
+        await _startSignUpFlow();
       },
       onSignIn: () async {
         Navigator.of(context).maybePop();
-        if (desktop) {
-          _showFlutterSignIn(context);
-        } else {
-          widget.authBloc.add(LoginWithNative());
-        }
+        await _startSignInFlow();
       },
     );
   }
@@ -582,20 +604,8 @@ class _DashboardPageState extends State<DashboardPage> {
                           showSignInIntroSheet(
                             context,
                             versionDisplay: _versionDisplay,
-                            onSignIn: () {
-                              if (desktop) {
-                                _showFlutterSignIn(context);
-                              } else {
-                                widget.authBloc.add(LoginWithNative());
-                              }
-                            },
-                            onSignUp: () {
-                              if (desktop) {
-                                _showFlutterSignIn(context);
-                              } else {
-                                widget.authBloc.add(SignupWithNative());
-                              }
-                            },
+                            onSignIn: () => unawaited(_startSignInFlow()),
+                            onSignUp: () => unawaited(_startSignUpFlow()),
                           );
                         },
                         onLogoutTap: () {

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/constants/constants.dart';
 import 'package:meet/helper/extension/bridge_error.extension.dart';
+import 'package:meet/helper/extension/bridge_session_check.extension.dart';
 import 'package:meet/helper/extension/local_video_track_extension.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/sentry_create_room.dart';
@@ -98,6 +99,18 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
           );
           isPaidUser = isPaid(user: userState.userData);
         }
+      } on BridgeError catch (e, stackTrace) {
+        if (e.consumeBridgeSessionIfNeeded()) {
+          emit(
+            state.copyWith(isLoading: false, shouldPopAfterBridgeSession: true),
+          );
+          return;
+        }
+        l.logger.e(
+          "[WaitingRoomBloc] Error fetching user state: $e, $stackTrace",
+          error: e,
+          stackTrace: stackTrace,
+        );
       } catch (e) {
         l.logger.e("error fetching user state: $e");
       }
@@ -120,6 +133,17 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
             } catch (_) {}
           }());
         } catch (e, stackTrace) {
+          if (e is BridgeError) {
+            if (e.consumeBridgeSessionIfNeeded()) {
+              emit(
+                state.copyWith(
+                  isLoading: false,
+                  shouldPopAfterBridgeSession: true,
+                ),
+              );
+              return;
+            }
+          }
           logBridgeError('WaitingRoomBloc', 'Error creating meeting', e);
           captureCreateRoomFailureToSentry(
             flow: 'waiting_room_instant_create',
@@ -417,7 +441,9 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
           },
         );
       }
-      emit(state.copyWith(isLoading: false, error: extractErrorMessage(e)));
+
+      final bridgeSessionExit =
+          e is BridgeError && e.consumeBridgeSessionIfNeeded();
 
       // Clean up room connection if it was created but connection failed
       // This prevents other users from seeing a failed participant
@@ -478,6 +504,15 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
           );
         }
       }
+
+      if (bridgeSessionExit) {
+        emit(
+          state.copyWith(isLoading: false, shouldPopAfterBridgeSession: true),
+        );
+        return;
+      }
+
+      emit(state.copyWith(isLoading: false, error: extractErrorMessage(e)));
 
       // Log join room failed if feature flag is enabled
       try {
@@ -566,6 +601,12 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
 
       emit(state.copyWith(shouldNavigateToRoom: true));
     } catch (error) {
+      if (error is BridgeError && error.consumeBridgeSessionIfNeeded()) {
+        emit(
+          state.copyWith(isLoading: false, shouldPopAfterBridgeSession: true),
+        );
+        return;
+      }
       l.logger.d('Could not connect $error');
       // Send connection error to Sentry with context
       Sentry.captureException(
@@ -595,7 +636,12 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
     WaitingRoomNavigateToRoom event,
     Emitter<WaitingRoomState> emit,
   ) {
-    emit(state.copyWith(shouldNavigateToRoom: false));
+    emit(
+      state.copyWith(
+        shouldNavigateToRoom: false,
+        shouldPopAfterBridgeSession: false,
+      ),
+    );
   }
 
   /// Disconnect from LiveKit room when error occurs to prevent other users from seeing failed participant

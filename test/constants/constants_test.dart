@@ -45,8 +45,8 @@ void main() {
       expect(driftDatabaseVersion, equals(1));
     });
 
-    testUnit('rustDatabaseVersion should be 1', () {
-      expect(rustDatabaseVersion, equals(1));
+    testUnit('rustDatabaseVersion should be 2', () {
+      expect(rustDatabaseVersion, equals(2));
     });
   });
 

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:meet/helper/extension/bridge_session_check.extension.dart';
 import 'package:meet/helper/logger.dart';
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/app.state.manager.dart';
@@ -121,12 +122,44 @@ class MeetingEventLoopManager extends Service implements Manager {
       // Check if we need to reload meetings:
       // 1. If refresh flag is set
       // 2. If there are any meeting events (create/update/delete)
-      final needsReload =
+      final needsReloadMeetings =
           eventResponse.refresh ||
           (eventResponse.meetingEvents != null &&
               eventResponse.meetingEvents!.isNotEmpty);
 
-      if (needsReload) {
+      final needsReloadUser =
+          eventResponse.refresh ||
+          (eventResponse.users != null && eventResponse.users!.isNotEmpty);
+
+      if (needsReloadUser) {
+        final uid = _appCoreManager.userID;
+        if (uid != null && uid.isNotEmpty) {
+          try {
+            await _appCoreManager.appCore.refreshUserStateFromApi(userId: uid);
+            logger.d(
+              '[MeetingEventLoopManager] Local user cache cleared; user state reloaded from API',
+            );
+          } on BridgeError catch (e) {
+            if (e.consumeBridgeSessionIfNeeded()) {
+              logger.w(
+                '[MeetingEventLoopManager] Session or force-upgrade while refreshing user state; stopping loop',
+              );
+              onUpdateing = false;
+              stop();
+              return null;
+            }
+            logger.w('[MeetingEventLoopManager] refreshUserStateFromApi: $e');
+          } catch (e, st) {
+            logger.w(
+              '[MeetingEventLoopManager] refreshUserStateFromApi failed: $e',
+              error: e,
+              stackTrace: st,
+            );
+          }
+        }
+      }
+
+      if (needsReloadMeetings) {
         logger.d(
           '[MeetingEventLoopManager] Reload needed: refresh=${eventResponse.refresh}, '
           'events=${eventResponse.meetingEvents?.length ?? 0}',
@@ -161,7 +194,14 @@ class MeetingEventLoopManager extends Service implements Manager {
       onUpdateing = false;
       return _normalPollInterval;
     } catch (e, stackTrace) {
-      // Handle different error types
+      if (e is BridgeError && e.consumeBridgeSessionIfNeeded()) {
+        logger.w(
+          '[MeetingEventLoopManager] Session or force-upgrade from API; stopping loop',
+        );
+        onUpdateing = false;
+        stop();
+        return null;
+      }
       if (e is BridgeError_ApiResponse) {
         logger.e(
           '[MeetingEventLoopManager] API response error: ${e.field0.error}',

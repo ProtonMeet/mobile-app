@@ -278,6 +278,14 @@ impl AppCore {
         Ok(user)
     }
 
+    pub async fn refresh_user_state_from_api(
+        &self,
+        user_id: String,
+    ) -> Result<UserState, BridgeError> {
+        let user = self.inner.refresh_user_state_from_api(user_id).await?;
+        Ok(user)
+    }
+
     pub async fn logout(&self, user_id: String) -> Result<(), BridgeError> {
         self.inner.logout(user_id).await?;
         Ok(())

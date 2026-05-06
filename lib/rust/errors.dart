@@ -19,6 +19,8 @@ sealed class BridgeError with _$BridgeError implements FrbException {
       BridgeError_MeetCoreAny;
   const factory BridgeError.login(String field0) = BridgeError_Login;
   const factory BridgeError.apiLock(String field0) = BridgeError_ApiLock;
+
+  /// this is livekit access token error
   const factory BridgeError.accessToken(String field0) =
       BridgeError_AccessToken;
 

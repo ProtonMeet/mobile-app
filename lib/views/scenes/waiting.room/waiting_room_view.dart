@@ -93,6 +93,27 @@ class _WaitingRoomPageState extends State<WaitingRoomPage>
         listeners: [
           BlocListener<WaitingRoomBloc, WaitingRoomState>(
             listenWhen: (previous, current) =>
+                !previous.shouldPopAfterBridgeSession &&
+                current.shouldPopAfterBridgeSession,
+            listener: (context, state) {
+              // Session dialog is pushed above this page on the same navigator
+              // (`logout.error.dialog.dart`). `pop` / `popUntil` would dismiss it
+              // first. Remove only this route so PreJoin shows underneath and the
+              // logout alert stays on top.
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!context.mounted) return;
+                final navigator = Navigator.of(context);
+                final route = ModalRoute.of(context);
+                if (route != null) {
+                  navigator.removeRoute(route);
+                } else {
+                  navigator.maybePop();
+                }
+              });
+            },
+          ),
+          BlocListener<WaitingRoomBloc, WaitingRoomState>(
+            listenWhen: (previous, current) =>
                 previous.error != current.error && current.error != null,
             listener: (context, state) {
               // Show error dialog when an error occurs (only once per error)

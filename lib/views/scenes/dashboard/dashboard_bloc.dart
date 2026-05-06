@@ -5,6 +5,8 @@ import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:meet/helper/extension/bridge_error.extension.dart';
+import 'package:meet/helper/extension/bridge_session_check.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/frb_upcoming_meetings.dart';
 import 'package:meet/helper/extension/response_error.extension.dart';
@@ -179,8 +181,13 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
     try {
       final appCore = ManagerFactory().get<AppCoreManager>().appCore;
       await appCore.ping();
-    } on BridgeError_ApiResponse catch (e) {
-      enterForceUpgradeFromApiIfNeeded(e.field0);
+    } on BridgeError catch (e) {
+      if (e.consumeBridgeSessionIfNeeded()) {
+        return;
+      }
+      if (e is BridgeError_ApiResponse) {
+        enterForceUpgradeFromApiIfNeeded(e.field0);
+      }
     } catch (e, st) {
       l.logger.d('[DashboardBloc] ping force-upgrade check: $e\n$st');
     }
@@ -277,6 +284,9 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         operationName: 'fetchUserState',
       );
     } catch (error, stackTrace) {
+      if (error is BridgeError && error.consumeBridgeSessionIfNeeded()) {
+        return;
+      }
       if (error is BridgeError_ApiResponse) {
         l.logger.e(
           '[DashboardBloc] Error fetching user state: ${error.field0.detailString}',
@@ -309,6 +319,9 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         operationName: 'getUpcomingMeetings',
       );
     } catch (error, stackTrace) {
+      if (error is BridgeError && error.consumeBridgeSessionIfNeeded()) {
+        return;
+      }
       l.logger.e(
         '[DashboardBloc] Error getting upcoming meetings: $error, $stackTrace',
       );
@@ -386,6 +399,17 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         add(UpdateUpcomingStateEvent(upcomingTab: MeetUpcomingTab.myMeetings));
         _recordMeetingCreatedForUserActivity();
       } catch (error, stackTrace) {
+        if (error is BridgeError && error.consumeBridgeSessionIfNeeded()) {
+          emit(
+            state.copyWith(
+              isLoadingPersonalMeeting: false,
+              isLoadingUpcomingMeetings: false,
+              isLoaded: true,
+              offerFetchUserStateRetry: false,
+            ),
+          );
+          return;
+        }
         captureCreateRoomFailureToSentry(
           flow: 'dashboard_bootstrap_personal_meeting',
           error: error,
@@ -503,6 +527,16 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       );
       _recordMeetingCreatedForUserActivity();
     } catch (error, stackTrace) {
+      if (error is BridgeError && error.consumeBridgeSessionIfNeeded()) {
+        emit(
+          state.copyWith(
+            isLoadingPersonalMeeting: false,
+            isLoading: false,
+            offerFetchUserStateRetry: false,
+          ),
+        );
+        return;
+      }
       const nameLen = 'Personal Meeting'.length;
       captureCreateRoomFailureToSentry(
         flow: 'dashboard_create_personal_meeting',
@@ -574,6 +608,16 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         ),
       );
     } catch (error, stackTrace) {
+      if (error is BridgeError && error.consumeBridgeSessionIfNeeded()) {
+        emit(
+          state.copyWith(
+            isLoadingPersonalMeeting: false,
+            isLoading: false,
+            offerFetchUserStateRetry: false,
+          ),
+        );
+        return;
+      }
       const nameLen = 'Personal Meeting'.length;
       captureCreateRoomFailureToSentry(
         flow: 'dashboard_rotate_personal_meeting',
@@ -796,27 +840,52 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       );
       add(UpdateUpcomingStateEvent(upcomingTab: MeetUpcomingTab.myRooms));
       _recordMeetingCreatedForUserActivity();
-    } on BridgeError_ApiResponse catch (error, stackTrace) {
+    } on BridgeError catch (error, stackTrace) {
       operationCompleted = true;
       timeoutTimer.cancel();
-      captureCreateRoomFailureToSentry(
-        flow: 'dashboard_create_permanent_room',
-        error: error,
-        stackTrace: stackTrace,
-        meetingType: MeetingType.permanent,
-        hasSession: true,
-        meetingNameLength: event.roomName.length,
-      );
-      if (!isClosed) {
-        l.logger.e('[DashboardBloc] Error creating meeting: $error');
+      if (error.consumeBridgeSessionIfNeeded()) {
         emit(
           state.copyWith(
             isLoadingCreateMeeting: false,
             isLoading: false,
-            errorResponse: error.field0,
             offerFetchUserStateRetry: false,
           ),
         );
+        return;
+      }
+      if (!isClosed) {
+        if (error is BridgeError_ApiResponse) {
+          captureCreateRoomFailureToSentry(
+            flow: 'dashboard_create_permanent_room',
+            error: error,
+            stackTrace: stackTrace,
+            meetingType: MeetingType.permanent,
+            hasSession: true,
+            meetingNameLength: event.roomName.length,
+          );
+          l.logger.e('[DashboardBloc] Error creating meeting: $error');
+          emit(
+            state.copyWith(
+              isLoadingCreateMeeting: false,
+              isLoading: false,
+              errorResponse: error.field0,
+              offerFetchUserStateRetry: false,
+            ),
+          );
+        } else {
+          l.logger.e(
+            '[DashboardBloc] Error creating meeting: $error, $stackTrace',
+          );
+          emit(
+            state.copyWith(
+              isLoadingCreateMeeting: false,
+              isLoading: false,
+              error: extractErrorMessage(error),
+              errorDetail: '',
+              offerFetchUserStateRetry: false,
+            ),
+          );
+        }
       }
     } catch (error, stackTrace) {
       operationCompleted = true;
@@ -901,19 +970,44 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         // Update display based on current tab
         add(UpdateUpcomingStateEvent(upcomingTab: state.upcomingTab));
       }
-    } on BridgeError_ApiResponse catch (error) {
+    } on BridgeError catch (error, stackTrace) {
       operationCompleted = true;
       timeoutTimer.cancel();
-      if (!isClosed) {
-        l.logger.e('[DashboardBloc] Error deleting meeting: $error');
+      if (error.consumeBridgeSessionIfNeeded()) {
         emit(
           state.copyWith(
             isLoadingDeleteMeeting: false,
             isLoading: false,
-            errorResponse: error.field0,
             offerFetchUserStateRetry: false,
           ),
         );
+        return;
+      }
+      if (!isClosed) {
+        if (error is BridgeError_ApiResponse) {
+          l.logger.e('[DashboardBloc] Error deleting meeting: $error');
+          emit(
+            state.copyWith(
+              isLoadingDeleteMeeting: false,
+              isLoading: false,
+              errorResponse: error.field0,
+              offerFetchUserStateRetry: false,
+            ),
+          );
+        } else {
+          l.logger.e(
+            '[DashboardBloc] Error deleting meeting: $error, $stackTrace',
+          );
+          emit(
+            state.copyWith(
+              isLoadingDeleteMeeting: false,
+              isLoading: false,
+              error: extractErrorMessage(error),
+              errorDetail: '',
+              offerFetchUserStateRetry: false,
+            ),
+          );
+        }
       }
     } catch (error, stackTrace) {
       operationCompleted = true;
@@ -1012,21 +1106,46 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         );
         add(UpdateUpcomingStateEvent(upcomingTab: state.upcomingTab));
       }
-    } on BridgeError_ApiResponse catch (error) {
+    } on BridgeError catch (error, stackTrace) {
       operationCompleted = true;
       timeoutTimer.cancel();
-      if (!isClosed) {
-        l.logger.e(
-          '[DashboardBloc] Error updating meeting: ${error.field0.detailString}',
-        );
+      if (error.consumeBridgeSessionIfNeeded()) {
         emit(
           state.copyWith(
             isLoadingUpdateMeeting: false,
             isLoading: false,
-            errorResponse: error.field0,
             offerFetchUserStateRetry: false,
           ),
         );
+        return;
+      }
+      if (!isClosed) {
+        if (error is BridgeError_ApiResponse) {
+          l.logger.e(
+            '[DashboardBloc] Error updating meeting: ${error.field0.detailString}',
+          );
+          emit(
+            state.copyWith(
+              isLoadingUpdateMeeting: false,
+              isLoading: false,
+              errorResponse: error.field0,
+              offerFetchUserStateRetry: false,
+            ),
+          );
+        } else {
+          l.logger.e(
+            '[DashboardBloc] Error updating meeting: $error, $stackTrace',
+          );
+          emit(
+            state.copyWith(
+              isLoadingUpdateMeeting: false,
+              isLoading: false,
+              error: extractErrorMessage(error),
+              errorDetail: '',
+              offerFetchUserStateRetry: false,
+            ),
+          );
+        }
       }
     } catch (error, stackTrace) {
       operationCompleted = true;
@@ -1181,31 +1300,65 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       );
       add(UpdateUpcomingStateEvent(upcomingTab: MeetUpcomingTab.myMeetings));
       _recordMeetingCreatedForUserActivity();
-    } on BridgeError_ApiResponse catch (error, stackTrace) {
+    } on BridgeError catch (error, stackTrace) {
       operationCompleted = true;
       timeoutTimer.cancel();
-      if (!isClosed) {
-        l.logger.e('[DashboardBloc] Error scheduling meeting: $error');
-        final meetingType = event.data.recurrence == RecurrenceFrequency.none
-            ? MeetingType.scheduled
-            : MeetingType.recurring;
-        captureCreateRoomFailureToSentry(
-          flow: 'dashboard_schedule_meeting',
-          error: error,
-          stackTrace: stackTrace,
-          meetingType: meetingType,
-          hasSession: true,
-          meetingNameLength: event.data.title.length,
-          scheduledMeeting: true,
-        );
+      if (error.consumeBridgeSessionIfNeeded()) {
         emit(
           state.copyWith(
             isLoadingScheduleMeeting: false,
             isLoading: false,
-            errorResponse: error.field0,
             offerFetchUserStateRetry: false,
           ),
         );
+        return;
+      }
+      if (!isClosed) {
+        final meetingType = event.data.recurrence == RecurrenceFrequency.none
+            ? MeetingType.scheduled
+            : MeetingType.recurring;
+        if (error is BridgeError_ApiResponse) {
+          l.logger.e('[DashboardBloc] Error scheduling meeting: $error');
+          captureCreateRoomFailureToSentry(
+            flow: 'dashboard_schedule_meeting',
+            error: error,
+            stackTrace: stackTrace,
+            meetingType: meetingType,
+            hasSession: true,
+            meetingNameLength: event.data.title.length,
+            scheduledMeeting: true,
+          );
+          emit(
+            state.copyWith(
+              isLoadingScheduleMeeting: false,
+              isLoading: false,
+              errorResponse: error.field0,
+              offerFetchUserStateRetry: false,
+            ),
+          );
+        } else {
+          l.logger.e(
+            '[DashboardBloc] Error scheduling meeting: $error, $stackTrace',
+          );
+          captureCreateRoomFailureToSentry(
+            flow: 'dashboard_schedule_meeting',
+            error: error,
+            stackTrace: stackTrace,
+            meetingType: meetingType,
+            hasSession: true,
+            meetingNameLength: event.data.title.length,
+            scheduledMeeting: true,
+          );
+          emit(
+            state.copyWith(
+              isLoadingScheduleMeeting: false,
+              isLoading: false,
+              error: extractErrorMessage(error),
+              errorDetail: '',
+              offerFetchUserStateRetry: false,
+            ),
+          );
+        }
       }
     } catch (error, stackTrace) {
       operationCompleted = true;
@@ -1381,19 +1534,44 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         );
         add(UpdateUpcomingStateEvent(upcomingTab: state.upcomingTab));
       }
-    } on BridgeError_ApiResponse catch (error) {
+    } on BridgeError catch (error, stackTrace) {
       operationCompleted = true;
       timeoutTimer.cancel();
-      if (!isClosed) {
-        l.logger.e('[DashboardBloc] Error updating meeting: $error');
+      if (error.consumeBridgeSessionIfNeeded()) {
         emit(
           state.copyWith(
             isLoadingUpdateMeeting: false,
             isLoading: false,
-            errorResponse: error.field0,
             offerFetchUserStateRetry: false,
           ),
         );
+        return;
+      }
+      if (!isClosed) {
+        if (error is BridgeError_ApiResponse) {
+          l.logger.e('[DashboardBloc] Error updating meeting: $error');
+          emit(
+            state.copyWith(
+              isLoadingUpdateMeeting: false,
+              isLoading: false,
+              errorResponse: error.field0,
+              offerFetchUserStateRetry: false,
+            ),
+          );
+        } else {
+          l.logger.e(
+            '[DashboardBloc] Error updating meeting: $error, $stackTrace',
+          );
+          emit(
+            state.copyWith(
+              isLoadingUpdateMeeting: false,
+              isLoading: false,
+              error: extractErrorMessage(error),
+              errorDetail: '',
+              offerFetchUserStateRetry: false,
+            ),
+          );
+        }
       }
     } catch (error, stackTrace) {
       operationCompleted = true;
@@ -1520,6 +1698,16 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         ),
       );
     } catch (error, stackTrace) {
+      if (error is BridgeError && error.consumeBridgeSessionIfNeeded()) {
+        emit(
+          state.copyWith(
+            error: '',
+            errorDetail: '',
+            offerFetchUserStateRetry: false,
+          ),
+        );
+        return;
+      }
       if (!isClosed) {
         final errorMessage = 'Failed to generate ICS: $error';
         l.logger.e('[DashboardBloc] Error generating ICS: $error, $stackTrace');

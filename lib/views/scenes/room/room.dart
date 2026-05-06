@@ -19,6 +19,7 @@ import 'package:meet/helper/local_toast.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/user.agent.dart';
 import 'package:meet/managers/app.core.manager.dart';
+import 'package:meet/managers/app.state.manager.dart';
 import 'package:meet/managers/channels/call_activity_action_channel.dart';
 import 'package:meet/managers/channels/physical_key_channel.dart';
 import 'package:meet/managers/channels/platform.channel.manager.dart';
@@ -35,6 +36,7 @@ import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/rust/proton_meet/user_config.dart';
 import 'package:meet/views/components/alerts/meeting_will_end_dialog.dart';
+import 'package:meet/views/components/alerts/session_expired_dialog.dart';
 import 'package:meet/views/components/bottom.sheets/leave_room_bottom_sheet.dart';
 import 'package:meet/views/components/button.inline.dart';
 import 'package:meet/views/components/loading_view.dart';
@@ -113,6 +115,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
   EventsListener<RoomEvent>? _currentListener;
   StreamSubscription? _deviceChangeSub;
+  StreamSubscription<DataState>? _appStateSubscription;
 
   bool _showChatBubble = false;
   bool _showParticipantList = false;
@@ -139,6 +142,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
   List<MediaDevice> _videoInputs = [];
   bool _isLeavingByUser = false;
+  bool _isHandlingSessionExpired = false;
 
   /// LiveKit transport reconnects during this meeting (for store-review quality).
   bool _hadLiveKitTransportIssuesThisMeeting = false;
@@ -220,6 +224,13 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       preventGoPrevPage();
     }
 
+    final appStateManager = ManagerFactory().get<AppStateManager>();
+    _appStateSubscription = appStateManager.stream.listen((state) {
+      if (state is AppSessionFailed) {
+        unawaited(_handleSessionExpiredDuringCall());
+      }
+    });
+
     // Set up home key listener for Android PIP
     //TODO(fix): move to room_bloc.dart
     if (android && _bloc.isPictureInPictureFeatureEnabled()) {
@@ -263,6 +274,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
     _deviceChangeSub?.cancel();
     _deviceChangeSub = null;
+    _appStateSubscription?.cancel();
+    _appStateSubscription = null;
 
     // Dispose call activity action channel
     //TODO(fix): move to room_bloc.dart
@@ -285,6 +298,36 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     disableWakelock();
     onWindowShouldClose = null;
     super.dispose();
+  }
+
+  Future<void> _handleSessionExpiredDuringCall() async {
+    if (!mounted || _isHandlingSessionExpired || _isLeavingByUser) {
+      return;
+    }
+    _isHandlingSessionExpired = true;
+    try {
+      // Leave room immediately and skip in-room "left meeting" feedback UI.
+      await _leaveRoom(isShowLeftMeetingBottomSheet: false);
+
+      // Show session sheet after room navigation completed (popUntil in _leaveRoom).
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final rootContext =
+            Coordinator.rootNavigatorKey.currentState?.overlay?.context ??
+            Coordinator.rootNavigatorKey.currentContext;
+        if (rootContext == null || !rootContext.mounted) return;
+        unawaited(
+          showSessionErrorDialog(
+            rootContext,
+            onSignIn: () async {
+              widget.authBloc?.add(LoginWithNative());
+            },
+            onContinueWithoutSignIn: () async {},
+          ),
+        );
+      });
+    } finally {
+      _isHandlingSessionExpired = false;
+    }
   }
 
   @override

@@ -284,13 +284,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   FlutterLogLayer dco_decode_flutter_log_layer(dynamic raw);
 
   @protected
+  FrbEventItem dco_decode_frb_event_item(dynamic raw);
+
+  @protected
   FrbGetEventsResponse dco_decode_frb_get_events_response(dynamic raw);
 
   @protected
   FrbMeetInfo dco_decode_frb_meet_info(dynamic raw);
-
-  @protected
-  FrbMeetingEventItem dco_decode_frb_meeting_event_item(dynamic raw);
 
   @protected
   FrbMeetingInfo dco_decode_frb_meeting_info(dynamic raw);
@@ -322,7 +322,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Address> dco_decode_list_address(dynamic raw);
 
   @protected
-  List<FrbMeetingEventItem> dco_decode_list_frb_meeting_event_item(dynamic raw);
+  List<FrbEventItem> dco_decode_list_frb_event_item(dynamic raw);
 
   @protected
   List<FrbUpcomingMeeting> dco_decode_list_frb_upcoming_meeting(dynamic raw);
@@ -393,9 +393,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   UserState? dco_decode_opt_box_autoadd_user_state(dynamic raw);
 
   @protected
-  List<FrbMeetingEventItem>? dco_decode_opt_list_frb_meeting_event_item(
-    dynamic raw,
-  );
+  List<FrbEventItem>? dco_decode_opt_list_frb_event_item(dynamic raw);
 
   @protected
   List<ProtonUserKey>? dco_decode_opt_list_proton_user_key(dynamic raw);
@@ -661,17 +659,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   FlutterLogLayer sse_decode_flutter_log_layer(SseDeserializer deserializer);
 
   @protected
+  FrbEventItem sse_decode_frb_event_item(SseDeserializer deserializer);
+
+  @protected
   FrbGetEventsResponse sse_decode_frb_get_events_response(
     SseDeserializer deserializer,
   );
 
   @protected
   FrbMeetInfo sse_decode_frb_meet_info(SseDeserializer deserializer);
-
-  @protected
-  FrbMeetingEventItem sse_decode_frb_meeting_event_item(
-    SseDeserializer deserializer,
-  );
 
   @protected
   FrbMeetingInfo sse_decode_frb_meeting_info(SseDeserializer deserializer);
@@ -705,7 +701,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Address> sse_decode_list_address(SseDeserializer deserializer);
 
   @protected
-  List<FrbMeetingEventItem> sse_decode_list_frb_meeting_event_item(
+  List<FrbEventItem> sse_decode_list_frb_event_item(
     SseDeserializer deserializer,
   );
 
@@ -792,7 +788,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  List<FrbMeetingEventItem>? sse_decode_opt_list_frb_meeting_event_item(
+  List<FrbEventItem>? sse_decode_opt_list_frb_event_item(
     SseDeserializer deserializer,
   );
 
@@ -1158,6 +1154,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_frb_event_item(FrbEventItem self, SseSerializer serializer);
+
+  @protected
   void sse_encode_frb_get_events_response(
     FrbGetEventsResponse self,
     SseSerializer serializer,
@@ -1165,12 +1164,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_frb_meet_info(FrbMeetInfo self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_frb_meeting_event_item(
-    FrbMeetingEventItem self,
-    SseSerializer serializer,
-  );
 
   @protected
   void sse_encode_frb_meeting_info(
@@ -1209,8 +1202,8 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_address(List<Address> self, SseSerializer serializer);
 
   @protected
-  void sse_encode_list_frb_meeting_event_item(
-    List<FrbMeetingEventItem> self,
+  void sse_encode_list_frb_event_item(
+    List<FrbEventItem> self,
     SseSerializer serializer,
   );
 
@@ -1320,8 +1313,8 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  void sse_encode_opt_list_frb_meeting_event_item(
-    List<FrbMeetingEventItem>? self,
+  void sse_encode_opt_list_frb_event_item(
+    List<FrbEventItem>? self,
     SseSerializer serializer,
   );
 

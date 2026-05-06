@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:meet/helper/extension/bridge_session_check.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/external.url.dart';
 import 'package:meet/helper/logger.dart' as l;
@@ -10,6 +11,7 @@ import 'package:meet/managers/channels/platform.channel.manager.dart';
 import 'package:meet/managers/channels/platform.channel.state.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/permissions/permission_service.dart';
+import 'package:meet/rust/errors.dart';
 import 'package:meet/rust/proton_meet/models/user.dart';
 import 'package:meet/views/scenes/utils.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -112,6 +114,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             ),
           );
           checkedUser = user;
+        } on BridgeError catch (e) {
+          if (!e.consumeBridgeSessionIfNeeded()) {
+            l.logger.e("error getting user: $e");
+          }
         } catch (e) {
           l.logger.e("error getting user: $e");
         }

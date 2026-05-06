@@ -17,24 +17,10 @@ pub enum HttpClientError {
     ForkAuthSession,
     #[error("A muon error was caused by a failed fork session")]
     ForkSession,
-    // #[error("A muon error was caused by a failed login")]
-    // LoginError,
-    // #[error("A muon error was caused by unsupported TwoFactor")]
-    // UnsupportedTwoFactor,
-    // #[error("An error occurred in the Muon App Version parser: \n\t{0}")]
-    // MuonAppVersion(#[from] ParseAppVersionErr),
-    // #[error("An error from Muon status: \n\t{0}")]
-    // MuonStatus(#[from] StatusErr),
+
     #[error("An error from Muon occurred: \n\t{0}")]
     MuonError(#[source] muon::Error),
-    // #[error("Bitcoin deserialize error: \n\t{0}")]
-    // BitcoinDeserialize(#[from] BitcoinEncodingError),
-    // #[error("An error occurred when decoding hex to array: \n\t{0}")]
-    // HexToArrayDecoding(#[from] HexToArrayError),
-    // #[error("An error occurred when decoding hex to bytes: \n\t{0}")]
-    // HexToBytesErrorDecoding(#[from] HexToBytesError),
-    // #[error("HTTP error")]
-    // Http,
+
     #[error("API Response error: {1}")]
     ErrorCode(muon::Status, ResponseError),
     #[error("Response parser error: {0}")]
