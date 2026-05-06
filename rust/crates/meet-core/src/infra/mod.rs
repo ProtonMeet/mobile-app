@@ -12,10 +12,10 @@ pub mod mls_response_ext;
 pub mod ports;
 pub mod proton_response_ext;
 pub mod storage;
+pub mod tls_pinning;
 pub mod unleash_api;
 pub mod user_api;
 pub mod ws_client;
-pub mod tls_pinning;
 
 // Re-export ports and adapters for convenient access
 pub use adapters::storage::{InMemorySecureStoreAdapter, UserKeyProviderAdapter};

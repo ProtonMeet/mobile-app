@@ -338,6 +338,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
+name = "backon"
+version = "1.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cffb0e931875b666fc4fcb20fee52e9bbd1ef836fd9e9e04ec21555f9f85f7ef"
+dependencies = [
+ "fastrand",
+ "gloo-timers 0.3.0",
+ "tokio",
+]
+
+[[package]]
 name = "backtrace"
 version = "0.3.76"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5180,6 +5191,7 @@ dependencies = [
  "anyhow",
  "argon2",
  "async-trait",
+ "backon",
  "base64",
  "cfg-if",
  "chrono",
@@ -5220,6 +5232,7 @@ dependencies = [
  "rusqlite",
  "rustls 0.23.38",
  "rustls-platform-verifier 0.6.2",
+ "secrecy",
  "serde",
  "serde-wasm-bindgen",
  "serde_bytes",
@@ -5290,6 +5303,7 @@ dependencies = [
  "mls-trait",
  "mls-types",
  "serde_json",
+ "thiserror 2.0.18",
  "tokio",
 ]
 
@@ -6034,6 +6048,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d56d437c2f19203ce5f7122e507831de96f3d2d4d3be5af44a0b0a09d8a80e4d"
 dependencies = [
  "der 0.8.0",
+ "zeroize",
+]
+
+[[package]]
+name = "secrecy"
+version = "0.10.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e891af845473308773346dc847b2c23ee78fe442e0472ac50e22a18a93d3ae5a"
+dependencies = [
+ "serde",
  "zeroize",
 ]
 

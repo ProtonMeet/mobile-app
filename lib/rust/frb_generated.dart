@@ -253,8 +253,8 @@ abstract class RustLibApi extends BaseApi {
     String? sessionId,
     required bool isMeetNewJoinType,
     required bool isMeetSwitchJoinType,
+    required bool isMeetNewSwitchJoinType,
     required bool reuseToken,
-    required bool usePsk,
   });
 
   Future<void> crateProtonMeetCoreAppCoreJoinMeetingWithAccessToken({
@@ -1821,8 +1821,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     String? sessionId,
     required bool isMeetNewJoinType,
     required bool isMeetSwitchJoinType,
+    required bool isMeetNewSwitchJoinType,
     required bool reuseToken,
-    required bool usePsk,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -1838,8 +1838,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_opt_String(sessionId, serializer);
           sse_encode_bool(isMeetNewJoinType, serializer);
           sse_encode_bool(isMeetSwitchJoinType, serializer);
+          sse_encode_bool(isMeetNewSwitchJoinType, serializer);
           sse_encode_bool(reuseToken, serializer);
-          sse_encode_bool(usePsk, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -1860,8 +1860,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sessionId,
           isMeetNewJoinType,
           isMeetSwitchJoinType,
+          isMeetNewSwitchJoinType,
           reuseToken,
-          usePsk,
         ],
         apiImpl: this,
       ),
@@ -1879,8 +1879,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           "sessionId",
           "isMeetNewJoinType",
           "isMeetSwitchJoinType",
+          "isMeetNewSwitchJoinType",
           "reuseToken",
-          "usePsk",
         ],
       );
 
@@ -8728,8 +8728,8 @@ class AppCoreImpl extends RustOpaque implements AppCore {
     String? sessionId,
     required bool isMeetNewJoinType,
     required bool isMeetSwitchJoinType,
+    required bool isMeetNewSwitchJoinType,
     required bool reuseToken,
-    required bool usePsk,
   }) => RustLib.instance.api.crateProtonMeetCoreAppCoreJoinMeeting(
     that: this,
     meetLinkName: meetLinkName,
@@ -8738,8 +8738,8 @@ class AppCoreImpl extends RustOpaque implements AppCore {
     sessionId: sessionId,
     isMeetNewJoinType: isMeetNewJoinType,
     isMeetSwitchJoinType: isMeetSwitchJoinType,
+    isMeetNewSwitchJoinType: isMeetNewSwitchJoinType,
     reuseToken: reuseToken,
-    usePsk: usePsk,
   );
 
   Future<void> joinMeetingWithAccessToken({

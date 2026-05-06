@@ -84,19 +84,22 @@ class RoomManager {
   }
 
   /// Get feature flags for join type
-  Future<(bool, bool)> getJoinTypeFlags() async {
+  Future<(bool, bool, bool)> getJoinTypeFlags() async {
     bool isMeetNewJoinType = true;
     bool isMeetSwitchJoinType = true;
+    bool isMeetNewSwitchJoinType = false;
     try {
       final dataProviderManager = ManagerFactory().get<DataProviderManager>();
       isMeetNewJoinType = dataProviderManager.unleashDataProvider
           .isMeetNewJoinType();
       isMeetSwitchJoinType = dataProviderManager.unleashDataProvider
           .isMeetSwitchJoinType();
+      isMeetNewSwitchJoinType = dataProviderManager.unleashDataProvider
+          .isMeetNewSwitchJoinType();
     } catch (e) {
       l.logger.e("error getting join type flags: $e");
     }
-    return (isMeetNewJoinType, isMeetSwitchJoinType);
+    return (isMeetNewJoinType, isMeetSwitchJoinType, isMeetNewSwitchJoinType);
   }
 
   /// Get seamless key rotation feature flag
@@ -261,7 +264,8 @@ class RoomManager {
     final (cameraEncoding, screenEncoding) = await getUserConfig();
 
     // Get feature flags
-    final (isMeetNewJoinType, isMeetSwitchJoinType) = await getJoinTypeFlags();
+    final (isMeetNewJoinType, isMeetSwitchJoinType, isMeetNewSwitchJoinType) =
+        await getJoinTypeFlags();
 
     FrbMeetInfo meetInfo;
     final joinMlsStopwatch = Stopwatch()..start();
@@ -272,7 +276,7 @@ class RoomManager {
       isMeetNewJoinType: isMeetNewJoinType,
       isMeetSwitchJoinType: isMeetSwitchJoinType,
       reuseToken: reuseToken,
-      usePsk: true,
+      isMeetNewSwitchJoinType: isMeetNewSwitchJoinType,
     );
     joinMlsStopwatch.stop();
     l.logger.i(

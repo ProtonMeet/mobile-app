@@ -35,7 +35,10 @@ use proton_meet_core::{
     app::App,
     app_state::UserState,
     domain::user::models::{
+        access_token::AccessToken,
         meet_link::{parse_meeting_link, MeetLink},
+        meeting_link_name::MeetingLinkName,
+        meeting_password::MeetingPassword,
         UnleashResponse,
     },
 };
@@ -373,8 +376,8 @@ impl AppCore {
         session_id: Option<String>,
         is_meet_new_join_type: bool,
         is_meet_switch_join_type: bool,
+        is_meet_new_switch_join_type: bool,
         reuse_token: bool,
-        use_psk: bool,
     ) -> Result<FrbMeetInfo, BridgeError> {
         // Spawn heavy authentication work on background runtime to offload main thread
         // This includes MLS crypto operations and WebSocket connections that can block
@@ -400,6 +403,20 @@ impl AppCore {
                 })
                 .await??
             };
+
+            if is_meet_new_switch_join_type {
+                self.inner
+                    .join_meeting(
+                        AccessToken::from(meet_info.access_token.clone()),
+                        MeetingLinkName::from(meet_link_name.clone()),
+                        MeetingPassword::from(meet_link_password.clone()),
+                        session_id,
+                        is_meet_new_join_type,
+                    )
+                    .await?;
+                tracing::info!("Successfully joined meeting with GroupInfo-based join switching");
+                return Ok(meet_info.into());
+            }
 
             // 2. Get participant count to determine join type (required to authenticate first, or backend will throw error)
             let participant_count = self
@@ -432,7 +449,7 @@ impl AppCore {
                         meet_info.access_token.clone(),
                         meet_link_name.clone(),
                         meet_link_password.clone(),
-                        use_psk,
+                        true,
                         session_id.clone(),
                     )
                     .await
@@ -457,7 +474,7 @@ impl AppCore {
                     meet_info.access_token.clone(),
                     meet_link_name.clone(),
                     meet_link_password.clone(),
-                    use_psk,
+                    true,
                     session_id,
                 )
                 .await?;
@@ -502,7 +519,7 @@ impl AppCore {
                     access_token.clone(),
                     meet_link_name.clone(),
                     meet_link_password.clone(),
-                    use_psk,
+                    true,
                     session_id.clone(),
                 )
                 .await
@@ -542,7 +559,7 @@ impl AppCore {
                 access_token.clone(),
                 meet_link_name.clone(),
                 meet_link_password.clone(),
-                use_psk,
+                true,
                 session_id,
             )
             .await?;

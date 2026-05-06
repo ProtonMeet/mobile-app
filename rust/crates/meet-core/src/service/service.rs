@@ -8,7 +8,10 @@ use std::{
 };
 
 use crate::{
-    domain::user::ports::ArcWebSocketClient,
+    domain::user::{
+        models::meeting_link_name::MeetingLinkName,
+        ports::{new_user_service::NewUserService, ArcWebSocketClient},
+    },
     infra::crypto_client::derive_external_psk,
     service::service_state::MlsSyncState,
     utils::{instant, spawn, spawn_detached},
@@ -42,13 +45,15 @@ use proton_meet_mls::{
 use rand::seq::SliceRandom;
 use rand::{Rng, SeedableRng};
 use serde::{Deserialize, Serialize};
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::{Mutex, Notify, RwLock};
 use uuid::Uuid;
 
 #[cfg(not(target_family = "wasm"))]
-use tokio::time::sleep;
+use tokio::time::{sleep, timeout};
 #[cfg(target_family = "wasm")]
-use wasmtimer::tokio::sleep;
+use wasmtimer::tokio::{sleep, timeout};
+
+use crate::service::mls_service::MlsService;
 
 //TODO:(fix) the whole file need to be refactored, there are too many code duplication and not enough abstraction
 use crate::{
@@ -176,9 +181,12 @@ pub struct Service {
     room_processing_locks: Arc<Mutex<HashMap<String, Arc<Mutex<()>>>>>,
     proposal_timer: Arc<Mutex<HashMap<String, u64>>>, // room_id -> epoch_at
     // MLS message service for processing commits and proposals
-    mls_service: Arc<crate::domain::mls::mls_message_service::MlsMessageService>,
+    mls_msg_service: Arc<crate::domain::mls::mls_message_service::MlsMessageService>,
     handling_offline_members: Arc<Mutex<bool>>,
     use_psk: Arc<Mutex<bool>>,
+    mls_service: Arc<MlsService>,
+    /// Wakes tasks waiting on a join-proposal `Welcome` after `welcome_info` is stored.
+    join_proposal_welcome_notify: Arc<Notify>,
 }
 
 /// Calculate retry delay with exponential backoff and jitter
@@ -258,13 +266,16 @@ impl Service {
         );
 
         // Create MLS message service
-        let mls_service = Arc::new(
+        let mls_msg_service = Arc::new(
             crate::domain::mls::mls_message_service::MlsMessageService::new(
                 mls_store_adapter as Arc<dyn crate::domain::mls::ports::MlsStorePort>,
                 message_cache_adapter as Arc<dyn crate::domain::mls::ports::MessageCachePort>,
                 state_repository_adapter as Arc<dyn crate::domain::mls::ports::StateRepositoryPort>,
             ),
         );
+
+        let mls_service = Arc::new(MlsService::new(http_client.clone(), mls_store.clone()));
+        let join_proposal_welcome_notify = Arc::new(Notify::new());
 
         Self {
             http_client,
@@ -280,9 +291,11 @@ impl Service {
             proposal_queue: Arc::new(Mutex::new(HashMap::new())),
             room_processing_locks: Arc::new(Mutex::new(HashMap::new())),
             proposal_timer: Arc::new(Mutex::new(HashMap::new())),
-            mls_service,
+            mls_msg_service: mls_msg_service,
             handling_offline_members: Arc::new(Mutex::new(false)),
             use_psk: Arc::new(Mutex::new(true)),
+            mls_service,
+            join_proposal_welcome_notify,
         }
     }
 }
@@ -2169,6 +2182,7 @@ impl UserService for Service {
                                     // save the welcome info to the state
                                     state.set_welcome_info(Some(mls_welcome_info));
                                     drop(state);
+                                    self.join_proposal_welcome_notify.notify_waiters();
                                 }
                                 RTCMessageInContent::CommitUpdate(mls_commit_info) => {
                                     let room_id_str =
@@ -4067,7 +4081,7 @@ impl Service {
         room_id: &str,
         commit_message: mls_types::MlsMessage,
     ) -> Result<(), anyhow::Error> {
-        self.mls_service
+        self.mls_msg_service
             .cache_commit_message(room_id, commit_message)
             .await
     }
@@ -4077,7 +4091,7 @@ impl Service {
         room_id: &str,
         proposal_message: mls_types::MlsMessage,
     ) -> Result<(), anyhow::Error> {
-        self.mls_service
+        self.mls_msg_service
             .cache_proposal_message(room_id, proposal_message)
             .await
     }
@@ -4249,6 +4263,213 @@ impl Service {
         }
 
         Ok(())
+    }
+}
+
+const JOIN_PROPOSAL_TIMEOUT: u64 = 15;
+impl NewUserService for Service {
+    async fn join_room_with_switch_join_type(
+        &self,
+        user_info_token: &UserTokenInfo,
+        meeting_link_name: &MeetingLinkName,
+        switch_join_type: bool,
+    ) -> Result<(), MeetCoreError> {
+        let base64_sd_kbt = self.get_sd_kbt(&user_info_token.user_id()).await?;
+
+        let ratchet_tree_and_group_info = match self
+            .http_client
+            .get_group_info(&base64_sd_kbt)
+            .await
+        {
+            Ok(ratchet_tree_and_group_info) => ratchet_tree_and_group_info,
+            Err(e) => {
+                if matches!(e, HttpClientError::GroupInfoEmpty) {
+                    // create group and upload group info
+                    let (group_info_message, ratchet_tree_option) = self
+                        .mls_service
+                        .create_mls_group(meeting_link_name, &user_info_token.user_id())
+                        .await?;
+
+                    self.http_client
+                        .update_group_info(
+                            &base64_sd_kbt,
+                            &group_info_message,
+                            &ratchet_tree_option,
+                            None,
+                            None,
+                        )
+                        .await?;
+
+                    {
+                        let mut state = self.state.lock().await;
+                        state.set_mls_group_state(MlsGroupState::Success);
+                    }
+
+                    return Ok(());
+                }
+                if let HttpClientError::MlsStatusCode(status) = &e {
+                    if *status == 401 {
+                        tracing::error!(
+                                "Failed to get group info: 401 Unauthorized, may caused by time drift, stopping retry"
+                            );
+                        return Err(MeetCoreError::TimeDriftError);
+                    }
+                    if (400..500).contains(status) {
+                        tracing::error!("Failed to get group info: {:?}, stopping retry", status);
+                        return Err(e.into());
+                    }
+                }
+                return Err(e.into());
+            }
+        };
+
+        if ratchet_tree_and_group_info.version != GroupInfoVersion::V1 {
+            let mut state = self.state.lock().await;
+            state.set_mls_group_state(MlsGroupState::ServerVersionNotSupported);
+            return Err(MeetCoreError::MlsServerVersionNotSupported);
+        }
+
+        let ratchet_tree = if let RatchetTreeOption::Full { ratchet_tree } =
+            &ratchet_tree_and_group_info.data.ratchet_tree
+        {
+            ratchet_tree
+        } else {
+            return Err(MeetCoreError::RatchetTreeNotFound);
+        };
+
+        let group_info = if let MlsMessageContent::GroupInfo(group_info) =
+            ratchet_tree_and_group_info.data.group_info.content
+        {
+            group_info
+        } else {
+            return Err(MeetCoreError::UnExpectedMlsMessageContent {
+                content_type: ratchet_tree_and_group_info
+                    .data
+                    .group_info
+                    .content
+                    .content_type()
+                    .map(|c| c.to_string()),
+            });
+        };
+
+        tracing::info!("Joining MLS join");
+        let member_count = ratchet_tree
+            .iter()
+            .filter_map(|slot| slot.as_ref())
+            .filter_map(|node| node.as_leaf_node())
+            .count() as u32;
+        let ratchet_tree_option = ratchet_tree_and_group_info.data.ratchet_tree;
+        if switch_join_type && member_count >= crate::JOIN_TYPE_SWITCH_THRESHOLD {
+            let proposal_message = self
+                .mls_service
+                .create_proposal_to_join_group(
+                    &user_info_token.user_id(),
+                    group_info,
+                    ratchet_tree_option.clone(),
+                )
+                .await?;
+            self.http_client
+                .join_group_by_proposal(&base64_sd_kbt, &proposal_message)
+                .await?;
+
+            {
+                let mut state = self.state.lock().await;
+                state.set_mls_group_state(MlsGroupState::WaitingForJoinProposalWelcome);
+            }
+
+            let join_deadline = Duration::from_secs(JOIN_PROPOSAL_TIMEOUT);
+            let start_time = instant::now();
+
+            loop {
+                let welcome_notify = self.join_proposal_welcome_notify.notified();
+                {
+                    let state = self.state.lock().await;
+                    if state.mls_group_state == MlsGroupState::Success {
+                        break;
+                    }
+                    if state.mls_group_state == MlsGroupState::WaitingForJoinProposalWelcome {
+                        if let Some(welcome_info) = state.get_welcome_info() {
+                            drop(state);
+                            self.mls_service
+                                .join_group_via_welcome(
+                                    &user_info_token.user_id(),
+                                    meeting_link_name,
+                                    welcome_info,
+                                )
+                                .await
+                                .map_err(|e| {
+                                    tracing::warn!(
+                                        "Failed to join group with welcome info: {:?}",
+                                        e
+                                    );
+                                    MeetCoreError::RoomJoinFailed {
+                                        room_id: meeting_link_name.as_str().to_string(),
+                                        reason: "Failed to join group with welcome info"
+                                            .to_string(),
+                                    }
+                                })?;
+                            let mut state = self.state.lock().await;
+                            state.set_mls_group_state(MlsGroupState::Success);
+                            state.set_welcome_info(None);
+                            tracing::info!("Join group with welcome info successfully");
+                            break;
+                        }
+                    } else {
+                        tracing::warn!(
+                            "Join proposal state is not valid: {:?}",
+                            state.mls_group_state
+                        );
+                        return Err(MeetCoreError::RoomJoinFailed {
+                            room_id: meeting_link_name.to_string(),
+                            reason: "Join proposal state is not valid".to_string(),
+                        });
+                    }
+                }
+
+                let elapsed = start_time.elapsed();
+                if elapsed >= join_deadline {
+                    return Err(MeetCoreError::RoomJoinFailed {
+                        room_id: meeting_link_name.to_string(),
+                        reason: "Join proposal timeout, didn't receive the welcome message from the server, please try again"
+                            .to_string(),
+                    });
+                }
+                let remaining = join_deadline.saturating_sub(elapsed);
+                if timeout(remaining, welcome_notify).await.is_err() {
+                    return Err(MeetCoreError::RoomJoinFailed {
+                        room_id: meeting_link_name.to_string(),
+                        reason: "Join proposal timeout, didn't receive the welcome message from the server, please try again"
+                            .to_string(),
+                    });
+                }
+            }
+            return Ok(());
+        } else {
+            let (group_info_message, ratchet_tree_option, commit_info) = self
+                .mls_service
+                .join_group_via_external_commit(
+                    meeting_link_name,
+                    &user_info_token.user_id(),
+                    group_info,
+                    ratchet_tree_option.clone(),
+                )
+                .await?;
+            self.http_client
+                .update_group_info(
+                    &base64_sd_kbt,
+                    &group_info_message,
+                    &ratchet_tree_option,
+                    Some(&commit_info),
+                    None,
+                )
+                .await?;
+            {
+                let mut state = self.state.lock().await;
+                state.set_mls_group_state(MlsGroupState::Success);
+            }
+
+            return Ok(());
+        }
     }
 }
 

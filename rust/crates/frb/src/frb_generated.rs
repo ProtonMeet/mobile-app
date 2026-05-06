@@ -1775,8 +1775,8 @@ fn wire__crate__proton_meet__core__AppCore_join_meeting_impl(
             let api_session_id = <Option<String>>::sse_decode(&mut deserializer);
             let api_is_meet_new_join_type = <bool>::sse_decode(&mut deserializer);
             let api_is_meet_switch_join_type = <bool>::sse_decode(&mut deserializer);
+            let api_is_meet_new_switch_join_type = <bool>::sse_decode(&mut deserializer);
             let api_reuse_token = <bool>::sse_decode(&mut deserializer);
-            let api_use_psk = <bool>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, crate::errors::BridgeError>(
@@ -1806,8 +1806,8 @@ fn wire__crate__proton_meet__core__AppCore_join_meeting_impl(
                             api_session_id,
                             api_is_meet_new_join_type,
                             api_is_meet_switch_join_type,
+                            api_is_meet_new_switch_join_type,
                             api_reuse_token,
-                            api_use_psk,
                         )
                         .await?;
                         Ok(output_ok)

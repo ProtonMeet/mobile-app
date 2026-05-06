@@ -1,14 +1,18 @@
 use crate::app_state::{preferred_user_key_for_crypto, AppState, UserState, UserStateInfo};
 use crate::domain::room::RoomService;
+use crate::domain::user::models::access_token::AccessToken;
 use crate::domain::user::models::meet_link_info::{MeetInfo, MeetParticipant};
 use crate::domain::user::models::meeting::{
     Meeting, MeetingType, UpcomingMeeting, UpdateMeetingScheduleParams,
 };
+use crate::domain::user::models::meeting_link_name::MeetingLinkName;
+use crate::domain::user::models::meeting_password::MeetingPassword;
 use crate::domain::user::models::participant_track_settings::ParticipantTrackSettings;
 use crate::domain::user::models::user_settings::UserSettings;
 use crate::domain::user::models::UnleashResponse;
 use crate::domain::user::models::UserId;
 use crate::domain::user::ports::meeting_api::MeetingApi;
+use crate::domain::user::ports::new_user_service::NewUserService;
 use crate::domain::user::ports::{
     ArcWebSocketClient, ConnectionState, HttpClient, UnleashApi, UserService, WebSocketClient,
 };
@@ -28,6 +32,7 @@ use crate::infra::storage::persister::Persister;
 use crate::infra::ws_client::WsClient;
 use crate::service::service::Service;
 use crate::utils::{instant, try_join};
+use backon::{ExponentialBuilder, Retryable};
 use chrono::{DateTime, Utc};
 use mls_rs_codec::MlsEncode;
 use mls_trait::MlsClientConfig;
@@ -51,9 +56,6 @@ use wasmtimer::tokio::sleep;
 
 #[cfg(target_family = "wasm")]
 use {wasm_bindgen::prelude::wasm_bindgen, wasm_bindgen::JsValue};
-
-// Threshold for switching from ExternalCommit to ExternalProposal join type in the app, based on the room participants count
-const JOIN_TYPE_SWITCH_THRESHOLD: u32 = 20;
 
 #[derive(Clone)]
 #[cfg_attr(target_family = "wasm", wasm_bindgen(getter_with_clone))]
@@ -925,6 +927,89 @@ impl App {
         Ok(user_data)
     }
 
+    /**
+     * This function will use the groupInfo to decide to use external commit or external proposal to join the meeting.
+     */
+    pub async fn join_meeting(
+        &self,
+        access_token: AccessToken,
+        meet_link_name: MeetingLinkName,
+        meeting_password: MeetingPassword,
+        session_id: Option<String>,
+        switch_join_type: bool,
+    ) -> Result<(), MeetCoreError> {
+        // Record join start time
+        {
+            let mut state = self.state.write().await;
+            state.join_start_time = Some(crate::utils::instant::now());
+            state.join_mls_time = None;
+            state.use_psk = true;
+        }
+        let mls_start = instant::now();
+        let user_info = self
+            .user_service
+            .read()
+            .await
+            .create_mls_client(
+                &access_token.expose_secret(),
+                &meet_link_name.as_str(),
+                &meeting_password.expose_secret(),
+                true,
+                session_id.as_deref(),
+            )
+            .await?;
+        debug!(
+            "join_meeting_with_access_token step=create_mls_client ms={} user={:?} device_id={}",
+            mls_start.elapsed().as_millis(),
+            &user_info.user_identifier,
+            &user_info.device_id,
+        );
+        debug!(
+            "MLS client created for user: {:?}, device_id: {}",
+            &user_info.user_identifier, &user_info.device_id,
+        );
+
+        let state_start = instant::now();
+        {
+            let mut state = self.state.write().await;
+            state.active_user_info = Some(user_info.clone());
+            state.active_livekit_access_token = Some(access_token.expose_secret().to_string());
+            debug!("Active user info: {:?}", state.active_user_info);
+        }
+        debug!(
+            "join_meeting_with_access_token step=store_state ms={}",
+            state_start.elapsed().as_millis()
+        );
+
+        let join_and_connect_start = instant::now();
+
+        let connect_ws_fut = Box::pin(self.connect_to_ws());
+        let join_room_fut = Box::pin(self.join_room_with_switch_join_type(switch_join_type));
+
+        let result = try_join(connect_ws_fut, join_room_fut).await;
+
+        if let Err(e) = result {
+            error!(
+                "Error connecting to WebSocket or joining room: {:?}, ms={}",
+                &e,
+                join_and_connect_start.elapsed().as_millis()
+            );
+
+            self.user_service.read().await.reset_service_state().await;
+            if let Err(disconnect_err) = self.disconnect_from_ws().await {
+                warn!("Failed to disconnect from websocket: {:?}", disconnect_err);
+            }
+            return Err(e);
+        }
+
+        info!(
+            "Connected to WebSocket and joined room ms={}",
+            join_and_connect_start.elapsed().as_millis()
+        );
+
+        Ok(())
+    }
+
     pub async fn join_meeting_with_access_token(
         &self,
         access_token: String,
@@ -979,8 +1064,8 @@ impl App {
 
         let join_and_connect_start = instant::now();
 
-        let connect_ws_fut = self.connect_to_ws();
-        let join_room_fut = self.join_room();
+        let connect_ws_fut = Box::pin(self.connect_to_ws());
+        let join_room_fut = Box::pin(self.join_room());
 
         let result = try_join(connect_ws_fut, join_room_fut).await;
 
@@ -1046,8 +1131,8 @@ impl App {
         } // lock released here
 
         let join_and_connect_start = instant::now();
-        let connect_ws_fut = self.connect_to_ws();
-        let join_room_fut = self.join_room_with_proposal();
+        let connect_ws_fut = Box::pin(self.connect_to_ws());
+        let join_room_fut = Box::pin(self.join_room_with_proposal());
         let result = try_join(connect_ws_fut, join_room_fut).await;
 
         if let Err(e) = result {
@@ -1515,9 +1600,9 @@ impl App {
         current_participant_count: u32,
     ) -> JoinType {
         debug!("get_join_type(), is_new_join_type={}, enable_join_type_switch={}, current_participant_count={}, threshold={}", 
-            is_new_join_type, enable_join_type_switch, current_participant_count, JOIN_TYPE_SWITCH_THRESHOLD);
+            is_new_join_type, enable_join_type_switch, current_participant_count, crate::JOIN_TYPE_SWITCH_THRESHOLD);
         if is_new_join_type && enable_join_type_switch {
-            if current_participant_count >= JOIN_TYPE_SWITCH_THRESHOLD {
+            if current_participant_count >= crate::JOIN_TYPE_SWITCH_THRESHOLD {
                 debug!("get_join_type() switching to ExternalProposal for large meeting room");
                 JoinType::ExternalProposal
             } else {
@@ -1531,6 +1616,67 @@ impl App {
             debug!("get_join_type() staying on ExternalCommit");
             JoinType::ExternalCommit
         }
+    }
+
+    async fn join_room_with_switch_join_type(
+        &self,
+        switch_join_type: bool,
+    ) -> Result<(), MeetCoreError> {
+        let total_start = instant::now();
+        let user_token_info = {
+            let app_state = self.state.read().await;
+            app_state
+                .active_user_info
+                .as_ref()
+                .ok_or(MeetCoreError::ParticipantNotFound)?
+                .clone()
+        };
+        let user_id = user_token_info.user_id();
+        let meeting_start = instant::now();
+        let meeting_id = self
+            .user_service
+            .read()
+            .await
+            .get_meeting_id(&user_id)
+            .await?;
+        debug!(
+            "join_room step=get_meeting_id ms={}",
+            meeting_start.elapsed().as_millis()
+        );
+
+        let join_call_start = instant::now();
+        let meeting_link_name = MeetingLinkName::from(meeting_id);
+
+        (|| async {
+            self.user_service
+                .read()
+                .await
+                .join_room_with_switch_join_type(
+                    &user_token_info,
+                    &meeting_link_name,
+                    switch_join_type,
+                )
+                .await
+        })
+        .retry(
+            ExponentialBuilder::default()
+                .with_max_times(5)
+                .with_min_delay(Duration::from_millis(500))
+                .with_max_delay(Duration::from_secs(10)),
+        )
+        .when(|e| matches!(e, MeetCoreError::MlsStatusCode(422)))
+        .await?;
+
+        {
+            let mut app_state = self.state.write().await;
+            app_state.join_mls_time = Some(crate::utils::instant::now());
+        }
+        debug!(
+            "join_room step=join_room_call ms={} total_ms={}",
+            join_call_start.elapsed().as_millis(),
+            total_start.elapsed().as_millis()
+        );
+        Ok(())
     }
 
     async fn join_room(&self) -> Result<(), MeetCoreError> {
@@ -2438,6 +2584,26 @@ impl App {
             meeting_password,
             use_psk,
             session_id,
+        )
+        .await
+        .map_err(|e| e.into())
+    }
+
+    #[wasm_bindgen(js_name = joinMeetingWithAccessTokenWithSwitchJoinType)]
+    pub async fn join_meeting_with_access_token_with_switch_join_type_wasm(
+        &self,
+        access_token: String,
+        meet_link_name: String,
+        meeting_password: String,
+        session_id: Option<String>,
+        switch_join_type: bool,
+    ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
+        self.join_meeting(
+            AccessToken::new(access_token),
+            MeetingLinkName::new(meet_link_name),
+            MeetingPassword::new(meeting_password),
+            session_id,
+            switch_join_type,
         )
         .await
         .map_err(|e| e.into())

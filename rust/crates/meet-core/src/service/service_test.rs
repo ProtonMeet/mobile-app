@@ -1,6 +1,10 @@
 #[cfg(test)]
 mod tests {
-    use std::{collections::HashMap, future::ready, sync::Arc};
+    use std::{
+        collections::HashMap,
+        future::ready,
+        sync::{Arc, Mutex as StdMutex},
+    };
 
     use esdicawt::spec::CwtAny;
     use mls_types::ExternalPskId;
@@ -9,17 +13,25 @@ mod tests {
 
     use crate::{
         domain::user::{
-            models::UserId,
+            models::{meeting_link_name::MeetingLinkName, UserId},
             ports::{
-                user_api::MockUserApi, MockHttpClient, MockUserRepository, MockWebSocketClient,
+                new_user_service::NewUserService, user_api::MockUserApi, MockHttpClient,
+                MockUserRepository, MockWebSocketClient,
             },
         },
-        errors::{login::LoginError, service::ServiceError},
+        errors::{
+            core::MeetCoreError, http_client::HttpClientError, login::LoginError,
+            service::ServiceError,
+        },
         infra::{
             crypto_client::derive_external_psk,
             dto::{
                 proton_user::UserData,
-                realtime::{MlsCommitInfo, MlsProposalInfo, RTCMessageIn, RTCMessageInContent},
+                realtime::{
+                    GroupInfoVersion, MlsCommitInfo, MlsProposalInfo, MlsWelcomeInfo,
+                    RatchetTreeAndGroupInfo, RTCMessageIn, RTCMessageInContent,
+                    VersionedGroupInfoData,
+                },
             },
             message_cache::CachedMessageType,
             mimi_subject_parser::ANONYMOUS_USER_IDENTIFIER,
@@ -5246,6 +5258,489 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let commit_bytes = commit_bundle.commit.mls_encode_to_vec().unwrap();
         let spec_msg = mls_spec::messages::MlsMessage::from_tls_bytes(&commit_bytes).unwrap();
         mls_types::MlsMessage::try_from(spec_msg).unwrap()
+    }
+
+    fn join_switch_ws_client_mock() -> MockWebSocketClient {
+        let mut ws = MockWebSocketClient::new();
+        ws.expect_get_connection_state()
+            .returning(|| Box::pin(ready(ConnectionState::Connected)));
+        ws
+    }
+
+    /// Builds a `Service` that reuses `base_service`'s MLS store but swaps HTTP for join-room tests.
+    async fn join_switch_service_with_http(
+        base_service: &Service,
+        email_for_sd_cwt_mock: &str,
+        meet_link_name: &str,
+        configure_http: impl FnOnce(&mut MockHttpClient),
+    ) -> Service {
+        let mut http_client =
+            create_mock_http_client_for_mls(email_for_sd_cwt_mock, meet_link_name, false);
+        configure_http(&mut http_client);
+        let user_repository = Arc::new(MockUserRepository::new());
+        let (clients, group_map, cfg) = {
+            let store = base_service.mls_store.read().await;
+            (
+                store.clients.clone(),
+                store.group_map.clone(),
+                store.config.clone(),
+            )
+        };
+        let mls_store = Arc::new(RwLock::new(MlsStore {
+            clients,
+            group_map,
+            config: cfg,
+        }));
+        Service::new(
+            Arc::new(http_client),
+            Arc::new(MockUserApi::new()),
+            user_repository,
+            Arc::new(join_switch_ws_client_mock()),
+            mls_store,
+        )
+    }
+
+    #[tokio::test]
+    async fn join_room_with_switch_join_type_external_commit_success() {
+        let meet_link_name = "join_switch_ext_commit_ok";
+        let config = MlsClientConfig::default();
+        let service1 = create_test_service("user1", meet_link_name).await;
+        let service2 = create_test_service("user2", meet_link_name).await;
+        let (_group1, _group2) =
+            setup_two_user_group(&service1, &service2, meet_link_name, config.ciphersuite).await;
+
+        let group1 = {
+            let store = service1.mls_store.read().await;
+            store.group_map.get(meet_link_name).unwrap().clone()
+        };
+        let (group_info_msg, ratchet_tree_opt) = mls_group_export_snapshot(&group1).await;
+
+        let service3 = create_test_service("user3", meet_link_name).await;
+        let user_token3 = service3
+            .create_mls_client(
+                "access_token",
+                meet_link_name,
+                "meet_password",
+                true,
+                None,
+            )
+            .await
+            .unwrap();
+
+        let versioned = VersionedGroupInfoData {
+            version: GroupInfoVersion::V1,
+            data: RatchetTreeAndGroupInfo {
+                ratchet_tree: ratchet_tree_opt.clone(),
+                group_info: group_info_msg.clone(),
+            },
+        };
+        let versioned_arc = Arc::new(versioned);
+
+        let join_service =
+            join_switch_service_with_http(&service3, "user3", meet_link_name, |http| {
+                http.expect_get_group_info().returning({
+                    let v = versioned_arc.clone();
+                    move |_| Box::pin(ready(Ok((*v).clone())))
+                });
+                http.expect_update_group_info()
+                    .returning(|_, _, _, _, _| Box::pin(ready(Ok(()))));
+            })
+            .await;
+
+        let meeting_name = MeetingLinkName::from(meet_link_name);
+        let res = join_service
+            .join_room_with_switch_join_type(&user_token3, &meeting_name, false)
+            .await;
+        assert!(res.is_ok(), "join_room_with_switch_join_type: {res:?}");
+
+        assert_eq!(
+            join_service.state.lock().await.mls_group_state,
+            MlsGroupState::Success
+        );
+        assert!(
+            join_service
+                .mls_store
+                .read()
+                .await
+                .group_map
+                .contains_key(meet_link_name),
+            "joiner should have stored the MLS group"
+        );
+    }
+
+    #[tokio::test]
+    async fn join_room_with_switch_join_type_switch_true_small_group_uses_external_commit() {
+        let meet_link_name = "join_switch_true_small_group";
+        let config = MlsClientConfig::default();
+        let service1 = create_test_service("user1", meet_link_name).await;
+        let service2 = create_test_service("user2", meet_link_name).await;
+        let (_g1, _g2) =
+            setup_two_user_group(&service1, &service2, meet_link_name, config.ciphersuite).await;
+
+        let group1 = {
+            let store = service1.mls_store.read().await;
+            store.group_map.get(meet_link_name).unwrap().clone()
+        };
+        let (group_info_msg, ratchet_tree_opt) = mls_group_export_snapshot(&group1).await;
+
+        let service3 = create_test_service("user3", meet_link_name).await;
+        let user_token3 = service3
+            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .await
+            .unwrap();
+
+        let versioned = Arc::new(VersionedGroupInfoData {
+            version: GroupInfoVersion::V1,
+            data: RatchetTreeAndGroupInfo {
+                ratchet_tree: ratchet_tree_opt,
+                group_info: group_info_msg,
+            },
+        });
+
+        let join_service =
+            join_switch_service_with_http(&service3, "user3", meet_link_name, |http| {
+                http.expect_get_group_info().returning({
+                    let v = versioned.clone();
+                    move |_| Box::pin(ready(Ok((*v).clone())))
+                });
+                http.expect_update_group_info()
+                    .returning(|_, _, _, _, _| Box::pin(ready(Ok(()))));
+            })
+            .await;
+
+        let meeting_name = MeetingLinkName::from(meet_link_name);
+        let res = join_service
+            .join_room_with_switch_join_type(&user_token3, &meeting_name, true)
+            .await;
+        assert!(
+            res.is_ok(),
+            "below JOIN_TYPE_SWITCH_THRESHOLD should still use external commit: {res:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn join_room_with_switch_join_type_large_group_uses_proposal_and_welcome() {
+        let meet_link_name = "join_switch_large_group";
+        let config = MlsClientConfig::default();
+        let existing_member_count = crate::JOIN_TYPE_SWITCH_THRESHOLD as usize;
+        let services = (0..existing_member_count)
+            .map(|idx| async move {
+                let user_id = format!("user{idx}");
+                create_test_service(&user_id, meet_link_name).await
+            })
+            .collect::<Vec<_>>();
+        let services = futures::future::join_all(services).await;
+        let service_refs = services.iter().collect::<Vec<_>>();
+        let groups = setup_n_user_group(service_refs, meet_link_name, config.ciphersuite).await;
+        let host_group = groups[0].clone();
+
+        let (group_info_msg, ratchet_tree_opt) = mls_group_export_snapshot(&host_group).await;
+        let ratchet_tree = match &ratchet_tree_opt {
+            RatchetTreeOption::Full { ratchet_tree } => ratchet_tree,
+            _ => panic!("expected full ratchet tree"),
+        };
+        let member_count = ratchet_tree
+            .iter()
+            .filter_map(|slot| slot.as_ref())
+            .filter_map(|node| node.as_leaf_node())
+            .count();
+        assert_eq!(member_count, existing_member_count);
+
+        let joiner_service = create_test_service("joiner", meet_link_name).await;
+        let joiner_token = joiner_service
+            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .await
+            .unwrap();
+
+        let versioned = Arc::new(VersionedGroupInfoData {
+            version: GroupInfoVersion::V1,
+            data: RatchetTreeAndGroupInfo {
+                ratchet_tree: ratchet_tree_opt,
+                group_info: group_info_msg,
+            },
+        });
+        let captured_proposal = Arc::new(StdMutex::new(None));
+
+        let join_service =
+            join_switch_service_with_http(&joiner_service, "joiner", meet_link_name, |http| {
+                http.expect_get_group_info().once().returning({
+                    let v = versioned.clone();
+                    move |_| Box::pin(ready(Ok((*v).clone())))
+                });
+                http.expect_join_group_by_proposal().once().returning({
+                    let captured_proposal = captured_proposal.clone();
+                    move |_, proposal| {
+                        *captured_proposal.lock().unwrap() = Some(proposal.clone());
+                        Box::pin(ready(Ok(())))
+                    }
+                });
+            })
+            .await;
+
+        let join_task_service = join_service.clone();
+        let join_task_token = joiner_token.clone();
+        let join_handle = tokio::spawn(async move {
+            let meeting_name = MeetingLinkName::from(meet_link_name);
+            join_task_service
+                .join_room_with_switch_join_type(&join_task_token, &meeting_name, true)
+                .await
+        });
+
+        let proposal = tokio::time::timeout(std::time::Duration::from_secs(5), async {
+            loop {
+                if let Some(proposal) = captured_proposal.lock().unwrap().clone() {
+                    break proposal;
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .expect("joiner should send an external Add proposal");
+
+        tokio::time::timeout(std::time::Duration::from_secs(5), async {
+            loop {
+                if join_service.state.lock().await.mls_group_state
+                    == MlsGroupState::WaitingForJoinProposalWelcome
+                {
+                    break;
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .expect("joiner should wait for proposal Welcome");
+
+        let commit_bundle = {
+            let proposal_types = mls_types::MlsMessage::try_from(proposal).unwrap();
+            let mut host_group_write = host_group.write().await;
+            let (received, _) = host_group_write
+                .decrypt_message(proposal_types)
+                .await
+                .expect("host should decrypt joiner's external Add proposal");
+            assert!(
+                matches!(received, ReceivedMessage::Proposal),
+                "host should receive a proposal, got {received:?}"
+            );
+            let (bundle, _) = host_group_write
+                .new_commit(vec![])
+                .await
+                .expect("host should commit the pending Add proposal");
+            host_group_write
+                .merge_pending_commit()
+                .await
+                .expect("host should merge proposal commit");
+            bundle
+        };
+
+        let welcome_info = MlsWelcomeInfo {
+            room_id: meet_link_name.as_bytes().to_vec(),
+            welcome: commit_bundle
+                .welcome
+                .expect("proposal commit should include Welcome")
+                .try_into()
+                .expect("welcome should convert to mls_spec"),
+            ratchet_tree: commit_bundle
+                .ratchet_tree
+                .expect("proposal commit should include ratchet tree")
+                .try_into()
+                .expect("ratchet tree should convert to RatchetTreeOption"),
+        };
+        let ws_message = WebSocketMessage::Binary(
+            RTCMessageIn {
+                content: RTCMessageInContent::Welcome(welcome_info),
+            }
+            .to_tls_bytes()
+            .unwrap(),
+        );
+        join_service
+            .handle_websocket_message(ws_message)
+            .await
+            .expect("joiner should process welcome websocket message");
+
+        let join_result = tokio::time::timeout(std::time::Duration::from_secs(5), join_handle)
+            .await
+            .expect("join should finish after Welcome")
+            .expect("join task should not panic");
+        assert!(join_result.is_ok(), "proposal join failed: {join_result:?}");
+        assert_eq!(
+            join_service.state.lock().await.mls_group_state,
+            MlsGroupState::Success
+        );
+        assert_eq!(
+            host_group.read().await.roster().count(),
+            existing_member_count + 1
+        );
+        assert_eq!(
+            join_service
+                .mls_store
+                .read()
+                .await
+                .group_map
+                .get(meet_link_name)
+                .expect("joiner group should be stored")
+                .read()
+                .await
+                .roster()
+                .count(),
+            existing_member_count + 1
+        );
+    }
+
+    #[tokio::test]
+    async fn join_room_with_switch_join_type_group_info_empty_creates_group() {
+        let meet_link_name = "join_switch_empty_group";
+        let service = create_test_service("user1", meet_link_name).await;
+        let user_token = service
+            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .await
+            .unwrap();
+
+        let join_service =
+            join_switch_service_with_http(&service, "user1", meet_link_name, |http| {
+                http.expect_get_group_info()
+                    .returning(|_| Box::pin(ready(Err(HttpClientError::GroupInfoEmpty))));
+                http.expect_update_group_info()
+                    .returning(|_, _, _, _, _| Box::pin(ready(Ok(()))));
+            })
+            .await;
+
+        let meeting_name = MeetingLinkName::from(meet_link_name);
+        let res = join_service
+            .join_room_with_switch_join_type(&user_token, &meeting_name, false)
+            .await;
+        assert!(res.is_ok(), "empty group path: {res:?}");
+        assert_eq!(
+            join_service.state.lock().await.mls_group_state,
+            MlsGroupState::Success
+        );
+        assert!(
+            join_service
+                .mls_store
+                .read()
+                .await
+                .group_map
+                .contains_key(meet_link_name)
+        );
+    }
+
+    #[tokio::test]
+    async fn join_room_with_switch_join_type_get_group_info_401_time_drift() {
+        let meet_link_name = "join_switch_401";
+        let service = create_test_service("user1", meet_link_name).await;
+        let user_token = service
+            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .await
+            .unwrap();
+
+        let join_service =
+            join_switch_service_with_http(&service, "user1", meet_link_name, |http| {
+                http.expect_get_group_info()
+                    .returning(|_| Box::pin(ready(Err(HttpClientError::MlsStatusCode(401)))));
+            })
+            .await;
+
+        let meeting_name = MeetingLinkName::from(meet_link_name);
+        let err = join_service
+            .join_room_with_switch_join_type(&user_token, &meeting_name, false)
+            .await
+            .unwrap_err();
+        assert!(matches!(err, MeetCoreError::TimeDriftError));
+    }
+
+    #[tokio::test]
+    async fn join_room_with_switch_join_type_server_version_not_supported() {
+        let meet_link_name = "join_switch_bad_version";
+        let config = MlsClientConfig::default();
+        let service1 = create_test_service("user1", meet_link_name).await;
+        let service2 = create_test_service("user2", meet_link_name).await;
+        let (_g1, _g2) =
+            setup_two_user_group(&service1, &service2, meet_link_name, config.ciphersuite).await;
+
+        let group1 = {
+            let store = service1.mls_store.read().await;
+            store.group_map.get(meet_link_name).unwrap().clone()
+        };
+        let (group_info_msg, ratchet_tree_opt) = mls_group_export_snapshot(&group1).await;
+
+        let service3 = create_test_service("user3", meet_link_name).await;
+        let user_token3 = service3
+            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .await
+            .unwrap();
+
+        let versioned = Arc::new(VersionedGroupInfoData {
+            version: GroupInfoVersion::V0,
+            data: RatchetTreeAndGroupInfo {
+                ratchet_tree: ratchet_tree_opt,
+                group_info: group_info_msg,
+            },
+        });
+
+        let join_service =
+            join_switch_service_with_http(&service3, "user3", meet_link_name, |http| {
+                http.expect_get_group_info().returning({
+                    let v = versioned.clone();
+                    move |_| Box::pin(ready(Ok((*v).clone())))
+                });
+            })
+            .await;
+
+        let meeting_name = MeetingLinkName::from(meet_link_name);
+        let err = join_service
+            .join_room_with_switch_join_type(&user_token3, &meeting_name, false)
+            .await
+            .unwrap_err();
+        assert!(matches!(err, MeetCoreError::MlsServerVersionNotSupported));
+        assert_eq!(
+            join_service.state.lock().await.mls_group_state,
+            MlsGroupState::ServerVersionNotSupported
+        );
+    }
+
+    #[tokio::test]
+    async fn join_room_with_switch_join_type_ratchet_tree_not_full() {
+        let meet_link_name = "join_switch_no_full_tree";
+        let config = MlsClientConfig::default();
+        let service1 = create_test_service("user1", meet_link_name).await;
+        let service2 = create_test_service("user2", meet_link_name).await;
+        let (_g1, _g2) =
+            setup_two_user_group(&service1, &service2, meet_link_name, config.ciphersuite).await;
+
+        let group1 = {
+            let store = service1.mls_store.read().await;
+            store.group_map.get(meet_link_name).unwrap().clone()
+        };
+        let (group_info_msg, _) = mls_group_export_snapshot(&group1).await;
+
+        let service3 = create_test_service("user3", meet_link_name).await;
+        let user_token3 = service3
+            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .await
+            .unwrap();
+
+        let versioned = Arc::new(VersionedGroupInfoData {
+            version: GroupInfoVersion::V1,
+            data: RatchetTreeAndGroupInfo {
+                ratchet_tree: RatchetTreeOption::DistributionService,
+                group_info: group_info_msg,
+            },
+        });
+
+        let join_service =
+            join_switch_service_with_http(&service3, "user3", meet_link_name, |http| {
+                http.expect_get_group_info().returning({
+                    let v = versioned.clone();
+                    move |_| Box::pin(ready(Ok((*v).clone())))
+                });
+            })
+            .await;
+
+        let meeting_name = MeetingLinkName::from(meet_link_name);
+        let err = join_service
+            .join_room_with_switch_join_type(&user_token3, &meeting_name, false)
+            .await
+            .unwrap_err();
+        assert!(matches!(err, MeetCoreError::RatchetTreeNotFound));
     }
 
     #[tokio::test]

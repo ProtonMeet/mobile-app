@@ -12,6 +12,7 @@ pub mod crypto_client;
 pub mod event_api;
 pub mod http_client;
 pub mod meeting_api;
+pub mod new_user_service;
 pub mod unleash_api;
 pub mod user_api;
 pub mod user_repository;

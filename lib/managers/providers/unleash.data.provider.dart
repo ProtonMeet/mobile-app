@@ -26,6 +26,7 @@ enum UnleashFeature {
   meetVp9,
   meetH264,
   meetSwitchJoinType,
+  meetNewSwitchJoinType,
   isNeedForceUpgrade,
   meetScheduleInAdvance,
   meetAutoReconnection,
@@ -82,6 +83,8 @@ extension UnleashFeatureExt on UnleashFeature {
         return "MeetFeedbackOnSkip";
       case UnleashFeature.meetInAppStoreReview:
         return "MeetInAppStoreReview";
+      case UnleashFeature.meetNewSwitchJoinType:
+        return "MeetNewSwitchJoinType";
     }
   }
 
@@ -293,6 +296,9 @@ class UnleashDataProvider extends DataProvider {
 
   bool isMeetSwitchJoinType() =>
       isFeatureEnabled(UnleashFeature.meetSwitchJoinType);
+
+  bool isMeetNewSwitchJoinType() =>
+      isFeatureEnabled(UnleashFeature.meetNewSwitchJoinType);
 
   bool isNeedForceUpgrade() =>
       isFeatureEnabled(UnleashFeature.isNeedForceUpgrade);
