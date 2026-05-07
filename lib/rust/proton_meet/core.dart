@@ -141,7 +141,6 @@ abstract class AppCore implements RustOpaqueInterface {
     required String accessToken,
     required String meetLinkName,
     required String meetingPassword,
-    required bool usePsk,
     String? sessionId,
   });
 
@@ -149,7 +148,6 @@ abstract class AppCore implements RustOpaqueInterface {
     required String accessToken,
     required String meetLinkName,
     required String meetingPassword,
-    required bool usePsk,
     String? sessionId,
   });
 

@@ -262,7 +262,6 @@ abstract class RustLibApi extends BaseApi {
     required String accessToken,
     required String meetLinkName,
     required String meetingPassword,
-    required bool usePsk,
     String? sessionId,
   });
 
@@ -272,7 +271,6 @@ abstract class RustLibApi extends BaseApi {
     required String accessToken,
     required String meetLinkName,
     required String meetingPassword,
-    required bool usePsk,
     String? sessionId,
   });
 
@@ -1899,7 +1897,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required String accessToken,
     required String meetLinkName,
     required String meetingPassword,
-    required bool usePsk,
     String? sessionId,
   }) {
     return handler.executeNormal(
@@ -1913,7 +1910,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(accessToken, serializer);
           sse_encode_String(meetLinkName, serializer);
           sse_encode_String(meetingPassword, serializer);
-          sse_encode_bool(usePsk, serializer);
           sse_encode_opt_String(sessionId, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
@@ -1933,7 +1929,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           accessToken,
           meetLinkName,
           meetingPassword,
-          usePsk,
           sessionId,
         ],
         apiImpl: this,
@@ -1950,7 +1945,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           "accessToken",
           "meetLinkName",
           "meetingPassword",
-          "usePsk",
           "sessionId",
         ],
       );
@@ -1962,7 +1956,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required String accessToken,
     required String meetLinkName,
     required String meetingPassword,
-    required bool usePsk,
     String? sessionId,
   }) {
     return handler.executeNormal(
@@ -1976,7 +1969,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(accessToken, serializer);
           sse_encode_String(meetLinkName, serializer);
           sse_encode_String(meetingPassword, serializer);
-          sse_encode_bool(usePsk, serializer);
           sse_encode_opt_String(sessionId, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
@@ -1996,7 +1988,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           accessToken,
           meetLinkName,
           meetingPassword,
-          usePsk,
           sessionId,
         ],
         apiImpl: this,
@@ -2013,7 +2004,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           "accessToken",
           "meetLinkName",
           "meetingPassword",
-          "usePsk",
           "sessionId",
         ],
       );
@@ -8829,7 +8819,6 @@ class AppCoreImpl extends RustOpaque implements AppCore {
     required String accessToken,
     required String meetLinkName,
     required String meetingPassword,
-    required bool usePsk,
     String? sessionId,
   }) =>
       RustLib.instance.api.crateProtonMeetCoreAppCoreJoinMeetingWithAccessToken(
@@ -8837,7 +8826,6 @@ class AppCoreImpl extends RustOpaque implements AppCore {
         accessToken: accessToken,
         meetLinkName: meetLinkName,
         meetingPassword: meetingPassword,
-        usePsk: usePsk,
         sessionId: sessionId,
       );
 
@@ -8845,7 +8833,6 @@ class AppCoreImpl extends RustOpaque implements AppCore {
     required String accessToken,
     required String meetLinkName,
     required String meetingPassword,
-    required bool usePsk,
     String? sessionId,
   }) => RustLib.instance.api
       .crateProtonMeetCoreAppCoreJoinMeetingWithAccessTokenWithProposal(
@@ -8853,7 +8840,6 @@ class AppCoreImpl extends RustOpaque implements AppCore {
         accessToken: accessToken,
         meetLinkName: meetLinkName,
         meetingPassword: meetingPassword,
-        usePsk: usePsk,
         sessionId: sessionId,
       );
 

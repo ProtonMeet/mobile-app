@@ -26,7 +26,6 @@ pub trait UserService {
         access_token: &str,
         meet_link_name: &str,
         meeting_password: &str,
-        use_psk: bool,
         session_id: Option<&str>,
     ) -> Result<UserTokenInfo, anyhow::Error>;
 
@@ -100,7 +99,6 @@ pub trait UserService {
         &self,
         user_info_token: &UserTokenInfo,
         meeting_link_name: &str,
-        use_psk: bool,
     ) -> Result<(), MeetCoreError>;
 
     async fn join_room_with_proposal(

@@ -26,9 +26,6 @@ pub struct Args {
     #[arg(long)]
     pub meeting_link_password: Option<String>,
 
-    #[arg(long, default_value_t = false, help = "Enable PSK flow for MLS join")]
-    pub use_psk: bool,
-
     #[command(subcommand)]
     pub command: Commands,
 }

@@ -65,7 +65,6 @@ async fn main() -> Result<(), anyhow::Error> {
                 config.http_host,
                 config.meeting_link_name,
                 config.meeting_link_password,
-                args.use_psk,
                 None,
             )
             .await?;
@@ -108,7 +107,6 @@ async fn main() -> Result<(), anyhow::Error> {
                     threads,
                     apps_per_thread,
                     config,
-                    args.use_psk,
                     join_delay_min_ms,
                     join_delay_max_ms,
                 )

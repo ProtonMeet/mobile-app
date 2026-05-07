@@ -141,7 +141,6 @@ mod tests {
             meet_info?.access_token,
             meeting_link_name.to_string(),
             meeting_link_p.to_string(),
-            true,
             None,
         )
         .await?;
@@ -217,7 +216,6 @@ mod tests {
             meet_info.access_token,
             meet_info.meet_link_name,
             meeting.meeting_password,
-            true,
             None,
         )
         .await?;

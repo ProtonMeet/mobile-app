@@ -210,7 +210,6 @@ impl App {
                 join_type: None,
                 app_version: Some(app_version_clone),
                 user_agent: Some(user_agent_clone),
-                use_psk: true,
             })),
             ws_client,
             http_client,
@@ -324,7 +323,6 @@ impl App {
                 join_type: None,
                 app_version: Some(app_version),
                 user_agent: Some(user_agent),
-                use_psk: true,
             })),
             ws_client,
             http_client,
@@ -961,7 +959,6 @@ impl App {
             let mut state = self.state.write().await;
             state.join_start_time = Some(crate::utils::instant::now());
             state.join_mls_time = None;
-            state.use_psk = true;
         }
         let mls_start = instant::now();
         let user_info = self
@@ -972,7 +969,6 @@ impl App {
                 &access_token.expose_secret(),
                 &meet_link_name.as_str(),
                 &meeting_password.expose_secret(),
-                true,
                 session_id.as_deref(),
             )
             .await?;
@@ -1033,7 +1029,6 @@ impl App {
         access_token: String,
         meet_link_name: String,
         meeting_password: String,
-        use_psk: bool,
         session_id: Option<String>,
     ) -> Result<(), MeetCoreError> {
         // Record join start time
@@ -1041,7 +1036,6 @@ impl App {
             let mut state = self.state.write().await;
             state.join_start_time = Some(crate::utils::instant::now());
             state.join_mls_time = None;
-            state.use_psk = use_psk;
         }
 
         let mls_start = instant::now();
@@ -1053,7 +1047,6 @@ impl App {
                 &access_token,
                 &meet_link_name,
                 &meeting_password,
-                use_psk,
                 session_id.as_deref(),
             )
             .await?;
@@ -1113,7 +1106,6 @@ impl App {
         access_token: String,
         meet_link_name: String,
         meeting_password: String,
-        use_psk: bool,
         session_id: Option<String>,
     ) -> Result<(), MeetCoreError> {
         // Record join start time
@@ -1121,7 +1113,6 @@ impl App {
             let mut state = self.state.write().await;
             state.join_start_time = Some(crate::utils::instant::now());
             state.join_mls_time = None;
-            state.use_psk = use_psk;
         }
 
         let user_info = self
@@ -1132,7 +1123,6 @@ impl App {
                 &access_token,
                 &meet_link_name,
                 &meeting_password,
-                use_psk,
                 session_id.as_deref(),
             )
             .await?;
@@ -1699,16 +1689,13 @@ impl App {
 
     async fn join_room(&self) -> Result<(), MeetCoreError> {
         let total_start = instant::now();
-        let (user_token_info, use_psk) = {
+        let user_token_info = {
             let app_state = self.state.read().await;
-            (
-                app_state
-                    .active_user_info
-                    .as_ref()
-                    .ok_or(MeetCoreError::ParticipantNotFound)?
-                    .clone(),
-                app_state.use_psk,
-            )
+            app_state
+                .active_user_info
+                .as_ref()
+                .ok_or(MeetCoreError::ParticipantNotFound)?
+                .clone()
         };
         let user_id = user_token_info.user_id();
         let meeting_start = instant::now();
@@ -1727,7 +1714,7 @@ impl App {
         self.user_service
             .read()
             .await
-            .join_room(&user_token_info, &meeting_id, use_psk)
+            .join_room(&user_token_info, &meeting_id)
             .await?;
 
         {
@@ -2618,14 +2605,12 @@ impl App {
         access_token: String,
         meet_link_name: String,
         meeting_password: String,
-        use_psk: bool,
         session_id: Option<String>,
     ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
         self.join_meeting_with_access_token(
             access_token,
             meet_link_name,
             meeting_password,
-            use_psk,
             session_id,
         )
         .await
@@ -2658,14 +2643,12 @@ impl App {
         access_token: String,
         meet_link_name: String,
         meeting_password: String,
-        use_psk: bool,
         session_id: Option<String>,
     ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
         self.join_meeting_with_access_token_with_proposal(
             access_token,
             meet_link_name,
             meeting_password,
-            use_psk,
             session_id,
         )
         .await

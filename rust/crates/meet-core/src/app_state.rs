@@ -20,7 +20,6 @@ pub struct AppState {
     pub join_mls_time: Option<PlatformInstant>,
     pub total_join_start_time: Option<PlatformInstant>,
     pub join_type: Option<JoinType>,
-    pub use_psk: bool,
 }
 
 #[derive(Debug)]

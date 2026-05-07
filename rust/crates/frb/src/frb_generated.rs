@@ -1846,7 +1846,6 @@ fn wire__crate__proton_meet__core__AppCore_join_meeting_with_access_token_impl(
             let api_access_token = <String>::sse_decode(&mut deserializer);
             let api_meet_link_name = <String>::sse_decode(&mut deserializer);
             let api_meeting_password = <String>::sse_decode(&mut deserializer);
-            let api_use_psk = <bool>::sse_decode(&mut deserializer);
             let api_session_id = <Option<String>>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
@@ -1875,7 +1874,6 @@ fn wire__crate__proton_meet__core__AppCore_join_meeting_with_access_token_impl(
                                 api_access_token,
                                 api_meet_link_name,
                                 api_meeting_password,
-                                api_use_psk,
                                 api_session_id,
                             )
                             .await?;
@@ -1900,7 +1898,6 @@ fn wire__crate__proton_meet__core__AppCore_join_meeting_with_access_token_with_p
 let api_access_token = <String>::sse_decode(&mut deserializer);
 let api_meet_link_name = <String>::sse_decode(&mut deserializer);
 let api_meeting_password = <String>::sse_decode(&mut deserializer);
-let api_use_psk = <bool>::sse_decode(&mut deserializer);
 let api_session_id = <Option<String>>::sse_decode(&mut deserializer);deserializer.end(); move |context| async move {
                     transform_result_sse::<_, crate::errors::BridgeError>((move || async move {
                         let mut api_that_guard = None;
@@ -1912,7 +1909,7 @@ let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decod
             }
         }
         let api_that_guard = api_that_guard.unwrap();
- let output_ok = crate::proton_meet::core::AppCore::join_meeting_with_access_token_with_proposal(&*api_that_guard, api_access_token, api_meet_link_name, api_meeting_password, api_use_psk, api_session_id).await?;   Ok(output_ok)
+ let output_ok = crate::proton_meet::core::AppCore::join_meeting_with_access_token_with_proposal(&*api_that_guard, api_access_token, api_meet_link_name, api_meeting_password, api_session_id).await?;   Ok(output_ok)
                     })().await)
                 } })
 }
