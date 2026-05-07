@@ -86,6 +86,8 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
 
     try {
       final appCoreManager = ManagerFactory().get<AppCoreManager>();
+      await appCoreManager.appCore.logStartToJoinRoom();
+
       final heading = "Launching Meeting...";
       final description = 'Encrypting with Messaging Layer Security (MLS)';
       emit(

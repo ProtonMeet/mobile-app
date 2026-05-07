@@ -18,6 +18,7 @@ pub struct AppState {
     pub active_user_info: Option<UserTokenInfo>,
     pub join_start_time: Option<PlatformInstant>,
     pub join_mls_time: Option<PlatformInstant>,
+    pub total_join_start_time: Option<PlatformInstant>,
     pub join_type: Option<JoinType>,
     pub use_psk: bool,
 }
@@ -114,7 +115,10 @@ mod preferred_user_key_tests {
             key("primary_active", 1, 1),
             key("active_only", 0, 1),
         ];
-        assert_eq!(preferred_user_key_for_crypto(&keys).unwrap().id, "primary_active");
+        assert_eq!(
+            preferred_user_key_for_crypto(&keys).unwrap().id,
+            "primary_active"
+        );
     }
 
     #[test]

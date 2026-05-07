@@ -169,6 +169,8 @@ abstract class AppCore implements RustOpaqueInterface {
   /// Log metrics when room join fails, this method must be called right after the room join fails on client side
   Future<void> logJoinedRoomFailed({String? errorCode});
 
+  Future<void> logStartToJoinRoom();
+
   /// Log metrics when connection is lost
   Future<void> logUserEpochHealth({
     required int currentEpoch,

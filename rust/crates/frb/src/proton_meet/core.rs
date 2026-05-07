@@ -1104,6 +1104,11 @@ impl AppCore {
         Ok(())
     }
 
+    pub async fn log_start_to_join_room(&self) -> Result<(), BridgeError> {
+        self.inner.log_start_to_join_room().await?;
+        Ok(())
+    }
+
     pub async fn try_log_designated_committer(&self, epoch: u32) -> Result<(), BridgeError> {
         self.inner.try_log_designated_committer(epoch).await?;
         Ok(())
