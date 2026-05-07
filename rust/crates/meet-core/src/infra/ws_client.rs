@@ -36,6 +36,17 @@ use wasmtimer::std::Instant;
 
 const MAX_RETRY_COUNT: u32 = 5;
 const RETRY_DELAY_SECONDS: u64 = 1;
+
+/// Any HTTP 4xx on the WS upgrade means the server rejected the request (auth, routing, etc.);
+/// retrying with the same session token usually does not help.
+fn ws_handshake_http_4xx_status(err: &anyhow::Error) -> Option<u16> {
+    let ws_err = err.downcast_ref::<tokio_tungstenite_wasm::Error>()?;
+    let tokio_tungstenite_wasm::Error::Http(resp) = ws_err else {
+        return None;
+    };
+    let status = resp.status();
+    status.is_client_error().then_some(status.as_u16())
+}
 const DEFAULT_PING_INTERVAL_SECONDS: u64 = 5;
 const DEFAULT_MAX_PING_FAILURES: u32 = 2;
 const HANDLER_WATCHDOG_SECS: u64 = 10;
@@ -555,7 +566,15 @@ impl WebSocketClient for WsClient {
             })?;
 
             let connect_result = self.connect(&token).await;
-            if connect_result.is_err() {
+            if let Err(e) = &connect_result {
+                if let Some(code) = ws_handshake_http_4xx_status(e) {
+                    tracing::warn!(
+                        code,
+                        "WebSocket reconnect got HTTP 4xx on handshake; stopping retries"
+                    );
+                    self.disconnect(None).await?;
+                    return Ok(());
+                }
                 sleep(std::time::Duration::from_secs(RETRY_DELAY_SECONDS)).await;
                 retry_count += 1;
                 tracing::warn!(
