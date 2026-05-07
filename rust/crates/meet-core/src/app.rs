@@ -206,6 +206,7 @@ impl App {
                 active_user_info: None,
                 join_start_time: None,
                 join_mls_time: None,
+                total_join_start_time: None,
                 join_type: None,
                 app_version: Some(app_version_clone),
                 user_agent: Some(user_agent_clone),
@@ -319,6 +320,7 @@ impl App {
                 active_user_info: None,
                 join_start_time: None,
                 join_mls_time: None,
+                total_join_start_time: None,
                 join_type: None,
                 app_version: Some(app_version),
                 user_agent: Some(user_agent),
@@ -1784,6 +1786,12 @@ impl App {
         Ok(())
     }
 
+    pub async fn log_start_to_join_room(&self) -> Result<(), MeetCoreError> {
+        let mut state = self.state.write().await;
+        state.total_join_start_time = Some(crate::utils::instant::now());
+        Ok(())
+    }
+
     /// Log metrics when room join is successful, this method must be called right after the room is showing to user on client side
     pub async fn log_joined_room(
         &self,
@@ -1796,6 +1804,14 @@ impl App {
                 .join_start_time
                 .ok_or_else(|| MeetCoreError::InternalError {
                     message: "join_start_time not set".to_string(),
+                    details: None,
+                })?;
+
+        let total_join_start_time =
+            state
+                .total_join_start_time
+                .ok_or_else(|| MeetCoreError::InternalError {
+                    message: "total_join_start_time not set".to_string(),
                     details: None,
                 })?;
 
@@ -1820,6 +1836,7 @@ impl App {
         drop(state);
 
         let join_room_time_ms = join_start_time.elapsed().as_millis() as u64;
+        let total_join_time_ms = total_join_start_time.elapsed().as_millis() as u64;
 
         // Get MLS retry count from Service
         let mls_retry_count = self.user_service.read().await.get_mls_retry_count().await;
@@ -1876,6 +1893,7 @@ impl App {
                 join_type,
                 is_vp9_decode_supported,
                 is_vp9_encode_supported,
+                total_join_time_ms: Some(total_join_time_ms),
             }),
             user_retry_count: Some(UserRetryCountMetric {
                 retry_count: mls_retry_count,
@@ -1914,8 +1932,16 @@ impl App {
                     details: None,
                 })?;
 
-        let join_room_time_ms = join_start_time.elapsed().as_millis() as u64;
+        let total_join_start_time =
+            state
+                .total_join_start_time
+                .ok_or_else(|| MeetCoreError::InternalError {
+                    message: "total_join_start_time not set".to_string(),
+                    details: None,
+                })?;
 
+        let join_room_time_ms = join_start_time.elapsed().as_millis() as u64;
+        let total_join_time_ms = total_join_start_time.elapsed().as_millis() as u64;
         drop(state);
 
         // Get MLS retry count from Service
@@ -1972,6 +1998,7 @@ impl App {
                 join_type: None,
                 is_vp9_decode_supported: None,
                 is_vp9_encode_supported: None,
+                total_join_time_ms: Some(total_join_time_ms),
             }),
             user_retry_count: Some(UserRetryCountMetric {
                 retry_count: mls_retry_count,
@@ -2991,6 +3018,13 @@ impl App {
     #[wasm_bindgen(js_name = testWasm)]
     pub async fn test_wasm(&self) -> crate::errors::core::Result<()> {
         Err(crate::errors::core::MeetCoreError::PasswordTooShort)
+    }
+
+    #[wasm_bindgen(js_name = logStartToJoinRoom)]
+    pub async fn log_start_to_join_room_wasm(
+        &self,
+    ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
+        self.log_start_to_join_room().await.map_err(|e| e.into())
     }
 }
 
