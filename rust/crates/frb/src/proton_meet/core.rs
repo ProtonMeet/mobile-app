@@ -457,7 +457,6 @@ impl AppCore {
                         meet_info.access_token.clone(),
                         meet_link_name.clone(),
                         meet_link_password.clone(),
-                        true,
                         session_id.clone(),
                     )
                     .await
@@ -482,7 +481,6 @@ impl AppCore {
                     meet_info.access_token.clone(),
                     meet_link_name.clone(),
                     meet_link_password.clone(),
-                    true,
                     session_id,
                 )
                 .await?;
@@ -527,7 +525,6 @@ impl AppCore {
                     access_token.clone(),
                     meet_link_name.clone(),
                     meet_link_password.clone(),
-                    true,
                     session_id.clone(),
                 )
                 .await
@@ -567,7 +564,6 @@ impl AppCore {
                 access_token.clone(),
                 meet_link_name.clone(),
                 meet_link_password.clone(),
-                true,
                 session_id,
             )
             .await?;
@@ -597,7 +593,6 @@ impl AppCore {
         access_token: String,
         meet_link_name: String,
         meeting_password: String,
-        use_psk: bool,
         session_id: Option<String>,
     ) -> Result<(), BridgeError> {
         self.inner
@@ -605,7 +600,6 @@ impl AppCore {
                 access_token,
                 meet_link_name,
                 meeting_password,
-                use_psk,
                 session_id,
             )
             .await?;
@@ -617,7 +611,6 @@ impl AppCore {
         access_token: String,
         meet_link_name: String,
         meeting_password: String,
-        use_psk: bool,
         session_id: Option<String>,
     ) -> Result<(), BridgeError> {
         self.inner
@@ -625,7 +618,6 @@ impl AppCore {
                 access_token,
                 meet_link_name,
                 meeting_password,
-                use_psk,
                 session_id,
             )
             .await?;

@@ -26,7 +26,6 @@ impl AppTestRunner {
         threads: usize,
         apps_per_thread: usize,
         config: AppConfig,
-        use_psk: bool,
         join_delay_min_ms: u64,
         join_delay_max_ms: u64,
     ) -> Result<(), anyhow::Error> {
@@ -87,7 +86,6 @@ impl AppTestRunner {
                                     http,
                                     name.clone(),
                                     pwd.clone(),
-                                    use_psk,
                                     Some(tag.clone()),
                                 )
                                 .await

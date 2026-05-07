@@ -22,7 +22,6 @@ impl AppRunner {
         http_host: String,
         room_name: String,
         room_password: String,
-        use_psk: bool,
         tag: Option<String>,
     ) -> Result<Self, anyhow::Error> {
         let auth = Arc::new(Mutex::new(Auth::None));
@@ -60,7 +59,6 @@ impl AppRunner {
             meeting_info.access_token,
             room_name.clone(),
             room_password,
-            use_psk,
             None,
         )
         .await?;

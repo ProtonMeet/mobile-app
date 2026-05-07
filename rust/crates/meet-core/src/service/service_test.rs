@@ -291,7 +291,6 @@ mod tests {
                 "access_token_user1",
                 meet_link_name,
                 "meet_password",
-                true,
                 None,
             )
             .await
@@ -318,7 +317,6 @@ mod tests {
                 "access_token_user2",
                 meet_link_name,
                 "meet_password",
-                true,
                 None,
             )
             .await
@@ -494,7 +492,6 @@ mod tests {
                 "access_token_user3",
                 meet_link_name,
                 "meet_password",
-                true,
                 None,
             )
             .await
@@ -506,7 +503,6 @@ mod tests {
                 "access_token_user4",
                 meet_link_name,
                 "meet_password",
-                true,
                 None,
             )
             .await
@@ -820,7 +816,7 @@ mod tests {
 
         // Create first user and group
         let user_token_info = service1
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
         let (group1, commit_bundle1) = service1
@@ -835,7 +831,7 @@ mod tests {
 
         // Create second user
         let user_token_info2 = service2
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
         let user1_id = {
@@ -971,7 +967,6 @@ mod tests {
                 "access_token_user1",
                 meet_link_name,
                 "meet_password",
-                true,
                 None,
             )
             .await
@@ -992,7 +987,6 @@ mod tests {
                 "access_token_user2",
                 meet_link_name,
                 "meet_password",
-                true,
                 None,
             )
             .await
@@ -1463,7 +1457,7 @@ mod tests {
 
         // Add third user using the commit_bundle2 from setup
         let user_token_info3 = service3
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -1625,13 +1619,9 @@ mod tests {
 
         // Setup third user and create external commit
         let user_token_info3 = service3
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
-
-        // These tests use commits without PSK proposals; disable PSK validation after setup.
-        *service2.use_psk.lock().await = false;
-        *service3.use_psk.lock().await = false;
 
         let group_info = match mls_spec::messages::MlsMessage::from_tls_bytes(
             &commit_bundle2
@@ -1649,12 +1639,13 @@ mod tests {
         };
 
         let (_, commit_bundle3) = service3
-            .create_external_commit(
+            .create_external_commit_with_psks(
                 &user_token_info3.user_id(),
                 meet_link_name,
                 config.ciphersuite,
                 group_info,
                 commit_bundle2.ratchet_tree.unwrap().try_into().unwrap(),
+                vec![ExternalPskId(meet_link_name.as_bytes().to_vec())],
             )
             .await
             .unwrap();
@@ -1691,7 +1682,12 @@ mod tests {
                 .await
                 .unwrap()
                 .remove(0);
-            let (commit_bundle, _) = group1_guard.new_commit([]).await.unwrap();
+            let (commit_bundle, _) = group1_guard
+                .new_commit([ProposalArg::PskExternal {
+                    id: ExternalPskId(meet_link_name.as_bytes().to_vec()),
+                }])
+                .await
+                .unwrap();
             group1_guard.merge_pending_commit().await.unwrap();
             (commit_bundle, proposal_msg)
         };
@@ -1833,9 +1829,6 @@ mod tests {
         let group3 = groups[2].clone();
         let group4 = groups[3].clone();
 
-        // These tests use commits without PSK proposals; disable PSK validation after setup.
-        *service4.use_psk.lock().await = false;
-
         // Verify initial state - all groups should be at same epoch
         let initial_epoch = group1.read().await.epoch();
         assert_eq!(group2.read().await.epoch(), initial_epoch);
@@ -1853,7 +1846,12 @@ mod tests {
                 .await
                 .unwrap()
                 .remove(0);
-            let (commit_bundle, _) = group1_guard.new_commit([]).await.unwrap();
+            let (commit_bundle, _) = group1_guard
+                .new_commit([ProposalArg::PskExternal {
+                    id: ExternalPskId(meet_link_name.as_bytes().to_vec()),
+                }])
+                .await
+                .unwrap();
             group1_guard.merge_pending_commit().await.unwrap();
             (commit_bundle, proposal_msg)
         };
@@ -1882,7 +1880,12 @@ mod tests {
                 .await
                 .unwrap()
                 .remove(0);
-            let (commit_bundle, _) = group1_guard.new_commit([]).await.unwrap();
+            let (commit_bundle, _) = group1_guard
+                .new_commit([ProposalArg::PskExternal {
+                    id: ExternalPskId(meet_link_name.as_bytes().to_vec()),
+                }])
+                .await
+                .unwrap();
             group1_guard.merge_pending_commit().await.unwrap();
             (commit_bundle, proposal_msg)
         };
@@ -2052,7 +2055,7 @@ mod tests {
 
         // Add third user to the group
         let user_token_info3 = service3
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -2188,7 +2191,7 @@ mod tests {
 
         // Add third user to the group (this advances group1's epoch)
         let user_token_info3 = service3
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -2295,7 +2298,7 @@ mod tests {
 
         // Setup third user and create external commit
         let user_token_info3 = service3
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -2315,12 +2318,13 @@ mod tests {
         };
 
         let (_, commit_bundle3) = service3
-            .create_external_commit(
+            .create_external_commit_with_psks(
                 &user_token_info3.user_id(),
                 meet_link_name,
                 config.ciphersuite,
                 group_info,
                 commit_bundle2.ratchet_tree.unwrap().try_into().unwrap(),
+                vec![ExternalPskId(meet_link_name.as_bytes().to_vec())],
             )
             .await
             .unwrap();
@@ -2348,7 +2352,12 @@ mod tests {
                 .await
                 .unwrap()
                 .remove(0);
-            let (commit_bundle, _) = group1_guard.new_commit([]).await.unwrap();
+            let (commit_bundle, _) = group1_guard
+                .new_commit([ProposalArg::PskExternal {
+                    id: ExternalPskId(meet_link_name.as_bytes().to_vec()),
+                }])
+                .await
+                .unwrap();
             group1_guard.merge_pending_commit().await.unwrap();
             (commit_bundle, proposal_msg)
         };
@@ -2362,9 +2371,6 @@ mod tests {
                 .await
                 .unwrap();
         }
-
-        // These tests use commits without PSK proposals; disable PSK validation after setup.
-        *service2.use_psk.lock().await = false;
 
         // Test scenario: Send commit with proposal first, then proposal, then group3 join commit last
         // Step 1: Send the commit message with proposal (this should be cached as future epoch)
@@ -2523,7 +2529,7 @@ mod tests {
     ) -> (Arc<RwLock<MlsGroup<MemKv>>>, Arc<RwLock<MlsGroup<MemKv>>>) {
         // Create first user and group
         let user_token_info1 = service1
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
         let (group1, commit_bundle1) = service1
@@ -2538,7 +2544,7 @@ mod tests {
 
         // Create second user
         let user_token_info2 = service2
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -2602,7 +2608,7 @@ mod tests {
     ) {
         // Create first user and group
         let user_token_info = service1
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
         let (group1, commit_bundle1) = service1
@@ -2617,7 +2623,7 @@ mod tests {
 
         // Create second user
         let user_token_info2 = service2
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -2696,7 +2702,7 @@ mod tests {
 
         // First user creates the group
         let user_token_info1 = services[0]
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -2718,7 +2724,7 @@ mod tests {
         for (_idx, service) in services.iter().enumerate().skip(1) {
             // Create MLS client for the new user
             let user_token_info = service
-                .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+                .create_mls_client("access_token", meet_link_name, "meet_password", None)
                 .await
                 .unwrap();
 
@@ -3121,7 +3127,7 @@ mod tests {
 
         // Setup third user and create external commit to join the group
         let user_token_info3 = service3
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -3639,7 +3645,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         // Create user3's MLS client
         let user_token_info3 = service3
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -3889,7 +3895,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         // Create service and group
         let service = create_test_service("user1", meet_link_name).await;
         let user_token_info = service
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
         let (group, _commit_bundle) = service
@@ -3983,7 +3989,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         // Create service1 and group1 (user1's group)
         let service1 = create_test_service("user1", meet_link_name).await;
         let user_token_info1 = service1
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
         let (_group1, _) = service1
@@ -4004,7 +4010,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 "access_token",
                 different_meet_link,
                 "meet_password",
-                true,
                 None,
             )
             .await
@@ -4100,7 +4105,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         // Create service and group
         let service = create_test_service("user1", meet_link_name).await;
         let user_token_info = service
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
         let (_group, _commit_bundle) = service
@@ -4142,7 +4147,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         // Create service and group with single user
         let service = create_test_service("user1", meet_link_name).await;
         let user_token_info = service
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
         let (group1, commit_bundle1) = service
@@ -4164,7 +4169,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         // Add a second user to the group
         let service2 = create_test_service("user2", meet_link_name).await;
         let user_token_info2 = service2
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -4244,21 +4249,21 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         // Create service1 and user_token_info1
         let service1 = create_test_service("user1", &base_name).await;
         let user_token_info1 = service1
-            .create_mls_client("access_token", &base_name, "meet_password", true, None)
+            .create_mls_client("access_token", &base_name, "meet_password", None)
             .await
             .unwrap();
 
         // Create service2 and user_token_info2
         let service2 = create_test_service("user2", &base_name).await;
         let user_token_info2 = service2
-            .create_mls_client("access_token", &base_name, "meet_password", true, None)
+            .create_mls_client("access_token", &base_name, "meet_password", None)
             .await
             .unwrap();
 
         // Create service3 and user_token_info3
         let service3 = create_test_service("user3", &base_name).await;
         let user_token_info3 = service3
-            .create_mls_client("access_token", &base_name, "meet_password", true, None)
+            .create_mls_client("access_token", &base_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -5013,14 +5018,13 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
     }
 
     #[tokio::test]
-    async fn test_process_commit_rejects_missing_psk_when_flag_enabled() {
+    async fn test_process_commit_rejects_missing_psk() {
         let meet_link_name = "test_psk_reject_missing";
         let config = MlsClientConfig::default();
 
         let service1 = create_test_service("psk-user1", meet_link_name).await;
         let service2 = create_test_service("psk-user2", meet_link_name).await;
 
-        // use_psk defaults to true in Service::new; the helper does not change it
         let (group1, _group2, _) = setup_two_user_group_with_commit_bundle(
             &service1,
             &service2,
@@ -5037,7 +5041,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             bundle
         };
 
-        // Deliver the no-PSK commit to service2 which has use_psk=true
         let commit_bytes = commit_bundle.commit.mls_encode_to_vec().unwrap();
         let rtc_message = RTCMessageIn {
             content: RTCMessageInContent::CommitUpdate(MlsCommitInfo {
@@ -5052,7 +5055,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         assert!(
             result.is_err(),
-            "Expected error when commit has no PSK proposal and use_psk=true"
+            "Expected error when commit has no PSK proposal"
         );
         let err = result.unwrap_err();
         assert!(
@@ -5073,7 +5076,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let service1 = create_test_service("psk-user1", meet_link_name).await;
         let service2 = create_test_service("psk-user2", meet_link_name).await;
 
-        // use_psk defaults to true in Service::new; the helper does not change it
         let (group1, _group2, _) = setup_two_user_group_with_commit_bundle(
             &service1,
             &service2,
@@ -5170,55 +5172,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         );
     }
 
-    #[tokio::test]
-    async fn test_process_commit_allows_missing_psk_when_flag_disabled() {
-        let meet_link_name = "test_psk_allow_no_psk";
-        let config = MlsClientConfig::default();
-
-        let service1 = create_test_service("psk-user1", meet_link_name).await;
-        let service2 = create_test_service("psk-user2", meet_link_name).await;
-
-        // Setup helper sets use_psk=true on both services internally
-        let (group1, _group2, _) = setup_two_user_group_with_commit_bundle(
-            &service1,
-            &service2,
-            meet_link_name,
-            config.ciphersuite,
-        )
-        .await;
-
-        // Set use_psk = false on service2 (the receiver being tested).
-        // Accessing the private field directly is allowed within #[cfg(test)] code in the same module.
-        *service2.use_psk.lock().await = false;
-
-        // group1 creates a commit with NO PSK proposal
-        let commit_bundle = {
-            let mut group1_guard = group1.write().await;
-            let (bundle, _) = group1_guard.new_commit(vec![]).await.unwrap();
-            group1_guard.merge_pending_commit().await.unwrap();
-            bundle
-        };
-
-        // Deliver the no-PSK commit to service2 which now has use_psk=false
-        let commit_bytes = commit_bundle.commit.mls_encode_to_vec().unwrap();
-        let rtc_message = RTCMessageIn {
-            content: RTCMessageInContent::CommitUpdate(MlsCommitInfo {
-                room_id: meet_link_name.as_bytes().to_vec(),
-                welcome_message: None,
-                commit: mls_spec::messages::MlsMessage::from_tls_bytes(&commit_bytes).unwrap(),
-            }),
-        };
-        let ws_message = WebSocketMessage::Binary(rtc_message.to_tls_bytes().unwrap());
-        service2.state.lock().await.mls_group_state = MlsGroupState::Success;
-        let result = service2.handle_websocket_message(ws_message).await;
-
-        assert!(
-            result.is_ok(),
-            "Expected commit with no PSK to succeed when use_psk=false, got: {:?}",
-            result.err()
-        );
-    }
-
     async fn setup_single_user_group(
         room_id: &str,
     ) -> (
@@ -5230,7 +5183,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let config = MlsClientConfig::default();
         let service = create_test_service("psk-unit-user", room_id).await;
         let user_token_info = service
-            .create_mls_client("access_token", room_id, "meet_password", true, None)
+            .create_mls_client("access_token", room_id, "meet_password", None)
             .await
             .unwrap();
         let (group, _) = service
@@ -5321,7 +5274,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 "access_token",
                 meet_link_name,
                 "meet_password",
-                true,
                 None,
             )
             .await
@@ -5385,7 +5337,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         let service3 = create_test_service("user3", meet_link_name).await;
         let user_token3 = service3
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -5448,7 +5400,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         let joiner_service = create_test_service("joiner", meet_link_name).await;
         let joiner_token = joiner_service
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -5591,7 +5543,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let meet_link_name = "join_switch_empty_group";
         let service = create_test_service("user1", meet_link_name).await;
         let user_token = service
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -5628,7 +5580,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let meet_link_name = "join_switch_401";
         let service = create_test_service("user1", meet_link_name).await;
         let user_token = service
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -5664,7 +5616,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         let service3 = create_test_service("user3", meet_link_name).await;
         let user_token3 = service3
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -5714,7 +5666,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         let service3 = create_test_service("user3", meet_link_name).await;
         let user_token3 = service3
-            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -5876,7 +5828,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                     "access_token_validator",
                     &meet_link_name,
                     "meet_password",
-                    true,
                     None,
                 )
                 .await
@@ -5948,7 +5899,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                                     "access_token",
                                     &meet_link_name,
                                     "meet_password",
-                                    true,
                                     None,
                                 )
                                 .await

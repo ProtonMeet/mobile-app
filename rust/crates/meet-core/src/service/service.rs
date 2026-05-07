@@ -183,7 +183,6 @@ pub struct Service {
     // MLS message service for processing commits and proposals
     mls_msg_service: Arc<crate::domain::mls::mls_message_service::MlsMessageService>,
     handling_offline_members: Arc<Mutex<bool>>,
-    use_psk: Arc<Mutex<bool>>,
     mls_service: Arc<MlsService>,
     /// Wakes tasks waiting on a join-proposal `Welcome` after `welcome_info` is stored.
     join_proposal_welcome_notify: Arc<Notify>,
@@ -293,7 +292,6 @@ impl Service {
             proposal_timer: Arc::new(Mutex::new(HashMap::new())),
             mls_msg_service: mls_msg_service,
             handling_offline_members: Arc::new(Mutex::new(false)),
-            use_psk: Arc::new(Mutex::new(true)),
             mls_service,
             join_proposal_welcome_notify,
         }
@@ -544,16 +542,9 @@ impl Service {
             role_proposals.push(role_update);
         }
 
-        let use_psk = {
-            let use_psk_guard = self.use_psk.lock().await;
-            *use_psk_guard
-        };
-
-        if use_psk {
-            role_proposals.push(ProposalArg::PskExternal {
-                id: ExternalPskId(room_id.as_bytes().to_vec()),
-            });
-        }
+        role_proposals.push(ProposalArg::PskExternal {
+            id: ExternalPskId(room_id.as_bytes().to_vec()),
+        });
 
         // process all proposals in the same commit
         let (commit_bundle, ..) = mls_group.new_commit(role_proposals).await?;
@@ -1228,15 +1219,9 @@ impl UserService for Service {
         access_token: &str,
         meet_link_name: &str,
         meeting_password: &str,
-        use_psk: bool,
         session_id: Option<&str>,
     ) -> Result<UserTokenInfo, anyhow::Error> {
         let total_start = instant::now();
-
-        {
-            let mut use_psk_guard = self.use_psk.lock().await;
-            *use_psk_guard = use_psk;
-        }
 
         let client_start = instant::now();
         let (client, _) = MlsClient::new(MemKv::new(), MlsClientConfig::default()).await?;
@@ -1416,18 +1401,11 @@ impl UserService for Service {
             .store()
             .await?;
 
-        let use_psk = {
-            let use_psk_guard = self.use_psk.lock().await;
-            *use_psk_guard
-        };
-
         let mut proposals = Vec::new();
 
-        if use_psk {
-            proposals.push(ProposalArg::PskExternal {
-                id: ExternalPskId(meeting_link_name.as_bytes().to_vec()),
-            });
-        }
+        proposals.push(ProposalArg::PskExternal {
+            id: ExternalPskId(meeting_link_name.as_bytes().to_vec()),
+        });
 
         let (bundle, ..) = group.new_commit(proposals).await?;
         group.merge_pending_commit().await?;
@@ -1688,11 +1666,6 @@ impl UserService for Service {
     ) -> Result<(), MeetCoreError> {
         let target_uuid = Uuid::from_str(target_participant_id)?;
 
-        let use_psk = {
-            let use_psk_guard = self.use_psk.lock().await;
-            *use_psk_guard
-        };
-
         tracing::debug!(
             "Starting kick for participant {} in meeting {}",
             target_participant_id,
@@ -1811,11 +1784,9 @@ impl UserService for Service {
                 );
             }
 
-            if use_psk {
-                proposal_args.push(ProposalArg::PskExternal {
-                    id: ExternalPskId(meeting_link_name.as_bytes().to_vec()),
-                });
-            }
+            proposal_args.push(ProposalArg::PskExternal {
+                id: ExternalPskId(meeting_link_name.as_bytes().to_vec()),
+            });
 
             let result = mls_group.new_commit(proposal_args).await;
             let (commit_bundle, _welcome_option) = match result {
@@ -2576,7 +2547,6 @@ impl UserService for Service {
         &self,
         user_info_token: &UserTokenInfo,
         meeting_link_name: &str,
-        use_psk: bool,
     ) -> Result<(), MeetCoreError> {
         let base64_sd_kbt = self.get_sd_kbt(&user_info_token.user_id()).await?;
 
@@ -2614,8 +2584,8 @@ impl UserService for Service {
                     {
                         tracing::info!("Join by external commit");
 
-                        let (mls_group, commit_bundle) = if use_psk {
-                            self.create_external_commit_with_psks(
+                        let (mls_group, commit_bundle) = self
+                            .create_external_commit_with_psks(
                                 &user_info_token.user_id(),
                                 meeting_link_name,
                                 cs,
@@ -2623,17 +2593,7 @@ impl UserService for Service {
                                 ratchet_tree_and_group_info.data.ratchet_tree,
                                 vec![ExternalPskId(meeting_link_name.as_bytes().to_vec())],
                             )
-                            .await?
-                        } else {
-                            self.create_external_commit(
-                                &user_info_token.user_id(),
-                                meeting_link_name,
-                                cs,
-                                group_info,
-                                ratchet_tree_and_group_info.data.ratchet_tree,
-                            )
-                            .await?
-                        };
+                            .await?;
 
                         let (epoch, roster, leaf_node_index) = {
                             let mls_group = mls_group.read().await;
@@ -3806,22 +3766,16 @@ impl Service {
             .ok_or_else(|| anyhow::anyhow!("Failed to find mls group for room {room_id}"))?
             .write()
             .await;
-        let use_psk = {
-            let guard = self.use_psk.lock().await;
-            *guard
-        };
-        if use_psk {
-            if let Err(e) = Self::validate_psk_proposal(commit_message.clone(), room_id) {
-                // PSK validation failed: restore queue and return.
-                drop(mls_group);
-                self.restore_proposal_queue_on_failure(
-                    room_id,
-                    &mut queued_proposals,
-                    "Failed to process commit message",
-                )
-                .await;
-                return Err(e);
-            }
+        if let Err(e) = Self::validate_psk_proposal(commit_message.clone(), room_id) {
+            // PSK validation failed: restore queue and return.
+            drop(mls_group);
+            self.restore_proposal_queue_on_failure(
+                room_id,
+                &mut queued_proposals,
+                "Failed to process commit message",
+            )
+            .await;
+            return Err(e);
         }
 
         let result = mls_group.decrypt_message(commit_message.clone()).await;
@@ -3840,27 +3794,25 @@ impl Service {
         };
         match received_message {
             ReceivedMessage::Commit { ref output, .. } => {
-                if use_psk {
-                    let expected_id = room_id.as_bytes();
-                    let has_psk = output.applied_proposals.iter().any(|p| {
-                        matches!(
-                            &p.effect,
-                            mls_trait::types::ProposalEffect::PskAdded {
-                                reference: mls_types::PskReference::External(mls_types::ExternalPskId(id))
-                            } if id.as_slice() == expected_id
-                        )
-                    });
-                    if !has_psk {
-                        tracing::error!("Commit missing required PSK proposal for room {room_id}");
-                        drop(mls_group);
-                        self.restore_proposal_queue_on_failure(
-                            room_id,
-                            &mut queued_proposals,
-                            "Commit missing PSK proposal",
-                        )
-                        .await;
-                        return Err(anyhow::Error::from(ServiceError::PskProposalMissing));
-                    }
+                let expected_id = room_id.as_bytes();
+                let has_psk = output.applied_proposals.iter().any(|p| {
+                    matches!(
+                        &p.effect,
+                        mls_trait::types::ProposalEffect::PskAdded {
+                            reference: mls_types::PskReference::External(mls_types::ExternalPskId(id))
+                        } if id.as_slice() == expected_id
+                    )
+                });
+                if !has_psk {
+                    tracing::error!("Commit missing required PSK proposal for room {room_id}");
+                    drop(mls_group);
+                    self.restore_proposal_queue_on_failure(
+                        room_id,
+                        &mut queued_proposals,
+                        "Commit missing PSK proposal",
+                    )
+                    .await;
+                    return Err(anyhow::Error::from(ServiceError::PskProposalMissing));
                 }
             }
             ReceivedMessage::Error(mls_types::MlsTypesError::MlsClientError(
@@ -4213,16 +4165,9 @@ impl Service {
             );
         }
 
-        let use_psk = {
-            let use_psk_guard = self.use_psk.lock().await;
-            *use_psk_guard
-        };
-
-        if use_psk {
-            proposal_args.push(ProposalArg::PskExternal {
-                id: ExternalPskId(room_id.as_bytes().to_vec()),
-            });
-        }
+        proposal_args.push(ProposalArg::PskExternal {
+            id: ExternalPskId(room_id.as_bytes().to_vec()),
+        });
 
         let (commit_bundle, _welcome_option) = match mls_group.new_commit(proposal_args).await {
             Ok((bundle, welcome)) => (bundle, welcome),
