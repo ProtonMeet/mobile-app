@@ -185,9 +185,7 @@ impl From<crate::errors::service::ServiceError> for MeetCoreError {
                             message: error_detail.error.clone(),
                             details: Some(format!("{:?}", error_detail.details)),
                         },
-                        HttpClientError::MlsStatusCode(status) => {
-                            return Self::MlsStatusCode(*status);
-                        }
+                        HttpClientError::MlsStatusCode(status) => Self::MlsStatusCode(*status),
                         _ => Self::HttpClientError {
                             status: 0,
                             message: inner_error.to_string(),

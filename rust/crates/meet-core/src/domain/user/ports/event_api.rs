@@ -20,6 +20,15 @@ pub trait EventApi: Send + Sync {
     /// # Returns
     /// GetEventsResponse containing meeting events, flags, and new event ID
     async fn get_events(&self, event_id: &str) -> Result<GetEventsResponse, HttpClientError>;
+
+    /// Get core events starting from a given event ID
+    ///
+    /// # Arguments
+    /// * `event_id` - The event ID to start fetching from
+    ///
+    /// # Returns
+    /// CoreEventsResponse containing core events and new event ID
+    async fn get_core_events(&self, event_id: &str) -> Result<GetEventsResponse, HttpClientError>;
 }
 
 #[cfg(test)]
@@ -79,6 +88,7 @@ mod tests {
                         more: false,
                         refresh: false,
                         event_id: "event-id-124".to_string(),
+                        user: None,
                     })
                 })
             });
@@ -105,6 +115,7 @@ mod tests {
                         more: true,
                         refresh: false,
                         event_id: "event-id-124".to_string(),
+                        user: None,
                     })
                 })
             });

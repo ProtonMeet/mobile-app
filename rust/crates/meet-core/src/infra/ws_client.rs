@@ -266,13 +266,13 @@ impl WsClient {
     }
 
     /// Get max ping failures, using configured value or default
-    async fn get_max_ping_failures(&self) -> u32 {
+    pub async fn get_max_ping_failures(&self) -> u32 {
         let guard = self.max_ping_failures.lock().await;
         guard.unwrap_or(DEFAULT_MAX_PING_FAILURES)
     }
 
     /// Get pong timeout in seconds, using configured value or default
-    async fn get_pong_timeout_seconds(&self) -> u64 {
+    pub async fn get_pong_timeout_seconds(&self) -> u64 {
         let guard = self.pong_timeout_seconds.lock().await;
         guard.unwrap_or(DEFAULT_PONG_TIMEOUT_SECONDS)
     }

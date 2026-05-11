@@ -291,7 +291,7 @@ impl Service {
             proposal_queue: Arc::new(Mutex::new(HashMap::new())),
             room_processing_locks: Arc::new(Mutex::new(HashMap::new())),
             proposal_timer: Arc::new(Mutex::new(HashMap::new())),
-            mls_msg_service: mls_msg_service,
+            mls_msg_service,
             handling_offline_members: Arc::new(Mutex::new(false)),
             use_psk: Arc::new(Mutex::new(true)),
             mls_service,
@@ -1179,37 +1179,52 @@ impl UserService for Service {
         Ok(user_data)
     }
 
-    async fn get_user(&self, user_id: &UserId) -> Result<ProtonUser, ServiceError> {
-        let user = self.user_repository.get_user(user_id.as_str()).await?;
-        if user.is_none() {
-            let proton_user = self.user_api.get_user_info().await?;
-            self.user_repository.save_user(&proton_user).await?;
-            let user_keys = self.user_repository.get_user_keys(user_id.as_str()).await?;
-            if user_keys.is_empty() {
-                let user_keys = proton_user.keys.clone().unwrap_or_default();
-                self.user_repository
-                    .save_user_keys(&proton_user.id, &user_keys)
-                    .await?;
+    async fn get_user_with_policy(
+        &self,
+        user_id: &UserId,
+        force_remote: bool,
+    ) -> Result<ProtonUser, ServiceError> {
+        if !force_remote {
+            let user = self.user_repository.get_user(user_id.as_str()).await?;
+            if let Some(local_user) = user {
+                return Ok(local_user);
             }
-            return Ok(proton_user);
         }
-        user.ok_or(ServiceError::UserNotFound)
+
+        // Force remote (or local miss): fetch fresh profile, then persist.
+        let proton_user = self.user_api.get_user_info().await?;
+        self.user_repository.save_user(&proton_user).await?;
+
+        // Keep key cache in sync with the latest user profile payload.
+        let user_keys = proton_user.keys.clone().unwrap_or_default();
+        self.user_repository
+            .save_user_keys(&proton_user.id, &user_keys)
+            .await?;
+
+        Ok(proton_user)
     }
 
-    async fn get_user_keys(&self, user_id: &UserId) -> Result<Vec<ProtonUserKey>, anyhow::Error> {
-        let user_keys = self.user_repository.get_user_keys(user_id.as_str()).await?;
-        if user_keys.is_empty() {
-            let proton_user = self.user_api.get_user_info().await?;
-            if let Some(keys) = proton_user.keys {
-                let proton_keys: Vec<ProtonUserKey> = keys;
-                self.user_repository
-                    .save_user_keys(user_id.as_str(), &proton_keys)
-                    .await?;
-                return Ok(proton_keys);
+    async fn get_user_keys_with_policy(
+        &self,
+        user_id: &UserId,
+        force_remote: bool,
+    ) -> Result<Vec<ProtonUserKey>, anyhow::Error> {
+        if !force_remote {
+            let user_keys = self.user_repository.get_user_keys(user_id.as_str()).await?;
+            if !user_keys.is_empty() {
+                return Ok(user_keys);
             }
-            return Ok(vec![]);
         }
-        Ok(user_keys)
+
+        // Force remote (or local miss): fetch user profile, then persist user + keys.
+        let proton_user = self.user_api.get_user_info().await?;
+        self.user_repository.save_user(&proton_user).await?;
+
+        let proton_keys: Vec<ProtonUserKey> = proton_user.keys.unwrap_or_default();
+        self.user_repository
+            .save_user_keys(user_id.as_str(), &proton_keys)
+            .await?;
+        Ok(proton_keys)
     }
 
     async fn get_user_addresses(&self) -> Result<Vec<Address>, anyhow::Error> {
@@ -4463,7 +4478,7 @@ impl NewUserService for Service {
                     });
                 }
             }
-            return Ok(());
+            Ok(())
         } else {
             let (group_info_message, ratchet_tree_option, commit_info) = self
                 .mls_service
@@ -4488,7 +4503,7 @@ impl NewUserService for Service {
                 state.set_mls_group_state(MlsGroupState::Success);
             }
 
-            return Ok(());
+            Ok(())
         }
     }
 }

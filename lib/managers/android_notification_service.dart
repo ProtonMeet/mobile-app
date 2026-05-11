@@ -77,7 +77,7 @@ class AndroidNotificationService implements NotificationService {
   /// Start is debounced by 300 ms so brief inactive→resumed transitions
   /// (notification shade, system dialogs) never trigger a service start that
   /// would be stopped before [startForeground()] runs — which would cause
-  /// [ForegroundServiceDidNotStartInTimeException].
+  /// 'ForegroundServiceDidNotStartInTimeException'.
   @override
   Future<void> showBackgroundNotification({required String roomName}) async {
     if (!_isInitialized) await init();
@@ -194,9 +194,7 @@ class AndroidNotificationService implements NotificationService {
     try {
       await _notificationsPlugin.cancel(_backgroundNotificationId);
     } on PlatformException catch (e) {
-      logger.w(
-        '[AndroidNotificationService] cancel notification failed: $e',
-      );
+      logger.w('[AndroidNotificationService] cancel notification failed: $e');
     }
   }
 

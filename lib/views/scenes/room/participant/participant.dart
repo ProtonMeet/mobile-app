@@ -114,6 +114,7 @@ class LocalParticipantWidget extends ParticipantWidget {
   final bool isRaisedHand;
   @override
   final bool compactOverlay;
+  @override
   final VoidCallback? onLowerHand;
   @override
   final ParticipantDisplayColors displayColors;
@@ -163,6 +164,7 @@ class RemoteParticipantWidget extends ParticipantWidget {
   final bool isRaisedHand;
   @override
   final bool compactOverlay;
+  @override
   final VoidCallback? onLowerHand;
   @override
   final ParticipantDisplayColors displayColors;

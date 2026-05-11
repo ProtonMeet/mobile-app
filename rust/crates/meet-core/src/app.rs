@@ -370,6 +370,21 @@ impl App {
         Ok(response)
     }
 
+    /// Get core events starting from a given event ID
+    /// Returns GetEventsResponse containing core event items, flags, and new event ID
+    pub async fn get_core_events(
+        &self,
+        event_id: String,
+    ) -> Result<crate::infra::dto::event::GetEventsResponse, MeetCoreError> {
+        use crate::domain::user::ports::event_api::EventApi;
+        let response = self
+            .http_client
+            .get_core_events(&event_id)
+            .await
+            .map_err(MeetCoreError::from)?;
+        Ok(response)
+    }
+
     /// Ping the server and return RTT in milliseconds
     pub async fn ping(&self) -> Result<u64, MeetCoreError> {
         self.http_client.ping().await.map_err(MeetCoreError::from)
@@ -398,12 +413,16 @@ impl App {
         }
     }
 
-    pub async fn fetch_user_state(&self, user_id: String) -> Result<UserState, MeetCoreError> {
+    pub async fn fetch_user_state(
+        &self,
+        user_id: String,
+        force_remote: bool,
+    ) -> Result<UserState, MeetCoreError> {
         let user = self
             .user_service
             .read()
             .await
-            .get_user(&UserId::new(user_id.clone()))
+            .get_user_with_policy(&UserId::new(user_id.clone()), force_remote)
             .await?;
 
         let user_keys = self
@@ -414,7 +433,6 @@ impl App {
             .await?;
 
         let user_addresses = self.user_service.read().await.get_user_addresses().await?;
-
         let user_state = UserState {
             user_data: user.clone(),
             user_keys,
@@ -438,7 +456,7 @@ impl App {
             .await
             .clear_local_user_profile_cache(&id)
             .await?;
-        self.fetch_user_state(user_id).await
+        self.fetch_user_state(user_id, true).await
     }
 
     pub async fn login(
@@ -969,9 +987,9 @@ impl App {
             .read()
             .await
             .create_mls_client(
-                &access_token.expose_secret(),
-                &meet_link_name.as_str(),
-                &meeting_password.expose_secret(),
+                access_token.expose_secret(),
+                meet_link_name.as_str(),
+                meeting_password.expose_secret(),
                 true,
                 session_id.as_deref(),
             )

@@ -28,9 +28,8 @@ mod tests {
             dto::{
                 proton_user::UserData,
                 realtime::{
-                    GroupInfoVersion, MlsCommitInfo, MlsProposalInfo, MlsWelcomeInfo,
-                    RatchetTreeAndGroupInfo, RTCMessageIn, RTCMessageInContent,
-                    VersionedGroupInfoData,
+                    GroupInfoVersion, MlsCommitInfo, MlsProposalInfo, MlsWelcomeInfo, RTCMessageIn,
+                    RTCMessageInContent, RatchetTreeAndGroupInfo, VersionedGroupInfoData,
                 },
             },
             message_cache::CachedMessageType,
@@ -461,7 +460,9 @@ mod tests {
         assert_eq!(decrypted, message);
         assert_eq!(
             sender_id.to_string(),
-            proton_claims_uuid_for_group_own_leaf(&group1).await.to_string()
+            proton_claims_uuid_for_group_own_leaf(&group1)
+                .await
+                .to_string()
         );
 
         // Verify reverse direction
@@ -479,7 +480,9 @@ mod tests {
         assert_eq!(decrypted2, message2);
         assert_eq!(
             sender_id2.to_string(),
-            proton_claims_uuid_for_group_own_leaf(&group2).await.to_string()
+            proton_claims_uuid_for_group_own_leaf(&group2)
+                .await
+                .to_string()
         );
 
         // ========== Part 2: Add User3 and User4 in a single commit ==========
@@ -778,7 +781,9 @@ mod tests {
         assert_eq!(decrypted_by_1, message_from_3);
         assert_eq!(
             sender_from_3.to_string(),
-            proton_claims_uuid_for_group_own_leaf(&group3).await.to_string()
+            proton_claims_uuid_for_group_own_leaf(&group3)
+                .await
+                .to_string()
         );
 
         let (decrypted_by_4, sender_from_3_to_4) = service4
@@ -788,7 +793,9 @@ mod tests {
         assert_eq!(decrypted_by_4, message_from_3);
         assert_eq!(
             sender_from_3_to_4.to_string(),
-            proton_claims_uuid_for_group_own_leaf(&group3).await.to_string()
+            proton_claims_uuid_for_group_own_leaf(&group3)
+                .await
+                .to_string()
         );
 
         // Verify user4 can also send messages
@@ -805,7 +812,9 @@ mod tests {
         assert_eq!(decrypted_by_2, message_from_4);
         assert_eq!(
             sender_from_4.to_string(),
-            proton_claims_uuid_for_group_own_leaf(&group4).await.to_string()
+            proton_claims_uuid_for_group_own_leaf(&group4)
+                .await
+                .to_string()
         );
     }
 
@@ -2502,16 +2511,14 @@ mod tests {
 
     /// Claim UUID for this group's **local** member (own leaf) — i.e. the encrypting peer's
     /// `ProtonMeetClaims.uuid` when passed that peer's `MlsGroup`.
-    async fn proton_claims_uuid_for_group_own_leaf(
-        group: &Arc<RwLock<MlsGroup<MemKv>>>,
-    ) -> Uuid {
+    async fn proton_claims_uuid_for_group_own_leaf(group: &Arc<RwLock<MlsGroup<MemKv>>>) -> Uuid {
         let g = group.read().await;
         let own = g.own_leaf_index().unwrap();
         let members: Vec<_> = g.roster().collect();
         members
             .iter()
             .find(|m| m.leaf_index() == own)
-            .map(|m| proton_claims_uuid_from_member(m))
+            .map(proton_claims_uuid_from_member)
             .expect("own leaf in roster")
     }
 
@@ -3952,7 +3959,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             .expect_get_group_info_summary()
             .returning(move || {
                 Box::pin(ready(Ok(GroupInfoSummaryData {
-                    epoch: group_info_summary.epoch.clone(),
+                    epoch: group_info_summary.epoch,
                     group_id: group_info_summary.group_id.clone(),
                 })))
             });
@@ -4069,7 +4076,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             .expect_get_group_info_summary()
             .returning(move || {
                 Box::pin(ready(Ok(GroupInfoSummaryData {
-                    epoch: group_info_summary.epoch.clone(),
+                    epoch: group_info_summary.epoch,
                     group_id: group_info_summary.group_id.clone(),
                 })))
             });
@@ -4242,23 +4249,23 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         );
 
         // Create service1 and user_token_info1
-        let service1 = create_test_service("user1", &base_name).await;
+        let service1 = create_test_service("user1", base_name).await;
         let user_token_info1 = service1
-            .create_mls_client("access_token", &base_name, "meet_password", true, None)
+            .create_mls_client("access_token", base_name, "meet_password", true, None)
             .await
             .unwrap();
 
         // Create service2 and user_token_info2
-        let service2 = create_test_service("user2", &base_name).await;
+        let service2 = create_test_service("user2", base_name).await;
         let user_token_info2 = service2
-            .create_mls_client("access_token", &base_name, "meet_password", true, None)
+            .create_mls_client("access_token", base_name, "meet_password", true, None)
             .await
             .unwrap();
 
         // Create service3 and user_token_info3
-        let service3 = create_test_service("user3", &base_name).await;
+        let service3 = create_test_service("user3", base_name).await;
         let user_token_info3 = service3
-            .create_mls_client("access_token", &base_name, "meet_password", true, None)
+            .create_mls_client("access_token", base_name, "meet_password", true, None)
             .await
             .unwrap();
 
@@ -5059,8 +5066,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             err.downcast_ref::<ServiceError>()
                 .map(|e| matches!(e, ServiceError::PskProposalMissing))
                 .unwrap_or(false),
-            "Expected PskProposalMissing error, got: {:?}",
-            err
+            "Expected PskProposalMissing error, got: {err:?}",
         );
     }
 
@@ -5165,8 +5171,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             err.downcast_ref::<ServiceError>()
                 .map(|e| matches!(e, ServiceError::PskProposalMissing))
                 .unwrap_or(false),
-            "Expected PskProposalMissing error, got: {:?}",
-            err
+            "Expected PskProposalMissing error, got: {err:?}",
         );
     }
 
@@ -5317,13 +5322,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         let service3 = create_test_service("user3", meet_link_name).await;
         let user_token3 = service3
-            .create_mls_client(
-                "access_token",
-                meet_link_name,
-                "meet_password",
-                true,
-                None,
-            )
+            .create_mls_client("access_token", meet_link_name, "meet_password", true, None)
             .await
             .unwrap();
 
@@ -5613,14 +5612,12 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             join_service.state.lock().await.mls_group_state,
             MlsGroupState::Success
         );
-        assert!(
-            join_service
-                .mls_store
-                .read()
-                .await
-                .group_map
-                .contains_key(meet_link_name)
-        );
+        assert!(join_service
+            .mls_store
+            .read()
+            .await
+            .group_map
+            .contains_key(meet_link_name));
     }
 
     #[tokio::test]
@@ -5795,8 +5792,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 .and_then(|e| e.downcast_ref::<ServiceError>())
                 .map(|e| matches!(e, ServiceError::PskProposalMissing))
                 .unwrap_or(false),
-            "Expected PskProposalMissing, got: {:?}",
-            result
+            "Expected PskProposalMissing, got: {result:?}",
         );
     }
 
@@ -5833,8 +5829,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 .and_then(|e| e.downcast_ref::<ServiceError>())
                 .map(|e| matches!(e, ServiceError::PskProposalMissing))
                 .unwrap_or(false),
-            "Expected PskProposalMissing, got: {:?}",
-            result
+            "Expected PskProposalMissing, got: {result:?}",
         );
     }
 
@@ -5941,7 +5936,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                     let add_services = futures::future::join_all((0..num_adds).map(|add_idx| {
                         let meet_link_name = meet_link_name.clone();
                         async move {
-                            let user_id = format!("stress_s{}_r{}_add_{}", session, round, add_idx);
+                            let user_id = format!("stress_s{session}_r{round}_add_{add_idx}");
                             let service = create_test_service(&user_id, &meet_link_name).await;
                             let user_token = service
                                 .create_mls_client(
