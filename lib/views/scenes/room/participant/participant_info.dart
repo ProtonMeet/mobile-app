@@ -122,8 +122,8 @@ class ParticipantInfoWidget extends StatelessWidget {
     child: CircleAvatar(
       radius: compact ? 8 : 16,
       backgroundColor: isScreenShare
-          ? context.colors.clear
-          : context.colors.backgroundNorm,
+          ? context.colors.clear.withValues(alpha: 0.5)
+          : context.colors.backgroundNorm.withValues(alpha: 0.5),
       child: isScreenShare
           ? const SizedBox.shrink()
           : (!isScreenShare && audioAvailable && activeAudioTrack != null)
