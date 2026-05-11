@@ -22,4 +22,11 @@ impl EventApi for ProtonHttpClient {
         let events_res = res.parse_response::<EventsResponse>()?;
         Ok(events_res.into())
     }
+
+    async fn get_core_events(&self, event_id: &str) -> Result<GetEventsResponse, HttpClientError> {
+        let req = self.get(format!("/core/v5/events/{event_id}"));
+        let res = self.get_session().send(req).await?;
+        let events_res = res.parse_response::<EventsResponse>()?;
+        Ok(events_res.into())
+    }
 }

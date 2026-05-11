@@ -273,8 +273,12 @@ impl AppCore {
         Ok(user)
     }
 
-    pub async fn fetch_user_state(&self, user_id: String) -> Result<UserState, BridgeError> {
-        let user = self.inner.fetch_user_state(user_id).await?;
+    pub async fn fetch_user_state(
+        &self,
+        user_id: String,
+        force_remote: bool,
+    ) -> Result<UserState, BridgeError> {
+        let user = self.inner.fetch_user_state(user_id, force_remote).await?;
         Ok(user)
     }
 
@@ -385,7 +389,7 @@ impl AppCore {
         is_meet_new_join_type: bool,
         is_meet_switch_join_type: bool,
         is_meet_new_switch_join_type: bool,
-        reuse_token: bool,
+        _reuse_token: bool,
     ) -> Result<FrbMeetInfo, BridgeError> {
         // Spawn heavy authentication work on background runtime to offload main thread
         // This includes MLS crypto operations and WebSocket connections that can block
@@ -772,6 +776,13 @@ impl AppCore {
     /// Returns GetEventsResponse containing meeting events, flags, and new event ID
     pub async fn get_events(&self, event_id: String) -> Result<FrbGetEventsResponse, BridgeError> {
         let response = self.inner.get_events(event_id).await?;
+        Ok(response.into())
+    }
+    pub async fn get_core_events(
+        &self,
+        event_id: String,
+    ) -> Result<FrbGetEventsResponse, BridgeError> {
+        let response = self.inner.get_core_events(event_id).await?;
         Ok(response.into())
     }
 

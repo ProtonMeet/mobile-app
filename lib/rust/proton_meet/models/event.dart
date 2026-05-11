@@ -6,7 +6,7 @@
 import '../../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `fmt`, `fmt`, `from`, `from`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `from`, `from`, `from`, `from`
 
 /// Event action type indicating what happened to the model
 enum EventAction {
@@ -52,6 +52,7 @@ class FrbGetEventsResponse {
   /// Meeting events (ID and Action) if any
   final List<FrbEventItem>? meetingEvents;
   final List<FrbEventItem>? users;
+  final FrbUserPayload? user;
 
   /// Whether there are more events available
   final bool more;
@@ -65,6 +66,7 @@ class FrbGetEventsResponse {
   const FrbGetEventsResponse({
     this.meetingEvents,
     this.users,
+    this.user,
     required this.more,
     required this.refresh,
     required this.eventId,
@@ -74,6 +76,7 @@ class FrbGetEventsResponse {
   int get hashCode =>
       meetingEvents.hashCode ^
       users.hashCode ^
+      user.hashCode ^
       more.hashCode ^
       refresh.hashCode ^
       eventId.hashCode;
@@ -85,7 +88,24 @@ class FrbGetEventsResponse {
           runtimeType == other.runtimeType &&
           meetingEvents == other.meetingEvents &&
           users == other.users &&
+          user == other.user &&
           more == other.more &&
           refresh == other.refresh &&
           eventId == other.eventId;
+}
+
+class FrbUserPayload {
+  final String? id;
+
+  const FrbUserPayload({this.id});
+
+  @override
+  int get hashCode => id.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FrbUserPayload &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
 }
