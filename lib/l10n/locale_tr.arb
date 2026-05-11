@@ -59,8 +59,12 @@
   "user_name": "Kullanıcı adı",
   "account": "Hesap",
   "password": "Parola",
-  "session_expired_content": "Oturumunuzun süresi doldu. Devam etmek için lütfen giriş yapın.",
+  "session_expired_content": "For your security, your session timed out. Sign in again to continue managing your meetings.",
   "session_expired_title": "Oturum süresi doldu!",
+  "session_expired_continue_without_signing_in": "Continue without signing in",
+  "@session_expired_continue_without_signing_in": {
+    "description": "Secondary button label for session expired bottom sheet"
+  },
   "force_upgrade": "Zorla Güncelle",
   "upgrade": "Güncelle",
   "search_participants": "Katılımcıları ara...",
@@ -758,6 +762,86 @@
   "quality_feedback_email_message": "Göndererek, bağlantı günlüğünü e-posta yoluyla bizimle paylaşmış olursunuz.",
   "@quality_feedback_email_message": {
     "description": "Message explaining that connection log will be shared via email"
+  },
+  "call_quality_how_was": "How was the call quality?",
+  "@call_quality_how_was": {
+    "description": "Prompt above star rating on post-meeting feedback"
+  },
+  "call_quality_what_went_wrong": "What went wrong?",
+  "@call_quality_what_went_wrong": {
+    "description": "Heading when user rated call quality below threshold"
+  },
+  "call_quality_problem_subtitle": "What problem did you experience?",
+  "@call_quality_problem_subtitle": {
+    "description": "Subtitle under what went wrong on low-rating feedback"
+  },
+  "call_quality_add_optional_details": "Add optional details",
+  "@call_quality_add_optional_details": {
+    "description": "Expand control for free-text feedback"
+  },
+  "call_quality_share_more_details": "Share more details",
+  "@call_quality_share_more_details": {
+    "description": "Placeholder for optional feedback text"
+  },
+  "call_quality_help_text": "Optional feedback is sent securely to help improve call quality.",
+  "@call_quality_help_text": {
+    "description": "Short privacy note under the rating on post-meeting feedback"
+  },
+  "call_quality_feedback_submitted": "Your feedback has been submitted",
+  "@call_quality_feedback_submitted": {
+    "description": "Toast after successful meeting feedback"
+  },
+  "call_quality_could_not_send": "Could not send feedback",
+  "@call_quality_could_not_send": {
+    "description": "Toast when meeting feedback API fails"
+  },
+  "call_quality_category_audio": "Audio",
+  "@call_quality_category_audio": {
+    "description": "Section label for audio-related feedback options"
+  },
+  "call_quality_category_video": "Video",
+  "@call_quality_category_video": {
+    "description": "Section label for video-related feedback options"
+  },
+  "call_quality_category_screen": "Screen share",
+  "@call_quality_category_screen": {
+    "description": "Section label for screen-share feedback options"
+  },
+  "call_quality_audio_breaking": "Audio was breaking up",
+  "@call_quality_audio_breaking": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_audio_couldnt_hear": "I couldn't hear others",
+  "@call_quality_audio_couldnt_hear": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_audio_others_couldnt_hear": "Others couldn't hear me",
+  "@call_quality_audio_others_couldnt_hear": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_poor": "Video quality was poor",
+  "@call_quality_video_poor": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_couldnt_see": "I couldn't see others' video",
+  "@call_quality_video_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_others_couldnt_see": "Others couldn't see my video",
+  "@call_quality_video_others_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_blurry": "The presentation was blurry",
+  "@call_quality_screen_blurry": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_couldnt_see": "I couldn't see the presentation",
+  "@call_quality_screen_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_couldnt_present": "I couldn't present",
+  "@call_quality_screen_couldnt_present": {
+    "description": "Low-rating feedback option"
   },
   "skip": "Atla",
   "@skip": {
@@ -1593,5 +1677,25 @@
   "system_default_mode": "System default",
   "@system_default_mode": {
     "description": "Use device language for app UI"
+  },
+  "pre_rating_sheet_title": "Enjoying Proton Meet?",
+  "@pre_rating_sheet_title": {
+    "description": "Title on the pre-rating bottom sheet before in-app review"
+  },
+  "pre_rating_sheet_subtitle": "We read and appreciate all feedback.",
+  "@pre_rating_sheet_subtitle": {
+    "description": "Subtitle on the pre-rating bottom sheet"
+  },
+  "pre_rating_sheet_yes_enjoy_proton_meet": "Yes",
+  "@pre_rating_sheet_yes_enjoy_proton_meet": {
+    "description": "Primary button on the pre-rating sheet to open store review"
+  },
+  "pre_rating_sheet_not_really_enjoy_proton_meet": "Not really",
+  "@pre_rating_sheet_not_really_enjoy_proton_meet": {
+    "description": "Secondary button on the pre-rating sheet"
+  },
+  "store_review_thanks_toast": "Thanks for your feedback",
+  "@store_review_thanks_toast": {
+    "description": "Toast shown before the OS in-app store review prompt"
   }
 }
