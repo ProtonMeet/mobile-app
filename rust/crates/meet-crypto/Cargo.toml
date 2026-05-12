@@ -18,8 +18,8 @@ proton-crypto = { workspace = true }
 proton-srp = { workspace = true, features = ["pgpinternal"] }
 proton-crypto-subtle = { workspace = true }
 proton-crypto-account = { workspace = true }
-hkdf = "0.12.4"
-sha2 = "0.10.9"
+hkdf = "0.13.0"
+sha2 = "0.11.0"
 zeroize = { version = "1.8.1", features = ["zeroize_derive"] }
 
 # WASM-only dependencies

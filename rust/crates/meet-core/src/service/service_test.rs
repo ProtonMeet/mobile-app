@@ -286,12 +286,7 @@ mod tests {
 
         // User1: Create MLS client and initialize a new group
         let user_token_info1 = service1
-            .create_mls_client(
-                "access_token_user1",
-                meet_link_name,
-                "meet_password",
-                None,
-            )
+            .create_mls_client("access_token_user1", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -312,12 +307,7 @@ mod tests {
 
         // User2: Create MLS client
         let user_token_info2 = service2
-            .create_mls_client(
-                "access_token_user2",
-                meet_link_name,
-                "meet_password",
-                None,
-            )
+            .create_mls_client("access_token_user2", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -491,23 +481,13 @@ mod tests {
 
         // User3: Create MLS client
         let user_token_info3 = service3
-            .create_mls_client(
-                "access_token_user3",
-                meet_link_name,
-                "meet_password",
-                None,
-            )
+            .create_mls_client("access_token_user3", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
         // User4: Create MLS client
         let user_token_info4 = service4
-            .create_mls_client(
-                "access_token_user4",
-                meet_link_name,
-                "meet_password",
-                None,
-            )
+            .create_mls_client("access_token_user4", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -972,12 +952,7 @@ mod tests {
 
         // User1 creates the group.
         let user_token_info1 = service1
-            .create_mls_client(
-                "access_token_user1",
-                meet_link_name,
-                "meet_password",
-                None,
-            )
+            .create_mls_client("access_token_user1", meet_link_name, "meet_password", None)
             .await
             .unwrap();
         let (group1, commit_bundle1) = service1
@@ -992,12 +967,7 @@ mod tests {
 
         // User2 creates a client and sends external add proposal.
         let user_token_info2 = service2
-            .create_mls_client(
-                "access_token_user2",
-                meet_link_name,
-                "meet_password",
-                None,
-            )
+            .create_mls_client("access_token_user2", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -4013,12 +3983,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let different_meet_link = "different_meet_link";
         let service2 = create_test_service("user2", different_meet_link).await;
         let user_token_info2 = service2
-            .create_mls_client(
-                "access_token",
-                different_meet_link,
-                "meet_password",
-                None,
-            )
+            .create_mls_client("access_token", different_meet_link, "meet_password", None)
             .await
             .unwrap();
         let (group2, _) = service2
@@ -4263,14 +4228,14 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         // Create service2 and user_token_info2
         let service2 = create_test_service("user2", base_name).await;
         let user_token_info2 = service2
-            .create_mls_client("access_token", &base_name, "meet_password", None)
+            .create_mls_client("access_token", base_name, "meet_password", None)
             .await
             .unwrap();
 
         // Create service3 and user_token_info3
         let service3 = create_test_service("user3", base_name).await;
         let user_token_info3 = service3
-            .create_mls_client("access_token", &base_name, "meet_password", None)
+            .create_mls_client("access_token", base_name, "meet_password", None)
             .await
             .unwrap();
 
@@ -5275,12 +5240,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         let service3 = create_test_service("user3", meet_link_name).await;
         let user_token3 = service3
-            .create_mls_client(
-                "access_token",
-                meet_link_name,
-                "meet_password",
-                None,
-            )
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
             .await
             .unwrap();
 

@@ -32,6 +32,9 @@ impl Database for Db {
             .transaction()
             .map_err(|error| StorageError::Db { source: error })?;
         Self::init_schemas_table(&db_tx)?;
+        db_tx
+            .commit()
+            .map_err(|error| StorageError::Db { source: error })?;
         Ok(())
     }
 }
@@ -290,7 +293,7 @@ impl Db {
         let mut raw_blob = HashMap::<String, Value>::with_capacity(count);
         for i in 0..count {
             let col = row.as_ref().column_name(i)?;
-            let sql_value = row.get_ref(i)?.into();
+            let sql_value = SqlValue::try_from(row.get_ref(i)?).map_err(rusqlite::Error::from)?;
             let value = match sql_value {
                 SqlValue::Null => Value::Null,
                 SqlValue::Integer(i) => Value::Number(Number::from(i)),
@@ -362,8 +365,11 @@ impl Db {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use futures::executor::block_on;
     use rusqlite::Connection;
     use serde::{Deserialize, Serialize};
+
+    use super::super::persister::Database;
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
     struct TestEntity {
@@ -975,5 +981,186 @@ mod tests {
             _ => panic!("Expected Blob for object"),
         }
         Ok(())
+    }
+
+    #[test]
+    fn test_database_open_and_init_tables() -> Result<(), StorageError> {
+        let dir = tempfile::tempdir()?;
+        let path = dir.path().join("meet_open.sqlite");
+        let path_str = path.to_str().expect("utf-8 path");
+
+        let mut db = block_on(Db::open(path_str))?;
+        db.init_tables()?;
+
+        let count: i64 = db.0.query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",
+            [SCHEMAS_TABLE_NAME],
+            |row| row.get(0),
+        )?;
+        assert_eq!(count, 1);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_migrate_schema_empty_script_list() -> Result<(), StorageError> {
+        let mut db = create_test_db();
+        let db_tx = db.get_transaction()?;
+        Db::migrate_schema(&db_tx, "NoScripts", &[])?;
+        assert_eq!(Db::schema_version(&db_tx, "NoScripts")?, None);
+        db_tx.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_migrate_schema_second_run_is_noop() -> Result<(), StorageError> {
+        let mut db = create_test_db();
+        let s1 = "CREATE TABLE IF NOT EXISTS t_mig (id TEXT PRIMARY KEY)";
+        let s2 = "ALTER TABLE t_mig ADD COLUMN x INTEGER";
+
+        let db_tx = db.get_transaction()?;
+        Db::migrate_schema(&db_tx, "M", &[s1, s2])?;
+        assert_eq!(Db::schema_version(&db_tx, "M")?, Some(1));
+        db_tx.commit()?;
+
+        let db_tx2 = db.get_transaction()?;
+        Db::migrate_schema(&db_tx2, "M", &[s1, s2])?;
+        assert_eq!(Db::schema_version(&db_tx2, "M")?, Some(1));
+        db_tx2.commit()?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_drop_table_tx_committed() -> Result<(), StorageError> {
+        let mut db = create_test_db();
+        setup_test_table(&db)?;
+
+        let db_tx = db.get_transaction()?;
+        Db::drop_table_tx(&db_tx, "test_table")?;
+        db_tx.commit()?;
+
+        let err = db.get::<TestEntity>("test_table", "any");
+        assert!(err.is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn test_save_tx_rollback_leaves_table_empty() -> Result<(), StorageError> {
+        let mut db = create_test_db();
+        setup_test_table(&db)?;
+
+        let entity = TestEntity {
+            id: "rolled".to_string(),
+            name: "N".to_string(),
+            value: 1,
+            optional: None,
+        };
+
+        {
+            let db_tx = db.get_transaction()?;
+            Db::save_tx(&db_tx, "test_table", &entity)?;
+            // Drop without commit → rollback
+        }
+
+        let retrieved: Option<TestEntity> = db.get("test_table", "rolled")?;
+        assert!(retrieved.is_none());
+        Ok(())
+    }
+
+    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+    struct EntityWithJson {
+        id: String,
+        tags: Value,
+    }
+
+    #[test]
+    fn test_save_get_roundtrip_nested_json_in_value_field() -> Result<(), StorageError> {
+        let db = create_test_db();
+        db.0.execute(
+            "CREATE TABLE IF NOT EXISTS t_json (id TEXT PRIMARY KEY, tags BLOB)",
+            [],
+        )?;
+
+        let entity = EntityWithJson {
+            id: "e1".to_string(),
+            tags: serde_json::json!([1, {"nested": true}, null]),
+        };
+
+        db.save("t_json", &entity)?;
+        let got: Option<EntityWithJson> = db.get("t_json", "e1")?;
+        assert_eq!(got.as_ref(), Some(&entity));
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_row_blob_invalid_json_errors() -> Result<(), StorageError> {
+        let db = create_test_db();
+        db.0.execute(
+            "CREATE TABLE IF NOT EXISTS t_bad (id TEXT PRIMARY KEY, data BLOB)",
+            [],
+        )?;
+        db.0.execute(
+            "INSERT INTO t_bad (id, data) VALUES ('x', ?)",
+            [b"{ not json".as_slice()],
+        )?;
+
+        let mut stmt = db.0.prepare("SELECT * FROM t_bad WHERE id = 'x'")?;
+        let mut rows = stmt.query([])?;
+        let row = rows.next()?.unwrap();
+
+        let err = Db::parse_row(row).unwrap_err();
+        match err {
+            StorageError::Serde(_) => {}
+            other => panic!("expected Serde error, got {other:?}"),
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_row_real_infinity_errors() -> Result<(), StorageError> {
+        let db = create_test_db();
+        db.0.execute(
+            "CREATE TABLE IF NOT EXISTS t_inf (id TEXT PRIMARY KEY, v REAL)",
+            [],
+        )?;
+        // Literal overflows IEEE double → SQLite stores +inf; serde_json rejects it as JSON Number.
+        db.0.execute(
+            "INSERT INTO t_inf (id, v) VALUES ('i', 1e999)",
+            [],
+        )?;
+
+        let mut stmt = db.0.prepare("SELECT * FROM t_inf WHERE id = 'i'")?;
+        let mut rows = stmt.query([])?;
+        let row = rows.next()?.unwrap();
+
+        let err = Db::parse_row(row).unwrap_err();
+        match err {
+            StorageError::Serde(msg) => {
+                assert!(msg.contains("invalid number"));
+            }
+            other => panic!("expected Serde error, got {other:?}"),
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_json_value_to_sql_bool_false() -> Result<(), StorageError> {
+        let sql_value = Db::json_value_to_sql(Value::Bool(false))?;
+        assert_eq!(sql_value, SqlValue::Integer(0));
+        Ok(())
+    }
+
+    #[test]
+    fn test_format_query_includes_null_and_real() {
+        let values = vec![
+            SqlValue::Null,
+            SqlValue::Real(std::f64::consts::PI),
+            SqlValue::Blob(vec![]),
+        ];
+        let s = Db::format_query("REPLACE INTO t (a) VALUES (?1)", &values);
+        assert!(s.contains("Null"));
+        assert!(s.contains("Real"));
+        assert!(s.contains("Blob(0)"));
     }
 }

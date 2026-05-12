@@ -127,7 +127,7 @@ pub fn build_prod_tls_config() -> Result<ClientConfig, anyhow::Error> {
 #[cfg(test)]
 mod tests {
     use base64::Engine;
-    use rcgen::{CertificateParams, KeyPair};
+    use rcgen::{CertificateParams, KeyPair, PublicKeyData};
     use rustls::{
         client::danger::{HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier},
         pki_types::{CertificateDer, ServerName, UnixTime},
@@ -143,7 +143,7 @@ mod tests {
         let params = CertificateParams::new(vec!["example.com".to_string()]).unwrap();
         let cert = params.self_signed(&key_pair).unwrap();
         let der = CertificateDer::from(cert.der().to_vec());
-        let spki_der = key_pair.public_key_der();
+        let spki_der = key_pair.subject_public_key_info();
         let hash: [u8; 32] = Sha256::digest(&spki_der).into();
         let pin_b64 = base64::engine::general_purpose::STANDARD.encode(hash);
         (der, pin_b64)
@@ -191,7 +191,10 @@ mod tests {
             .unwrap();
         let expected: [u8; 32] = expected.try_into().unwrap();
         let got = spki_sha256(&cert_der).expect("spki_sha256 should succeed");
-        assert_eq!(got, expected, "SPKI hash must match SHA-256 of raw SPKI bytes");
+        assert_eq!(
+            got, expected,
+            "SPKI hash must match SHA-256 of raw SPKI bytes"
+        );
     }
 
     #[test]
@@ -213,7 +216,8 @@ mod tests {
     fn test_pinning_verifier_rejects_unpinned_cert() {
         let (cert_der, _) = make_test_cert_and_pin();
         let other_key = KeyPair::generate().unwrap();
-        let other_hash: [u8; 32] = Sha256::digest(other_key.public_key_der()).into();
+        //subject_public_key_info is public_key_der after update to rcgen 0.14.8
+        let other_hash: [u8; 32] = Sha256::digest(other_key.subject_public_key_info()).into();
         let wrong_pin = base64::engine::general_purpose::STANDARD.encode(other_hash);
         let verifier =
             CertPinningVerifier::with_verifier(Arc::new(AlwaysOkVerifier), &[wrong_pin]).unwrap();
@@ -241,7 +245,10 @@ mod tests {
             &[],
             UnixTime::now(),
         );
-        assert!(result.is_err(), "pinned intermediate must be rejected: {result:?}");
+        assert!(
+            result.is_err(),
+            "pinned intermediate must be rejected: {result:?}"
+        );
     }
 
     #[test]
@@ -254,7 +261,10 @@ mod tests {
     fn test_new_rejects_wrong_length_pin() {
         let short = base64::engine::general_purpose::STANDARD.encode([0u8; 10]);
         let result = CertPinningVerifier::new(&[short]);
-        assert!(result.is_err(), "pin with wrong byte length should return error");
+        assert!(
+            result.is_err(),
+            "pin with wrong byte length should return error"
+        );
     }
 
     #[test]

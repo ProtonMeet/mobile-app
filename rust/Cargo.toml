@@ -151,11 +151,6 @@ features = [
 git = "https://github.com/beltram/ciborium"
 branch = "simple-value+cde"
 
-[patch.crates-io.time]
-# need to patch time crate to fixed 0.3.41, 0.3.42+ will raise type annotations error when build wasm..
-git = "https://github.com/time-rs/time.git"
-rev = "v0.3.41"
-
 [workspace.lints.rust]
 nonstandard_style = "warn"
 future_incompatible = "warn"
