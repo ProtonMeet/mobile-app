@@ -1,6 +1,6 @@
 use flutter_rust_bridge::frb;
-use proton_meet_core::infra::dto::event::UserEventItem;
 pub use proton_meet_core::infra::dto::event::{EventAction, GetEventsResponse, MeetingEventItem};
+use proton_meet_core::infra::dto::event::{UserEventItem, UserPayload};
 
 /// Event action type indicating what happened to the model
 #[frb(mirror(EventAction))]
@@ -27,6 +27,17 @@ pub struct FrbEventItem {
     pub action: EventAction,
 }
 
+#[derive(Debug, Clone)]
+pub struct FrbUserPayload {
+    pub id: Option<String>,
+}
+
+impl From<UserPayload> for FrbUserPayload {
+    fn from(payload: UserPayload) -> Self {
+        Self { id: payload.id }
+    }
+}
+
 impl From<MeetingEventItem> for FrbEventItem {
     fn from(item: MeetingEventItem) -> Self {
         Self {
@@ -50,6 +61,7 @@ pub struct FrbGetEventsResponse {
     /// Meeting events (ID and Action) if any
     pub meeting_events: Option<Vec<FrbEventItem>>,
     pub users: Option<Vec<FrbEventItem>>,
+    pub user: Option<FrbUserPayload>,
 
     /// Whether there are more events available
     pub more: bool,
@@ -71,6 +83,7 @@ impl From<GetEventsResponse> for FrbGetEventsResponse {
             more: response.more,
             refresh: response.refresh,
             event_id: response.event_id,
+            user: response.user.map(|u| u.into()),
         }
     }
 }

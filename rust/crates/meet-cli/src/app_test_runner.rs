@@ -20,6 +20,7 @@ impl AppTestRunner {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn run_benchmark(
         &mut self,
         scenario: &str,

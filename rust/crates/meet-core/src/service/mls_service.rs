@@ -23,6 +23,7 @@ use crate::domain::user::{
 };
 
 pub struct MlsService {
+    #[allow(dead_code)]
     http_client: Arc<dyn HttpClient>,
     mls_store: Arc<RwLock<MlsStore>>,
 }

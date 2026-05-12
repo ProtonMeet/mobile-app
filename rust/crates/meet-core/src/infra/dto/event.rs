@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 
 /// Event action type indicating what happened to the model
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
@@ -68,6 +68,15 @@ pub struct UserEvent {
     pub users: Vec<UserEventItem>,
 }
 
+/// Some event-loop payloads include a single `User` object (without `Action`).
+/// We only need the user ID to trigger a user-state refresh in existing logic.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct UserPayload {
+    #[serde(default, rename = "ID")]
+    pub id: Option<String>,
+}
+
 /// Response payload for getting the latest event ID
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -87,16 +96,42 @@ pub struct EventsResponse {
     pub meet_meetings: Option<MeetMeetingsEvent>,
     /// User events (null if no user updates)
     pub users: Option<UserEvent>,
+    /// Singular user object from event loop payload.
+    /// Present in some responses even when `Users` events are omitted.
+    pub user: Option<UserPayload>,
 
     /// Whether there are more events available
+    #[serde(deserialize_with = "deserialize_bool_or_zero_one")]
     pub more: bool,
     /// Whether a full refresh is needed
+    #[serde(deserialize_with = "deserialize_bool_or_zero_one")]
     pub refresh: bool,
     /// The event ID for this response
     #[serde(rename = "EventID")]
     pub event_id: String,
     /// Response code (e.g., 1000 for success)
     pub code: u32,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+enum BoolOrZeroOne {
+    Bool(bool),
+    Int(u8),
+}
+
+fn deserialize_bool_or_zero_one<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    match BoolOrZeroOne::deserialize(deserializer)? {
+        BoolOrZeroOne::Bool(v) => Ok(v),
+        BoolOrZeroOne::Int(0) => Ok(false),
+        BoolOrZeroOne::Int(1) => Ok(true),
+        BoolOrZeroOne::Int(other) => Err(serde::de::Error::custom(format!(
+            "expected bool or 0/1, got {other}"
+        ))),
+    }
 }
 
 impl EventsResponse {
@@ -110,10 +145,27 @@ impl EventsResponse {
 
     /// Extract user events (ID and Action) from the response if present
     pub fn users(&self) -> Option<Vec<UserEventItem>> {
-        self.users
+        let users_from_events = self
+            .users
             .as_ref()
             .map(|e| e.users.clone())
-            .filter(|v| !v.is_empty())
+            .filter(|v| !v.is_empty());
+
+        if users_from_events.is_some() {
+            return users_from_events;
+        }
+
+        // Fallback: if backend sends `User` (without action), treat as an update event.
+        self.user.as_ref().map(|u| {
+            vec![UserEventItem {
+                id: u
+                    .id
+                    .clone()
+                    .filter(|id| !id.is_empty())
+                    .unwrap_or_else(|| "current-user".to_string()),
+                action: EventAction::Update,
+            }]
+        })
     }
 }
 
@@ -124,6 +176,9 @@ pub struct GetEventsResponse {
     pub meeting_events: Option<Vec<MeetingEventItem>>,
     /// User data if any
     pub users: Option<Vec<UserEventItem>>,
+    /// Singular user object from event loop payload.
+    /// Present in some responses even when `Users` events are omitted.
+    pub user: Option<UserPayload>,
     /// Whether there are more events available
     pub more: bool,
     /// Whether a full refresh is needed
@@ -140,6 +195,7 @@ impl From<EventsResponse> for GetEventsResponse {
             more: response.more,
             refresh: response.refresh,
             event_id: response.event_id,
+            user: response.user,
         }
     }
 }
@@ -256,5 +312,38 @@ mod tests {
         });
         let parsed: EventsResponse = serde_json::from_value(j).unwrap();
         assert!(parsed.meeting_events().is_none());
+    }
+
+    #[test]
+    fn users_fallback_to_singular_user_payload_when_users_wrapper_missing() {
+        let j = json!({
+            "MeetMeetings": null,
+            "Users": null,
+            "User": {"ID": "user-single-1", "Name": "feng"},
+            "More": false,
+            "Refresh": false,
+            "EventID": "evt-6",
+            "Code": 1000
+        });
+        let parsed: EventsResponse = serde_json::from_value(j).unwrap();
+        let users = parsed.users().expect("fallback user event");
+        assert_eq!(users.len(), 1);
+        assert_eq!(users[0].id, "user-single-1");
+        assert_eq!(users[0].action, EventAction::Update);
+    }
+
+    #[test]
+    fn events_response_deserializes_more_refresh_as_zero_one() {
+        let j = json!({
+            "MeetMeetings": null,
+            "Users": null,
+            "More": 1,
+            "Refresh": 0,
+            "EventID": "evt-7",
+            "Code": 1000
+        });
+        let parsed: EventsResponse = serde_json::from_value(j).unwrap();
+        assert!(parsed.more);
+        assert!(!parsed.refresh);
     }
 }

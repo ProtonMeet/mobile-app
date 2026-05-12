@@ -82,12 +82,17 @@ abstract class AppCore implements RustOpaqueInterface {
 
   Future<UnleashResponse> fetchToggles();
 
-  Future<UserState> fetchUserState({required String userId});
+  Future<UserState> fetchUserState({
+    required String userId,
+    required bool forceRemote,
+  });
 
   /// Fork selector for creating child sessions (e.g., for account deletion)
   /// Returns a selector string that can be used to create a fork session
   /// Client must be authenticated first
   Future<String> forkSelector({required String clientChild});
+
+  Future<FrbGetEventsResponse> getCoreEvents({required String eventId});
 
   /// Get events starting from a given event ID
   /// Returns GetEventsResponse containing meeting events, flags, and new event ID
