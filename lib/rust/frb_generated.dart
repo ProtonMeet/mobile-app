@@ -15,6 +15,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'panic_hook.dart';
 import 'proton_meet/core.dart';
 import 'proton_meet/meet_auth_store.dart';
+import 'proton_meet/meet_link.dart';
 import 'proton_meet/models/app_event.dart';
 import 'proton_meet/models/connection_state.dart';
 import 'proton_meet/models/event.dart';
@@ -97,7 +98,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => 764855265;
+  int get rustContentHash => 428078821;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -619,6 +620,8 @@ abstract class RustLibApi extends BaseApi {
   bool crateProtonMeetUserSubscriptionIsPrivate({required ProtonUser user});
 
   bool crateProtonMeetUserSubscriptionIsSelf({required ProtonUser user});
+
+  bool crateProtonMeetMeetLinkIsUrlPasswordValid({String? hash});
 
   Future<UserConfig> crateProtonMeetUserConfigLoadConfig();
 
@@ -4689,6 +4692,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "is_self", argNames: ["user"]);
 
   @override
+  bool crateProtonMeetMeetLinkIsUrlPasswordValid({String? hash}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_opt_String(hash, serializer);
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 108,
+          )!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateProtonMeetMeetLinkIsUrlPasswordValidConstMeta,
+        argValues: [hash],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateProtonMeetMeetLinkIsUrlPasswordValidConstMeta =>
+      const TaskConstMeta(
+        debugName: "is_url_password_valid",
+        argNames: ["hash"],
+      );
+
+  @override
   Future<UserConfig> crateProtonMeetUserConfigLoadConfig() {
     return handler.executeNormal(
       NormalTask(
@@ -4697,7 +4730,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 108,
+            funcId: 109,
             port: port_,
           );
         },
@@ -4727,7 +4760,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 109,
+            funcId: 110,
             port: port_,
           );
         },
@@ -4758,7 +4791,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 110,
+            funcId: 111,
             port: port_,
           );
         },
@@ -4788,7 +4821,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 111,
+            funcId: 112,
             port: port_,
           );
         },
@@ -4821,7 +4854,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 112,
+            funcId: 113,
             port: port_,
           );
         },
@@ -5507,6 +5540,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         );
       case 20:
         return BridgeError_MeetingLocked();
+      case 21:
+        return BridgeError_IncorrectPassword();
       default:
         throw Exception("unreachable");
     }
@@ -6555,6 +6590,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return BridgeError_ApiResponse(var_field0);
       case 20:
         return BridgeError_MeetingLocked();
+      case 21:
+        return BridgeError_IncorrectPassword();
       default:
         throw UnimplementedError('');
     }
@@ -7940,6 +7977,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_box_autoadd_response_error(field0, serializer);
       case BridgeError_MeetingLocked():
         sse_encode_i_32(20, serializer);
+      case BridgeError_IncorrectPassword():
+        sse_encode_i_32(21, serializer);
     }
   }
 

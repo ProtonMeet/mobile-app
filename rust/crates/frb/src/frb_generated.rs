@@ -41,7 +41,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.11.1";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 764855265;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 428078821;
 
 // Section: executor
 
@@ -5430,6 +5430,38 @@ fn wire__crate__proton_meet__user_subscription__is_self_impl(
         },
     )
 }
+fn wire__crate__proton_meet__meet_link__is_url_password_valid_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "is_url_password_valid",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_hash = <Option<String>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Result::<_, ()>::Ok(
+                    crate::proton_meet::meet_link::is_url_password_valid(api_hash),
+                )?;
+                Ok(output_ok)
+            })())
+        },
+    )
+}
 fn wire__crate__proton_meet__user_config__load_config_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -6276,6 +6308,9 @@ impl SseDecode for crate::errors::BridgeError {
             }
             20 => {
                 return crate::errors::BridgeError::MeetingLocked;
+            }
+            21 => {
+                return crate::errors::BridgeError::IncorrectPassword;
             }
             _ => {
                 unimplemented!("");
@@ -7308,11 +7343,11 @@ fn pde_ffi_dispatcher_primary_impl(
 81 => wire__crate__logger__RotatingFileWriter_new_impl(port, ptr, rust_vec_len, data_len),
 84 => wire__crate__flutter_logger__flutter_log_layer_default_impl(port, ptr, rust_vec_len, data_len),
 98 => wire__crate__init__init_app_impl(port, ptr, rust_vec_len, data_len),
-108 => wire__crate__proton_meet__user_config__load_config_impl(port, ptr, rust_vec_len, data_len),
-109 => wire__crate__flutter_logger__rust_level_from_string_ref_impl(port, ptr, rust_vec_len, data_len),
-110 => wire__crate__flutter_logger__rust_level_to_str_impl(port, ptr, rust_vec_len, data_len),
-111 => wire__crate__proton_meet__user_config__save_config_impl(port, ptr, rust_vec_len, data_len),
-112 => wire__crate__flutter_logger__set_flutter_log_callback_impl(port, ptr, rust_vec_len, data_len),
+109 => wire__crate__proton_meet__user_config__load_config_impl(port, ptr, rust_vec_len, data_len),
+110 => wire__crate__flutter_logger__rust_level_from_string_ref_impl(port, ptr, rust_vec_len, data_len),
+111 => wire__crate__flutter_logger__rust_level_to_str_impl(port, ptr, rust_vec_len, data_len),
+112 => wire__crate__proton_meet__user_config__save_config_impl(port, ptr, rust_vec_len, data_len),
+113 => wire__crate__flutter_logger__set_flutter_log_callback_impl(port, ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
 }
@@ -7353,6 +7388,7 @@ fn pde_ffi_dispatcher_sync_impl(
 105 => wire__crate__proton_meet__user_subscription__is_paid_impl(ptr, rust_vec_len, data_len),
 106 => wire__crate__proton_meet__user_subscription__is_private_impl(ptr, rust_vec_len, data_len),
 107 => wire__crate__proton_meet__user_subscription__is_self_impl(ptr, rust_vec_len, data_len),
+108 => wire__crate__proton_meet__meet_link__is_url_password_valid_impl(ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
 }
@@ -7581,6 +7617,7 @@ impl flutter_rust_bridge::IntoDart for crate::errors::BridgeError {
                 [19.into_dart(), field0.into_into_dart().into_dart()].into_dart()
             }
             crate::errors::BridgeError::MeetingLocked => [20.into_dart()].into_dart(),
+            crate::errors::BridgeError::IncorrectPassword => [21.into_dart()].into_dart(),
             _ => {
                 unimplemented!("");
             }
@@ -8721,6 +8758,9 @@ impl SseEncode for crate::errors::BridgeError {
             }
             crate::errors::BridgeError::MeetingLocked => {
                 <i32>::sse_encode(20, serializer);
+            }
+            crate::errors::BridgeError::IncorrectPassword => {
+                <i32>::sse_encode(21, serializer);
             }
             _ => {
                 unimplemented!("");

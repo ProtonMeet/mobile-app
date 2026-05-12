@@ -64,6 +64,9 @@ pub enum HttpClientError {
 
     #[error("Meeting is locked. Please try again later.")]
     MeetingLocked,
+
+    #[error("Incorrect meeting password.")]
+    IncorrectPassword,
 }
 
 impl From<url::ParseError> for HttpClientError {

@@ -4,7 +4,13 @@ import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 
-enum LinkStatus { empty, invalid, valid }
+enum LinkStatus { empty, invalid, valid, invalidPassword }
+
+extension LinkStatusX on LinkStatus {
+  bool get canSubmit {
+    return this == LinkStatus.valid || this == LinkStatus.invalidPassword;
+  }
+}
 
 class LinkTextField extends StatelessWidget {
   const LinkTextField({
@@ -110,12 +116,17 @@ class LinkTextField extends StatelessWidget {
             /// helper / error text
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 120),
-              child: status == LinkStatus.invalid && message != null
+              child:
+                  (status == LinkStatus.invalid ||
+                          status == LinkStatus.invalidPassword) &&
+                      message != null
                   ? Text(
                       message!,
                       key: const ValueKey('link_text_field_error'),
                       style: ProtonStyles.captionSemibold(
-                        color: context.colors.signalDangerMajor3,
+                        color: status == LinkStatus.invalid
+                            ? context.colors.signalDangerMajor3
+                            : context.colors.signalDanger,
                       ),
                     )
                   : const SizedBox.shrink(

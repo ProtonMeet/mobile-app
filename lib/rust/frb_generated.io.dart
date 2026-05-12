@@ -14,6 +14,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
 import 'panic_hook.dart';
 import 'proton_meet/core.dart';
 import 'proton_meet/meet_auth_store.dart';
+import 'proton_meet/meet_link.dart';
 import 'proton_meet/models/app_event.dart';
 import 'proton_meet/models/connection_state.dart';
 import 'proton_meet/models/event.dart';

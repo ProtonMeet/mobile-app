@@ -1,6 +1,31 @@
 #[cfg(target_family = "wasm")]
 use wasm_bindgen::prelude::wasm_bindgen;
 
+/// Fragment prefix used by Proton Meet share links, e.g. `#pwd-XXXXXXXXXXXX`.
+pub const URL_PASSWORD_PREFIX: &str = "#pwd-";
+/// Number of password characters that follow [`URL_PASSWORD_PREFIX`].
+pub const URL_PASSWORD_LENGTH: usize = 12;
+
+/// Validates a URL fragment of the form `#pwd-XXXXXXXXXXXX`, where the password
+/// is exactly [`URL_PASSWORD_LENGTH`] ASCII alphanumeric characters.
+///
+/// Returns `false` for `None`, missing prefix, wrong length, or non-alphanumeric
+/// characters. Mirrors the previous Dart-side `isUrlPasswordValid` so Flutter
+/// and Web can share a single source of truth.
+pub fn is_url_password_valid(hash: Option<&str>) -> bool {
+    let Some(hash) = hash else { return false };
+    let Some(pw) = hash.strip_prefix(URL_PASSWORD_PREFIX) else {
+        return false;
+    };
+    pw.len() == URL_PASSWORD_LENGTH && pw.bytes().all(|b| b.is_ascii_alphanumeric())
+}
+
+#[cfg(target_family = "wasm")]
+#[wasm_bindgen(js_name = isUrlPasswordValid)]
+pub fn is_url_password_valid_wasm(hash: Option<String>) -> bool {
+    is_url_password_valid(hash.as_deref())
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum MeetLinkError {
     #[error("Parse missing id- prefix")]
@@ -112,5 +137,27 @@ mod tests {
         assert!(MeetLink::parse("#pwd-ONLY_NO_ID").is_err());
         assert!(MeetLink::parse("id-#pwd-abc").is_err()); // empty id
         assert!(MeetLink::parse("id-abc#pwd-").is_err()); // empty pwd
+    }
+
+    #[test]
+    fn url_password_valid_accepts_canonical_fragment() {
+        assert!(is_url_password_valid(Some("#pwd-ODqAJEoaAaZX")));
+        assert!(is_url_password_valid(Some("#pwd-aaaaaaaaaaaa")));
+        assert!(is_url_password_valid(Some("#pwd-000000000000")));
+        assert!(is_url_password_valid(Some("#pwd-AbCdEf123456")));
+    }
+
+    #[test]
+    fn url_password_invalid_rejects_bad_input() {
+        assert!(!is_url_password_valid(None));
+        assert!(!is_url_password_valid(Some("")));
+        assert!(!is_url_password_valid(Some("ODqAJEoaAaZX"))); // missing prefix
+        assert!(!is_url_password_valid(Some("pwd-ODqAJEoaAaZX"))); // missing '#'
+        assert!(!is_url_password_valid(Some("#pwd-"))); // empty pwd
+        assert!(!is_url_password_valid(Some("#pwd-short"))); // < 12
+        assert!(!is_url_password_valid(Some("#pwd-ODqAJEoaAaZXX"))); // > 12
+        assert!(!is_url_password_valid(Some("#pwd-ODqAJEoaAa-X"))); // non-alphanumeric
+        assert!(!is_url_password_valid(Some("#pwd-ODqAJEoaAa X"))); // space
+        assert!(!is_url_password_valid(Some("#pwd-ODqAJEoaAaZé"))); // non-ASCII
     }
 }

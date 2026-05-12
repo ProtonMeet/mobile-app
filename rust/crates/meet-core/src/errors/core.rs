@@ -138,6 +138,9 @@ pub enum MeetCoreError {
     #[error("Meeting is locked. Please try again later.")]
     MeetingLocked,
 
+    #[error("Incorrect meeting password.")]
+    IncorrectPassword,
+
     #[error(transparent)]
     UuidError(#[from] uuid::Error),
 
@@ -187,6 +190,9 @@ impl From<crate::errors::service::ServiceError> for MeetCoreError {
                         },
                         HttpClientError::MlsStatusCode(status) => {
                             return Self::MlsStatusCode(*status);
+                        }
+                        HttpClientError::IncorrectPassword => {
+                            return Self::IncorrectPassword;
                         }
                         _ => Self::HttpClientError {
                             status: 0,
@@ -248,6 +254,7 @@ impl From<anyhow::Error> for MeetCoreError {
         if let Some(http_error) = error.downcast_ref::<HttpClientError>() {
             return match http_error {
                 HttpClientError::MeetingLocked => Self::MeetingLocked,
+                HttpClientError::IncorrectPassword => Self::IncorrectPassword,
                 HttpClientError::ErrorCode(_, ref error_detail) => Self::HttpClientError {
                     status: error_detail.code,
                     message: error_detail.error.clone(),
@@ -486,6 +493,7 @@ impl From<HttpClientError> for MeetCoreError {
     fn from(error: HttpClientError) -> Self {
         match error {
             HttpClientError::MeetingLocked => Self::MeetingLocked,
+            HttpClientError::IncorrectPassword => Self::IncorrectPassword,
             HttpClientError::ErrorCode(_, ref err) => Self::HttpClientError {
                 status: err.code,
                 message: err.error.clone(),
@@ -550,6 +558,7 @@ pub enum MeetCoreErrorEnum {
     ServiceError,
     TimeDriftError,
     MeetingLocked,
+    IncorrectPassword,
     UuidError,
     NotRoomAdmin,
     MlsStatusCode,
@@ -593,6 +602,7 @@ impl From<MeetCoreError> for MeetCoreErrorEnum {
             MeetCoreError::ServiceError { .. } => Self::ServiceError,
             MeetCoreError::TimeDriftError => Self::TimeDriftError,
             MeetCoreError::MeetingLocked => Self::MeetingLocked,
+            MeetCoreError::IncorrectPassword => Self::IncorrectPassword,
             MeetCoreError::UuidError(_) => Self::UuidError,
             MeetCoreError::NotRoomAdmin => Self::NotRoomAdmin,
             MeetCoreError::UnExpectedMlsMessageContent { .. } => Self::MlsSpecError,
