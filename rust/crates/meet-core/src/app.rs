@@ -984,9 +984,9 @@ impl App {
             .read()
             .await
             .create_mls_client(
-                &access_token.expose_secret(),
-                &meet_link_name.as_str(),
-                &meeting_password.expose_secret(),
+                access_token.expose_secret(),
+                meet_link_name.as_str(),
+                meeting_password.expose_secret(),
                 session_id.as_deref(),
             )
             .await?;
