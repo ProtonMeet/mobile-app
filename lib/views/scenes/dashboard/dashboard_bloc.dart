@@ -280,7 +280,12 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
     final UserState userState;
     try {
       userState = await utils.retryWithTimeout(
-        action: () => appCoreManager.appCore.fetchUserState(userId: userId),
+        action: () => appCoreManager.appCore.fetchUserState(
+          userId: userId,
+          // hacky way to force remote fetch user,
+          //  make sure get latest key even without event loop.
+          forceRemote: true,
+        ),
         operationName: 'fetchUserState',
       );
     } catch (error, stackTrace) {
@@ -307,9 +312,12 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       return;
     }
 
-    emit(state.copyWith(isLoadingScheduledMeetings: false));
-
-    emit(state.copyWith(isLoadingUpcomingMeetings: true));
+    emit(
+      state.copyWith(
+        isLoadingScheduledMeetings: false,
+        isLoadingUpcomingMeetings: true,
+      ),
+    );
 
     // Get upcoming meetings with timeout and retry
     final List<FrbUpcomingMeeting> upcomingMeetings;

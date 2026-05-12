@@ -1,10 +1,8 @@
 import 'dart:async';
-import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:meet/helper/logger.dart';
 import 'package:meet/managers/manager.dart' as manager;
 import 'package:meet/managers/notification_service.dart';
-import 'package:meet/permissions/permission_service.dart';
 
 /// Simplified Android Notification Service for ongoing meetings
 class AndroidNotificationService implements NotificationService {
@@ -21,12 +19,6 @@ class AndroidNotificationService implements NotificationService {
   bool _isInitialized = false;
 
   Future<void> Function()? _onNotificationTapCallback;
-
-  // Debounce timer: prevents ForegroundServiceDidNotStartInTimeException caused
-  // by rapid inactive→resumed transitions (e.g. notification shade, system dialog)
-  // that start the service and then immediately stop it before startForeground() runs.
-  Timer? _pendingStartTimer;
-  bool _stopRequested = false;
 
   /// Initialize the notification service
   @override
@@ -72,49 +64,10 @@ class AndroidNotificationService implements NotificationService {
     _isInitialized = true;
   }
 
-  /// Show persistent background notification using foreground service.
-  ///
-  /// Start is debounced by 300 ms so brief inactive→resumed transitions
-  /// (notification shade, system dialogs) never trigger a service start that
-  /// would be stopped before [startForeground()] runs — which would cause
-  /// [ForegroundServiceDidNotStartInTimeException].
+  /// Show persistent background notification using foreground service
   @override
   Future<void> showBackgroundNotification({required String roomName}) async {
     if (!_isInitialized) await init();
-
-    // Cancel any previously scheduled start and arm a new one.
-    _pendingStartTimer?.cancel();
-    _stopRequested = false;
-
-    _pendingStartTimer = Timer(const Duration(milliseconds: 300), () {
-      _pendingStartTimer = null;
-      if (!_stopRequested) {
-        _doStartForegroundService(roomName);
-      }
-    });
-  }
-
-  Future<void> _doStartForegroundService(String roomName) async {
-    // Build the set of foreground service types based on permissions that are
-    // actually granted right now. Android 14+ calls validateForegroundServiceType()
-    // inside Service.startForeground() and throws SecurityException — from within
-    // the service's onStartCommand(), not catchable via the Dart method channel —
-    // if you request a type whose runtime permission is not currently held.
-    final permissionService = PermissionService();
-    final hasMic = await permissionService.hasMicrophonePermission();
-    final hasCam = await permissionService.hasCameraPermission();
-
-    final Set<AndroidServiceForegroundType> serviceTypes = {
-      if (hasMic) AndroidServiceForegroundType.foregroundServiceTypeMicrophone,
-      if (hasCam) AndroidServiceForegroundType.foregroundServiceTypeCamera,
-    };
-
-    if (serviceTypes.isEmpty) {
-      logger.w(
-        '[AndroidNotificationService] No authorized foreground service types '
-        '(mic=$hasMic cam=$hasCam) — falling back to plain notification',
-      );
-    }
 
     final androidDetails = AndroidNotificationDetails(
       _channelId,
@@ -131,72 +84,62 @@ class AndroidNotificationService implements NotificationService {
       priority: Priority.low,
     );
 
-    final title = roomName.isNotEmpty ? 'In Meeting: $roomName' : 'In Meeting';
-    const body = 'Tap to return to meeting';
-
     final androidImpl = await _getAndroidImplementation();
-    if (androidImpl != null && serviceTypes.isNotEmpty) {
+    if (androidImpl != null) {
       try {
         await androidImpl.startForegroundService(
           _backgroundNotificationId,
-          title,
-          body,
+          roomName.isNotEmpty ? 'In Meeting: $roomName' : 'In Meeting',
+          'Tap to return to meeting',
           notificationDetails: androidDetails,
           payload: 'meeting_foreground',
           startType: AndroidServiceStartType
               .startNotSticky, // avoid potential NullPointerException crash
-          foregroundServiceTypes: serviceTypes,
+          foregroundServiceTypes: {
+            AndroidServiceForegroundType.foregroundServiceTypeCamera,
+            AndroidServiceForegroundType.foregroundServiceTypeMicrophone,
+          },
         );
-        return;
       } catch (e) {
         logger.e('[AndroidNotificationService] Foreground service failed: $e');
-        // Fall through to plain notification
+        // Fallback to regular notification
+        final details = NotificationDetails(android: androidDetails);
+        await _notificationsPlugin.show(
+          _backgroundNotificationId,
+          roomName.isNotEmpty ? 'In Meeting: $roomName' : 'In Meeting',
+          'Tap to return to meeting',
+          details,
+          payload: 'meeting_foreground',
+        );
       }
-    }
-
-    // Fallback: plain (non-foreground) notification — no service type validation.
-    final details = NotificationDetails(android: androidDetails);
-    try {
+    } else {
+      // fallback: show regular notification
+      logger.d(
+        '[AndroidNotificationService] Using fallback regular notification',
+      );
+      final details = NotificationDetails(android: androidDetails);
       await _notificationsPlugin.show(
         _backgroundNotificationId,
-        title,
-        body,
+        roomName.isNotEmpty ? 'In Meeting: $roomName' : 'In Meeting',
+        'Tap to return to meeting',
         details,
         payload: 'meeting_foreground',
       );
-    } catch (e) {
-      logger.e('[AndroidNotificationService] Plain notification failed: $e');
     }
   }
 
   /// Hide foreground service notification
   @override
   Future<void> hideBackgroundNotification() async {
-    // Cancel any pending debounced start — service won't start at all.
-    _pendingStartTimer?.cancel();
-    _pendingStartTimer = null;
-    _stopRequested = true;
-
     final androidImpl = await _getAndroidImplementation();
     if (androidImpl != null) {
-      try {
-        await androidImpl.stopForegroundService();
-      } on PlatformException catch (e) {
-        // Service may already be stopped or the method channel may be partially
-        // torn down — log a warning rather than crashing.
-        logger.w(
-          '[AndroidNotificationService] stopForegroundService failed '
-          '(may already be stopped): $e',
-        );
-      }
+      await androidImpl.stopForegroundService();
     }
 
     try {
       await _notificationsPlugin.cancel(_backgroundNotificationId);
-    } on PlatformException catch (e) {
-      logger.w(
-        '[AndroidNotificationService] cancel notification failed: $e',
-      );
+    } catch (e) {
+      logger.w('[AndroidNotificationService] cancel notification failed: $e');
     }
   }
 
@@ -275,8 +218,6 @@ class AndroidNotificationService implements NotificationService {
 
   @override
   Future<void> dispose() async {
-    _pendingStartTimer?.cancel();
-    _pendingStartTimer = null;
     await hideBackgroundNotification();
     _onNotificationTapCallback = null;
   }

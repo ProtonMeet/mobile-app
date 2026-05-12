@@ -30,13 +30,14 @@ class MeetingEventLoopManager extends Service implements Manager {
   static const int _maxRetryCount = 5;
   static const Duration _baseRetryDelay = Duration(seconds: 5);
   static const Duration _maxRetryDelay = Duration(minutes: 5);
-  static const Duration _normalPollInterval = Duration(seconds: 60);
+  static const Duration _normalPollInterval = Duration(seconds: 30);
 
   // Track last known meetings hash to detect changes
   String? _lastMeetingHash;
 
   // Track last event ID for event polling (cached in memory)
   String? _lastEventId;
+  String? _lastCoreEventId;
 
   // Dashboard bloc reference (will be set when available)
   DashboardBloc? _dashboardBloc;
@@ -76,6 +77,7 @@ class MeetingEventLoopManager extends Service implements Manager {
     logger.d('[MeetingEventLoopManager] Starting event loop');
     // Reset event ID when starting - will be initialized on first update
     _lastEventId = null;
+    _lastCoreEventId = null;
     super.start();
   }
 
@@ -110,6 +112,16 @@ class MeetingEventLoopManager extends Service implements Manager {
         _lastEventId = await _appCoreManager.appCore.getLatestEventId();
         logger.d('[MeetingEventLoopManager] Initial event ID: $_lastEventId');
       }
+      if (_lastCoreEventId == null) {
+        _lastCoreEventId = _lastEventId;
+        logger.d(
+          '[MeetingEventLoopManager] Initial core event ID: $_lastCoreEventId',
+        );
+      }
+
+      final coreEventResponse = await _appCoreManager.appCore.getCoreEvents(
+        eventId: _lastCoreEventId!,
+      );
 
       // Poll events using event API
       final eventResponse = await _appCoreManager.appCore.getEvents(
@@ -118,6 +130,7 @@ class MeetingEventLoopManager extends Service implements Manager {
 
       // Update last event ID (cache in memory)
       _lastEventId = eventResponse.eventId;
+      _lastCoreEventId = coreEventResponse.eventId;
 
       // Check if we need to reload meetings:
       // 1. If refresh flag is set
@@ -125,11 +138,19 @@ class MeetingEventLoopManager extends Service implements Manager {
       final needsReloadMeetings =
           eventResponse.refresh ||
           (eventResponse.meetingEvents != null &&
-              eventResponse.meetingEvents!.isNotEmpty);
+              eventResponse.meetingEvents!.isNotEmpty) ||
+          coreEventResponse.refresh ||
+          (coreEventResponse.meetingEvents != null &&
+              coreEventResponse.meetingEvents!.isNotEmpty);
 
       final needsReloadUser =
           eventResponse.refresh ||
-          (eventResponse.users != null && eventResponse.users!.isNotEmpty);
+          (eventResponse.users != null && eventResponse.users!.isNotEmpty) ||
+          (eventResponse.user != null) ||
+          coreEventResponse.refresh ||
+          (coreEventResponse.users != null &&
+              coreEventResponse.users!.isNotEmpty) ||
+          (coreEventResponse.user != null);
 
       if (needsReloadUser) {
         final uid = _appCoreManager.userID;
@@ -276,6 +297,7 @@ class MeetingEventLoopManager extends Service implements Manager {
     _retryCount = 0;
     _lastMeetingHash = null;
     _lastEventId = null; // Will be initialized on first update
+    _lastCoreEventId = null;
     start();
   }
 
@@ -285,6 +307,7 @@ class MeetingEventLoopManager extends Service implements Manager {
     stop();
     _lastMeetingHash = null;
     _lastEventId = null;
+    _lastCoreEventId = null;
     _retryCount = 0;
   }
 

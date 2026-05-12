@@ -152,35 +152,12 @@ class MainActivity : FlutterFragmentActivity(), NativeCallHandler {
         // Notifications will be cancelled by ProcessLifecycleOwner when app is killed
     }
 
-    override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
-        // Stop the foreground service before the engine releases its rendering
-        // surface, preventing the FlutterJNI-not-attached crash caused by a
-        // dangling ImageReader callback after engine teardown.
-        stopForegroundServiceCompat()
-        super.cleanUpFlutterEngine(flutterEngine)
-    }
-
     override fun onDestroy() {
         // Remove lifecycle observer
         ProcessLifecycleOwner.get().lifecycle.removeObserver(lifecycleObserver)
-        // Stop the foreground service before super.onDestroy() tears down the engine
-        stopForegroundServiceCompat()
         super.onDestroy()
         // Cancel all notifications when Activity is destroyed
         cancelAllNotifications()
-    }
-
-    private fun stopForegroundServiceCompat() {
-        try {
-            val intent = Intent(
-                this,
-                com.dexterous.flutterlocalnotifications.ForegroundService::class.java,
-            )
-            stopService(intent)
-            android.util.Log.d("MainActivity", "Foreground service stopped")
-        } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "Error stopping foreground service", e)
-        }
     }
 
     private fun cancelAllNotifications() {

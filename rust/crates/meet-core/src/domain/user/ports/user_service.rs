@@ -125,9 +125,25 @@ pub trait UserService {
 
     async fn login_with_two_factor(&self, two_factor_code: &str) -> Result<UserData, LoginError>;
 
-    async fn get_user(&self, user_id: &UserId) -> Result<ProtonUser, ServiceError>;
+    async fn get_user(&self, user_id: &UserId) -> Result<ProtonUser, ServiceError> {
+        self.get_user_with_policy(user_id, false).await
+    }
 
-    async fn get_user_keys(&self, user_id: &UserId) -> Result<Vec<ProtonUserKey>, anyhow::Error>;
+    async fn get_user_with_policy(
+        &self,
+        user_id: &UserId,
+        force_remote: bool,
+    ) -> Result<ProtonUser, ServiceError>;
+
+    async fn get_user_keys(&self, user_id: &UserId) -> Result<Vec<ProtonUserKey>, anyhow::Error> {
+        self.get_user_keys_with_policy(user_id, false).await
+    }
+
+    async fn get_user_keys_with_policy(
+        &self,
+        user_id: &UserId,
+        force_remote: bool,
+    ) -> Result<Vec<ProtonUserKey>, anyhow::Error>;
 
     async fn get_user_addresses(&self) -> Result<Vec<Address>, anyhow::Error>;
 

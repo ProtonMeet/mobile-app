@@ -98,6 +98,7 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
         if (appCoreManager.isAuthenticated) {
           final userState = await appCoreManager.appCore.fetchUserState(
             userId: appCoreManager.userID!,
+            forceRemote: false,
           );
           isPaidUser = isPaid(user: userState.userData);
         }
