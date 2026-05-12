@@ -34,6 +34,7 @@ abstract class ParticipantWidget extends StatefulWidget {
     ParticipantReaction? reaction,
     bool isRaisedHand = false,
     bool compactOverlay = false,
+    bool isPipMode = false,
     VoidCallback? onLowerHand,
   }) {
     if (participantTrack.participant is LocalParticipant) {
@@ -50,6 +51,7 @@ abstract class ParticipantWidget extends StatefulWidget {
         reaction: reaction,
         isRaisedHand: isRaisedHand,
         compactOverlay: compactOverlay,
+        isPipMode: isPipMode,
         onLowerHand: onLowerHand,
       );
     } else if (participantTrack.participant is RemoteParticipant) {
@@ -66,6 +68,7 @@ abstract class ParticipantWidget extends StatefulWidget {
         reaction: reaction,
         isRaisedHand: isRaisedHand,
         compactOverlay: compactOverlay,
+        isPipMode: isPipMode,
         onLowerHand: onLowerHand,
       );
     }
@@ -85,6 +88,7 @@ abstract class ParticipantWidget extends StatefulWidget {
   abstract final ParticipantReaction? reaction;
   abstract final bool isRaisedHand;
   abstract final bool compactOverlay;
+  abstract final bool isPipMode;
   abstract final VoidCallback? onLowerHand;
   final VideoQuality quality;
 
@@ -115,6 +119,8 @@ class LocalParticipantWidget extends ParticipantWidget {
   @override
   final bool compactOverlay;
   @override
+  final bool isPipMode;
+  @override
   final VoidCallback? onLowerHand;
   @override
   final ParticipantDisplayColors displayColors;
@@ -132,6 +138,7 @@ class LocalParticipantWidget extends ParticipantWidget {
     this.reaction,
     this.isRaisedHand = false,
     this.compactOverlay = false,
+    this.isPipMode = false,
     this.onLowerHand,
 
     super.key,
@@ -165,6 +172,8 @@ class RemoteParticipantWidget extends ParticipantWidget {
   @override
   final bool compactOverlay;
   @override
+  final bool isPipMode;
+  @override
   final VoidCallback? onLowerHand;
   @override
   final ParticipantDisplayColors displayColors;
@@ -182,6 +191,7 @@ class RemoteParticipantWidget extends ParticipantWidget {
     this.reaction,
     this.isRaisedHand = false,
     this.compactOverlay = false,
+    this.isPipMode = false,
     this.onLowerHand,
     super.key,
   });
@@ -341,6 +351,7 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
           type: ParticipantInfoType.kAudioStatus,
           activeAudioTrack: activeAudioTrack,
           compact: widget.compactOverlay,
+          isPipMode: widget.isPipMode,
         ),
       ],
     );
@@ -399,6 +410,7 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
                   type: ParticipantInfoType.kName,
                   isScreenShare: isScreenShare,
                   compact: widget.compactOverlay,
+                  isPipMode: widget.isPipMode,
                 ),
             ],
           ),

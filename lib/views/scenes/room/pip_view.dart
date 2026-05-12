@@ -64,6 +64,7 @@ class PipView extends StatelessWidget {
                   tracks[safeIndex],
                   showStatsLayer: false,
                   roundedBorder: false,
+                  isPipMode: true,
                 ),
               );
             },
@@ -109,6 +110,7 @@ class PipView extends StatelessWidget {
       room: room,
       hideNavigationIcons: true,
       compactParticipantOverlay: true,
+      isPipMode: true,
     );
   }
 }
