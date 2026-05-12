@@ -136,7 +136,11 @@ class AndroidNotificationService implements NotificationService {
       await androidImpl.stopForegroundService();
     }
 
-    await _notificationsPlugin.cancel(_backgroundNotificationId);
+    try {
+      await _notificationsPlugin.cancel(_backgroundNotificationId);
+    } catch (e) {
+      logger.w('[AndroidNotificationService] cancel notification failed: $e');
+    }
   }
 
   /// Set tap callback
