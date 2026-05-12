@@ -895,7 +895,7 @@ impl AppCore {
 
         let event_tx = self.event_tx.clone(); // <-- owned, 'static (Arc<...>)
         self.inner
-            .set_mls_group_update_handler(move |room_id| {
+            .set_mls_group_update_handler(move |room_id, _reason| {
                 // let app_arc = app_arc.clone();
                 // let self_weak = self_weak.clone();
                 let event_tx = event_tx.clone(); // <-- owned, 'static (Arc<...>)
