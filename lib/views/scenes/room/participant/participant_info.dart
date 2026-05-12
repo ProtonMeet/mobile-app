@@ -38,6 +38,7 @@ class ParticipantInfoWidget extends StatelessWidget {
   final AudioTrack? activeAudioTrack;
   final bool isScreenShare;
   final bool compact;
+  final bool isPipMode;
   final ParticipantInfoType type;
   const ParticipantInfoWidget({
     required this.type,
@@ -46,6 +47,7 @@ class ParticipantInfoWidget extends StatelessWidget {
     this.activeAudioTrack,
     this.isScreenShare = false,
     this.compact = false,
+    this.isPipMode = false,
 
     super.key,
   });
@@ -61,6 +63,10 @@ class ParticipantInfoWidget extends StatelessWidget {
   }
 
   Widget _buildName(BuildContext context) {
+    if (isPipMode) {
+      return const SizedBox.shrink();
+    }
+
     final horizontalPadding = compact ? 6.0 : 12.0;
     final verticalPadding = compact ? 6.0 : 12.0;
     final textStyle = ProtonStyles.body1Regular(

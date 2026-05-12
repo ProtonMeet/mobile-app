@@ -25,6 +25,7 @@ class ResponsiveCameraLayout extends StatefulWidget {
   final Room room;
   final bool hideNavigationIcons;
   final bool compactParticipantOverlay;
+  final bool isPipMode;
   final Map<String, ParticipantReaction> reactionsByIdentity;
   final Map<String, bool> raisedHandsByIdentity;
   final void Function(String)? onLowerHandByIdentity;
@@ -34,6 +35,7 @@ class ResponsiveCameraLayout extends StatefulWidget {
     required this.room,
     this.hideNavigationIcons = false,
     this.compactParticipantOverlay = false,
+    this.isPipMode = false,
     this.reactionsByIdentity = const {},
     this.raisedHandsByIdentity = const {},
     this.onLowerHandByIdentity,
@@ -409,6 +411,7 @@ class _ResponsiveCameraLayoutState extends State<ResponsiveCameraLayout> {
                                       .identity] ==
                                   true,
                               compactOverlay: widget.compactParticipantOverlay,
+                              isPipMode: widget.isPipMode,
                               onLowerHand: widget.onLowerHandByIdentity == null
                                   ? null
                                   : () {
