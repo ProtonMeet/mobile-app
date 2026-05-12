@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/helper/audio_output_display.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
@@ -65,27 +66,37 @@ class PreJoinSpeakerPhonePanel extends StatelessWidget {
       children: [
         if (!isLandscape) const BottomSheetHandleBar(),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: BlocSelector<PreJoinBloc, PreJoinState, (bool, bool)>(
-            selector: (state) =>
-                (state.isSpeakerPhoneEnabled, state.hasExternalAudioOutput),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: BlocSelector<PreJoinBloc, PreJoinState, (bool, bool, bool)>(
+            selector: (state) => (
+              state.isSpeakerPhoneEnabled,
+              state.hasExternalAudioOutput,
+              state.hasBluetoothAudioOutput,
+            ),
             builder: (context, data) {
               final isSpeakerPhone = data.$1;
               final hasExternalAudioOutput = data.$2;
+              final hasBluetoothAudioOutput = data.$3;
+              final defaultDeviceIcon = AudioOutputDisplay.defaultDeviceIcon(
+                context,
+                hasExternalAudioOutput: hasExternalAudioOutput,
+                hasBluetoothAudioOutput: hasBluetoothAudioOutput,
+              );
+              final defaultDeviceLabel = AudioOutputDisplay.defaultDeviceLabel(
+                context,
+                hasExternalAudioOutput: hasExternalAudioOutput,
+                hasBluetoothAudioOutput: hasBluetoothAudioOutput,
+              );
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildMenuItem(
                     context,
-                    icon: hasExternalAudioOutput
-                        ? context.images.iconAudioOutputHeadphones.svg24(
-                            color: context.colors.interActionNorm,
-                          )
-                        : context.images.iconAudioOutputPhone.svg24(
-                            color: context.colors.interActionNorm,
-                          ),
-                    label: context.local.audio_output_default_device,
+                    icon: defaultDeviceIcon.svg24(
+                      color: context.colors.interActionNorm,
+                    ),
+                    label: defaultDeviceLabel,
                     selected: !isSpeakerPhone,
                     onTap: () {
                       context.read<PreJoinBloc>().add(

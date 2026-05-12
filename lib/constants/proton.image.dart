@@ -38,6 +38,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
   final SvgGenImage iconSpeakerPhone;
   final SvgGenImage iconAudioOutputPhone;
   final SvgGenImage iconAudioOutputHeadphones;
+  final SvgGenImage iconAudioOutputBluetooth;
   final SvgGenImage iconAudioOutputSpeakerphone;
   final SvgGenImage iconMore;
   final SvgGenImage iconReload;
@@ -136,6 +137,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
     required this.iconSpeakerPhone,
     required this.iconAudioOutputPhone,
     required this.iconAudioOutputHeadphones,
+    required this.iconAudioOutputBluetooth,
     required this.iconAudioOutputSpeakerphone,
     required this.iconReload,
     required this.iconAudioOn,
@@ -221,6 +223,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
     SvgGenImage? iconSpeakerPhone,
     SvgGenImage? iconAudioOutputPhone,
     SvgGenImage? iconAudioOutputHeadphones,
+    SvgGenImage? iconAudioOutputBluetooth,
     SvgGenImage? iconAudioOutputSpeakerphone,
     SvgGenImage? iconReload,
     SvgGenImage? iconAudioOn,
@@ -305,6 +308,8 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
       iconAudioOutputPhone: iconAudioOutputPhone ?? this.iconAudioOutputPhone,
       iconAudioOutputHeadphones:
           iconAudioOutputHeadphones ?? this.iconAudioOutputHeadphones,
+      iconAudioOutputBluetooth:
+          iconAudioOutputBluetooth ?? this.iconAudioOutputBluetooth,
       iconAudioOutputSpeakerphone:
           iconAudioOutputSpeakerphone ?? this.iconAudioOutputSpeakerphone,
       iconAudioOn: iconAudioOn ?? this.iconAudioOn,
@@ -401,6 +406,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
       iconSpeakerPhone: other.iconSpeakerPhone,
       iconAudioOutputPhone: other.iconAudioOutputPhone,
       iconAudioOutputHeadphones: other.iconAudioOutputHeadphones,
+      iconAudioOutputBluetooth: other.iconAudioOutputBluetooth,
       iconAudioOutputSpeakerphone: other.iconAudioOutputSpeakerphone,
       iconAudioOn: other.iconAudioOn,
       iconAudioOff: other.iconAudioOff,
@@ -485,6 +491,7 @@ final lightImageExtension = ProtonImages(
   iconSpeakerPhone: Assets.images.icon.icSpeakerPhone,
   iconAudioOutputPhone: Assets.images.icon.icAudioOutputPhone,
   iconAudioOutputHeadphones: Assets.images.icon.icAudioOutputHeadphones,
+  iconAudioOutputBluetooth: Assets.images.icon.icAudioOutputBluetooth,
   iconAudioOutputSpeakerphone: Assets.images.icon.icAudioOutputSpeakerphone,
   iconAudioOn: Assets.images.icon.icMicOn,
   iconAudioOff: Assets.images.icon.icMicOff,
@@ -569,6 +576,7 @@ final darkImageExtension = ProtonImages(
   iconSpeakerPhone: Assets.images.icon.icSpeakerPhone,
   iconAudioOutputPhone: Assets.images.icon.icAudioOutputPhone,
   iconAudioOutputHeadphones: Assets.images.icon.icAudioOutputHeadphones,
+  iconAudioOutputBluetooth: Assets.images.icon.icAudioOutputBluetooth,
   iconAudioOutputSpeakerphone: Assets.images.icon.icAudioOutputSpeakerphone,
   iconAudioOn: Assets.images.icon.icMicOn,
   iconAudioOff: Assets.images.icon.icMicOff,

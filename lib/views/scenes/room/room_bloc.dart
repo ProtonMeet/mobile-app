@@ -433,11 +433,15 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
         speakerDevices.hasLabelSuggestingExternalAudioOutput;
 
     bool hasExternalAudioOutputFromAudioSession = false;
+    bool hasBluetoothAudioOutputFromAudioSession = false;
     try {
       final audioSession = await AudioSession.instance;
       final sessionDevices = await audioSession.getDevices();
       hasExternalAudioOutputFromAudioSession = sessionDevices.any(
         (device) => device.type.isExternalAudioOutput,
+      );
+      hasBluetoothAudioOutputFromAudioSession = sessionDevices.any(
+        (device) => device.type.isBluetoothAudioOutput,
       );
 
       // listen to audio session devices changed event as well, or device change event from hardware may triggered faster than audio session devices changed event
@@ -446,6 +450,9 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
         final audioSessionHasExternal = sessionDevices.any(
           (device) => device.type.isExternalAudioOutput,
         );
+        final audioSessionHasBluetooth = sessionDevices.any(
+          (device) => device.type.isBluetoothAudioOutput,
+        );
         final hardwareDevices = await Hardware.instance.enumerateDevices();
         final labelSuggestingExternalAudioOutput = hardwareDevices
             .where((d) => d.kind == 'audiooutput')
@@ -453,8 +460,15 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
 
         final hasExternalAudioOutput =
             labelSuggestingExternalAudioOutput || audioSessionHasExternal;
-        if (hasExternalAudioOutput != state.hasExternalAudioOutput) {
-          emit(state.copyWith(hasExternalAudioOutput: hasExternalAudioOutput));
+        final hasBluetoothAudioOutput = audioSessionHasBluetooth;
+        if (hasExternalAudioOutput != state.hasExternalAudioOutput ||
+            hasBluetoothAudioOutput != state.hasBluetoothAudioOutput) {
+          emit(
+            state.copyWith(
+              hasExternalAudioOutput: hasExternalAudioOutput,
+              hasBluetoothAudioOutput: hasBluetoothAudioOutput,
+            ),
+          );
         }
       });
     } catch (e) {
@@ -465,7 +479,13 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     final hasExternalAudioOutput =
         hasLabelSuggestingExternalAudioOutput ||
         hasExternalAudioOutputFromAudioSession;
-    emit(state.copyWith(hasExternalAudioOutput: hasExternalAudioOutput));
+    final hasBluetoothAudioOutput = hasBluetoothAudioOutputFromAudioSession;
+    emit(
+      state.copyWith(
+        hasExternalAudioOutput: hasExternalAudioOutput,
+        hasBluetoothAudioOutput: hasBluetoothAudioOutput,
+      ),
+    );
 
     _deviceChangeSub = Hardware.instance.onDeviceChange.stream.listen((
       value,
@@ -496,11 +516,15 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
           .hasLabelSuggestingExternalAudioOutput;
 
       bool hasExternalAudioOutputFromAudioSession = false;
+      bool hasBluetoothAudioOutputFromAudioSession = false;
       try {
         final audioSession = await AudioSession.instance;
         final sessionDevices = await audioSession.getDevices();
         hasExternalAudioOutputFromAudioSession = sessionDevices.any(
           (device) => device.type.isExternalAudioOutput,
+        );
+        hasBluetoothAudioOutputFromAudioSession = sessionDevices.any(
+          (device) => device.type.isBluetoothAudioOutput,
         );
       } catch (e) {
         l.logger.w('[RoomBloc] Error checking audio session: $e');
@@ -509,11 +533,13 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       // Identify if there is any external audio output devic based on label or audio session
       final hasExternalAudioOutput =
           nextHasExternal || hasExternalAudioOutputFromAudioSession;
+      final hasBluetoothAudioOutput = hasBluetoothAudioOutputFromAudioSession;
 
       emit(
         state.copyWith(
           audioDeviceCount: currentAudioDeviceCount,
           hasExternalAudioOutput: hasExternalAudioOutput,
+          hasBluetoothAudioOutput: hasBluetoothAudioOutput,
         ),
       );
     });

@@ -48,6 +48,10 @@ class $AssetsImagesIconGen {
   SvgGenImage get icArrowsRotate =>
       const SvgGenImage('assets/images/icon/ic-arrows-rotate.svg');
 
+  /// File path: assets/images/icon/ic-audio-output-bluetooth.svg
+  SvgGenImage get icAudioOutputBluetooth =>
+      const SvgGenImage('assets/images/icon/ic-audio-output-bluetooth.svg');
+
   /// File path: assets/images/icon/ic-audio-output-headphones.svg
   SvgGenImage get icAudioOutputHeadphones =>
       const SvgGenImage('assets/images/icon/ic-audio-output-headphones.svg');
@@ -322,6 +326,7 @@ class $AssetsImagesIconGen {
   List<SvgGenImage> get values => [
     icAppNoWord,
     icArrowsRotate,
+    icAudioOutputBluetooth,
     icAudioOutputHeadphones,
     icAudioOutputPhone,
     icAudioOutputSpeakerphone,
