@@ -54,6 +54,10 @@ use url::Url;
 /// Error code returned by the API when the meeting link is locked
 const MEETING_LOCKED_ERROR_CODE: u16 = 2502;
 
+/// Error code returned by the API when SRP parameters are invalid — i.e. the
+/// URL/custom password the caller supplied does not match the meeting link.
+const INVALID_SRP_PARAMS_ERROR_CODE: u16 = 2026;
+
 #[derive(Debug)]
 pub struct ApiConfig {
     /// A tupple composed of `app_version` and `user_agent`
@@ -422,7 +426,15 @@ impl HttpClient for ProtonHttpClient {
                 srp_session: srp_session.to_string(),
             })?;
         let res = self.get_session().send(req).await?;
-        let auth_meet_link_res = res.parse_response::<AuthMeetLinkResponse>()?;
+        let auth_meet_link_res = match res.parse_response::<AuthMeetLinkResponse>() {
+            Ok(response) => response,
+            Err(HttpClientError::ErrorCode(_, ref error))
+                if error.code == INVALID_SRP_PARAMS_ERROR_CODE =>
+            {
+                return Err(HttpClientError::IncorrectPassword);
+            }
+            Err(e) => return Err(e),
+        };
         Ok(auth_meet_link_res.into())
     }
 

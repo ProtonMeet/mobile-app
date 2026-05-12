@@ -229,6 +229,14 @@
   "@please_enter_valid_meeting_link": {
     "description": "Error message when meeting link is invalid"
   },
+  "meeting_password_incorrect": "The meeting password is incorrect",
+  "@meeting_password_incorrect": {
+    "description": "Error message when the meeting password is incorrect"
+  },
+  "meeting_password_invalid": "The meeting password is invalid",
+  "@meeting_password_incorrect": {
+    "description": "Error message when the meeting password embedded in the join link is invalid"
+  },
   "link_copied_to_clipboard": "Link copied to clipboard",
   "@link_copied_to_clipboard": {
     "description": "Success message when meeting link is copied"

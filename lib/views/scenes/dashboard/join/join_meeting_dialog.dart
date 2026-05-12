@@ -13,6 +13,7 @@ import 'package:meet/helper/meet_join_link_parser.dart' as meet_link;
 import 'package:meet/managers/app.state.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
+import 'package:meet/rust/proton_meet/meet_link.dart';
 import 'package:meet/views/components/alerts/base_bottom_sheet.dart';
 import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart';
 import 'package:meet/views/scenes/dashboard/dashboard_bloc.dart';
@@ -320,8 +321,15 @@ class _JoinMeetingModelState extends State<JoinMeetingModel> {
       _roomId = result.roomId;
       _passcode = result.passcode;
       if (result.isValid) {
-        _status = LinkStatus.valid;
-        _message = null;
+        final isValidPassword = isUrlPasswordValid(
+          hash: "#pwd-${result.passcode}",
+        );
+        _status = isValidPassword
+            ? LinkStatus.valid
+            : LinkStatus.invalidPassword;
+        _message = isValidPassword
+            ? null
+            : context.local.meeting_password_invalid;
       } else {
         _status = LinkStatus.invalid;
         _message = context.local.please_enter_valid_meeting_link;
@@ -330,7 +338,7 @@ class _JoinMeetingModelState extends State<JoinMeetingModel> {
   }
 
   void _submit() {
-    if (_status != LinkStatus.valid ||
+    if (!_status.canSubmit ||
         _roomId == null ||
         _passcode == null ||
         _passcode!.isEmpty) {

@@ -102,9 +102,9 @@ class ActionButtons extends StatelessWidget {
                   width: double.infinity,
                   height: 60,
                   child: ElevatedButton(
-                    onPressed: status == LinkStatus.valid ? onSubmit : null,
+                    onPressed: status.canSubmit ? onSubmit : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: status == LinkStatus.valid
+                      backgroundColor: status.canSubmit
                           ? displayColors?.actionBackgroundColor ??
                                 context.colors.protonBlue
                           : context.colors.interActionWeekMinor1,
@@ -115,7 +115,7 @@ class ActionButtons extends StatelessWidget {
                     child: Text(
                       context.local.join_meeting_button,
                       style: ProtonStyles.body1Semibold(
-                        color: status == LinkStatus.valid
+                          color: status.canSubmit
                             ? context.colors.textInverted
                             : context.colors.textDisable,
                       ),

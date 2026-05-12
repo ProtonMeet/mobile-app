@@ -271,6 +271,15 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
               ),
             );
             return;
+          } else if (e is BridgeError_IncorrectPassword) {
+            l.logger.e('[WaitingRoomBloc] Incorrect password: $e');
+            emit(
+              state.copyWith(
+                isLoading: false,
+                error: "The meeting password is incorrect",
+              ),
+            );
+            return;
           }
 
           // Log join meeting failed to meet-server if feature flag is enabled

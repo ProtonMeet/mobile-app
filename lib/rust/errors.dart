@@ -56,6 +56,9 @@ sealed class BridgeError with _$BridgeError implements FrbException {
 
   /// Meeting locked error (error code 2502)
   const factory BridgeError.meetingLocked() = BridgeError_MeetingLocked;
+
+  /// SRP authentication rejected the supplied password (API error code 2026).
+  const factory BridgeError.incorrectPassword() = BridgeError_IncorrectPassword;
 }
 
 class ResponseError {

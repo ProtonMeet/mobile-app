@@ -77,6 +77,10 @@ pub enum BridgeError {
     /// Meeting locked error (error code 2502)
     #[error("Meeting is locked. Please try again later.")]
     MeetingLocked,
+
+    /// SRP authentication rejected the supplied password (API error code 2026).
+    #[error("Incorrect meeting password.")]
+    IncorrectPassword,
 }
 
 #[derive(Debug)]
@@ -153,6 +157,7 @@ impl From<MeetCoreError> for BridgeError {
     fn from(value: MeetCoreError) -> Self {
         match value {
             MeetCoreError::MeetingLocked => BridgeError::MeetingLocked,
+            MeetCoreError::IncorrectPassword => BridgeError::IncorrectPassword,
             MeetCoreError::HttpClientError {
                 status,
                 message,

@@ -55,7 +55,7 @@ extension BridgeErrorPatterns on BridgeError {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( BridgeError_MutexLock value)?  mutexLock,TResult Function( BridgeError_MeetCore value)?  meetCore,TResult Function( BridgeError_MissingTwoFactor value)?  missingTwoFactor,TResult Function( BridgeError_MeetCoreAny value)?  meetCoreAny,TResult Function( BridgeError_Login value)?  login,TResult Function( BridgeError_ApiLock value)?  apiLock,TResult Function( BridgeError_AccessToken value)?  accessToken,TResult Function( BridgeError_MuonAuthSession value)?  muonAuthSession,TResult Function( BridgeError_MuonAuthRefresh value)?  muonAuthRefresh,TResult Function( BridgeError_MuonClient value)?  muonClient,TResult Function( BridgeError_MuonSession value)?  muonSession,TResult Function( BridgeError_Fork value)?  fork,TResult Function( BridgeError_Encoding value)?  encoding,TResult Function( BridgeError_ParseError value)?  parseError,TResult Function( BridgeError_Std value)?  std,TResult Function( BridgeError_TracingsSubscriber value)?  tracingsSubscriber,TResult Function( BridgeError_MeetLink value)?  meetLink,TResult Function( BridgeError_Chat value)?  chat,TResult Function( BridgeError_TaskJoin value)?  taskJoin,TResult Function( BridgeError_ApiResponse value)?  apiResponse,TResult Function( BridgeError_MeetingLocked value)?  meetingLocked,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( BridgeError_MutexLock value)?  mutexLock,TResult Function( BridgeError_MeetCore value)?  meetCore,TResult Function( BridgeError_MissingTwoFactor value)?  missingTwoFactor,TResult Function( BridgeError_MeetCoreAny value)?  meetCoreAny,TResult Function( BridgeError_Login value)?  login,TResult Function( BridgeError_ApiLock value)?  apiLock,TResult Function( BridgeError_AccessToken value)?  accessToken,TResult Function( BridgeError_MuonAuthSession value)?  muonAuthSession,TResult Function( BridgeError_MuonAuthRefresh value)?  muonAuthRefresh,TResult Function( BridgeError_MuonClient value)?  muonClient,TResult Function( BridgeError_MuonSession value)?  muonSession,TResult Function( BridgeError_Fork value)?  fork,TResult Function( BridgeError_Encoding value)?  encoding,TResult Function( BridgeError_ParseError value)?  parseError,TResult Function( BridgeError_Std value)?  std,TResult Function( BridgeError_TracingsSubscriber value)?  tracingsSubscriber,TResult Function( BridgeError_MeetLink value)?  meetLink,TResult Function( BridgeError_Chat value)?  chat,TResult Function( BridgeError_TaskJoin value)?  taskJoin,TResult Function( BridgeError_ApiResponse value)?  apiResponse,TResult Function( BridgeError_MeetingLocked value)?  meetingLocked,TResult Function( BridgeError_IncorrectPassword value)?  incorrectPassword,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case BridgeError_MutexLock() when mutexLock != null:
@@ -79,7 +79,8 @@ return meetLink(_that);case BridgeError_Chat() when chat != null:
 return chat(_that);case BridgeError_TaskJoin() when taskJoin != null:
 return taskJoin(_that);case BridgeError_ApiResponse() when apiResponse != null:
 return apiResponse(_that);case BridgeError_MeetingLocked() when meetingLocked != null:
-return meetingLocked(_that);case _:
+return meetingLocked(_that);case BridgeError_IncorrectPassword() when incorrectPassword != null:
+return incorrectPassword(_that);case _:
   return orElse();
 
 }
@@ -97,7 +98,7 @@ return meetingLocked(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( BridgeError_MutexLock value)  mutexLock,required TResult Function( BridgeError_MeetCore value)  meetCore,required TResult Function( BridgeError_MissingTwoFactor value)  missingTwoFactor,required TResult Function( BridgeError_MeetCoreAny value)  meetCoreAny,required TResult Function( BridgeError_Login value)  login,required TResult Function( BridgeError_ApiLock value)  apiLock,required TResult Function( BridgeError_AccessToken value)  accessToken,required TResult Function( BridgeError_MuonAuthSession value)  muonAuthSession,required TResult Function( BridgeError_MuonAuthRefresh value)  muonAuthRefresh,required TResult Function( BridgeError_MuonClient value)  muonClient,required TResult Function( BridgeError_MuonSession value)  muonSession,required TResult Function( BridgeError_Fork value)  fork,required TResult Function( BridgeError_Encoding value)  encoding,required TResult Function( BridgeError_ParseError value)  parseError,required TResult Function( BridgeError_Std value)  std,required TResult Function( BridgeError_TracingsSubscriber value)  tracingsSubscriber,required TResult Function( BridgeError_MeetLink value)  meetLink,required TResult Function( BridgeError_Chat value)  chat,required TResult Function( BridgeError_TaskJoin value)  taskJoin,required TResult Function( BridgeError_ApiResponse value)  apiResponse,required TResult Function( BridgeError_MeetingLocked value)  meetingLocked,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( BridgeError_MutexLock value)  mutexLock,required TResult Function( BridgeError_MeetCore value)  meetCore,required TResult Function( BridgeError_MissingTwoFactor value)  missingTwoFactor,required TResult Function( BridgeError_MeetCoreAny value)  meetCoreAny,required TResult Function( BridgeError_Login value)  login,required TResult Function( BridgeError_ApiLock value)  apiLock,required TResult Function( BridgeError_AccessToken value)  accessToken,required TResult Function( BridgeError_MuonAuthSession value)  muonAuthSession,required TResult Function( BridgeError_MuonAuthRefresh value)  muonAuthRefresh,required TResult Function( BridgeError_MuonClient value)  muonClient,required TResult Function( BridgeError_MuonSession value)  muonSession,required TResult Function( BridgeError_Fork value)  fork,required TResult Function( BridgeError_Encoding value)  encoding,required TResult Function( BridgeError_ParseError value)  parseError,required TResult Function( BridgeError_Std value)  std,required TResult Function( BridgeError_TracingsSubscriber value)  tracingsSubscriber,required TResult Function( BridgeError_MeetLink value)  meetLink,required TResult Function( BridgeError_Chat value)  chat,required TResult Function( BridgeError_TaskJoin value)  taskJoin,required TResult Function( BridgeError_ApiResponse value)  apiResponse,required TResult Function( BridgeError_MeetingLocked value)  meetingLocked,required TResult Function( BridgeError_IncorrectPassword value)  incorrectPassword,}){
 final _that = this;
 switch (_that) {
 case BridgeError_MutexLock():
@@ -121,7 +122,8 @@ return meetLink(_that);case BridgeError_Chat():
 return chat(_that);case BridgeError_TaskJoin():
 return taskJoin(_that);case BridgeError_ApiResponse():
 return apiResponse(_that);case BridgeError_MeetingLocked():
-return meetingLocked(_that);}
+return meetingLocked(_that);case BridgeError_IncorrectPassword():
+return incorrectPassword(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -135,7 +137,7 @@ return meetingLocked(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( BridgeError_MutexLock value)?  mutexLock,TResult? Function( BridgeError_MeetCore value)?  meetCore,TResult? Function( BridgeError_MissingTwoFactor value)?  missingTwoFactor,TResult? Function( BridgeError_MeetCoreAny value)?  meetCoreAny,TResult? Function( BridgeError_Login value)?  login,TResult? Function( BridgeError_ApiLock value)?  apiLock,TResult? Function( BridgeError_AccessToken value)?  accessToken,TResult? Function( BridgeError_MuonAuthSession value)?  muonAuthSession,TResult? Function( BridgeError_MuonAuthRefresh value)?  muonAuthRefresh,TResult? Function( BridgeError_MuonClient value)?  muonClient,TResult? Function( BridgeError_MuonSession value)?  muonSession,TResult? Function( BridgeError_Fork value)?  fork,TResult? Function( BridgeError_Encoding value)?  encoding,TResult? Function( BridgeError_ParseError value)?  parseError,TResult? Function( BridgeError_Std value)?  std,TResult? Function( BridgeError_TracingsSubscriber value)?  tracingsSubscriber,TResult? Function( BridgeError_MeetLink value)?  meetLink,TResult? Function( BridgeError_Chat value)?  chat,TResult? Function( BridgeError_TaskJoin value)?  taskJoin,TResult? Function( BridgeError_ApiResponse value)?  apiResponse,TResult? Function( BridgeError_MeetingLocked value)?  meetingLocked,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( BridgeError_MutexLock value)?  mutexLock,TResult? Function( BridgeError_MeetCore value)?  meetCore,TResult? Function( BridgeError_MissingTwoFactor value)?  missingTwoFactor,TResult? Function( BridgeError_MeetCoreAny value)?  meetCoreAny,TResult? Function( BridgeError_Login value)?  login,TResult? Function( BridgeError_ApiLock value)?  apiLock,TResult? Function( BridgeError_AccessToken value)?  accessToken,TResult? Function( BridgeError_MuonAuthSession value)?  muonAuthSession,TResult? Function( BridgeError_MuonAuthRefresh value)?  muonAuthRefresh,TResult? Function( BridgeError_MuonClient value)?  muonClient,TResult? Function( BridgeError_MuonSession value)?  muonSession,TResult? Function( BridgeError_Fork value)?  fork,TResult? Function( BridgeError_Encoding value)?  encoding,TResult? Function( BridgeError_ParseError value)?  parseError,TResult? Function( BridgeError_Std value)?  std,TResult? Function( BridgeError_TracingsSubscriber value)?  tracingsSubscriber,TResult? Function( BridgeError_MeetLink value)?  meetLink,TResult? Function( BridgeError_Chat value)?  chat,TResult? Function( BridgeError_TaskJoin value)?  taskJoin,TResult? Function( BridgeError_ApiResponse value)?  apiResponse,TResult? Function( BridgeError_MeetingLocked value)?  meetingLocked,TResult? Function( BridgeError_IncorrectPassword value)?  incorrectPassword,}){
 final _that = this;
 switch (_that) {
 case BridgeError_MutexLock() when mutexLock != null:
@@ -159,7 +161,8 @@ return meetLink(_that);case BridgeError_Chat() when chat != null:
 return chat(_that);case BridgeError_TaskJoin() when taskJoin != null:
 return taskJoin(_that);case BridgeError_ApiResponse() when apiResponse != null:
 return apiResponse(_that);case BridgeError_MeetingLocked() when meetingLocked != null:
-return meetingLocked(_that);case _:
+return meetingLocked(_that);case BridgeError_IncorrectPassword() when incorrectPassword != null:
+return incorrectPassword(_that);case _:
   return null;
 
 }
@@ -176,7 +179,7 @@ return meetingLocked(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String field0)?  mutexLock,TResult Function( String field0)?  meetCore,TResult Function()?  missingTwoFactor,TResult Function( String field0)?  meetCoreAny,TResult Function( String field0)?  login,TResult Function( String field0)?  apiLock,TResult Function( String field0)?  accessToken,TResult Function( String field0)?  muonAuthSession,TResult Function( String field0)?  muonAuthRefresh,TResult Function( String field0)?  muonClient,TResult Function( String field0)?  muonSession,TResult Function( String field0)?  fork,TResult Function( String field0)?  encoding,TResult Function( String field0)?  parseError,TResult Function( String field0)?  std,TResult Function( String field0)?  tracingsSubscriber,TResult Function( String field0)?  meetLink,TResult Function( String field0)?  chat,TResult Function( String field0)?  taskJoin,TResult Function( ResponseError field0)?  apiResponse,TResult Function()?  meetingLocked,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String field0)?  mutexLock,TResult Function( String field0)?  meetCore,TResult Function()?  missingTwoFactor,TResult Function( String field0)?  meetCoreAny,TResult Function( String field0)?  login,TResult Function( String field0)?  apiLock,TResult Function( String field0)?  accessToken,TResult Function( String field0)?  muonAuthSession,TResult Function( String field0)?  muonAuthRefresh,TResult Function( String field0)?  muonClient,TResult Function( String field0)?  muonSession,TResult Function( String field0)?  fork,TResult Function( String field0)?  encoding,TResult Function( String field0)?  parseError,TResult Function( String field0)?  std,TResult Function( String field0)?  tracingsSubscriber,TResult Function( String field0)?  meetLink,TResult Function( String field0)?  chat,TResult Function( String field0)?  taskJoin,TResult Function( ResponseError field0)?  apiResponse,TResult Function()?  meetingLocked,TResult Function()?  incorrectPassword,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case BridgeError_MutexLock() when mutexLock != null:
 return mutexLock(_that.field0);case BridgeError_MeetCore() when meetCore != null:
@@ -199,7 +202,8 @@ return meetLink(_that.field0);case BridgeError_Chat() when chat != null:
 return chat(_that.field0);case BridgeError_TaskJoin() when taskJoin != null:
 return taskJoin(_that.field0);case BridgeError_ApiResponse() when apiResponse != null:
 return apiResponse(_that.field0);case BridgeError_MeetingLocked() when meetingLocked != null:
-return meetingLocked();case _:
+return meetingLocked();case BridgeError_IncorrectPassword() when incorrectPassword != null:
+return incorrectPassword();case _:
   return orElse();
 
 }
@@ -217,7 +221,7 @@ return meetingLocked();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String field0)  mutexLock,required TResult Function( String field0)  meetCore,required TResult Function()  missingTwoFactor,required TResult Function( String field0)  meetCoreAny,required TResult Function( String field0)  login,required TResult Function( String field0)  apiLock,required TResult Function( String field0)  accessToken,required TResult Function( String field0)  muonAuthSession,required TResult Function( String field0)  muonAuthRefresh,required TResult Function( String field0)  muonClient,required TResult Function( String field0)  muonSession,required TResult Function( String field0)  fork,required TResult Function( String field0)  encoding,required TResult Function( String field0)  parseError,required TResult Function( String field0)  std,required TResult Function( String field0)  tracingsSubscriber,required TResult Function( String field0)  meetLink,required TResult Function( String field0)  chat,required TResult Function( String field0)  taskJoin,required TResult Function( ResponseError field0)  apiResponse,required TResult Function()  meetingLocked,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String field0)  mutexLock,required TResult Function( String field0)  meetCore,required TResult Function()  missingTwoFactor,required TResult Function( String field0)  meetCoreAny,required TResult Function( String field0)  login,required TResult Function( String field0)  apiLock,required TResult Function( String field0)  accessToken,required TResult Function( String field0)  muonAuthSession,required TResult Function( String field0)  muonAuthRefresh,required TResult Function( String field0)  muonClient,required TResult Function( String field0)  muonSession,required TResult Function( String field0)  fork,required TResult Function( String field0)  encoding,required TResult Function( String field0)  parseError,required TResult Function( String field0)  std,required TResult Function( String field0)  tracingsSubscriber,required TResult Function( String field0)  meetLink,required TResult Function( String field0)  chat,required TResult Function( String field0)  taskJoin,required TResult Function( ResponseError field0)  apiResponse,required TResult Function()  meetingLocked,required TResult Function()  incorrectPassword,}) {final _that = this;
 switch (_that) {
 case BridgeError_MutexLock():
 return mutexLock(_that.field0);case BridgeError_MeetCore():
@@ -240,7 +244,8 @@ return meetLink(_that.field0);case BridgeError_Chat():
 return chat(_that.field0);case BridgeError_TaskJoin():
 return taskJoin(_that.field0);case BridgeError_ApiResponse():
 return apiResponse(_that.field0);case BridgeError_MeetingLocked():
-return meetingLocked();}
+return meetingLocked();case BridgeError_IncorrectPassword():
+return incorrectPassword();}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -254,7 +259,7 @@ return meetingLocked();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String field0)?  mutexLock,TResult? Function( String field0)?  meetCore,TResult? Function()?  missingTwoFactor,TResult? Function( String field0)?  meetCoreAny,TResult? Function( String field0)?  login,TResult? Function( String field0)?  apiLock,TResult? Function( String field0)?  accessToken,TResult? Function( String field0)?  muonAuthSession,TResult? Function( String field0)?  muonAuthRefresh,TResult? Function( String field0)?  muonClient,TResult? Function( String field0)?  muonSession,TResult? Function( String field0)?  fork,TResult? Function( String field0)?  encoding,TResult? Function( String field0)?  parseError,TResult? Function( String field0)?  std,TResult? Function( String field0)?  tracingsSubscriber,TResult? Function( String field0)?  meetLink,TResult? Function( String field0)?  chat,TResult? Function( String field0)?  taskJoin,TResult? Function( ResponseError field0)?  apiResponse,TResult? Function()?  meetingLocked,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String field0)?  mutexLock,TResult? Function( String field0)?  meetCore,TResult? Function()?  missingTwoFactor,TResult? Function( String field0)?  meetCoreAny,TResult? Function( String field0)?  login,TResult? Function( String field0)?  apiLock,TResult? Function( String field0)?  accessToken,TResult? Function( String field0)?  muonAuthSession,TResult? Function( String field0)?  muonAuthRefresh,TResult? Function( String field0)?  muonClient,TResult? Function( String field0)?  muonSession,TResult? Function( String field0)?  fork,TResult? Function( String field0)?  encoding,TResult? Function( String field0)?  parseError,TResult? Function( String field0)?  std,TResult? Function( String field0)?  tracingsSubscriber,TResult? Function( String field0)?  meetLink,TResult? Function( String field0)?  chat,TResult? Function( String field0)?  taskJoin,TResult? Function( ResponseError field0)?  apiResponse,TResult? Function()?  meetingLocked,TResult? Function()?  incorrectPassword,}) {final _that = this;
 switch (_that) {
 case BridgeError_MutexLock() when mutexLock != null:
 return mutexLock(_that.field0);case BridgeError_MeetCore() when meetCore != null:
@@ -277,7 +282,8 @@ return meetLink(_that.field0);case BridgeError_Chat() when chat != null:
 return chat(_that.field0);case BridgeError_TaskJoin() when taskJoin != null:
 return taskJoin(_that.field0);case BridgeError_ApiResponse() when apiResponse != null:
 return apiResponse(_that.field0);case BridgeError_MeetingLocked() when meetingLocked != null:
-return meetingLocked();case _:
+return meetingLocked();case BridgeError_IncorrectPassword() when incorrectPassword != null:
+return incorrectPassword();case _:
   return null;
 
 }
@@ -1595,6 +1601,38 @@ int get hashCode => runtimeType.hashCode;
 @override
 String toString() {
   return 'BridgeError.meetingLocked()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class BridgeError_IncorrectPassword extends BridgeError {
+  const BridgeError_IncorrectPassword(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_IncorrectPassword);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'BridgeError.incorrectPassword()';
 }
 
 
