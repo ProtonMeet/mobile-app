@@ -63,4 +63,14 @@ extension AudioDeviceTypeX on AudioDeviceType {
         return false;
     }
   }
+
+  bool get isBluetoothAudioOutput {
+    switch (this) {
+      case AudioDeviceType.bluetoothA2dp:
+      case AudioDeviceType.bluetoothSco:
+        return true;
+      default:
+        return false;
+    }
+  }
 }

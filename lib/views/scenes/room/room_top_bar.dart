@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/helper/audio_output_display.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
+import 'package:meet/helper/extension/svg_gen_image_extension.dart';
+import 'package:meet/views/scenes/room/room_bloc.dart';
+import 'package:meet/views/scenes/room/room_state.dart';
 
 class RoomTopBar extends StatelessWidget implements PreferredSizeWidget {
   const RoomTopBar({
@@ -58,13 +63,25 @@ class RoomTopBar extends StatelessWidget implements PreferredSizeWidget {
             offset: Offset(showSwapCamera ? 14.0 : 0.0, 0.0),
             child: Padding(
               padding: const EdgeInsets.only(left: 8.0),
-              child: IconButton(
-                onPressed: onSpeakerButtonPressed,
-                icon: context.images.iconSpeakerPhone.svg(
-                  width: 20,
-                  height: 20,
+              child: BlocSelector<RoomBloc, RoomState, (bool, bool, bool)>(
+                selector: (state) => (
+                  state.isSpeakerPhone,
+                  state.hasExternalAudioOutput,
+                  state.hasBluetoothAudioOutput,
                 ),
-                tooltip: "Select speaker",
+                builder: (context, data) {
+                  final icon = AudioOutputDisplay.icon(
+                    context,
+                    isSpeakerPhone: data.$1,
+                    hasExternalAudioOutput: data.$2,
+                    hasBluetoothAudioOutput: data.$3,
+                  );
+                  return IconButton(
+                    onPressed: onSpeakerButtonPressed,
+                    icon: icon.svg20(color: context.colors.textNorm),
+                    tooltip: "Select speaker",
+                  );
+                },
               ),
             ),
           ),
@@ -73,7 +90,9 @@ class RoomTopBar extends StatelessWidget implements PreferredSizeWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: IconButton(
               onPressed: onSwapCamera,
-              icon: context.images.iconSwapCamera.svg(width: 20, height: 20),
+              icon: context.images.iconSwapCamera.svg20(
+                color: context.colors.textNorm,
+              ),
               tooltip: 'Swap camera',
             ),
           ),
@@ -82,7 +101,9 @@ class RoomTopBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _buildLeadingWidget(BuildContext context) {
-    final textStyle = ProtonStyles.body1Semibold(color: context.colors.interActionNorm);
+    final textStyle = ProtonStyles.body1Semibold(
+      color: context.colors.interActionNorm,
+    );
 
     if (shareScreenWidget != null) {
       return shareScreenWidget!;

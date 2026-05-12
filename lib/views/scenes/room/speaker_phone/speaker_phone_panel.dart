@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/helper/audio_output_display.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
@@ -13,24 +14,29 @@ import 'package:meet/views/scenes/room/room_state.dart';
 
 class _SpeakerPhonePanelConstants {
   static const double borderRadiusMedium = 24.0;
-  static const double borderRadiusLarge = 40.0;
   static const double borderColorAlpha = 0.03;
 }
 
-class SpeakerPhonePanel extends StatefulWidget {
+class SpeakerPhonePanel extends StatelessWidget {
   const SpeakerPhonePanel({super.key});
 
   @override
-  State<SpeakerPhonePanel> createState() => _SpeakerPhonePanelState();
-}
-
-class _SpeakerPhonePanelState extends State<SpeakerPhonePanel> {
-  final ScrollController _scrollController = ScrollController();
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
+  Widget build(BuildContext context) {
+    final isLandscape = context.isLandscape && mobile;
+    return RepaintBoundary(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          width: double.infinity,
+          decoration: _buildContainerDecoration(context),
+          child: GestureDetector(
+            onTap: () => FocusScope.of(context).unfocus(),
+            behavior: HitTestBehavior.deferToChild,
+            child: _buildScrollableContent(context, isLandscape),
+          ),
+        ),
+      ),
+    );
   }
 
   Decoration _buildContainerDecoration(BuildContext context) {
@@ -50,139 +56,68 @@ class _SpeakerPhonePanelState extends State<SpeakerPhonePanel> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isLandscape = context.isLandscape && mobile;
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(_SpeakerPhonePanelConstants.borderRadiusLarge),
-        topRight: Radius.circular(
-          _SpeakerPhonePanelConstants.borderRadiusLarge,
-        ),
-      ),
-      child: RepaintBoundary(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            width: double.infinity,
-            // height: double.infinity, // don't need to make height match parent since it only has two items
-            decoration: _buildContainerDecoration(context),
-            child: GestureDetector(
-              onTap: () => FocusScope.of(context).unfocus(),
-              behavior: HitTestBehavior.deferToChild,
-              child: _buildScrollableContent(context, isLandscape),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildScrollableContent(BuildContext context, bool isLandscape) {
-    return Stack(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        CustomScrollView(
-          controller: _scrollController,
-          slivers: [
-            SliverAppBar(
-              pinned: true,
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              automaticallyImplyLeading: false,
-              toolbarHeight: !isLandscape ? 36.0 : 8.0,
-              expandedHeight: !isLandscape ? 36.0 : 8.0,
-              flexibleSpace: SizedBox.expand(
-                child: ClipRRect(
-                  child: DecoratedBox(
-                    decoration: ShapeDecoration(
-                      color: Colors.transparent,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(
-                            _SpeakerPhonePanelConstants.borderRadiusMedium,
-                          ),
-                          topRight: Radius.circular(
-                            _SpeakerPhonePanelConstants.borderRadiusMedium,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+        if (!isLandscape) const BottomSheetHandleBar(),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: BlocSelector<RoomBloc, RoomState, (bool, bool, bool)>(
+            selector: (state) => (
+              state.isSpeakerPhone,
+              state.hasExternalAudioOutput,
+              state.hasBluetoothAudioOutput,
             ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  /// Meeting details section
-                  BlocSelector<RoomBloc, RoomState, (bool, bool)>(
-                    selector: (state) =>
-                        (state.isSpeakerPhone, state.hasExternalAudioOutput),
-                    builder: (context, data) {
-                      final isSpeakerPhone = data.$1;
-                      final hasExternalAudioOutput = data.$2;
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildMenuItem(
-                            context,
-                            icon: hasExternalAudioOutput
-                                ? context.images.iconAudioOutputHeadphones
-                                      .svg24(
-                                        color: context.colors.interActionNorm,
-                                      )
-                                : context.images.iconAudioOutputPhone.svg24(
-                                    color: context.colors.interActionNorm,
-                                  ),
-                            label: context.local.audio_output_default_device,
-                            selected: !isSpeakerPhone,
-                            onTap: () {
-                              context.read<RoomBloc>().add(
-                                const SetSpeakerPhone(enabled: false),
-                              );
-                            },
-                          ),
-                          _buildMenuItem(
-                            context,
-                            icon: context.images.iconAudioOutputSpeakerphone
-                                .svg24(color: context.colors.interActionNorm),
-                            label: context.local.audio_output_phone_speakers,
-                            selected: isSpeakerPhone,
-                            onTap: () {
-                              context.read<RoomBloc>().add(
-                                const SetSpeakerPhone(enabled: true),
-                              );
-                            },
-                          ),
-                        ],
+            builder: (context, data) {
+              final isSpeakerPhone = data.$1;
+              final hasExternalAudioOutput = data.$2;
+              final hasBluetoothAudioOutput = data.$3;
+              final defaultDeviceIcon = AudioOutputDisplay.defaultDeviceIcon(
+                context,
+                hasExternalAudioOutput: hasExternalAudioOutput,
+                hasBluetoothAudioOutput: hasBluetoothAudioOutput,
+              );
+              final defaultDeviceLabel = AudioOutputDisplay.defaultDeviceLabel(
+                context,
+                hasExternalAudioOutput: hasExternalAudioOutput,
+                hasBluetoothAudioOutput: hasBluetoothAudioOutput,
+              );
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildMenuItem(
+                    context,
+                    icon: defaultDeviceIcon.svg24(
+                      color: context.colors.interActionNorm,
+                    ),
+                    label: defaultDeviceLabel,
+                    selected: !isSpeakerPhone,
+                    onTap: () {
+                      context.read<RoomBloc>().add(
+                        const SetSpeakerPhone(enabled: false),
                       );
+                      Navigator.of(context).pop();
                     },
                   ),
-                ]),
-              ),
-            ),
-          ],
-        ),
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          height: !isLandscape ? 36.0 : 8.0,
-          child: AbsorbPointer(
-            child: Stack(
-              children: [
-                if (!isLandscape)
-                  const Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 36.0,
-                    child: BottomSheetHandleBar(),
+                  _buildMenuItem(
+                    context,
+                    icon: context.images.iconAudioOutputSpeakerphone.svg24(
+                      color: context.colors.interActionNorm,
+                    ),
+                    label: context.local.audio_output_phone_speakers,
+                    selected: isSpeakerPhone,
+                    onTap: () {
+                      context.read<RoomBloc>().add(
+                        const SetSpeakerPhone(enabled: true),
+                      );
+                      Navigator.of(context).pop();
+                    },
                   ),
-              ],
-            ),
+                ],
+              );
+            },
           ),
         ),
       ],

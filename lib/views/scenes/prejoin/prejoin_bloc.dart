@@ -59,7 +59,10 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     on<SetSpeakerPhoneEnabled>(_onSetSpeakerPhoneEnabled);
     on<PreJoinAudioOutputDevicesChanged>(
       (event, emit) => emit(
-        state.copyWith(hasExternalAudioOutput: event.hasExternalAudioOutput),
+        state.copyWith(
+          hasExternalAudioOutput: event.hasExternalAudioOutput,
+          hasBluetoothAudioOutput: event.hasBluetoothAudioOutput,
+        ),
       ),
     );
     on<SwapVideo>(_onSwapVideo);
@@ -288,17 +291,24 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
           speakerDevices.hasLabelSuggestingExternalAudioOutput;
 
       bool hasExternalAudioOutputFromAudioSession = false;
+      bool hasBluetoothAudioOutputFromAudioSession = false;
       try {
         final audioSession = await AudioSession.instance;
         final devices = await audioSession.getDevices();
         hasExternalAudioOutputFromAudioSession = devices.any(
           (device) => device.type.isExternalAudioOutput,
         );
+        hasBluetoothAudioOutputFromAudioSession = devices.any(
+          (device) => device.type.isBluetoothAudioOutput,
+        );
         // listen to audio session devices changed event as well, or device change event from hardware may triggered faster than audio session devices changed event
         audioSession.devicesChangedEventStream.listen((event) async {
           final sessionDevices = await audioSession.getDevices();
           final audioSessionHasExternal = sessionDevices.any(
             (device) => device.type.isExternalAudioOutput,
+          );
+          final audioSessionHasBluetooth = sessionDevices.any(
+            (device) => device.type.isBluetoothAudioOutput,
           );
           final hardwareDevices = await Hardware.instance.enumerateDevices();
           final labelSuggestingExternalAudioOutput = hardwareDevices
@@ -307,10 +317,13 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
 
           final hasExternalAudioOutput =
               labelSuggestingExternalAudioOutput || audioSessionHasExternal;
-          if (hasExternalAudioOutput != state.hasExternalAudioOutput) {
+          final hasBluetoothAudioOutput = audioSessionHasBluetooth;
+          if (hasExternalAudioOutput != state.hasExternalAudioOutput ||
+              hasBluetoothAudioOutput != state.hasBluetoothAudioOutput) {
             add(
               PreJoinAudioOutputDevicesChanged(
                 hasExternalAudioOutput: hasExternalAudioOutput,
+                hasBluetoothAudioOutput: hasBluetoothAudioOutput,
               ),
             );
           }
@@ -323,6 +336,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       final hasExternalAudioOutput =
           hasLabelSuggestingExternalAudioOutput ||
           hasExternalAudioOutputFromAudioSession;
+      final hasBluetoothAudioOutput = hasBluetoothAudioOutputFromAudioSession;
 
       LocalAudioTrack? audioTrack;
       LocalVideoTrack? videoTrack;
@@ -372,6 +386,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
           versionDisplay: versionDisplay,
           isMeetMobileSpeakerToggleEnabled: isMeetMobileSpeakerToggleEnabled,
           hasExternalAudioOutput: hasExternalAudioOutput,
+          hasBluetoothAudioOutput: hasBluetoothAudioOutput,
           videoCodec: preferredCodec, // Set based on unleash flag
         ),
       );
@@ -384,11 +399,15 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
             .where((d) => d.kind == 'audiooutput')
             .hasLabelSuggestingExternalAudioOutput;
         bool hasExternalAudioOutputFromAudioSession = false;
+        bool hasBluetoothAudioOutputFromAudioSession = false;
         try {
           final audioSession = await AudioSession.instance;
           final devices = await audioSession.getDevices();
           hasExternalAudioOutputFromAudioSession = devices.any(
             (device) => device.type.isExternalAudioOutput,
+          );
+          hasBluetoothAudioOutputFromAudioSession = devices.any(
+            (device) => device.type.isBluetoothAudioOutput,
           );
         } catch (e) {
           l.logger.w('[PreJoinBloc] Error checking audio session: $e');
@@ -397,10 +416,13 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         // Identify if there is any external audio output devic based on label or audio session
         final hasExternalAudioOutput =
             nextHasExternal || hasExternalAudioOutputFromAudioSession;
+        final hasBluetoothAudioOutput =
+            hasBluetoothAudioOutputFromAudioSession;
 
         add(
           PreJoinAudioOutputDevicesChanged(
             hasExternalAudioOutput: hasExternalAudioOutput,
+            hasBluetoothAudioOutput: hasBluetoothAudioOutput,
           ),
         );
       });

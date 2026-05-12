@@ -121,7 +121,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   bool _showParticipantList = false;
   bool _showSettings = false;
   bool _showMeetingInfo = false;
-  bool _showSpeakerPhonePanel = false;
   bool _isLandscape = false;
   bool _isScreenSharing = false;
   bool _hideSelfCamera = false;
@@ -2134,10 +2133,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
               ///
               if (_showMeetingInfo) buildMeetingInfo(context),
-
-              ///
-              if (_showSpeakerPhonePanel)
-                buildSpeakerPhonePanel(context, width: constraints.maxWidth),
             ],
           );
         },
@@ -2238,8 +2233,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               if (_showChatBubble) buildChatBubble(context),
               if (_showSettings) buildMeetingSettings(context),
               if (_showMeetingInfo) buildMeetingInfo(context),
-              if (_showSpeakerPhonePanel)
-                buildSpeakerPhonePanel(context, width: constraints.maxWidth),
             ],
           );
         },
@@ -2392,15 +2385,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                   !context.isAtLeastMedium &&
                   _bloc.state.isMeetMobileSpeakerToggleEnabled,
               onSpeakerButtonPressed: () {
-                setState(() {
-                  _showSpeakerPhonePanel = !_showSpeakerPhonePanel;
-                  if (_showSpeakerPhonePanel) {
-                    _showChatBubble = false;
-                    _showParticipantList = false;
-                    _showMeetingInfo = false;
-                    _showSettings = false;
-                  }
-                });
+                _openSpeakerPhonePanel(context);
               },
             ),
           ),
@@ -2540,7 +2525,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                       if (_showParticipantList) {
                         _showChatBubble = false;
                         _showSettings = false;
-                        _showSpeakerPhonePanel = false;
                       }
                     });
                   },
@@ -2563,7 +2547,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                         _lastOpenChatTime = DateTime.now();
                         _showParticipantList = false;
                         _showSettings = false;
-                        _showSpeakerPhonePanel = false;
                       }
                     });
                   },
@@ -2579,7 +2562,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                       if (_showSettings) {
                         _showChatBubble = false;
                         _showParticipantList = false;
-                        _showSpeakerPhonePanel = false;
                       }
                     });
                   },
@@ -2596,7 +2578,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                         _showChatBubble = false;
                         _showParticipantList = false;
                         _showSettings = false;
-                        _showSpeakerPhonePanel = false;
                       }
                     });
                   },
@@ -2966,29 +2947,23 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
-  Widget buildSpeakerPhonePanel(BuildContext context, {double width = 300.0}) {
-    return SidePanelOrSheet(
-      isScreenSharing: _isScreenSharing,
-      isCameraView: _isCameraView,
-      maxWidth: maxMobileSheetWidth,
-      child: buildSpeakerPhoneContent(context, width: width),
-      onDismissed: () {
-        setState(() {
-          _showSpeakerPhonePanel = false;
-        });
+  void _openSpeakerPhonePanel(BuildContext context) {
+    final roomBloc = context.read<RoomBloc>();
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
+      ),
+      builder: (BuildContext context) {
+        return BlocProvider<RoomBloc>.value(
+          value: roomBloc,
+          child: SafeArea(
+            child: IntrinsicHeight(child: const SpeakerPhonePanel()),
+          ),
+        );
       },
-    );
-  }
-
-  Widget buildSpeakerPhoneContent(
-    BuildContext context, {
-    double width = 300.0,
-  }) {
-    return Container(
-      width: width,
-      height: context.height,
-      color: Colors.transparent,
-      child: const SpeakerPhonePanel(),
     );
   }
 

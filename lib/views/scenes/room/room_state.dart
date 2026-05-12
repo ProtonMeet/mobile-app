@@ -147,6 +147,9 @@ class RoomState extends Equatable {
   /// True when headphones / headset / Bluetooth audio output is present (from device labels).
   final bool hasExternalAudioOutput;
 
+  /// True when a Bluetooth audio output device is present (from audio session).
+  final bool hasBluetoothAudioOutput;
+
   /// Room initialized state - true when initial setup is complete and room is ready to display
   final bool isRoomInitialized;
 
@@ -271,6 +274,7 @@ class RoomState extends Equatable {
     this.currentCameraPosition,
     this.audioDeviceCount = 0,
     this.hasExternalAudioOutput = false,
+    this.hasBluetoothAudioOutput = false,
     this.isRoomInitialized = false,
     this.isTrackInitialized = false,
     this.isRejoining = false,
@@ -337,6 +341,7 @@ class RoomState extends Equatable {
     CameraPosition? currentCameraPosition,
     int? audioDeviceCount,
     bool? hasExternalAudioOutput,
+    bool? hasBluetoothAudioOutput,
     bool? isRoomInitialized,
     bool? isTrackInitialized,
     bool? isRejoining,
@@ -413,6 +418,8 @@ class RoomState extends Equatable {
       audioDeviceCount: audioDeviceCount ?? this.audioDeviceCount,
       hasExternalAudioOutput:
           hasExternalAudioOutput ?? this.hasExternalAudioOutput,
+      hasBluetoothAudioOutput:
+          hasBluetoothAudioOutput ?? this.hasBluetoothAudioOutput,
       isRoomInitialized: isRoomInitialized ?? this.isRoomInitialized,
       isTrackInitialized: isTrackInitialized ?? this.isTrackInitialized,
       isRejoining: isRejoining ?? this.isRejoining,
@@ -495,6 +502,7 @@ class RoomState extends Equatable {
     currentCameraPosition,
     audioDeviceCount,
     hasExternalAudioOutput,
+    hasBluetoothAudioOutput,
     isRoomInitialized,
     isTrackInitialized,
     isRejoining,

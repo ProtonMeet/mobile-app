@@ -66,6 +66,7 @@ class PreJoinState {
   final bool isSpeakerPhoneEnabled;
   final bool isMeetMobileSpeakerToggleEnabled;
   final bool hasExternalAudioOutput;
+  final bool hasBluetoothAudioOutput;
   final bool keepDisplayNameOnDevice;
   final bool
   shouldOverrideAuthDisplayName; // true if we have cached display name to override auth name
@@ -110,6 +111,7 @@ class PreJoinState {
     this.isSpeakerPhoneEnabled = false,
     this.isMeetMobileSpeakerToggleEnabled = false,
     this.hasExternalAudioOutput = false,
+    this.hasBluetoothAudioOutput = false,
     this.keepDisplayNameOnDevice = false,
     this.shouldOverrideAuthDisplayName = false,
     this.displayNameFieldError,
@@ -155,6 +157,7 @@ class PreJoinState {
     bool? isSpeakerPhoneEnabled,
     bool? isMeetMobileSpeakerToggleEnabled,
     bool? hasExternalAudioOutput,
+    bool? hasBluetoothAudioOutput,
     bool? keepDisplayNameOnDevice,
     bool? shouldOverrideAuthDisplayName,
     bool resetDisplayNameFieldError = false,
@@ -211,6 +214,8 @@ class PreJoinState {
           this.isMeetMobileSpeakerToggleEnabled,
       hasExternalAudioOutput:
           hasExternalAudioOutput ?? this.hasExternalAudioOutput,
+      hasBluetoothAudioOutput:
+          hasBluetoothAudioOutput ?? this.hasBluetoothAudioOutput,
       keepDisplayNameOnDevice:
           keepDisplayNameOnDevice ?? this.keepDisplayNameOnDevice,
       shouldOverrideAuthDisplayName:

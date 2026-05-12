@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/helper/audio_output_display.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
+import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/views/components/safe_video_track_renderer.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_bloc.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_speaker_phone_panel.dart';
@@ -373,14 +375,21 @@ class VideoPreviewWithControls extends StatelessWidget {
               borderRadius: BorderRadius.circular(100),
             ),
           ),
-          child: context.images.iconSpeakerPhone.svg(
-            width: 20,
-            height: 20,
-            fit: BoxFit.fill,
-            colorFilter: ColorFilter.mode(
-              context.colors.textNorm,
-              BlendMode.srcIn,
+          child: BlocSelector<PreJoinBloc, PreJoinState, (bool, bool, bool)>(
+            selector: (state) => (
+              state.isSpeakerPhoneEnabled,
+              state.hasExternalAudioOutput,
+              state.hasBluetoothAudioOutput,
             ),
+            builder: (context, data) {
+              final icon = AudioOutputDisplay.icon(
+                context,
+                isSpeakerPhone: data.$1,
+                hasExternalAudioOutput: data.$2,
+                hasBluetoothAudioOutput: data.$3,
+              );
+              return icon.svg20(color: context.colors.textNorm);
+            },
           ),
         ),
       ),
