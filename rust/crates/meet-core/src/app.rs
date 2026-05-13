@@ -450,7 +450,7 @@ impl App {
     ) -> Result<UserState, MeetCoreError> {
         let id = UserId::new(user_id.clone());
         self.user_service
-            .write()
+            .read()
             .await
             .clear_local_user_profile_cache(&id)
             .await?;
@@ -529,7 +529,7 @@ impl App {
             .get_meeting_id(&user_id)
             .await?;
         self.user_service
-            .write()
+            .read()
             .await
             .set_livekit_active_uuids(&meeting_id, livekit_active_uuid_list)
             .await?;
@@ -595,7 +595,7 @@ impl App {
 
     pub async fn logout(&self, user_id: String) -> Result<(), MeetCoreError> {
         self.user_service
-            .write()
+            .read()
             .await
             .logout(&UserId::new(user_id))
             .await?;
