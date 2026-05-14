@@ -135,13 +135,21 @@ enum ProposalProcessingOutcome {
     NoStateChange,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GroupKeyUpdateReason {
+    Join,
+    Leave,
+    Mixed,
+    Unknown,
+}
+
 #[cfg(not(target_family = "wasm"))]
 pub type MlsGroupUpdateHandler =
-    Box<dyn FnMut(String) -> Box<dyn Future<Output = ()> + Unpin + Send> + Send + 'static>;
+    Box<dyn FnMut(String, GroupKeyUpdateReason) -> Box<dyn Future<Output = ()> + Unpin + Send> + Send + 'static>;
 
 #[cfg(target_family = "wasm")]
 pub type MlsGroupUpdateHandler =
-    Box<dyn FnMut(String) -> Box<dyn Future<Output = ()> + Unpin> + 'static>;
+    Box<dyn FnMut(String, GroupKeyUpdateReason) -> Box<dyn Future<Output = ()> + Unpin> + 'static>;
 
 #[cfg(not(target_family = "wasm"))]
 pub type LiveKitAdminChangeHandler = Box<
@@ -633,9 +641,23 @@ impl Service {
             state.set_mls_designated_committer_metrics(new_epoch_u32, true, mls_rank_group);
         }
         // trigger the mls group update handler to update the meeting room key
+        let key_update_reason = {
+            let has_add = all_proposals
+                .iter()
+                .any(|p| matches!(p.proposal_type, ProposalType::Add));
+            let has_remove = all_proposals
+                .iter()
+                .any(|p| matches!(p.proposal_type, ProposalType::Remove));
+            match (has_add, has_remove) {
+                (true, true) => GroupKeyUpdateReason::Mixed,
+                (true, false) => GroupKeyUpdateReason::Join,
+                (false, true) => GroupKeyUpdateReason::Leave,
+                _ => GroupKeyUpdateReason::Unknown,
+            }
+        };
         if let Some(handler) = self.mls_group_update_handler.as_ref() {
             let mut handler = handler.lock().await;
-            handler(room_id.to_string()).await;
+            handler(room_id.to_string(), key_update_reason).await;
         }
         Ok(())
     }
@@ -1872,7 +1894,7 @@ impl UserService for Service {
                     // Trigger group update handler
                     if let Some(handler) = self.mls_group_update_handler.as_ref() {
                         let mut handler = handler.lock().await;
-                        handler(meeting_link_name.to_string()).await;
+                        handler(meeting_link_name.to_string(), GroupKeyUpdateReason::Leave).await;
                     }
 
                     return Ok(());
@@ -3293,13 +3315,13 @@ impl Service {
     #[cfg(not(target_family = "wasm"))]
     pub fn set_mls_group_update_handler<F, Fut>(&mut self, callback: F)
     where
-        F: Fn(String) -> Fut + Send + 'static,
+        F: Fn(String, GroupKeyUpdateReason) -> Fut + Send + 'static,
         Fut: Future<Output = ()> + Unpin + Send + 'static,
     {
         tracing::info!("Service set mls group update handler");
         self.mls_group_update_handler = Some(Arc::new(Mutex::new(Box::new({
-            move |room_id| {
-                Box::new(callback(room_id)) as Box<dyn Future<Output = ()> + Send + Unpin>
+            move |room_id, reason| {
+                Box::new(callback(room_id, reason)) as Box<dyn Future<Output = ()> + Send + Unpin>
             }
         }))));
     }
@@ -3307,11 +3329,13 @@ impl Service {
     #[cfg(target_family = "wasm")]
     pub fn set_mls_group_update_handler<F, Fut>(&mut self, callback: F)
     where
-        F: Fn(String) -> Fut + 'static,
+        F: Fn(String, GroupKeyUpdateReason) -> Fut + 'static,
         Fut: Future<Output = ()> + Unpin + 'static,
     {
         self.mls_group_update_handler = Some(Arc::new(Mutex::new(Box::new({
-            move |room_id| Box::new(callback(room_id)) as Box<dyn Future<Output = ()> + Unpin>
+            move |room_id, reason| {
+                Box::new(callback(room_id, reason)) as Box<dyn Future<Output = ()> + Unpin>
+            }
         }))));
     }
 
@@ -3870,10 +3894,37 @@ impl Service {
 
         drop(mls_group);
 
+        let key_update_reason = match &received_message {
+            ReceivedMessage::Commit { output, .. } => {
+                let has_add = output.applied_proposals.iter().any(|p| {
+                    matches!(
+                        &p.effect,
+                        mls_trait::types::ProposalEffect::Add(_)
+                            | mls_trait::types::ProposalEffect::ExternalInit(_)
+                            | mls_trait::types::ProposalEffect::SelfExternalInit
+                    )
+                });
+                let has_remove = output.applied_proposals.iter().any(|p| {
+                    matches!(
+                        &p.effect,
+                        mls_trait::types::ProposalEffect::Remove(_)
+                            | mls_trait::types::ProposalEffect::SelfRemove(_)
+                    )
+                });
+                match (has_add, has_remove) {
+                    (true, true) => GroupKeyUpdateReason::Mixed,
+                    (true, false) => GroupKeyUpdateReason::Join,
+                    (false, true) => GroupKeyUpdateReason::Leave,
+                    _ => GroupKeyUpdateReason::Unknown,
+                }
+            }
+            _ => GroupKeyUpdateReason::Unknown,
+        };
+
         // trigger the group update callback outside of locks to prevent lock inversion
         if let Some(handler) = self.mls_group_update_handler.as_ref() {
             let mut handler = handler.lock().await;
-            handler(room_id.to_string()).await;
+            handler(room_id.to_string(), key_update_reason).await;
         }
 
         let _unused_proposals = match received_message {

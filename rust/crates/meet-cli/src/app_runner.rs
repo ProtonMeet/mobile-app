@@ -83,7 +83,7 @@ impl AppRunner {
         let display_name = self.display_name.clone();
 
         self.app
-            .set_mls_group_update_handler(move |room_id| {
+            .set_mls_group_update_handler(move |room_id, _reason| {
                 let app_inner = app_clone.clone();
                 let tag = display_name.clone();
                 Box::pin(async move {

@@ -900,7 +900,7 @@ impl App {
 
     pub async fn set_mls_group_update_handler<F, Fut>(&self, callback: F)
     where
-        F: Fn(String) -> Fut + Send + 'static,
+        F: Fn(String, crate::service::service::GroupKeyUpdateReason) -> Fut + Send + 'static,
         Fut: Future<Output = ()> + Unpin + Send + 'static,
     {
         self.user_service
@@ -2559,6 +2559,29 @@ impl From<RejoinReasonInfo> for RejoinReason {
     }
 }
 
+#[cfg_attr(target_family = "wasm", wasm_bindgen)]
+#[repr(u8)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GroupKeyUpdateReasonInfo {
+    Join = 0,
+    Leave = 1,
+    Mixed = 2,
+    Unknown = 3,
+}
+
+#[cfg(target_family = "wasm")]
+impl From<crate::service::service::GroupKeyUpdateReason> for GroupKeyUpdateReasonInfo {
+    fn from(reason: crate::service::service::GroupKeyUpdateReason) -> Self {
+        use crate::service::service::GroupKeyUpdateReason;
+        match reason {
+            GroupKeyUpdateReason::Join => GroupKeyUpdateReasonInfo::Join,
+            GroupKeyUpdateReason::Leave => GroupKeyUpdateReasonInfo::Leave,
+            GroupKeyUpdateReason::Mixed => GroupKeyUpdateReasonInfo::Mixed,
+            GroupKeyUpdateReason::Unknown => GroupKeyUpdateReasonInfo::Unknown,
+        }
+    }
+}
+
 #[cfg(target_family = "wasm")]
 impl From<ConnectionState> for ConnectionStateInfo {
     fn from(state: ConnectionState) -> Self {
@@ -2885,9 +2908,10 @@ impl App {
         self.user_service
             .write()
             .await
-            .set_mls_group_update_handler(|meeting_link_name| {
+            .set_mls_group_update_handler(|meeting_link_name, reason| {
                 Box::pin(async move {
-                    new_group_key_for(meeting_link_name.clone());
+                    let reason_info: GroupKeyUpdateReasonInfo = reason.into();
+                    new_group_key_for(meeting_link_name, reason_info);
                 })
             });
         Ok(())
@@ -3033,7 +3057,7 @@ impl App {
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(js_namespace = newGroupKeyEvent)]
-    pub fn new_group_key_for(meeting_link_name: String);
+    pub fn new_group_key_for(meeting_link_name: String, reason: GroupKeyUpdateReasonInfo);
 
     #[wasm_bindgen(js_namespace = livekitAdminChangeEvent)]
     pub fn on_livekit_admin_changed(
