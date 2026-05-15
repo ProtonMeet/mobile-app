@@ -126,6 +126,9 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
   /// icons for session expired dialog
   final SvgGenImage iconSessionExpired;
 
+  /// icons for recording top banner
+  final SvgGenImage iconRecordingFilled;
+
   const ProtonImages({
     required this.protonMeetBarLogo,
     required this.iconSettings,
@@ -209,6 +212,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
     required this.iconFeedbackStar,
     required this.iconFeedbackStarBorder,
     required this.iconSessionExpired,
+    required this.iconRecordingFilled,
   });
 
   @override
@@ -295,6 +299,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
     SvgGenImage? iconFeedbackStar,
     SvgGenImage? iconFeedbackStarBorder,
     SvgGenImage? iconSessionExpired,
+    SvgGenImage? iconRecordingFilled,
   }) {
     return ProtonImages(
       protonMeetBarLogo: protonMeetBarLogo ?? this.protonMeetBarLogo,
@@ -387,6 +392,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
       iconFeedbackStarBorder:
           iconFeedbackStarBorder ?? this.iconFeedbackStarBorder,
       iconSessionExpired: iconSessionExpired ?? this.iconSessionExpired,
+      iconRecordingFilled: iconRecordingFilled ?? this.iconRecordingFilled,
     );
   }
 
@@ -478,6 +484,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
       iconFeedbackStar: other.iconFeedbackStar,
       iconFeedbackStarBorder: other.iconFeedbackStarBorder,
       iconSessionExpired: other.iconSessionExpired,
+      iconRecordingFilled: other.iconRecordingFilled,
     );
   }
 }
@@ -565,6 +572,7 @@ final lightImageExtension = ProtonImages(
   iconFeedbackStar: Assets.images.icon.icStarRateFilled,
   iconFeedbackStarBorder: Assets.images.icon.icStarRateEmpty,
   iconSessionExpired: Assets.images.icon.icSessionExpired,
+  iconRecordingFilled: Assets.images.icon.icRecordingFilled,
 );
 
 final darkImageExtension = ProtonImages(
@@ -650,4 +658,5 @@ final darkImageExtension = ProtonImages(
   iconFeedbackStar: Assets.images.icon.icStarRateFilled,
   iconFeedbackStarBorder: Assets.images.icon.icStarRateEmpty,
   iconSessionExpired: Assets.images.icon.icSessionExpired,
+  iconRecordingFilled: Assets.images.icon.icRecordingFilled,
 );

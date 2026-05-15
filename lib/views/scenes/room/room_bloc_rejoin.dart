@@ -13,6 +13,7 @@ import 'package:meet/managers/room.manager.dart';
 import 'package:meet/rust/errors.dart';
 import 'package:meet/rust/proton_meet/models/meet_participant.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
+import 'package:meet/views/scenes/room/recording/recording_status_handler.dart';
 import 'package:meet/views/scenes/room/room_bloc.dart';
 import 'package:meet/views/scenes/room/room_event.dart';
 import 'package:meet/views/scenes/room/room_state.dart';
@@ -783,11 +784,35 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
         currentAudioInputDeviceId: state.currentAudioInputDeviceId,
         currentVideoInputDeviceId: state.currentVideoInputDeviceId,
         currentAudioOutputDeviceId: state.currentAudioOutputDeviceId,
+        participantsRecording: state.participantsRecording,
       );
       emit(newState);
 
       // Update participant list to reflect the new room
       add(SortParticipants());
+
+      // Re-sync server-recording state after the new LiveKit connection.
+      // `RoomRecordingStatusChanged` is gated by `emitWhenConnected`, so it
+      // can be missed during the rejoin handshake. Toggling the synthetic
+      // recorder identity based on the fresh `room.isRecording` keeps the
+      // banner in sync with the actual egress state.
+      final hasServerRecording = state.participantsRecording.contains(
+        kServerRecordingIdentity,
+      );
+      if (newRoom.isRecording && !hasServerRecording) {
+        add(
+          const ParticipantRecordingStarted(
+            identity: kServerRecordingIdentity,
+          ),
+        );
+      } else if (!newRoom.isRecording && hasServerRecording) {
+        add(
+          const ParticipantRecordingStopped(
+            identity: kServerRecordingIdentity,
+          ),
+        );
+      }
+
       if (!isClosed) {
         add(RejoinMeetingCompleted());
       }

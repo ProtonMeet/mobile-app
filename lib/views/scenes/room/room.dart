@@ -72,6 +72,8 @@ import 'envelope_sender.dart';
 import 'info/meeting_info_panel.dart';
 import 'message_topic.dart';
 import 'pip_view.dart';
+import 'recording/recording_status_handler.dart';
+import 'recording/recording_top_banner.dart';
 import 'room_bloc.dart';
 import 'room_event.dart';
 import 'room_reconnection_listeners.dart';
@@ -146,6 +148,21 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   /// LiveKit transport reconnects during this meeting (for store-review quality).
   bool _hadLiveKitTransportIssuesThisMeeting = false;
   final Map<String, ParticipantReaction> _activeReactions = {};
+
+  /// Recording-status envelopes received before [RoomState.isRoomInitialized]
+  /// flipped true. We can't validate them yet because the participant map (and
+  /// therefore admin/host lookup) isn't loaded. Drained by
+  /// [_processPendingRecordingStatus] once the room is ready.
+  final List<
+    ({
+      Map<String, dynamic> envelope,
+      String? decryptedPlaintext,
+      String? mlsSenderId,
+      String? liveKitSenderIdentity,
+    })
+  >
+  _pendingRecordingStatuses = [];
+  Timer? _pendingRecordingStatusTimer;
 
   @override
   void initState() {
@@ -275,6 +292,10 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     _deviceChangeSub = null;
     _appStateSubscription?.cancel();
     _appStateSubscription = null;
+
+    _pendingRecordingStatusTimer?.cancel();
+    _pendingRecordingStatusTimer = null;
+    _pendingRecordingStatuses.clear();
 
     // Dispose call activity action channel
     //TODO(fix): move to room_bloc.dart
@@ -607,14 +628,18 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       });
     })
     ..on<RoomRecordingStatusChanged>((event) {
+      // Server-initiated recordings (LiveKit egress) — surface as a synthetic
+      // recorder identity in the multi-recording set so the banner appears
+      // for everyone. We dedupe by a sentinel identity that no real
+      // participant can collide with.
       if (event.activeRecording) {
-        context.showRecordingStatusChangedDialog(
-          onLeaveMeeting: () async {
-            await _leaveRoom();
-          },
+        _bloc.add(
+          const ParticipantRecordingStarted(identity: kServerRecordingIdentity),
         );
       } else {
-        LocalToast.showToast(context, context.local.room_recording_stopped);
+        _bloc.add(
+          const ParticipantRecordingStopped(identity: kServerRecordingIdentity),
+        );
       }
     })
     ..on<DataReceivedEvent>((event) async {
@@ -628,8 +653,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           );
           if (topic == MessageTopic.e2eeMessage) {
             await _handleE2EEMessage(event);
-          } else if (topic == MessageTopic.recordingStatus) {
-            await _handleRecordingStatus(event);
           }
         } catch (e) {
           if (mounted) {
@@ -1003,21 +1026,72 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _handleRecordingStatus(DataReceivedEvent event) async {
-    final data = utf8.decode(event.data);
-    final messageJson = jsonDecode(data);
-    final message = messageJson['message'];
-    final recordingStatus = RecordingStatus.values.firstWhere(
-      (e) => e.name.toLowerCase() == message.toLowerCase(),
+  /// Validates an incoming recording-status envelope
+  /// and dispatches the appropriate bloc event. Banner / consent modal are
+  /// driven off bloc state changes (see [RecordingTopBanner] and the
+  /// BlocListener in [build]) rather than imperatively from here, so a
+  /// single source of truth governs the UI.
+  void _handleRecordingStatus({
+    required Map<String, dynamic> envelope,
+    required String? decryptedPlaintext,
+    required String? mlsSenderId,
+    required String? liveKitSenderIdentity,
+  }) {
+    final isSenderAdminOrHost = liveKitSenderIdentity != null
+        ? _isParticipantAdminOrHost(liveKitSenderIdentity)
+        : false;
+
+    final result = RecordingStatusReceiver.validate(
+      envelope: envelope,
+      decryptedPlaintext: decryptedPlaintext,
+      mlsSenderId: mlsSenderId,
+      liveKitSenderIdentity: liveKitSenderIdentity,
+      isSenderAdminOrHost: isSenderAdminOrHost,
     );
-    if (recordingStatus == RecordingStatus.started) {
-      context.showRecordingStatusChangedDialog(
-        onLeaveMeeting: () async {
-          await _leaveRoom();
-        },
+
+    switch (result.decision) {
+      case RecordingStatusDecision.started:
+        _bloc.add(ParticipantRecordingStarted(identity: result.senderIdentity));
+      case RecordingStatusDecision.stopped:
+        _bloc.add(ParticipantRecordingStopped(identity: result.senderIdentity));
+      case RecordingStatusDecision.drop:
+        break;
+    }
+  }
+
+  /// Drains [_pendingRecordingStatuses] once the room is initialized. While
+  /// the room is still warming up we keep polling every 1s — cheap because
+  /// the queue is usually empty and the timer is one-shot per tick.
+  void _processPendingRecordingStatus() {
+    if (_pendingRecordingStatuses.isEmpty) {
+      _pendingRecordingStatusTimer?.cancel();
+      _pendingRecordingStatusTimer = null;
+      return;
+    }
+
+    if (!_bloc.state.isRoomInitialized) {
+      // Schedule a re-check; replace any in-flight timer so we don't stack
+      // multiple drains.
+      _pendingRecordingStatusTimer?.cancel();
+      _pendingRecordingStatusTimer = Timer(const Duration(seconds: 1), () {
+        if (!mounted) return;
+        _processPendingRecordingStatus();
+      });
+      return;
+    }
+
+    final drained = List.of(_pendingRecordingStatuses);
+    _pendingRecordingStatuses.clear();
+    _pendingRecordingStatusTimer?.cancel();
+    _pendingRecordingStatusTimer = null;
+
+    for (final args in drained) {
+      _handleRecordingStatus(
+        envelope: args.envelope,
+        decryptedPlaintext: args.decryptedPlaintext,
+        mlsSenderId: args.mlsSenderId,
+        liveKitSenderIdentity: args.liveKitSenderIdentity,
       );
-    } else {
-      LocalToast.showToast(context, context.local.room_recording_stopped);
     }
   }
 
@@ -1090,6 +1164,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       PublishableDataType.emojiReaction,
       PublishableDataType.raiseHand,
       PublishableDataType.chatMessageReaction,
+      PublishableDataType.recordingStatus,
     };
 
     final encryptedText = message is String ? message : null;
@@ -1214,7 +1289,25 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
         return;
       case PublishableDataType.recordingStatus:
-        await _handleRecordingStatus(event);
+        if (_bloc.state.isRoomInitialized) {
+          _handleRecordingStatus(
+            envelope: messageJson,
+            decryptedPlaintext: decryptedMessage,
+            mlsSenderId: trustedSenderId,
+            liveKitSenderIdentity: event.participant?.identity,
+          );
+        } else {
+          // Defer until the room (and participant map) is ready; otherwise
+          // `_isParticipantAdminOrHost` returns false and the receiver
+          // silently drops the message.
+          _pendingRecordingStatuses.add((
+            envelope: messageJson,
+            decryptedPlaintext: decryptedMessage,
+            mlsSenderId: trustedSenderId,
+            liveKitSenderIdentity: event.participant?.identity,
+          ));
+          _processPendingRecordingStatus();
+        }
         return;
       case null:
         l.logger.w(
@@ -1969,6 +2062,20 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               }); // triggers rebuild manually
             },
           ),
+          // Show the consent modal once on every off→on transition. The
+          // banner stays up for the whole duration; this listener only fires
+          // on the *edge*.
+          BlocListener<RoomBloc, RoomState>(
+            listenWhen: (prev, curr) =>
+                !prev.isRecordingInProgress && curr.isRecordingInProgress,
+            listener: (context, state) {
+              context.showRecordingStatusChangedDialog(
+                onLeaveMeeting: () async {
+                  await _leaveRoom();
+                },
+              );
+            },
+          ),
         ],
         child: RoomReconnectionListeners(
           onLeaveRoom: _leaveRoom,
@@ -2266,6 +2373,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           children: [
             Column(
               children: [
+                const RecordingTopBanner(),
                 if (!isPipMode && isRoomReady)
                   _buildHeaderWithSlide(
                     context: context,
@@ -3124,6 +3232,19 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
           final participants = <ParticipantDetail>[];
 
+          // Pull the host/admin + recording-set lookups once instead of
+          // re-querying them per row.
+          final frbParticipantsMap = blocState.frbParticipantsMap;
+          final showRecordingChips = _bloc.isMeetMultipleRecordingEnabled();
+          bool participantIsHost(String identity) {
+            final p = frbParticipantsMap[identity];
+            if (p == null) return false;
+            return p.isAdmin == 1 || p.isHost == 1;
+          }
+
+          bool participantIsRecording(String identity) =>
+              showRecordingChips && blocState.isParticipantRecording(identity);
+
           // Add local participant
           if (localParticipant != null) {
             participants.add(
@@ -3144,8 +3265,10 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                             ?.muted ==
                         false,
                 isMe: true,
+                isHost: participantIsHost(localParticipant.identity),
                 isRaisedHand:
                     raisedHandsByIdentity[localParticipant.identity] == true,
+                isRecording: participantIsRecording(localParticipant.identity),
                 participant: localParticipant,
               ),
             );
@@ -3162,7 +3285,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                 hasVideo:
                     element.hasVideo &&
                     element.videoTrackPublications.firstOrNull?.muted == false,
+                isHost: participantIsHost(element.identity),
                 isRaisedHand: raisedHandsByIdentity[element.identity] == true,
+                isRecording: participantIsRecording(element.identity),
                 participant: element,
               ),
             ),

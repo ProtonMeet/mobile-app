@@ -27,6 +27,7 @@ import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
 import 'package:meet/views/scenes/utils.dart' as utils;
 import 'package:sentry/sentry.dart';
 
+import 'recording/recording_status_handler.dart';
 import 'room_bloc_alone_meeting.dart';
 import 'room_bloc_connection_check.dart';
 import 'room_bloc_data.dart';
@@ -247,6 +248,9 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     /// see: room_bloc_settings.dart
     registerSettingsHandlers();
 
+    on<ParticipantRecordingStarted>(_onParticipantRecordingStarted);
+    on<ParticipantRecordingStopped>(_onParticipantRecordingStopped);
+
     on<AddSystemMessage>(_onAddSystemMessageReceived);
 
     /// register system message handlers
@@ -277,6 +281,31 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
 
     /// video operations
     on<SwapCamera>(_onSwapCamera);
+  }
+
+  void _onParticipantRecordingStarted(
+    ParticipantRecordingStarted event,
+    Emitter<RoomState> emit,
+  ) {
+    if (state.participantsRecording.contains(event.identity)) {
+      return;
+    }
+    final next = List<String>.of(state.participantsRecording)
+      ..add(event.identity);
+    emit(state.copyWith(participantsRecording: next));
+  }
+
+  void _onParticipantRecordingStopped(
+    ParticipantRecordingStopped event,
+    Emitter<RoomState> emit,
+  ) {
+    if (!state.participantsRecording.contains(event.identity)) {
+      return;
+    }
+    final next = state.participantsRecording
+        .where((id) => id != event.identity)
+        .toList(growable: false);
+    emit(state.copyWith(participantsRecording: next));
   }
 
   void _onSetParticipantRaisedHand(
@@ -581,6 +610,20 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
 
     if (event.preJoinType == PreJoinType.create) {
       emit(state.copyWith(showMeetingIsReady: true));
+    }
+
+    // Late-join recording sync.
+    //
+    // LiveKit's `RoomRecordingStatusChanged` event is gated by
+    // `emitWhenConnected`, so if egress was already active when we joined the
+    // event may never fire on the listener attached in `room.dart`. Reading
+    // `room.isRecording` directly avoids that race and ensures the banner +
+    // consent dialog appear for late joiners of server-recorded meetings.
+    if (state.room.isRecording &&
+        !state.participantsRecording.contains(kServerRecordingIdentity)) {
+      add(
+        const ParticipantRecordingStarted(identity: kServerRecordingIdentity),
+      );
     }
 
     // Fetch meeting info from appCore to show maximum participant limits to user

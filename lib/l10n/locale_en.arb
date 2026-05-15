@@ -437,9 +437,36 @@
   "@recording_consent_message": {
     "description": "Message about recording consent"
   },
+  "recording_in_progress": "Recording in progress",
+  "@recording_in_progress": {
+    "description": "Top banner shown to all participants when the meeting is being recorded"
+  },
+  "recording_in_progress_with_name": "Recording in progress · {name} is recording",
+  "@recording_in_progress_with_name": {
+    "description": "Top banner when exactly one named participant is recording",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "recording_in_progress_with_name_and_others": "Recording in progress · {name} and {count} others are recording",
+  "@recording_in_progress_with_name_and_others": {
+    "description": "Top banner when multiple participants are recording",
+    "placeholders": {
+      "name": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "recording_label": "Recording",
+  "@recording_label": {
+    "description": "Chip shown next to participants currently recording the meeting"
+  },
   "agree_and_continue": "Agree and continue",
   "@agree_and_continue": {
     "description": "Button text to agree and continue in meeting"
+  },
+  "continue_button": "Continue",
+  "@continue_button": {
+    "description": "Button text to continue in meeting"
   },
   "allow_subscription": "Allow subscription",
   "@allow_subscription": {

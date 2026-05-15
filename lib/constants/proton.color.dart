@@ -104,6 +104,7 @@ class ProtonColors extends ThemeExtension<ProtonColors> {
   final Color meetingHeaderTextColor;
   final Color meetingHeaderGradientStart;
   final Color meetingHeaderGradientEnd;
+  final Color recordingTopBanner;
 
   const ProtonColors({
     required this.white,
@@ -187,6 +188,7 @@ class ProtonColors extends ThemeExtension<ProtonColors> {
     required this.meetingHeaderGradientEnd,
     required this.backgroundTimePicker,
     required this.greenInteractionNormMajor1,
+    required this.recordingTopBanner,
   });
 
   @override
@@ -281,6 +283,7 @@ class ProtonColors extends ThemeExtension<ProtonColors> {
     Color? meetingHeaderGradientEnd,
     Color? backgroundTimePicker,
     Color? greenInteractionNormMajor1,
+    Color? recordingTopBanner,
   }) {
     return ProtonColors(
       white: white ?? this.white,
@@ -403,6 +406,7 @@ class ProtonColors extends ThemeExtension<ProtonColors> {
       backgroundTimePicker: backgroundTimePicker ?? this.backgroundTimePicker,
       greenInteractionNormMajor1:
           greenInteractionNormMajor1 ?? this.greenInteractionNormMajor1,
+      recordingTopBanner: recordingTopBanner ?? this.recordingTopBanner,
     );
   }
 
@@ -717,6 +721,11 @@ class ProtonColors extends ThemeExtension<ProtonColors> {
         other.greenInteractionNormMajor1,
         t,
       )!,
+      recordingTopBanner: Color.lerp(
+        recordingTopBanner,
+        other.recordingTopBanner,
+        t,
+      )!,
     );
   }
 }
@@ -804,6 +813,7 @@ final lightColorsExtension = ProtonColors(
   backgroundTimePicker: const Color(0xFF4A4478),
   redInteractionNormMajor1: const Color(0xFFFF8A8A),
   greenInteractionNormMajor1: const Color(0xFF9EEA9F),
+  recordingTopBanner: const Color(0xFF2E2952),
 );
 // Dark theme colors
 final darkColorsExtension = ProtonColors(
@@ -888,4 +898,5 @@ final darkColorsExtension = ProtonColors(
   backgroundTimePicker: const Color(0xFF4A4478),
   redInteractionNormMajor1: const Color(0xFFFF8A8A),
   greenInteractionNormMajor1: const Color(0xFF9EEA9F),
+  recordingTopBanner: const Color(0xFF2E2952),
 );

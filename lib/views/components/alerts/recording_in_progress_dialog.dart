@@ -86,7 +86,7 @@ class RecordingInProgressDialog extends StatelessWidget {
                           height: 64,
                           clipBehavior: Clip.antiAlias,
                           decoration: const BoxDecoration(),
-                          child: context.images.iconEarlyAccess.svg(
+                          child: context.images.iconRecordingFilled.svg(
                             width: 64,
                             height: 64,
                             fit: BoxFit.fitWidth,
@@ -138,7 +138,7 @@ class RecordingInProgressDialog extends StatelessWidget {
                                   ),
                                 ),
                                 child: Text(
-                                  context.local.agree_and_continue,
+                                  context.local.continue_button,
                                   style: ProtonStyles.body1Semibold(
                                     color: context.colors.textInverted,
                                   ),

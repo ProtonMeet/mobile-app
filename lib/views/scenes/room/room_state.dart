@@ -199,6 +199,19 @@ class RoomState extends Equatable {
   final String? currentVideoInputDeviceId;
   final String? currentAudioOutputDeviceId;
 
+  /// Identities of participants currently recording the meeting.
+  ///
+  /// Maintained insertion-ordered (matches the web `string[]` interface) so
+  /// the banner can pick a "first" recorder deterministically.
+  final List<String> participantsRecording;
+
+  /// True if anyone in the room is currently recording.
+  bool get isRecordingInProgress => participantsRecording.isNotEmpty;
+
+  /// True if [identity] is in the active recorder set.
+  bool isParticipantRecording(String identity) =>
+      participantsRecording.contains(identity);
+
   /// Check if the local participant is the host/admin using API data
   /// This matches the WebApp approach which checks IsAdmin or IsHost from the backend
   bool get isHost {
@@ -292,6 +305,7 @@ class RoomState extends Equatable {
     this.currentAudioInputDeviceId,
     this.currentVideoInputDeviceId,
     this.currentAudioOutputDeviceId,
+    this.participantsRecording = const [],
   });
 
   RoomState copyWith({
@@ -359,6 +373,7 @@ class RoomState extends Equatable {
     String? currentAudioInputDeviceId,
     String? currentVideoInputDeviceId,
     String? currentAudioOutputDeviceId,
+    List<String>? participantsRecording,
   }) {
     return RoomState(
       room: room,
@@ -444,6 +459,8 @@ class RoomState extends Equatable {
           currentVideoInputDeviceId ?? this.currentVideoInputDeviceId,
       currentAudioOutputDeviceId:
           currentAudioOutputDeviceId ?? this.currentAudioOutputDeviceId,
+      participantsRecording:
+          participantsRecording ?? this.participantsRecording,
     );
   }
 
@@ -520,5 +537,6 @@ class RoomState extends Equatable {
     currentAudioInputDeviceId,
     currentVideoInputDeviceId,
     currentAudioOutputDeviceId,
+    participantsRecording,
   ];
 }

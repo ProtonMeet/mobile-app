@@ -35,6 +35,7 @@ enum UnleashFeature {
   meetShowProtonCalendar,
   meetFeedbackOnSkip,
   meetInAppStoreReview,
+  meetMultipleRecording,
 }
 
 /// Function to retrieve all default toggles
@@ -85,6 +86,8 @@ extension UnleashFeatureExt on UnleashFeature {
         return "MeetInAppStoreReview";
       case UnleashFeature.meetNewSwitchJoinType:
         return "MeetNewSwitchJoinType";
+      case UnleashFeature.meetMultipleRecording:
+        return "MeetMultipleRecording";
     }
   }
 
@@ -326,4 +329,7 @@ class UnleashDataProvider extends DataProvider {
   /// When false, deferred / store [InAppReview] flows are disabled (Unleash kill switch).
   bool isMeetInAppStoreReviewEnabled() =>
       isFeatureEnabled(UnleashFeature.meetInAppStoreReview);
+
+  bool isMeetMultipleRecording() =>
+      isFeatureEnabled(UnleashFeature.meetMultipleRecording);
 }
