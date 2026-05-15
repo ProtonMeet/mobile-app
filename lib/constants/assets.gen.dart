@@ -228,6 +228,10 @@ class $AssetsImagesIconGen {
   /// File path: assets/images/icon/ic-plus.svg
   SvgGenImage get icPlus => const SvgGenImage('assets/images/icon/ic-plus.svg');
 
+  /// File path: assets/images/icon/ic-recording-filled.svg
+  SvgGenImage get icRecordingFilled =>
+      const SvgGenImage('assets/images/icon/ic-recording-filled.svg');
+
   /// File path: assets/images/icon/ic-recurring.svg
   SvgGenImage get icRecurring =>
       const SvgGenImage('assets/images/icon/ic-recurring.svg');
@@ -372,6 +376,7 @@ class $AssetsImagesIconGen {
     icPhone,
     icPinAngled,
     icPlus,
+    icRecordingFilled,
     icRecurring,
     icReload,
     icSecurityIndicator,

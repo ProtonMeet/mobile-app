@@ -120,6 +120,12 @@ mixin RoomParticipantsHandlers on Bloc<RoomBlocEvent, RoomState> {
       emit(state.copyWith(leftParticipants: leftParticipants.toList()));
     }
     _updateLivekitActiveUuids();
+
+    // Auto-clear stale recording state when a recorder drops out without
+    // sending us a Stopped envelope, otherwise the banner could get stuck.
+    if (state.participantsRecording.contains(participantIdentity)) {
+      add(ParticipantRecordingStopped(identity: participantIdentity));
+    }
   }
 
   /// Updates the list of active LiveKit participant UUIDs in AppCore.

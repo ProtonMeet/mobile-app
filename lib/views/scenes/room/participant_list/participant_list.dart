@@ -405,11 +405,17 @@ class _ParticipantListState extends State<ParticipantList> {
                               ),
                           ],
                         ),
-                        if (p.isHost)
+                        if (p.isHost || p.isRecording)
                           Text(
-                            'Meeting host',
+                            _composeStatusLine(
+                              isHost: p.isHost,
+                              isRecording: p.isRecording,
+                              recordingLabel: context.local.recording_label,
+                            ),
                             style: ProtonStyles.body2Regular(
-                              color: context.colors.textWeak,
+                              color: p.isRecording
+                                  ? context.colors.signalDanger
+                                  : context.colors.textWeak,
                             ),
                           ),
                       ],
@@ -631,6 +637,21 @@ class _ParticipantListState extends State<ParticipantList> {
   }
 }
 
+/// Composes the small status line under a participant's name. Web layers
+/// these the same way: `Host · Recording`, with `Recording` only visible when
+/// MeetMultipleRecording is enabled (the source data is gated upstream).
+String _composeStatusLine({
+  required bool isHost,
+  required bool isRecording,
+  required String recordingLabel,
+}) {
+  final parts = <String>[
+    if (isHost) 'Host',
+    if (isRecording) recordingLabel,
+  ];
+  return parts.join(' · ');
+}
+
 class ParticipantDetail {
   final String name;
   final bool hasVideo;
@@ -638,6 +659,7 @@ class ParticipantDetail {
   final bool isHost;
   final bool isMe;
   final bool isRaisedHand;
+  final bool isRecording;
   final Participant<TrackPublication<Track>>? participant;
 
   ParticipantDetail({
@@ -647,6 +669,7 @@ class ParticipantDetail {
     this.isHost = false,
     this.isMe = false,
     this.isRaisedHand = false,
+    this.isRecording = false,
     this.participant,
   });
 }

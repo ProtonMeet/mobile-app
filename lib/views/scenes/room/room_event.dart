@@ -347,3 +347,25 @@ class SetParticipantRaisedHand extends RoomBlocEvent {
   @override
   List<Object?> get props => [identity, raised];
 }
+
+/// A remote participant just announced they started recording (validated &
+/// MLS-decrypted by the receiver before being dispatched).
+class ParticipantRecordingStarted extends RoomBlocEvent {
+  final String identity;
+
+  const ParticipantRecordingStarted({required this.identity});
+
+  @override
+  List<Object?> get props => [identity];
+}
+
+/// A remote participant announced they stopped recording, OR they
+/// disconnected from the room while recording.
+class ParticipantRecordingStopped extends RoomBlocEvent {
+  final String identity;
+
+  const ParticipantRecordingStopped({required this.identity});
+
+  @override
+  List<Object?> get props => [identity];
+}

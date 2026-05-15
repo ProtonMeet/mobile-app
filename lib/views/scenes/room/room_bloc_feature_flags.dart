@@ -80,6 +80,18 @@ mixin RoomFeatureFlagsHandlers on Bloc<RoomBlocEvent, RoomState> {
     }
   }
 
+  /// Multi-recording support (status sync across all participants).
+  /// When OFF the app should fall back to single-recorder semantics.
+  bool isMeetMultipleRecordingEnabled() {
+    try {
+      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
+      return dataProviderManager.unleashDataProvider.isMeetMultipleRecording();
+    } catch (e) {
+      l.logger.w('[RoomBloc] Error checking MeetMultipleRecording flag: $e');
+      return false;
+    }
+  }
+
   /// Check if users can lower their own raised hand.
   bool isMeetAdminLowerHandEnabled() {
     try {
