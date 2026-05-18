@@ -19,7 +19,7 @@
   "search": "Ara",
   "placeholder": "Yer Tutucu",
   "something_went_wrong": "Bir şeyler ters gitti",
-  "retry": "Retry",
+  "retry": "Yeniden dene",
   "@retry": {
     "description": "Retry loading dashboard after an error"
   },
@@ -59,9 +59,9 @@
   "user_name": "Kullanıcı adı",
   "account": "Hesap",
   "password": "Parola",
-  "session_expired_content": "For your security, your session timed out. Sign in again to continue managing your meetings.",
+  "session_expired_content": "Güvenliğiniz için oturumunuz zaman aşımına uğradı. Toplantılarınızı yönetmeyi sürdürmek için lütfen yeniden oturum açın.",
   "session_expired_title": "Oturum süresi doldu!",
-  "session_expired_continue_without_signing_in": "Continue without signing in",
+  "session_expired_continue_without_signing_in": "Oturum açmadan ilerle",
   "@session_expired_continue_without_signing_in": {
     "description": "Secondary button label for session expired bottom sheet"
   },
@@ -229,6 +229,11 @@
   "@please_enter_valid_meeting_link": {
     "description": "Error message when meeting link is invalid"
   },
+  "meeting_password_incorrect": "Toplantı parolası yanlış",
+  "@meeting_password_incorrect": {
+    "description": "Error message when the meeting password embedded in the join link is invalid"
+  },
+  "meeting_password_invalid": "Toplantı parolası geçersiz",
   "link_copied_to_clipboard": "Bağlantı panoya kopyalandı",
   "@link_copied_to_clipboard": {
     "description": "Success message when meeting link is copied"
@@ -305,27 +310,27 @@
   "@rejoin_meeting": {
     "description": "Button text to rejoin a meeting"
   },
-  "left_meeting_title": "You left the meeting",
+  "left_meeting_title": "Toplantıdan ayrıldınız",
   "@left_meeting_title": {
     "description": "Title shown in left meeting bottom sheet"
   },
-  "left_meeting_subtitle_guest_free": "Host your own secure meeting. Start a call in Proton Meet and share the link to invite anyone to join. Simple, secure, and free.",
+  "left_meeting_subtitle_guest_free": "Kendi güvenli toplantınıza ev sahipliği yapın. Proton Meet üzerinde bir görüşme başlatın ve herkesi katılmaya davet etmek için bağlantıyı paylaşın. Basit, güvenli ve ücretsiz.",
   "@left_meeting_subtitle_guest_free": {
     "description": "Subtitle shown for non-paid non-host users after leaving a meeting"
   },
-  "left_meeting_subtitle_guest_paid": "Thank you for joining.",
+  "left_meeting_subtitle_guest_paid": "Katıldığınız için teşekkür ederiz.",
   "@left_meeting_subtitle_guest_paid": {
     "description": "Subtitle shown for paid non-host users after leaving a meeting"
   },
-  "left_meeting_subtitle_host_free": "Thank you for hosting a meeting.",
+  "left_meeting_subtitle_host_free": "Bir toplantıya ev sahipliği yaptığınız için teşekkür ederiz.",
   "@left_meeting_subtitle_host_free": {
     "description": "Subtitle shown for free host users after leaving a meeting"
   },
-  "left_meeting_subtitle_host_paid": "Thank you for hosting a premium meeting.",
+  "left_meeting_subtitle_host_paid": "Ücretli bir toplantıya ev sahipliği yaptığınız için teşekkür ederiz.",
   "@left_meeting_subtitle_host_paid": {
     "description": "Subtitle shown for paid host users after leaving a meeting"
   },
-  "start_meeting_now": "Start a meeting now",
+  "start_meeting_now": "Şimdi bir toplantı başlatın",
   "@start_meeting_now": {
     "description": "Button text to start a meeting immediately from left meeting bottom sheet"
   },
@@ -429,9 +434,42 @@
   "@recording_consent_message": {
     "description": "Message about recording consent"
   },
+  "recording_in_progress": "Kaydediliyor",
+  "@recording_in_progress": {
+    "description": "Top banner shown to all participants when the meeting is being recorded"
+  },
+  "recording_in_progress_with_name": "Kaydediliyor · {name} kaydediyor",
+  "@recording_in_progress_with_name": {
+    "description": "Top banner when exactly one named participant is recording",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "recording_in_progress_with_name_and_others": "Kaydediliyor · {name} ve diğer {count} kişi kaydediyor",
+  "@recording_in_progress_with_name_and_others": {
+    "description": "Top banner when multiple participants are recording",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recording_label": "Kaydediliyor",
+  "@recording_label": {
+    "description": "Chip shown next to participants currently recording the meeting"
+  },
   "agree_and_continue": "Kabul et ve devam et",
   "@agree_and_continue": {
     "description": "Button text to agree and continue in meeting"
+  },
+  "continue_button": "İlerle",
+  "@continue_button": {
+    "description": "Button text to continue in meeting"
   },
   "allow_subscription": "Aboneliğe izin ver",
   "@allow_subscription": {
@@ -583,11 +621,23 @@
   "@switch_speakerphone_off": {
     "description": "Tooltip for switching audio output back to the default device"
   },
-  "audio_output_default_device": "Default device",
+  "audio_output_default_device": "Varsayılan aygıt",
   "@audio_output_default_device": {
     "description": "Bottom sheet option: use default audio output routing (e.g. earpiece or headphones)"
   },
-  "audio_output_phone_speakers": "Phone speakers",
+  "audio_output_earpiece": "Earpiece",
+  "@audio_output_earpiece": {
+    "description": "Bottom sheet option: use Earpiece audio output routing"
+  },
+  "audio_output_bluetooth_device": "Bluetooth device",
+  "@audio_output_bluetooth_device": {
+    "description": "Bottom sheet option: use Bluetooth device audio output routing"
+  },
+  "audio_output_headphones": "Headphones",
+  "@audio_output_headphones": {
+    "description": "Bottom sheet option: use Headphones audio output routing"
+  },
+  "audio_output_phone_speakers": "Telefon hoparlörleri",
   "@audio_output_phone_speakers": {
     "description": "Bottom sheet option: use the phone built-in loudspeaker"
   },
@@ -751,7 +801,7 @@
       }
     }
   },
-  "chat_privacy_message": "This is an end to end encrypted chat with ephemeral messages, which disappear at the end of the call.",
+  "chat_privacy_message": "Bu, görüşme sonunda kaybolan süreli iletilerin kullanıldığı uçtan uca şifrelenmiş bir sohbettir.",
   "@chat_privacy_message": {
     "description": "Privacy message displayed in chat when there are no messages."
   },
@@ -763,83 +813,83 @@
   "@quality_feedback_email_message": {
     "description": "Message explaining that connection log will be shared via email"
   },
-  "call_quality_how_was": "How was the call quality?",
+  "call_quality_how_was": "Görüşme kalitesi nasıldı?",
   "@call_quality_how_was": {
     "description": "Prompt above star rating on post-meeting feedback"
   },
-  "call_quality_what_went_wrong": "What went wrong?",
+  "call_quality_what_went_wrong": "Ters giden neydi?",
   "@call_quality_what_went_wrong": {
     "description": "Heading when user rated call quality below threshold"
   },
-  "call_quality_problem_subtitle": "What problem did you experience?",
+  "call_quality_problem_subtitle": "Ne tür bir sorunla karşılaştınız?",
   "@call_quality_problem_subtitle": {
     "description": "Subtitle under what went wrong on low-rating feedback"
   },
-  "call_quality_add_optional_details": "Add optional details",
+  "call_quality_add_optional_details": "İsteğe bağlı ayrıntılar ekleyin",
   "@call_quality_add_optional_details": {
     "description": "Expand control for free-text feedback"
   },
-  "call_quality_share_more_details": "Share more details",
+  "call_quality_share_more_details": "Daha fazla ayrıntı paylaşın",
   "@call_quality_share_more_details": {
     "description": "Placeholder for optional feedback text"
   },
-  "call_quality_help_text": "Optional feedback is sent securely to help improve call quality.",
+  "call_quality_help_text": "İsteğe bağlı geri bildirim, görüşme kalitesini artırmaya yardımcı olmak için güvenli bir şekilde gönderilir.",
   "@call_quality_help_text": {
     "description": "Short privacy note under the rating on post-meeting feedback"
   },
-  "call_quality_feedback_submitted": "Your feedback has been submitted",
+  "call_quality_feedback_submitted": "Geri bildiriminiz gönderildi",
   "@call_quality_feedback_submitted": {
     "description": "Toast after successful meeting feedback"
   },
-  "call_quality_could_not_send": "Could not send feedback",
+  "call_quality_could_not_send": "Geri bildirim gönderilemedi",
   "@call_quality_could_not_send": {
     "description": "Toast when meeting feedback API fails"
   },
-  "call_quality_category_audio": "Audio",
+  "call_quality_category_audio": "Ses",
   "@call_quality_category_audio": {
     "description": "Section label for audio-related feedback options"
   },
-  "call_quality_category_video": "Video",
+  "call_quality_category_video": "Görüntü",
   "@call_quality_category_video": {
     "description": "Section label for video-related feedback options"
   },
-  "call_quality_category_screen": "Screen share",
+  "call_quality_category_screen": "Ekran paylaşımı",
   "@call_quality_category_screen": {
     "description": "Section label for screen-share feedback options"
   },
-  "call_quality_audio_breaking": "Audio was breaking up",
+  "call_quality_audio_breaking": "Ses kesiliyordu",
   "@call_quality_audio_breaking": {
     "description": "Low-rating feedback option"
   },
-  "call_quality_audio_couldnt_hear": "I couldn't hear others",
+  "call_quality_audio_couldnt_hear": "Diğerlerini duyamadım",
   "@call_quality_audio_couldnt_hear": {
     "description": "Low-rating feedback option"
   },
-  "call_quality_audio_others_couldnt_hear": "Others couldn't hear me",
+  "call_quality_audio_others_couldnt_hear": "Diğerleri beni duyamadı",
   "@call_quality_audio_others_couldnt_hear": {
     "description": "Low-rating feedback option"
   },
-  "call_quality_video_poor": "Video quality was poor",
+  "call_quality_video_poor": "Görüntü kalitesi düşüktü",
   "@call_quality_video_poor": {
     "description": "Low-rating feedback option"
   },
-  "call_quality_video_couldnt_see": "I couldn't see others' video",
+  "call_quality_video_couldnt_see": "Diğerlerinin görüntüsünü göremedim",
   "@call_quality_video_couldnt_see": {
     "description": "Low-rating feedback option"
   },
-  "call_quality_video_others_couldnt_see": "Others couldn't see my video",
+  "call_quality_video_others_couldnt_see": "Diğerleri benim görüntümü göremedi",
   "@call_quality_video_others_couldnt_see": {
     "description": "Low-rating feedback option"
   },
-  "call_quality_screen_blurry": "The presentation was blurry",
+  "call_quality_screen_blurry": "Sunum bulanıktı",
   "@call_quality_screen_blurry": {
     "description": "Low-rating feedback option"
   },
-  "call_quality_screen_couldnt_see": "I couldn't see the presentation",
+  "call_quality_screen_couldnt_see": "Sunumu göremedim",
   "@call_quality_screen_couldnt_see": {
     "description": "Low-rating feedback option"
   },
-  "call_quality_screen_couldnt_present": "I couldn't present",
+  "call_quality_screen_couldnt_present": "Sunum yapamadım",
   "@call_quality_screen_couldnt_present": {
     "description": "Low-rating feedback option"
   },
@@ -1078,11 +1128,11 @@
   "@create_new_room": {
     "description": "Menu item label to create a new room"
   },
-  "emoji_reactions": "Emoji reactions",
+  "emoji_reactions": "Emoji tepkileri",
   "@emoji_reactions": {
     "description": "Emoji reactions tooltip"
   },
-  "lower_participant_hand": "Lower participant's hand",
+  "lower_participant_hand": "Katılımcının elini indir",
   "@lower_participant_hand": {
     "description": "Tooltip text for lowering a participant's raised hand"
   },
@@ -1102,7 +1152,7 @@
   "@room_name": {
     "description": "Label for room name input field header"
   },
-  "room_id": "Oda Kimliği",
+  "room_id": "Oda kimliği",
   "@room_id": {
     "description": "Label for room ID display"
   },
@@ -1114,7 +1164,7 @@
   "@meeting_deleted": {
     "description": "Success message shown after a meeting is deleted"
   },
-  "enter_room_name_hint": "örn. Tasarım Ekibi, Haftada bir Değerlendirme",
+  "enter_room_name_hint": "Örnek: Tasarım Ekibi, Haftalık değerlendirme",
   "@enter_room_name_hint": {
     "description": "Hint text for room name input field"
   },
@@ -1142,27 +1192,27 @@
   "@you_are_using_free_meet_plan": {
     "description": "Message shown to host indicating they are using the free plan"
   },
-  "call_supports_up_to": "This call supports up to ",
+  "call_supports_up_to": "Bu görüşmede en fazla şu kadar katılımcı olabilir: ",
   "@call_supports_up_to": {
     "description": "Message prefix showing the maximum number of participants allowed in the call"
   },
-  "call_reached_limit": "This call has reached the ",
+  "call_reached_limit": "Bu görüşme şu sınıra ulaştı: ",
   "@call_reached_limit": {
     "description": "Message prefix showing the call has reached the limit"
   },
-  "participants_suffix": " participants.",
+  "participants_suffix": " katılımcı.",
   "@participants_suffix": {
     "description": "Message suffix after the participant count"
   },
-  "participants_reached_limit_suffix": " participant limit.",
+  "participants_reached_limit_suffix": " katılımcı sınırı.",
   "@participants_reached_limit_suffix": {
     "description": "Message suffix after the call reached limit message"
   },
-  "no_more_participants_can_join": "Remove a participant or upgrade your plan to invite more people.",
+  "no_more_participants_can_join": "Daha fazla kişiyi davet etmek için bir katılımcıyı kaldırın ya da tarifenizi yükseltin.",
   "@no_more_participants_can_join": {
     "description": "Message shown when the call has reached the maximum number of participants"
   },
-  "connection_quality_poor": "Zayıf bağlantı",
+  "connection_quality_poor": "Bağlantı kötü",
   "@connection_quality_poor": {
     "description": "Tooltip message shown when connection quality is poor"
   },
@@ -1170,15 +1220,15 @@
   "@meeting_ended_by_host": {
     "description": "Toast message shown when the host ends the meeting for everyone"
   },
-  "client_kicked_out_by_host": "Toplantı sahibi sizi toplantıdan kaldırdı",
+  "client_kicked_out_by_host": "Toplantı sahibi sizi toplantıdan çıkardı",
   "@client_kicked_out_by_host": {
     "description": "Toast message shown when the host removes current user from the meeting"
   },
-  "kicked_out_bottom_sheet_title": "You have been removed",
+  "kicked_out_bottom_sheet_title": "Çıkarıldınız",
   "@kicked_out_bottom_sheet_title": {
     "description": "Title shown in left meeting bottom sheet when current user is removed by host"
   },
-  "kicked_out_bottom_sheet_content": "The host removed you from the meeting.",
+  "kicked_out_bottom_sheet_content": "Oturum sahibi sizi toplantıdan çıkardı.",
   "@kicked_out_bottom_sheet_content": {
     "description": "Content shown in left meeting bottom sheet when current user is removed by host"
   },
@@ -1206,7 +1256,7 @@
   "@schedule_recurrence_daily": {
     "description": "Label for schedule recurrence daily"
   },
-  "schedule_recurrence_weekly": "Haftada bir",
+  "schedule_recurrence_weekly": "Haftalık",
   "@schedule_recurrence_weekly": {
     "description": "Label for schedule recurrence weekly"
   },
@@ -1226,7 +1276,7 @@
   "@schedule_time_zone_current": {
     "description": "Label for schedule time zone current"
   },
-  "schedule_time_zone_selected": "Seçilen saat dilimi",
+  "schedule_time_zone_selected": "Seçilmiş saat dilimi",
   "@schedule_time_zone_selected": {
     "description": "Label for schedule time zone selected"
   },
@@ -1278,11 +1328,11 @@
   "@month_dec": {
     "description": "Full month name for December"
   },
-  "month_short_jan": "Jan",
+  "month_short_jan": "Oca",
   "@month_short_jan": {
     "description": "Abbreviated month name January (order Jan–Dec)"
   },
-  "month_short_feb": "Feb",
+  "month_short_feb": "Şub",
   "@month_short_feb": {
     "description": "Abbreviated month name February"
   },
@@ -1290,7 +1340,7 @@
   "@month_short_mar": {
     "description": "Abbreviated month name March"
   },
-  "month_short_apr": "Apr",
+  "month_short_apr": "Nis",
   "@month_short_apr": {
     "description": "Abbreviated month name April"
   },
@@ -1298,31 +1348,31 @@
   "@month_short_may": {
     "description": "Abbreviated month name May"
   },
-  "month_short_jun": "Jun",
+  "month_short_jun": "Haz",
   "@month_short_jun": {
     "description": "Abbreviated month name June"
   },
-  "month_short_jul": "Jul",
+  "month_short_jul": "Tem",
   "@month_short_jul": {
     "description": "Abbreviated month name July"
   },
-  "month_short_aug": "Aug",
+  "month_short_aug": "Ağu",
   "@month_short_aug": {
     "description": "Abbreviated month name August"
   },
-  "month_short_sep": "Sep",
+  "month_short_sep": "Eyl",
   "@month_short_sep": {
     "description": "Abbreviated month name September"
   },
-  "month_short_oct": "Oct",
+  "month_short_oct": "Eki",
   "@month_short_oct": {
     "description": "Abbreviated month name October"
   },
-  "month_short_nov": "Nov",
+  "month_short_nov": "Kas",
   "@month_short_nov": {
     "description": "Abbreviated month name November"
   },
-  "month_short_dec": "Dec",
+  "month_short_dec": "Ara",
   "@month_short_dec": {
     "description": "Abbreviated month name December"
   },
@@ -1354,39 +1404,39 @@
   "@weekday_sunday": {
     "description": "Weekday name for Sunday"
   },
-  "weekday_short_monday": "Mon",
+  "weekday_short_monday": "Pzt",
   "@weekday_short_monday": {
     "description": "Short weekday label Monday (list order Mon–Sun)"
   },
-  "weekday_short_tuesday": "Tue",
+  "weekday_short_tuesday": "Sal",
   "@weekday_short_tuesday": {
     "description": "Short weekday label Tuesday"
   },
-  "weekday_short_wednesday": "Wed",
+  "weekday_short_wednesday": "Çar",
   "@weekday_short_wednesday": {
     "description": "Short weekday label Wednesday"
   },
-  "weekday_short_thursday": "Thu",
+  "weekday_short_thursday": "Per",
   "@weekday_short_thursday": {
     "description": "Short weekday label Thursday"
   },
-  "weekday_short_friday": "Fri",
+  "weekday_short_friday": "Cum",
   "@weekday_short_friday": {
     "description": "Short weekday label Friday"
   },
-  "weekday_short_saturday": "Sat",
+  "weekday_short_saturday": "Cmt",
   "@weekday_short_saturday": {
     "description": "Short weekday label Saturday"
   },
-  "weekday_short_sunday": "Sun",
+  "weekday_short_sunday": "Paz",
   "@weekday_short_sunday": {
     "description": "Short weekday label Sunday"
   },
-  "calendar_system": "Add to Phone Calendar",
+  "calendar_system": "Telefon takvimine ekle",
   "@calendar_system": {
     "description": "Menu label for opening system calendar"
   },
-  "calendar_google": "Add to Google Calendar",
+  "calendar_google": "Google Takvim üzerine ekle",
   "@calendar_google": {
     "description": "Menu label for opening Google Calendar"
   },
@@ -1394,11 +1444,11 @@
   "@calendar_share_ics": {
     "description": "Menu label for sharing ICS file"
   },
-  "calendar_outlook": "Add to Outlook Calendar",
+  "calendar_outlook": "Outlook Takvim üzerine ekle",
   "@calendar_outlook": {
     "description": "Menu label for opening Outlook Calendar"
   },
-  "calendar_proton": "Add to Proton Calendar",
+  "calendar_proton": "Proton Calendar üzerine ekle",
   "@calendar_proton": {
     "description": "Menu label for opening Proton Calendar"
   },
@@ -1430,7 +1480,7 @@
   "@upcoming_prefix": {
     "description": "Prefix for upcoming meetings header label"
   },
-  "ended_prefix": "SONA ERDİ",
+  "ended_prefix": "SONA ERMİŞ",
   "@ended_prefix": {
     "description": "Prefix for ended/past meetings header label"
   },
@@ -1497,11 +1547,11 @@
   "@secure_meeting": {
     "description": "Default meeting name when no title is set"
   },
-  "premium_meeting": "Premium meeting",
+  "premium_meeting": "Ücretli toplantı",
   "@premium_meeting": {
     "description": "Default meeting name for paid meeting"
   },
-  "free_meeting": "Free meeting",
+  "free_meeting": "Ücretsiz toplantı",
   "@free_meeting": {
     "description": "Default meeting name for free meeting"
   },
@@ -1614,87 +1664,87 @@
   "@sign_in_card_title": {
     "description": "Title text for the sign-in card displayed on dashboard"
   },
-  "sign_in_card_description": "Schedule meetings, access your personal room, and create new rooms.",
+  "sign_in_card_description": "Toplantılar planlayın, kişisel odanıza erişin ve yeni odalar oluşturun.",
   "@sign_in_card_description": {
     "description": "Description text for the sign-in card explaining benefits of signing in"
   },
-  "almost_there_title": "You are almost there",
+  "almost_there_title": "Neredeyse bitti",
   "@almost_there_title": {
     "description": "Title for the almost there bottom sheet"
   },
-  "almost_there_content_before": "To schedule a meeting, create a free ",
+  "almost_there_content_before": "Bir toplantı planlamak için ücretsiz bir ",
   "@almost_there_content_before": {
     "description": "Content before Proton account in almost there bottom sheet (schedule meeting)"
   },
-  "almost_there_content_before_create_room": "To create a room, create a free ",
+  "almost_there_content_before_create_room": "Bir oda oluşturmak için ücretsiz bir ",
   "@almost_there_content_before_create_room": {
     "description": "Content before Proton account in almost there bottom sheet (create room)"
   },
-  "almost_there_content_before_personal_room": "To use your personal meeting room, create a free ",
+  "almost_there_content_before_personal_room": "Kişisel toplantı odanızı kullanmak için ücretsiz bir ",
   "@almost_there_content_before_personal_room": {
     "description": "Content before Proton account in almost there bottom sheet (personal meeting room)"
   },
-  "almost_there_proton_account": "Proton account",
+  "almost_there_proton_account": "Proton hesabı",
   "@almost_there_proton_account": {
     "description": "Proton account text in almost there bottom sheet"
   },
-  "almost_there_content_after": ". You will return to Proton Meet automatically.",
+  "almost_there_content_after": ". Proton Meet uygulamasına otomatik olarak döneceksiniz.",
   "@almost_there_content_after": {
     "description": "Content after Proton account in almost there bottom sheet"
   },
-  "app_settings_title": "App settings",
+  "app_settings_title": "Uygulama ayarları",
   "@app_settings_title": {
     "description": "Title for the app settings bottom sheet"
   },
-  "settings_section_general": "General",
+  "settings_section_general": "Genel",
   "@settings_section_general": {
     "description": "Section header in app settings"
   },
-  "settings_section_support": "Support",
+  "settings_section_support": "Destek",
   "@settings_section_support": {
     "description": "Section header for support links in app settings"
   },
-  "settings_section_legal": "Legal",
+  "settings_section_legal": "Yasal",
   "@settings_section_legal": {
     "description": "Section header for legal links in app settings"
   },
-  "languages": "Languages",
+  "languages": "Diller",
   "@languages": {
     "description": "Label for language selection in settings"
   },
-  "privacy_policy": "Privacy policy",
+  "privacy_policy": "Gizlilik ilkesi",
   "@privacy_policy": {
     "description": "Link to privacy policy"
   },
-  "terms_and_conditions": "Terms and conditions",
+  "terms_and_conditions": "Hüküm ve koşullar",
   "@terms_and_conditions": {
     "description": "Link to terms and conditions"
   },
-  "knowledge_base": "Knowledge base",
+  "knowledge_base": "Bilgi bankası",
   "@knowledge_base": {
     "description": "Link to help center / knowledge base"
   },
-  "system_default_mode": "System default",
+  "system_default_mode": "Sistem varsayılanı",
   "@system_default_mode": {
     "description": "Use device language for app UI"
   },
-  "pre_rating_sheet_title": "Enjoying Proton Meet?",
+  "pre_rating_sheet_title": "Proton Meet uygulamasından memnun musunuz?",
   "@pre_rating_sheet_title": {
     "description": "Title on the pre-rating bottom sheet before in-app review"
   },
-  "pre_rating_sheet_subtitle": "We read and appreciate all feedback.",
+  "pre_rating_sheet_subtitle": "Tüm geri bildirimleri okuyor ve değer veriyoruz.",
   "@pre_rating_sheet_subtitle": {
     "description": "Subtitle on the pre-rating bottom sheet"
   },
-  "pre_rating_sheet_yes_enjoy_proton_meet": "Yes",
+  "pre_rating_sheet_yes_enjoy_proton_meet": "Evet",
   "@pre_rating_sheet_yes_enjoy_proton_meet": {
     "description": "Primary button on the pre-rating sheet to open store review"
   },
-  "pre_rating_sheet_not_really_enjoy_proton_meet": "Not really",
+  "pre_rating_sheet_not_really_enjoy_proton_meet": "Pek değil",
   "@pre_rating_sheet_not_really_enjoy_proton_meet": {
     "description": "Secondary button on the pre-rating sheet"
   },
-  "store_review_thanks_toast": "Thanks for your feedback",
+  "store_review_thanks_toast": "Geri bildiriminiz için teşekkürler",
   "@store_review_thanks_toast": {
     "description": "Toast shown before the OS in-app store review prompt"
   }
