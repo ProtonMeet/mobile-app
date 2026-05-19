@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:meet/helper/logger.dart';
 import 'package:meet/managers/manager.dart' as manager;
 import 'package:meet/managers/notification_service.dart';
+import 'package:meet/permissions/permission_service.dart';
 
 /// Simplified Android Notification Service for ongoing meetings
 class AndroidNotificationService implements NotificationService {
@@ -12,6 +13,8 @@ class AndroidNotificationService implements NotificationService {
   static const String _channelName = 'Meeting in Progress';
   static const String _channelDescription =
       'Notifications for ongoing meetings when app is in background';
+  static const String _notificationBody = 'Tap to return to meeting';
+  static const String _notificationPayload = 'meeting_foreground';
 
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -86,30 +89,46 @@ class AndroidNotificationService implements NotificationService {
 
     final androidImpl = await _getAndroidImplementation();
     if (androidImpl != null) {
+      // Make sure we have the necessary permissions to start the foreground service
+      // Or fallback to regular notification to avoid SecurityException
+      final permissionService = PermissionService();
+      final hasCamera = await permissionService.hasCameraPermission();
+      final hasMic = await permissionService.hasMicrophonePermission();
+      final serviceTypes = <AndroidServiceForegroundType>{
+        if (hasCamera) AndroidServiceForegroundType.foregroundServiceTypeCamera,
+        if (hasMic)
+          AndroidServiceForegroundType.foregroundServiceTypeMicrophone,
+      };
+
+      if (serviceTypes.isEmpty) {
+        logger.w(
+          '[AndroidNotificationService] No media permissions granted; '
+          'falling back to regular notification instead of foreground service',
+        );
+        await _showRegularNotification(
+          roomName: roomName,
+          androidDetails: androidDetails,
+        );
+        return;
+      }
+
       try {
         await androidImpl.startForegroundService(
           _backgroundNotificationId,
-          roomName.isNotEmpty ? 'In Meeting: $roomName' : 'In Meeting',
-          'Tap to return to meeting',
+          _notificationTitle(roomName),
+          _notificationBody,
           notificationDetails: androidDetails,
-          payload: 'meeting_foreground',
+          payload: _notificationPayload,
           startType: AndroidServiceStartType
               .startNotSticky, // avoid potential NullPointerException crash
-          foregroundServiceTypes: {
-            AndroidServiceForegroundType.foregroundServiceTypeCamera,
-            AndroidServiceForegroundType.foregroundServiceTypeMicrophone,
-          },
+          foregroundServiceTypes: serviceTypes,
         );
       } catch (e) {
         logger.e('[AndroidNotificationService] Foreground service failed: $e');
         // Fallback to regular notification
-        final details = NotificationDetails(android: androidDetails);
-        await _notificationsPlugin.show(
-          _backgroundNotificationId,
-          roomName.isNotEmpty ? 'In Meeting: $roomName' : 'In Meeting',
-          'Tap to return to meeting',
-          details,
-          payload: 'meeting_foreground',
+        await _showRegularNotification(
+          roomName: roomName,
+          androidDetails: androidDetails,
         );
       }
     } else {
@@ -117,13 +136,9 @@ class AndroidNotificationService implements NotificationService {
       logger.d(
         '[AndroidNotificationService] Using fallback regular notification',
       );
-      final details = NotificationDetails(android: androidDetails);
-      await _notificationsPlugin.show(
-        _backgroundNotificationId,
-        roomName.isNotEmpty ? 'In Meeting: $roomName' : 'In Meeting',
-        'Tap to return to meeting',
-        details,
-        payload: 'meeting_foreground',
+      await _showRegularNotification(
+        roomName: roomName,
+        androidDetails: androidDetails,
       );
     }
   }
@@ -162,6 +177,24 @@ class AndroidNotificationService implements NotificationService {
         >();
   }
 
+  String _notificationTitle(String roomName) {
+    return roomName.isNotEmpty ? 'In Meeting: $roomName' : 'In Meeting';
+  }
+
+  Future<void> _showRegularNotification({
+    required String roomName,
+    required AndroidNotificationDetails androidDetails,
+  }) async {
+    final details = NotificationDetails(android: androidDetails);
+    await _notificationsPlugin.show(
+      _backgroundNotificationId,
+      _notificationTitle(roomName),
+      _notificationBody,
+      details,
+      payload: _notificationPayload,
+    );
+  }
+
   Future<void> _handleNotificationTap(NotificationResponse response) async {
     logger.d(
       '[AndroidNotificationService] Notification tapped, payload: ${response.payload}',
@@ -188,7 +221,7 @@ class AndroidNotificationService implements NotificationService {
     }
 
     // Only execute callback if it exists and payload matches
-    if (response.payload == 'meeting_foreground') {
+    if (response.payload == _notificationPayload) {
       try {
         await _onNotificationTapCallback!()
             .timeout(
