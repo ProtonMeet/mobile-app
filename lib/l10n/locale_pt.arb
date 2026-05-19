@@ -19,13 +19,13 @@
   "search": "Pesquisar",
   "placeholder": "Espaço reservado",
   "something_went_wrong": "Algo deu errado",
-  "retry": "Retry",
+  "retry": "Tentar novamente",
   "@retry": {
     "description": "Retry loading dashboard after an error"
   },
   "report_a_problem": "Relatar problema",
-  "sign_in_to_proton_title": "Iniciar sessão no Proton",
-  "sign_in_to_proton_subtitle": "Insira os detalhes da sua Proton Account.",
+  "sign_in_to_proton_title": "Iniciar sessão na Proton",
+  "sign_in_to_proton_subtitle": "Insira os detalhes da sua conta da Proton.",
   "options": "Opções",
   "@options": {
     "description": "Title for options dialog"
@@ -61,7 +61,7 @@
   "password": "Senha",
   "session_expired_content": "For your security, your session timed out. Sign in again to continue managing your meetings.",
   "session_expired_title": "Sessão expirada!",
-  "session_expired_continue_without_signing_in": "Continue without signing in",
+  "session_expired_continue_without_signing_in": "Continuar sem iniciar sessão",
   "@session_expired_continue_without_signing_in": {
     "description": "Secondary button label for session expired bottom sheet"
   },
@@ -229,6 +229,11 @@
   "@please_enter_valid_meeting_link": {
     "description": "Error message when meeting link is invalid"
   },
+  "meeting_password_incorrect": "A senha da reunião está incorreta",
+  "@meeting_password_incorrect": {
+    "description": "Error message when the meeting password embedded in the join link is invalid"
+  },
+  "meeting_password_invalid": "A senha da reunião está invalida",
   "link_copied_to_clipboard": "Link copiado para a área de transferência",
   "@link_copied_to_clipboard": {
     "description": "Success message when meeting link is copied"
@@ -305,7 +310,7 @@
   "@rejoin_meeting": {
     "description": "Button text to rejoin a meeting"
   },
-  "left_meeting_title": "You left the meeting",
+  "left_meeting_title": "Você saiu da reunião",
   "@left_meeting_title": {
     "description": "Title shown in left meeting bottom sheet"
   },
@@ -325,7 +330,7 @@
   "@left_meeting_subtitle_host_paid": {
     "description": "Subtitle shown for paid host users after leaving a meeting"
   },
-  "start_meeting_now": "Start a meeting now",
+  "start_meeting_now": "Inicie uma reunião agora",
   "@start_meeting_now": {
     "description": "Button text to start a meeting immediately from left meeting bottom sheet"
   },
@@ -429,9 +434,42 @@
   "@recording_consent_message": {
     "description": "Message about recording consent"
   },
+  "recording_in_progress": "Gravação em progresso",
+  "@recording_in_progress": {
+    "description": "Top banner shown to all participants when the meeting is being recorded"
+  },
+  "recording_in_progress_with_name": "Gravação em progresso · {name} está gravando",
+  "@recording_in_progress_with_name": {
+    "description": "Top banner when exactly one named participant is recording",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "recording_in_progress_with_name_and_others": "Gravação em progresso · {name} e {count} outras pessoas estão gravando",
+  "@recording_in_progress_with_name_and_others": {
+    "description": "Top banner when multiple participants are recording",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recording_label": "Gravando",
+  "@recording_label": {
+    "description": "Chip shown next to participants currently recording the meeting"
+  },
   "agree_and_continue": "Concordar e continuar",
   "@agree_and_continue": {
     "description": "Button text to agree and continue in meeting"
+  },
+  "continue_button": "Continar",
+  "@continue_button": {
+    "description": "Button text to continue in meeting"
   },
   "allow_subscription": "Permitir assinatura",
   "@allow_subscription": {
@@ -583,11 +621,23 @@
   "@switch_speakerphone_off": {
     "description": "Tooltip for switching audio output back to the default device"
   },
-  "audio_output_default_device": "Default device",
+  "audio_output_default_device": "Dispositivo padrão",
   "@audio_output_default_device": {
     "description": "Bottom sheet option: use default audio output routing (e.g. earpiece or headphones)"
   },
-  "audio_output_phone_speakers": "Phone speakers",
+  "audio_output_earpiece": "Auricular",
+  "@audio_output_earpiece": {
+    "description": "Bottom sheet option: use Earpiece audio output routing"
+  },
+  "audio_output_bluetooth_device": "Dispositivo Bluetooth",
+  "@audio_output_bluetooth_device": {
+    "description": "Bottom sheet option: use Bluetooth device audio output routing"
+  },
+  "audio_output_headphones": "Fones de ouvido",
+  "@audio_output_headphones": {
+    "description": "Bottom sheet option: use Headphones audio output routing"
+  },
+  "audio_output_phone_speakers": "Alto-falantes do telefone",
   "@audio_output_phone_speakers": {
     "description": "Bottom sheet option: use the phone built-in loudspeaker"
   },
@@ -631,7 +681,7 @@
   "@add_another_account": {
     "description": "Button text to add another account"
   },
-  "delete_proton_account": "Excluir conta Proton",
+  "delete_proton_account": "Excluir conta da Proton",
   "@delete_proton_account": {
     "description": "Button text to delete Proton account"
   },
@@ -767,19 +817,19 @@
   "@call_quality_how_was": {
     "description": "Prompt above star rating on post-meeting feedback"
   },
-  "call_quality_what_went_wrong": "What went wrong?",
+  "call_quality_what_went_wrong": "O que aconteceu de errado?",
   "@call_quality_what_went_wrong": {
     "description": "Heading when user rated call quality below threshold"
   },
-  "call_quality_problem_subtitle": "What problem did you experience?",
+  "call_quality_problem_subtitle": "Que problema você teve?",
   "@call_quality_problem_subtitle": {
     "description": "Subtitle under what went wrong on low-rating feedback"
   },
-  "call_quality_add_optional_details": "Add optional details",
+  "call_quality_add_optional_details": "Adicione detalhes opcionais",
   "@call_quality_add_optional_details": {
     "description": "Expand control for free-text feedback"
   },
-  "call_quality_share_more_details": "Share more details",
+  "call_quality_share_more_details": "Compartilhe mais detalhes",
   "@call_quality_share_more_details": {
     "description": "Placeholder for optional feedback text"
   },
@@ -787,7 +837,7 @@
   "@call_quality_help_text": {
     "description": "Short privacy note under the rating on post-meeting feedback"
   },
-  "call_quality_feedback_submitted": "Your feedback has been submitted",
+  "call_quality_feedback_submitted": "Seu feedback foi enviado",
   "@call_quality_feedback_submitted": {
     "description": "Toast after successful meeting feedback"
   },
@@ -795,15 +845,15 @@
   "@call_quality_could_not_send": {
     "description": "Toast when meeting feedback API fails"
   },
-  "call_quality_category_audio": "Audio",
+  "call_quality_category_audio": "Áudio",
   "@call_quality_category_audio": {
     "description": "Section label for audio-related feedback options"
   },
-  "call_quality_category_video": "Video",
+  "call_quality_category_video": "Vídeo",
   "@call_quality_category_video": {
     "description": "Section label for video-related feedback options"
   },
-  "call_quality_category_screen": "Screen share",
+  "call_quality_category_screen": "Compartilhar tela",
   "@call_quality_category_screen": {
     "description": "Section label for screen-share feedback options"
   },
@@ -1150,11 +1200,11 @@
   "@call_reached_limit": {
     "description": "Message prefix showing the call has reached the limit"
   },
-  "participants_suffix": " participants.",
+  "participants_suffix": " participantes.",
   "@participants_suffix": {
     "description": "Message suffix after the participant count"
   },
-  "participants_reached_limit_suffix": " participant limit.",
+  "participants_reached_limit_suffix": " linite de participantes",
   "@participants_reached_limit_suffix": {
     "description": "Message suffix after the call reached limit message"
   },
@@ -1174,11 +1224,11 @@
   "@client_kicked_out_by_host": {
     "description": "Toast message shown when the host removes current user from the meeting"
   },
-  "kicked_out_bottom_sheet_title": "You have been removed",
+  "kicked_out_bottom_sheet_title": "Você foi removido.",
   "@kicked_out_bottom_sheet_title": {
     "description": "Title shown in left meeting bottom sheet when current user is removed by host"
   },
-  "kicked_out_bottom_sheet_content": "The host removed you from the meeting.",
+  "kicked_out_bottom_sheet_content": "O anfitrião removeu você da reunião.",
   "@kicked_out_bottom_sheet_content": {
     "description": "Content shown in left meeting bottom sheet when current user is removed by host"
   },
@@ -1282,7 +1332,7 @@
   "@month_short_jan": {
     "description": "Abbreviated month name January (order Jan–Dec)"
   },
-  "month_short_feb": "Feb",
+  "month_short_feb": "Fev",
   "@month_short_feb": {
     "description": "Abbreviated month name February"
   },
@@ -1290,11 +1340,11 @@
   "@month_short_mar": {
     "description": "Abbreviated month name March"
   },
-  "month_short_apr": "Apr",
+  "month_short_apr": "Abr",
   "@month_short_apr": {
     "description": "Abbreviated month name April"
   },
-  "month_short_may": "May",
+  "month_short_may": "Mai",
   "@month_short_may": {
     "description": "Abbreviated month name May"
   },
@@ -1306,15 +1356,15 @@
   "@month_short_jul": {
     "description": "Abbreviated month name July"
   },
-  "month_short_aug": "Aug",
+  "month_short_aug": "Ago",
   "@month_short_aug": {
     "description": "Abbreviated month name August"
   },
-  "month_short_sep": "Sep",
+  "month_short_sep": "Set",
   "@month_short_sep": {
     "description": "Abbreviated month name September"
   },
-  "month_short_oct": "Oct",
+  "month_short_oct": "Out",
   "@month_short_oct": {
     "description": "Abbreviated month name October"
   },
@@ -1322,7 +1372,7 @@
   "@month_short_nov": {
     "description": "Abbreviated month name November"
   },
-  "month_short_dec": "Dec",
+  "month_short_dec": "Dez",
   "@month_short_dec": {
     "description": "Abbreviated month name December"
   },
@@ -1354,39 +1404,39 @@
   "@weekday_sunday": {
     "description": "Weekday name for Sunday"
   },
-  "weekday_short_monday": "Mon",
+  "weekday_short_monday": "Seg",
   "@weekday_short_monday": {
     "description": "Short weekday label Monday (list order Mon–Sun)"
   },
-  "weekday_short_tuesday": "Tue",
+  "weekday_short_tuesday": "Ter",
   "@weekday_short_tuesday": {
     "description": "Short weekday label Tuesday"
   },
-  "weekday_short_wednesday": "Wed",
+  "weekday_short_wednesday": "Qua",
   "@weekday_short_wednesday": {
     "description": "Short weekday label Wednesday"
   },
-  "weekday_short_thursday": "Thu",
+  "weekday_short_thursday": "Qui",
   "@weekday_short_thursday": {
     "description": "Short weekday label Thursday"
   },
-  "weekday_short_friday": "Fri",
+  "weekday_short_friday": "Sex",
   "@weekday_short_friday": {
     "description": "Short weekday label Friday"
   },
-  "weekday_short_saturday": "Sat",
+  "weekday_short_saturday": "Sáb",
   "@weekday_short_saturday": {
     "description": "Short weekday label Saturday"
   },
-  "weekday_short_sunday": "Sun",
+  "weekday_short_sunday": "Dom",
   "@weekday_short_sunday": {
     "description": "Short weekday label Sunday"
   },
-  "calendar_system": "Add to Phone Calendar",
+  "calendar_system": "Adicionar ao calendário do telefone",
   "@calendar_system": {
     "description": "Menu label for opening system calendar"
   },
-  "calendar_google": "Add to Google Calendar",
+  "calendar_google": "Adicionar ao calendário do Google",
   "@calendar_google": {
     "description": "Menu label for opening Google Calendar"
   },
@@ -1394,11 +1444,11 @@
   "@calendar_share_ics": {
     "description": "Menu label for sharing ICS file"
   },
-  "calendar_outlook": "Add to Outlook Calendar",
+  "calendar_outlook": "Adicionar ao calendário do Outlook",
   "@calendar_outlook": {
     "description": "Menu label for opening Outlook Calendar"
   },
-  "calendar_proton": "Add to Proton Calendar",
+  "calendar_proton": "Adicionar ao Proton Calendar",
   "@calendar_proton": {
     "description": "Menu label for opening Proton Calendar"
   },
@@ -1634,7 +1684,7 @@
   "@almost_there_content_before_personal_room": {
     "description": "Content before Proton account in almost there bottom sheet (personal meeting room)"
   },
-  "almost_there_proton_account": "Proton account",
+  "almost_there_proton_account": "Conta da Proton",
   "@almost_there_proton_account": {
     "description": "Proton account text in almost there bottom sheet"
   },
@@ -1642,15 +1692,15 @@
   "@almost_there_content_after": {
     "description": "Content after Proton account in almost there bottom sheet"
   },
-  "app_settings_title": "App settings",
+  "app_settings_title": "Configurações do aplicativo",
   "@app_settings_title": {
     "description": "Title for the app settings bottom sheet"
   },
-  "settings_section_general": "General",
+  "settings_section_general": "Geral",
   "@settings_section_general": {
     "description": "Section header in app settings"
   },
-  "settings_section_support": "Support",
+  "settings_section_support": "Suporte",
   "@settings_section_support": {
     "description": "Section header for support links in app settings"
   },
@@ -1658,27 +1708,27 @@
   "@settings_section_legal": {
     "description": "Section header for legal links in app settings"
   },
-  "languages": "Languages",
+  "languages": "Idiomas",
   "@languages": {
     "description": "Label for language selection in settings"
   },
-  "privacy_policy": "Privacy policy",
+  "privacy_policy": "Política de privacidade",
   "@privacy_policy": {
     "description": "Link to privacy policy"
   },
-  "terms_and_conditions": "Terms and conditions",
+  "terms_and_conditions": "Termos e condições",
   "@terms_and_conditions": {
     "description": "Link to terms and conditions"
   },
-  "knowledge_base": "Knowledge base",
+  "knowledge_base": "Base de conhecimento",
   "@knowledge_base": {
     "description": "Link to help center / knowledge base"
   },
-  "system_default_mode": "System default",
+  "system_default_mode": "Padrão do sistema",
   "@system_default_mode": {
     "description": "Use device language for app UI"
   },
-  "pre_rating_sheet_title": "Enjoying Proton Meet?",
+  "pre_rating_sheet_title": "Você está gostando do Proton Meet?",
   "@pre_rating_sheet_title": {
     "description": "Title on the pre-rating bottom sheet before in-app review"
   },
@@ -1686,15 +1736,15 @@
   "@pre_rating_sheet_subtitle": {
     "description": "Subtitle on the pre-rating bottom sheet"
   },
-  "pre_rating_sheet_yes_enjoy_proton_meet": "Yes",
+  "pre_rating_sheet_yes_enjoy_proton_meet": "Sim",
   "@pre_rating_sheet_yes_enjoy_proton_meet": {
     "description": "Primary button on the pre-rating sheet to open store review"
   },
-  "pre_rating_sheet_not_really_enjoy_proton_meet": "Not really",
+  "pre_rating_sheet_not_really_enjoy_proton_meet": "Não exatamente",
   "@pre_rating_sheet_not_really_enjoy_proton_meet": {
     "description": "Secondary button on the pre-rating sheet"
   },
-  "store_review_thanks_toast": "Thanks for your feedback",
+  "store_review_thanks_toast": "Obrigado pelo seu feedback",
   "@store_review_thanks_toast": {
     "description": "Toast shown before the OS in-app store review prompt"
   }
