@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/views/components/alerts/base_bottom_sheet_v2.dart';
@@ -22,11 +24,17 @@ class PreRatingSheet extends StatelessWidget {
   final VoidCallback onPositiveAction;
   final VoidCallback onNegativeAction;
 
-  /// Presents the sheet in a modal bottom sheet
+  /// Presents the sheet in a modal bottom sheet.
+  ///
+  /// The user's positive/negative callbacks run **after** the sheet has been
+  /// fully dismissed. This matters on Android: `InAppReview.requestReview()`
+  /// is silently a no-op when invoked while another modal route is still in
+  /// its pop animation (Play Core requires the host activity to be in the
+  /// RESUMED state with no transient surface on top).
   static Future<void> show(
     BuildContext context, {
-    required VoidCallback onPositiveAction,
-    required VoidCallback onNegativeAction,
+    required FutureOr<void> Function() onPositiveAction,
+    required FutureOr<void> Function() onNegativeAction,
   }) async {
     await showModalBottomSheet<void>(
       context: context,
@@ -40,17 +48,30 @@ class PreRatingSheet extends StatelessWidget {
         return PreRatingSheet(
           maxHeight: maxHeight,
           isLandscape: isLandscape,
-          onPositiveAction: () {
-            Navigator.of(ctx).maybePop();
-            onPositiveAction();
-          },
-          onNegativeAction: () {
-            Navigator.of(ctx).maybePop();
-            onNegativeAction();
-          },
+          onPositiveAction: () => _dismissThenRun(ctx, onPositiveAction),
+          onNegativeAction: () => _dismissThenRun(ctx, onNegativeAction),
         );
       },
     );
+  }
+
+  /// Pops the sheet, awaits the dismissal animation, then runs [action] on
+  /// a clean activity surface.
+  static void _dismissThenRun(
+    BuildContext ctx,
+    FutureOr<void> Function() action,
+  ) {
+    final navigator = Navigator.of(ctx);
+    // Fire & forget on purpose: the InkWell handler must not await, otherwise
+    // the ripple/tap feedback stalls. We still chain dismissal → delay → action
+    // so platform dialogs (e.g. Play Core in-app review) get a clean window.
+    unawaited(() async {
+      await navigator.maybePop();
+      // showModalBottomSheet uses a 250 ms reverse transition; wait slightly
+      // longer so the modal route is fully removed before the callback runs.
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      await action();
+    }());
   }
 
   @override
