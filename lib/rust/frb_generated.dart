@@ -5866,7 +5866,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return MeetParticipant(
       participantUuid: dco_decode_String(arr[0]),
-      displayName: dco_decode_String(arr[1]),
+      displayName: dco_decode_opt_String(arr[1]),
       encryptedDisplayName: dco_decode_opt_String(arr[2]),
       canSubscribe: dco_decode_opt_box_autoadd_u_8(arr[3]),
       canPublish: dco_decode_opt_box_autoadd_u_8(arr[4]),
@@ -7011,7 +7011,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   MeetParticipant sse_decode_meet_participant(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_participantUuid = sse_decode_String(deserializer);
-    var var_displayName = sse_decode_String(deserializer);
+    var var_displayName = sse_decode_opt_String(deserializer);
     var var_encryptedDisplayName = sse_decode_opt_String(deserializer);
     var var_canSubscribe = sse_decode_opt_box_autoadd_u_8(deserializer);
     var var_canPublish = sse_decode_opt_box_autoadd_u_8(deserializer);
@@ -8374,7 +8374,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.participantUuid, serializer);
-    sse_encode_String(self.displayName, serializer);
+    sse_encode_opt_String(self.displayName, serializer);
     sse_encode_opt_String(self.encryptedDisplayName, serializer);
     sse_encode_opt_box_autoadd_u_8(self.canSubscribe, serializer);
     sse_encode_opt_box_autoadd_u_8(self.canPublish, serializer);

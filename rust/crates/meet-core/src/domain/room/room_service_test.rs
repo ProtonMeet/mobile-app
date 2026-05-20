@@ -389,7 +389,7 @@ mod tests {
         let expected_participants = vec![
             crate::domain::user::models::meet_link_info::MeetParticipant {
                 participant_uuid: "participant1".to_string(),
-                display_name: "Participant 1".to_string(),
+                display_name: Some("Participant 1".to_string()),
                 encrypted_display_name: None,
                 can_subscribe: Some(1),
                 can_publish: Some(1),
@@ -399,13 +399,23 @@ mod tests {
             },
             crate::domain::user::models::meet_link_info::MeetParticipant {
                 participant_uuid: "participant2".to_string(),
-                display_name: "Participant 2".to_string(),
+                display_name: Some("Participant 2".to_string()),
                 encrypted_display_name: None,
                 can_subscribe: Some(1),
                 can_publish: Some(0),
                 can_publish_data: Some(1),
                 is_admin: Some(0),
                 is_host: Some(0),
+            },
+            crate::domain::user::models::meet_link_info::MeetParticipant {
+                participant_uuid: "participant3".to_string(),
+                display_name: None,
+                encrypted_display_name: None,
+                can_subscribe: None,
+                can_publish: None,
+                can_publish_data: None,
+                is_admin: None,
+                is_host: None,
             },
         ];
 
@@ -428,9 +438,21 @@ mod tests {
 
         assert!(result.is_ok());
         let participants = result.unwrap();
-        assert_eq!(participants.len(), 2);
+        assert_eq!(participants.len(), 3);
         assert_eq!(participants[0].participant_uuid, "participant1");
         assert_eq!(participants[1].participant_uuid, "participant2");
+        assert_eq!(participants[2].participant_uuid, "participant3");
+        assert_eq!(
+            participants[2].display_name.as_deref(),
+            None,
+            "display_name should remain None when API omits it"
+        );
+        assert_eq!(participants[2].encrypted_display_name, None);
+        assert_eq!(participants[2].can_subscribe, None);
+        assert_eq!(participants[2].can_publish, None);
+        assert_eq!(participants[2].can_publish_data, None);
+        assert_eq!(participants[2].is_admin, None);
+        assert_eq!(participants[2].is_host, None);
     }
 
     #[unified_test]

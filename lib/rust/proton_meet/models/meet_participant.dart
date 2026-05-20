@@ -8,7 +8,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 class MeetParticipant {
   final String participantUuid;
-  final String displayName;
+  final String? displayName;
   final String? encryptedDisplayName;
   final int? canSubscribe;
   final int? canPublish;
@@ -18,7 +18,7 @@ class MeetParticipant {
 
   const MeetParticipant({
     required this.participantUuid,
-    required this.displayName,
+    this.displayName,
     this.encryptedDisplayName,
     this.canSubscribe,
     this.canPublish,

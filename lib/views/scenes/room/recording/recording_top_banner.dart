@@ -92,6 +92,6 @@ class RecordingTopBanner extends StatelessWidget {
     final p = participants[identity];
     if (p == null) return identity;
     final name = p.displayName;
-    return (name.isNotEmpty) ? name : identity;
+    return (name?.isNotEmpty ?? false) ? name! : identity;
   }
 }

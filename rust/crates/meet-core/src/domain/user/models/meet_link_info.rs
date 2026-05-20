@@ -15,7 +15,8 @@ pub struct MeetLinkInfo {
 pub struct MeetParticipant {
     #[serde(rename = "ParticipantUUID")]
     pub participant_uuid: String,
-    pub display_name: String,
+    #[serde(default)]
+    pub display_name: Option<String>,
     #[serde(default)]
     pub encrypted_display_name: Option<String>,
     pub can_subscribe: Option<u8>,
