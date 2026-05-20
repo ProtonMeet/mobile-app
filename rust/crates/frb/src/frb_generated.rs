@@ -5729,7 +5729,7 @@ const _: fn() = || {
         let MeetParticipant =
             None::<crate::proton_meet::models::meet_participant::MeetParticipant>.unwrap();
         let _: String = MeetParticipant.participant_uuid;
-        let _: String = MeetParticipant.display_name;
+        let _: Option<String> = MeetParticipant.display_name;
         let _: Option<String> = MeetParticipant.encrypted_display_name;
         let _: Option<u8> = MeetParticipant.can_subscribe;
         let _: Option<u8> = MeetParticipant.can_publish;
@@ -6759,7 +6759,7 @@ impl SseDecode for crate::proton_meet::models::meet_participant::MeetParticipant
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_participantUuid = <String>::sse_decode(deserializer);
-        let mut var_displayName = <String>::sse_decode(deserializer);
+        let mut var_displayName = <Option<String>>::sse_decode(deserializer);
         let mut var_encryptedDisplayName = <Option<String>>::sse_decode(deserializer);
         let mut var_canSubscribe = <Option<u8>>::sse_decode(deserializer);
         let mut var_canPublish = <Option<u8>>::sse_decode(deserializer);
@@ -9171,7 +9171,7 @@ impl SseEncode for crate::proton_meet::models::meet_participant::MeetParticipant
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.participant_uuid, serializer);
-        <String>::sse_encode(self.display_name, serializer);
+        <Option<String>>::sse_encode(self.display_name, serializer);
         <Option<String>>::sse_encode(self.encrypted_display_name, serializer);
         <Option<u8>>::sse_encode(self.can_subscribe, serializer);
         <Option<u8>>::sse_encode(self.can_publish, serializer);

@@ -887,9 +887,6 @@ impl RoomService {
                 }
             };
 
-            #[cfg(debug_assertions)]
-            let api_display_len = p.display_name.len();
-
             match self
                 .crypto_client
                 .decrypt_message(enc, key, MEET_DISPLAY_NAME_AAD)
@@ -902,14 +899,13 @@ impl RoomService {
                         tracing::debug!(
                             participant_uuid = %p.participant_uuid,
                             cipher_len = enc.len(),
-                            api_display_len,
                             decrypted_len = name.len(),
                             decrypted = %name,
                             aad = MEET_DISPLAY_NAME_AAD,
                             "get_participants: decrypted EncryptedDisplayName into display_name",
                         );
                     }
-                    p.display_name = name;
+                    p.display_name = Some(name);
                 }
                 Err(e) => {
                     #[cfg(debug_assertions)]
@@ -918,7 +914,6 @@ impl RoomService {
                         tracing::debug!(
                             participant_uuid = %p.participant_uuid,
                             cipher_len = enc.len(),
-                            api_display_len,
                             error = %e,
                             aad = MEET_DISPLAY_NAME_AAD,
                             "get_participants: decrypt EncryptedDisplayName failed; keeping API display_name",
