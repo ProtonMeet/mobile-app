@@ -2717,6 +2717,11 @@ impl App {
         Ok(ConnectionStateInfo::from(ws_state))
     }
 
+    #[wasm_bindgen(js_name = setWorkerCookieBridgeEnabled)]
+    pub fn set_worker_cookie_bridge_enabled_wasm(&self, enabled: bool) {
+        self.ws_client.set_worker_cookie_bridge_enabled(enabled);
+    }
+
     #[wasm_bindgen(js_name = setWebsocketPingInterval)]
     pub async fn set_websocket_ping_interval_wasm(
         &self,

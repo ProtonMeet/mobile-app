@@ -1,5 +1,6 @@
 use meet_type::fanout::GroupInfoSummaryData;
 use proton_meet_macro::async_trait;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex as StdMutex};
 use tokio::sync::{oneshot, Mutex};
 
@@ -26,6 +27,8 @@ use crate::{
 };
 #[cfg(not(target_family = "wasm"))]
 use tokio::time::*;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::wasm_bindgen;
 #[cfg(target_family = "wasm")]
 use wasmtimer::tokio::*;
 
@@ -56,6 +59,7 @@ const DEFAULT_PONG_TIMEOUT_SECONDS: u64 = 3;
 const HEARTBEAT_PING: u8 = 0x01;
 const HEARTBEAT_PONG: u8 = 0x02;
 const HEARTBEAT_MSG_SIZE: usize = 25; // 1 byte type + 16 bytes UUID + 8 bytes timestamp
+const COOKIE_CLEAR_EXPIRES_AT_EPOCH: &str = "Thu, 01 Jan 1970 00:00:00 GMT";
 
 #[cfg(target_family = "wasm")]
 fn set_cookie_js(cookie_string: &str) -> bool {
@@ -74,11 +78,23 @@ fn set_cookie_js(cookie_string: &str) -> bool {
     html_document.set_cookie(cookie_string).is_ok()
 }
 
-#[cfg(target_family = "wasm")]
-fn set_ws_auth_cookie(url: &Url, base64_sd_kbt: &str) -> Result<(), anyhow::Error> {
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen(module = "/src/wasm_cookie_bridge.js")]
+extern "C" {
+    #[wasm_bindgen(catch, js_name = set_ws_auth_cookie_from_main)]
+    async fn set_ws_auth_cookie_from_main(
+        cookie: String,
+    ) -> Result<wasm_bindgen::JsValue, wasm_bindgen::JsValue>;
+
+    #[wasm_bindgen(catch, js_name = clear_ws_auth_cookie_from_main)]
+    async fn clear_ws_auth_cookie_from_main(
+        cookie: String,
+    ) -> Result<wasm_bindgen::JsValue, wasm_bindgen::JsValue>;
+}
+
+fn build_ws_auth_cookie(url: &Url, base64_sd_kbt: &str, expires: Option<&str>) -> String {
     let mut cookie = format!("meet-token={base64_sd_kbt}");
 
-    // Restrict this cookie to the websocket endpoint path.
     let path = url.path();
     if path.is_empty() {
         cookie.push_str("; Path=/");
@@ -96,43 +112,72 @@ fn set_ws_auth_cookie(url: &Url, base64_sd_kbt: &str) -> Result<(), anyhow::Erro
 
     cookie.push_str("; SameSite=Strict");
 
-    if !set_cookie_js(&cookie) {
+    if let Some(expires) = expires {
+        cookie.push_str("; Expires=");
+        cookie.push_str(expires);
+    }
+
+    cookie
+}
+
+fn build_ws_clear_cookie(url: &Url) -> String {
+    build_ws_auth_cookie(url, "", Some(COOKIE_CLEAR_EXPIRES_AT_EPOCH))
+}
+
+#[cfg(target_arch = "wasm32")]
+async fn set_ws_auth_cookie(
+    url: &Url,
+    base64_sd_kbt: &str,
+    worker_cookie_bridge_enabled: bool,
+) -> Result<(), anyhow::Error> {
+    let cookie = build_ws_auth_cookie(url, base64_sd_kbt, None);
+
+    if web_sys::window().is_some() {
+        if !set_cookie_js(&cookie) {
+            return Err(anyhow::anyhow!(
+                "Failed to set websocket auth cookie meet-token"
+            ));
+        }
+        return Ok(());
+    }
+
+    if !worker_cookie_bridge_enabled {
         return Err(anyhow::anyhow!(
-            "Failed to set websocket auth cookie meet-token"
+            "websocket auth cookie requires window.document unless worker cookie bridge is enabled"
         ));
     }
 
+    set_ws_auth_cookie_from_main(cookie)
+        .await
+        .map_err(|error| anyhow::anyhow!("main-thread websocket cookie set failed: {error:?}"))?;
     Ok(())
 }
 
-#[cfg(target_family = "wasm")]
-fn clear_ws_auth_cookie(url: &Url) -> Result<(), anyhow::Error> {
-    let mut cookie = "meet-token=".to_string();
+#[cfg(target_arch = "wasm32")]
+async fn clear_ws_auth_cookie(
+    url: &Url,
+    worker_cookie_bridge_enabled: bool,
+) -> Result<(), anyhow::Error> {
+    let cookie = build_ws_clear_cookie(url);
 
-    let path = url.path();
-    if path.is_empty() {
-        cookie.push_str("; Path=/");
-    } else {
-        cookie.push_str(&format!("; Path={path}"));
+    if web_sys::window().is_some() {
+        if !set_cookie_js(&cookie) {
+            return Err(anyhow::anyhow!(
+                "Failed to clear websocket auth cookie meet-token"
+            ));
+        }
+        return Ok(());
     }
 
-    if let Some(domain) = url.host_str() {
-        cookie.push_str(&format!("; Domain={domain}"));
-    }
-
-    if url.scheme() == "wss" {
-        cookie.push_str("; Secure");
-    }
-
-    cookie.push_str("; SameSite=Strict");
-    cookie.push_str("; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
-
-    if !set_cookie_js(&cookie) {
+    if !worker_cookie_bridge_enabled {
         return Err(anyhow::anyhow!(
-            "Failed to clear websocket auth cookie meet-token"
+            "websocket auth cookie requires window.document unless worker cookie bridge is enabled"
         ));
     }
 
+    clear_ws_auth_cookie_from_main(cookie)
+        .await
+        .map_err(|error| anyhow::anyhow!("main-thread websocket cookie clear failed: {error:?}"))?;
     Ok(())
 }
 
@@ -223,6 +268,8 @@ pub struct WsClient {
     ws_receiver: Arc<Mutex<Option<SplitStream<WebSocketStream>>>>,
     token: Arc<Mutex<Option<String>>>,
     connection_state: Arc<Mutex<WebSocketStatus>>,
+    worker_cookie_bridge_enabled: Arc<AtomicBool>,
+    connect_lock: Arc<Mutex<()>>,
     host: String,
     message_handler: Arc<Mutex<Option<Arc<WebSocketMessageHandler>>>>,
     disconnection_callback: Arc<Mutex<Option<Arc<WebSocketDisconnectionHandler>>>>,
@@ -256,6 +303,8 @@ impl WsClient {
                 last_ping_timestamp: None,
                 last_pong_timestamp: None,
             })),
+            worker_cookie_bridge_enabled: Arc::new(AtomicBool::new(false)),
+            connect_lock: Arc::new(Mutex::new(())),
             host,
             message_handler: Arc::new(Mutex::new(None)),
             disconnection_callback: Arc::new(Mutex::new(None)),
@@ -268,6 +317,15 @@ impl WsClient {
             listener_generation: Arc::new(StdMutex::new(0)),
             enable_prod_tls_pinning,
         }
+    }
+
+    pub fn set_worker_cookie_bridge_enabled(&self, enabled: bool) {
+        self.worker_cookie_bridge_enabled
+            .store(enabled, Ordering::Relaxed);
+    }
+
+    fn worker_cookie_bridge_enabled(&self) -> bool {
+        self.worker_cookie_bridge_enabled.load(Ordering::Relaxed)
     }
 
     /// Get ping interval in seconds, using configured value or default
@@ -446,9 +504,31 @@ impl WebSocketClient for WsClient {
         #[cfg(target_family = "wasm")]
         {
             let url = self.build_ws_url("v1/ws")?;
-            set_ws_auth_cookie(&url, base64_sd_kbt)?;
+            let use_worker_cookie_bridge = self.worker_cookie_bridge_enabled();
+            let _connect_guard = if use_worker_cookie_bridge {
+                Some(self.connect_lock.lock().await)
+            } else {
+                None
+            };
+
+            if use_worker_cookie_bridge {
+                tracing::trace!("worker cookie replay start");
+            }
+
+            {
+                let mut state = self.connection_state.lock().await;
+                state.connection_state = ConnectionState::Connecting;
+            }
+
+            set_ws_auth_cookie(&url, base64_sd_kbt, use_worker_cookie_bridge).await?;
             let connect_result = tokio_tungstenite_wasm::connect(url.as_str()).await;
-            let _ = clear_ws_auth_cookie(&url);
+            let clear_result = clear_ws_auth_cookie(&url, use_worker_cookie_bridge).await;
+            if let Err(error) = clear_result {
+                tracing::warn!("failed to clear websocket auth cookie: {error:?}");
+            }
+            if use_worker_cookie_bridge {
+                tracing::trace!("worker cookie replay end");
+            }
             let ws_stream = connect_result?;
 
             let (write, read) = ws_stream.split();
@@ -883,8 +963,15 @@ impl WebSocketClient for WsClient {
                                 }
 
                                 let wrapped_msg = WebSocketMessage::from(msg);
-                                #[cfg(debug_assertions)]
-                                tracing::info!("Received websocket message");
+                                let wire_len = match &wrapped_msg {
+                                    WebSocketMessage::Text(t) => t.len(),
+                                    WebSocketMessage::Binary(b) => b.len(),
+                                    _ => 0,
+                                };
+                                tracing::info!(
+                                    wire_len = wire_len,
+                                    "Received websocket message (wire arrival)"
+                                );
 
                                 // Clone handler Arc outside lock
                                 if let Some(handler) = handler_arc.lock().await.clone() {
@@ -1117,6 +1204,10 @@ impl WebSocketClient for WsClient {
         *guard = seconds;
     }
 
+    fn set_worker_cookie_bridge_enabled(&self, enabled: bool) {
+        WsClient::set_worker_cookie_bridge_enabled(self, enabled);
+    }
+
     async fn get_group_info_summary(&self) -> Result<GroupInfoSummaryData, anyhow::Error> {
         let ping_interval_seconds = self.get_ping_interval_seconds().await;
         let response = self
@@ -1273,5 +1364,54 @@ mod tests {
         let client = WsClient::new("meet.proton.me/meet/api".to_string());
         let url = client.build_ws_url("v1/ws").expect("url should build");
         assert_eq!(url.as_str(), "wss://meet.proton.me/meet/api/v1/ws");
+    }
+
+    #[test]
+    fn worker_cookie_bridge_flag_defaults_to_false() {
+        let client = WsClient::new("localhost".to_string());
+        assert!(!client.worker_cookie_bridge_enabled());
+    }
+
+    #[test]
+    fn worker_cookie_bridge_flag_can_be_toggled() {
+        let client = WsClient::new("localhost".to_string());
+        client.set_worker_cookie_bridge_enabled(true);
+        assert!(client.worker_cookie_bridge_enabled());
+        client.set_worker_cookie_bridge_enabled(false);
+        assert!(!client.worker_cookie_bridge_enabled());
+    }
+
+    #[test]
+    fn build_ws_auth_cookie_uses_expected_attributes_for_wss_endpoint() {
+        let url = Url::parse("wss://meet.proton.me/meet/api/v1/ws").expect("valid ws url");
+        let cookie = build_ws_auth_cookie(&url, "base64-token", None);
+        assert_eq!(
+            cookie,
+            "meet-token=base64-token; Path=/meet/api/v1/ws; Domain=meet.proton.me; Secure; SameSite=Strict"
+        );
+    }
+
+    #[test]
+    fn build_ws_auth_cookie_uses_root_path_for_empty_endpoint_path() {
+        let url = Url::parse("wss://meet.proton.me").expect("valid ws url");
+        let cookie = build_ws_auth_cookie(&url, "base64-token", None);
+        assert!(cookie.contains("; Path=/"));
+    }
+
+    #[test]
+    fn build_ws_clear_cookie_preserves_scope_and_epoch_expiry() {
+        let url = Url::parse("wss://meet.proton.me/meet/api/v1/ws").expect("valid ws url");
+        let cookie = build_ws_clear_cookie(&url);
+        assert_eq!(
+            cookie,
+            "meet-token=; Path=/meet/api/v1/ws; Domain=meet.proton.me; Secure; SameSite=Strict; Expires=Thu, 01 Jan 1970 00:00:00 GMT"
+        );
+    }
+
+    #[test]
+    fn build_ws_auth_cookie_keeps_domain_attribute() {
+        let url = Url::parse("wss://meet.proton.me/meet/api/v1/ws").expect("valid ws url");
+        let cookie = build_ws_auth_cookie(&url, "base64-token", None);
+        assert!(cookie.contains("; Domain=meet.proton.me"));
     }
 }
