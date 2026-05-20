@@ -57,6 +57,7 @@ pub trait WebSocketClient {
     async fn set_ping_interval_seconds(&self, _seconds: Option<u64>) {}
     async fn set_max_ping_failures(&self, _failures: Option<u32>) {}
     async fn set_pong_timeout_seconds(&self, _seconds: Option<u64>) {}
+    fn set_worker_cookie_bridge_enabled(&self, _enabled: bool) {}
 
     async fn get_group_info_summary(&self) -> Result<GroupInfoSummaryData, anyhow::Error>;
 }
