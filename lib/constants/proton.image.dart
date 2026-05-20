@@ -49,6 +49,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
 
   /// in room top bar
   final SvgGenImage iconDiamond;
+  final SvgGenImage iconDiamondClear;
   final SvgGenImage iconStarShield;
 
   /// icons for dashboard
@@ -171,6 +172,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
     required this.iconAudioOnWave,
     required this.iconConnectionPoor,
     required this.iconDiamond,
+    required this.iconDiamondClear,
     required this.iconStarShield,
     required this.iconEarlyAccess,
     required this.iconAdd,
@@ -258,6 +260,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
     SvgGenImage? iconAudioOnWave,
     SvgGenImage? iconConnectionPoor,
     SvgGenImage? iconDiamond,
+    SvgGenImage? iconDiamondClear,
     SvgGenImage? iconStarShield,
     SvgGenImage? iconEarlyAccess,
     SvgGenImage? iconAdd,
@@ -348,6 +351,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
       iconAudioOnWave: iconAudioOnWave ?? this.iconAudioOnWave,
       iconConnectionPoor: iconConnectionPoor ?? this.iconConnectionPoor,
       iconDiamond: iconDiamond ?? this.iconDiamond,
+      iconDiamondClear: iconDiamondClear ?? this.iconDiamondClear,
       iconStarShield: iconStarShield ?? this.iconStarShield,
       iconEarlyAccess: iconEarlyAccess ?? this.iconEarlyAccess,
       iconAdd: iconAdd ?? this.iconAdd,
@@ -443,6 +447,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
       iconAudioOnWave: other.iconAudioOnWave,
       iconConnectionPoor: other.iconConnectionPoor,
       iconDiamond: other.iconDiamond,
+      iconDiamondClear: other.iconDiamondClear,
       iconStarShield: other.iconStarShield,
       iconEarlyAccess: other.iconEarlyAccess,
       iconAdd: other.iconAdd,
@@ -531,6 +536,7 @@ final lightImageExtension = ProtonImages(
   iconAudioOnWave: Assets.images.icon.icAudioWave,
   iconConnectionPoor: Assets.images.icon.icConnectionPoor,
   iconDiamond: Assets.images.icon.icDiamond,
+  iconDiamondClear: Assets.images.icon.icDiamondClear,
   iconStarShield: Assets.images.icon.icStarShield,
   iconEarlyAccess: Assets.images.icon.icEarlyAccessDialog,
   iconAdd: Assets.images.icon.icPlus,
@@ -617,6 +623,7 @@ final darkImageExtension = ProtonImages(
   iconAudioOnWave: Assets.images.icon.icAudioWave,
   iconConnectionPoor: Assets.images.icon.icConnectionPoor,
   iconDiamond: Assets.images.icon.icDiamond,
+  iconDiamondClear: Assets.images.icon.icDiamondClear,
   iconStarShield: Assets.images.icon.icStarShield,
   iconEarlyAccess: Assets.images.icon.icEarlyAccessDialog,
   iconAdd: Assets.images.icon.icPlus,

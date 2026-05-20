@@ -36,6 +36,7 @@ enum UnleashFeature {
   meetFeedbackOnSkip,
   meetInAppStoreReview,
   meetMultipleRecording,
+  meetInAppPurchase,
 }
 
 /// Function to retrieve all default toggles
@@ -84,6 +85,8 @@ extension UnleashFeatureExt on UnleashFeature {
         return "MeetFeedbackOnSkip";
       case UnleashFeature.meetInAppStoreReview:
         return "MeetInAppStoreReview";
+      case UnleashFeature.meetInAppPurchase:
+        return "MeetInAppPurchase";
       case UnleashFeature.meetNewSwitchJoinType:
         return "MeetNewSwitchJoinType";
       case UnleashFeature.meetMultipleRecording:
@@ -332,4 +335,8 @@ class UnleashDataProvider extends DataProvider {
 
   bool isMeetMultipleRecording() =>
       isFeatureEnabled(UnleashFeature.meetMultipleRecording);
+
+  /// Native subscription / upgrade (StoreKit / Play Billing) via method channel.
+  bool isMeetInAppPurchaseEnabled() =>
+      isFeatureEnabled(UnleashFeature.meetInAppPurchase);
 }

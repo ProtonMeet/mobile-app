@@ -12,7 +12,10 @@ abstract class NativeViewChannel {
     String userAgent,
   );
 
-  /// Add more methods here
+  /// Opens native plan management (maps to `native.navigation.plan.subscription`).
+  Future<void> switchToSubscription(FlutterSession session);
+
+  /// Opens native upgrade / IAP flow (maps to `native.navigation.plan.upgrade`).
   Future<void> switchToUpgrade(FlutterSession session);
 
   /// logout

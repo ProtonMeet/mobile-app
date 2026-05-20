@@ -49,6 +49,7 @@ dependencies:
   # frb
   flutter_rust_bridge: 2.11.1
   freezed_annotation: ^3.1.0
+  json_annotation: ^4.12.0
 
   # Add shelf dependencies for web server
   # shelf: ^1.4.1
