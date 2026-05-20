@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -23,6 +24,7 @@ import 'package:meet/views/components/alerts/session_expired_dialog.dart';
 import 'package:meet/views/components/alerts/signin_intro_sheet.dart';
 import 'package:meet/views/components/bottom.sheets/almost_there_bottom_sheet.dart'
     show AlmostThereContext, showAlmostThereBottomSheet;
+import 'package:meet/views/components/iap/native_plans_test_sheet.dart';
 import 'package:meet/views/components/local.toast.view.dart';
 import 'package:meet/views/scenes/account_deletion/account_deletion_view.dart';
 import 'package:meet/views/scenes/app/app.router.dart';
@@ -105,6 +107,23 @@ class _DashboardPageState extends State<DashboardPage> {
     _appStateSubscription?.cancel();
     _dashboardScrollController.dispose();
     super.dispose();
+  }
+
+  bool _isNativeInAppPurchaseEnabled() {
+    try {
+      return ManagerFactory()
+          .get<DataProviderManager>()
+          .unleashDataProvider
+          .isMeetInAppPurchaseEnabled();
+    } on Object {
+      return false;
+    }
+  }
+
+  void _handleNativePlansTest() {
+    if (!kIsWeb && (android || iOS) && _isNativeInAppPurchaseEnabled()) {
+      unawaited(NativePlansTestSheet.show(context));
+    }
   }
 
   void joinMeetingWithLink(String roomId, String password, String meetingLink) {
@@ -631,6 +650,12 @@ class _DashboardPageState extends State<DashboardPage> {
                         onNavBarTitleChanged: (_) {
                           // Title is managed internally by DashboardScreen
                         },
+                        onNativePlansTestTap:
+                            !kIsWeb &&
+                                (android || iOS) &&
+                                _isNativeInAppPurchaseEnabled()
+                            ? _handleNativePlansTest
+                            : null,
                       ),
                     ),
                   ),

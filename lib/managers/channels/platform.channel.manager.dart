@@ -8,6 +8,9 @@ import 'package:meet/helper/logger.dart';
 import 'package:meet/managers/channels/native.view.channel.dart';
 import 'package:meet/managers/channels/platform.channel.event.dart';
 import 'package:meet/managers/manager.dart';
+import 'package:meet/managers/manager.factory.dart';
+import 'package:meet/managers/providers/data.provider.manager.dart'
+    hide DirectEmitEvent;
 import 'package:meet/models/native.session.model.dart';
 
 import 'platform.channel.state.dart';
@@ -69,8 +72,40 @@ class PlatformChannelManager extends Bloc<ChannelEvent, NativeLoginState>
     }
   }
 
+  bool _isInAppPurchaseEnabled() {
+    try {
+      return ManagerFactory()
+          .get<DataProviderManager>()
+          .unleashDataProvider
+          .isMeetInAppPurchaseEnabled();
+    } on Object catch (e) {
+      logger.w('[IAP] MeetInAppPurchase flag check failed: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<void> switchToSubscription(FlutterSession session) async {
+    if (!_isInAppPurchaseEnabled()) {
+      return logger.i('switchToSubscription skipped: MeetInAppPurchase disabled');
+    }
+    if (desktop) {
+      return logger.i("switchToSubscription is mobile only feature");
+    }
+    const key = "session-key";
+    const String method = "native.navigation.plan.subscription";
+    try {
+      await toNativeChannel.invokeMethod(method, [key, session.toJson()]);
+    } on Exception catch (e) {
+      logger.e("Failed to switch to subscription view: '$e'.");
+    }
+  }
+
   @override
   Future<void> switchToUpgrade(FlutterSession session) async {
+    if (!_isInAppPurchaseEnabled()) {
+      return logger.i('switchToUpgrade skipped: MeetInAppPurchase disabled');
+    }
     if (desktop) {
       return logger.i("switchToUpgrade is mobile only feature");
     }

@@ -12,5 +12,5 @@ enum PaymentsConstants {
     // unused (used pre-Dynamic Plans only)
     static let shownPlanNames: ListOfShownPlanNames = []
 
-    static let clientApp = ClientApp.wallet
+    static let clientApp = ClientApp.meet
 }

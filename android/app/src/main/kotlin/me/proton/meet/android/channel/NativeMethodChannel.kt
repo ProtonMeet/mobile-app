@@ -21,7 +21,6 @@ package proton.android.meet.channel
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
-import kotlinx.serialization.json.Json
 import me.proton.core.account.domain.entity.Account
 import me.proton.core.account.domain.entity.AccountDetails
 import me.proton.core.account.domain.entity.AccountState
@@ -122,16 +121,39 @@ class NativeMethodChannel(
         account: Account?,
         session: Session?,
     ) = AccountSession(
-        account = requireNotNull(account),
-        session = requireNotNull(session),
+        account = requireNotNull(account) { "Missing Account (check session map / userId)" },
+        session = requireNotNull(session) { "Missing Session (check accessToken, refreshToken, scopes)" },
     )
 
-    @Suppress("UNCHECKED_CAST")
-    private fun getArgumentsOrNull(arguments: Any?): Map<String, Any>? = runCatching {
-        (arguments as? Map<String, String>) ?:
-        (arguments as? ArrayList<*>)?.getOrNull(1) as? Map<String, Any> ?:
-        Json.decodeFromString<Map<String, Any>>(arguments as String)
-    }.getOrNull()
+    /**
+     * Normalizes Flutter method arguments into a [Map<String, Any>] so values stay typed
+     * (e.g. [scopes] as a list). Avoids [Map<String, String>] casts that drop valid maps.
+     *
+     * Supported shapes (match iOS): `[ sessionKey, authMap ]`, or a single auth [Map],
+     * same as other `native.navigation.*` calls.
+     */
+    private fun getArgumentsOrNull(arguments: Any?): Map<String, Any>? =
+        when (arguments) {
+            is ArrayList<*> ->
+                if (arguments.size < 2) {
+                    null
+                } else {
+                    val payload = arguments[1]
+                    if (payload is Map<*, *>) mapFromFlutter(payload) else null
+                }
+            is Map<*, *> -> mapFromFlutter(arguments)
+            else -> null
+        }
+
+    private fun mapFromFlutter(raw: Map<*, *>): Map<String, Any> {
+        val out = LinkedHashMap<String, Any>()
+        for ((k, v) in raw) {
+            if (k != null && v != null) {
+                out[k.toString()] = v
+            }
+        }
+        return out
+    }
 
     private fun getUserIdOrNull(arguments: Map<String, Any>): UserId? = runCatching {
         arguments["userId"]?.let { UserId(it as String) }
@@ -155,16 +177,29 @@ class NativeMethodChannel(
         MeetLogger.e(LogTag.CHANNEL_NATIVE, it)
     }.getOrNull()
 
-    @Suppress("UNCHECKED_CAST")
     private fun getSessionOrNull(arguments: Map<String, Any>) = runCatching {
         Session.Authenticated(
             userId = requireNotNull(getUserIdOrNull(arguments)),
             sessionId = requireNotNull(getSessionIdOrNull(arguments)),
-            accessToken = requireNotNull(arguments["accessToken"] as String),
-            refreshToken = requireNotNull(arguments["refreshToken"] as String),
-            scopes = arguments["scopes"] as ArrayList<String>,
+            accessToken = requireNotNull(arguments["accessToken"]?.toString()),
+            refreshToken = requireNotNull(arguments["refreshToken"]?.toString()),
+            scopes = parseScopes(arguments),
         )
     }.onFailure {
         MeetLogger.e(LogTag.CHANNEL_NATIVE, it)
     }.getOrNull()
+
+    /** Flutter sends [scopes] as a List; Proton Core expects an [ArrayList] of scope strings. */
+    private fun parseScopes(arguments: Map<String, Any>): ArrayList<String> {
+        val raw = arguments["scopes"] ?: return ArrayList()
+        return when (raw) {
+            is ArrayList<*> -> ArrayList(raw.map { it.toString() })
+            is List<*> -> ArrayList(raw.map { it.toString() })
+            is String ->
+                ArrayList(
+                    raw.split(',').map { it.trim() }.filter { it.isNotEmpty() },
+                )
+            else -> throw IllegalArgumentException("Invalid scopes payload: ${raw::class.java.name}")
+        }
+    }
 }

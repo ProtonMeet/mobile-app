@@ -47,7 +47,7 @@ List<dynamic> _intListToJson(List<int> list) => list;
 @JsonSerializable()
 class UserActivityPersistedV1 {
   const UserActivityPersistedV1({
-    this.version = kUserActivitySchemaVersion,
+    int? version,
     this.meetingsCreatedCount = 0,
     this.meetingsCompletedCount = 0,
     this.createdAtEpochSec = const [],
@@ -60,7 +60,7 @@ class UserActivityPersistedV1 {
     this.hasSubmittedFeedbackBelow5Stars = false,
     this.pendingDeferredStoreReview = false,
     this.lastPreRatingNegativeEpochSec = 0,
-  });
+  }) : version = version ?? kUserActivitySchemaVersion;
 
   static const int _listCap = 48;
 

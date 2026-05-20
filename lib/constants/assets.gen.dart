@@ -135,6 +135,10 @@ class $AssetsImagesIconGen {
   SvgGenImage get icDataUpload =>
       const SvgGenImage('assets/images/icon/ic-data-upload.svg');
 
+  /// File path: assets/images/icon/ic-diamond-clear.svg
+  SvgGenImage get icDiamondClear =>
+      const SvgGenImage('assets/images/icon/ic-diamond-clear.svg');
+
   /// File path: assets/images/icon/ic-diamond.svg
   SvgGenImage get icDiamond =>
       const SvgGenImage('assets/images/icon/ic-diamond.svg');
@@ -352,6 +356,7 @@ class $AssetsImagesIconGen {
     icCrossCircle,
     icCross,
     icDataUpload,
+    icDiamondClear,
     icDiamond,
     icDoorModalHeader,
     icEarlyAccessDialog,

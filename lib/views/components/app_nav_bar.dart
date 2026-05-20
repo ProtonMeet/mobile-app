@@ -27,6 +27,7 @@ class AppNavBar extends StatelessWidget {
     this.onCancelSearch,
     this.onSortTap,
     this.searchBarReachedNavBar = false,
+    this.onNativePlansTestTap,
     super.key,
   });
 
@@ -47,6 +48,9 @@ class AppNavBar extends StatelessWidget {
   final VoidCallback? onCancelSearch;
   final VoidCallback? onSortTap;
   final bool searchBarReachedNavBar;
+
+  /// Opens native plans / IAP test sheet (Android & iOS); null hides control.
+  final VoidCallback? onNativePlansTestTap;
 
   @override
   Widget build(BuildContext context) {
@@ -104,6 +108,7 @@ class AppNavBar extends StatelessWidget {
         isScrolled: isScrolled,
         onSortTap: onSortTap,
         searchBarReachedNavBar: searchBarReachedNavBar,
+        onNativePlansTestTap: onNativePlansTestTap,
       ),
     );
   }
@@ -134,6 +139,7 @@ class _FixedNavBarDelegate extends SliverPersistentHeaderDelegate {
     this.isScrolled = false,
     this.onSortTap,
     this.searchBarReachedNavBar = false,
+    this.onNativePlansTestTap,
   });
 
   final double height;
@@ -159,6 +165,7 @@ class _FixedNavBarDelegate extends SliverPersistentHeaderDelegate {
   final bool isScrolled;
   final VoidCallback? onSortTap;
   final bool searchBarReachedNavBar;
+  final VoidCallback? onNativePlansTestTap;
 
   @override
   double get minExtent => height;
@@ -204,6 +211,7 @@ class _FixedNavBarDelegate extends SliverPersistentHeaderDelegate {
                           displayName: displayName,
                           onLogoutTap: onLogoutTap,
                           onSignInTap: onSignInTap,
+                          onNativePlansTestTap: onNativePlansTestTap,
                         ),
                 ),
               ),
@@ -247,7 +255,8 @@ class _FixedNavBarDelegate extends SliverPersistentHeaderDelegate {
         searchQuery != oldDelegate.searchQuery ||
         isScrolled != oldDelegate.isScrolled ||
         onSortTap != oldDelegate.onSortTap ||
-        searchBarReachedNavBar != oldDelegate.searchBarReachedNavBar;
+        searchBarReachedNavBar != oldDelegate.searchBarReachedNavBar ||
+        onNativePlansTestTap != oldDelegate.onNativePlansTestTap;
   }
 }
 
@@ -266,6 +275,7 @@ class _NormalModeContent extends StatelessWidget {
     required this.displayName,
     required this.onLogoutTap,
     required this.onSignInTap,
+    this.onNativePlansTestTap,
   });
 
   final bool showTitle;
@@ -280,6 +290,7 @@ class _NormalModeContent extends StatelessWidget {
   final String displayName;
   final VoidCallback onLogoutTap;
   final VoidCallback onSignInTap;
+  final VoidCallback? onNativePlansTestTap;
 
   @override
   Widget build(BuildContext context) {
@@ -328,9 +339,13 @@ class _NormalModeContent extends StatelessWidget {
             if (onSearchTap != null && onSortTap != null)
               const SizedBox(width: 6),
             if (onSortTap != null) SortButton(onTap: onSortTap!),
-          ] else if (isSignedIn)
-            UserAvatarButton(displayName: displayName, onTap: onLogoutTap)
-          else
+          ] else if (isSignedIn) ...[
+            if (onNativePlansTestTap != null) ...[
+              _NativePlansButton(onTap: onNativePlansTestTap!),
+              const SizedBox(width: 6),
+            ],
+            UserAvatarButton(displayName: displayName, onTap: onLogoutTap),
+          ] else
             _SignInButton(onTap: onSignInTap),
           const SizedBox(width: 12),
         ],
@@ -398,6 +413,37 @@ class _SearchModeContent extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Native plans / IAP entry; styled like [_SettingsButton].
+class _NativePlansButton extends StatelessWidget {
+  const _NativePlansButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: context.local.iap_native_test_title,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: ShapeDecoration(
+          color: context.colors.backgroundCard,
+          shape: RoundedRectangleBorder(
+            side: BorderSide(color: context.colors.borderCard),
+            borderRadius: BorderRadius.circular(200),
+          ),
+        ),
+        child: IconButton(
+          onPressed: onTap,
+          icon: context.images.iconDiamondClear.svg20(
+            color: context.colors.textWeak,
+          ),
+        ),
+      ),
     );
   }
 }

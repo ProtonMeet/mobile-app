@@ -43,6 +43,7 @@ class DashboardScreen extends StatefulWidget {
     required this.isSignedIn,
     required this.displayName,
     this.onNavBarTitleChanged,
+    this.onNativePlansTestTap,
     super.key,
   });
 
@@ -63,6 +64,7 @@ class DashboardScreen extends StatefulWidget {
   final bool isSignedIn;
   final String displayName;
   final ValueChanged<String?>? onNavBarTitleChanged;
+  final VoidCallback? onNativePlansTestTap;
 
   @override
   State<DashboardScreen> createState() {
@@ -392,6 +394,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                 onSignInTap: widget.onSignInTap,
                 onLogoutTap: widget.onLogoutTap,
                 onSettingsTap: widget.onSettingsTap,
+                onNativePlansTestTap: widget.onNativePlansTestTap,
               ),
 
               if (!currentState.isSearchMode)
