@@ -47,6 +47,7 @@ use crate::infra::http_client_util::HttpClientUtil;
 use crate::infra::mls_response_ext::MlsResponseExt;
 use crate::infra::proton_response_ext::ProtonResponseExt;
 use reqwest;
+use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use url::Url;
@@ -86,6 +87,8 @@ pub struct ProtonHttpClient {
     session: Client,
     http_host: String,
     mls_session: reqwest::Client,
+    app_version: String,
+    user_agent: String,
     cks_cache: Arc<RwLock<Option<Vec<u8>>>>,
     external_sender_cache: Arc<RwLock<Option<Vec<u8>>>>,
 }
@@ -114,13 +117,35 @@ impl ProtonHttpClient {
         self.session.clone()
     }
 
+    fn mls_default_headers(
+        app_version: &str,
+        user_agent: &str,
+    ) -> Result<HeaderMap, HttpClientError> {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            USER_AGENT,
+            HeaderValue::from_str(user_agent).map_err(|e| HttpClientError::MlsHttpError {
+                message: format!("invalid User-Agent header value: {e}"),
+            })?,
+        );
+        headers.insert(
+            reqwest::header::HeaderName::from_static("x-app-version"),
+            HeaderValue::from_str(app_version).map_err(|e| HttpClientError::MlsHttpError {
+                message: format!("invalid X-App-Version header value: {e}"),
+            })?,
+        );
+        Ok(headers)
+    }
+
     pub fn new(
         config: ApiConfig,
         auth_store: Box<dyn Store>,
         http_host: String,
     ) -> Result<Self, anyhow::Error> {
         let (app_version, user_agent) = config.spec;
-        let app = App::new(app_version)?.with_user_agent(user_agent);
+        let mls_default_headers = Self::mls_default_headers(&app_version, &user_agent)
+            .map_err(anyhow::Error::from)?;
+        let app = App::new(app_version.clone())?.with_user_agent(user_agent.clone());
 
         #[cfg(not(target_family = "wasm"))]
         let mut builder = Client::builder(app, auth_store);
@@ -181,16 +206,22 @@ impl ProtonHttpClient {
                     })?,
                 );
             }
-            mls_builder.build()?
+            mls_builder
+                .default_headers(mls_default_headers)
+                .build()?
         };
 
         #[cfg(target_family = "wasm")]
-        let mls_session = reqwest::ClientBuilder::new().build()?;
+        let mls_session = reqwest::ClientBuilder::new()
+            .default_headers(mls_default_headers)
+            .build()?;
 
         Ok(Self {
             session,
             http_host,
             mls_session,
+            app_version,
+            user_agent,
             cks_cache: Arc::new(RwLock::new(None)),
             external_sender_cache: Arc::new(RwLock::new(None)),
         })
@@ -631,8 +662,8 @@ impl HttpClient for ProtonHttpClient {
     async fn send_metrics(
         &self,
         base64_sd_kbt: &str,
-        app_version: &str,
-        user_agent: &str,
+        _app_version: &str,
+        _user_agent: &str,
         metrics_request: &ServiceMetricsRequest,
     ) -> Result<(), HttpClientError> {
         let url = self.build_http_url("v1/metrics")?;
@@ -640,8 +671,6 @@ impl HttpClient for ProtonHttpClient {
             .mls_session
             .post(url)
             .json(metrics_request)
-            .header("X-App-Version", app_version)
-            .header("User-Agent", user_agent)
             .header("Authorization", format!("Bearer {base64_sd_kbt}"))
             .send()
             .await?;
@@ -787,6 +816,32 @@ mod tests {
 
         let url = client.build_http_url("v1/groupInfo").unwrap();
         assert_eq!(url.as_str(), "https://meet.proton.me/meet/api/v1/groupInfo");
+    }
+
+    #[test]
+    fn test_mls_session_stores_client_spec() {
+        let config = ApiConfig {
+            spec: (
+                "macos-meet@9.8.7".to_string(),
+                "ProtonMeet/1.0 (macOS 14.0; MacBookPro)".to_string(),
+            ),
+            auth: None,
+            url_prefix: None,
+            env: None,
+            store: None,
+            proxy: None,
+        };
+        let client = ProtonHttpClient::new(
+            config,
+            Box::new(MockStore),
+            "meet.proton.me/meet/api".to_string(),
+        )
+        .expect("client should build");
+        assert_eq!(client.app_version, "macos-meet@9.8.7");
+        assert_eq!(
+            client.user_agent,
+            "ProtonMeet/1.0 (macOS 14.0; MacBookPro)"
+        );
     }
 
     #[test]
