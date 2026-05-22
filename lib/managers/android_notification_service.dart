@@ -1,11 +1,19 @@
 import 'dart:async';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:meet/helper/logger.dart';
 import 'package:meet/managers/manager.dart' as manager;
 import 'package:meet/managers/notification_service.dart';
 import 'package:meet/permissions/permission_service.dart';
 
-/// Simplified Android Notification Service for ongoing meetings
+/// Simplified Android Notification Service for ongoing meetings.
+///
+/// Designed to be called the moment the user enters a meeting (NOT from
+/// app-lifecycle callbacks), so the permission state read here is stable.
+/// If any required permission is missing, the call is a safe no-op rather
+/// than a crash: Android 13+ POST_NOTIFICATIONS and Android 14+
+/// foregroundServiceType runtime checks are validated up-front, and every
+/// platform call is guarded against PlatformException.
 class AndroidNotificationService implements NotificationService {
   // Notification constants
   static const int _backgroundNotificationId = 9999;
@@ -21,6 +29,10 @@ class AndroidNotificationService implements NotificationService {
 
   bool _isInitialized = false;
 
+  /// Tracks whether the foreground-service notification is currently posted
+  /// so repeated `showBackgroundNotification(...)` calls become a no-op.
+  bool _isShowing = false;
+
   Future<void> Function()? _onNotificationTapCallback;
 
   /// Initialize the notification service
@@ -33,10 +45,16 @@ class AndroidNotificationService implements NotificationService {
     );
     final settings = InitializationSettings(android: androidSettings);
 
-    await _notificationsPlugin.initialize(
-      settings,
-      onDidReceiveNotificationResponse: _handleNotificationTap,
-    );
+    try {
+      await _notificationsPlugin.initialize(
+        settings,
+        onDidReceiveNotificationResponse: _handleNotificationTap,
+      );
+    } on PlatformException catch (e) {
+      logger.e('[AndroidNotificationService] init plugin failed: $e');
+      // Leave _isInitialized as false; show* will retry on next call.
+      return;
+    }
 
     final androidImplementation = _notificationsPlugin
         .resolvePlatformSpecificImplementation<
@@ -44,22 +62,32 @@ class AndroidNotificationService implements NotificationService {
         >();
 
     if (androidImplementation != null) {
-      // Create notification channel
-      const channel = AndroidNotificationChannel(
-        _channelId,
-        _channelName,
-        description: _channelDescription,
-        importance: Importance.low,
-        showBadge: false,
-      );
-      await androidImplementation.createNotificationChannel(channel);
-
-      // Request notification permission
-      final granted = await androidImplementation
-          .requestNotificationsPermission();
-      if (granted == false) {
+      try {
+        const channel = AndroidNotificationChannel(
+          _channelId,
+          _channelName,
+          description: _channelDescription,
+          importance: Importance.low,
+          showBadge: false,
+        );
+        await androidImplementation.createNotificationChannel(channel);
+      } on PlatformException catch (e) {
         logger.w(
-          '[AndroidNotificationService] Notification permission not granted',
+          '[AndroidNotificationService] createNotificationChannel failed: $e',
+        );
+      }
+
+      try {
+        final granted = await androidImplementation
+            .requestNotificationsPermission();
+        if (granted == false) {
+          logger.w(
+            '[AndroidNotificationService] Notification permission not granted',
+          );
+        }
+      } on PlatformException catch (e) {
+        logger.w(
+          '[AndroidNotificationService] requestNotificationsPermission failed: $e',
         );
       }
     }
@@ -67,10 +95,76 @@ class AndroidNotificationService implements NotificationService {
     _isInitialized = true;
   }
 
-  /// Show persistent background notification using foreground service
+  /// Show the persistent in-meeting notification backed by a foreground
+  /// service.
+  ///
+  /// Call once when the user enters the meeting. Safe to call multiple
+  /// times — subsequent calls are no-ops while the notification is already
+  /// posted.
+  ///
+  /// The call short-circuits (no-op + warning log) when any precondition is
+  /// missing, so it never throws and never crashes:
+  /// - POST_NOTIFICATIONS not granted (Android 13+)
+  /// - No camera/microphone permission granted (Android 14+ requires the
+  ///   declared `foregroundServiceType` to match a runtime-granted
+  ///   permission, otherwise `startForeground` raises SecurityException
+  ///   from the system server which is uncatchable from Dart).
   @override
   Future<void> showBackgroundNotification({required String roomName}) async {
     if (!_isInitialized) await init();
+    if (!_isInitialized) {
+      logger.w(
+        '[AndroidNotificationService] Skip show: plugin failed to initialize',
+      );
+      return;
+    }
+
+    if (_isShowing) {
+      // Already posted; nothing to do.
+      return;
+    }
+
+    final permissionService = PermissionService();
+
+    final hasNotification = await permissionService.hasNotificationPermission();
+    if (!hasNotification) {
+      logger.w(
+        '[AndroidNotificationService] Skip show: notification permission '
+        'not granted',
+      );
+      return;
+    }
+
+    final androidImpl = await _getAndroidImplementation();
+    if (androidImpl == null) {
+      logger.w(
+        '[AndroidNotificationService] Skip show: Android implementation '
+        'unavailable',
+      );
+      return;
+    }
+
+    final hasCamera = await permissionService.hasCameraPermission();
+    final hasMic = await permissionService.hasMicrophonePermission();
+
+    // Android 14+ validates each foregroundServiceType against a
+    // runtime-granted permission. Build the set from currently granted
+    // permissions only; if neither media permission is granted we cannot
+    // safely call startForegroundService for the manifest-declared types
+    // (phoneCall|camera|microphone|mediaProjection), so we bail out
+    // instead of risking a SecurityException from the system server.
+    final serviceTypes = <AndroidServiceForegroundType>{
+      if (hasCamera) AndroidServiceForegroundType.foregroundServiceTypeCamera,
+      if (hasMic) AndroidServiceForegroundType.foregroundServiceTypeMicrophone,
+    };
+
+    if (serviceTypes.isEmpty) {
+      logger.w(
+        '[AndroidNotificationService] Skip show: no media permission granted; '
+        'cannot start foreground service safely',
+      );
+      return;
+    }
 
     final androidDetails = AndroidNotificationDetails(
       _channelId,
@@ -87,75 +181,60 @@ class AndroidNotificationService implements NotificationService {
       priority: Priority.low,
     );
 
-    final androidImpl = await _getAndroidImplementation();
-    if (androidImpl != null) {
-      // Make sure we have the necessary permissions to start the foreground service
-      // Or fallback to regular notification to avoid SecurityException
-      final permissionService = PermissionService();
-      final hasCamera = await permissionService.hasCameraPermission();
-      final hasMic = await permissionService.hasMicrophonePermission();
-      final serviceTypes = <AndroidServiceForegroundType>{
-        if (hasCamera) AndroidServiceForegroundType.foregroundServiceTypeCamera,
-        if (hasMic)
-          AndroidServiceForegroundType.foregroundServiceTypeMicrophone,
-      };
-
-      if (serviceTypes.isEmpty) {
-        logger.w(
-          '[AndroidNotificationService] No media permissions granted; '
-          'falling back to regular notification instead of foreground service',
-        );
-        await _showRegularNotification(
-          roomName: roomName,
-          androidDetails: androidDetails,
-        );
-        return;
-      }
-
-      try {
-        await androidImpl.startForegroundService(
-          _backgroundNotificationId,
-          _notificationTitle(roomName),
-          _notificationBody,
-          notificationDetails: androidDetails,
-          payload: _notificationPayload,
-          startType: AndroidServiceStartType
-              .startNotSticky, // avoid potential NullPointerException crash
-          foregroundServiceTypes: serviceTypes,
-        );
-      } catch (e) {
-        logger.e('[AndroidNotificationService] Foreground service failed: $e');
-        // Fallback to regular notification
-        await _showRegularNotification(
-          roomName: roomName,
-          androidDetails: androidDetails,
-        );
-      }
-    } else {
-      // fallback: show regular notification
-      logger.d(
-        '[AndroidNotificationService] Using fallback regular notification',
+    try {
+      await androidImpl.startForegroundService(
+        _backgroundNotificationId,
+        _notificationTitle(roomName),
+        _notificationBody,
+        notificationDetails: androidDetails,
+        payload: _notificationPayload,
+        // startNotSticky avoids a known NPE crash on some OEM ROMs when the
+        // system tries to recreate the service after the process is killed.
+        startType: AndroidServiceStartType.startNotSticky,
+        foregroundServiceTypes: serviceTypes,
       );
-      await _showRegularNotification(
-        roomName: roomName,
-        androidDetails: androidDetails,
+      _isShowing = true;
+      logger.d(
+        '[AndroidNotificationService] Foreground service started (types: '
+        '${serviceTypes.length})',
+      );
+    } on PlatformException catch (e) {
+      logger.e(
+        '[AndroidNotificationService] startForegroundService failed: $e',
+      );
+    } catch (e) {
+      logger.e(
+        '[AndroidNotificationService] startForegroundService unexpected: $e',
       );
     }
   }
 
-  /// Hide foreground service notification
+  /// Hide foreground service notification.
+  ///
+  /// Safe to call at any time — idempotent and hardened against
+  /// PlatformException raised when the engine channel is already dead
+  /// (e.g. during Activity teardown).
   @override
   Future<void> hideBackgroundNotification() async {
     final androidImpl = await _getAndroidImplementation();
     if (androidImpl != null) {
-      await androidImpl.stopForegroundService();
+      try {
+        await androidImpl.stopForegroundService();
+      } on PlatformException catch (e) {
+        logger.w(
+          '[AndroidNotificationService] stopForegroundService failed '
+          '(may already be stopped): $e',
+        );
+      }
     }
 
     try {
       await _notificationsPlugin.cancel(_backgroundNotificationId);
-    } catch (e) {
+    } on PlatformException catch (e) {
       logger.w('[AndroidNotificationService] cancel notification failed: $e');
     }
+
+    _isShowing = false;
   }
 
   /// Set tap callback
@@ -179,20 +258,6 @@ class AndroidNotificationService implements NotificationService {
 
   String _notificationTitle(String roomName) {
     return roomName.isNotEmpty ? 'In Meeting: $roomName' : 'In Meeting';
-  }
-
-  Future<void> _showRegularNotification({
-    required String roomName,
-    required AndroidNotificationDetails androidDetails,
-  }) async {
-    final details = NotificationDetails(android: androidDetails);
-    await _notificationsPlugin.show(
-      _backgroundNotificationId,
-      _notificationTitle(roomName),
-      _notificationBody,
-      details,
-      payload: _notificationPayload,
-    );
   }
 
   Future<void> _handleNotificationTap(NotificationResponse response) async {

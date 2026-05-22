@@ -111,6 +111,40 @@ class PermissionService implements Manager {
     return {'camera': cameraGranted, 'microphone': microphoneGranted};
   }
 
+  /// Get notification permission status (Android 13+ POST_NOTIFICATIONS).
+  /// Returns granted on platforms that do not require runtime notification
+  /// permissions (older Android, desktop without runtime gate).
+  Future<ph.PermissionStatus> notificationStatus() async {
+    if (kIsWeb) {
+      return ph.PermissionStatus.granted;
+    }
+    if (Platform.isAndroid || Platform.isIOS) {
+      return ph.Permission.notification.status;
+    }
+    // Desktop platforms do not require runtime notification permissions
+    return ph.PermissionStatus.granted;
+  }
+
+  /// Check if notification permission is granted.
+  ///
+  /// Required on Android 13+ (POST_NOTIFICATIONS) before posting any
+  /// foreground-service notification, otherwise `startForeground()` can throw
+  /// a SecurityException on some OEM ROMs.
+  Future<bool> hasNotificationPermission() async {
+    final status = await notificationStatus();
+    return status.isGranted || status.isLimited;
+  }
+
+  /// Request notification permission (Android 13+ POST_NOTIFICATIONS).
+  Future<bool> requestNotificationPermission() async {
+    if (kIsWeb) return true;
+    if (Platform.isAndroid || Platform.isIOS) {
+      final status = await ph.Permission.notification.request();
+      return status.isGranted || status.isLimited;
+    }
+    return true;
+  }
+
   /// Check if share screen capture permission is granted
   Future<bool> hasShareScreenCapturePermission() async {
     if (Platform.isMacOS && !kIsWeb) {

@@ -216,6 +216,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       if (_bloc.isPictureInPictureFeatureEnabled()) {
         _bloc.add(InitializePip(roomName: widget.meetInfo.meetName));
       }
+
+      // Show the persistent in-meeting notification immediately on entering
+      // the meeting (rather than waiting for AppLifecycleState.inactive 
+      // which might have random crashes if the lifecycle state changes before the notification is shown).
+      unawaited(_showMeetingNotification());
     }
 
     // Load video devices for swap camera functionality
@@ -363,20 +368,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           _bloc.add(ExitPipMode());
         }
       } else if (state == AppLifecycleState.inactive) {
-        // make sure the notification is shown when the app is inactive
-        try {
-          final notificationService = ManagerFactory()
-              .get<NotificationService>();
-          notificationService.showBackgroundNotification(
-            roomName: widget.meetInfo.meetName,
-          );
-        } catch (e) {
-          l.logger.e('[RoomPage] Error showing background notification: $e');
-        }
+        // Intentionally NO notification show/hide here.
+        // Because triggering it from `inactive` races
+        // against Android 13/14 runtime permission re-evaluation during
+        // transitions
       } else if (state == AppLifecycleState.resumed) {
-        // App comes to foreground, hide notification
-        await _hideNotification('app resumed');
-
         if (_bloc.isPictureInPictureFeatureEnabled()) {
           // Exit PIP when app comes to foreground
           if (_bloc.state.isPipMode) {
@@ -473,6 +469,30 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     final wakelockEnabled = await WakelockPlus.enabled;
     if (wakelockEnabled) {
       await WakelockPlus.disable();
+    }
+  }
+
+  /// Show the persistent in-meeting notification immediately on entering
+  /// the meeting.
+  ///
+  /// The underlying [NotificationService.showBackgroundNotification] is
+  /// idempotent and short-circuits when any required permission is missing,
+  /// so this method is safe to call regardless of permission state — it
+  /// will never throw and will never crash the meeting page.
+  Future<void> _showMeetingNotification() async {
+    if (!android) return;
+
+    try {
+      final notificationService = ManagerFactory().get<NotificationService>();
+      await notificationService.showBackgroundNotification(
+        roomName: widget.meetInfo.meetName,
+      );
+      l.logger.d('[RoomPage] In-meeting notification show requested');
+    } catch (e) {
+      // Defensive: the service itself is hardened, but if the manager
+      // factory or platform channel is in an unusual state we still want
+      // entering the meeting to succeed.
+      l.logger.e('[RoomPage] Error showing in-meeting notification: $e');
     }
   }
 
