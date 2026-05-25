@@ -434,11 +434,11 @@
   "@recording_consent_message": {
     "description": "Message about recording consent"
   },
-  "recording_in_progress": "Recording in progress",
+  "recording_in_progress": "Aufzeichnung läuft",
   "@recording_in_progress": {
     "description": "Top banner shown to all participants when the meeting is being recorded"
   },
-  "recording_in_progress_with_name": "Recording in progress · {name} is recording",
+  "recording_in_progress_with_name": "Aufzeichnung läuft · {name} nimmt auf",
   "@recording_in_progress_with_name": {
     "description": "Top banner when exactly one named participant is recording",
     "placeholders": {
@@ -447,7 +447,7 @@
       }
     }
   },
-  "recording_in_progress_with_name_and_others": "Recording in progress · {name} and {count} others are recording",
+  "recording_in_progress_with_name_and_others": "Aufzeichnung läuft · {name} und {count} weitere nehmen auf",
   "@recording_in_progress_with_name_and_others": {
     "description": "Top banner when multiple participants are recording",
     "placeholders": {
@@ -459,7 +459,7 @@
       }
     }
   },
-  "recording_label": "Recording",
+  "recording_label": "Aufzeichnung",
   "@recording_label": {
     "description": "Chip shown next to participants currently recording the meeting"
   },
@@ -467,7 +467,7 @@
   "@agree_and_continue": {
     "description": "Button text to agree and continue in meeting"
   },
-  "continue_button": "Continue",
+  "continue_button": "Fortsetzen",
   "@continue_button": {
     "description": "Button text to continue in meeting"
   },
@@ -1747,5 +1747,25 @@
   "store_review_thanks_toast": "Danke für dein Feedback",
   "@store_review_thanks_toast": {
     "description": "Toast shown before the OS in-app store review prompt"
+  },
+  "iap_native_test_title": "Abonnemente (integriert)",
+  "@iap_native_test_title": {
+    "description": "Title for dev sheet that invokes native IAP / plans"
+  },
+  "iap_native_test_body": "Nutze die Proton-eigene Zahlungsinfrastruktur (gleicher Kanal wie Proton Wallet). Anmeldung erforderlich.",
+  "@iap_native_test_body": {
+    "description": "Explains native channel test sheet"
+  },
+  "iap_native_test_current_plan": "Aktuelles Abonnement",
+  "@iap_native_test_current_plan": {
+    "description": "Button: native.navigation.plan.subscription"
+  },
+  "iap_native_test_upgrade": "Upgraden",
+  "@iap_native_test_upgrade": {
+    "description": "Button: native.navigation.plan.upgrade"
+  },
+  "iap_native_test_sign_in_required": "Mit dem Proton-Konto anmelden, um die plattformeigenen Zahlungen zu öffnen.",
+  "@iap_native_test_sign_in_required": {
+    "description": "Message shown when sign in is required to open native payments"
   }
 }

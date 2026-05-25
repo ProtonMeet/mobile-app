@@ -434,11 +434,11 @@
   "@recording_consent_message": {
     "description": "Message about recording consent"
   },
-  "recording_in_progress": "Recording in progress",
+  "recording_in_progress": "Registrazione in corso",
   "@recording_in_progress": {
     "description": "Top banner shown to all participants when the meeting is being recorded"
   },
-  "recording_in_progress_with_name": "Recording in progress · {name} is recording",
+  "recording_in_progress_with_name": "Registrazione in corso · {name} sta registrando",
   "@recording_in_progress_with_name": {
     "description": "Top banner when exactly one named participant is recording",
     "placeholders": {
@@ -447,7 +447,7 @@
       }
     }
   },
-  "recording_in_progress_with_name_and_others": "Recording in progress · {name} and {count} others are recording",
+  "recording_in_progress_with_name_and_others": "Registrazione in corso · {name} e {count} altri stanno registrando",
   "@recording_in_progress_with_name_and_others": {
     "description": "Top banner when multiple participants are recording",
     "placeholders": {
@@ -459,7 +459,7 @@
       }
     }
   },
-  "recording_label": "Recording",
+  "recording_label": "Registrazione",
   "@recording_label": {
     "description": "Chip shown next to participants currently recording the meeting"
   },
@@ -467,7 +467,7 @@
   "@agree_and_continue": {
     "description": "Button text to agree and continue in meeting"
   },
-  "continue_button": "Continue",
+  "continue_button": "Continua",
   "@continue_button": {
     "description": "Button text to continue in meeting"
   },
@@ -625,15 +625,15 @@
   "@audio_output_default_device": {
     "description": "Bottom sheet option: use default audio output routing (e.g. earpiece or headphones)"
   },
-  "audio_output_earpiece": "Earpiece",
+  "audio_output_earpiece": "Auricolare",
   "@audio_output_earpiece": {
     "description": "Bottom sheet option: use Earpiece audio output routing"
   },
-  "audio_output_bluetooth_device": "Bluetooth device",
+  "audio_output_bluetooth_device": "Dispositivo Bluetooth",
   "@audio_output_bluetooth_device": {
     "description": "Bottom sheet option: use Bluetooth device audio output routing"
   },
-  "audio_output_headphones": "Headphones",
+  "audio_output_headphones": "Cuffie",
   "@audio_output_headphones": {
     "description": "Bottom sheet option: use Headphones audio output routing"
   },
@@ -1747,5 +1747,25 @@
   "store_review_thanks_toast": "Grazie per il tuo feedback",
   "@store_review_thanks_toast": {
     "description": "Toast shown before the OS in-app store review prompt"
+  },
+  "iap_native_test_title": "Piani (nativo)",
+  "@iap_native_test_title": {
+    "description": "Title for dev sheet that invokes native IAP / plans"
+  },
+  "iap_native_test_body": "Utilizza lo stack di pagamento nativo di Proton (stesso canale di Proton Wallet). È richiesto l'accesso.",
+  "@iap_native_test_body": {
+    "description": "Explains native channel test sheet"
+  },
+  "iap_native_test_current_plan": "Piano attuale",
+  "@iap_native_test_current_plan": {
+    "description": "Button: native.navigation.plan.subscription"
+  },
+  "iap_native_test_upgrade": "Aggiorna",
+  "@iap_native_test_upgrade": {
+    "description": "Button: native.navigation.plan.upgrade"
+  },
+  "iap_native_test_sign_in_required": "Accedi con un account Proton per abilitare i pagamenti nativi.",
+  "@iap_native_test_sign_in_required": {
+    "description": "Message shown when sign in is required to open native payments"
   }
 }
