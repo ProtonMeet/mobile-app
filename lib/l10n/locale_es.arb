@@ -1747,5 +1747,25 @@
   "store_review_thanks_toast": "Gracias por tus comentarios",
   "@store_review_thanks_toast": {
     "description": "Toast shown before the OS in-app store review prompt"
+  },
+  "iap_native_test_title": "Planes (nativo)",
+  "@iap_native_test_title": {
+    "description": "Title for dev sheet that invokes native IAP / plans"
+  },
+  "iap_native_test_body": "Usa la estructura de pagos nativa de Proton (mismo canal de Proton Wallet). Se requiere iniciar sesión.",
+  "@iap_native_test_body": {
+    "description": "Explains native channel test sheet"
+  },
+  "iap_native_test_current_plan": "Plan actual",
+  "@iap_native_test_current_plan": {
+    "description": "Button: native.navigation.plan.subscription"
+  },
+  "iap_native_test_upgrade": "Mejorar",
+  "@iap_native_test_upgrade": {
+    "description": "Button: native.navigation.plan.upgrade"
+  },
+  "iap_native_test_sign_in_required": "Inicie sesión con una cuenta de Proton para abrir los pagos nativos.",
+  "@iap_native_test_sign_in_required": {
+    "description": "Message shown when sign in is required to open native payments"
   }
 }

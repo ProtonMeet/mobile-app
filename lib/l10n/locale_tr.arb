@@ -625,15 +625,15 @@
   "@audio_output_default_device": {
     "description": "Bottom sheet option: use default audio output routing (e.g. earpiece or headphones)"
   },
-  "audio_output_earpiece": "Earpiece",
+  "audio_output_earpiece": "Kulak içi kulaklık",
   "@audio_output_earpiece": {
     "description": "Bottom sheet option: use Earpiece audio output routing"
   },
-  "audio_output_bluetooth_device": "Bluetooth device",
+  "audio_output_bluetooth_device": "Bluetooth aygıtı",
   "@audio_output_bluetooth_device": {
     "description": "Bottom sheet option: use Bluetooth device audio output routing"
   },
-  "audio_output_headphones": "Headphones",
+  "audio_output_headphones": "Kulak üstü kulaklık",
   "@audio_output_headphones": {
     "description": "Bottom sheet option: use Headphones audio output routing"
   },
@@ -1480,15 +1480,15 @@
   "@upcoming_prefix": {
     "description": "Prefix for upcoming meetings header label"
   },
-  "ended_prefix": "SONA ERMİŞ",
+  "ended_prefix": "SONLANMIŞ",
   "@ended_prefix": {
     "description": "Prefix for ended/past meetings header label"
   },
-  "ended_today": "Bugün sonlandı",
+  "ended_today": "Bugün sonlanmış",
   "@ended_today": {
     "description": "Label for meetings ended today"
   },
-  "ended_yesterday": "Dün sonlandı",
+  "ended_yesterday": "Dün sonlanmış",
   "@ended_yesterday": {
     "description": "Label for meetings ended yesterday"
   },
@@ -1496,19 +1496,19 @@
   "@ended_on": {
     "description": "Label for meetings ended on a specific date"
   },
-  "created_prefix": "OLUŞTURULDU",
+  "created_prefix": "OLUŞTURULMA",
   "@created_prefix": {
     "description": "Prefix for newly created meetings header label"
   },
-  "created_today": "Bugün oluşturuldu",
+  "created_today": "Bugün oluşturulan",
   "@created_today": {
     "description": "Label for meetings created today"
   },
-  "created_yesterday": "Dün oluşturuldu",
+  "created_yesterday": "Dün oluşturulan",
   "@created_yesterday": {
     "description": "Label for meetings created yesterday"
   },
-  "created_last_week": "Geçen hafta oluşturuldu",
+  "created_last_week": "Geçen hafta oluşturulan",
   "@created_last_week": {
     "description": "Label for meetings created within the last week"
   },
@@ -1516,11 +1516,11 @@
   "@created": {
     "description": "Label prefix for created time"
   },
-  "last_used_today": "Son olarak bugün kullanıldı",
+  "last_used_today": "Son olarak bugün kullanılan",
   "@last_used_today": {
     "description": "Label for meetings last used today"
   },
-  "last_used_yesterday": "Son olarak dün kullanıldı",
+  "last_used_yesterday": "Son olarak dün kullanılan",
   "@last_used_yesterday": {
     "description": "Label for meetings last used yesterday"
   },
@@ -1543,15 +1543,15 @@
       }
     }
   },
-  "secure_meeting": "Güvenli toplantı",
+  "secure_meeting": "Güvenli görüşme",
   "@secure_meeting": {
     "description": "Default meeting name when no title is set"
   },
-  "premium_meeting": "Ücretli toplantı",
+  "premium_meeting": "Ücretli görüşme",
   "@premium_meeting": {
     "description": "Default meeting name for paid meeting"
   },
-  "free_meeting": "Ücretsiz toplantı",
+  "free_meeting": "Ücretsiz görüşme",
   "@free_meeting": {
     "description": "Default meeting name for free meeting"
   },
@@ -1571,7 +1571,7 @@
   "@start_typing_to_search": {
     "description": "Placeholder text shown when search query is empty"
   },
-  "no_results_found_for": "\\\"{searchQuery}\\\" için sonuç bulunamadı",
+  "no_results_found_for": "\\\"{searchQuery}\\\" için bir sonuç bulunamadı",
   "@no_results_found_for": {
     "description": "Message shown when search returns no results",
     "placeholders": {
@@ -1620,11 +1620,11 @@
       }
     }
   },
-  "unable_to_reconnect": "Yeniden bağlanılamıyor",
+  "unable_to_reconnect": "Yeniden bağlantı kurulamadı",
   "@unable_to_reconnect": {
     "description": "Title shown when reconnection fails"
   },
-  "reconnection_failed_message": "Bağlantıyı geri yükleyemedik. Lütfen toplantıya yeniden katılmayı deneyin",
+  "reconnection_failed_message": "Bağlantı yeniden kurulamadı. Lütfen görüşmeye yeniden katılmayı deneyin",
   "@reconnection_failed_message": {
     "description": "Message shown when reconnection fails"
   },
@@ -1632,11 +1632,11 @@
   "@connection": {
     "description": "Section title for connection settings"
   },
-  "reconnect_meeting": "Toplantıya Yeniden Bağlan",
+  "reconnect_meeting": "Görüşmeye yeniden bağlan",
   "@reconnect_meeting": {
     "description": "Button label to reconnect to meeting"
   },
-  "always_show_status": "Durumu her zaman görüntüle",
+  "always_show_status": "Durum her zaman görüntülensin",
   "@always_show_status": {
     "description": "Setting label to always show connection status banner"
   },
@@ -1644,27 +1644,27 @@
   "@connection_check_mls_checking": {
     "description": "Message shown when checking MLS sync status"
   },
-  "connection_issue_restoring": "Bağlantı sorunu\nTam işlevselliği geri yüklemek için çalışıyoruz...",
+  "connection_issue_restoring": "Bağlantı sorunu\nTam işlevselliği kazanmaya çalışıyoruz...",
   "@connection_issue_restoring": {
     "description": "Message shown when connection issue is being resolved"
   },
-  "connection_check_mls_failed": "Bağlantı kontrolü\nMLS durumu denetimi başarısız oldu, yeniden katılma tetikleniyor...",
+  "connection_check_mls_failed": "Bağlantı kontrolü\nMLS durum denetimi başarısız. Yeniden katılma tetikleniyor...",
   "@connection_check_mls_failed": {
     "description": "Message shown when MLS sync check fails"
   },
-  "connection_check_mls_passed": "Bağlantı kontrolü\nMLS durumu denetimi başarılı oldu",
+  "connection_check_mls_passed": "Bağlantı kontrolü\nMLS durum denetimi başarılı",
   "@connection_check_mls_passed": {
     "description": "Message shown when MLS sync check passes"
   },
-  "trying_to_reconnect": "Yeniden bağlanmaya çalışılıyor…",
+  "trying_to_reconnect": "Bağlantı yeniden kuruluyor…",
   "@trying_to_reconnect": {
     "description": "Message shown when attempting to reconnect to meeting"
   },
-  "sign_in_card_title": "Oturum açın veya bir hesap oluşturun",
+  "sign_in_card_title": "Oturum veya hesap açın",
   "@sign_in_card_title": {
     "description": "Title text for the sign-in card displayed on dashboard"
   },
-  "sign_in_card_description": "Toplantılar planlayın, kişisel odanıza erişin ve yeni odalar oluşturun.",
+  "sign_in_card_description": "Görüşmeler planlayın, kişisel odanıza erişin ve yeni odalar oluşturun.",
   "@sign_in_card_description": {
     "description": "Description text for the sign-in card explaining benefits of signing in"
   },
@@ -1672,7 +1672,7 @@
   "@almost_there_title": {
     "description": "Title for the almost there bottom sheet"
   },
-  "almost_there_content_before": "Bir toplantı planlamak için ücretsiz bir ",
+  "almost_there_content_before": "Bir görüşme planlamak için ücretsiz bir ",
   "@almost_there_content_before": {
     "description": "Content before Proton account in almost there bottom sheet (schedule meeting)"
   },
@@ -1684,11 +1684,11 @@
   "@almost_there_content_before_personal_room": {
     "description": "Content before Proton account in almost there bottom sheet (personal meeting room)"
   },
-  "almost_there_proton_account": "Proton hesabı",
+  "almost_there_proton_account": "Proton hesabı açın",
   "@almost_there_proton_account": {
     "description": "Proton account text in almost there bottom sheet"
   },
-  "almost_there_content_after": ". Proton Meet uygulamasına otomatik olarak döneceksiniz.",
+  "almost_there_content_after": ". Otomatik olarak Proton Meet uygulamasına döneceksiniz.",
   "@almost_there_content_after": {
     "description": "Content after Proton account in almost there bottom sheet"
   },
@@ -1728,7 +1728,7 @@
   "@system_default_mode": {
     "description": "Use device language for app UI"
   },
-  "pre_rating_sheet_title": "Proton Meet uygulamasından memnun musunuz?",
+  "pre_rating_sheet_title": "Proton Meet uygulamasını beğendiniz mi?",
   "@pre_rating_sheet_title": {
     "description": "Title on the pre-rating bottom sheet before in-app review"
   },
@@ -1747,5 +1747,25 @@
   "store_review_thanks_toast": "Geri bildiriminiz için teşekkürler",
   "@store_review_thanks_toast": {
     "description": "Toast shown before the OS in-app store review prompt"
+  },
+  "iap_native_test_title": "Tarifeler (yerel)",
+  "@iap_native_test_title": {
+    "description": "Title for dev sheet that invokes native IAP / plans"
+  },
+  "iap_native_test_body": "Proton yerel ödeme altyapısını kullanır (Proton Wallet ile aynı kanal). Oturum açılması gereklidir.",
+  "@iap_native_test_body": {
+    "description": "Explains native channel test sheet"
+  },
+  "iap_native_test_current_plan": "Geçerli tarife",
+  "@iap_native_test_current_plan": {
+    "description": "Button: native.navigation.plan.subscription"
+  },
+  "iap_native_test_upgrade": "Yükselt",
+  "@iap_native_test_upgrade": {
+    "description": "Button: native.navigation.plan.upgrade"
+  },
+  "iap_native_test_sign_in_required": "Yerel ödemeleri açmak için Proton hesabıyla oturum açın.",
+  "@iap_native_test_sign_in_required": {
+    "description": "Message shown when sign in is required to open native payments"
   }
 }

@@ -1436,7 +1436,7 @@
   "@calendar_system": {
     "description": "Menu label for opening system calendar"
   },
-  "calendar_google": "Ajouter à Google Calendrier",
+  "calendar_google": "Ajouter à Google Agenda",
   "@calendar_google": {
     "description": "Menu label for opening Google Calendar"
   },
@@ -1747,5 +1747,25 @@
   "store_review_thanks_toast": "Merci pour votre commentaire",
   "@store_review_thanks_toast": {
     "description": "Toast shown before the OS in-app store review prompt"
+  },
+  "iap_native_test_title": "Abonnements (natif)",
+  "@iap_native_test_title": {
+    "description": "Title for dev sheet that invokes native IAP / plans"
+  },
+  "iap_native_test_body": "Utilise la stack de paiement natif Proton (même canal que Proton Wallet). Connexion nécessaire.",
+  "@iap_native_test_body": {
+    "description": "Explains native channel test sheet"
+  },
+  "iap_native_test_current_plan": "Abonnement actuel",
+  "@iap_native_test_current_plan": {
+    "description": "Button: native.navigation.plan.subscription"
+  },
+  "iap_native_test_upgrade": "Mettre à niveau",
+  "@iap_native_test_upgrade": {
+    "description": "Button: native.navigation.plan.upgrade"
+  },
+  "iap_native_test_sign_in_required": "Connectez-vous à un compte Proton pour ouvrir les paiements natifs.",
+  "@iap_native_test_sign_in_required": {
+    "description": "Message shown when sign in is required to open native payments"
   }
 }
