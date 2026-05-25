@@ -1,4 +1,4 @@
-platform :osx, '11.5'
+platform :osx, '12.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -47,7 +47,7 @@ post_install do |installer|
     project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings["DEVELOPMENT_TEAM"] = "2SB5Z68H26"
-        config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '11.5'
+        config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '12.0'
       end
     end
   end

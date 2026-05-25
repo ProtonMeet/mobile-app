@@ -3,7 +3,7 @@
 minSdk = "24"
 compileSdk = "36"
 targetSdk = "36"
-ndkVersion = "27.0.12077973"
+ndkVersion = "29.0.14206865"
 
 # AndroidX
 androidx-activity = "1.10.1"
@@ -28,10 +28,12 @@ androidx-compose-bom = "2024.11.00"
 androidx-compose-compiler = "1.5.15"
 
 # Proton Core
-core = "36.3.1"
+core = "36.4.1"
 
 # Dagger
-dagger = "2.53.1"
+# 2.58 is the last release that supports AGP 8.x; 2.59+ requires AGP 9.0+ / Gradle 9.1+.
+# Bump in lockstep with an AGP 9 migration.
+dagger = "2.58"
 
 # Desugaring
 desugaring = "2.1.4"
@@ -48,10 +50,29 @@ gradlePlugin-proton-config = "1.3.1"
 gradlePlugin-sentry = "3.5.0"
 
 # Kotlin
-kotlin = "2.0.21"
+kotlin = "2.1.21"
 kotlinx-coroutines = "1.8.0"
 kotlinx-datetime = "0.3.3"
 kotlinx-serialization-json = "1.6.3"
+
+# MediaPipe Tasks Vision — keep in lockstep with `pod 'MediaPipeTasksVision'` in `ios/Podfile`
+# (currently 0.10.35) so both platforms run identical inference graphs against the bundled
+# `selfie_*.tflite` assets.
+mediapipe-tasks-vision = "0.10.35"
+
+# TensorFlow Lite + GPU delegate — used by `MeetBackgroundBlurTfliteBackend` to run the same
+# `selfie_*.tflite` assets directly on the GPU, bypassing MediaPipe Tasks's `ImageSegmenter`
+# result-conversion path which crashes (uncatchable native CHECK in `image_frame.cc`) on Adreno
+# GPUs in 0.10.35. Raw TFLite reads output tensors directly so it doesn't go anywhere near the
+# broken `Image → ImageFrame` JNI boundary. Versions are pinned together because TFLite Java
+# bindings and TFLite GPU plugin must match.
+tensorflow-lite = "2.17.0"
+
+# WebRTC Android (must match the fork bundled by `flutter_webrtc` on pub.dev — currently
+# `io.github.webrtc-sdk:android:144.7559.01` as of flutter_webrtc 1.4.0). Added as `compileOnly`
+# in `app/build.gradle` so we get the `org.webrtc.*` symbols at compile time without shipping
+# the AAR twice — flutter_webrtc already packages it at runtime.
+webrtc-sdk = "144.7559.01"
 
 #rust layer
 rustls-platform-verifier = "latest.release"
@@ -84,7 +105,13 @@ hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "dagger" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
-#kotlin-ksp = { id = "com.google.devtools.ksp", version.ref = "kotlin" }
+# Re-enable when Proton Core publishes a fully KSP-compatible `me.proton.core:data-room`.
+# Tried twice (Core 36.3.1 and 36.4.1): 36.3.1 failed on `BaseDao<T>` type resolution,
+# 36.4.1 fixed that but `BaseDao.<V> deleteChunked` (generic method on a binary class)
+# still trips KSP cross-AAR type resolution. Tracked at:
+#   https://issuetracker.google.com/issues/206464425  (Room generic DAOs + KSP)
+#   https://github.com/google/ksp/issues/1129         (KSP generic method resolution from binary deps)
+#kotlin-ksp = { id = "com.google.devtools.ksp", version = "2.1.21-2.0.2" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
 proton-environmentConfig = { id = "me.proton.core.gradle-plugins.environment-config", version.ref = "gradlePlugin-proton-config" }
@@ -207,6 +234,12 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-c
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
+
+mediapipe-tasks-vision = { module = "com.google.mediapipe:tasks-vision", version.ref = "mediapipe-tasks-vision" }
+tensorflow-lite = { module = "org.tensorflow:tensorflow-lite", version.ref = "tensorflow-lite" }
+tensorflow-lite-gpu = { module = "org.tensorflow:tensorflow-lite-gpu", version.ref = "tensorflow-lite" }
+tensorflow-lite-gpu-api = { module = "org.tensorflow:tensorflow-lite-gpu-api", version.ref = "tensorflow-lite" }
+webrtc-sdk-android = { module = "io.github.webrtc-sdk:android", version.ref = "webrtc-sdk" }
 
 ## OnRamp
 ramp-sdk-android = { module = "com.github.RampNetwork:ramp-sdk-android", version.ref = "ramp" }

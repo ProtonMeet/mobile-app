@@ -4221,7 +4221,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         // Create service1 and user_token_info1
         let service1 = create_test_service("user1", base_name).await;
         let user_token_info1 = service1
-            .create_mls_client("access_token", &base_name, "meet_password", None)
+            .create_mls_client("access_token", base_name, "meet_password", None)
             .await
             .unwrap();
 

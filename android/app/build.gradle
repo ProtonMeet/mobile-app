@@ -199,7 +199,6 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.dagger.hilt.android.base)
     kapt(libs.dagger.hilt.android.compiler)
-    //testImplementation(libs.dagger.hilt.android.testing)
 
     debugImplementation(libs.core.config.dagger.contentResolver)
     releaseImplementation(libs.core.config.dagger.staticDefaults)
@@ -249,11 +248,4 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.serialization.json)
 
-    //implementation(libs.moonPay.sdk.android)
-
-    //implementation(libs.sentry.android.core)
-    //implementation(libs.sentry.android.timber)
-
-    //testImplementation(libs.junit)
-    //testImplementation(libs.fusion)
 }

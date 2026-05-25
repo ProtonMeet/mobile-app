@@ -9,6 +9,7 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:logger/logger.dart';
 import 'package:meet/constants/constants.dart';
+import 'package:meet/helper/background_blur/camera_background_blur_sync.dart';
 import 'package:meet/helper/extension/bridge_error.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/media_device_list_ext.dart';
@@ -58,10 +59,12 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
         RoomAloneMeetingHandlers,
         RoomPipHandlers,
         RoomConnectionCheckHandlers,
+        // `RoomFeatureFlagsHandlers` must precede every mixin whose `on` clause
+        // depends on it (e.g. `RoomReconnectionListeners`, `RoomSettingsHandlers`).
+        RoomFeatureFlagsHandlers,
         RoomRejoinHandlers,
         RoomReconnectionListeners,
         RoomBlocDebugLogging,
-        RoomFeatureFlagsHandlers,
         RoomSettingsHandlers {
   // Debounce timing constants for participant sorting,
   //    not sure this will work well logic could be changed later
@@ -605,11 +608,31 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       );
     });
 
-    // Mark room as initialized, no need to wait for meeting info to be fetched
-    emit(state.copyWith(isRoomInitialized: true));
+    // Carry over the prejoin camera background blur preference. We gate on the
+    // FF here (matching `_onSetCameraBackgroundBlurEnabled`'s logic) and emit
+    // `cameraBackgroundBlurEnabled` together with `isRoomInitialized: true` so
+    // the meeting settings toggle reflects the preference atomically — no
+    // flash of an "off" state between mount and a queued event handler.
+    final ffBlurEnabled = isMeetCameraBackgroundBlurEnabled();
+    final effectiveBlurEnabled =
+        event.cameraBackgroundBlurEnabled && ffBlurEnabled;
+    emit(
+      state.copyWith(
+        isRoomInitialized: true,
+        cameraBackgroundBlurEnabled: effectiveBlurEnabled,
+      ),
+    );
 
     if (event.preJoinType == PreJoinType.create) {
       emit(state.copyWith(showMeetingIsReady: true));
+    }
+
+    // Attach the native processor onto the already-published local video
+    // track. Fire-and-forget: the toggle state is already correct in the
+    // bloc, and `syncLocalCameraBackgroundBlur` is idempotent + FF-gated, so
+    // failures here only delay the visual blur without leaving state stale.
+    if (effectiveBlurEnabled) {
+      unawaited(syncLocalCameraBackgroundBlur(room: state.room, enabled: true));
     }
 
     // Late-join recording sync.
@@ -1116,6 +1139,10 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
   ) async {
     try {
       await state.room.setVideoInputDevice(event.device);
+      await syncLocalCameraBackgroundBlur(
+        room: state.room,
+        enabled: state.cameraBackgroundBlurEnabled,
+      );
       emit(state.copyWith(currentVideoInputDeviceId: event.device.deviceId));
       l.logger.d('Video input device set: ${event.device.deviceId}');
     } catch (e) {
@@ -1347,6 +1374,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       try {
         if (track != null) {
           await track.setCameraPosition(newCameraPosition);
+          await syncLocalCameraBackgroundBlur(room: state.room, enabled: true);
         }
         emit(state.copyWith(currentCameraPosition: newCameraPosition));
       } catch (e) {

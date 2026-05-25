@@ -20,12 +20,12 @@ class SampleHandler: RPBroadcastSampleHandler {
     }
 
     override init() {
-      super.init()
+        super.init()
         if let connection = SocketConnection(filePath: socketFilePath) {
-          clientConnection = connection
-          setupConnection()
+            clientConnection = connection
+            setupConnection()
 
-          uploader = SampleUploader(connection: connection)
+            uploader = SampleUploader(connection: connection)
         }
         os_log(.debug, log: broadcastLogger, "%{public}s", socketFilePath)
     }

@@ -25,6 +25,9 @@ class MeetingSettingsV2 extends StatefulWidget {
   final bool isRejoining;
   final bool forceShowConnectionStatusBanner;
   final bool showConnectionSettings;
+  final bool showCameraBackgroundBlur;
+  final bool cameraBackgroundBlurEnabled;
+  final void Function({required bool value})? onCameraBackgroundBlurChanged;
 
   const MeetingSettingsV2({
     required this.hideSelfView,
@@ -41,6 +44,9 @@ class MeetingSettingsV2 extends StatefulWidget {
     this.isRejoining = false,
     this.forceShowConnectionStatusBanner = false,
     this.showConnectionSettings = false,
+    this.showCameraBackgroundBlur = false,
+    this.cameraBackgroundBlurEnabled = false,
+    this.onCameraBackgroundBlurChanged,
     super.key,
   });
 
@@ -65,6 +71,7 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
   bool pictureInPictureMode = false;
   bool lockMeeting = false;
   bool forceShowConnectionStatusBanner = false;
+  bool cameraBackgroundBlurEnabled = false;
 
   // Loading states
   bool _isLockMeetingLoading = false;
@@ -78,12 +85,22 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
     pictureInPictureMode = widget.pictureInPictureMode;
     lockMeeting = widget.lockMeeting;
     forceShowConnectionStatusBanner = widget.forceShowConnectionStatusBanner;
+    cameraBackgroundBlurEnabled = widget.cameraBackgroundBlurEnabled;
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(MeetingSettingsV2 oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.cameraBackgroundBlurEnabled !=
+        oldWidget.cameraBackgroundBlurEnabled) {
+      cameraBackgroundBlurEnabled = widget.cameraBackgroundBlurEnabled;
+    }
   }
 
   @override
@@ -322,6 +339,18 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
                     }
                   : null,
             ),
+            if (widget.showCameraBackgroundBlur &&
+                widget.onCameraBackgroundBlurChanged != null)
+              _SettingSwitch(
+                title: context.local.camera_background_blur,
+                value: cameraBackgroundBlurEnabled,
+                onChanged: (value) {
+                  setState(() {
+                    cameraBackgroundBlurEnabled = value;
+                    widget.onCameraBackgroundBlurChanged?.call(value: value);
+                  });
+                },
+              ),
             _SettingSwitch(
               title: context.local.unsubscribe_video_by_default,
               value: unsubscribeVideoByDefault,

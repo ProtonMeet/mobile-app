@@ -1,3 +1,5 @@
+// ignore_for_file: invalid_use_of_internal_member
+
 import 'dart:async';
 
 import 'package:collection/collection.dart';
@@ -6,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/constants/constants.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/helper/background_blur/camera_background_blur_sync.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/local_video_track_extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
@@ -40,6 +43,7 @@ class ResponsiveControlsBar extends StatefulWidget {
     this.cameraResolution,
     this.cameraMaxBitrate,
     this.currentCameraPosition,
+    this.applyCameraBackgroundBlur = false,
   });
 
   final Room room;
@@ -52,6 +56,7 @@ class ResponsiveControlsBar extends StatefulWidget {
   final VideoResolution? cameraResolution;
   final VideoMaxBitrate? cameraMaxBitrate;
   final CameraPosition? currentCameraPosition;
+  final bool applyCameraBackgroundBlur;
 
   @override
   State<ResponsiveControlsBar> createState() => _ResponsiveControlsBarState();
@@ -175,14 +180,15 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
   }
 
   Future<void> _disableVideo() async {
+    await syncLocalCameraBackgroundBlur(room: widget.room, enabled: false);
     await participant?.setCameraEnabled(false);
-    // await _stopVideoTrack();
     _onChange();
   }
 
   Future<void> _enableVideo() async {
     await _startVideoTrack();
     await participant?.setCameraEnabled(true);
+    await syncLocalCameraBackgroundBlur(room: widget.room, enabled: true);
     _onChange();
   }
 
@@ -197,6 +203,7 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
       if (track.track is LocalVideoTrack) {
         if (!track.isScreenShare) {
           hasVideoTrack = true;
+          break;
         }
       }
     }
@@ -211,6 +218,7 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
         cameraTrack = await LocalVideoTrackHelper.cameraTrack(
           parameters: VideoParameters(dimensions: resolution.videoDimensions),
           position: widget.currentCameraPosition,
+          applyBackgroundBlur: widget.applyCameraBackgroundBlur,
         );
       } catch (e) {
         l.logger.e('[ControlsBar] Failed to create camera track: $e');
@@ -227,6 +235,7 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
           createTrack: () => LocalVideoTrackHelper.cameraTrack(
             parameters: VideoParameters(dimensions: resolution.videoDimensions),
             position: widget.currentCameraPosition,
+            applyBackgroundBlur: widget.applyCameraBackgroundBlur,
           ),
           publishOptions: VideoPublishOptions(
             videoCodec: preferredCodec,
@@ -276,6 +285,7 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
         await track.switchCamera(device.deviceId);
         Hardware.instance.selectedVideoInput = device;
       }
+
       // Update state through RoomBloc if available
       if (context != null && context.mounted) {
         try {
@@ -289,6 +299,7 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
       }
     } catch (e) {
       // if the switching actually fails, reset it to the previous deviceId
+
       widget.room.engine.roomOptions = widget.room.engine.roomOptions.copyWith(
         defaultCameraCaptureOptions: widget
             .room

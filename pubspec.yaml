@@ -117,6 +117,8 @@ dependencies:
   # Screen recording plugin
   proton_screen_recorder:
     path: plugins/proton_screen_recorder
+  proton_video_effects:
+    path: plugins/proton_video_effects
   # File picker for audio processing example
   # file_picker: 10.2.0
   # unleash proxy client for feature flags

@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:logger/logger.dart';
+import 'package:meet/helper/background_blur/camera_background_blur_sync.dart'
+    show syncLocalCameraBackgroundBlur;
 import 'package:meet/rust/proton_meet/models/mls_sync_state.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
@@ -24,6 +26,11 @@ class RoomInitialized extends RoomBlocEvent {
   final PreJoinType preJoinType;
   final FrbUpcomingMeeting meetingLink;
 
+  /// User preference for camera background blur carried over from the prejoin
+  /// screen. The bloc still gates the actual attach through the feature flag
+  /// and the published track lookup in [syncLocalCameraBackgroundBlur].
+  final bool cameraBackgroundBlurEnabled;
+
   const RoomInitialized({
     required this.room,
     required this.listener,
@@ -32,6 +39,7 @@ class RoomInitialized extends RoomBlocEvent {
     required this.displayName,
     required this.preJoinType,
     required this.meetingLink,
+    this.cameraBackgroundBlurEnabled = false,
   });
 
   @override
@@ -43,6 +51,7 @@ class RoomInitialized extends RoomBlocEvent {
     displayName,
     preJoinType,
     meetingLink,
+    cameraBackgroundBlurEnabled,
   ];
 }
 
@@ -219,6 +228,15 @@ class SetUnsubscribeVideoByDefault extends RoomBlocEvent {
 
   @override
   List<Object?> get props => [value];
+}
+
+class SetCameraBackgroundBlurEnabled extends RoomBlocEvent {
+  final bool enabled;
+
+  const SetCameraBackgroundBlurEnabled({required this.enabled});
+
+  @override
+  List<Object?> get props => [enabled];
 }
 
 class SetForceShowConnectionStatusBanner extends RoomBlocEvent {

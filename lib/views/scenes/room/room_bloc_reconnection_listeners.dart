@@ -13,7 +13,8 @@ import 'package:meet/views/scenes/room/room_state.dart';
 
 /// Mixin for handling reconnection-related listeners and state management
 /// This includes MLS sync state monitoring and key rotation subscription management
-mixin RoomReconnectionListeners on Bloc<RoomBlocEvent, RoomState> {
+mixin RoomReconnectionListeners
+    on Bloc<RoomBlocEvent, RoomState>, RoomFeatureFlagsHandlers {
   // Subscription for key rotation listener from RoomConnectionHelper
   StreamSubscription<(String, BigInt)?>? _keyRotationSubscription;
   // Subscription for MLS sync state listener
@@ -79,14 +80,11 @@ mixin RoomReconnectionListeners on Bloc<RoomBlocEvent, RoomState> {
           state.rejoinStatus != RejoinStatus.error &&
           !isWithinGracePeriod) {
         // Check if auto reconnection feature is enabled
-        if (this is RoomFeatureFlagsHandlers) {
-          final featureFlagsHandler = this as RoomFeatureFlagsHandlers;
-          if (!featureFlagsHandler.isMeetAutoReconnectionEnabled()) {
-            l.logger.d(
-              '[RoomBloc] Auto reconnection feature disabled, skipping rejoin',
-            );
-            return;
-          }
+        if (!isMeetAutoReconnectionEnabled()) {
+          l.logger.d(
+            '[RoomBloc] Auto reconnection feature disabled, skipping rejoin',
+          );
+          return;
         }
         l.logger.w('[RoomBloc] MLS sync failed, triggering rejoin');
         await _logConnectionLost();

@@ -92,6 +92,20 @@ mixin RoomFeatureFlagsHandlers on Bloc<RoomBlocEvent, RoomState> {
     }
   }
 
+  /// Check if native camera background blur is enabled via feature flag.
+  bool isMeetCameraBackgroundBlurEnabled() {
+    try {
+      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
+      return dataProviderManager.unleashDataProvider
+          .isMeetCameraBackgroundBlur();
+    } catch (e) {
+      l.logger.w(
+        '[RoomBloc] Error checking Camera Background Blur feature flag: $e',
+      );
+      return false;
+    }
+  }
+
   /// Check if users can lower their own raised hand.
   bool isMeetAdminLowerHandEnabled() {
     try {

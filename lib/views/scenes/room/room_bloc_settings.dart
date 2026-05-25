@@ -1,8 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:meet/helper/background_blur/camera_background_blur_sync.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 
+import 'room_bloc_feature_flags.dart';
 import 'room_event.dart';
 import 'room_state.dart';
 
@@ -10,13 +12,20 @@ import 'room_state.dart';
 ///
 /// This mixin provides handlers and methods for meeting-related settings such as
 /// locking/unlocking meetings.
-mixin RoomSettingsHandlers on Bloc<RoomBlocEvent, RoomState> {
+///
+/// The `on` clause requires both [Bloc] and [RoomFeatureFlagsHandlers] so this mixin can
+/// query the live feature-flag state (e.g. [isMeetCameraBackgroundBlurEnabled]) without
+/// duplicating the try/catch wrapping. `RoomBloc` must list [RoomFeatureFlagsHandlers]
+/// before [RoomSettingsHandlers] in its `with` clause to satisfy the constraint.
+mixin RoomSettingsHandlers
+    on Bloc<RoomBlocEvent, RoomState>, RoomFeatureFlagsHandlers {
   /// Lock to prevent concurrent lock/unlock operations
   bool _isTogglingLockMeeting = false;
 
   /// Registers settings-related event handlers.
   void registerSettingsHandlers() {
     on<SetUnsubscribeVideoByDefault>(_onSetUnsubscribeVideoByDefault);
+    on<SetCameraBackgroundBlurEnabled>(_onSetCameraBackgroundBlurEnabled);
   }
 
   /// Toggles meeting lock state.
@@ -73,5 +82,25 @@ mixin RoomSettingsHandlers on Bloc<RoomBlocEvent, RoomState> {
   ) {
     emit(state.copyWith(unsubscribeVideoByDefault: event.value));
     l.logger.d('Unsubscribe video by default: ${event.value}');
+  }
+
+  Future<void> _onSetCameraBackgroundBlurEnabled(
+    SetCameraBackgroundBlurEnabled event,
+    Emitter<RoomState> emit,
+  ) async {
+    // Force the stored value to false when the FF is off so the bloc state can never report
+    // `true` while the feature is disabled. This keeps the toggle, the controls bar, and the
+    // native processor in agreement on a single source of truth.
+    final ffEnabled = isMeetCameraBackgroundBlurEnabled();
+    final effectiveEnabled = event.enabled && ffEnabled;
+    emit(state.copyWith(cameraBackgroundBlurEnabled: effectiveEnabled));
+    await syncLocalCameraBackgroundBlur(
+      room: state.room,
+      enabled: effectiveEnabled,
+    );
+    l.logger.d(
+      'Camera background blur enabled: $effectiveEnabled '
+      '(requested=${event.enabled}, ff=$ffEnabled)',
+    );
   }
 }

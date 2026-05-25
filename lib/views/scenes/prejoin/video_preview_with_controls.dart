@@ -40,6 +40,9 @@ class VideoPreviewWithControls extends StatelessWidget {
   final ValueChanged<MediaDevice?> onSpeakerDeviceChanged;
   final VoidCallback onCameraPermissionRequest;
   final VoidCallback onMicrophonePermissionRequest;
+  final bool isCameraBackgroundBlurFeatureEnabled;
+  final bool cameraBackgroundBlurEnabled;
+  final VoidCallback? onCameraBackgroundBlurToggle;
   final bool showWaveform;
   final String? displayName;
 
@@ -58,6 +61,9 @@ class VideoPreviewWithControls extends StatelessWidget {
     required this.onSpeakerDeviceChanged,
     required this.onCameraPermissionRequest,
     required this.onMicrophonePermissionRequest,
+    this.isCameraBackgroundBlurFeatureEnabled = false,
+    this.cameraBackgroundBlurEnabled = false,
+    this.onCameraBackgroundBlurToggle,
     this.showSelectVideoButtons = false,
     this.showSelectAudioButtons = false,
     super.key,
@@ -76,6 +82,7 @@ class VideoPreviewWithControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controlHeight = 86.0;
+    final bool isBlurSupported = mobile || macOS;
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableWidth = constraints.maxWidth.isFinite
@@ -104,7 +111,6 @@ class VideoPreviewWithControls extends StatelessWidget {
                               color: context.colors.interActionPurpleMinor3,
                               child: isVideoEnabled && videoTrack != null
                                   ? SafeVideoTrackRenderer(
-                                      mirrorMode: VideoViewMirrorMode.off,
                                       videoTrack: videoTrack!,
                                     )
                                   : Center(
@@ -219,6 +225,12 @@ class VideoPreviewWithControls extends StatelessWidget {
                           // swape video button
                           _buildSwapVideoButton(context),
                         ],
+                        if (isVideoEnabled &&
+                            isBlurSupported &&
+                            isCameraBackgroundBlurFeatureEnabled) ...[
+                          const SizedBox(width: 12),
+                          _buildCameraBackgroundBlurButton(context),
+                        ],
                       ],
                     ),
                   ),
@@ -300,6 +312,44 @@ class VideoPreviewWithControls extends StatelessWidget {
             ),
       iconColor: context.colors.textNorm,
       showWarning: !isMicrophonePermissionGranted,
+    );
+  }
+
+  Widget _buildCameraBackgroundBlurButton(BuildContext context) {
+    final buttonSize = 48.0;
+    // Active toggle = filled blue, matching the meeting-settings switch colour. Inactive uses
+    // the same neutral control-bar background as the swap-camera button next to it.
+    final bg = context.colors.controlBarBtnBackground;
+    return GestureDetector(
+      onTap: onCameraBackgroundBlurToggle,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          width: buttonSize,
+          height: buttonSize,
+          padding: const EdgeInsets.all(14),
+          decoration: ShapeDecoration(
+            color: bg,
+            shape: RoundedRectangleBorder(
+              side: BorderSide(width: 0.86, color: bg),
+              borderRadius: BorderRadius.circular(100),
+            ),
+          ),
+          // No bespoke SVG asset for blur — Material `blur_on` / `blur_off` are stock 24dp
+          // glyphs that render cleanly at the swap button's 20-pixel footprint.
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: FittedBox(
+              child: Icon(
+                cameraBackgroundBlurEnabled ? Icons.blur_on : Icons.blur_off,
+                color: context.colors.textNorm,
+                semanticLabel: context.local.camera_background_blur,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 

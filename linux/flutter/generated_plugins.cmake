@@ -8,6 +8,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_webrtc
   gtk
   livekit_client
+  proton_video_effects
   url_launcher_linux
 )
 

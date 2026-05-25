@@ -91,6 +91,9 @@ class RoomState extends Equatable {
   final CameraLayout layout;
   final int screenSharingIndex;
   final bool unsubscribeVideoByDefault;
+
+  /// In-room preference: native camera background blur (MeetCameraBackgroundBlur).
+  final bool cameraBackgroundBlurEnabled;
   final CameraPosition? currentCameraPosition;
 
   /// is screen sharing
@@ -269,6 +272,7 @@ class RoomState extends Equatable {
     this.isRemoteScreenSharing = false,
     this.screenSharingIndex = 0,
     this.unsubscribeVideoByDefault = false,
+    this.cameraBackgroundBlurEnabled = false,
     this.showMeetingIsReady = false,
     this.meetingLink = '',
     this.isSpeakerMuted,
@@ -334,6 +338,7 @@ class RoomState extends Equatable {
     bool? isRemoteScreenSharing,
     int? screenSharingIndex,
     bool? unsubscribeVideoByDefault,
+    bool? cameraBackgroundBlurEnabled,
     DateTime? lastOpenChatTime,
     bool? showMeetingIsReady,
     String? meetingLink,
@@ -407,6 +412,8 @@ class RoomState extends Equatable {
       screenSharingIndex: screenSharingIndex ?? this.screenSharingIndex,
       unsubscribeVideoByDefault:
           unsubscribeVideoByDefault ?? this.unsubscribeVideoByDefault,
+      cameraBackgroundBlurEnabled:
+          cameraBackgroundBlurEnabled ?? this.cameraBackgroundBlurEnabled,
       meetingLink: meetingLink ?? this.meetingLink,
       showMeetingIsReady: showMeetingIsReady ?? this.showMeetingIsReady,
       isSpeakerMuted: isSpeakerMuted ?? this.isSpeakerMuted,
@@ -498,6 +505,7 @@ class RoomState extends Equatable {
     layout,
     screenSharingIndex,
     unsubscribeVideoByDefault,
+    cameraBackgroundBlurEnabled,
     meetingLink,
     showMeetingIsReady,
     isSpeakerMuted,
