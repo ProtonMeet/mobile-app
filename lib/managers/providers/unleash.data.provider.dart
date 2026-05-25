@@ -37,6 +37,9 @@ enum UnleashFeature {
   meetInAppStoreReview,
   meetMultipleRecording,
   meetInAppPurchase,
+
+  /// Experimental: native camera background blur (iOS / Android).
+  meetCameraBackgroundBlur,
 }
 
 /// Function to retrieve all default toggles
@@ -91,6 +94,8 @@ extension UnleashFeatureExt on UnleashFeature {
         return "MeetNewSwitchJoinType";
       case UnleashFeature.meetMultipleRecording:
         return "MeetMultipleRecording";
+      case UnleashFeature.meetCameraBackgroundBlur:
+        return "MeetCameraBackgroundBlur";
     }
   }
 
@@ -329,6 +334,7 @@ class UnleashDataProvider extends DataProvider {
   bool isMeetFeedbackOnSkip() =>
       isFeatureEnabled(UnleashFeature.meetFeedbackOnSkip);
 
+  // ignore: comment_references
   /// When false, deferred / store [InAppReview] flows are disabled (Unleash kill switch).
   bool isMeetInAppStoreReviewEnabled() =>
       isFeatureEnabled(UnleashFeature.meetInAppStoreReview);
@@ -339,4 +345,8 @@ class UnleashDataProvider extends DataProvider {
   /// Native subscription / upgrade (StoreKit / Play Billing) via method channel.
   bool isMeetInAppPurchaseEnabled() =>
       isFeatureEnabled(UnleashFeature.meetInAppPurchase);
+
+  /// Native pipeline for camera background blur (pass-through until ML / Vision ship).
+  bool isMeetCameraBackgroundBlur() =>
+      isFeatureEnabled(UnleashFeature.meetCameraBackgroundBlur);
 }

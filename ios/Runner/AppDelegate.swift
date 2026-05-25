@@ -198,10 +198,7 @@ import app_links
         
         // Inject crypto with the default implementation.
         injectDefaultCryptoImplementation()
-        
-        // FlutterLocalNotificationsPlugin.setPluginRegistrantCallback { (registry) in
-        //     GeneratedPluginRegistrant.register(with: registry)
-        // }
+
         if #available(iOS 10.0, *) {
             UNUserNotificationCenter.current().delegate = self as UNUserNotificationCenterDelegate
         }
@@ -240,7 +237,7 @@ import app_links
                 result(FlutterMethodNotImplemented)
             }
         }
-        
+
         let nativeViewChannel = FlutterMethodChannel(
             name: "me.proton.meet/native.views",
             binaryMessenger: engineBridge.applicationRegistrar.messenger())

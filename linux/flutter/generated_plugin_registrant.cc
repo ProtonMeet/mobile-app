@@ -11,6 +11,7 @@
 #include <flutter_webrtc/flutter_web_r_t_c_plugin.h>
 #include <gtk/gtk_plugin.h>
 #include <livekit_client/live_kit_plugin.h>
+#include <proton_video_effects/proton_video_effects_plugin.h>
 #include <url_launcher_linux/url_launcher_plugin.h>
 
 void fl_register_plugins(FlPluginRegistry* registry) {
@@ -29,6 +30,9 @@ void fl_register_plugins(FlPluginRegistry* registry) {
   g_autoptr(FlPluginRegistrar) livekit_client_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "LiveKitPlugin");
   live_kit_plugin_register_with_registrar(livekit_client_registrar);
+  g_autoptr(FlPluginRegistrar) proton_video_effects_registrar =
+      fl_plugin_registry_get_registrar_for_plugin(registry, "ProtonVideoEffectsPlugin");
+  proton_video_effects_plugin_register_with_registrar(proton_video_effects_registrar);
   g_autoptr(FlPluginRegistrar) url_launcher_linux_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "UrlLauncherPlugin");
   url_launcher_plugin_register_with_registrar(url_launcher_linux_registrar);

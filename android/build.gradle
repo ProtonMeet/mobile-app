@@ -6,8 +6,8 @@ buildscript {
     }
     dependencies {
         classpath("com.android.tools.build:gradle:8.12.0")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21")
-        classpath("com.google.dagger:hilt-android-gradle-plugin:2.53.1")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.21")
+        classpath("com.google.dagger:hilt-android-gradle-plugin:2.58")
         classpath("org.codehaus.groovy:groovy-json:3.0.19")
     }
 }
@@ -30,10 +30,10 @@ allprojects {
     // Force Kotlin version consistency across all projects
     configurations.all {
         resolutionStrategy {
-            force "org.jetbrains.kotlin:kotlin-stdlib:2.0.21"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.0.21"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.0.21"
-            force "org.jetbrains.kotlin:kotlin-stdlib-common:2.0.21"
+            force "org.jetbrains.kotlin:kotlin-stdlib:2.1.21"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.21"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.21"
+            force "org.jetbrains.kotlin:kotlin-stdlib-common:2.1.21"
         }
     }
 }

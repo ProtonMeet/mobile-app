@@ -163,11 +163,21 @@ class CargoKitPlugin implements Plugin<Project> {
                 }
             }
 
-            // Same thing addFlutterDependencies does in flutter.gradle
-            if (buildType == "debug") {
-                platforms.add("android-x86")
-                platforms.add("android-x64")
-            }
+            // LOCAL PATCH (diverges from upstream Cargokit):
+            // Upstream unconditionally added android-x86 + android-x64 here for debug builds,
+            // mirroring what `addFlutterDependencies` does in flutter.gradle. That makes sense
+            // for the Flutter/Dart engine (it ships emulator-only x86/x64 variants), but for
+            // Rust native libraries we only need the ABI of the actual run target. Building
+            // arm64 + arm + x86 + x64 on every `flutter run` ~quadrupled cold Rust build times
+            // for debug iteration with no benefit.
+            //
+            // We now honor `plugin.getTargetPlatforms()` verbatim:
+            //   - `flutter run -d <device>` → just that device's ABI
+            //   - `flutter build apk` / `flutter build appbundle` → all enabled ABIs
+            //   - `flutter build apk --target-platform=...` → exactly what was requested
+            //
+            // If you ever need x86 emulator support during debug, pass it explicitly:
+            //   `flutter run --target-platform=android-x64`
 
             // The task name depends on plugin properties, which are not available
             // at this point

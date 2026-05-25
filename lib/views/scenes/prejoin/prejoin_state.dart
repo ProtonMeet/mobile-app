@@ -34,6 +34,11 @@ class PreJoinState {
   final PreJoinType preJoinType;
   final bool isAudioEnabled;
   final bool isVideoEnabled;
+  final bool isCameraBackgroundBlurFeatureEnabled;
+
+  /// User toggle for the native camera background blur in the prejoin preview.
+  /// Always forced to `false` when [isCameraBackgroundBlurFeatureEnabled] is `false`.
+  final bool cameraBackgroundBlurEnabled;
   final bool isCameraPermissionGranted;
   final bool isMicrophonePermissionGranted;
   final bool shouldShowCameraPermissionSettings;
@@ -78,6 +83,8 @@ class PreJoinState {
     this.preJoinType = PreJoinType.join,
     this.isAudioEnabled = true,
     this.isVideoEnabled = true,
+    this.isCameraBackgroundBlurFeatureEnabled = false,
+    this.cameraBackgroundBlurEnabled = false,
     this.isCameraPermissionGranted = false,
     this.isMicrophonePermissionGranted = false,
     this.shouldShowCameraPermissionSettings = false,
@@ -124,6 +131,8 @@ class PreJoinState {
     bool? isLoggingOut,
     bool? isAudioEnabled,
     bool? isVideoEnabled,
+    bool? isCameraBackgroundBlurFeatureEnabled,
+    bool? cameraBackgroundBlurEnabled,
     bool? isCameraPermissionGranted,
     bool? isMicrophonePermissionGranted,
     bool? shouldShowCameraPermissionSettings,
@@ -169,6 +178,9 @@ class PreJoinState {
       preJoinType: preJoinType ?? this.preJoinType,
       isAudioEnabled: isAudioEnabled ?? this.isAudioEnabled,
       isVideoEnabled: isVideoEnabled ?? this.isVideoEnabled,
+      isCameraBackgroundBlurFeatureEnabled:
+          isCameraBackgroundBlurFeatureEnabled ??
+          this.isCameraBackgroundBlurFeatureEnabled,
       shouldShowCameraPermissionSettings:
           shouldShowCameraPermissionSettings ??
           this.shouldShowCameraPermissionSettings,
@@ -223,6 +235,8 @@ class PreJoinState {
       displayNameFieldError: resetDisplayNameFieldError
           ? null
           : (displayNameFieldError ?? this.displayNameFieldError),
+      cameraBackgroundBlurEnabled:
+          cameraBackgroundBlurEnabled ?? this.cameraBackgroundBlurEnabled,
     );
   }
 }

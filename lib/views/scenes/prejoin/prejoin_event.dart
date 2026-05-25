@@ -92,6 +92,8 @@ class PreJoinAudioOutputDevicesChanged extends PreJoinEvent {
 
 class SwapVideo extends PreJoinEvent {}
 
+class PreJoinToggleCameraBackgroundBlur extends PreJoinEvent {}
+
 class ToggleKeepDisplayName extends PreJoinEvent {
   final bool keep;
   ToggleKeepDisplayName({required this.keep});

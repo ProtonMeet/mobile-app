@@ -257,11 +257,13 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState> {
         );
       });
 
+    // ignore: invalid_use_of_internal_member
     _signalListener = state.room.engine.signalClient.createListener();
     _signalListener.on<SignalEvent>((event) {
       // l.logger.d('engine signal event: $event');
       final typeName = event.runtimeType.toString();
       if (typeName.contains('Token') || typeName == 'SignalTokenUpdatedEvent') {
+        // ignore: invalid_use_of_internal_member
         final newToken = state.room.engine.token;
         l.logger.d("[LiveKit] Detected token refresh: $newToken");
         if (newToken != null) {

@@ -748,6 +748,7 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
         isRemoteScreenSharing: state.isRemoteScreenSharing,
         screenSharingIndex: state.screenSharingIndex,
         unsubscribeVideoByDefault: state.unsubscribeVideoByDefault,
+        cameraBackgroundBlurEnabled: state.cameraBackgroundBlurEnabled,
         meetingLink: state.meetingLink,
         showMeetingIsReady: state.showMeetingIsReady,
         isSpeakerMuted: state.isSpeakerMuted,
@@ -801,15 +802,11 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
       );
       if (newRoom.isRecording && !hasServerRecording) {
         add(
-          const ParticipantRecordingStarted(
-            identity: kServerRecordingIdentity,
-          ),
+          const ParticipantRecordingStarted(identity: kServerRecordingIdentity),
         );
       } else if (!newRoom.isRecording && hasServerRecording) {
         add(
-          const ParticipantRecordingStopped(
-            identity: kServerRecordingIdentity,
-          ),
+          const ParticipantRecordingStopped(identity: kServerRecordingIdentity),
         );
       }
 

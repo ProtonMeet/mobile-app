@@ -26,6 +26,10 @@ class WaitingRoomPage extends StatefulWidget {
   final CameraPosition? selectedVideoPosition;
   final VideoParameters selectedVideoParameters;
 
+  /// Forwarded to [RoomPage] so the room can re-apply the prejoin camera
+  /// background blur preference onto its published video track.
+  final bool cameraBackgroundBlurEnabled;
+
   const WaitingRoomPage(
     this.args, {
     required this.preJoinType,
@@ -37,6 +41,7 @@ class WaitingRoomPage extends StatefulWidget {
     this.selectedSpeakerDevice,
     this.selectedVideoPosition,
     this.selectedVideoParameters = VideoParametersPresets.h720_169,
+    this.cameraBackgroundBlurEnabled = false,
     super.key,
   });
 
@@ -202,6 +207,7 @@ class _WaitingRoomPageState extends State<WaitingRoomPage>
       state.meetLink!,
       widget.preJoinType,
       authBloc: widget.args.authBloc,
+      cameraBackgroundBlurEnabled: widget.cameraBackgroundBlurEnabled,
     );
 
     // Use a custom fade transition for smoother animation

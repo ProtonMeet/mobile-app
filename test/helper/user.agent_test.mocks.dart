@@ -340,14 +340,6 @@ class MockIosDeviceInfo extends _i1.Mock implements _i3.IosDeviceInfo {
           as bool);
 
   @override
-  bool get isiOSAppOnVision =>
-      (super.noSuchMethod(
-            Invocation.getter(#isiOSAppOnVision),
-            returnValue: false,
-          )
-          as bool);
-
-  @override
   _i3.IosUtsname get utsname =>
       (super.noSuchMethod(
             Invocation.getter(#utsname),

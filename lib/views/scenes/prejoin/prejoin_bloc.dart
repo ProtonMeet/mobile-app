@@ -17,6 +17,8 @@ import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/rust/proton_meet/user_config.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_event.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:proton_video_effects/proton_video_effects.dart'
+    show BackgroundBlurTrackProcessor, ProtonVideoEffects;
 
 import 'prejoin_state.dart';
 
@@ -67,6 +69,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     );
     on<SwapVideo>(_onSwapVideo);
     on<ToggleKeepDisplayName>(_onToggleKeepDisplayName);
+    on<PreJoinToggleCameraBackgroundBlur>(_onToggleCameraBackgroundBlur);
   }
 
   @override
@@ -196,6 +199,11 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       shouldOverride =
           true; // We have cached name, should override auth name even if auth name is not empty
     }
+
+    final dataProviderManager = serviceManager.get<DataProviderManager>();
+    final isCameraBackgroundBlurFeatureEnabled = dataProviderManager
+        .unleashDataProvider
+        .isMeetCameraBackgroundBlur();
     emit(
       state.copyWith(
         isLoading: true,
@@ -209,6 +217,8 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         meetingLinkUrl: event.args.meetingLinkUrl,
         preJoinType: event.args.type,
         isSpeakerPhoneEnabled: savedSpeakerPhoneEnabled,
+        isCameraBackgroundBlurFeatureEnabled:
+            isCameraBackgroundBlurFeatureEnabled,
       ),
     );
 
@@ -362,6 +372,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
           parameters: state.selectedVideoParameters,
           device: videoDevice,
           position: videoPosition,
+          applyBackgroundBlur: state.cameraBackgroundBlurEnabled,
         );
         await videoTrack.start();
       }
@@ -416,8 +427,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         // Identify if there is any external audio output devic based on label or audio session
         final hasExternalAudioOutput =
             nextHasExternal || hasExternalAudioOutputFromAudioSession;
-        final hasBluetoothAudioOutput =
-            hasBluetoothAudioOutputFromAudioSession;
+        final hasBluetoothAudioOutput = hasBluetoothAudioOutputFromAudioSession;
 
         add(
           PreJoinAudioOutputDevicesChanged(
@@ -484,6 +494,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         parameters: state.selectedVideoParameters,
         device: state.selectedVideoDevice,
         position: state.selectedVideoPosition,
+        applyBackgroundBlur: state.cameraBackgroundBlurEnabled,
       );
       await videoTrack.start();
       emit(state.copyWith(isVideoEnabled: true, videoTrack: videoTrack));
@@ -567,6 +578,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       videoTrack = await LocalVideoTrackHelper.cameraTrack(
         parameters: state.selectedVideoParameters,
         device: event.device,
+        applyBackgroundBlur: state.cameraBackgroundBlurEnabled,
       );
       await videoTrack.start();
     }
@@ -593,6 +605,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       videoTrack = await LocalVideoTrackHelper.cameraTrack(
         parameters: state.selectedVideoParameters,
         device: state.selectedVideoDevice,
+        applyBackgroundBlur: state.cameraBackgroundBlurEnabled,
       );
       await videoTrack.start();
       final appCoreManager = ManagerFactory().get<AppCoreManager>();
@@ -616,6 +629,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       videoTrack = await LocalVideoTrackHelper.cameraTrack(
         parameters: state.selectedVideoParameters,
         position: newPosition,
+        applyBackgroundBlur: state.cameraBackgroundBlurEnabled,
       );
       await videoTrack.start();
     }
@@ -625,5 +639,64 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         videoTrack: videoTrack,
       ),
     );
+  }
+
+  /// Toggles the local camera background blur in the prejoin preview.
+  ///
+  /// Asymmetric for performance:
+  ///   * **Enable**  → recreate the local video track with `applyBackgroundBlur: true`. The
+  ///     [BackgroundBlurTrackProcessor] is wired during track creation and its `init()` calls
+  ///     the native `attach` channel — there's no way to "graft" the processor onto an existing
+  ///     LiveKit track, so a full stop/recreate is required.
+  ///   * **Disable** → just call the native `detachBackgroundBlur` on the current track id.
+  ///     The track keeps capturing raw frames; we avoid the stop/recreate flicker entirely.
+  ///     The `BackgroundBlurTrackProcessor` wrapper on the LiveKit track remains, but its
+  ///     `destroy()` is a no-op against the now-detached native processor (idempotent on the
+  ///     native side), so cleanup on later disposal is safe.
+  ///
+  /// No-op when the FF is off or when the camera is not currently capturing — we just store
+  /// the preference so the next track creation applies it.
+  Future<void> _onToggleCameraBackgroundBlur(
+    PreJoinToggleCameraBackgroundBlur event,
+    Emitter<PreJoinState> emit,
+  ) async {
+    if (!state.isCameraBackgroundBlurFeatureEnabled) {
+      return;
+    }
+    final nextEnabled = !state.cameraBackgroundBlurEnabled;
+
+    if (!state.isVideoEnabled || !state.isCameraPermissionGranted) {
+      emit(state.copyWith(cameraBackgroundBlurEnabled: nextEnabled));
+      return;
+    }
+
+    try {
+      if (nextEnabled) {
+        await state.videoTrack?.stop();
+        final videoTrack = await LocalVideoTrackHelper.cameraTrack(
+          parameters: state.selectedVideoParameters,
+          device: state.selectedVideoDevice,
+          position: state.selectedVideoPosition,
+          applyBackgroundBlur: true,
+        );
+        await videoTrack.start();
+        emit(
+          state.copyWith(
+            cameraBackgroundBlurEnabled: true,
+            videoTrack: videoTrack,
+          ),
+        );
+      } else {
+        final trackId = state.videoTrack?.mediaStreamTrack.id;
+        if (trackId != null && trackId.isNotEmpty) {
+          await ProtonVideoEffects.instance.detachBackgroundBlur(
+            trackId: trackId,
+          );
+        }
+        emit(state.copyWith(cameraBackgroundBlurEnabled: false));
+      }
+    } catch (e) {
+      l.logger.e('[PreJoinBloc] Error toggling camera background blur: $e');
+    }
   }
 }

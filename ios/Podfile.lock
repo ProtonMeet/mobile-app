@@ -33,12 +33,19 @@ PODS:
   - local_auth_darwin (0.0.1):
     - Flutter
     - FlutterMacOS
+  - MediaPipeTasksCommon (0.10.35)
+  - MediaPipeTasksVision (0.10.35):
+    - MediaPipeTasksCommon (= 0.10.35)
   - package_info_plus (0.4.5):
     - Flutter
   - permission_handler_apple (9.3.0):
     - Flutter
   - proton_screen_recorder (0.0.1):
     - Flutter
+  - proton_video_effects (1.0.0):
+    - Flutter
+    - flutter_webrtc
+    - MediaPipeTasksVision (= 0.10.35)
   - rust_builder (0.0.1):
     - Flutter
   - share_plus (0.0.1):
@@ -74,6 +81,7 @@ DEPENDENCIES:
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - proton_screen_recorder (from `.symlinks/plugins/proton_screen_recorder/ios`)
+  - proton_video_effects (from `.symlinks/plugins/proton_video_effects/ios`)
   - rust_builder (from `.symlinks/plugins/rust_builder/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
@@ -83,6 +91,8 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - MediaPipeTasksCommon
+    - MediaPipeTasksVision
     - WebRTC-SDK
 
 EXTERNAL SOURCES:
@@ -122,6 +132,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
   proton_screen_recorder:
     :path: ".symlinks/plugins/proton_screen_recorder/ios"
+  proton_video_effects:
+    :path: ".symlinks/plugins/proton_video_effects/ios"
   rust_builder:
     :path: ".symlinks/plugins/rust_builder/ios"
   share_plus:
@@ -151,9 +163,12 @@ SPEC CHECKSUMS:
   integration_test: 4a889634ef21a45d28d50d622cf412dc6d9f586e
   livekit_client: 9b9a08c5c78f694ac6a9e70c1c269704ba574b73
   local_auth_darwin: c3ee6cce0a8d56be34c8ccb66ba31f7f180aaebb
+  MediaPipeTasksCommon: ae27d88c4d185db114a1a768c504f8270dda79b5
+  MediaPipeTasksVision: 1d6c3efa89830a131dbd0dc4fb80dea283fac521
   package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
   proton_screen_recorder: 86a2cace4e5522337dfdc1c6be6ad8c2d848e0ee
+  proton_video_effects: 07d9de7ab5329e6620a65cf520d939ee09ccd368
   rust_builder: e5e181121263dc90680706deeeb4621278fa7d17
   share_plus: 50da8cb520a8f0f65671c6c6a99b3617ed10a58a
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
@@ -162,6 +177,6 @@ SPEC CHECKSUMS:
   WebRTC-SDK: ab9b5319e458c2bfebdc92b3600740da35d5630d
   webview_flutter_wkwebview: 8ebf4fded22593026f7dbff1fbff31ea98573c8d
 
-PODFILE CHECKSUM: 6e8f302d8f41239a8710af43c5cb931dbb3e2d3d
+PODFILE CHECKSUM: bb3c45b446be48fcd71353d56d6c95bf72ca700d
 
 COCOAPODS: 1.16.2

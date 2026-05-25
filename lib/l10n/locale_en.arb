@@ -113,6 +113,7 @@
   "meeting": "Meeting",
   "show_meeting_timer": "Show meeting timer",
   "unsubscribe_video_by_default": "Turn off incoming video",
+  "camera_background_blur": "Background blur",
   "dark_mode": "Dark mode",
   "show_connection_indicator": "Show connection indicator",
   "desktop_notifications": "Desktop notifications",

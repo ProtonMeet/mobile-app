@@ -93,6 +93,12 @@ class RoomPage extends StatefulWidget {
   final FrbUpcomingMeeting meetLink;
   final PreJoinType preJoinType;
   final AuthBloc? authBloc;
+
+  /// User preference for camera background blur carried over from the prejoin
+  /// screen. Forwarded to [RoomBloc] via [RoomInitialized] which re-applies
+  /// the native processor onto the already-published video track.
+  final bool cameraBackgroundBlurEnabled;
+
   const RoomPage(
     this.room,
     this.listener,
@@ -103,6 +109,7 @@ class RoomPage extends StatefulWidget {
     this.meetLink,
     this.preJoinType, {
     this.authBloc,
+    this.cameraBackgroundBlurEnabled = false,
     super.key,
   });
 
@@ -182,6 +189,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           displayName: widget.displayName,
           preJoinType: widget.preJoinType,
           meetingLink: widget.meetLink,
+          cameraBackgroundBlurEnabled: widget.cameraBackgroundBlurEnabled,
         ),
       );
 
@@ -2572,6 +2580,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             cameraResolution: _cameraResolution,
             cameraMaxBitrate: _cameraMaxBitrate,
             currentCameraPosition: state.currentCameraPosition,
+            applyCameraBackgroundBlur: state.cameraBackgroundBlurEnabled,
             optionalActionsBuilder: () {
               final isSpeakerMuted = state.isSpeakerMuted ?? false;
               return [
@@ -3121,12 +3130,23 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     BuildContext context, {
     bool isHost = false,
   }) {
-    return BlocSelector<RoomBloc, RoomState, (bool, bool)>(
-      selector: (state) =>
-          (state.isRejoining, state.forceShowConnectionStatusBanner),
+    final showCameraBackgroundBlur =
+        mobile &&
+        !kIsWeb &&
+        ManagerFactory()
+            .get<DataProviderManager>()
+            .unleashDataProvider
+            .isMeetCameraBackgroundBlur();
+    return BlocSelector<RoomBloc, RoomState, (bool, bool, bool)>(
+      selector: (state) => (
+        state.isRejoining,
+        state.forceShowConnectionStatusBanner,
+        state.cameraBackgroundBlurEnabled,
+      ),
       builder: (context, data) {
         final isRejoining = data.$1;
         final forceShowConnectionStatusBanner = data.$2;
+        final cameraBackgroundBlurEnabled = data.$3;
         final isAutoReconnectionEnabled = _bloc.isMeetAutoReconnectionEnabled();
         final isNetworkToolEnabled = _bloc
             .isMeetMobileEnableNetworkToolEnabled();
@@ -3140,6 +3160,13 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           forceShowConnectionStatusBanner: forceShowConnectionStatusBanner,
           showConnectionSettings:
               isAutoReconnectionEnabled && isNetworkToolEnabled,
+          showCameraBackgroundBlur: showCameraBackgroundBlur,
+          cameraBackgroundBlurEnabled: cameraBackgroundBlurEnabled,
+          onCameraBackgroundBlurChanged: showCameraBackgroundBlur
+              ? ({required bool value}) {
+                  _bloc.add(SetCameraBackgroundBlurEnabled(enabled: value));
+                }
+              : null,
           onHideSelfViewChanged: ({required bool value}) {
             _bloc.add(SetHideSelfView(hideSelfView: value));
             setState(() {

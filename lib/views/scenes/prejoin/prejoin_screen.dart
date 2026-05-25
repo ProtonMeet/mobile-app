@@ -91,6 +91,12 @@ class PreJoinScreen extends StatelessWidget {
                         videoTrack: state.videoTrack,
                         audioTrack: state.audioTrack,
                         displayName: state.displayName,
+                        isCameraBackgroundBlurFeatureEnabled:
+                            state.isCameraBackgroundBlurFeatureEnabled,
+                        cameraBackgroundBlurEnabled:
+                            state.cameraBackgroundBlurEnabled,
+                        onCameraBackgroundBlurToggle: () =>
+                            bloc.add(PreJoinToggleCameraBackgroundBlur()),
                         onVideoToggle: () => bloc.add(PreJoinToggleVideo()),
                         onAudioToggle: () => bloc.add(PreJoinToggleAudio()),
                         onSwapVideo: () => bloc.add(SwapVideo()),
@@ -196,6 +202,8 @@ class PreJoinScreen extends StatelessWidget {
                                         state.selectedVideoPosition,
                                     selectedVideoParameters:
                                         state.selectedVideoParameters,
+                                    cameraBackgroundBlurEnabled:
+                                        state.cameraBackgroundBlurEnabled,
                                   ),
                                 ),
                               );
@@ -262,6 +270,8 @@ class PreJoinScreen extends StatelessWidget {
                                         state.selectedVideoPosition,
                                     selectedVideoParameters:
                                         state.selectedVideoParameters,
+                                    cameraBackgroundBlurEnabled:
+                                        state.cameraBackgroundBlurEnabled,
                                   ),
                                 ),
                               );
