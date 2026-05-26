@@ -1690,7 +1690,7 @@ impl App {
                 .with_min_delay(Duration::from_millis(500))
                 .with_max_delay(Duration::from_secs(10)),
         )
-        .when(|e| matches!(e, MeetCoreError::MlsStatusCode(422)))
+        .when(|e| e.is_retryable_switch_join())
         .await?;
 
         {
