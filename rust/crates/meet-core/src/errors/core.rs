@@ -160,6 +160,18 @@ pub enum MeetCoreError {
     MlsStatusCode(u32),
 }
 
+impl MeetCoreError {
+    /// Whether [`crate::app::App::join_room_with_switch_join_type`] should retry the MLS join call.
+    pub fn is_retryable_switch_join(&self) -> bool {
+        match self {
+            Self::MlsStatusCode(422) => true,
+            Self::RoomJoinFailed { reason, .. } => reason
+                .contains("didn't receive the welcome message from the server"),
+            _ => false,
+        }
+    }
+}
+
 impl From<crate::infra::storage::error::StorageError> for MeetCoreError {
     fn from(error: crate::infra::storage::error::StorageError) -> Self {
         Self::StorageError {
@@ -188,8 +200,12 @@ impl From<crate::errors::service::ServiceError> for MeetCoreError {
                             message: error_detail.error.clone(),
                             details: Some(format!("{:?}", error_detail.details)),
                         },
-                        HttpClientError::MlsStatusCode(status) => Self::MlsStatusCode(*status),
-                        HttpClientError::IncorrectPassword => Self::IncorrectPassword,
+                        HttpClientError::MlsStatusCode(status) => {
+                            return Self::MlsStatusCode(*status);
+                        }
+                        HttpClientError::IncorrectPassword => {
+                            return Self::IncorrectPassword;
+                        }
                         _ => Self::HttpClientError {
                             status: 0,
                             message: inner_error.to_string(),
@@ -665,5 +681,24 @@ mod tests {
         let anyhow_error = anyhow::anyhow!("Test error");
         let meet_error: MeetCoreError = anyhow_error.into();
         assert!(matches!(meet_error, MeetCoreError::InternalError { .. }));
+    }
+
+    #[test]
+    fn test_is_retryable_switch_join() {
+        assert!(MeetCoreError::MlsStatusCode(422).is_retryable_switch_join());
+        assert!(
+            MeetCoreError::RoomJoinFailed {
+                room_id: "room".into(),
+                reason: "Join proposal timeout, didn't receive the welcome message from the server, please try again".into(),
+            }
+            .is_retryable_switch_join()
+        );
+        assert!(
+            !MeetCoreError::RoomJoinFailed {
+                room_id: "room".into(),
+                reason: "Join proposal state is not valid".into(),
+            }
+            .is_retryable_switch_join()
+        );
     }
 }
