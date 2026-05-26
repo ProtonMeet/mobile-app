@@ -22,8 +22,6 @@ class InAppReviewService {
   static Future<bool> canShowStoreReview() async {
     if (kIsWeb) return false;
 
-    if (kDebugMode) return true;
-
     try {
       final unleash = ManagerFactory()
           .get<DataProviderManager>()
@@ -39,7 +37,7 @@ class InAppReviewService {
 
     // check if the app is running through testflight
     final isFromTestFlight = await PlatformInfoChannel.isFromTestFlight();
-    if (isFromTestFlight) return true;
+    if (isFromTestFlight) return false;
 
     try {
       final ua = ManagerFactory().get<UserActivityManager>();
