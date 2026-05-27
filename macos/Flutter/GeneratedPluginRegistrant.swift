@@ -17,6 +17,7 @@ import in_app_review
 import livekit_client
 import local_auth_darwin
 import package_info_plus
+import proton_denoise
 import proton_screen_recorder
 import proton_video_effects
 import share_plus
@@ -38,6 +39,7 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   LiveKitPlugin.register(with: registry.registrar(forPlugin: "LiveKitPlugin"))
   LocalAuthPlugin.register(with: registry.registrar(forPlugin: "LocalAuthPlugin"))
   FPPPackageInfoPlusPlugin.register(with: registry.registrar(forPlugin: "FPPPackageInfoPlusPlugin"))
+  ProtonDenoisePlugin.register(with: registry.registrar(forPlugin: "ProtonDenoisePlugin"))
   ProtonScreenRecorderPlugin.register(with: registry.registrar(forPlugin: "ProtonScreenRecorderPlugin"))
   ProtonVideoEffectsPlugin.register(with: registry.registrar(forPlugin: "ProtonVideoEffectsPlugin"))
   SharePlusMacosPlugin.register(with: registry.registrar(forPlugin: "SharePlusMacosPlugin"))

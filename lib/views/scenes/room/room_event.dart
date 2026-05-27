@@ -239,6 +239,24 @@ class SetCameraBackgroundBlurEnabled extends RoomBlocEvent {
   List<Object?> get props => [enabled];
 }
 
+class SetAudioDenoiseEnabled extends RoomBlocEvent {
+  final bool enabled;
+
+  const SetAudioDenoiseEnabled({required this.enabled});
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+class SetAudioDenoiseType extends RoomBlocEvent {
+  final String typeId;
+
+  const SetAudioDenoiseType({required this.typeId});
+
+  @override
+  List<Object?> get props => [typeId];
+}
+
 class SetForceShowConnectionStatusBanner extends RoomBlocEvent {
   final bool value;
 

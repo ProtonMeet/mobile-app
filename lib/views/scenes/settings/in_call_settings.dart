@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
+import 'package:meet/managers/services/denoise_audio.service.dart';
 
 class MeetingSettingsContent extends StatefulWidget {
   const MeetingSettingsContent({super.key});
@@ -83,7 +84,10 @@ class _MeetingSettingsContentState extends State<MeetingSettingsContent> {
           _buildToggleItem(
             'Noise cancellation',
             _noiseCancellation,
-            (value) => setState(() => _noiseCancellation = value),
+            (value) async {
+              setState(() => _noiseCancellation = value);
+              await DenoiseAudioService.instance.setEnabled(enabled: value);
+            },
             isFirst: true,
           ),
           _buildToggleItem(

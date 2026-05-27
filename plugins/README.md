@@ -9,6 +9,13 @@ This directory contains Flutter plugins and shared components for the Proton Mee
 - Share common components across Proton applications
 - Enable code reuse between Proton Meet and Proton Meet applications
 
+## Plugins in this repo
+
+| Plugin | Purpose |
+|--------|---------|
+| `proton_screen_recorder` | iOS/macOS screen capture |
+| `proton_denoise` | Cross-platform audio denoising (RNNoise backend; DeepFilter etc. later) |
+
 ## Structure
 
 Each plugin should be organized in its own directory with the following structure:

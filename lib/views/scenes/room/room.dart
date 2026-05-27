@@ -26,6 +26,7 @@ import 'package:meet/managers/channels/platform.channel.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/notification_service.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
+import 'package:meet/managers/services/denoise_audio.service.dart';
 import 'package:meet/managers/services/in_app_review_service.dart';
 import 'package:meet/managers/user_activity.manager.dart';
 import 'package:meet/permissions/permission_service.dart';
@@ -62,6 +63,7 @@ import 'package:meet/views/scenes/signin/auth_bloc.dart';
 import 'package:meet/views/scenes/signin/auth_event.dart';
 import 'package:meet/views/scenes/utils.dart';
 import 'package:meet/views/scenes/widgets/meeting_settings_v2.dart';
+import 'package:proton_denoise/proton_denoise.dart';
 import 'package:meet/views/scenes/widgets/statistics_dialog.dart';
 import 'package:sentry/sentry.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -226,7 +228,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       }
 
       // Show the persistent in-meeting notification immediately on entering
-      // the meeting (rather than waiting for AppLifecycleState.inactive 
+      // the meeting (rather than waiting for AppLifecycleState.inactive
       // which might have random crashes if the lifecycle state changes before the notification is shown).
       unawaited(_showMeetingNotification());
     }
@@ -2581,6 +2583,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             cameraMaxBitrate: _cameraMaxBitrate,
             currentCameraPosition: state.currentCameraPosition,
             applyCameraBackgroundBlur: state.cameraBackgroundBlurEnabled,
+            applyAudioDenoise: state.audioDenoiseEnabled,
             optionalActionsBuilder: () {
               final isSpeakerMuted = state.isSpeakerMuted ?? false;
               return [
@@ -3137,74 +3140,119 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             .get<DataProviderManager>()
             .unleashDataProvider
             .isMeetCameraBackgroundBlur();
-    return BlocSelector<RoomBloc, RoomState, (bool, bool, bool)>(
-      selector: (state) => (
-        state.isRejoining,
-        state.forceShowConnectionStatusBanner,
-        state.cameraBackgroundBlurEnabled,
-      ),
-      builder: (context, data) {
-        final isRejoining = data.$1;
-        final forceShowConnectionStatusBanner = data.$2;
-        final cameraBackgroundBlurEnabled = data.$3;
-        final isAutoReconnectionEnabled = _bloc.isMeetAutoReconnectionEnabled();
-        final isNetworkToolEnabled = _bloc
-            .isMeetMobileEnableNetworkToolEnabled();
-        return MeetingSettingsV2(
-          hideSelfView: _hideSelfCamera,
-          unsubscribeVideoByDefault: _unsubscribeVideoByDefault,
-          pictureInPictureMode: _pictureInPictureMode,
-          lockMeeting: _lockMeeting,
-          isHost: isHost,
-          isRejoining: isRejoining,
-          forceShowConnectionStatusBanner: forceShowConnectionStatusBanner,
-          showConnectionSettings:
-              isAutoReconnectionEnabled && isNetworkToolEnabled,
-          showCameraBackgroundBlur: showCameraBackgroundBlur,
-          cameraBackgroundBlurEnabled: cameraBackgroundBlurEnabled,
-          onCameraBackgroundBlurChanged: showCameraBackgroundBlur
-              ? ({required bool value}) {
-                  _bloc.add(SetCameraBackgroundBlurEnabled(enabled: value));
-                }
-              : null,
-          onHideSelfViewChanged: ({required bool value}) {
-            _bloc.add(SetHideSelfView(hideSelfView: value));
-            setState(() {
-              _hideSelfCamera = value;
-            });
-          },
-          onLockMeetingChanged: isHost
-              ? ({required bool value}) async {
-                  return _toggleLockMeeting(value);
-                }
-              : null,
-          onUnsubscribeVideoByDefaultChanged: ({required bool value}) {
-            // Update bloc state first so new tracks are handled correctly
-            _bloc.add(SetUnsubscribeVideoByDefault(value: value));
+    final showAudioDenoiseCandidate =
+        !kIsWeb && DenoiseAudioService.instance.isAvailable;
+    return FutureBuilder(
+      future: showAudioDenoiseCandidate
+          ? DenoiseAudioService.instance.listAvailableTypesForUi()
+          : Future.value(const <DenoiseTypeInfo>[]),
+      builder: (context, denoiseTypesSnapshot) {
+        final denoiseTypeInfos = denoiseTypesSnapshot.data ?? const [];
+        final showAudioDenoise =
+            showAudioDenoiseCandidate && denoiseTypeInfos.isNotEmpty;
+        final denoiseTypeOptions = denoiseTypeInfos
+            .map(
+              (info) => DenoiseTypeUiOption(
+                id: info.type.id,
+                label: info.type.displayName,
+              ),
+            )
+            .toList();
+        return BlocSelector<
+          RoomBloc,
+          RoomState,
+          (bool, bool, bool, bool, String)
+        >(
+          selector: (state) => (
+            state.isRejoining,
+            state.forceShowConnectionStatusBanner,
+            state.cameraBackgroundBlurEnabled,
+            state.audioDenoiseEnabled,
+            state.audioDenoiseTypeId,
+          ),
+          builder: (context, data) {
+            final isRejoining = data.$1;
+            final forceShowConnectionStatusBanner = data.$2;
+            final cameraBackgroundBlurEnabled = data.$3;
+            final audioDenoiseEnabled = data.$4;
+            final audioDenoiseTypeId = data.$5;
+            final isAutoReconnectionEnabled = _bloc
+                .isMeetAutoReconnectionEnabled();
+            final isNetworkToolEnabled = _bloc
+                .isMeetMobileEnableNetworkToolEnabled();
+            return MeetingSettingsV2(
+              hideSelfView: _hideSelfCamera,
+              unsubscribeVideoByDefault: _unsubscribeVideoByDefault,
+              pictureInPictureMode: _pictureInPictureMode,
+              lockMeeting: _lockMeeting,
+              isHost: isHost,
+              isRejoining: isRejoining,
+              forceShowConnectionStatusBanner: forceShowConnectionStatusBanner,
+              showConnectionSettings:
+                  isAutoReconnectionEnabled && isNetworkToolEnabled,
+              showCameraBackgroundBlur: showCameraBackgroundBlur,
+              cameraBackgroundBlurEnabled: cameraBackgroundBlurEnabled,
+              onCameraBackgroundBlurChanged: showCameraBackgroundBlur
+                  ? ({required bool value}) {
+                      _bloc.add(SetCameraBackgroundBlurEnabled(enabled: value));
+                    }
+                  : null,
+              showAudioDenoise: showAudioDenoise,
+              audioDenoiseEnabled: audioDenoiseEnabled,
+              onAudioDenoiseChanged: showAudioDenoise
+                  ? ({required bool value}) {
+                      _bloc.add(SetAudioDenoiseEnabled(enabled: value));
+                    }
+                  : null,
+              audioDenoiseTypeOptions: denoiseTypeOptions,
+              selectedAudioDenoiseTypeId: audioDenoiseTypeId,
+              onAudioDenoiseTypeSelected:
+                  showAudioDenoise && denoiseTypeOptions.length > 1
+                  ? (typeId) {
+                      _bloc.add(SetAudioDenoiseType(typeId: typeId));
+                    }
+                  : null,
+              onHideSelfViewChanged: ({required bool value}) {
+                _bloc.add(SetHideSelfView(hideSelfView: value));
+                setState(() {
+                  _hideSelfCamera = value;
+                });
+              },
+              onLockMeetingChanged: isHost
+                  ? ({required bool value}) async {
+                      return _toggleLockMeeting(value);
+                    }
+                  : null,
+              onUnsubscribeVideoByDefaultChanged: ({required bool value}) {
+                _bloc.add(SetUnsubscribeVideoByDefault(value: value));
 
-            setState(() {
-              _unsubscribeVideoByDefault = value;
-              if (value) {
-                unsubscribeAllVideoTracks();
-              } else {
-                subscribeAllVideoTracks();
-              }
-            });
+                setState(() {
+                  _unsubscribeVideoByDefault = value;
+                  if (value) {
+                    unsubscribeAllVideoTracks();
+                  } else {
+                    subscribeAllVideoTracks();
+                  }
+                });
+              },
+              onReconnectPressed:
+                  (isAutoReconnectionEnabled && isNetworkToolEnabled)
+                  ? () {
+                      _bloc.add(
+                        const StartRejoinMeeting(reason: RejoinReason.other),
+                      );
+                    }
+                  : null,
+              onForceShowConnectionStatusBannerChanged:
+                  (isAutoReconnectionEnabled && isNetworkToolEnabled)
+                  ? ({required bool value}) {
+                      _bloc.add(
+                        SetForceShowConnectionStatusBanner(value: value),
+                      );
+                    }
+                  : null,
+            );
           },
-          onReconnectPressed:
-              (isAutoReconnectionEnabled && isNetworkToolEnabled)
-              ? () {
-                  _bloc.add(
-                    const StartRejoinMeeting(reason: RejoinReason.other),
-                  );
-                }
-              : null,
-          onForceShowConnectionStatusBannerChanged:
-              (isAutoReconnectionEnabled && isNetworkToolEnabled)
-              ? ({required bool value}) {
-                  _bloc.add(SetForceShowConnectionStatusBanner(value: value));
-                }
-              : null,
         );
       },
     );

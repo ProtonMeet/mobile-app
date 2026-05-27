@@ -28,6 +28,12 @@ class MeetingSettingsV2 extends StatefulWidget {
   final bool showCameraBackgroundBlur;
   final bool cameraBackgroundBlurEnabled;
   final void Function({required bool value})? onCameraBackgroundBlurChanged;
+  final bool showAudioDenoise;
+  final bool audioDenoiseEnabled;
+  final void Function({required bool value})? onAudioDenoiseChanged;
+  final List<DenoiseTypeUiOption> audioDenoiseTypeOptions;
+  final String? selectedAudioDenoiseTypeId;
+  final void Function(String typeId)? onAudioDenoiseTypeSelected;
 
   const MeetingSettingsV2({
     required this.hideSelfView,
@@ -47,11 +53,25 @@ class MeetingSettingsV2 extends StatefulWidget {
     this.showCameraBackgroundBlur = false,
     this.cameraBackgroundBlurEnabled = false,
     this.onCameraBackgroundBlurChanged,
+    this.showAudioDenoise = false,
+    this.audioDenoiseEnabled = false,
+    this.onAudioDenoiseChanged,
+    this.audioDenoiseTypeOptions = const [],
+    this.selectedAudioDenoiseTypeId,
+    this.onAudioDenoiseTypeSelected,
     super.key,
   });
 
   @override
   State<MeetingSettingsV2> createState() => _MeetingSettingsV2State();
+}
+
+/// Denoise algorithm row shown when multiple backends are enabled via Unleash.
+class DenoiseTypeUiOption {
+  const DenoiseTypeUiOption({required this.id, required this.label});
+
+  final String id;
+  final String label;
 }
 
 class _MeetingSettingsV2Constants {
@@ -72,6 +92,7 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
   bool lockMeeting = false;
   bool forceShowConnectionStatusBanner = false;
   bool cameraBackgroundBlurEnabled = false;
+  bool audioDenoiseEnabled = false;
 
   // Loading states
   bool _isLockMeetingLoading = false;
@@ -86,6 +107,7 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
     lockMeeting = widget.lockMeeting;
     forceShowConnectionStatusBanner = widget.forceShowConnectionStatusBanner;
     cameraBackgroundBlurEnabled = widget.cameraBackgroundBlurEnabled;
+    audioDenoiseEnabled = widget.audioDenoiseEnabled;
   }
 
   @override
@@ -101,33 +123,49 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
         oldWidget.cameraBackgroundBlurEnabled) {
       cameraBackgroundBlurEnabled = widget.cameraBackgroundBlurEnabled;
     }
+    if (widget.audioDenoiseEnabled != oldWidget.audioDenoiseEnabled) {
+      audioDenoiseEnabled = widget.audioDenoiseEnabled;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isLandscape = context.isLandscape && mobile;
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(_MeetingSettingsV2Constants.borderRadiusLarge),
-        topRight: Radius.circular(
-          _MeetingSettingsV2Constants.borderRadiusLarge,
-        ),
-      ),
-      child: RepaintBoundary(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-          child: Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: _buildContainerDecoration(context),
-            child: GestureDetector(
-              onTap: () => FocusScope.of(context).unfocus(),
-              behavior: HitTestBehavior.deferToChild,
-              child: _buildScrollableContent(context, isLandscape),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Desktop side panel can pass unbounded max height; cap like mobile sheets.
+        final panelHeight = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : MediaQuery.sizeOf(context).height * 0.84;
+
+        return SizedBox(
+          height: panelHeight,
+          width: constraints.maxWidth.isFinite ? constraints.maxWidth : null,
+          child: ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(
+                _MeetingSettingsV2Constants.borderRadiusLarge,
+              ),
+              topRight: Radius.circular(
+                _MeetingSettingsV2Constants.borderRadiusLarge,
+              ),
+            ),
+            child: RepaintBoundary(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                child: DecoratedBox(
+                  decoration: _buildContainerDecoration(context),
+                  child: GestureDetector(
+                    onTap: () => FocusScope.of(context).unfocus(),
+                    behavior: HitTestBehavior.deferToChild,
+                    child: _buildScrollableContent(context, isLandscape),
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -351,6 +389,29 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
                   });
                 },
               ),
+            if (widget.showAudioDenoise && widget.onAudioDenoiseChanged != null)
+              _SettingSwitch(
+                title: context.local.audio_noise_cancellation,
+                value: audioDenoiseEnabled,
+                onChanged: (value) {
+                  setState(() {
+                    audioDenoiseEnabled = value;
+                    widget.onAudioDenoiseChanged?.call(value: value);
+                  });
+                },
+              ),
+            if (widget.showAudioDenoise &&
+                audioDenoiseEnabled &&
+                widget.audioDenoiseTypeOptions.length > 1 &&
+                widget.onAudioDenoiseTypeSelected != null)
+              ...widget.audioDenoiseTypeOptions.map(
+                (option) => _SettingChoice(
+                  title: option.label,
+                  selected: widget.selectedAudioDenoiseTypeId == option.id,
+                  onTap: () =>
+                      widget.onAudioDenoiseTypeSelected?.call(option.id),
+                ),
+              ),
             _SettingSwitch(
               title: context.local.unsubscribe_video_by_default,
               value: unsubscribeVideoByDefault,
@@ -545,6 +606,42 @@ class _SettingSwitch extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _SettingChoice extends StatelessWidget {
+  const _SettingChoice({
+    required this.title,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String title;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: ProtonStyles.body1Medium(color: context.colors.textNorm),
+            ),
+          ),
+          Icon(
+            selected ? Icons.check_circle : Icons.circle_outlined,
+            color: selected
+                ? context.colors.protonBlue
+                : context.colors.interActionWeak,
+            size: 22,
+          ),
+        ],
+      ),
     );
   }
 }

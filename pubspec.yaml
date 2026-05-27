@@ -22,6 +22,11 @@ environment:
   sdk: ">=3.8.0 <4.0.0"
   flutter: ">=3.35.0"
 
+# Path plugins that share dependency versions with this app (see resolution: workspace).
+workspace:
+  - plugins/proton_denoise
+  - plugins/proton_video_effects
+
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
@@ -89,6 +94,7 @@ dependencies:
   # this is for app version and user agent
   device_info_plus: ^12.2.0
   package_info_plus: ^9.0.0
+  # Workspace-shared with proton_denoise / proton_video_effects (resolution: workspace).
   livekit_client: ^2.7.0
   # Pin version so ios/macos Podfile.lock WebRTC-SDK stays aligned (avoid `any` + stale lock).
   flutter_webrtc: ^1.4.0
@@ -119,6 +125,8 @@ dependencies:
     path: plugins/proton_screen_recorder
   proton_video_effects:
     path: plugins/proton_video_effects
+  proton_denoise:
+    path: plugins/proton_denoise
   # File picker for audio processing example
   # file_picker: 10.2.0
   # unleash proxy client for feature flags

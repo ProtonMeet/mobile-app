@@ -37,11 +37,21 @@ enum UnleashFeature {
   meetInAppStoreReview,
   meetMultipleRecording,
   meetInAppPurchase,
+
   /// Experimental: in app update (currently only support android)
   meetMobileInAppUpdate,
 
-  /// Experimental: native camera background blur (iOS / Android).
+  // Native camera background blur (iOS / Android / macOS).
   meetCameraBackgroundBlur,
+
+  /// Experimental: native microphone denoise (parent flag).
+  meetAudioDenoise,
+
+  /// RNNoise backend under [meetAudioDenoise].
+  meetAudioDenoiseRnnoise,
+
+  /// DeepFilter backend under [meetAudioDenoise] (stub until model ships).
+  meetAudioDenoiseDeepfilter,
 }
 
 /// Function to retrieve all default toggles
@@ -100,6 +110,12 @@ extension UnleashFeatureExt on UnleashFeature {
         return "MeetMobileInAppUpdate";
       case UnleashFeature.meetCameraBackgroundBlur:
         return "MeetCameraBackgroundBlur";
+      case UnleashFeature.meetAudioDenoise:
+        return "MeetAudioDenoise";
+      case UnleashFeature.meetAudioDenoiseRnnoise:
+        return "MeetAudioDenoiseRnnoise";
+      case UnleashFeature.meetAudioDenoiseDeepfilter:
+        return "MeetAudioDenoiseDeepfilter";
     }
   }
 
@@ -362,4 +378,16 @@ class UnleashDataProvider extends DataProvider {
   /// Experimental: in app update (currently only support android)
   bool isMeetMobileInAppUpdate() =>
       isFeatureEnabled(UnleashFeature.meetMobileInAppUpdate);
+
+  /// Parent flag for native mic denoise (RNNoise / DeepFilter).
+  bool isMeetAudioDenoise() =>
+      isFeatureEnabled(UnleashFeature.meetAudioDenoise);
+
+  bool isMeetAudioDenoiseRnnoise() =>
+      isMeetAudioDenoise() &&
+      isFeatureEnabled(UnleashFeature.meetAudioDenoiseRnnoise);
+
+  bool isMeetAudioDenoiseDeepfilter() =>
+      isMeetAudioDenoise() &&
+      isFeatureEnabled(UnleashFeature.meetAudioDenoiseDeepfilter);
 }

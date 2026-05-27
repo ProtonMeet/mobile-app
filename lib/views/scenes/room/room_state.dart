@@ -94,6 +94,12 @@ class RoomState extends Equatable {
 
   /// In-room preference: native camera background blur (MeetCameraBackgroundBlur).
   final bool cameraBackgroundBlurEnabled;
+
+  /// In-room preference: native mic denoise (MeetAudioDenoise).
+  final bool audioDenoiseEnabled;
+
+  /// Selected denoise algorithm id (e.g. `rnnoise`, `deepfilter`).
+  final String audioDenoiseTypeId;
   final CameraPosition? currentCameraPosition;
 
   /// is screen sharing
@@ -273,6 +279,8 @@ class RoomState extends Equatable {
     this.screenSharingIndex = 0,
     this.unsubscribeVideoByDefault = false,
     this.cameraBackgroundBlurEnabled = false,
+    this.audioDenoiseEnabled = false,
+    this.audioDenoiseTypeId = 'rnnoise',
     this.showMeetingIsReady = false,
     this.meetingLink = '',
     this.isSpeakerMuted,
@@ -339,6 +347,8 @@ class RoomState extends Equatable {
     int? screenSharingIndex,
     bool? unsubscribeVideoByDefault,
     bool? cameraBackgroundBlurEnabled,
+    bool? audioDenoiseEnabled,
+    String? audioDenoiseTypeId,
     DateTime? lastOpenChatTime,
     bool? showMeetingIsReady,
     String? meetingLink,
@@ -414,6 +424,8 @@ class RoomState extends Equatable {
           unsubscribeVideoByDefault ?? this.unsubscribeVideoByDefault,
       cameraBackgroundBlurEnabled:
           cameraBackgroundBlurEnabled ?? this.cameraBackgroundBlurEnabled,
+      audioDenoiseEnabled: audioDenoiseEnabled ?? this.audioDenoiseEnabled,
+      audioDenoiseTypeId: audioDenoiseTypeId ?? this.audioDenoiseTypeId,
       meetingLink: meetingLink ?? this.meetingLink,
       showMeetingIsReady: showMeetingIsReady ?? this.showMeetingIsReady,
       isSpeakerMuted: isSpeakerMuted ?? this.isSpeakerMuted,
@@ -506,6 +518,8 @@ class RoomState extends Equatable {
     screenSharingIndex,
     unsubscribeVideoByDefault,
     cameraBackgroundBlurEnabled,
+    audioDenoiseEnabled,
+    audioDenoiseTypeId,
     meetingLink,
     showMeetingIsReady,
     isSpeakerMuted,
