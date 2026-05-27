@@ -36,6 +36,9 @@ const VideoMaxBitrate defaultScreenSharingMaxBitrate = VideoMaxBitrate.kbps1000;
 const CameraPosition defaultCameraPosition = CameraPosition.front;
 const int maxDisplayNameLength = 50;
 
+/// guest meeting room size
+const int guestMeetingRoomSize = 4;
+
 /// delay subscription update
 const Duration delaySubscriptionUpdate = Duration(milliseconds: 5000);
 

@@ -218,7 +218,8 @@ class _ParticipantListState extends State<ParticipantList> {
   }
 
   bool _isGuestMeetingRoom(FrbMeetingInfo? meetingInfo) {
-    return (meetingInfo?.maxParticipants ?? 4) <= 4;
+    /// If the max participants is guestMeetingRoomSize (4 by default), it is a guest meeting room.
+    return (meetingInfo?.maxParticipants ?? 0) == guestMeetingRoomSize;
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -645,10 +646,7 @@ String _composeStatusLine({
   required bool isRecording,
   required String recordingLabel,
 }) {
-  final parts = <String>[
-    if (isHost) 'Host',
-    if (isRecording) recordingLabel,
-  ];
+  final parts = <String>[if (isHost) 'Host', if (isRecording) recordingLabel];
   return parts.join(' · ');
 }
 
