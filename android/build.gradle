@@ -38,12 +38,19 @@ allprojects {
     }
 }
 
-rootProject.buildDir = '../build'
-subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
-    project.evaluationDependsOn(':app')
+// Flutter repo-root build/ (not android/build or android/app/build).
+def repoRootBuildDir = rootProject.layout.projectDirectory.dir('../build')
+rootProject.layout.buildDirectory.set(repoRootBuildDir)
+// AGP CXX intermediates still consult legacy buildDir on some versions — keep both in sync.
+rootProject.buildDir = repoRootBuildDir.asFile
+
+subprojects { subproject ->
+    def subBuildDir = repoRootBuildDir.dir(subproject.name)
+    subproject.layout.buildDirectory.set(subBuildDir)
+    subproject.buildDir = subBuildDir.asFile
+    subproject.evaluationDependsOn(':app')
 }
 
-tasks.register("clean", Delete) {
-    delete rootProject.buildDir
+tasks.register('clean', Delete) {
+    delete rootProject.layout.buildDirectory
 }

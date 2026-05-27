@@ -11,6 +11,11 @@ plugins {
     //alias(libs.plugins.proton.environmentConfig)
 }
 
+// Must run after plugins {} so :app uses <repo>/build/app (AGP + Flutter), not android/app/build.
+def appBuildDir = rootProject.layout.projectDirectory.dir('../build/app')
+layout.buildDirectory.set(appBuildDir)
+buildDir = appBuildDir.asFile
+
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file('local.properties')
 if (localPropertiesFile.exists()) {
@@ -158,6 +163,13 @@ android {
             ndk {
                 abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64'
             }
+        }
+    }
+
+    // Flutter forceNdkDownload() stub CMake; keep staging under <repo>/build/native/app/cxx.
+    externalNativeBuild {
+        cmake {
+            buildStagingDirectory rootProject.layout.buildDirectory.dir('native/app/cxx').get().asFile
         }
     }
 }

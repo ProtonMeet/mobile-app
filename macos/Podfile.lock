@@ -29,6 +29,9 @@ PODS:
     - FlutterMacOS
   - package_info_plus (0.0.1):
     - FlutterMacOS
+  - proton_denoise (1.0.0):
+    - flutter_webrtc
+    - FlutterMacOS
   - proton_screen_recorder (0.0.1):
     - FlutterMacOS
   - proton_video_effects (1.0.0):
@@ -64,6 +67,7 @@ DEPENDENCIES:
   - livekit_client (from `Flutter/ephemeral/.symlinks/plugins/livekit_client/macos`)
   - local_auth_darwin (from `Flutter/ephemeral/.symlinks/plugins/local_auth_darwin/darwin`)
   - package_info_plus (from `Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos`)
+  - proton_denoise (from `Flutter/ephemeral/.symlinks/plugins/proton_denoise/macos`)
   - proton_screen_recorder (from `Flutter/ephemeral/.symlinks/plugins/proton_screen_recorder/macos`)
   - proton_video_effects (from `Flutter/ephemeral/.symlinks/plugins/proton_video_effects/macos`)
   - rust_builder (from `Flutter/ephemeral/.symlinks/plugins/rust_builder/macos`)
@@ -104,6 +108,8 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/local_auth_darwin/darwin
   package_info_plus:
     :path: Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos
+  proton_denoise:
+    :path: Flutter/ephemeral/.symlinks/plugins/proton_denoise/macos
   proton_screen_recorder:
     :path: Flutter/ephemeral/.symlinks/plugins/proton_screen_recorder/macos
   proton_video_effects:
@@ -135,6 +141,7 @@ SPEC CHECKSUMS:
   livekit_client: 3e024a31e364d4a2e0deda1b3908e93933dbf6dc
   local_auth_darwin: c3ee6cce0a8d56be34c8ccb66ba31f7f180aaebb
   package_info_plus: f0052d280d17aa382b932f399edf32507174e870
+  proton_denoise: 1e69339fb7f3591af3762bbd811b8dcc16a3987c
   proton_screen_recorder: 6f9149e3e42d9804f4ead9f1a40961e5af657a9c
   proton_video_effects: 53a26a2ff0cc3274d46160851a2aaee83710c642
   rust_builder: 26319731cff3d47ae0b57e7a06c664f9282a1369

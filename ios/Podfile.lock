@@ -40,6 +40,9 @@ PODS:
     - Flutter
   - permission_handler_apple (9.3.0):
     - Flutter
+  - proton_denoise (1.0.0):
+    - Flutter
+    - flutter_webrtc
   - proton_screen_recorder (0.0.1):
     - Flutter
   - proton_video_effects (1.0.0):
@@ -80,6 +83,7 @@ DEPENDENCIES:
   - local_auth_darwin (from `.symlinks/plugins/local_auth_darwin/darwin`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
+  - proton_denoise (from `.symlinks/plugins/proton_denoise/ios`)
   - proton_screen_recorder (from `.symlinks/plugins/proton_screen_recorder/ios`)
   - proton_video_effects (from `.symlinks/plugins/proton_video_effects/ios`)
   - rust_builder (from `.symlinks/plugins/rust_builder/ios`)
@@ -130,6 +134,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/package_info_plus/ios"
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
+  proton_denoise:
+    :path: ".symlinks/plugins/proton_denoise/ios"
   proton_screen_recorder:
     :path: ".symlinks/plugins/proton_screen_recorder/ios"
   proton_video_effects:
@@ -158,7 +164,7 @@ SPEC CHECKSUMS:
   flutter_secure_storage_darwin: acdb3f316ed05a3e68f856e0353b133eec373a23
   flutter_timezone: 7c838e17ffd4645d261e87037e5bebf6d38fe544
   flutter_webrtc: ec91d94b484ad49cf191ef93413f64a40ffd3b4c
-  fluttertoast: 2c67e14dce98bbdb200df9e1acf610d7a6264ea1
+  fluttertoast: fe6790210fdba20801685be946e3a2124b72eef5
   in_app_review: 7dd1ea365263f834b8464673f9df72c80c17c937
   integration_test: 4a889634ef21a45d28d50d622cf412dc6d9f586e
   livekit_client: 9b9a08c5c78f694ac6a9e70c1c269704ba574b73
@@ -167,6 +173,7 @@ SPEC CHECKSUMS:
   MediaPipeTasksVision: 1d6c3efa89830a131dbd0dc4fb80dea283fac521
   package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
+  proton_denoise: e50dc912945766ecc79dcdf5353885d8d4225962
   proton_screen_recorder: 86a2cace4e5522337dfdc1c6be6ad8c2d848e0ee
   proton_video_effects: 07d9de7ab5329e6620a65cf520d939ee09ccd368
   rust_builder: e5e181121263dc90680706deeeb4621278fa7d17

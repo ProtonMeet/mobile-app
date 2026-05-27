@@ -1,8 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/helper/background_blur/camera_background_blur_sync.dart';
+import 'package:meet/helper/denoise/denoise_audio_sync.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
+import 'package:meet/managers/services/denoise_audio.service.dart';
+import 'package:proton_denoise/proton_denoise.dart';
 
 import 'room_bloc_feature_flags.dart';
 import 'room_event.dart';
@@ -26,6 +29,8 @@ mixin RoomSettingsHandlers
   void registerSettingsHandlers() {
     on<SetUnsubscribeVideoByDefault>(_onSetUnsubscribeVideoByDefault);
     on<SetCameraBackgroundBlurEnabled>(_onSetCameraBackgroundBlurEnabled);
+    on<SetAudioDenoiseEnabled>(_onSetAudioDenoiseEnabled);
+    on<SetAudioDenoiseType>(_onSetAudioDenoiseType);
   }
 
   /// Toggles meeting lock state.
@@ -102,5 +107,50 @@ mixin RoomSettingsHandlers
       'Camera background blur enabled: $effectiveEnabled '
       '(requested=${event.enabled}, ff=$ffEnabled)',
     );
+  }
+
+  Future<void> _onSetAudioDenoiseEnabled(
+    SetAudioDenoiseEnabled event,
+    Emitter<RoomState> emit,
+  ) async {
+    final ffEnabled = isMeetAudioDenoiseEnabled();
+    final effectiveEnabled = event.enabled && ffEnabled;
+    final type =
+        DenoiseType.fromId(state.audioDenoiseTypeId) ?? DenoiseType.rnnoise;
+    emit(state.copyWith(audioDenoiseEnabled: effectiveEnabled));
+    await syncLocalAudioDenoise(
+      room: state.room,
+      enabled: effectiveEnabled,
+      type: type,
+    );
+    l.logger.d(
+      'Audio denoise enabled: $effectiveEnabled '
+      '(requested=${event.enabled}, ff=$ffEnabled, type=${type.id})',
+    );
+  }
+
+  Future<void> _onSetAudioDenoiseType(
+    SetAudioDenoiseType event,
+    Emitter<RoomState> emit,
+  ) async {
+    if (!isMeetAudioDenoiseEnabled()) {
+      return;
+    }
+    final type = DenoiseType.fromId(event.typeId);
+    if (type == null || type == DenoiseType.none) {
+      return;
+    }
+    final available = await DenoiseAudioService.instance
+        .listAvailableTypesForUi();
+    if (!available.any((info) => info.type == type)) {
+      l.logger.w('Audio denoise type ${event.typeId} not available for UI');
+      return;
+    }
+    final wasEnabled = state.audioDenoiseEnabled;
+    emit(state.copyWith(audioDenoiseTypeId: type.id));
+    if (wasEnabled) {
+      await syncLocalAudioDenoise(room: state.room, enabled: true, type: type);
+    }
+    l.logger.d('Audio denoise type: ${type.id}');
   }
 }

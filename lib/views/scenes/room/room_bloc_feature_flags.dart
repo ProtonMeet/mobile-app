@@ -92,6 +92,17 @@ mixin RoomFeatureFlagsHandlers on Bloc<RoomBlocEvent, RoomState> {
     }
   }
 
+  /// Check if native mic denoise is enabled via feature flag.
+  bool isMeetAudioDenoiseEnabled() {
+    try {
+      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
+      return dataProviderManager.unleashDataProvider.isMeetAudioDenoise();
+    } catch (e) {
+      l.logger.w('[RoomBloc] Error checking Audio Denoise feature flag: $e');
+      return false;
+    }
+  }
+
   /// Check if native camera background blur is enabled via feature flag.
   bool isMeetCameraBackgroundBlurEnabled() {
     try {

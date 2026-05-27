@@ -9,6 +9,7 @@ import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/constants/constants.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/background_blur/camera_background_blur_sync.dart';
+import 'package:meet/helper/denoise/denoise_audio_sync.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/local_video_track_extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
@@ -44,6 +45,7 @@ class ResponsiveControlsBar extends StatefulWidget {
     this.cameraMaxBitrate,
     this.currentCameraPosition,
     this.applyCameraBackgroundBlur = false,
+    this.applyAudioDenoise = false,
   });
 
   final Room room;
@@ -57,6 +59,7 @@ class ResponsiveControlsBar extends StatefulWidget {
   final VideoMaxBitrate? cameraMaxBitrate;
   final CameraPosition? currentCameraPosition;
   final bool applyCameraBackgroundBlur;
+  final bool applyAudioDenoise;
 
   @override
   State<ResponsiveControlsBar> createState() => _ResponsiveControlsBarState();
@@ -166,6 +169,7 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
   Future<void> _disableAudio() async {
     final participant = this.participant;
     if (participant == null) return;
+    await syncLocalAudioDenoise(room: widget.room, enabled: false);
     // Use debouncer to prevent rapid toggles
     await _microphoneToggleDebouncer.disable(participant);
     _onChange();
@@ -176,6 +180,9 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
     if (participant == null) return;
     // Use debouncer to prevent rapid toggles
     await _microphoneToggleDebouncer.enable(participant);
+    if (widget.applyAudioDenoise) {
+      await syncLocalAudioDenoise(room: widget.room, enabled: true);
+    }
     _onChange();
   }
 
@@ -188,7 +195,9 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
   Future<void> _enableVideo() async {
     await _startVideoTrack();
     await participant?.setCameraEnabled(true);
-    await syncLocalCameraBackgroundBlur(room: widget.room, enabled: true);
+    if (widget.applyCameraBackgroundBlur) {
+      await syncLocalCameraBackgroundBlur(room: widget.room, enabled: true);
+    }
     _onChange();
   }
 
