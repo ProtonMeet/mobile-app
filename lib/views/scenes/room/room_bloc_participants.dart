@@ -1,4 +1,6 @@
 // room_participants_handlers.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
@@ -18,6 +20,11 @@ mixin RoomParticipantsHandlers on Bloc<RoomBlocEvent, RoomState> {
   // Shared with RoomBloc for consistency
   final int largeMeetingThreshold = 50;
   static const int _maxJoinLeaveHistory = 50;
+  static const Duration _livekitActiveUuidRefreshInterval = Duration(
+    seconds: 10,
+  );
+
+  Timer? _livekitActiveUuidTimer;
   void registerParticipantHandlers() {
     /// livekit events
     on<BridgeParticipantConnected>(_onParticipantConnected);
@@ -126,6 +133,26 @@ mixin RoomParticipantsHandlers on Bloc<RoomBlocEvent, RoomState> {
     if (state.participantsRecording.contains(participantIdentity)) {
       add(ParticipantRecordingStopped(identity: participantIdentity));
     }
+  }
+
+  void startLivekitActiveUuidRefresh() {
+    stopLivekitActiveUuidRefresh();
+    _updateLivekitActiveUuids();
+    _livekitActiveUuidTimer = Timer.periodic(
+      _livekitActiveUuidRefreshInterval,
+      (timer) {
+        if (isClosed) {
+          timer.cancel();
+          return;
+        }
+        _updateLivekitActiveUuids();
+      },
+    );
+  }
+
+  void stopLivekitActiveUuidRefresh() {
+    _livekitActiveUuidTimer?.cancel();
+    _livekitActiveUuidTimer = null;
   }
 
   /// Updates the list of active LiveKit participant UUIDs in AppCore.

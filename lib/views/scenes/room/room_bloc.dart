@@ -158,6 +158,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     disposeReconnectionListeners();
     stopAloneCheckTimer();
     stopConnectionHealthCheck();
+    stopLivekitActiveUuidRefresh();
 
     await CallActivityChannel.end();
 
@@ -376,6 +377,8 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
 
     // Start connection health check
     startConnectionHealthCheck();
+
+    startLivekitActiveUuidRefresh();
 
     // Periodic sampling for subscription creep / leaks
     _startRoomHealthSampling();
@@ -728,6 +731,8 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
   /// - [event]: The leave room event
   /// - [emit]: State emitter for updating the room state
   Future<void> _onLeaveRoom(LeaveRoom event, Emitter<RoomState> emit) async {
+    stopLivekitActiveUuidRefresh();
+
     final room = state.room;
     try {
       await room.disconnect();

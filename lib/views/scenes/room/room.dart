@@ -1588,6 +1588,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     String? leftMeetingBottomSheetContent,
   }) async {
     _isLeavingByUser = true;
+    if (!_bloc.isClosed) {
+      _bloc.stopLivekitActiveUuidRefresh();
+    }
     // Cancel rejoin if in progress to prevent adding events after bloc closes
     if (_bloc.state.isRejoining && !_bloc.isClosed) {
       l.logger.i('[Room] Cancelling rejoin before leaving room');

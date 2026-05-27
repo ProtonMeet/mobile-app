@@ -92,6 +92,7 @@ use meet_identifiers::{AsOwned, Domain, GroupId, Id, LeafIndex};
 const DELAY_PER_RANK_MS: u64 = 100;
 const RANK_GROUP_SIZE: u64 = 3;
 const RANK_GROUP_DELAY_MS: u64 = 5000;
+const LIVEKIT_OFFLINE_THRESHOLD_MS: u64 = 60_000;
 
 // Kick participant retry configuration
 const KICK_MAX_ATTEMPTS: u32 = 4; // 1 initial + 3 retries
@@ -144,8 +145,11 @@ pub enum GroupKeyUpdateReason {
 }
 
 #[cfg(not(target_family = "wasm"))]
-pub type MlsGroupUpdateHandler =
-    Box<dyn FnMut(String, GroupKeyUpdateReason) -> Box<dyn Future<Output = ()> + Unpin + Send> + Send + 'static>;
+pub type MlsGroupUpdateHandler = Box<
+    dyn FnMut(String, GroupKeyUpdateReason) -> Box<dyn Future<Output = ()> + Unpin + Send>
+        + Send
+        + 'static,
+>;
 
 #[cfg(target_family = "wasm")]
 pub type MlsGroupUpdateHandler =
@@ -826,14 +830,7 @@ impl Service {
         epoch_at: u64,
         roster: Vec<Member>,
     ) -> Result<u64, anyhow::Error> {
-        // Filter out offline members to avoid scheduling commits for offline members because only host can kickout ungraceful offline members now
-        let offline_indices = self.get_offline_indices(roster.clone()).await?;
-        let offline_set: HashSet<u32> = offline_indices.iter().copied().collect();
-        let mut all_leaf_indices: Vec<u32> = roster
-            .iter()
-            .map(|m| *m.leaf_index())
-            .filter(|index| !offline_set.contains(index))
-            .collect();
+        let mut all_leaf_indices = self.get_committer_candidate_indices(roster).await?;
 
         all_leaf_indices.sort();
         all_leaf_indices.dedup(); // optional, for safety
@@ -846,9 +843,44 @@ impl Service {
             .iter()
             .position(|&x| x == own_leaf_index)
             .ok_or_else(|| {
-                anyhow::anyhow!("own_leaf_index {own_leaf_index} not found in roster")
+                anyhow::anyhow!("own_leaf_index {own_leaf_index} not found in committer candidates")
             })?;
         Ok(rank as u64)
+    }
+
+    async fn get_committer_candidate_indices(
+        &self,
+        roster: Vec<Member>,
+    ) -> Result<Vec<u32>, anyhow::Error> {
+        let state_lock = self.state.lock().await;
+        let livekit_active_uuid_hashmap = state_lock.livekit_active_uuid_hashset.clone();
+        let last_livekit_active_uuid_update_time = state_lock.last_livekit_active_uuid_update_time;
+        drop(state_lock);
+
+        let Some(livekit_active_uuid_hashmap) = livekit_active_uuid_hashmap else {
+            return Ok(roster.iter().map(|m| *m.leaf_index()).collect());
+        };
+
+        let fallback_indices: Vec<u32> = roster.iter().map(|m| *m.leaf_index()).collect();
+        let candidate_indices = roster
+            .into_iter()
+            .filter_map(|mut member| {
+                let leaf_index = *member.leaf_index();
+                let uuid = get_uuid_from_member(&mut member).ok()?;
+                let uuid_info = livekit_active_uuid_hashmap.get(&uuid)?;
+
+                (last_livekit_active_uuid_update_time.saturating_sub(uuid_info.last_seen)
+                    <= LIVEKIT_OFFLINE_THRESHOLD_MS)
+                    .then_some(leaf_index)
+            })
+            .collect::<Vec<_>>();
+
+        if candidate_indices.is_empty() {
+            tracing::warn!("No candidate indices found, using fallback indices");
+            return Ok(fallback_indices);
+        }
+
+        Ok(candidate_indices)
     }
 
     /// Get leaf indices of members who have been offline for more than the threshold
@@ -857,12 +889,12 @@ impl Service {
         &self,
         roster: Vec<Member>,
     ) -> Result<Vec<u32>, anyhow::Error> {
-        const OFFLINE_THRESHOLD_MS: u64 = 60_000; // 60 seconds in milliseconds
-
         let state_lock = self.state.lock().await;
         let livekit_active_uuid_hashmap = state_lock.get_livekit_active_uuid_hashmap();
         let last_livekit_active_uuid_update_time = state_lock.last_livekit_active_uuid_update_time;
         drop(state_lock);
+
+        const COMMITTER_OFFLINE_THRESHOLD_MS: u64 = 15_000;
 
         let offline_indices: Vec<u32> = roster
             .into_iter()
@@ -873,7 +905,7 @@ impl Service {
                             // Check if last_seen is older than threshold
                             if last_livekit_active_uuid_update_time
                                 .saturating_sub(uuid_info.last_seen)
-                                > OFFLINE_THRESHOLD_MS
+                                > COMMITTER_OFFLINE_THRESHOLD_MS
                             {
                                 Some(*member.leaf_index())
                             } else {
