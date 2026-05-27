@@ -145,6 +145,9 @@ dependencies:
   # check audio session and devices
   audio_session: ^0.2.3
 
+  # in app update for android
+  in_app_update: ^4.2.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

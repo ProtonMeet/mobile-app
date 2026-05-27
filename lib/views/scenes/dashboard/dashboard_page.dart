@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:in_app_update/in_app_update.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/extension/response_error.extension.dart';
 import 'package:meet/helper/local_toast.dart';
+import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/user.agent.dart';
 import 'package:meet/managers/app.state.manager.dart';
 import 'package:meet/managers/channels/platform_info_channel.dart';
@@ -100,6 +102,19 @@ class _DashboardPageState extends State<DashboardPage> {
         showSessionErrorDialog(context, onSignIn: _startSignInFlow);
       }
     });
+
+    // Check for in app updates for android (gated by Unleash flag)
+    if (android && _isMeetMobileInAppUpdateEnabled()) {
+      try {
+        InAppUpdate.checkForUpdate().then((value) {
+          if (value.flexibleUpdateAllowed) {
+            InAppUpdate.startFlexibleUpdate();
+          }
+        });
+      } catch (e) {
+        l.logger.e('Error checking for in app updates: $e');
+      }
+    }
   }
 
   @override
@@ -115,6 +130,17 @@ class _DashboardPageState extends State<DashboardPage> {
           .get<DataProviderManager>()
           .unleashDataProvider
           .isMeetInAppPurchaseEnabled();
+    } on Object {
+      return false;
+    }
+  }
+
+  bool _isMeetMobileInAppUpdateEnabled() {
+    try {
+      return ManagerFactory()
+          .get<DataProviderManager>()
+          .unleashDataProvider
+          .isMeetMobileInAppUpdate();
     } on Object {
       return false;
     }
