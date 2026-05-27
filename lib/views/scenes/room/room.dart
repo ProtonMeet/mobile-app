@@ -2580,7 +2580,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             room: state.room,
             backgroundColor: context.colors.interActionWeakMinor3,
             onLeave: () {
-              leaveRoomDialog(isHost: state.isHost, isAlone: state.isAlone);
+              // Only show the "End meeting for all" button when the local
+              // participant is the only host in the meeting.
+              leaveRoomDialog(
+                isHost: state.isOnlyHost,
+                isAlone: state.isAlone,
+              );
             },
             cameraResolution: _cameraResolution,
             cameraMaxBitrate: _cameraMaxBitrate,
