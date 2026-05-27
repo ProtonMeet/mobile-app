@@ -1039,6 +1039,30 @@ impl App {
             join_and_connect_start.elapsed().as_millis()
         );
 
+        // Check if user is host and update role if needed
+        let user_id = user_info.user_id();
+        if let Ok(meeting_id) = self
+            .user_service
+            .read()
+            .await
+            .get_meeting_id(&user_id)
+            .await
+        {
+            if let Err(e) = self
+                .user_service
+                .read()
+                .await
+                .check_and_update_host_role(&meeting_id)
+                .await
+            {
+                warn!(
+                    "Failed to check and update host role after proposal join: {:?}",
+                    e
+                );
+                // Don't fail the join if role update fails
+            }
+        }
+
         Ok(())
     }
 

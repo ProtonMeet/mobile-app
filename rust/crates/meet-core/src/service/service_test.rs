@@ -4352,21 +4352,21 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 },
             );
 
-            // Second member: offline (70 seconds ago, exceeds 60s threshold)
+            // Second member: offline (20 seconds ago, exceeds 15s threshold)
             hashmap.insert(
                 member_uuids[1].0,
                 LivekitUUIDInfo {
                     uuid: member_uuids[1].0,
-                    last_seen: current_time - 70_000,
+                    last_seen: current_time - 20_000,
                 },
             );
 
-            // Third member: barely online (59 seconds ago, just under threshold)
+            // Third member: barely online (14 seconds ago, just under 15s threshold)
             hashmap.insert(
                 member_uuids[2].0,
                 LivekitUUIDInfo {
                     uuid: member_uuids[2].0,
-                    last_seen: current_time - 59_000,
+                    last_seen: current_time - 14_000,
                 },
             );
 
@@ -4383,7 +4383,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         // Call get_offline_indices
         let offline_indices = service1.get_offline_indices(test_roster).await.unwrap();
 
-        // Verify: Only the second member (70s ago) should be in offline list, the fourth member should be ignored
+        // Verify: Only the second member (20s ago) should be offline; fourth member not in hashmap is ignored
         assert_eq!(
             offline_indices.len(),
             1,
@@ -4391,7 +4391,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         );
         assert_eq!(
             offline_indices[0], member_uuids[1].1,
-            "Offline member should be the one with 70s old timestamp"
+            "Offline member should be the one with 20s old timestamp"
         );
     }
 
@@ -4425,6 +4425,73 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         // Verify: No offline indices since no UUIDs are tracked
         assert_eq!(offline_indices.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_get_deterministic_random_rank_excludes_untracked_livekit_uuids() {
+        use crate::service::service_state::LivekitUUIDInfo;
+        use std::collections::HashMap;
+
+        let meet_link_name = "test_rank_excludes_untracked_livekit_uuids";
+        let ciphersuite = MlsClientConfig::default().ciphersuite;
+
+        let service1 = create_test_service("user1", meet_link_name).await;
+        let service2 = create_test_service("user2", meet_link_name).await;
+        let service3 = create_test_service("user3", meet_link_name).await;
+
+        let groups = setup_n_user_group(
+            vec![&service1, &service2, &service3],
+            meet_link_name,
+            ciphersuite,
+        )
+        .await;
+
+        let roster: Vec<mls_types::Member> = {
+            let group = groups[0].read().await;
+            group.roster().collect()
+        };
+
+        let mut member_uuids = vec![];
+        for mut member in roster.iter().cloned() {
+            if let Ok(uuid) = crate::service::utils::get_uuid_from_member(&mut member) {
+                member_uuids.push((uuid, *member.leaf_index()));
+            }
+        }
+
+        assert_eq!(member_uuids.len(), 3, "Expected 3 valid UUIDs");
+
+        let current_time = crate::utils::unix_timestamp_ms();
+        {
+            let mut state = service1.state.lock().await;
+            let mut hashmap = HashMap::new();
+            hashmap.insert(
+                member_uuids[0].0,
+                LivekitUUIDInfo {
+                    uuid: member_uuids[0].0,
+                    last_seen: current_time,
+                },
+            );
+            hashmap.insert(
+                member_uuids[2].0,
+                LivekitUUIDInfo {
+                    uuid: member_uuids[2].0,
+                    last_seen: current_time,
+                },
+            );
+
+            state.livekit_active_uuid_hashset = Some(hashmap);
+            state.last_livekit_active_uuid_update_time = current_time;
+        }
+
+        let missing_livekit_leaf_index = member_uuids[1].1;
+        let rank_result = service1
+            .get_deterministic_random_rank(missing_livekit_leaf_index, 100, roster)
+            .await;
+
+        assert!(
+            rank_result.is_err(),
+            "Missing LiveKit UUID should be excluded from committer ranking"
+        );
     }
 
     #[tokio::test]
