@@ -246,6 +246,33 @@ class RoomState extends Equatable {
 
   bool get isLocalParticipantAdminOrHost => isHost;
 
+  bool _participantIsHost(String identity) {
+    final p = frbParticipantsMap[identity];
+    if (p == null) return false;
+    return p.isAdmin == 1 || p.isHost == 1;
+  }
+
+  bool get isOnlyHost {
+    if (!isHost) return false;
+
+    var hostCount = 0;
+
+    final localParticipant = room.localParticipant;
+    if (localParticipant != null &&
+        _participantIsHost(localParticipant.identity)) {
+      hostCount++;
+    }
+
+    for (final remote in room.remoteParticipants.values) {
+      if (_participantIsHost(remote.identity)) {
+        hostCount++;
+        if (hostCount > 1) return false;
+      }
+    }
+
+    return hostCount == 1;
+  }
+
   const RoomState({
     required this.room,
     required this.listener,
