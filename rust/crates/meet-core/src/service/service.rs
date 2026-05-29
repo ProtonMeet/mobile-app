@@ -830,6 +830,12 @@ impl Service {
         epoch_at: u64,
         roster: Vec<Member>,
     ) -> Result<u64, anyhow::Error> {
+        let own_leaf = roster
+            .iter()
+            .find(|m| *m.leaf_index() == own_leaf_index)
+            .ok_or_else(|| {
+                anyhow::anyhow!("own_leaf_index {own_leaf_index} not found in roster")
+            })?;
         let mut all_leaf_indices = self.get_committer_candidate_indices(roster).await?;
 
         all_leaf_indices.sort();
@@ -4082,13 +4088,20 @@ impl Service {
 
         let self_leaf_index = mls_group.own_leaf_index()?;
         let epoch_at = *mls_group.epoch();
-        let deterministic_random_rank = self
-            .get_deterministic_random_rank(
+        let authorizer = mls_group.authorizer()?;
+        let own_role = authorizer.own_role(epoch_at)?;
+        // If the own role is RoomAdmin, the client will be the designated committer
+        // otherwise, the client will be the committer with the deterministic random rank
+        let deterministic_random_rank = if own_role.role_index == UserRole::RoomAdmin as u32 {
+            0
+        } else {
+            self.get_deterministic_random_rank(
                 *self_leaf_index,
                 epoch_at,
                 mls_group.roster().collect::<Vec<_>>(),
             )
-            .await?;
+            .await?
+        };
         drop(mls_group);
 
         let rank_group = deterministic_random_rank / RANK_GROUP_SIZE;
