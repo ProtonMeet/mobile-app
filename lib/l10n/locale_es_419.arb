@@ -113,6 +113,8 @@
   "meeting": "Reunión",
   "show_meeting_timer": "Mostrar temporizador de la reunión",
   "unsubscribe_video_by_default": "Desactivar video entrante",
+  "camera_background_blur": "Desenfoque del fondo",
+  "audio_noise_cancellation": "Cancelación de ruido",
   "dark_mode": "Modo oscuro",
   "show_connection_indicator": "Mostrar indicador de conexión",
   "desktop_notifications": "Notificaciones de escritorio",
@@ -310,11 +312,11 @@
   "@rejoin_meeting": {
     "description": "Button text to rejoin a meeting"
   },
-  "left_meeting_title": "Usted salió de la reunión",
+  "left_meeting_title": "Usted ha salió de la reunión",
   "@left_meeting_title": {
     "description": "Title shown in left meeting bottom sheet"
   },
-  "left_meeting_subtitle_guest_free": "Organice su propia reunión segura. Inicie una llamada en Proton Meet y comparta el enlace para invitar a cualquier persona a unirse. Simple, seguro y gratuito.",
+  "left_meeting_subtitle_guest_free": "Organice su propia reunión segura. Inicie una llamada en Proton Meet y comparta el enlace para invitar a cualquier persona a unirse. Simple, seguro y gratis.",
   "@left_meeting_subtitle_guest_free": {
     "description": "Subtitle shown for non-paid non-host users after leaving a meeting"
   },
@@ -434,11 +436,11 @@
   "@recording_consent_message": {
     "description": "Message about recording consent"
   },
-  "recording_in_progress": "Recording in progress",
+  "recording_in_progress": "Grabación en progreso",
   "@recording_in_progress": {
     "description": "Top banner shown to all participants when the meeting is being recorded"
   },
-  "recording_in_progress_with_name": "Recording in progress · {name} is recording",
+  "recording_in_progress_with_name": "Grabación en progreso · {name} está grabando",
   "@recording_in_progress_with_name": {
     "description": "Top banner when exactly one named participant is recording",
     "placeholders": {
@@ -447,7 +449,7 @@
       }
     }
   },
-  "recording_in_progress_with_name_and_others": "Recording in progress · {name} and {count} others are recording",
+  "recording_in_progress_with_name_and_others": "Grabación en progreso · {name} y {count} más están grabando",
   "@recording_in_progress_with_name_and_others": {
     "description": "Top banner when multiple participants are recording",
     "placeholders": {
@@ -459,7 +461,7 @@
       }
     }
   },
-  "recording_label": "Recording",
+  "recording_label": "Grabando",
   "@recording_label": {
     "description": "Chip shown next to participants currently recording the meeting"
   },
@@ -467,7 +469,7 @@
   "@agree_and_continue": {
     "description": "Button text to agree and continue in meeting"
   },
-  "continue_button": "Continue",
+  "continue_button": "Continuar",
   "@continue_button": {
     "description": "Button text to continue in meeting"
   },
@@ -625,15 +627,15 @@
   "@audio_output_default_device": {
     "description": "Bottom sheet option: use default audio output routing (e.g. earpiece or headphones)"
   },
-  "audio_output_earpiece": "Earpiece",
+  "audio_output_earpiece": "Auricular",
   "@audio_output_earpiece": {
     "description": "Bottom sheet option: use Earpiece audio output routing"
   },
-  "audio_output_bluetooth_device": "Bluetooth device",
+  "audio_output_bluetooth_device": "Dispositivo Bluetooth",
   "@audio_output_bluetooth_device": {
     "description": "Bottom sheet option: use Bluetooth device audio output routing"
   },
-  "audio_output_headphones": "Headphones",
+  "audio_output_headphones": "Audífonos",
   "@audio_output_headphones": {
     "description": "Bottom sheet option: use Headphones audio output routing"
   },
@@ -821,15 +823,15 @@
   "@call_quality_what_went_wrong": {
     "description": "Heading when user rated call quality below threshold"
   },
-  "call_quality_problem_subtitle": "¿Qué problema experimentó usted?",
+  "call_quality_problem_subtitle": "¿Qué problemas experimentaste?",
   "@call_quality_problem_subtitle": {
     "description": "Subtitle under what went wrong on low-rating feedback"
   },
-  "call_quality_add_optional_details": "Añadir detalles opcionales",
+  "call_quality_add_optional_details": "Añade detalles opcionales",
   "@call_quality_add_optional_details": {
     "description": "Expand control for free-text feedback"
   },
-  "call_quality_share_more_details": "Compartir más detalles",
+  "call_quality_share_more_details": "Comparte más detalles",
   "@call_quality_share_more_details": {
     "description": "Placeholder for optional feedback text"
   },
@@ -1748,23 +1750,23 @@
   "@store_review_thanks_toast": {
     "description": "Toast shown before the OS in-app store review prompt"
   },
-  "iap_native_test_title": "Plans (native)",
+  "iap_native_test_title": "Planes (Nativo)",
   "@iap_native_test_title": {
     "description": "Title for dev sheet that invokes native IAP / plans"
   },
-  "iap_native_test_body": "Uses the native Proton payments stack (same channel as Proton Wallet). Sign in required.",
+  "iap_native_test_body": "Usa el sistema nativo de pagos de Proton (El mismo que Proton Wallet). Se requiere iniciar sesión.",
   "@iap_native_test_body": {
     "description": "Explains native channel test sheet"
   },
-  "iap_native_test_current_plan": "Current plan",
+  "iap_native_test_current_plan": "Plan actual",
   "@iap_native_test_current_plan": {
     "description": "Button: native.navigation.plan.subscription"
   },
-  "iap_native_test_upgrade": "Upgrade",
+  "iap_native_test_upgrade": "Mejorar",
   "@iap_native_test_upgrade": {
     "description": "Button: native.navigation.plan.upgrade"
   },
-  "iap_native_test_sign_in_required": "Sign in with a Proton account to open native payments.",
+  "iap_native_test_sign_in_required": "Inicia sesión con tu cuenta de Proton para abrir tus pagos nativos.",
   "@iap_native_test_sign_in_required": {
     "description": "Message shown when sign in is required to open native payments"
   }

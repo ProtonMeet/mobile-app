@@ -113,6 +113,8 @@
   "meeting": "Spotkanie",
   "show_meeting_timer": "Pokaż licznik spotkania",
   "unsubscribe_video_by_default": "Wyłącz przychodzące wideo",
+  "camera_background_blur": "Background blur",
+  "audio_noise_cancellation": "Noise cancellation",
   "dark_mode": "Tryb ciemny",
   "show_connection_indicator": "Pokaż wskaźnik połączenia",
   "desktop_notifications": "Powiadomienia na pulpicie",
