@@ -42,14 +42,21 @@ mixin RoomTracksHandlers
     final hideSelfCamera = state.hideSelfCamera;
     final List<ParticipantInfo> userMediaTracks = [];
     final List<ParticipantInfo> screenTracks = [];
+    // O(1) duplicate guard for userMediaTracks.
+    final Set<String> seenIdentities = <String>{};
     for (var participant in room.remoteParticipants.values) {
+      final identity = participant.identity;
       bool hasVideo = false;
       for (var t in participant.videoTrackPublications) {
         hasVideo = true;
         if (t.isScreenShare) {
-          /// ensure we have high quality for screen sharing
-          t.setVideoQuality(VideoQuality.HIGH);
-          t.setVideoFPS(30);
+          /// Ensure high quality + 30 FPS for screen sharing.
+          if (t.videoQuality != VideoQuality.HIGH) {
+            t.setVideoQuality(VideoQuality.HIGH);
+          }
+          if (t.fps != 30) {
+            t.setVideoFPS(30);
+          }
           final displayName = getParticipantDisplayName(participant);
           screenTracks.add(
             ParticipantInfo(
@@ -61,9 +68,7 @@ mixin RoomTracksHandlers
               type: ParticipantTrackType.kScreenShare,
             ),
           );
-          if (!userMediaTracks.any(
-            (element) => element.participant.identity == participant.identity,
-          )) {
+          if (seenIdentities.add(identity)) {
             userMediaTracks.add(
               ParticipantInfo(
                 displayName: displayName,
@@ -72,9 +77,7 @@ mixin RoomTracksHandlers
             );
           }
         } else {
-          if (!userMediaTracks.any(
-            (element) => element.participant.identity == participant.identity,
-          )) {
+          if (seenIdentities.add(identity)) {
             userMediaTracks.add(
               ParticipantInfo(
                 displayName: getParticipantDisplayName(participant),
@@ -88,9 +91,7 @@ mixin RoomTracksHandlers
         /// add to userMediaTracks though remoteParticipant didn't publish video
         /// so we can see this user in camera layout
         ///
-        if (!userMediaTracks.any(
-          (element) => element.participant.identity == participant.identity,
-        )) {
+        if (seenIdentities.add(identity)) {
           userMediaTracks.add(
             ParticipantInfo(
               displayName: getParticipantDisplayName(participant),
@@ -100,8 +101,6 @@ mixin RoomTracksHandlers
         }
       }
     }
-
-    // remove the duplicates in userMediaTracks
 
     /// sort speakers for the grid if participant count > 5 (otherwise they can show in same page, so no need to sort them)
     /// 1st: last spokeAt desc (if user spoke in 60 seconds, they will order by identity instead of spokeAt to avoid screen flickering)
@@ -326,58 +325,65 @@ mixin RoomTracksHandlers
   /// 3) Tertiary: camera enabled (non-screen-share, unmuted) before camera off.
   /// 4) Final: joinedAt ASC (earlier joiners first).
   void sortUserMediaTracksBySpoken(List<ParticipantInfo> userMediaTracks) {
-    const recentWindow = Duration(seconds: 10);
+    const recentWindowMs = 10000; // 10 seconds
     final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final raisedMap = state.raisedHandsByIdentity;
 
-    bool isRecent(DateTime? ts) =>
-        ts != null &&
-        (nowMs - ts.millisecondsSinceEpoch) <= recentWindow.inMilliseconds;
-
-    int spokeMs(DateTime? ts) => ts?.millisecondsSinceEpoch ?? 0;
-
-    userMediaTracks.sort((a, b) {
-      final aP = a.participant;
-      final bP = b.participant;
-      final aRaised = state.raisedHandsByIdentity[aP.identity] == true;
-      final bRaised = state.raisedHandsByIdentity[bP.identity] == true;
-
-      // Raised hand gets the highest priority.
-      if (aRaised != bRaised) {
-        return aRaised ? -1 : 1;
-      }
-
-      final aLastMs = spokeMs(aP.lastSpokeAt);
-      final bLastMs = spokeMs(bP.lastSpokeAt);
-
-      final aRecent = isRecent(aP.lastSpokeAt);
-      final bRecent = isRecent(bP.lastSpokeAt);
-
-      // If both spoke recently, keep a stable order by identity to prevent UI flicker.
-      if (aRecent && bRecent) {
-        final idCmp = aP.identity.compareTo(bP.identity);
-        if (idCmp != 0) return idCmp;
-        // fall through to next criteria if identities are equal (extremely rare)
-      } else if (aLastMs != bLastMs) {
-        // Otherwise, order by lastSpokeAt DESC (0 means "never", so it naturally sinks)
-        return bLastMs.compareTo(aLastMs);
-      }
-
-      // Camera ON before OFF (excludes screen share tracks, checks mute state)
-      final aCam = aP.isCameraEnabled();
-      final bCam = bP.isCameraEnabled();
-      if (aCam != bCam) {
-        return aCam ? -1 : 1;
-      }
-
-      // Earlier joiners first
-      final joinCmp = aP.joinedAt.millisecondsSinceEpoch.compareTo(
-        bP.joinedAt.millisecondsSinceEpoch,
+    // Cache sort keys once before sorting.
+    // This avoids repeatedly reading Participant getters from the comparator.
+    final decorated = List.generate(userMediaTracks.length, (i) {
+      final t = userMediaTracks[i];
+      final p = t.participant;
+      final lastSpokeAt = p.lastSpokeAt;
+      final lastSpokeMs = lastSpokeAt?.millisecondsSinceEpoch ?? 0;
+      return (
+        info: t,
+        identity: p.identity,
+        raised: raisedMap[p.identity] == true,
+        lastSpokeMs: lastSpokeMs,
+        isRecent:
+            lastSpokeAt != null && (nowMs - lastSpokeMs) <= recentWindowMs,
+        cameraEnabled: p.isCameraEnabled(),
+        joinedAtMs: p.joinedAt.millisecondsSinceEpoch,
       );
+    });
+
+    // Sort the decorated records — comparator never touches the
+    // underlying [Participant] getters.
+    decorated.sort((a, b) {
+      // Raised hand gets the highest priority.
+      if (a.raised != b.raised) return a.raised ? -1 : 1;
+
+      // If both spoke recently, keep a stable order by identity to
+      // prevent UI flicker.
+      if (a.isRecent && b.isRecent) {
+        final idCmp = a.identity.compareTo(b.identity);
+        if (idCmp != 0) return idCmp;
+        // fall through to next criteria if identities are equal
+      } else if (a.lastSpokeMs != b.lastSpokeMs) {
+        // Otherwise, order by lastSpokeAt DESC (0 means "never" and
+        // naturally sinks).
+        return b.lastSpokeMs.compareTo(a.lastSpokeMs);
+      }
+
+      // Camera ON before OFF.
+      if (a.cameraEnabled != b.cameraEnabled) {
+        return a.cameraEnabled ? -1 : 1;
+      }
+
+      // Earlier joiners first.
+      final joinCmp = a.joinedAtMs.compareTo(b.joinedAtMs);
       if (joinCmp != 0) return joinCmp;
 
-      // Final deterministic tiebreaker: identity
-      return aP.identity.compareTo(bP.identity);
+      // Final deterministic tiebreaker: identity.
+      return a.identity.compareTo(b.identity);
     });
+
+    // Undecorate in-place: write back the [ParticipantInfo]s in the
+    // newly sorted order, preserving the in-place contract of [List.sort].
+    for (var i = 0; i < decorated.length; i++) {
+      userMediaTracks[i] = decorated[i].info;
+    }
   }
 
   /// Helper method to compare two lists of ParticipantInfo efficiently

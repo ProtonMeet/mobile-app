@@ -2315,6 +2315,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
                         final safeIndex = min(index, tracks.length - 1);
 
+                        _ensureScreenShareSubscribed(
+                          tracks[safeIndex].participant,
+                        );
                         final showLowerHand =
                             _bloc.state.isLocalParticipantAdminOrHost &&
                             _bloc.isMeetAdminLowerHandEnabled();
@@ -3282,6 +3285,30 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     final room = _bloc.state.room;
     for (final remoteParticipant in room.remoteParticipants.values.toList()) {
       for (final pub in remoteParticipant.videoTrackPublications) {
+        pub.subscribe();
+      }
+    }
+  }
+
+  /// Safety-net re-subscribe for the screen-share view.
+  ///
+  /// With `autoSubscribe: false` (see [RoomManager.connectRoom]) the SFU only
+  /// forwards tracks we explicitly subscribe to. The bridge subscribes
+  /// screen-share on TrackPublished/Unmuted, but a transient network blip,
+  /// rejoin, or any future selective-unsubscribe pass could leave the
+  /// publication silent. Each time the user (re-)enters the screen-share
+  /// view we re-assert subscription on the active sharer's screen-share
+  /// publications. Idempotent: bails when already subscribed.
+  void _ensureScreenShareSubscribed(Participant participant) {
+    for (final pub in participant.videoTrackPublications) {
+      if (pub.source != TrackSource.screenShareVideo) continue;
+      if (pub is RemoteTrackPublication && !pub.subscribed) {
+        pub.subscribe();
+      }
+    }
+    for (final pub in participant.audioTrackPublications) {
+      if (pub.source != TrackSource.screenShareAudio) continue;
+      if (pub is RemoteTrackPublication && !pub.subscribed) {
         pub.subscribe();
       }
     }

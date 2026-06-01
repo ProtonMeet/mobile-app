@@ -200,6 +200,26 @@ class RemoteParticipantWidget extends ParticipantWidget {
   State<StatefulWidget> createState() => _RemoteParticipantWidgetState();
 }
 
+/// Snapshot of every participant-driven field that the tile's [build]
+/// actually reads. Records auto-generate structural `==` / `hashCode`,
+/// so we can bail out of [State.setState] when nothing visible changed.
+///
+/// LiveKit's `Participant` ChangeNotifier fires for every audio-level
+/// tick, connection-quality probe, mute/unmute, track sub/unsub, etc.
+/// In a 200-person room that easily reaches 200+ events/s — without
+/// this diff we used to schedule a full tile rebuild for every one.
+typedef _ParticipantSnapshot =
+    ({
+      bool isSpeaking,
+      ConnectionQuality connectionQuality,
+      String? audioPubSid,
+      bool? audioMuted,
+      bool? audioSubscribed,
+      String? videoPubSid,
+      bool? videoTrackMuted,
+      bool hasVideoTrack,
+    });
+
 abstract class _ParticipantWidgetState<T extends ParticipantWidget>
     extends State<T> {
   VideoTrack? get activeVideoTrack;
@@ -216,6 +236,28 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
   String? _displayReactionEmoji;
   Timer? _hideReactionTimer;
 
+  /// Last snapshot we rebuilt against. `_onParticipantChanged` short-circuits
+  /// when the next snapshot is structurally equal to this.
+  _ParticipantSnapshot? _lastSnapshot;
+
+  /// Read every build-time input from the current participant + track state
+  /// in one shot. Stays cheap (8 field reads, 1 record allocation).
+  _ParticipantSnapshot _captureSnapshot() {
+    final ap = audioPublication;
+    final vp = videoPublication;
+    final vt = activeVideoTrack;
+    return (
+      isSpeaking: widget.participant.isSpeaking,
+      connectionQuality: widget.participant.connectionQuality,
+      audioPubSid: ap?.sid,
+      audioMuted: ap?.muted,
+      audioSubscribed: ap?.subscribed,
+      videoPubSid: vp?.sid,
+      videoTrackMuted: vt?.muted,
+      hasVideoTrack: vt != null,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -228,7 +270,9 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
 
     widget.participant.addListener(_onParticipantChanged);
     _syncReactionFromWidget();
-    _onParticipantChanged();
+    // Seed the snapshot. The first frame builds naturally after initState,
+    // so we don't need an extra setState here.
+    _lastSnapshot = _captureSnapshot();
   }
 
   @override
@@ -244,7 +288,9 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
     oldWidget.participant.removeListener(_onParticipantChanged);
     widget.participant.addListener(_onParticipantChanged);
     _syncReactionFromWidget();
-    _onParticipantChanged();
+    // didUpdateWidget always implies a rebuild, so just refresh the snapshot
+    // baseline against the (potentially new) participant.
+    _lastSnapshot = _captureSnapshot();
     super.didUpdateWidget(oldWidget);
   }
 
@@ -298,9 +344,17 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
     );
   }
 
-  // Notify Flutter that UI re-build is required, but we don't set anything here
-  // since the updated values are computed properties.
-  void _onParticipantChanged() => setState(() {});
+  /// Diff the current snapshot against the last one we rebuilt against and
+  /// only `setState` when something visible actually changed. LiveKit fires
+  /// this for every audio-level tick, so 80–90% of calls in a busy room
+  /// short-circuit here without touching the widget tree.
+  void _onParticipantChanged() {
+    final next = _captureSnapshot();
+    if (next == _lastSnapshot) return;
+    _lastSnapshot = next;
+    if (!mounted) return;
+    setState(() {});
+  }
 
   // Widgets to show above the info bar
   List<Widget> extraWidgets({required bool isScreenShare}) => [];

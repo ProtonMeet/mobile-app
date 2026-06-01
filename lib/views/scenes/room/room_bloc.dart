@@ -26,6 +26,7 @@ import 'package:meet/rust/proton_meet/models/meet_info.dart';
 import 'package:meet/rust/proton_meet/user_subscription.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
 import 'package:meet/views/scenes/utils.dart' as utils;
+import 'package:rxdart/rxdart.dart';
 import 'package:sentry/sentry.dart';
 
 import 'recording/recording_status_handler.dart';
@@ -42,6 +43,7 @@ import 'room_bloc_settings.dart';
 import 'room_bloc_tracks.dart';
 import 'room_event.dart';
 import 'room_event_bridge.dart';
+import 'room_event_livekit.dart';
 import 'room_state.dart';
 
 /// BLoC (Business Logic Component) for managing room state and interactions.
@@ -66,19 +68,10 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
         RoomReconnectionListeners,
         RoomBlocDebugLogging,
         RoomSettingsHandlers {
-  // Debounce timing constants for participant sorting,
-  //    not sure this will work well logic could be changed later
-  static const int _debounceMsLargeMeeting = 500;
-  static const int _debounceMsSmallMeeting = 200;
-
-  Timer? _sortTimer;
+  Timer? _watchDogTimer;
   DateTime? _callStartTime;
 
   StreamSubscription? _deviceChangeSub;
-
-  // Debounce timer for SortParticipants to reduce excessive sorting with many participants
-  Timer? _sortDebounceTimer;
-  bool _sortPending = false;
 
   bool _screenShareToggleInFlight = false;
   static const int _joinLeaveChatSuppressThreshold = 50;
@@ -150,8 +143,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
 
   @override
   Future<void> close() async {
-    _sortTimer?.cancel();
-    _sortDebounceTimer?.cancel();
+    _watchDogTimer?.cancel();
     _roomHealthSampleTimer?.cancel();
     _cancelFullScreenTimer();
     _deviceChangeSub?.cancel();
@@ -176,29 +168,17 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     return super.close();
   }
 
-  /// Debounced version of SortParticipants to reduce excessive sorting
-  /// with large participant counts. Waits for events to settle before sorting.
-  /// Handler for DebouncedSortParticipants event
+  /// Throttled fan-in for high-frequency LiveKit `ParticipantEvent`s.
+  ///
+  /// Throttling happens upstream in the EventTransformer registered for
+  /// [DebouncedSortParticipants] (see the constructor), so this handler is
+  /// only invoked at most ~2x/s even when LiveKit fires 200+ events/s in a
+  /// large room. We just forward to the heavy [SortParticipants] handler.
   void _onDebouncedSortParticipants(
     DebouncedSortParticipants event,
     Emitter<RoomState> emit,
   ) {
-    _sortPending = true;
-    _sortDebounceTimer?.cancel();
-
-    // With large meetings, use longer debounce to batch events
-    // Use shorter debounce for smaller groups for responsiveness
-    final participantCount = state.room.remoteParticipants.length + 1;
-    final debounceMs = participantCount > largeMeetingThreshold
-        ? _debounceMsLargeMeeting
-        : _debounceMsSmallMeeting;
-
-    _sortDebounceTimer = Timer(Duration(milliseconds: debounceMs), () {
-      if (_sortPending) {
-        _sortPending = false;
-        add(SortParticipants());
-      }
-    });
+    add(SortParticipants());
   }
 
   /// Creates a new [RoomBloc] instance.
@@ -213,7 +193,19 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     roomManager = RoomManager(appCoreManager);
     on<RoomInitialized>(_onRoomInitialized);
     on<RoomDisposed>(_onRoomDisposed);
-    on<DebouncedSortParticipants>(_onDebouncedSortParticipants);
+    // Throttle the high-frequency `DebouncedSortParticipants` stream coming
+    // from LiveKit `ParticipantEvent`s (200+/s in 200-person rooms).
+    // - leading edge: first event triggers a sort immediately
+    // - trailing edge: at most one extra sort per 500ms window captures the
+    //   latest state when bursts continue past the window
+    // - switchMap: cancels any in-flight handler when a new throttled event
+    //   arrives so we never queue stale sort requests
+    on<DebouncedSortParticipants>(
+      _onDebouncedSortParticipants,
+      transformer: (events, mapper) => events
+          .throttleTime(const Duration(milliseconds: 500), trailing: true)
+          .switchMap(mapper),
+    );
     on<RetryLoadParticipants>(_onRetryLoadParticipants);
 
     /// register participant handlers
@@ -282,9 +274,27 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     on<RoomParticipantUpdated>(_onRoomParticipantUpdated);
     on<RoomMessageReceived>(_onRoomMessageReceived);
     on<MlsGroupUpdated>(_onMlsGroupUpdated);
+    on<BridgeLocalTrackPublished>(_onBridgeLocalTrackPublished);
 
     /// video operations
     on<SwapCamera>(_onSwapCamera);
+  }
+
+  /// Re-arm the LiveKit E2EE key whenever any local track is published.
+  ///
+  /// LiveKit creates a fresh frame cryptor per published track; if a key
+  /// rotation was mid-flight at publish time the cryptor can pin to a
+  /// stale keyIndex, leaving remote (web) peers unable to decrypt the new
+  /// track until the next epoch change forces a re-set. The bridge maps
+  /// every [LocalTrackPublishedEvent] (mic / camera / screen-share /
+  /// fastConnect mic / rejoin re-publishes) to this handler so the fix
+  /// covers every publish path without individual call sites having to
+  /// remember. Idempotent and cheap when no rotation is in flight.
+  Future<void> _onBridgeLocalTrackPublished(
+    BridgeLocalTrackPublished event,
+    Emitter<RoomState> emit,
+  ) async {
+    await roomManager?.refreshE2EEKey(state.room);
   }
 
   void _onParticipantRecordingStarted(
@@ -579,19 +589,10 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       );
     });
 
-    /// re-sorting participants periodically (longer interval for large groups)
-    /// so we can make last speaker move to upper tiles
-    /// Use longer interval for 100+ participants to reduce CPU load
-    final participantCount = state.room.remoteParticipants.length + 1;
-    final sortInterval = participantCount > 50
-        ? const Duration(seconds: 5)
-        : const Duration(seconds: 3);
-
-    _sortTimer = Timer.periodic(sortInterval, (_) async {
-      // Force immediate sort on timer (not debounced) to ensure periodic updates
-      _sortPending = false;
-      _sortDebounceTimer?.cancel();
-      add(SortParticipants());
+    _watchDogTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
+      // every track pub/unpub, raise hand / un-raised hand, speaking event
+      // will trigger a sort, so we don't need to sort periodically
+      // add(SortParticipants());
       add(MlsGroupUpdated());
       // Calculate elapsed time from call start
       final elapsedSeconds = _callStartTime != null
@@ -883,6 +884,13 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
           true,
           captureScreenAudio: captureScreenAudio,
         );
+        // Re-arm the E2EE key immediately after the new screen-share track
+        // is published. LiveKit builds the frame cryptor per track; if a
+        // key rotation was mid-flight at publish time the cryptor can pin
+        // to a stale keyIndex, leaving remote (web) peers unable to
+        // decrypt the screen share until the next epoch change forces a
+        // re-set. See [RoomManager.refreshE2EEKey].
+        await roomManager?.refreshE2EEKey(room);
         emit(state.copyWith(isLocalScreenSharing: true));
         logRoomTrackStats('after_screen_share_enable', room);
       } catch (e) {
@@ -1312,10 +1320,10 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     // In large rooms, suppress join/leave chat bubble spam to avoid memory/CPU growth.
     // Still log it to the stats logger below.
     if (isJoinLeaveSystemMessage && isLargeRoom) {
-      logSystemLogToStatLogger(
-        DateTime.now().millisecondsSinceEpoch,
-        event.message,
-      );
+      // logSystemLogToStatLogger(
+      //   DateTime.now().millisecondsSinceEpoch,
+      //   event.message,
+      // );
       return;
     }
 
@@ -1339,10 +1347,10 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     }
 
     /// add system message to logger
-    logSystemLogToStatLogger(
-      DateTime.now().millisecondsSinceEpoch,
-      event.message,
-    );
+    // logSystemLogToStatLogger(
+    //   DateTime.now().millisecondsSinceEpoch,
+    //   event.message,
+    // );
   }
 
   /// Callback invoked when the room state updates.
@@ -1426,22 +1434,25 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
 
       final groupKey = groupKeyResult.$1;
       final epoch = groupKeyResult.$2;
+      final newEpochStr = epoch.toString();
+      final epochChanged = state.epoch != newEpochStr;
 
-      // Update E2EE manager with the latest group key
-      await state.room.safeSetKeyWithEpoch(groupKey, epoch);
-      final keyIndex =
-          state.room.e2eeManager?.keyProvider.getKeyIndexFromEpoch(epoch) ??
-          epoch.toInt();
-      await state.room.safeSetKeyIndex(keyIndex);
+      if (epochChanged) {
+        await state.room.safeSetKeyWithEpoch(groupKey, epoch);
+        final keyIndex =
+            state.room.e2eeManager?.keyProvider.getKeyIndexFromEpoch(epoch) ??
+            epoch.toInt();
+        await state.room.safeSetKeyIndex(keyIndex);
+      }
 
       if (kDebugMode) {
         l.logger.d('Latest group key: $groupKey, epoch: $epoch');
         l.logger.d('Latest group display code: $displayCode');
       }
-      // Emit updated state with new epoch and display code
+      // Emit updated state with new epoch / displayCode / counts.
       emit(
         state.copyWith(
-          epoch: epoch.toString(),
+          epoch: newEpochStr,
           displayCode: displayCode,
           participantsCount: participantsCount,
           mlsGroupLen: mlsGroupLen,
