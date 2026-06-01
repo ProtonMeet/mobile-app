@@ -10,6 +10,7 @@ use crate::domain::user::models::Address;
 use crate::domain::user::ports::user_api::UserApi;
 use crate::errors::http_client::HttpClientError;
 use crate::errors::login::LoginError;
+use crate::infra::dto::addresses::ApiAddressesResponse;
 use crate::infra::dto::proton_user::{ApiProtonUserResponse, UserData};
 use crate::infra::http_client::ProtonHttpClient;
 use crate::infra::http_client_util::HttpClientUtil;
@@ -60,9 +61,9 @@ impl UserApi for ProtonHttpClient {
             .get("/core/v4/addresses")
             .allowed_time(Duration::from_secs(15));
         let res = self.get_session().send(req).await?;
-        let addresses_res: CoreAPI::v4::addresses::GetRes = res.into_body_json()?;
+        let addresses_res = res.parse_response::<ApiAddressesResponse>()?;
         Ok(addresses_res
-            .addresses
+            .addresses()
             .iter()
             .map(|address| address.into())
             .collect())

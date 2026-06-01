@@ -304,7 +304,9 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         emit(
           _recoverableDashboardFailure(
             state,
-            error: 'Failed to fetch user state: $error',
+            error: isMissingUserStateError(error)
+                ? _generalUserStateError
+                : 'Failed to fetch user state: $error',
             errorDetail: error.toString(),
           ),
         );
@@ -320,7 +322,7 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
     );
 
     // Get upcoming meetings with timeout and retry
-    final List<FrbUpcomingMeeting> upcomingMeetings;
+    late List<FrbUpcomingMeeting> upcomingMeetings;
     try {
       upcomingMeetings = await utils.retryWithTimeout<List<FrbUpcomingMeeting>>(
         action: () => appCoreManager.appCore.getUpcomingMeetings(),
@@ -335,6 +337,35 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       );
       if (error is BridgeError_ApiResponse) {
         emit(_recoverableDashboardFailure(state, errorResponse: error.field0));
+        return;
+      }
+
+      if (isMissingUserStateError(error)) {
+        final recoverySteps = <String>[
+          'initial getUpcomingMeetings failed: $error',
+        ];
+        try {
+          await appCoreManager.appCore.refreshUserStateFromApi(userId: userId);
+          recoverySteps.add('refreshUserStateFromApi succeeded');
+          upcomingMeetings = await utils
+              .retryWithTimeout<List<FrbUpcomingMeeting>>(
+                action: () => appCoreManager.appCore.getUpcomingMeetings(),
+                operationName: 'getUpcomingMeetings_after_user_state_refresh',
+              );
+        } catch (retryError, retryStack) {
+          l.logger.e(
+            '[DashboardBloc] User-state recovery failed: $retryError, $retryStack',
+          );
+          recoverySteps.add('retry after refresh failed: $retryError');
+          emit(
+            _recoverableDashboardFailure(
+              state,
+              error: _generalUserStateError,
+              errorDetail: recoverySteps.join('\n'),
+            ),
+          );
+          return;
+        }
       } else {
         emit(
           _recoverableDashboardFailure(
@@ -343,8 +374,8 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
             errorDetail: error.toString(),
           ),
         );
+        return;
       }
-      return;
     }
 
     emit(
@@ -459,6 +490,127 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
             ),
           );
         }
+      }
+    }
+  }
+
+  static const String _generalUserStateError =
+      'Unable to load your meetings right now. Please try again.';
+
+  /// Shown when create/schedule meeting recovery (refresh + retry) still fails.
+  static const String _meetingUserStateFailureMessage =
+      'Unable to create or schedule your meeting right now. Please try again.';
+
+  String _meetCoreBridgeDiagnostic(String payload) {
+    final details = parseMeetCoreServiceErrorDetails(payload);
+    final detailsSuffix = details == null ? '' : ', details: $details';
+    return 'Meet core — ${meetCoreServiceMessageLine(payload)}'
+        '$detailsSuffix\nraw: $payload';
+  }
+
+  /// Human-readable bridge/API payload for error details (support / debug).
+  String _errorDiagnostic(Object error) {
+    if (error is BridgeError) {
+      return switch (error) {
+        BridgeError_ApiResponse(:final field0) =>
+          'API response — code: ${field0.code}, error: ${field0.error}, '
+              'details: ${field0.details.isEmpty ? "(none)" : field0.details}',
+        BridgeError_MeetCore(:final field0) => _meetCoreBridgeDiagnostic(
+          field0,
+        ),
+        _ =>
+          '${error.runtimeType} — user: ${error.userMessage}, '
+              'detail: ${error.detailMessage}',
+      };
+    }
+    return '${error.runtimeType}: $error';
+  }
+
+  Never _throwCreateMeetingRecoveryFailed({
+    required List<String> recoveryLog,
+    required Object lastError,
+  }) {
+    throw CreateMeetingUserStateRecoveryFailure(
+      recoveryLog: recoveryLog,
+      lastError: lastError,
+    );
+  }
+
+  /// Calls [createMeeting]; on missing active user, refreshes user state and retries once.
+  Future<FrbUpcomingMeeting> _createMeetingWithUserStateRecovery({
+    required AppCoreManager appCoreManager,
+    required String meetingName,
+    required bool hasSession,
+    required MeetingType meetingType,
+    String? customPassword,
+    int? startTime,
+    int? endTime,
+    String? timeZone,
+    String? rRule,
+  }) async {
+    Future<FrbUpcomingMeeting> create() => appCoreManager.appCore.createMeeting(
+      meetingName: meetingName,
+      hasSession: hasSession,
+      meetingType: meetingType,
+      customPassword: customPassword,
+      startTime: startTime,
+      endTime: endTime,
+      timeZone: timeZone,
+      rRule: rRule,
+    );
+
+    try {
+      return await create();
+    } on BridgeError catch (error) {
+      if (!error.isMissingUserState) {
+        rethrow;
+      }
+      final userId = appCoreManager.userID;
+      if (userId == null || userId.isEmpty) {
+        rethrow;
+      }
+
+      final recoveryLog = <String>[
+        'createMeeting (attempt 1): ${_errorDiagnostic(error)}',
+      ];
+      l.logger.w(
+        '[DashboardBloc] createMeeting missing user state; '
+        'refreshing user state and retrying. $error',
+      );
+
+      try {
+        await appCoreManager.appCore.refreshUserStateFromApi(userId: userId);
+        recoveryLog.add('refreshUserStateFromApi: succeeded');
+      } catch (refreshError, refreshStack) {
+        recoveryLog.add(
+          'refreshUserStateFromApi: failed — ${_errorDiagnostic(refreshError)}',
+        );
+        l.logger.e(
+          '[DashboardBloc] refreshUserStateFromApi failed during create recovery',
+          error: refreshError,
+          stackTrace: refreshStack,
+        );
+        _throwCreateMeetingRecoveryFailed(
+          recoveryLog: recoveryLog,
+          lastError: refreshError,
+        );
+      }
+
+      try {
+        return await create();
+      } catch (retryError, retryStack) {
+        recoveryLog.add(
+          'createMeeting (attempt 2): ${_errorDiagnostic(retryError)}',
+        );
+        l.logger.e(
+          '[DashboardBloc] createMeeting retry failed after user-state refresh',
+          error: retryError,
+          stackTrace: retryStack,
+        );
+        _throwCreateMeetingRecoveryFailed(
+          recoveryLog: recoveryLog,
+          lastError: retryError,
+        );
       }
     }
   }
@@ -814,7 +966,8 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
 
     try {
       final appCoreManager = ManagerFactory().get<AppCoreManager>();
-      final upcomingMeeting = await appCoreManager.appCore.createMeeting(
+      final upcomingMeeting = await _createMeetingWithUserStateRecovery(
+        appCoreManager: appCoreManager,
         meetingName: event.roomName,
         hasSession: true,
         meetingType: MeetingType.permanent,
@@ -848,6 +1001,26 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       );
       add(UpdateUpcomingStateEvent(upcomingTab: MeetUpcomingTab.myRooms));
       _recordMeetingCreatedForUserActivity();
+    } on CreateMeetingUserStateRecoveryFailure catch (failure, stackTrace) {
+      operationCompleted = true;
+      timeoutTimer.cancel();
+      l.logger.e(
+        '[DashboardBloc] Create meeting failed after user-state recovery\n'
+        '${failure.diagnosticLog}',
+        error: failure.lastError,
+        stackTrace: stackTrace,
+      );
+      if (!isClosed) {
+        emit(
+          state.copyWith(
+            isLoadingCreateMeeting: false,
+            isLoading: false,
+            error: _meetingUserStateFailureMessage,
+            errorDetail: failure.diagnosticLog,
+            offerFetchUserStateRetry: true,
+          ),
+        );
+      }
     } on BridgeError catch (error, stackTrace) {
       operationCompleted = true;
       timeoutTimer.cancel();
@@ -881,6 +1054,12 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
             ),
           );
         } else {
+          if (error.isMissingUserState) {
+            l.logger.w(
+              '[DashboardBloc] Create meeting missing user state. '
+              'error=$error detail=${error.detailMessage}',
+            );
+          }
           l.logger.e(
             '[DashboardBloc] Error creating meeting: $error, $stackTrace',
           );
@@ -888,9 +1067,11 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
             state.copyWith(
               isLoadingCreateMeeting: false,
               isLoading: false,
-              error: extractErrorMessage(error),
-              errorDetail: '',
-              offerFetchUserStateRetry: false,
+              error: error.isMissingUserState
+                  ? _generalUserStateError
+                  : extractErrorMessage(error),
+              errorDetail: error.isMissingUserState ? error.toString() : '',
+              offerFetchUserStateRetry: error.isMissingUserState,
             ),
           );
         }
@@ -1271,7 +1452,8 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       final meetingType = event.data.recurrence == RecurrenceFrequency.none
           ? MeetingType.scheduled
           : MeetingType.recurring;
-      final upcomingMeeting = await appCoreManager.appCore.createMeeting(
+      final upcomingMeeting = await _createMeetingWithUserStateRecovery(
+        appCoreManager: appCoreManager,
         meetingName: event.data.title,
         hasSession: true,
         meetingType: meetingType,
@@ -1308,6 +1490,26 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       );
       add(UpdateUpcomingStateEvent(upcomingTab: MeetUpcomingTab.myMeetings));
       _recordMeetingCreatedForUserActivity();
+    } on CreateMeetingUserStateRecoveryFailure catch (failure, stackTrace) {
+      operationCompleted = true;
+      timeoutTimer.cancel();
+      l.logger.e(
+        '[DashboardBloc] Schedule meeting failed after user-state recovery\n'
+        '${failure.diagnosticLog}',
+        error: failure.lastError,
+        stackTrace: stackTrace,
+      );
+      if (!isClosed) {
+        emit(
+          state.copyWith(
+            isLoadingScheduleMeeting: false,
+            isLoading: false,
+            error: _meetingUserStateFailureMessage,
+            errorDetail: failure.diagnosticLog,
+            offerFetchUserStateRetry: true,
+          ),
+        );
+      }
     } on BridgeError catch (error, stackTrace) {
       operationCompleted = true;
       timeoutTimer.cancel();
@@ -1345,6 +1547,12 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
             ),
           );
         } else {
+          if (error.isMissingUserState) {
+            l.logger.w(
+              '[DashboardBloc] Schedule meeting missing user state. '
+              'error=$error detail=${error.detailMessage}',
+            );
+          }
           l.logger.e(
             '[DashboardBloc] Error scheduling meeting: $error, $stackTrace',
           );
@@ -1361,9 +1569,11 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
             state.copyWith(
               isLoadingScheduleMeeting: false,
               isLoading: false,
-              error: extractErrorMessage(error),
-              errorDetail: '',
-              offerFetchUserStateRetry: false,
+              error: error.isMissingUserState
+                  ? _generalUserStateError
+                  : extractErrorMessage(error),
+              errorDetail: error.isMissingUserState ? error.toString() : '',
+              offerFetchUserStateRetry: error.isMissingUserState,
             ),
           );
         }
@@ -2189,4 +2399,21 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       );
     }
   }
+}
+
+/// Create meeting failed after refreshing user state and retrying once.
+final class CreateMeetingUserStateRecoveryFailure implements Exception {
+  CreateMeetingUserStateRecoveryFailure({
+    required this.recoveryLog,
+    required this.lastError,
+  });
+
+  final List<String> recoveryLog;
+  final Object lastError;
+
+  String get diagnosticLog => recoveryLog.join('\n');
+
+  @override
+  String toString() =>
+      'CreateMeetingUserStateRecoveryFailure(lastError: $lastError)';
 }

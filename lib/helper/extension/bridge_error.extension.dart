@@ -5,6 +5,14 @@ import 'package:meet/rust/errors.dart';
 /// Payload shape for [MeetCoreError::ServiceError] from `rust/crates/frb/src/errors.rs`.
 const String kMeetCoreServiceErrorHeader = 'MeetCoreError::ServiceError';
 
+// TODO: later to check the rust layer error enum
+bool _textIndicatesMissingUserState(String text) {
+  return text.contains('No active user') ||
+      text.contains('NoActiveUser') ||
+      text.contains('No user keys') ||
+      text.contains('No primary address');
+}
+
 extension BridgeErrorExtension on BridgeError {
   String get userMessage => switch (this) {
     BridgeError_ApiResponse(:final field0) => field0.error,
@@ -25,6 +33,17 @@ extension BridgeErrorExtension on BridgeError {
     ),
     _ => null,
   };
+
+  /// True when meet-core reports missing active user, keys, or primary address.
+  bool get isMissingUserState => _textIndicatesMissingUserState(toString());
+}
+
+/// Same as [BridgeError.isMissingUserState] for non-bridge errors (uses [Object.toString]).
+bool isMissingUserStateError(Object error) {
+  if (error is BridgeError) {
+    return error.isMissingUserState;
+  }
+  return _textIndicatesMissingUserState(error.toString());
 }
 
 /// First line `message: …` from [kMeetCoreServiceErrorHeader] payloads; otherwise [payload].
