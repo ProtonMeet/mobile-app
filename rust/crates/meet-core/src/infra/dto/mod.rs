@@ -1,4 +1,5 @@
 pub mod access_token;
+pub mod addresses;
 pub mod common;
 pub mod end_meeting;
 pub mod event;

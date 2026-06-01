@@ -91,18 +91,7 @@ pub struct App {
 }
 
 impl App {
-    /// Extracts user authentication information from the active user state.
-    /// This includes the active user key, user ID, mailbox password, and primary address.
-    ///
-    /// # Returns
-    /// * `Ok(UserAuthInfo)` - User authentication information
-    /// * `Err(MeetCoreError)` - Error if no active user, no user keys, or no primary address
-    async fn get_user_state_info(&self) -> Result<UserStateInfo, MeetCoreError> {
-        let app_state = self.state.read().await;
-        let user_state = app_state
-            .active_user
-            .as_ref()
-            .ok_or(MeetCoreError::NoActiveUser)?;
+    fn user_state_info_from(user_state: &UserState) -> Result<UserStateInfo, MeetCoreError> {
         let active_user_key = preferred_user_key_for_crypto(&user_state.user_keys)
             .ok_or(MeetCoreError::NoUserKeys)?
             .clone();
@@ -118,6 +107,21 @@ impl App {
             user_id,
             primary_address,
         })
+    }
+
+    /// Extracts user authentication information from the active user state.
+    /// This includes the active user key, user ID, mailbox password, and primary address.
+    ///
+    /// # Returns
+    /// * `Ok(UserAuthInfo)` - User authentication information
+    /// * `Err(MeetCoreError)` - Error if no active user, no user keys, or no primary address
+    async fn get_user_state_info(&self) -> Result<UserStateInfo, MeetCoreError> {
+        let app_state = self.state.read().await;
+        let user_state = app_state
+            .active_user
+            .as_ref()
+            .ok_or(MeetCoreError::NoActiveUser)?;
+        Self::user_state_info_from(user_state)
     }
 }
 
@@ -437,7 +441,8 @@ impl App {
             user_addresses,
         };
 
-        self.state.write().await.active_user = Some(user_state.clone());
+        let mut state = self.state.write().await;
+        state.active_user = Some(user_state.clone());
         Ok(user_state)
     }
 
@@ -470,7 +475,8 @@ impl App {
             .await
             .login(&username, password.as_str())
             .await?;
-        self.state.write().await.active_user = Some(UserState {
+        let mut state = self.state.write().await;
+        state.active_user = Some(UserState {
             user_data: user.clone(),
             user_keys,
             user_addresses,
@@ -584,13 +590,19 @@ impl App {
         Ok(has_reconnected)
     }
 
+    /// Returns the in-memory active user snapshot (single read lock).
+    ///
+    /// Does not load from storage or API — use [`Self::fetch_user_state`] or
+    /// [`Self::refresh_user_state_from_api`] to populate or refresh `active_user`.
+    /// Meeting/crypto paths should use `get_user_state_info`, which also validates
+    /// signing keys and primary address.
     pub async fn get_user_state(&self) -> Result<UserState, MeetCoreError> {
-        let app_state = self.state.read().await;
-        let user_state = app_state
+        self.state
+            .read()
+            .await
             .active_user
-            .as_ref()
-            .ok_or(MeetCoreError::NoActiveUser)?;
-        Ok(user_state.clone())
+            .clone()
+            .ok_or(MeetCoreError::NoActiveUser)
     }
 
     pub async fn logout(&self, user_id: String) -> Result<(), MeetCoreError> {
@@ -947,6 +959,15 @@ impl App {
             .await
             .login_with_two_factor(&two_factor_code)
             .await?;
+        let user = user_data.user.clone();
+        let user_keys = user.keys.clone().unwrap_or_default();
+        let user_addresses = self.user_service.read().await.get_user_addresses().await?;
+        let mut state = self.state.write().await;
+        state.active_user = Some(UserState {
+            user_data: user,
+            user_keys,
+            user_addresses,
+        });
         Ok(user_data)
     }
 
