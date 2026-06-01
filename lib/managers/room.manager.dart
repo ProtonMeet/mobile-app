@@ -201,6 +201,17 @@ class RoomManager {
     }
   }
 
+  /// Re-fetch the current MLS group key/epoch and push it into the LiveKit
+  /// e2eeManager.
+  ///
+  /// Call this right after publishing a new local track (camera / screen
+  /// share). LiveKit creates a fresh frame cryptor per published track, and
+  /// if a key rotation was mid-flight at publish time the new cryptor can
+  /// latch onto a stale keyIndex, leaving remote peers unable to decrypt
+  /// the new track until the next epoch change forces a re-set. Re-arming
+  /// the key/keyIndex here closes that window.
+  Future<void> refreshE2EEKey(Room room) => setPostConnectE2EEKeys(room);
+
   /// Connect to room with retry logic
   Future<void> connectRoom(
     Room room,
@@ -234,6 +245,8 @@ class RoomManager {
               iceRestart: const Duration(seconds: 30),
               subscribe: const Duration(seconds: 24),
             ),
+            autoSubscribe:
+                false, // do not subscribe to tracks automatically, or we will face performance issues on big meeting
           ),
         );
         lastConnectError = null;

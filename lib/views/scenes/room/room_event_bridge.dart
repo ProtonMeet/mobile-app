@@ -1,7 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/helper/logger.dart' as l;
-import 'package:meet/helper/participant_stat_logger.dart';
+// import 'package:meet/helper/participant_stat_logger.dart';
 import 'package:meet/managers/channels/call_activity_channel.dart';
 
 import 'room_event.dart';
@@ -14,23 +15,24 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState> {
     _bound = false;
     _signalListener.cancelAll();
     _signalListener.dispose();
-    _participantStatLogger.dispose();
+    // _participantStatLogger.dispose();
     return super.close();
   }
 
   bool _bound = false;
   late EventsListener<SignalEvent> _signalListener;
+  final Set<String> _pendingSubscribeSids = <String>{};
 
   /// logger for participant stats
-  final _participantStatLogger = ParticipantStatLogger();
+  // final _participantStatLogger = ParticipantStatLogger();
 
-  String exportAllStatsAsJson() {
-    return _participantStatLogger.exportAllStatsAsJson();
-  }
+  // String exportAllStatsAsJson() {
+  //   return _participantStatLogger.exportAllStatsAsJson();
+  // }
 
-  void logSystemLogToStatLogger(int timestamp, String log) {
-    _participantStatLogger.logSystemLog(timestamp, log);
-  }
+  // void logSystemLogToStatLogger(int timestamp, String log) {
+  //   _participantStatLogger.logSystemLog(timestamp, log);
+  // }
 
   /// Handles unsubscribing video tracks by default if the feature is enabled.
   /// This is used when tracks are published or subscribed.
@@ -81,6 +83,62 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState> {
     }
   }
 
+  /// Subscribe a single publication if it is audio (mic / screen-share audio)
+  /// or screen-share video. Camera video is intentionally left for the UI
+  /// grid to subscribe on demand (see ResponsiveCameraLayout).
+  ///
+  /// Idempotent: bails when the publication is already subscribed.
+  ///
+  /// Companion to `autoSubscribe: false` in [RoomManager.connectRoom]. With
+  /// auto-subscribe disabled the SFU only forwards tracks we explicitly
+  /// subscribe to, so we must run this anywhere the room exposes a new (or
+  /// re-published) track: initial roster walk, ParticipantConnected,
+  /// TrackPublished, and as a defensive re-subscribe on TrackUnmuted.
+  void _subscribeIfAudioOrScreenShare(RemoteTrackPublication pub) {
+    if (pub.subscribed) return;
+    final shouldSubscribe = pub.kind == TrackType.AUDIO || pub.isScreenShare;
+    if (!shouldSubscribe) return;
+
+    // Race-window dedup: Set.add returns false if the sid is already
+    // pending, meaning a previous call has already sent UpdateSubscription
+    // and we are still waiting for TrackSubscribedEvent. Bail to avoid a
+    // duplicate RPC to the SFU.
+    if (!_pendingSubscribeSids.add(pub.sid)) return;
+
+    try {
+      pub.subscribe();
+      l.logger.d(
+        '[LiveKit] subscribe sid=${pub.sid} kind=${pub.kind} '
+        'source=${pub.source} (autoSubscribe=false policy)',
+      );
+    } catch (e) {
+      // Allow a future retry: the in-flight request never made it out.
+      _pendingSubscribeSids.remove(pub.sid);
+      l.logger.e('[LiveKit] subscribe failed sid=${pub.sid}: $e');
+    }
+  }
+
+  /// Walk one remote participant's publications and apply the audio +
+  /// screen-share subscribe policy.
+  void _subscribeAudioAndScreenShareForParticipant(
+    RemoteParticipant participant,
+  ) {
+    for (final pub in participant.trackPublications.values) {
+      _subscribeIfAudioOrScreenShare(pub);
+    }
+  }
+
+  /// Walk the room's current remote roster once and apply the audio +
+  /// screen-share subscribe policy. Called right after listeners are wired
+  /// so participants/tracks that already existed at connect time are not
+  /// missed (TrackPublishedEvent only covers tracks published after we
+  /// start listening).
+  void _subscribeExistingAudioAndScreenShare() {
+    for (final participant in state.room.remoteParticipants.values) {
+      _subscribeAudioAndScreenShareForParticipant(participant);
+    }
+  }
+
   void setUpListeners() {
     if (_bound) return;
     _bound = true;
@@ -88,76 +146,65 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState> {
     /// for more information, see [event types](https://docs.livekit.io/client/events/#events)
     state.listener
       ..on<RoomDisconnectedEvent>((event) async {
+        // Drop the in-flight guard; pubs from this connection are stale.
+        _pendingSubscribeSids.clear();
+
         /// End call activity when room disconnects
         await CallActivityChannel.end(immediately: true);
       })
       ..on<RoomAttemptReconnectEvent>((event) {
-        l.logger.d('[LiveKit] Room attempting to reconnect');
         add(const SetLiveKitReconnecting(isLiveKitReconnecting: true));
       })
       ..on<RoomReconnectingEvent>((event) {
-        l.logger.d('[LiveKit] Room reconnecting');
         add(const SetLiveKitReconnecting(isLiveKitReconnecting: true));
       })
       ..on<RoomReconnectedEvent>((event) {
-        l.logger.d('[LiveKit] Room reconnected');
         add(const SetLiveKitReconnecting(isLiveKitReconnecting: false));
       })
       ..on<ParticipantEvent>((event) {
         // Use debounced sort for high-frequency participant events to reduce CPU load
         // with large participant counts
         add(DebouncedSortParticipants());
-        _updateParticipantLogger();
+        // _updateParticipantLogger();
       })
       ..on<RoomRecordingStatusChanged>((event) {
         /// widget will handle it
-        l.logger.d(
-          '[LiveKit] Room recording status changed: ${event.activeRecording}',
-        );
-      })
-      ..on<RoomAttemptReconnectEvent>((event) {
-        l.logger.d(
-          '[LiveKit] Attempting to reconnect ${event.attempt}/${event.maxAttemptsRetry}, '
-          '(${event.nextRetryDelaysInMs}ms delay until next attempt)',
-        );
-        add(
-          AddSystemMessage(
-            'Attempting to reconnect ${event.attempt}/${event.maxAttemptsRetry}, '
-                '(${event.nextRetryDelaysInMs}ms delay until next attempt)',
-            'system',
-            'System',
-          ),
-        );
-      })
-      ..on<LocalTrackSubscribedEvent>((event) {
-        l.logger.d('[LiveKit] Local track subscribed: ${event.trackSid}');
-        add(
-          AddSystemMessage(
-            'Local track subscribed: ${event.trackSid}',
-            'system',
-            'System',
-          ),
-        );
       })
       ..on<LocalTrackPublishedEvent>((_) {
         add(
           DebouncedSortParticipants(),
         ); // Schedule logger update on next microtask to avoid blocking event loop
-        Future.microtask(_updateParticipantLogger);
+        // Future.microtask(_updateParticipantLogger);
+        // Centralized E2EE key refresh: LiveKit builds a fresh frame
+        // cryptor per published track. If a key rotation was mid-flight
+        // at publish time the cryptor can pin to a stale keyIndex,
+        // breaking decryption on remote (web) peers until the next epoch
+        // change. Re-arm the key here so it covers every local publish
+        // path (mic / camera / screen-share / fastConnect / rejoin)
+        // without each call site having to remember.
+        add(const BridgeLocalTrackPublished());
       })
       ..on<LocalTrackUnpublishedEvent>((event) {
         add(DebouncedSortParticipants());
       })
       ..on<ParticipantConnectedEvent>((event) async {
-        l.logger.d(
-          '[LiveKit] Participant connected: ${event.participant.identity}',
-        );
         add(BridgeParticipantConnected(event));
+        // Cover the gap between ParticipantConnectedEvent and the per-track
+        // TrackPublishedEvent: if the joiner already had publications at
+        // connect time, subscribe to their audio + screen-share immediately.
+        // Idempotent with the TrackPublishedEvent handler below.
+        _subscribeAudioAndScreenShareForParticipant(event.participant);
       })
       ..on<ParticipantDisconnectedEvent>((event) {
-        l.logger.d(
-          '[LiveKit] Participant disconnected: ${event.participant.identity}',
-        );
+        // Defensive: drop all pending sids belonging to this participant
+        // in case TrackUnsubscribedEvent does not fire on disconnect
+        // (e.g. abrupt network drop). Cheap O(K) scan where K is the
+        // small set of in-flight subscribes. Done before the rejoin
+        // short-circuit so the guard is freed even on stale events.
+        for (final pub in event.participant.trackPublications.values) {
+          _pendingSubscribeSids.remove(pub.sid);
+        }
+
         // During rejoin, the old room is torn down and may emit stale ParticipantDisconnectedEvent.
         // Ignore these to avoid surfacing false leave/chat events.
         if (state.isRejoining || state.isLiveKitReconnecting) {
@@ -177,84 +224,56 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState> {
         );
       })
       ..on<TrackSubscribedEvent>((event) async {
-        l.logger.d('[LiveKit] Track subscribed: ${event.track.sid}');
+        // Race resolved: SDK now owns `pub.subscribed == true` for this
+        // sid. Free the in-flight slot so any future re-subscribe (after
+        // an explicit unsubscribe) is allowed through.
+        _pendingSubscribeSids.remove(event.publication.sid);
+
         _handleUnsubscribeVideoByDefault(event.publication);
         await _handleMuteAudioTrackIfSpeakerMuted(event.participant);
-
-        // Log track subscription for codec debugging
-        l.logger.d(
-          '[LiveKit] Track subscribed: ${event.track.sid}, kind: ${event.track.kind}',
-        );
         // Schedule codec logging asynchronously to avoid blocking event loop
-        Future.microtask(() => _logParticipantCodecs(event.participant));
+        if (kDebugMode) {
+          Future.microtask(() => _logParticipantCodecs(event.participant));
+        }
         add(DebouncedSortParticipants());
       })
       ..on<TrackPublishedEvent>((event) async {
-        l.logger.d('[LiveKit] Track published: ${event.publication.sid}');
+        // Apply the audio + screen-share subscribe policy on every newly
+        // published track (autoSubscribe: false means nothing flows
+        // otherwise). Camera video is intentionally skipped here.
+        _subscribeIfAudioOrScreenShare(event.publication);
         await _handleMuteAudioTrackIfSpeakerMuted(event.participant);
         _handleUnsubscribeVideoByDefault(event.publication);
       })
       ..on<TrackUnmutedEvent>((event) async {
-        l.logger.d('[LiveKit] Track unmuted: ${event.publication.sid}');
+        // Defensive re-subscribe: if the audio publication had been
+        // unsubscribed (e.g. because the participant joined muted and no
+        // initial subscribe happened, or a future bandwidth optimization
+        // dropped idle mics), pull it back here so the unmute is audible.
+        // No-op when already subscribed.
+        final pub = event.publication;
+        if (pub is RemoteTrackPublication) {
+          _subscribeIfAudioOrScreenShare(pub);
+        }
         await _handleMuteAudioTrackIfSpeakerMuted(event.participant);
         _handleUnsubscribeVideoByDefault(event.publication);
       })
       ..on<TrackStreamStateUpdatedEvent>((event) async {
-        l.logger.d(
-          '[LiveKit] Track stream state updated: ${event.publication.sid}, state: ${event.streamState}',
-        );
         await _handleMuteAudioTrackIfSpeakerMuted(event.participant);
         _handleUnsubscribeVideoByDefault(event.publication);
       })
       ..on<TrackUnsubscribedEvent>((event) {
+        // Allow a future re-subscribe for this sid (e.g. user switches
+        // back to screen-share view, or layout brings a tile into view).
+        _pendingSubscribeSids.remove(event.publication.sid);
+
         add(DebouncedSortParticipants());
-      })
-      ..on<TrackE2EEStateEvent>((event) {
-        l.logger.d('[LiveKit] e2ee state: $event');
       })
       ..on<ParticipantNameUpdatedEvent>((event) {
-        l.logger.d(
-          '[LiveKit] Participant name updated ${event.participant.identity} => ${event.name}',
-        );
         add(DebouncedSortParticipants());
-        add(
-          AddSystemMessage(
-            'Participant name updated\n ${event.participant.identity} => ${event.name}',
-            event.participant.identity,
-            event.participant.name,
-          ),
-        );
-      })
-      ..on<ParticipantMetadataUpdatedEvent>((event) {
-        l.logger.d(
-          '[LiveKit] Participant metadata updated: ${event.participant.identity}, metadata => ${event.metadata}',
-        );
-        add(
-          AddSystemMessage(
-            'Participant metadata updated: ${event.participant.identity}, metadata => ${event.metadata}',
-            event.participant.identity,
-            event.participant.name,
-          ),
-        );
-      })
-      ..on<RoomMetadataChangedEvent>((event) {
-        l.logger.d('[LiveKit] Room metadata changed: ${event.metadata}');
       })
       ..on<DataReceivedEvent>((event) async {
-        l.logger.d('[LiveKit] Data received: ${event.topic}');
         add(BridgeDataReceived(event));
-      })
-      ..on<TrackStreamStateUpdatedEvent>((event) {
-        l.logger.d(
-          '[LiveKit] Track stream state updated: track: ${event.publication.sid}, state: ${event.streamState}',
-        );
-        add(
-          AddSystemMessage(
-            'Track stream state updated: ${event.publication.sid}, state: ${event.streamState}',
-            event.publication.sid,
-            event.publication.sid,
-          ),
-        );
       });
 
     // ignore: invalid_use_of_internal_member
@@ -271,6 +290,12 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState> {
         }
       }
     });
+
+    // Initial roster walk: with autoSubscribe: false, the room is connected
+    // but no media is flowing. Pull all existing audio and screen-share
+    // tracks now; camera video is left for the UI grid to subscribe on
+    // demand (ResponsiveCameraLayout._updateVideoSubscriptions).
+    _subscribeExistingAudioAndScreenShare();
     // add more mappings as needed...
   }
 
@@ -329,12 +354,12 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState> {
     }
   }
 
-  void _updateParticipantLogger() {
-    if (state.room.localParticipant != null) {
-      _participantStatLogger.addParticipant(state.room.localParticipant!);
-    }
-    for (var participant in state.room.remoteParticipants.values) {
-      _participantStatLogger.addParticipant(participant);
-    }
-  }
+  // void _updateParticipantLogger() {
+  //   if (state.room.localParticipant != null) {
+  //     _participantStatLogger.addParticipant(state.room.localParticipant!);
+  //   }
+  //   for (var participant in state.room.remoteParticipants.values) {
+  //     _participantStatLogger.addParticipant(participant);
+  //   }
+  // }
 }
