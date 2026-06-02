@@ -159,6 +159,9 @@ class AndroidPipManager implements PipManagerInterface {
   }
 
   @override
+  Future<void> updatePipVideoTrack() async {}
+
+  @override
   Future<void> exitPipMode() async {
     if (!_isInitialized) {
       return;

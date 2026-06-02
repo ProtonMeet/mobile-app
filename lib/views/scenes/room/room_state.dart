@@ -9,6 +9,8 @@ import 'package:meet/rust/proton_meet/models/meeting_info.dart';
 import 'package:meet/rust/proton_meet/models/mls_sync_state.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
 import 'package:meet/views/scenes/room/camera_layout.dart';
+import 'package:meet/views/scenes/room/layout/responsive_camera_layout.dart'
+    show ResponsiveCameraLayout;
 import 'package:meet/views/scenes/room/participant/participant_info.dart';
 import 'package:meet/views/scenes/room/participant_detail.dart';
 
@@ -137,6 +139,11 @@ class RoomState extends Equatable {
   final bool isPipMode;
   final bool pipInitialized;
   final bool? pipAvailable;
+
+  /// Remote participant identity whose camera must stay subscribed for iOS PiP
+  /// when they are off the visible grid page (see [ResponsiveCameraLayout]).
+  /// Empty string means none.
+  final String iosPipRemoteCameraSubscriptionIdentity;
 
   /// Camera enabled state for local participant
   final bool isCameraEnabled;
@@ -319,6 +326,7 @@ class RoomState extends Equatable {
     this.isPipMode = false,
     this.pipInitialized = false,
     this.pipAvailable,
+    this.iosPipRemoteCameraSubscriptionIdentity = '',
     this.isCameraEnabled = false,
     this.isSpeakerPhone = false,
     this.isMeetMobileSpeakerToggleEnabled = false,
@@ -389,6 +397,7 @@ class RoomState extends Equatable {
     bool? isPipMode,
     bool? pipInitialized,
     bool? pipAvailable,
+    String? iosPipRemoteCameraSubscriptionIdentity,
     bool? isCameraEnabled,
     bool? isSpeakerPhone,
     bool? isMeetMobileSpeakerToggleEnabled,
@@ -467,6 +476,9 @@ class RoomState extends Equatable {
       isPipMode: isPipMode ?? this.isPipMode,
       pipInitialized: pipInitialized ?? this.pipInitialized,
       pipAvailable: pipAvailable ?? this.pipAvailable,
+      iosPipRemoteCameraSubscriptionIdentity:
+          iosPipRemoteCameraSubscriptionIdentity ??
+          this.iosPipRemoteCameraSubscriptionIdentity,
       isCameraEnabled: isCameraEnabled ?? this.isCameraEnabled,
       isSpeakerPhone: isSpeakerPhone ?? this.isSpeakerPhone,
       isMeetMobileSpeakerToggleEnabled:
@@ -560,6 +572,7 @@ class RoomState extends Equatable {
     isPipMode,
     pipInitialized,
     pipAvailable,
+    iosPipRemoteCameraSubscriptionIdentity,
     isCameraEnabled,
     isSpeakerPhone,
     isMeetMobileSpeakerToggleEnabled,

@@ -60,6 +60,7 @@
 		75D38E5A2EC1CD270003D747 /* CallActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75D38E592EC1CD170003D747 /* CallActivityManager.swift */; };
 		75D38E5C2EC1CDB60003D747 /* CallActivityChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75D38E5B2EC1CDA90003D747 /* CallActivityChannel.swift */; };
 		75D6F2192ED019DB00D46EB4 /* PipManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75D6F2182ED019DB00D46EB4 /* PipManager.swift */; };
+		75D6F21A2ED019DC00D46EB4 /* PipSampleBufferRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75D6F21B2ED019DC00D46EB4 /* PipSampleBufferRenderer.swift */; };
 		75DD9A4D2C4FCD6A0068EF4B /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75DD9A4C2C4FCD6A0068EF4B /* Extensions.swift */; };
 		7881ED66DFC77AA9943FFC12 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B177F81A4556CAEF7B3768B9 /* Pods_RunnerTests.framework */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
@@ -135,6 +136,7 @@
 		75D38E592EC1CD170003D747 /* CallActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallActivityManager.swift; sourceTree = "<group>"; };
 		75D38E5B2EC1CDA90003D747 /* CallActivityChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallActivityChannel.swift; sourceTree = "<group>"; };
 		75D6F2182ED019DB00D46EB4 /* PipManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipManager.swift; sourceTree = "<group>"; };
+		75D6F21B2ED019DC00D46EB4 /* PipSampleBufferRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipSampleBufferRenderer.swift; sourceTree = "<group>"; };
 		75DD9A4C2C4FCD6A0068EF4B /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		75DD9A4E2C50F24A0068EF4B /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Main.strings; sourceTree = "<group>"; };
 		75DD9A4F2C50F24A0068EF4B /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/LaunchScreen.strings; sourceTree = "<group>"; };
@@ -373,6 +375,7 @@
 			isa = PBXGroup;
 			children = (
 				75D6F2182ED019DB00D46EB4 /* PipManager.swift */,
+				75D6F21B2ED019DC00D46EB4 /* PipSampleBufferRenderer.swift */,
 				75D38E5B2EC1CDA90003D747 /* CallActivityChannel.swift */,
 				75D38E592EC1CD170003D747 /* CallActivityManager.swift */,
 				75DD9A4C2C4FCD6A0068EF4B /* Extensions.swift */,
@@ -756,6 +759,7 @@
 				6377F4992C0F360700E8917D /* PaymentsConstants.swift in Sources */,
 				75D38E5A2EC1CD270003D747 /* CallActivityManager.swift in Sources */,
 				75D6F2192ED019DB00D46EB4 /* PipManager.swift in Sources */,
+				75D6F21A2ED019DC00D46EB4 /* PipSampleBufferRenderer.swift in Sources */,
 				7548DAE92B182817002588F4 /* MeetApiServiceManager.swift in Sources */,
 				7548DAED2B1828CB002588F4 /* AppVersionHeader.swift in Sources */,
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,

@@ -16,6 +16,9 @@ abstract class PipManagerInterface {
   /// Returns true if successful, false otherwise
   Future<bool> enterPipMode();
 
+  /// Switch PiP video content (e.g. active speaker changed). No-op on Android.
+  Future<void> updatePipVideoTrack();
+
   /// Exit PIP mode
   Future<void> exitPipMode();
 

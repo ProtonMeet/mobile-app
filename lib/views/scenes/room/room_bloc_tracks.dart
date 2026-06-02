@@ -3,15 +3,20 @@ import 'dart:math';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
+import 'package:meet/views/scenes/room/active_speaker_order.dart';
 import 'package:meet/views/scenes/room/camera_layout.dart';
 import 'package:meet/views/scenes/room/participant/participant_info.dart';
 
 import 'room_bloc_participants.dart';
+import 'room_bloc_pip.dart';
 import 'room_event.dart';
 import 'room_state.dart';
 
 mixin RoomTracksHandlers
-    on Bloc<RoomBlocEvent, RoomState>, RoomParticipantsHandlers {
+    on
+        Bloc<RoomBlocEvent, RoomState>,
+        RoomParticipantsHandlers,
+        RoomPipHandlers {
   void registerTracksHandlers() {
     on<SortParticipants>(_onSortParticipants);
   }
@@ -254,20 +259,16 @@ mixin RoomTracksHandlers
         ),
       );
     }
+
+    // Active speaker / camera state can change without speaker list identity changing.
+    scheduleIosPipSync();
   }
 
   List<ParticipantInfo> sortSpeakerTracks(List<ParticipantInfo> speakers) {
-    final layout = state.layout;
-    if (layout != CameraLayout.mutliSpeaker) {
-      return speakers;
-    }
-
-    /// only sort speaker for mutliSpeaker layout
-    speakers.sort((a, b) {
-      return a.participant.identity.compareTo(b.participant.identity) < 0
-          ? -1
-          : 1;
-    });
+    sortParticipantsByActiveSpeakerPriority(
+      speakers,
+      state.raisedHandsByIdentity,
+    );
     return speakers;
   }
 
@@ -325,65 +326,10 @@ mixin RoomTracksHandlers
   /// 3) Tertiary: camera enabled (non-screen-share, unmuted) before camera off.
   /// 4) Final: joinedAt ASC (earlier joiners first).
   void sortUserMediaTracksBySpoken(List<ParticipantInfo> userMediaTracks) {
-    const recentWindowMs = 10000; // 10 seconds
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
-    final raisedMap = state.raisedHandsByIdentity;
-
-    // Cache sort keys once before sorting.
-    // This avoids repeatedly reading Participant getters from the comparator.
-    final decorated = List.generate(userMediaTracks.length, (i) {
-      final t = userMediaTracks[i];
-      final p = t.participant;
-      final lastSpokeAt = p.lastSpokeAt;
-      final lastSpokeMs = lastSpokeAt?.millisecondsSinceEpoch ?? 0;
-      return (
-        info: t,
-        identity: p.identity,
-        raised: raisedMap[p.identity] == true,
-        lastSpokeMs: lastSpokeMs,
-        isRecent:
-            lastSpokeAt != null && (nowMs - lastSpokeMs) <= recentWindowMs,
-        cameraEnabled: p.isCameraEnabled(),
-        joinedAtMs: p.joinedAt.millisecondsSinceEpoch,
-      );
-    });
-
-    // Sort the decorated records — comparator never touches the
-    // underlying [Participant] getters.
-    decorated.sort((a, b) {
-      // Raised hand gets the highest priority.
-      if (a.raised != b.raised) return a.raised ? -1 : 1;
-
-      // If both spoke recently, keep a stable order by identity to
-      // prevent UI flicker.
-      if (a.isRecent && b.isRecent) {
-        final idCmp = a.identity.compareTo(b.identity);
-        if (idCmp != 0) return idCmp;
-        // fall through to next criteria if identities are equal
-      } else if (a.lastSpokeMs != b.lastSpokeMs) {
-        // Otherwise, order by lastSpokeAt DESC (0 means "never" and
-        // naturally sinks).
-        return b.lastSpokeMs.compareTo(a.lastSpokeMs);
-      }
-
-      // Camera ON before OFF.
-      if (a.cameraEnabled != b.cameraEnabled) {
-        return a.cameraEnabled ? -1 : 1;
-      }
-
-      // Earlier joiners first.
-      final joinCmp = a.joinedAtMs.compareTo(b.joinedAtMs);
-      if (joinCmp != 0) return joinCmp;
-
-      // Final deterministic tiebreaker: identity.
-      return a.identity.compareTo(b.identity);
-    });
-
-    // Undecorate in-place: write back the [ParticipantInfo]s in the
-    // newly sorted order, preserving the in-place contract of [List.sort].
-    for (var i = 0; i < decorated.length; i++) {
-      userMediaTracks[i] = decorated[i].info;
-    }
+    sortParticipantsByActiveSpeakerPriority(
+      userMediaTracks,
+      state.raisedHandsByIdentity,
+    );
   }
 
   /// Helper method to compare two lists of ParticipantInfo efficiently

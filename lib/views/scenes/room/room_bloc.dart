@@ -54,12 +54,12 @@ import 'room_state.dart';
 /// encryption key for secure messaging.
 class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     with
+        RoomPipHandlers,
         RoomEventsBinding,
         RoomParticipantsHandlers,
         RoomTracksHandlers,
         RoomDataHandlers,
         RoomAloneMeetingHandlers,
-        RoomPipHandlers,
         RoomConnectionCheckHandlers,
         // `RoomFeatureFlagsHandlers` must precede every mixin whose `on` clause
         // depends on it (e.g. `RoomReconnectionListeners`, `RoomSettingsHandlers`).

@@ -4,12 +4,14 @@ import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/helper/logger.dart' as l;
 // import 'package:meet/helper/participant_stat_logger.dart';
 import 'package:meet/managers/channels/call_activity_channel.dart';
+import 'package:meet/managers/room.manager.dart' show RoomManager;
 
+import 'room_bloc_pip.dart';
 import 'room_event.dart';
 import 'room_event_livekit.dart';
 import 'room_state.dart';
 
-mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState> {
+mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
   @override
   Future<void> close() {
     _bound = false;
@@ -166,6 +168,7 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState> {
         // with large participant counts
         add(DebouncedSortParticipants());
         // _updateParticipantLogger();
+        scheduleIosPipSync();
       })
       ..on<RoomRecordingStatusChanged>((event) {
         /// widget will handle it
@@ -236,6 +239,10 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState> {
           Future.microtask(() => _logParticipantCodecs(event.participant));
         }
         add(DebouncedSortParticipants());
+        if (event.publication.kind == TrackType.VIDEO) {
+          scheduleIosPipSync(immediate: true);
+          Future.microtask(() => scheduleIosPipSync(immediate: true));
+        }
       })
       ..on<TrackPublishedEvent>((event) async {
         // Apply the audio + screen-share subscribe policy on every newly
@@ -244,6 +251,18 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState> {
         _subscribeIfAudioOrScreenShare(event.publication);
         await _handleMuteAudioTrackIfSpeakerMuted(event.participant);
         _handleUnsubscribeVideoByDefault(event.publication);
+        if (event.publication.kind == TrackType.VIDEO) {
+          add(DebouncedSortParticipants());
+          scheduleIosPipSync(immediate: true);
+          Future.microtask(() => scheduleIosPipSync(immediate: true));
+        }
+      })
+      ..on<TrackMutedEvent>((event) async {
+        l.logger.d('[LiveKit] Track muted: ${event.publication.sid}');
+        if (event.publication.kind == TrackType.VIDEO) {
+          add(DebouncedSortParticipants());
+          scheduleIosPipSync(immediate: true);
+        }
       })
       ..on<TrackUnmutedEvent>((event) async {
         // Defensive re-subscribe: if the audio publication had been
@@ -257,6 +276,10 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState> {
         }
         await _handleMuteAudioTrackIfSpeakerMuted(event.participant);
         _handleUnsubscribeVideoByDefault(event.publication);
+        if (event.publication.kind == TrackType.VIDEO) {
+          add(DebouncedSortParticipants());
+          scheduleIosPipSync(immediate: true);
+        }
       })
       ..on<TrackStreamStateUpdatedEvent>((event) async {
         await _handleMuteAudioTrackIfSpeakerMuted(event.participant);
