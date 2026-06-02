@@ -107,14 +107,26 @@ class LeaveRoom extends RoomBlocEvent {}
 ///
 /// [notificationTitle] / [notificationText] are forwarded to the Android
 /// foreground-service notification used during the screen-share session.
+///
+/// [screenShareSourceId] is the desktop window/screen id from
+/// [ScreenSelectDialog]; ignored when stopping share.
 class ToggleScreenShare extends RoomBlocEvent {
   final String? notificationTitle;
   final String? notificationText;
+  final String? screenShareSourceId;
 
-  const ToggleScreenShare({this.notificationTitle, this.notificationText});
+  const ToggleScreenShare({
+    this.notificationTitle,
+    this.notificationText,
+    this.screenShareSourceId,
+  });
 
   @override
-  List<Object?> get props => [notificationTitle, notificationText];
+  List<Object?> get props => [
+    notificationTitle,
+    notificationText,
+    screenShareSourceId,
+  ];
 }
 
 /// Clears [RoomState.shouldShowNotificationPermissionSettings] after the user
