@@ -1,3 +1,9 @@
+# Local tooling (e.g. chromedriver from utilities/ensure-chromedriver.sh)
+.local/
+
+# WASM JS integration tests
+js/wasm-integration/node_modules/
+
 # Miscellaneous
 *.class
 *.log
