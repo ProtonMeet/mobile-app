@@ -113,6 +113,8 @@
   "meeting": "Встреча",
   "show_meeting_timer": "Показать таймер встречи",
   "unsubscribe_video_by_default": "Отключить входящее видео",
+  "camera_background_blur": "Background blur",
+  "audio_noise_cancellation": "Noise cancellation",
   "dark_mode": "Тёмная тема",
   "show_connection_indicator": "Показать индикатор подключения",
   "desktop_notifications": "Уведомления на рабочем столе",

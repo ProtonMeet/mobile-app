@@ -113,6 +113,8 @@
   "meeting": "Riunione",
   "show_meeting_timer": "Mostra il timer della riunione",
   "unsubscribe_video_by_default": "Disattiva i video in entrata",
+  "camera_background_blur": "Background blur",
+  "audio_noise_cancellation": "Noise cancellation",
   "dark_mode": "Modalità scura",
   "show_connection_indicator": "Mostra indicatore di connessione",
   "desktop_notifications": "Notifiche desktop",

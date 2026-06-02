@@ -113,6 +113,8 @@
   "meeting": "Toplantı",
   "show_meeting_timer": "Toplantı Zamanlayıcısını Göster",
   "unsubscribe_video_by_default": "Gelen videoyu kapat",
+  "camera_background_blur": "Arka plan bulanıklığı",
+  "audio_noise_cancellation": "Gürültü engelleme",
   "dark_mode": "Karanlık Mod",
   "show_connection_indicator": "Bağlantı Göstergesini Göster",
   "desktop_notifications": "Masaüstü Bildirimleri",
