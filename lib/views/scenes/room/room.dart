@@ -221,8 +221,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     setUpListeners(_currentListener!);
 
     //TODO(fix): move to room_bloc.dart
-    if (android) {
-      // Initialize PIP through bloc - only if feature flag is enabled
+    // PiP: Android + iOS (was Android-only, so iOS never got InitializePip / pipAvailable).
+    if (android || iOS) {
       if (_bloc.isPictureInPictureFeatureEnabled()) {
         _bloc.add(InitializePip(roomName: widget.meetInfo.meetName));
       }
@@ -464,6 +464,23 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           }
         }
       }
+    }
+
+    // iOS: start PiP while still active (inactive), before the process is suspended.
+    if (iOS &&
+        state == AppLifecycleState.inactive &&
+        _bloc.isPictureInPictureFeatureEnabled() &&
+        _bloc.state.pipInitialized &&
+        _bloc.state.pipAvailable == true &&
+        !_bloc.state.isPipMode) {
+      _bloc.add(EnterPipMode());
+    }
+
+    if (iOS &&
+        state == AppLifecycleState.resumed &&
+        _bloc.isPictureInPictureFeatureEnabled() &&
+        _bloc.state.isPipMode) {
+      _bloc.add(ExitPipMode());
     }
   }
 
@@ -1417,6 +1434,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     List<ParticipantInfo> participantTracks,
     List<ParticipantInfo> speakerTracks,
     Map<String, bool> raisedHandsByIdentity,
+    String iosPipRemoteCameraSubscriptionIdentity,
   ) {
     // Hide participant tiles during rejoin, show them only after rejoin completes
     if (_bloc.state.isRejoining || _bloc.state.isLiveKitReconnecting) {
@@ -1445,6 +1463,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           reactionsByIdentity: _activeReactions,
           raisedHandsByIdentity: raisedHandsByIdentity,
           onLowerHandByIdentity: onLowerHandByIdentity,
+          iosPipRemoteCameraSubscriptionIdentity:
+              iosPipRemoteCameraSubscriptionIdentity,
         );
       case CameraLayout.fixedSizing:
         return FixedSizingCameraLayout(
@@ -2219,7 +2239,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       builder: (context, data) {
         final isPipMode = data.$1;
         final room = data.$2;
-        if (isPipMode) {
+        // Android: shrink in-app UI. iOS: system PiP window (native video, no Flutter controls).
+        if (isPipMode && android) {
           return PipView(room: room, isScreenSharing: _isScreenSharing);
         }
         return _buildNormalMobileView(context);
@@ -2245,19 +2266,22 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                         List<ParticipantInfo> participantTracks,
                         List<ParticipantInfo> speakerTracks,
                         Map<String, bool> raisedHandsByIdentity,
-                        bool isRejoining,
-                        bool isLiveKitReconnecting,
+                        String iosPipRemoteCameraSubscriptionIdentity,
                       )
                     >(
                       selector: (state) => (
                         state.participantTracks,
                         state.speakerTracks,
                         state.raisedHandsByIdentity,
-                        state.isRejoining,
-                        state.isLiveKitReconnecting,
+                        state.iosPipRemoteCameraSubscriptionIdentity,
                       ),
-                      builder: (context, data) =>
-                          buildCameraLayout(context, data.$1, data.$2, data.$3),
+                      builder: (context, data) => buildCameraLayout(
+                        context,
+                        data.$1,
+                        data.$2,
+                        data.$3,
+                        data.$4,
+                      ),
                     ),
               ),
 

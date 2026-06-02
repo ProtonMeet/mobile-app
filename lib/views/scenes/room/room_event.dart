@@ -175,6 +175,9 @@ class InitializePip extends RoomBlocEvent {
 
 class EnterPipMode extends RoomBlocEvent {}
 
+/// iOS: refresh native PiP video when active speaker / screen share changes.
+class SyncIosPipTrack extends RoomBlocEvent {}
+
 class ExitPipMode extends RoomBlocEvent {}
 
 class PipStateChanged extends RoomBlocEvent {

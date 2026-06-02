@@ -317,8 +317,8 @@ class UnleashDataProvider extends DataProvider {
 
   bool isMeetScreenShare() => isFeatureEnabled(UnleashFeature.meetScreenShare);
 
-  bool isMeetPictureInPicture() =>
-      isFeatureEnabled(UnleashFeature.meetPictureInPicture);
+  bool isMeetPictureInPicture() => true;
+  // isFeatureEnabled(UnleashFeature.meetPictureInPicture);
 
   bool isMeetClientMetricsLog() =>
       isFeatureEnabled(UnleashFeature.meetClientMetricsLog);

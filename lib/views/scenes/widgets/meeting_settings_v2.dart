@@ -426,7 +426,7 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
                     }
                   : null,
             ),
-            if (widget.onPictureInPictureModeChanged != null && android)
+            if (widget.onPictureInPictureModeChanged != null && mobile)
               _SettingSwitch(
                 title: context.local.picture_in_picture_mode,
                 value: pictureInPictureMode,

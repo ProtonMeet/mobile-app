@@ -29,6 +29,8 @@ class ResponsiveCameraLayout extends StatefulWidget {
   final Map<String, ParticipantReaction> reactionsByIdentity;
   final Map<String, bool> raisedHandsByIdentity;
   final void Function(String)? onLowerHandByIdentity;
+  /// When set, keep this remote participant's camera subscribed (iOS PiP off-grid).
+  final String iosPipRemoteCameraSubscriptionIdentity;
 
   const ResponsiveCameraLayout({
     required this.participantTracks,
@@ -39,6 +41,7 @@ class ResponsiveCameraLayout extends StatefulWidget {
     this.reactionsByIdentity = const {},
     this.raisedHandsByIdentity = const {},
     this.onLowerHandByIdentity,
+    this.iosPipRemoteCameraSubscriptionIdentity = '',
     super.key,
   });
 
@@ -323,12 +326,42 @@ class _ResponsiveCameraLayoutState extends State<ResponsiveCameraLayout> {
           cacheStart,
           cacheEnd,
         );
+
+        final pipId = widget.iosPipRemoteCameraSubscriptionIdentity;
+        ParticipantInfo? pipExtra;
+        if (pipId.isNotEmpty) {
+          for (final t in widget.participantTracks) {
+            if (t.participant.identity == pipId) {
+              pipExtra = t;
+              break;
+            }
+          }
+        }
+
+        List<ParticipantInfo> availableForSubscribe = availableWidgets;
+        List<ParticipantInfo> currentForSubscribe = currentWidgets;
+        if (pipExtra != null) {
+          if (!availableForSubscribe.any(
+            (t) => t.participant.identity == pipId,
+          )) {
+            availableForSubscribe = [...availableForSubscribe, pipExtra];
+          }
+          if (!currentForSubscribe.any(
+            (t) => t.participant.identity == pipId,
+          )) {
+            currentForSubscribe = [...currentForSubscribe, pipExtra];
+          }
+        }
+
         // Subscribe to visible participants and unsubscribe from others
         // Use addPostFrameCallback to ensure this runs after the frame is built
         // This prevents multiple rapid calls during rebuilds
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
-            _updateVideoSubscriptions(availableWidgets, currentWidgets);
+            _updateVideoSubscriptions(
+              availableForSubscribe,
+              currentForSubscribe,
+            );
           }
         });
 

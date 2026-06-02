@@ -760,6 +760,8 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
         isPipMode: state.isPipMode,
         pipInitialized: state.pipInitialized,
         pipAvailable: state.pipAvailable,
+        iosPipRemoteCameraSubscriptionIdentity:
+            state.iosPipRemoteCameraSubscriptionIdentity,
         isCameraEnabled: state.isCameraEnabled,
         isSpeakerPhone: state.isSpeakerPhone,
         isMeetMobileSpeakerToggleEnabled:
