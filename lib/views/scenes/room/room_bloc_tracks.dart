@@ -10,13 +10,15 @@ import 'package:meet/views/scenes/room/participant/participant_info.dart';
 import 'room_bloc_participants.dart';
 import 'room_bloc_pip.dart';
 import 'room_event.dart';
+import 'room_event_bridge.dart';
 import 'room_state.dart';
 
 mixin RoomTracksHandlers
     on
         Bloc<RoomBlocEvent, RoomState>,
         RoomParticipantsHandlers,
-        RoomPipHandlers {
+        RoomPipHandlers,
+        RoomEventsBinding {
   void registerTracksHandlers() {
     on<SortParticipants>(_onSortParticipants);
   }
@@ -49,12 +51,17 @@ mixin RoomTracksHandlers
     final List<ParticipantInfo> screenTracks = [];
     // O(1) duplicate guard for userMediaTracks.
     final Set<String> seenIdentities = <String>{};
+    final Set<String> screenShareSubscribeEnsured = <String>{};
     for (var participant in room.remoteParticipants.values) {
       final identity = participant.identity;
       bool hasVideo = false;
       for (var t in participant.videoTrackPublications) {
         hasVideo = true;
         if (t.isScreenShare) {
+          if (screenShareSubscribeEnsured.add(identity)) {
+            ensureParticipantAudioAndScreenShareSubscribed(participant);
+          }
+
           /// Ensure high quality + 30 FPS for screen sharing.
           if (t.videoQuality != VideoQuality.HIGH) {
             t.setVideoQuality(VideoQuality.HIGH);
