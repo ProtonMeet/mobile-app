@@ -141,6 +141,15 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
     }
   }
 
+  /// Re-apply the audio + screen-share subscribe policy for one remote
+  /// participant. Safe to call from sort/layout handlers as a defensive
+  /// backstop when `autoSubscribe: false`.
+  void ensureParticipantAudioAndScreenShareSubscribed(
+    RemoteParticipant participant,
+  ) {
+    _subscribeAudioAndScreenShareForParticipant(participant);
+  }
+
   void setUpListeners() {
     if (_bound) return;
     _bound = true;
@@ -162,6 +171,10 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
       })
       ..on<RoomReconnectedEvent>((event) {
         add(const SetLiveKitReconnecting(isLiveKitReconnecting: false));
+        // ICE restart / reconnect can leave publications without an active
+        // subscription when autoSubscribe is false. Re-walk the roster.
+        _pendingSubscribeSids.clear();
+        _subscribeExistingAudioAndScreenShare();
       })
       ..on<ParticipantEvent>((event) {
         // Use debounced sort for high-frequency participant events to reduce CPU load
