@@ -1,11 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:meet/constants/constants.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/rust/proton_meet/models/mls_sync_state.dart';
 import 'package:meet/views/scenes/room/room_state.dart';
 
+/// How long before meeting expiration to show the warning banner.
+const kMeetingExpirationWarningThreshold = Duration(minutes: 5);
+
 extension RoomStateExtension on RoomState {
   bool get isAlone {
     return room.remoteParticipants.isEmpty;
+  }
+
+  /// Free (guest) meetings are capped at [guestMeetingRoomSize] participants.
+  bool get isFreeMeeting =>
+      (meetingInfo?.maxParticipants ?? 0) == guestMeetingRoomSize;
+
+  /// Parsed local [DateTime] for [meetingInfo.expirationTime], if set.
+  DateTime? get meetingExpirationTime {
+    final expirationTime = meetingInfo?.expirationTime;
+    if (expirationTime == null) return null;
+
+    return DateTime.fromMillisecondsSinceEpoch(
+      expirationTime * 1000,
+      isUtc: true,
+    ).toLocal();
   }
 }
 

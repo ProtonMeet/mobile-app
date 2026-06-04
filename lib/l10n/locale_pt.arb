@@ -1002,6 +1002,8 @@
       }
     }
   },
+  "meeting_expiry_banner_title_prefix": "A reunião terminará em ",
+  "meeting_expiry_banner_description": "Reuniões gratuitas são limitadas a 1 hora. Esta chamada será desconectada em breve.",
   "host_close_meeting_description": "Deseja sair da reunião ou encerrá-la para todos?",
   "@host_close_meeting_description": {
     "description": "Description text when host want to leave meeting"
