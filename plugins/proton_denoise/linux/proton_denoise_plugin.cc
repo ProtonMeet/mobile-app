@@ -73,7 +73,8 @@ static bool ReadFloatSamples(FlValue* samples_val, std::vector<float>* buffer) {
   }
   if (type == FL_VALUE_TYPE_FLOAT_LIST) {
     const size_t count = fl_value_get_length(samples_val);
-    const float* src = fl_value_get_float_list(samples_val);
+    // fl_value_get_float_list returns const double*; assign narrows to float.
+    const double* src = fl_value_get_float_list(samples_val);
     buffer->assign(src, src + count);
     return true;
   }
