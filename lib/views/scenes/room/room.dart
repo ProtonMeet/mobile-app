@@ -84,6 +84,7 @@ import 'room_top_bar.dart';
 import 'side_panel_widget.dart';
 import 'speaker_phone/speaker_phone_panel.dart';
 import 'widgets/connection_status_banner.dart';
+import 'widgets/meeting_expiry_banner.dart';
 
 class RoomPage extends StatefulWidget {
   final Room room;
@@ -2434,6 +2435,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             Column(
               children: [
                 const RecordingTopBanner(),
+                if (isRoomReady) const MeetingExpiryBannerHost(),
                 if (!isPipMode && isRoomReady)
                   _buildHeaderWithSlide(
                     context: context,

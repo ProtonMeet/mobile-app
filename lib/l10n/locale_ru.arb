@@ -1002,6 +1002,8 @@
       }
     }
   },
+  "meeting_expiry_banner_title_prefix": "Встреча завершится через ",
+  "meeting_expiry_banner_description": "Бесплатные встречи ограничены 1 часом. Этот звонок скоро будет отключён.",
   "host_close_meeting_description": "Вы хотите покинуть встречу или завершить её для всех?",
   "@host_close_meeting_description": {
     "description": "Description text when host want to leave meeting"

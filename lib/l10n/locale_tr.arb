@@ -1002,6 +1002,8 @@
       }
     }
   },
+  "meeting_expiry_banner_title_prefix": "Kalan süre: ",
+  "meeting_expiry_banner_description": "Ücretsiz toplantılar 1 saat ile sınırlıdır. Bu görüşme yakında sonlandırılacak.",
   "host_close_meeting_description": "Toplantıdan ayrılmak mı yoksa herkes için sonlandırmak mı istiyorsunuz?",
   "@host_close_meeting_description": {
     "description": "Description text when host want to leave meeting"
