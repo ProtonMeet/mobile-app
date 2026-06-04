@@ -27,6 +27,11 @@ target_include_directories(${PLUGIN_NAME} PRIVATE
   "${CMAKE_CURRENT_SOURCE_DIR}/../native/include"
 )
 
+# Expose the public header dir so the runner's generated_plugin_registrant.cc
+# can resolve <proton_video_effects/proton_video_effects_plugin.h>.
+target_include_directories(${PLUGIN_NAME} INTERFACE
+  "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
 target_link_libraries(${PLUGIN_NAME} PRIVATE flutter)
 target_link_libraries(${PLUGIN_NAME} PRIVATE PkgConfig::GTK)
 target_link_libraries(${PLUGIN_NAME} PRIVATE meet_video_effects_native)

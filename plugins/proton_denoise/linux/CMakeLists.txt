@@ -5,7 +5,10 @@ cmake_minimum_required(VERSION 3.14)
 
 # Project-level configuration.
 set(PROJECT_NAME "proton_denoise")
-project(${PROJECT_NAME} LANGUAGES CXX)
+# RNNoise is built from C sources, so the C language must be enabled here
+# (mirrors the Android build); otherwise CMake omits CMAKE_C_COMPILE_OBJECT /
+# CMAKE_C_ARCHIVE_* rules and the generate step fails.
+project(${PROJECT_NAME} LANGUAGES C CXX)
 
 # This value is used when generating builds using this plugin, so it must
 # not be changed.

@@ -288,7 +288,7 @@ MeetVideoEffectsEngine* meet_video_effects_create(const char* model_path) {
 void meet_video_effects_destroy(MeetVideoEffectsEngine* engine) {
   if (!engine) return;
   // RAII teardown; pairs with std::make_unique in meet_video_effects_create.
-  std::unique_ptr<MeetVideoEffectsEngine>(engine);
+  std::unique_ptr<MeetVideoEffectsEngine> owned(engine);
 }
 
 bool meet_video_effects_is_ready(const MeetVideoEffectsEngine* engine) {
