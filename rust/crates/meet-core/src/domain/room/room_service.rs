@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use crate::{errors::service::ServiceError, utils::instant};
+use crate::{
+    domain::user::models::meeting_session_key::MeetingSessionKey, errors::service::ServiceError,
+    utils::instant,
+};
 use tracing::info;
 
 use crate::domain::user::{
@@ -65,7 +68,7 @@ impl RoomService {
         meet_link_name: &str,
         meet_link_password: &str,
         display_name: &str,
-    ) -> Result<(MeetInfo, Option<String>), anyhow::Error> {
+    ) -> Result<(MeetInfo, Option<MeetingSessionKey>), anyhow::Error> {
         let total_start = instant::now();
 
         let link_info_start = instant::now();
@@ -178,7 +181,8 @@ impl RoomService {
         tracing::debug!("decrypted_meet_name: {:?}", &decrypted_meet_name);
 
         #[cfg(not(target_family = "wasm"))]
-        let display_name_session_key = Some(decrypted_session_key.clone());
+        let display_name_session_key =
+            Some(MeetingSessionKey::new(decrypted_session_key.clone().into()));
         #[cfg(not(target_family = "wasm"))]
         let encrypted_display_name = match self
             .crypto_client
@@ -202,7 +206,7 @@ impl RoomService {
         };
 
         #[cfg(target_family = "wasm")]
-        let display_name_session_key: Option<String> = None;
+        let display_name_session_key: Option<MeetingSessionKey> = None;
         #[cfg(target_family = "wasm")]
         let encrypted_display_name = String::new();
 
@@ -857,7 +861,7 @@ impl RoomService {
     pub async fn decrypt_participant_display_names(
         &self,
         mut participants: Vec<crate::domain::user::models::meet_link_info::MeetParticipant>,
-        session_key: Option<&str>,
+        session_key: Option<&MeetingSessionKey>,
     ) -> Vec<crate::domain::user::models::meet_link_info::MeetParticipant> {
         let Some(key) = session_key else {
             #[cfg(debug_assertions)]
@@ -889,7 +893,7 @@ impl RoomService {
 
             match self
                 .crypto_client
-                .decrypt_message(enc, key, MEET_DISPLAY_NAME_AAD)
+                .decrypt_message(enc, key.expose_secret(), MEET_DISPLAY_NAME_AAD)
                 .await
             {
                 Ok(name) => {
@@ -931,7 +935,7 @@ impl RoomService {
             decrypted_count,
             skipped_no_cipher,
             decrypt_failed,
-            session_key_len = key.len(),
+            session_key_len = key.expose_secret().len(),
             aad = MEET_DISPLAY_NAME_AAD,
             "get_participants: decrypt_participant_display_names summary",
         );

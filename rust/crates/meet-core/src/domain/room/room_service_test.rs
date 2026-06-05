@@ -197,7 +197,10 @@ mod tests {
         assert_eq!(meet_info.meet_link_name, TEST_MEET_LINK_NAME);
         assert_eq!(meet_info.access_token, TEST_ACCESS_TOKEN);
         assert_eq!(meet_info.websocket_url, TEST_WEBSOCKET_URL);
-        assert_eq!(session_key.as_deref(), Some("decrypted_session_key"));
+        assert_eq!(
+            session_key.unwrap().expose_secret(),
+            "decrypted_session_key"
+        );
     }
 
     #[unified_test]

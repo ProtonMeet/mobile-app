@@ -9,6 +9,7 @@ pub mod meet_link_info;
 pub mod meeting;
 pub mod meeting_link_name;
 pub mod meeting_password;
+pub mod meeting_session_key;
 pub mod participant_track_settings;
 pub mod password_settings;
 pub mod phone_settings;
