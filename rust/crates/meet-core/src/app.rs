@@ -1638,7 +1638,7 @@ impl App {
         let participants = self.room_service.get_participants(&meet_link_name).await?;
         let participants = self
             .room_service
-            .decrypt_participant_display_names(participants, session_key.as_deref())
+            .decrypt_participant_display_names(participants, session_key.as_ref())
             .await;
         Ok(participants)
     }

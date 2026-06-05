@@ -1,3 +1,4 @@
+use crate::domain::user::models::meeting_session_key::MeetingSessionKey;
 use crate::domain::user::models::{Address, UserTokenInfo};
 use crate::infra::dto::realtime::JoinType;
 use crate::utils::PlatformInstant;
@@ -13,7 +14,7 @@ pub struct AppState {
     pub active_livekit_access_token: Option<String>,
     pub active_livekit_websocket_url: Option<String>,
     /// Base64-encoded decrypted meeting session key; used to decrypt participant display names.
-    pub meeting_display_name_session_key: Option<String>,
+    pub meeting_display_name_session_key: Option<MeetingSessionKey>,
     pub mls_store: Arc<RwLock<MlsStore>>,
     pub active_user_info: Option<UserTokenInfo>,
     pub join_start_time: Option<PlatformInstant>,
