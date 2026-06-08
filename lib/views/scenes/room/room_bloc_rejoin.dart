@@ -753,6 +753,8 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
         showMeetingIsReady: state.showMeetingIsReady,
         isSpeakerMuted: state.isSpeakerMuted,
         shouldShowMeetingWillEndDialog: state.shouldShowMeetingWillEndDialog,
+        shouldShowNotificationPermissionSettings:
+            state.shouldShowNotificationPermissionSettings,
         aloneSince: state.aloneSince,
         isPictureInPictureActive: state.isPictureInPictureActive,
         pipVideoTrackSid: state.pipVideoTrackSid,

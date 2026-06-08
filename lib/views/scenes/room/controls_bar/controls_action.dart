@@ -12,6 +12,8 @@ class ControlAction {
     this.badge,
     this.visiblePredicate,
     this.key,
+    this.globalKey,
+    this.description,
   });
 
   final Widget icon;
@@ -24,4 +26,6 @@ class ControlAction {
   final String? badge;
   final bool Function()? visiblePredicate;
   final Key? key;
+  final GlobalKey? globalKey;
+  final String? description;
 }

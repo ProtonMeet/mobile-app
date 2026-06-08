@@ -4,6 +4,21 @@ import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+/// Inform sheet when notification permission is required for screen sharing
+/// (same layout as [showMediaPermissionSettingsDialog]).
+Future<void> showNotificationPermissionSettingsDialog(
+  BuildContext context, {
+  VoidCallback? onReturned,
+}) async {
+  await _showPermissionInformSheet(
+    context,
+    title: context.local.notification_permission_settings_title,
+    message: context.local.notification_permission_settings_message,
+    showOpenSettings: false,
+    onReturned: onReturned,
+  );
+}
+
 /// Show a dialog that explains camera/microphone were denied previously
 /// and offers to open the system Settings page.
 /// - Pass which permissions are currently denied/permanentlyDenied so the
@@ -47,12 +62,32 @@ Future<void> showMediaPermissionSettingsDialog(
     return b.toString();
   }
 
+  await _showPermissionInformSheet(
+    context,
+    title: title.isEmpty ? computedTitle : title,
+    message: buildMessage(),
+    onReturned: onReturned,
+  );
+}
+
+Future<void> _showPermissionInformSheet(
+  BuildContext context, {
+  required String title,
+  required String message,
+  bool showOpenSettings = true,
+  VoidCallback? onReturned,
+}) async {
+  void dismiss() {
+    Navigator.of(context).maybePop();
+    onReturned?.call();
+  }
+
   final padding =
       EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom) +
       const EdgeInsets.symmetric(horizontal: 16, vertical: 16);
   await showDialog<void>(
     context: context,
-    builder: (_) {
+    builder: (dialogContext) {
       return Center(
         child: AnimatedPadding(
           padding: padding,
@@ -64,9 +99,9 @@ Future<void> showMediaPermissionSettingsDialog(
               color: Colors.transparent,
               child: DecoratedBox(
                 decoration: ShapeDecoration(
-                  color: context.colors.interActionWeakMinor3,
+                  color: dialogContext.colors.interActionWeakMinor3,
                   shape: RoundedRectangleBorder(
-                    side: BorderSide(color: context.colors.appBorderNorm),
+                    side: BorderSide(color: dialogContext.colors.appBorderNorm),
                     borderRadius: BorderRadius.circular(40),
                   ),
                 ),
@@ -76,25 +111,25 @@ Future<void> showMediaPermissionSettingsDialog(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Title row with close
                         Row(
                           children: [
                             Expanded(
                               child: Text(
-                                title.isEmpty ? computedTitle : title,
+                                title,
                                 style: ProtonStyles.headline(
-                                  color: context.colors.textNorm,
+                                  color: dialogContext.colors.textNorm,
                                 ),
                               ),
                             ),
                             InkResponse(
-                              onTap: () => Navigator.of(context).maybePop(),
+                              onTap: () =>
+                                  Navigator.of(dialogContext).maybePop(),
                               radius: 24,
                               child: Container(
                                 width: 36,
                                 height: 36,
                                 decoration: BoxDecoration(
-                                  color: context.colors.white.withValues(
+                                  color: dialogContext.colors.white.withValues(
                                     alpha: 0.08,
                                   ),
                                   shape: BoxShape.circle,
@@ -102,7 +137,7 @@ Future<void> showMediaPermissionSettingsDialog(
                                 child: Icon(
                                   Icons.close_rounded,
                                   size: 18,
-                                  color: context.colors.white.withValues(
+                                  color: dialogContext.colors.white.withValues(
                                     alpha: 0.60,
                                   ),
                                 ),
@@ -111,78 +146,100 @@ Future<void> showMediaPermissionSettingsDialog(
                           ],
                         ),
                         const SizedBox(height: 20),
-
-                        // Message
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            buildMessage(),
+                            message,
                             style: ProtonStyles.body2Medium(
-                              color: context.colors.textWeak,
+                              color: dialogContext.colors.textWeak,
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 8),
-
-                        // Actions
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () =>
-                                    Navigator.of(context).maybePop(),
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(
-                                    color: context.colors.appBorderNorm,
+                        if (showOpenSettings)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () =>
+                                      Navigator.of(dialogContext).maybePop(),
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(
+                                      color:
+                                          dialogContext.colors.appBorderNorm,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(200),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(200),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
-                                ),
-                                child: Text(
-                                  context.local.cancel,
-                                  style: ProtonStyles.body1Semibold(
-                                    color: context.colors.textNorm,
+                                  child: Text(
+                                    dialogContext.local.cancel,
+                                    style: ProtonStyles.body1Semibold(
+                                      color: dialogContext.colors.textNorm,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () async {
-                                  await openAppSettings();
-                                  if (context.mounted) {
-                                    if (Navigator.of(context).canPop()) {
-                                      Navigator.of(context).pop();
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () async {
+                                    await openAppSettings();
+                                    if (dialogContext.mounted) {
+                                      if (Navigator.of(dialogContext)
+                                          .canPop()) {
+                                        Navigator.of(dialogContext).pop();
+                                      }
                                     }
-                                  }
-                                  onReturned?.call();
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      context.colors.interActionWeak,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(200),
+                                    onReturned?.call();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        dialogContext.colors.interActionWeak,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(200),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
                                   ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
-                                ),
-                                child: Text(
-                                  context.local.open_settings,
-                                  style: ProtonStyles.body1Semibold(
-                                    color: context.colors.textNorm,
+                                  child: Text(
+                                    dialogContext.local.open_settings,
+                                    style: ProtonStyles.body1Semibold(
+                                      color: dialogContext.colors.textNorm,
+                                    ),
                                   ),
                                 ),
                               ),
+                            ],
+                          )
+                        else
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton(
+                              onPressed: dismiss,
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(
+                                  color: dialogContext.colors.appBorderNorm,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(200),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                              ),
+                              child: Text(
+                                dialogContext.local.cancel,
+                                style: ProtonStyles.body1Semibold(
+                                  color: dialogContext.colors.textNorm,
+                                ),
+                              ),
                             ),
-                          ],
-                        ),
+                          ),
                       ],
                     ),
                   ),

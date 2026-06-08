@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/managers/manager.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:universal_io/io.dart';
@@ -143,6 +144,25 @@ class PermissionService implements Manager {
       return status.isGranted || status.isLimited;
     }
     return true;
+  }
+
+  /// Returns true when notification permission is already granted, otherwise
+  /// shows the system permission dialog once (Android 13+ / iOS).
+  Future<bool> ensureNotificationPermission() async {
+    if (await hasNotificationPermission()) return true;
+
+    /// Request notification permission again if we didn't have permission yet
+    await requestNotificationPermission();
+    if (android) {
+      /// After [requestNotificationPermission], some Android OEM builds briefly report
+      /// stale status; Poll for a few times before treating the grant as final.
+      for (var attempt = 0; attempt < 5; attempt++) {
+        if (await hasNotificationPermission()) return true;
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+      }
+    }
+    // iOS can forward the notificationStatus immediately
+    return hasNotificationPermission();
   }
 
   /// Check if share screen capture permission is granted

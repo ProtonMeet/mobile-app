@@ -49,7 +49,7 @@ class RoomTopBar extends StatelessWidget implements PreferredSizeWidget {
                 child: Row(
                   children: [
                     _buildLeadingWidget(context),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 4),
                   ],
                 ),
               ),

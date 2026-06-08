@@ -22,6 +22,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.annotation.NonNull
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -39,6 +40,8 @@ import proton.android.meet.channel.FlutterMethodChannel
 import proton.android.meet.channel.NativeCallHandler
 import proton.android.meet.channel.NativeMethodChannel
 import proton.android.meet.channel.VersionHeader
+import proton.android.meet.meeting.MeetCallChannel
+import proton.android.meet.meeting.MeetCallController
 
 @AndroidEntryPoint
 class MainActivity : FlutterFragmentActivity(), NativeCallHandler {
@@ -46,17 +49,30 @@ class MainActivity : FlutterFragmentActivity(), NativeCallHandler {
     private val viewModel: MainActivityViewModel by viewModels()
     private var callbackHelper = PipCallbackHelper()
     private var physicalKeyChannel: MethodChannel? = null
+    private var meetCallChannel: MeetCallChannel? = null
 
     @Inject lateinit var meetApiClient: MeetApiClient
 
     private val lifecycleObserver =
             object : androidx.lifecycle.DefaultLifecycleObserver {
                 override fun onStop(owner: androidx.lifecycle.LifecycleOwner) {
-                    // Cancel notifications when app process is stopped (killed)
-                    // This is called when the app is killed by the system
-                    cancelAllNotifications()
+                    // App moved to background — keep ongoing meeting FGS alive.
+                    if (!MeetCallController.hasActiveMeetingCall()) {
+                        cancelLegacyNotifications()
+                    }
                 }
             }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        handleReturnToCallIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleReturnToCallIntent(intent)
+    }
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -72,6 +88,8 @@ class MainActivity : FlutterFragmentActivity(), NativeCallHandler {
         // Create channel for physical key detection (currently supports home key)
         physicalKeyChannel =
                 MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "me.proton.meet/physical_key")
+
+        meetCallChannel = MeetCallChannel.register(this, flutterEngine)
 
         // Register lifecycle observer to cancel notifications when app is killed
         ProcessLifecycleOwner.get().lifecycle.addObserver(lifecycleObserver)
@@ -155,17 +173,38 @@ class MainActivity : FlutterFragmentActivity(), NativeCallHandler {
     override fun onDestroy() {
         // Remove lifecycle observer
         ProcessLifecycleOwner.get().lifecycle.removeObserver(lifecycleObserver)
+        meetCallChannel?.dispose()
+        meetCallChannel = null
+        MeetCallChannel.dispose()
         super.onDestroy()
-        // Cancel all notifications when Activity is destroyed
-        cancelAllNotifications()
+        if (isFinishing || !MeetCallController.hasActiveMeetingCall()) {
+            cancelAllNotifications()
+        }
+    }
+
+    private fun handleReturnToCallIntent(intent: Intent?) {
+        if (intent?.action != MeetCallController.ACTION_RETURN_TO_CALL) return
+        MeetCallController.notifyReturnToCall()
+        intent.action = null
+    }
+
+    private fun cancelLegacyNotifications() {
+        try {
+            val notificationManager =
+                    getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.cancel(9999)
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Error cancelling legacy notifications", e)
+        }
     }
 
     private fun cancelAllNotifications() {
         try {
             val notificationManager =
                     getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            // Cancel PIP notification (ID: 9999)
             notificationManager.cancel(9999)
+            notificationManager.cancel(MeetCallController.NOTIFICATION_ID)
+            MeetCallController.stopMeeting(this)
             android.util.Log.d("MainActivity", "Notifications cancelled")
         } catch (e: Exception) {
             android.util.Log.e("MainActivity", "Error cancelling notifications", e)

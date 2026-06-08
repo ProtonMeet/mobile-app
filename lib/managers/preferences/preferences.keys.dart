@@ -26,6 +26,10 @@ class PreferenceKeys {
 
   static const String speakerPhoneEnabled =
       "proton_meet_app_k_speaker_phone_enabled";
+
+  /// Whether the one-time "tap to stop sharing" tooltip has been shown.
+  static const String stopSharingTooltipShown =
+      "proton_meet_app_k_stop_sharing_tooltip_shown";
 }
 
 /// Keys that persist across logout and should only reset on reinstall
@@ -34,4 +38,5 @@ Set<String> appPerInstallPreferenceKeys = {
   PreferenceKeys.lastApiEnvCacheKey,
   PreferenceKeys.inAppReviewLastRequestedEpoch,
   PreferenceKeys.userActivityStateV1,
+  PreferenceKeys.stopSharingTooltipShown,
 };

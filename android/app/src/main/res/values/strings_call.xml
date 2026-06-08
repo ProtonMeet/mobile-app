@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="meet_call_channel_name">Meeting call</string>
+    <string name="meet_call_channel_description">Ongoing Proton Meet conference</string>
+    <string name="meet_call_notification_tap_subtitle">Tap to open the meeting</string>
+    <string name="meet_call_notification_sharing">Sharing screen</string>
+    <string name="meet_call_notification_in_meeting">In meeting</string>
+    <string name="meet_call_action_leave_meeting">Leave meeting</string>
+    <string name="meet_call_default_room">Proton Meet</string>
+</resources>

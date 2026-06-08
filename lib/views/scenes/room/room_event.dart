@@ -102,7 +102,25 @@ class ToggleParticipantList extends RoomBlocEvent {}
 
 class LeaveRoom extends RoomBlocEvent {}
 
-class ToggleScreenShare extends RoomBlocEvent {}
+/// Toggles the local participant's screen share.
+///
+/// [notificationTitle] / [notificationText] are forwarded to the Android
+/// foreground-service notification used during the screen-share session.
+class ToggleScreenShare extends RoomBlocEvent {
+  final String? notificationTitle;
+  final String? notificationText;
+
+  ToggleScreenShare({this.notificationTitle, this.notificationText});
+
+  @override
+  List<Object?> get props => [notificationTitle, notificationText];
+}
+
+/// Clears [RoomState.shouldShowNotificationPermissionSettings] after the user
+/// dismisses the notification permission inform sheet.
+class NotificationPermissionSettingsConsumed extends RoomBlocEvent {
+  const NotificationPermissionSettingsConsumed();
+}
 
 class UpdateVideoFPS extends RoomBlocEvent {
   final int fps;

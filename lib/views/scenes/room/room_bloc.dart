@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_webrtc/flutter_webrtc.dart';
@@ -19,9 +18,11 @@ import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/channels/call_activity_channel.dart';
 import 'package:meet/managers/manager.factory.dart';
+import 'package:meet/managers/notification_service.dart';
 import 'package:meet/managers/preferences/preferences.manager.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/managers/room.manager.dart';
+import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/rust/proton_meet/models/meet_info.dart';
 import 'package:meet/rust/proton_meet/user_subscription.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
@@ -118,6 +119,29 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     }
   }
 
+  Future<bool> _startScreenShareForegroundService() async {
+    try {
+      final notificationService = ManagerFactory().get<NotificationService>();
+      return notificationService.startScreenShareForegroundService(
+        roomName: state.meetInfo.meetName,
+      );
+    } catch (e) {
+      l.logger.w('[RoomBloc] startScreenShareForegroundService failed: $e');
+      return false;
+    }
+  }
+
+  Future<void> _stopScreenShareForegroundService() async {
+    try {
+      final notificationService = ManagerFactory().get<NotificationService>();
+      await notificationService.stopScreenShareForegroundService(
+        roomName: state.meetInfo.meetName,
+      );
+    } catch (e) {
+      l.logger.w('[RoomBloc] stopScreenShareForegroundService failed: $e');
+    }
+  }
+
   /// Gets the mute and video enabled states from the local participant.
   ///
   /// Returns a record with `isMuted` and `isVideoEnabled` boolean values.
@@ -158,6 +182,22 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
 
     // Dispose room manager
     await roomManager?.dispose();
+
+    // Make sure the local screen-share publication and the Android
+    // foreground service are torn down BEFORE we disconnect the room.
+    // Otherwise the mediaProjection notification can outlive the meeting
+    // and the screen capturer can leak.
+    final localParticipant = state.room.localParticipant;
+    if (localParticipant != null) {
+      try {
+        await _cleanupLocalScreenSharePublications(localParticipant);
+      } catch (e) {
+        l.logger.w('[RoomBloc] close: screen share cleanup failed: $e');
+      }
+      if (android) {
+        await _stopScreenShareForegroundService();
+      }
+    }
 
     state.room.removeListener(_onRoomDidUpdate);
     await state.listener.cancelAll();
@@ -255,6 +295,9 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     on<ToggleParticipantList>(_onToggleParticipantList);
     on<LeaveRoom>(_onLeaveRoom);
     on<ToggleScreenShare>(_onToggleScreenShare);
+    on<NotificationPermissionSettingsConsumed>(
+      _onNotificationPermissionSettingsConsumed,
+    );
     on<StartAutoFullScreenTimer>(_onStartAutoFullScreenTimer);
     on<ResetAutoFullScreenTimer>(_onResetAutoFullScreenTimer);
     on<ToggleSpeaker>(_onToggleSpeaker);
@@ -664,6 +707,17 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       l.logger.e('Error fetching meeting info: $e');
     }
   }
+  /// Handles the event when the user dismisses the notification permission inform sheet.
+  ///
+  /// Parameters:
+  /// - [event]: The notification permission settings consumed event
+  /// - [emit]: State emitter for updating the room state
+  void _onNotificationPermissionSettingsConsumed(
+    NotificationPermissionSettingsConsumed event,
+    Emitter<RoomState> emit,
+  ) {
+    emit(state.copyWith(shouldShowNotificationPermissionSettings: false));
+  }
 
   /// Handles toggling the full screen mode.
   ///
@@ -674,6 +728,12 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
   /// - [event]: The toggle full screen event
   /// - [emit]: State emitter for updating the room state
   void _onToggleFullScreen(ToggleFullScreen event, Emitter<RoomState> emit) {
+    // Block any attempt to ENTER fullscreen while a local screen share is active.
+    // The controls bar is the only place the "Stop sharing" action lives now,
+    // so it must stay visible. Exiting fullscreen is always allowed.
+    if (state.isLocalScreenSharing && !state.isFullScreen) {
+      return;
+    }
     final isFullScreen = !state.isFullScreen;
     emit(
       state.copyWith(
@@ -752,6 +812,48 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     }
   }
 
+  /// Android 13+ needs POST_NOTIFICATIONS before the screen-share foreground
+  /// service can post a notification. Requests once; if still denied, surfaces
+  /// [RoomState.shouldShowNotificationPermissionSettings] for the inform sheet.
+  Future<bool> _ensureNotificationPermissionForScreenShare(
+    Emitter<RoomState> emit,
+  ) async {
+    if (isClosed) return false;
+
+    final permissionService = PermissionService();
+    if (await permissionService.hasNotificationPermission()) {
+      return true;
+    }
+
+    final granted = await permissionService.ensureNotificationPermission();
+    if (isClosed) return false;
+
+    if (!granted) {
+      if (!isClosed) {
+        emit(state.copyWith(shouldShowNotificationPermissionSettings: true));
+      }
+      return false;
+    }
+    return true;
+  }
+
+  /// Starts the ongoing meeting FGS after notification permission is granted.
+  /// Screen-share upgrade requires this to be active on the native side.
+  Future<void> _ensureMeetingForegroundNotification() async {
+    if (!android || isClosed) return;
+
+    try {
+      final notificationService = ManagerFactory().get<NotificationService>();
+      await notificationService.showBackgroundNotification(
+        roomName: state.meetInfo.meetName,
+        callId: state.meetInfo.meetLinkName,
+        requestPermissionIfMissing: false,
+      );
+    } catch (e) {
+      l.logger.w('[RoomBloc] ensureMeetingForegroundNotification failed: $e');
+    }
+  }
+
   /// Handles toggling screen sharing.
   ///
   /// Enables or disables screen sharing for the local participant. Updates
@@ -816,21 +918,13 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
           l.logger.e('Error disabling screen share: $e');
         }
 
-        // Android background execution is enabled during screen share; turn it off.
-        if (android) {
-          try {
-            if (FlutterBackground.isBackgroundExecutionEnabled) {
-              await FlutterBackground.disableBackgroundExecution();
-            }
-          } catch (e) {
-            l.logger.w('[RoomBloc] disableBackgroundExecution failed: $e');
-          }
-        }
-
         await _cleanupLocalScreenSharePublications(participant);
 
+        if (android) {
+          await _stopScreenShareForegroundService();
+        }
+
         emit(state.copyWith(isLocalScreenSharing: false, isFullScreen: false));
-        logRoomTrackStats('after_screen_share_disable', room);
         return;
       }
 
@@ -839,45 +933,43 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
 
       // If enabling screen share, check permissions on Android first
       if (android) {
-        // Android specific
-        final hasCapturePermission = await Helper.requestCapturePermission();
-        if (!hasCapturePermission) {
+        if (!await _ensureNotificationPermissionForScreenShare(emit)) {
           return;
         }
+        if (isClosed) return;
 
-        Future<void> requestBackgroundPermission({bool isRetry = false}) async {
-          // Required for android screenshare.
-          try {
-            bool hasPermissions = await FlutterBackground.hasPermissions;
-            if (!isRetry) {
-              const androidConfig = FlutterBackgroundAndroidConfig(
-                notificationTitle: 'Screen Sharing',
-                notificationText: 'Sharing your screen',
-              );
-              hasPermissions = await FlutterBackground.initialize(
-                androidConfig: androidConfig,
-              );
-            }
-            if (hasPermissions &&
-                !FlutterBackground.isBackgroundExecutionEnabled) {
-              await FlutterBackground.enableBackgroundExecution();
-            }
-          } catch (e) {
-            if (!isRetry) {
-              return Future<void>.delayed(
-                const Duration(seconds: 1),
-                () => requestBackgroundPermission(isRetry: true),
-              );
-            }
-            l.logger.d('could not publish video: $e');
-          }
+        // Permission may have been missing at join; start meeting FGS now so
+        // native screen-share upgrade does not run without an active call.
+        await _ensureMeetingForegroundNotification();
+        if (isClosed) return;
+
+        // Step A: ask the system for MediaProjection consent. This shows the
+        // "Start now / Cancel" dialog. If the user cancels, abort silently —
+        // emitting a state update would surface a stale loading indicator.
+        final hasCapturePermission = await Helper.requestCapturePermission();
+        if (!hasCapturePermission) {
+          l.logger.i(
+            '[RoomBloc] Screen share aborted: MediaProjection permission denied',
+          );
+          return;
         }
+        if (isClosed) return;
 
-        await requestBackgroundPermission();
+        // Step B: Android 14+ requires a mediaProjection foreground service
+        // to be running before LiveKit calls getMediaProjection().
+        final fgsStarted = await _startScreenShareForegroundService();
+        if (!fgsStarted) {
+          l.logger.e(
+            '[RoomBloc] Screen share aborted: mediaProjection FGS failed',
+          );
+          return;
+        }
+        if (isClosed) return;
       }
 
-      // Enable screen sharing after permission checks
-      // NOTE: captureScreenAudio is expensive on iOS; keep it off by default.
+      // Step C: publish the screen-share track via LiveKit.
+      // NOTE: captureScreenAudio is unsupported on iOS (handled by the
+      // Broadcast Extension), so we only enable it elsewhere.
       final captureScreenAudio = !iOS;
       try {
         await participant.setScreenShareEnabled(
@@ -891,26 +983,40 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
         // decrypt the screen share until the next epoch change forces a
         // re-set. See [RoomManager.refreshE2EEKey].
         await roomManager?.refreshE2EEKey(room);
-        emit(state.copyWith(isLocalScreenSharing: true));
-        logRoomTrackStats('after_screen_share_enable', room);
+        emit(state.copyWith(isLocalScreenSharing: true, isFullScreen: false));
       } catch (e) {
         l.logger.e('Error enabling screen share: $e');
-        // Revert state on error + cleanup
+        // Publish failed — roll the foreground service back so we don't
+        // leak a dangling mediaProjection notification on Android.
+        if (android) {
+          await _stopScreenShareForegroundService();
+        }
         emit(state.copyWith(isLocalScreenSharing: false));
         await _cleanupLocalScreenSharePublications(participant);
-        logRoomTrackStats('after_screen_share_enable_error', room);
       }
     } finally {
       _screenShareToggleInFlight = false;
     }
   }
 
-  /// Start auto fullscreen timer, which will enter fullscreen after autoFullScreenDelay if no user interaction is detected
+  /// Start auto fullscreen timer, which will enter fullscreen after
+  /// `autoFullScreenDelay` if no user interaction is detected.
+  ///
+  /// While a screen share (local or remote) is active, the timer fires but
+  /// skips entering fullscreen and reschedules itself; that way normal
+  /// auto-fullscreen behavior resumes as soon as sharing ends without
+  /// requiring an explicit "start timer" event from the UI.
   void _startAutoFullScreenTimer() {
     try {
       _cancelFullScreenTimer();
       _autoFullScreenTimer = Timer(autoFullScreenDelay, () {
         if (isClosed) return;
+        if (state.isLocalScreenSharing) {
+          // Local screen share in progress — keep the controls bar visible and
+          // poll again after the same delay.
+          _startAutoFullScreenTimer();
+          return;
+        }
         if (!state.isFullScreen) {
           add(ToggleFullScreen());
         }
