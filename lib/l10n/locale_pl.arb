@@ -1002,8 +1002,14 @@
       }
     }
   },
-  "meeting_expiry_banner_title_prefix": "Spotkanie zakończy się za ",
-  "meeting_expiry_banner_description": "Bezpłatne spotkania są ograniczone do 1 godziny. To połączenie wkrótce zostanie rozłączone.",
+  "meeting_expiry_banner_title_prefix": "Meeting will end in ",
+  "@meeting_expiry_banner_title_prefix": {
+    "description": "Title prefix for meeting expiry countdown banner; duration is appended"
+  },
+  "meeting_expiry_banner_description": "Free meetings are limited to 1 hour. This call will disconnect soon.",
+  "@meeting_expiry_banner_description": {
+    "description": "Subtitle on meeting expiry warning banner for free meetings"
+  },
   "host_close_meeting_description": "Czy chcesz opuścić spotkanie, czy zakończyć je dla wszystkich?",
   "@host_close_meeting_description": {
     "description": "Description text when host want to leave meeting"

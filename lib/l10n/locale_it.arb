@@ -113,8 +113,8 @@
   "meeting": "Riunione",
   "show_meeting_timer": "Mostra il timer della riunione",
   "unsubscribe_video_by_default": "Disattiva i video in entrata",
-  "camera_background_blur": "Background blur",
-  "audio_noise_cancellation": "Noise cancellation",
+  "camera_background_blur": "Sfondo sfocato",
+  "audio_noise_cancellation": "Eliminazione rumori",
   "dark_mode": "Modalità scura",
   "show_connection_indicator": "Mostra indicatore di connessione",
   "desktop_notifications": "Notifiche desktop",
@@ -1003,7 +1003,13 @@
     }
   },
   "meeting_expiry_banner_title_prefix": "La riunione terminerà tra ",
-  "meeting_expiry_banner_description": "Le riunioni gratuite sono limitate a 1 ora. Questa chiamata verrà disconnessa a breve.",
+  "@meeting_expiry_banner_title_prefix": {
+    "description": "Title prefix for meeting expiry countdown banner; duration is appended"
+  },
+  "meeting_expiry_banner_description": "Le riunioni gratuite hanno una durata massima di 1 ora. La chiamata verrà interrotta a breve.",
+  "@meeting_expiry_banner_description": {
+    "description": "Subtitle on meeting expiry warning banner for free meetings"
+  },
   "host_close_meeting_description": "Vuoi lasciare la riunione o terminarla per tutti?",
   "@host_close_meeting_description": {
     "description": "Description text when host want to leave meeting"
