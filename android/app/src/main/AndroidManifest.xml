@@ -15,11 +15,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <application
@@ -135,18 +135,27 @@
                     android:pathPattern="/u/.*/join/.*" />
             </intent-filter>
         </activity>
-        <!-- Required service for android screenshare -->
+        <!-- Ongoing meeting: FGS + CallStyle notification + MediaSession -->
         <service
-            android:name="de.julianassmann.flutter_background.IsolateHolderService"
-            android:enabled="true"
+            android:name="proton.android.meet.meeting.MeetCallForegroundService"
             android:exported="false"
-            android:foregroundServiceType="mediaProjection" />
-        <!-- Foreground service for ongoing call notification -->
-        <service
-            android:name="com.dexterous.flutterlocalnotifications.ForegroundService"
-            android:enabled="true"
-            android:exported="false"
-            android:foregroundServiceType="phoneCall|camera|microphone|mediaProjection" />
+            android:stopWithTask="true"
+            android:foregroundServiceType="camera|microphone|mediaProjection|mediaPlayback" />
+        <receiver
+            android:name="proton.android.meet.meeting.MeetCallActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="proton.android.meet.RETURN_TO_CALL" />
+                <action android:name="proton.android.meet.END_CALL" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name="androidx.media.session.MediaButtonReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

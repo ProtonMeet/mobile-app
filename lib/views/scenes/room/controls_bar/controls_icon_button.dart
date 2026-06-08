@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/views/components/custom.tooltip.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 class ControlIconButton extends StatelessWidget {
   final Widget icon;
@@ -14,6 +15,8 @@ class ControlIconButton extends StatelessWidget {
   final Color? activeColor;
   final Color? inactiveColor;
   final String? tooltip;
+  final GlobalKey? globalKey;
+  final String? description;
 
   const ControlIconButton({
     required this.icon,
@@ -28,10 +31,30 @@ class ControlIconButton extends StatelessWidget {
     this.activeColor,
     this.inactiveColor,
     this.tooltip,
+    this.globalKey,
+    this.description,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (globalKey != null) {
+      return Showcase(
+        key: globalKey!,
+        description: description ?? tooltip ?? "",
+        onBarrierClick: () {
+          ShowcaseView.get().dismiss();
+        },
+        tooltipActionConfig: const TooltipActionConfig(
+          alignment: MainAxisAlignment.end,
+          position: TooltipActionPosition.outside,
+        ),
+        child: buildMainWidget(context),
+      );
+    }
+    return buildMainWidget(context);
+  }
+
+  Widget buildMainWidget(BuildContext context) {
     return Container(
       width: size,
       height: size,

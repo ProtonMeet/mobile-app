@@ -179,6 +179,15 @@
   "camera_view": "Camera view",
   "is_presenting": "is presenting",
   "stop_presenting": "Stop presenting",
+  "tap_to_stop_sharing": "Tap to stop sharing",
+  "notification_permission_settings_title": "Enable notification access",
+  "@notification_permission_settings_title": {
+    "description": "Title when notification permission was denied and screen sharing requires it"
+  },
+  "notification_permission_settings_message": "Screen sharing requires notification permission so the meeting can stay active in the background.\n\nYou previously denied access. To share your screen, please enable Notifications in your system settings:\n• Open Settings\n• Find this app\n• Allow Notifications",
+  "@notification_permission_settings_message": {
+    "description": "Body for notification permission inform sheet shown before screen sharing"
+  },
   "participant_joined": "Participant joined🎉",
   "participant_left": "Participant left👋",
   "participant_name_prefix": "Name: ",

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import 'package:just_the_tooltip/just_the_tooltip.dart';
 import 'package:livekit_client/livekit_client.dart' hide ConnectionState;
 import 'package:logger/logger.dart';
 import 'package:meet/constants/constants.dart';
@@ -18,6 +19,7 @@ import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/local_toast.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/user.agent.dart';
+import 'package:meet/managers/android_notification_service.dart';
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/app.state.manager.dart';
 import 'package:meet/managers/channels/call_activity_action_channel.dart';
@@ -25,6 +27,7 @@ import 'package:meet/managers/channels/physical_key_channel.dart';
 import 'package:meet/managers/channels/platform.channel.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/notification_service.dart';
+import 'package:meet/managers/preferences/preferences.manager.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/managers/services/denoise_audio.service.dart';
 import 'package:meet/managers/services/in_app_review_service.dart';
@@ -36,10 +39,11 @@ import 'package:meet/rust/proton_meet/models/meet_info.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/rust/proton_meet/user_config.dart';
+import 'package:meet/views/components/alerts/media_permission_dialog.dart';
 import 'package:meet/views/components/alerts/meeting_will_end_dialog.dart';
 import 'package:meet/views/components/alerts/session_expired_dialog.dart';
 import 'package:meet/views/components/bottom.sheets/leave_room_bottom_sheet.dart';
-import 'package:meet/views/components/button.inline.dart';
+import 'package:meet/views/components/custom.tooltip.dart';
 import 'package:meet/views/components/loading_view.dart';
 import 'package:meet/views/scenes/app/app.router.dart';
 import 'package:meet/views/scenes/core/coordinator.dart';
@@ -63,8 +67,8 @@ import 'package:meet/views/scenes/signin/auth_bloc.dart';
 import 'package:meet/views/scenes/signin/auth_event.dart';
 import 'package:meet/views/scenes/utils.dart';
 import 'package:meet/views/scenes/widgets/meeting_settings_v2.dart';
-import 'package:proton_denoise/proton_denoise.dart';
 import 'package:meet/views/scenes/widgets/statistics_dialog.dart';
+import 'package:proton_denoise/proton_denoise.dart';
 import 'package:sentry/sentry.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -173,6 +177,13 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   >
   _pendingRecordingStatuses = [];
   Timer? _pendingRecordingStatusTimer;
+
+  final JustTheController _stopSharingTooltipController = JustTheController();
+
+  static const EdgeInsets _screenSharePanelPadding = EdgeInsets.all(4);
+
+  /// Mirror of `state.isLocalScreenSharing` for tooltip show/hide edges.
+  bool _wasLocalScreenSharing = false;
 
   @override
   void initState() {
@@ -503,10 +514,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   /// Show the persistent in-meeting notification immediately on entering
   /// the meeting.
   ///
-  /// The underlying [NotificationService.showBackgroundNotification] is
-  /// idempotent and short-circuits when any required permission is missing,
-  /// so this method is safe to call regardless of permission state — it
-  /// will never throw and will never crash the meeting page.
+  /// On Android, [AndroidNotificationService] requests POST_NOTIFICATIONS
+  /// when missing, then starts the ongoing meeting notification. Safe to call
+  /// on every enter — idempotent and does not throw.
   Future<void> _showMeetingNotification() async {
     if (!android) return;
 
@@ -514,7 +524,15 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       final notificationService = ManagerFactory().get<NotificationService>();
       await notificationService.showBackgroundNotification(
         roomName: widget.meetInfo.meetName,
+        callId: widget.meetInfo.meetLinkName,
       );
+      if (notificationService is AndroidNotificationService) {
+        notificationService.setEndCallFromNotificationCallback(() async {
+          if (mounted) {
+            _bloc.add(LeaveRoom());
+          }
+        });
+      }
       l.logger.d('[RoomPage] In-meeting notification show requested');
     } catch (e) {
       // Defensive: the service itself is hardened, but if the manager
@@ -2038,6 +2056,23 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               }
             },
           ),
+          BlocListener<RoomBloc, RoomState>(
+            listenWhen: (prev, curr) =>
+                prev.shouldShowNotificationPermissionSettings !=
+                    curr.shouldShowNotificationPermissionSettings &&
+                curr.shouldShowNotificationPermissionSettings,
+            listener: (context, state) async {
+              await showNotificationPermissionSettingsDialog(
+                context,
+                onReturned: () {
+                  unawaited(_showMeetingNotification());
+                },
+              );
+              if (context.mounted) {
+                _bloc.add(const NotificationPermissionSettingsConsumed());
+              }
+            },
+          ),
           // Add chat message for all joined participants
           BlocListener<RoomBloc, RoomState>(
             listenWhen: (prev, curr) =>
@@ -2106,14 +2141,33 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                 prev.isLocalScreenSharing != curr.isLocalScreenSharing ||
                 prev.isRemoteScreenSharing != curr.isRemoteScreenSharing,
             listener: (context, state) {
-              setState(() {
-                _isScreenSharing =
-                    state.isLocalScreenSharing || state.isRemoteScreenSharing;
+              final localShareJustStarted =
+                  !_wasLocalScreenSharing && state.isLocalScreenSharing;
+              final localShareJustStopped =
+                  _wasLocalScreenSharing && !state.isLocalScreenSharing;
+              _wasLocalScreenSharing = state.isLocalScreenSharing;
 
-                if (_isScreenSharing) {
-                  _isCameraView = false; // auto move to screen sharing view
+              if (localShareJustStopped) {
+                unawaited(
+                  _stopSharingTooltipController.hideTooltip(immediately: true),
+                );
+              }
+
+              final nowSharing =
+                  state.isLocalScreenSharing || state.isRemoteScreenSharing;
+              setState(() {
+                _isScreenSharing = nowSharing;
+                if (nowSharing) {
+                  // Auto move to screen sharing view on any share start
+                  // (local or remote).
+                  _isCameraView = false;
                 }
-              }); // triggers rebuild manually
+              });
+
+              if (localShareJustStarted) {
+                _bloc.add(ResetAutoFullScreenTimer());
+                unawaited(_maybeShowStopSharingTooltipOnce());
+              }
             },
           ),
           // Show the consent modal once on every off→on transition. The
@@ -2430,88 +2484,35 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         final isCameraEnabled = data.$5;
         final isPaidUser = data.$6;
         final isRoomReady = isRoomInitialized && isTrackInitialized;
-        return Stack(
+        return Column(
           children: [
-            Column(
-              children: [
-                const RecordingTopBanner(),
-                if (isRoomReady) const MeetingExpiryBannerHost(),
-                if (!isPipMode && isRoomReady)
-                  _buildHeaderWithSlide(
-                    context: context,
-                    room: room,
-                    isCameraEnabled: isCameraEnabled,
-                    isPaidUser: isPaidUser,
-                  ),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      // Immediately enter full screen when tapping the view
-                      if (!_bloc.state.isFullScreen) {
-                        _bloc.add(ToggleFullScreen());
-                      } else {
-                        _resetAutoFullScreenTimer();
-                      }
-                    },
-                    onPanStart: (_) => _resetAutoFullScreenTimer(),
-                    onPanUpdate: (_) => _resetAutoFullScreenTimer(),
-                    child: _buildMainContent(context),
-                  ),
-                ),
-                if (room.localParticipant != null) _buildControlsBarWithFade(),
-              ],
+            const RecordingTopBanner(),
+            if (!isPipMode && isRoomReady)
+              _buildHeaderWithSlide(
+                context: context,
+                room: room,
+                isCameraEnabled: isCameraEnabled,
+                isPaidUser: isPaidUser,
+              ),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  // Immediately enter full screen when tapping the view
+                  if (!_bloc.state.isFullScreen) {
+                    _bloc.add(ToggleFullScreen());
+                  } else {
+                    _resetAutoFullScreenTimer();
+                  }
+                },
+                onPanStart: (_) => _resetAutoFullScreenTimer(),
+                onPanUpdate: (_) => _resetAutoFullScreenTimer(),
+                child: _buildMainContent(context),
+              ),
             ),
-            // Floating stop screen share button
-            BlocSelector<RoomBloc, RoomState, bool>(
-              selector: (state) => state.isLocalScreenSharing,
-              builder: (context, isLocalScreenSharing) {
-                if (room.localParticipant != null && isLocalScreenSharing) {
-                  return _buildStopScreenShareButton(context);
-                }
-                return const SizedBox.shrink();
-              },
-            ),
+            if (room.localParticipant != null) _buildControlsBarWithFade(),
           ],
         );
       },
-    );
-  }
-
-  Widget _buildStopScreenShareButton(BuildContext context) {
-    return Positioned(
-      top: 20,
-      left: 0,
-      right: 0,
-      child: Center(
-        child: Material(
-          elevation: 4,
-          borderRadius: BorderRadius.circular(24),
-          child: InkWell(
-            onTap: () {
-              _bloc.add(ToggleScreenShare());
-            },
-            borderRadius: BorderRadius.circular(24),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              decoration: BoxDecoration(
-                color: context.colors.signalDangerMajor3,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    context.local.stop_presenting,
-                    style: ProtonStyles.body2Medium(
-                      color: context.colors.textNorm,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -2611,18 +2612,77 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             onLeave: () {
               // Only show the "End meeting for all" button when the local
               // participant is the only host in the meeting.
-              leaveRoomDialog(
-                isHost: state.isOnlyHost,
-                isAlone: state.isAlone,
-              );
+              leaveRoomDialog(isHost: state.isOnlyHost, isAlone: state.isAlone);
             },
             cameraResolution: _cameraResolution,
             cameraMaxBitrate: _cameraMaxBitrate,
             currentCameraPosition: state.currentCameraPosition,
             applyCameraBackgroundBlur: state.cameraBackgroundBlurEnabled,
             applyAudioDenoise: state.audioDenoiseEnabled,
+            trailing: state.isLocalScreenSharing
+                ? CustomTooltip(
+                    controller: _stopSharingTooltipController,
+                    triggerMode: TooltipTriggerMode.manual,
+                    message: context.local.tap_to_stop_sharing,
+                    preferredDirection: AxisDirection.up,
+                    child: Material(
+                      color: context.colors.signalDangerMajor3,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () => _bloc.add(ToggleScreenShare()),
+                        child: SizedBox(
+                          width: 56,
+                          height: 56,
+                          child: Center(
+                            child: context.images.iconScreenShare.svg(
+                              width: 24,
+                              height: 24,
+                              colorFilter: ColorFilter.mode(
+                                context.colors.white,
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                : null,
             optionalActionsBuilder: () {
               final isSpeakerMuted = state.isSpeakerMuted ?? false;
+
+              // Screen share toggle. We build two slightly different
+              // `ControlAction`s rather than one shared instance:
+              //   - `unshareAction` is shown at the very FRONT of the row
+              //     while we are actively presenting, and carries the
+              //     showcase GlobalKey (so the tutorial tip points at it).
+              //   - `shareAction` is shown in the default slot otherwise,
+              //     and intentionally has NO globalKey (preventing the
+              //     showcase from latching onto the "Share screen" button
+              //     when there is nothing to stop).
+              final isScreenShareEnabled = _bloc.isScreenShareFeatureEnabled();
+              void onScreenShareTapped() {
+                _bloc.add(
+                  ToggleScreenShare(
+                    notificationTitle: context.local.screen_sharing,
+                    notificationText: context.local.sharing_your_screen,
+                  ),
+                );
+              }
+
+              final shareAction = isScreenShareEnabled
+                  ? ControlAction(
+                      icon: context.images.iconScreenShare.svg(
+                        width: 24,
+                        height: 24,
+                      ),
+                      tooltip: context.local.share_screen,
+                      onPressed: onScreenShareTapped,
+                      isActive: true,
+                    )
+                  : null;
+
               return [
                 /// Mute speaker
                 ControlAction(
@@ -2671,20 +2731,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                     },
                   ),
 
-                /// Screen share - only show if feature flag is enabled
-                if (_bloc.isScreenShareFeatureEnabled())
-                  ControlAction(
-                    icon: context.images.iconScreenShare.svg(
-                      width: 24,
-                      height: 24,
-                    ),
-                    tooltip: state.isLocalScreenSharing
-                        ? context.local.unshare_screen
-                        : context.local.share_screen,
-                    onPressed: () {
-                      _bloc.add(ToggleScreenShare());
-                    },
-                  ),
+                /// Screen share (start) — hidden while sharing; the stop
+                /// control lives in the controls bar as the second-to-last
+                /// button (right before the leave button).
+                if (!state.isLocalScreenSharing && shareAction != null)
+                  shareAction,
 
                 /// Participants
                 ControlAction(
@@ -2885,109 +2936,106 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
+  /// Shows the "tap to stop sharing" tooltip only the first time the local
+  /// participant ever starts a screen share. The shown state is persisted in
+  /// SharedPreferences so it is never displayed again on subsequent shares.
+  Future<void> _maybeShowStopSharingTooltipOnce() async {
+    final prefs = ManagerFactory().get<PreferencesManager>();
+    final alreadyShown = await prefs.getStopSharingTooltipShown();
+    if (alreadyShown) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!_bloc.state.isLocalScreenSharing) return;
+      unawaited(_stopSharingTooltipController.showTooltip(immediately: true));
+      // Persist only once the tooltip has actually been shown.
+      unawaited(prefs.setStopSharingTooltipShown(shown: true));
+    });
+  }
+
   Widget buildPanelWhenScreenSharing(
     BuildContext context,
     LocalParticipant? participant,
   ) {
-    final sharing = participant?.isScreenShareEnabled() ?? false;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: BlocSelector<RoomBloc, RoomState, List<ParticipantInfo>>(
-          selector: (state) {
-            return state.screenSharingTracks;
-          },
-          builder: (context, tracks) {
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    if (tracks.isNotEmpty)
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isCameraView = true;
-                          });
-                        },
-                        child: Container(
-                          width: 160,
-                          margin: const EdgeInsets.only(right: 4),
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _isCameraView
-                                ? context.colors.interActionWeak
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: context.colors.textWeak),
-                          ),
-                          child: Text(
-                            context.local.camera_view,
-                            style: ProtonStyles.body2Medium(
-                              color: context.colors.textNorm,
+      padding: _screenSharePanelPadding,
+      child: BlocSelector<RoomBloc, RoomState, List<ParticipantInfo>>(
+        selector: (state) => state.screenSharingTracks,
+        builder: (context, tracks) {
+          return Row(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      if (tracks.isNotEmpty)
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _isCameraView = true;
+                            });
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 4),
+                            alignment: Alignment.center,
+                            padding: _screenSharePanelPadding,
+                            decoration: BoxDecoration(
+                              color: _isCameraView
+                                  ? context.colors.interActionWeak
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: context.colors.textWeak,
+                              ),
+                            ),
+                            child: Text(
+                              context.local.camera_view,
+                              style: ProtonStyles.body2Medium(
+                                color: context.colors.textNorm,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    for (int i = 0; i < tracks.length; i++)
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isCameraView = false;
-                            _screenSharingIndex = i;
-                            _bloc.add(ToggleFullScreen());
-                          });
-                        },
-                        child: Container(
-                          width: 160,
-                          margin: const EdgeInsets.only(right: 4),
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: (i == _screenSharingIndex && !_isCameraView)
-                                ? context.colors.interActionWeak
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: context.colors.textWeak),
-                          ),
-                          child: Text(
-                            "🖥️ ${_bloc.getParticipantDisplayName(tracks[i].participant)} ${context.local.is_presenting}",
-                            overflow: TextOverflow.ellipsis,
-                            style: ProtonStyles.body2Medium(
-                              color: context.colors.textNorm,
+                      for (int i = 0; i < tracks.length; i++)
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _isCameraView = false;
+                              _screenSharingIndex = i;
+                              _bloc.add(ToggleFullScreen());
+                            });
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 4),
+                            alignment: Alignment.center,
+                            padding: _screenSharePanelPadding,
+                            decoration: BoxDecoration(
+                              color:
+                                  (i == _screenSharingIndex && !_isCameraView)
+                                  ? context.colors.interActionWeak
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: context.colors.textWeak,
+                              ),
+                            ),
+                            child: Text(
+                              '🖥️ ${_bloc.getParticipantDisplayName(tracks[i].participant)} ${context.local.is_presenting}',
+                              overflow: TextOverflow.ellipsis,
+                              style: ProtonStyles.body2Medium(
+                                color: context.colors.textNorm,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                  ],
-                ),
-                if (sharing)
-                  ButtonInline(
-                    text: context.local.stop_presenting,
-                    onPressed: () async {
-                      _bloc.add(ToggleScreenShare());
-                    },
-                    width: 160,
-                    height: 32,
-                    borderRadius: 40,
-                    textColor: Colors.white,
-                    backgroundColor: context.colors.protonBlue,
+                    ],
                   ),
-              ],
-            );
-          },
-        ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

@@ -10,7 +10,11 @@ abstract class NotificationService implements Manager {
 
   /// Show persistent background notification (ongoing, non-dismissible)
   /// This notification is shown when the app goes to background
-  Future<void> showBackgroundNotification({required String roomName});
+  Future<void> showBackgroundNotification({
+    required String roomName,
+    String? callId,
+    bool requestPermissionIfMissing = true,
+  });
 
   /// Hide background notification
   Future<void> hideBackgroundNotification();
@@ -20,6 +24,17 @@ abstract class NotificationService implements Manager {
 
   /// Clear background notification tap callback
   void clearBackgroundNotificationTapCallback();
+
+  /// Upgrade the meeting foreground service to include [mediaProjection].
+  ///
+  /// Must be called on Android after MediaProjection consent and before
+  /// [LocalParticipant.setScreenShareEnabled]. Returns `false` when the
+  /// service could not be started (caller should abort screen share).
+  Future<bool> startScreenShareForegroundService({required String roomName});
+
+  /// Downgrade from screen-share foreground service back to the normal
+  /// in-meeting notification.
+  Future<void> stopScreenShareForegroundService({required String roomName});
 
   // ============================================================================
   // Future notification types can be added here

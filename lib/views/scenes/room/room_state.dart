@@ -130,6 +130,10 @@ class RoomState extends Equatable {
 
   /// Alone meeting tracking
   final bool shouldShowMeetingWillEndDialog;
+
+  /// Android: show notification permission inform sheet (e.g. before screen share).
+  final bool shouldShowNotificationPermissionSettings;
+
   final DateTime? aloneSince;
 
   /// Picture-in-Picture state
@@ -319,6 +323,7 @@ class RoomState extends Equatable {
     this.meetingLink = '',
     this.isSpeakerMuted,
     this.shouldShowMeetingWillEndDialog = false,
+    this.shouldShowNotificationPermissionSettings = false,
     this.aloneSince,
     this.isPictureInPictureActive = false,
     this.pipVideoTrackSid,
@@ -389,6 +394,7 @@ class RoomState extends Equatable {
     String? meetingLink,
     bool? isSpeakerMuted,
     bool? shouldShowMeetingWillEndDialog,
+    bool? shouldShowNotificationPermissionSettings,
     DateTime? aloneSince,
     bool resetAloneStatus = false,
     bool? isPictureInPictureActive,
@@ -467,6 +473,9 @@ class RoomState extends Equatable {
       isSpeakerMuted: isSpeakerMuted ?? this.isSpeakerMuted,
       shouldShowMeetingWillEndDialog:
           shouldShowMeetingWillEndDialog ?? this.shouldShowMeetingWillEndDialog,
+      shouldShowNotificationPermissionSettings:
+          shouldShowNotificationPermissionSettings ??
+          this.shouldShowNotificationPermissionSettings,
       aloneSince: resetAloneStatus ? null : aloneSince ?? this.aloneSince,
       isPictureInPictureActive:
           isPictureInPictureActive ?? this.isPictureInPictureActive,
@@ -563,6 +572,7 @@ class RoomState extends Equatable {
     showMeetingIsReady,
     isSpeakerMuted,
     shouldShowMeetingWillEndDialog,
+    shouldShowNotificationPermissionSettings,
     aloneSince,
 
     ///

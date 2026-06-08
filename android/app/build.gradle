@@ -199,6 +199,7 @@ dependencies {
     kapt(libs.androidx.room.compiler)
 
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.media)
     implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)

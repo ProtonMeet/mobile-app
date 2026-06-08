@@ -8,23 +8,28 @@ class CustomTooltip extends StatelessWidget {
   final String message;
   final Widget child;
   final AxisDirection? preferredDirection;
+  final JustTheController? controller;
+  final TooltipTriggerMode? triggerMode;
 
   const CustomTooltip({
     required this.message,
     required this.child,
     this.preferredDirection = AxisDirection.up,
+    this.controller,
+    this.triggerMode,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
     return JustTheTooltip(
+      controller: controller,
       tailLength: 12,
       tailBaseWidth: 16,
       margin: const EdgeInsets.symmetric(horizontal: defaultPadding * 2),
       preferredDirection: preferredDirection!,
       backgroundColor: context.colors.black,
-      triggerMode: TooltipTriggerMode.tap,
+      triggerMode: triggerMode ?? TooltipTriggerMode.tap,
       content: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Text(

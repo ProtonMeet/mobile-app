@@ -186,6 +186,22 @@ class PreferencesManager implements Manager {
     await storage.write(PreferenceKeys.speakerPhoneEnabled, enabled);
   }
 
+  /// Whether the one-time "tap to stop sharing" tooltip has already been shown.
+  Future<bool> getStopSharingTooltipShown() async {
+    try {
+      final value = await storage.read(PreferenceKeys.stopSharingTooltipShown);
+      if (value is bool) return value;
+      return false;
+    } catch (e) {
+      logger.e("error getting stop sharing tooltip preference: $e");
+      return false;
+    }
+  }
+
+  Future<void> setStopSharingTooltipShown({required bool shown}) async {
+    await storage.write(PreferenceKeys.stopSharingTooltipShown, shown);
+  }
+
   @override
   Future<void> reload() async {}
 

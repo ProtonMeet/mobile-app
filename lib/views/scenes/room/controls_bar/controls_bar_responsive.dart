@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/constants/constants.dart';
-import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/background_blur/camera_background_blur_sync.dart';
 import 'package:meet/helper/denoise/denoise_audio_sync.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
@@ -40,7 +39,7 @@ class ResponsiveControlsBar extends StatefulWidget {
     this.backgroundColor,
     this.buttonWidth = 56,
     this.buttonGap = 6,
-    this.endWidth = 90,
+    this.trailing,
     this.cameraResolution,
     this.cameraMaxBitrate,
     this.currentCameraPosition,
@@ -54,7 +53,10 @@ class ResponsiveControlsBar extends StatefulWidget {
   final Color? backgroundColor;
   final double buttonWidth;
   final double buttonGap;
-  final double endWidth;
+
+  /// Optional widget rendered as the second-to-last control, right before the
+  /// leave button. Used e.g. for the "stop sharing" button while presenting.
+  final Widget? trailing;
   final VideoResolution? cameraResolution;
   final VideoMaxBitrate? cameraMaxBitrate;
   final CameraPosition? currentCameraPosition;
@@ -335,9 +337,15 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
                 .where((a) => a.visiblePredicate?.call() ?? true)
                 .toList();
 
-            // ---- width packing: always show [Mic][Video][...visible optionals...][More?][End] ----
+            // ---- width packing: always show [Mic][Video][...visible optionals...][More?][Trailing?][End] ----
             final maxW = constraints.maxWidth;
             final moreW = widget.buttonWidth;
+            // Space reserved for the optional trailing widget (stop sharing).
+            final trailingReserve = widget.trailing != null
+                ? widget.buttonGap + widget.buttonWidth
+                : 0.0;
+            // Space reserved for the leave button (same size as a control button).
+            final endReserve = widget.buttonGap + widget.buttonWidth;
             // Start with required: mic + video
             double used = 0;
             // place mic
@@ -348,14 +356,13 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
             // Try to fit as many optionals as possible (optimistically assume no "More")
             final visible = <ControlAction>[];
             for (final a in allOptionals) {
-              // If we add this optional, can we still fit the END button?
+              // If we add this optional, can we still fit the trailing + END buttons?
               final need =
                   widget.buttonGap +
-                  widget
-                      .buttonWidth // this optional
-                      +
-                  widget.buttonGap +
-                  widget.endWidth; // gap + END
+                  widget.buttonWidth // this optional
+                  +
+                  trailingReserve +
+                  endReserve;
               if (used + need <= maxW) {
                 used += widget.buttonGap + widget.buttonWidth;
                 visible.add(a);
@@ -367,13 +374,13 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
             final hasOverflow = visible.length < allOptionals.length;
             // If overflow, we need to reserve a "More" button.
             if (hasOverflow) {
-              // Ensure [gap + More + gap + End] fits; if not, remove some visible optionals.
+              // Ensure [gap + More + Trailing + End] fits; if not, remove some visible optionals.
               while (visible.isNotEmpty &&
                   used +
                           widget.buttonGap +
                           moreW +
-                          widget.buttonGap +
-                          widget.endWidth >
+                          trailingReserve +
+                          endReserve >
                       maxW) {
                 // remove last visible optional
                 used -= (widget.buttonGap + widget.buttonWidth);
@@ -381,9 +388,9 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
               }
             }
 
-            // Finally check (no overflow case): we must ensure END fits even if we filled all optionals
+            // Finally check (no overflow case): we must ensure Trailing + END fit even if we filled all optionals
             while (!hasOverflow &&
-                used + widget.buttonGap + widget.endWidth > maxW &&
+                used + trailingReserve + endReserve > maxW &&
                 visible.isNotEmpty) {
               used -= (widget.buttonGap + widget.buttonWidth);
               visible.removeLast();
@@ -403,6 +410,8 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
               inactiveBackgroundColor: a.inactiveBackgroundColor,
               badge: a.badge,
               key: a.key,
+              globalKey: a.globalKey,
+              description: a.description,
             );
 
             Widget buildMoreMenu() {
@@ -441,6 +450,12 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
                     // More (only if overflow)
                     if (overflow.isNotEmpty) ...[
                       buildMoreMenu(),
+                      SizedBox(width: widget.buttonGap),
+                    ],
+
+                    /// Trailing control (e.g. stop sharing), second-to-last
+                    if (widget.trailing != null) ...[
+                      widget.trailing!,
                       SizedBox(width: widget.buttonGap),
                     ],
 
@@ -500,23 +515,14 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
   Widget _buildLeaveButton(BuildContext context) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        fixedSize: Size(widget.endWidth, 56),
+        fixedSize: Size(widget.buttonWidth, widget.buttonWidth),
         backgroundColor: context.colors.deviceSelectorDisabledBackground,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(40),
-          side: BorderSide(
-            color: context.colors.deviceSelectorDisabledBackground,
-          ),
-        ),
+        shape: const CircleBorder(),
+        padding: EdgeInsets.zero,
         elevation: 0.0,
       ),
       onPressed: widget.onLeave,
-      child: mobile
-          ? context.images.iconEndCall.svg30(color: context.colors.white)
-          : Text(
-              context.local.leave,
-              style: ProtonStyles.body2Medium(color: context.colors.white),
-            ),
+      child: context.images.iconEndCall.svg30(color: context.colors.white),
     );
   }
 }

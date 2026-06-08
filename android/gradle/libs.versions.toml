@@ -9,6 +9,7 @@ ndkVersion = "29.0.14206865"
 androidx-activity = "1.10.1"
 androidx-biometric = "1.2.0-alpha05"
 androidx-core-splashscreen = "1.0.1"
+androidx-media = "1.7.0"
 androidx-espresso-core = "3.6.1"
 androidx-hilt = "1.2.0"
 androidx-hilt-navigation-compose = "1.2.0"
@@ -133,6 +134,7 @@ androidx-compose-uiToolingPreview = { module = "androidx.compose.ui:ui-tooling-p
 androidx-compose-uiTestManifest = { module = "androidx.compose.ui:ui-test-manifest" }
 
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "androidx-core-splashscreen" }
+androidx-media = { module = "androidx.media:media", version.ref = "androidx-media" }
 
 androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "androidx-hilt" }
 androidx-hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "androidx-hilt" }

@@ -23,6 +23,7 @@ import android.app.NotificationManager
 import android.content.Context
 import dagger.hilt.android.HiltAndroidApp
 import proton.android.meet.initializer.MainInitializer
+import proton.android.meet.meeting.MeetCallController
 
 @HiltAndroidApp
 class MeetApplication : Application() {
@@ -36,11 +37,12 @@ class MeetApplication : Application() {
         // Note: onTerminate() is not guaranteed to be called on modern Android,
         // but it's a fallback in case onDestroy() is not called
         try {
+            MeetCallController.stopMeeting(this)
             val notificationManager =
                     getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            // Cancel background notification (ID: 9999)
+            notificationManager.cancel(MeetCallController.NOTIFICATION_ID)
             notificationManager.cancel(9999)
-            android.util.Log.d("MeetApplication", "Notifications cancelled in onTerminate")
+            android.util.Log.d("MeetApplication", "Meeting notifications cancelled in onTerminate")
         } catch (e: Exception) {
             android.util.Log.e(
                     "MeetApplication",
