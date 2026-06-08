@@ -114,7 +114,7 @@
   "show_meeting_timer": "Mostrar cronômetro da reunião",
   "unsubscribe_video_by_default": "Desativar vídeo de entrada",
   "camera_background_blur": "Background blur",
-  "audio_noise_cancellation": "Noise cancellation",
+  "audio_noise_cancellation": "Cancelamento de ruído",
   "dark_mode": "Modo escuro",
   "show_connection_indicator": "Mostrar indicador de conexão",
   "desktop_notifications": "Notificações na área de trabalho",
@@ -1002,8 +1002,14 @@
       }
     }
   },
-  "meeting_expiry_banner_title_prefix": "A reunião terminará em ",
-  "meeting_expiry_banner_description": "Reuniões gratuitas são limitadas a 1 hora. Esta chamada será desconectada em breve.",
+  "meeting_expiry_banner_title_prefix": "Meeting will end in ",
+  "@meeting_expiry_banner_title_prefix": {
+    "description": "Title prefix for meeting expiry countdown banner; duration is appended"
+  },
+  "meeting_expiry_banner_description": "Free meetings are limited to 1 hour. This call will disconnect soon.",
+  "@meeting_expiry_banner_description": {
+    "description": "Subtitle on meeting expiry warning banner for free meetings"
+  },
   "host_close_meeting_description": "Deseja sair da reunião ou encerrá-la para todos?",
   "@host_close_meeting_description": {
     "description": "Description text when host want to leave meeting"
@@ -1132,7 +1138,7 @@
   "@create_new_room": {
     "description": "Menu item label to create a new room"
   },
-  "emoji_reactions": "Emoji reactions",
+  "emoji_reactions": "Reações com emoji",
   "@emoji_reactions": {
     "description": "Emoji reactions tooltip"
   },
@@ -1551,11 +1557,11 @@
   "@secure_meeting": {
     "description": "Default meeting name when no title is set"
   },
-  "premium_meeting": "Premium meeting",
+  "premium_meeting": "Reunião premium",
   "@premium_meeting": {
     "description": "Default meeting name for paid meeting"
   },
-  "free_meeting": "Free meeting",
+  "free_meeting": "Reunião gratuita",
   "@free_meeting": {
     "description": "Default meeting name for free meeting"
   },
@@ -1752,7 +1758,7 @@
   "@store_review_thanks_toast": {
     "description": "Toast shown before the OS in-app store review prompt"
   },
-  "iap_native_test_title": "Plans (native)",
+  "iap_native_test_title": "Planos (nativo)",
   "@iap_native_test_title": {
     "description": "Title for dev sheet that invokes native IAP / plans"
   },

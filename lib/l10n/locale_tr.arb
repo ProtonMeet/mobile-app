@@ -5,32 +5,32 @@
   "@app_name": {
     "description": "The name of the application"
   },
-  "logout": "Oturumu Kapat",
-  "login": "Giriş Yap",
-  "sign_in": "Oturum Aç",
-  "sign_out": "Oturumu Kapat",
-  "learn_more": "Daha Fazla Bilgi",
-  "no_data": "Veri Yok",
+  "logout": "Oturumu kapat",
+  "login": "Oturum aç",
+  "sign_in": "Oturum aç",
+  "sign_out": "Oturumu kapat",
+  "learn_more": "Ayrıntılı bilgi alın",
+  "no_data": "Herhangi bir veri yok",
   "submit": "Gönder",
   "cancel": "İptal",
   "close": "Kapat",
   "ok": "Tamam",
-  "unlock_app": "Uygulamanın Kilidini Aç",
+  "unlock_app": "Uygulamanın kilidini aç",
   "search": "Ara",
-  "placeholder": "Yer Tutucu",
-  "something_went_wrong": "Bir şeyler ters gitti",
+  "placeholder": "Yer belirtici",
+  "something_went_wrong": "Bir sorun çıktı",
   "retry": "Yeniden dene",
   "@retry": {
     "description": "Retry loading dashboard after an error"
   },
-  "report_a_problem": "Sorunu Bildir",
-  "sign_in_to_proton_title": "Proton'a Giriş Yap",
-  "sign_in_to_proton_subtitle": "Proton Hesabınızın bilgilerini girin.",
+  "report_a_problem": "Sorun bildireceğim",
+  "sign_in_to_proton_title": "Proton oturumu aç",
+  "sign_in_to_proton_subtitle": "Proton hesabınızın bilgilerini yazın.",
   "options": "Seçenekler",
   "@options": {
     "description": "Title for options dialog"
   },
-  "manage_accounts": "Hesapları yönet",
+  "manage_accounts": "Hesap yönetimi",
   "@manage_accounts": {
     "description": "Title for manage accounts dialog"
   },
@@ -38,209 +38,209 @@
   "@delete_account": {
     "description": "Title for delete account dialog"
   },
-  "signin_intro_title": "Proton Meet'e Hoş Geldiniz",
+  "signin_intro_title": "Proton Meet uygulamasına hoş geldiniz",
   "@signin_intro_title": {
     "description": "Title in the sign-in intro sheet"
   },
-  "signin_intro_subtitle": "Devam etmek için oturum açın veya bir hesap oluşturun",
+  "signin_intro_subtitle": "İlerlemek için oturum ya da hesap açın",
   "@signin_intro_subtitle": {
     "description": "Subtitle in the sign-in intro sheet"
   },
-  "signin_intro_create_account": "Hesap oluştur",
+  "signin_intro_create_account": "Bir hesap açın",
   "@signin_intro_create_account": {
     "description": "Primary button label in the sign-in intro sheet"
   },
-  "signin_intro_sign_in": "Oturum Aç",
+  "signin_intro_sign_in": "Oturum aç",
   "@signin_intro_sign_in": {
     "description": "Secondary button label in the sign-in intro sheet"
   },
-  "sign_in_username_or_email": "Kullanıcı adı veya e-posta",
+  "sign_in_username_or_email": "Kullanıcı adı ya da e-posta",
   "email": "E-posta",
   "user_name": "Kullanıcı adı",
   "account": "Hesap",
   "password": "Parola",
-  "session_expired_content": "Güvenliğiniz için oturumunuz zaman aşımına uğradı. Toplantılarınızı yönetmeyi sürdürmek için lütfen yeniden oturum açın.",
+  "session_expired_content": "Güvenliğiniz için oturumunuz zaman aşımına uğradı. Görüşmelerini yönetmeyi sürdürmek için lütfen yeniden oturum açın.",
   "session_expired_title": "Oturum süresi doldu!",
   "session_expired_continue_without_signing_in": "Oturum açmadan ilerle",
   "@session_expired_continue_without_signing_in": {
     "description": "Secondary button label for session expired bottom sheet"
   },
-  "force_upgrade": "Zorla Güncelle",
+  "force_upgrade": "Zorla güncelle",
   "upgrade": "Güncelle",
-  "search_participants": "Katılımcıları ara...",
+  "search_participants": "Katılımcı ara...",
   "participants_count": "Katılımcılar({count})",
-  "no_participants_found": "Katılımcı bulunamadı",
-  "try_different_search_term": "Başka bir arama terimi deneyin",
+  "no_participants_found": "Herhangi bir katılımcı bulunamadı",
+  "try_different_search_term": "Başka bir arama ifadesi deneyin",
   "you": "(Siz)",
-  "invite_participant": "Katılımcı Davet Et",
+  "invite_participant": "Katılımcı davet et",
   "leave": "Ayrıl",
-  "emoji_reaction": "Emoji Tepkisi",
+  "emoji_reaction": "Emoji tepkisi",
   "unshare_screen": "Ekran paylaşımını durdur",
-  "share_screen": "Ekran Paylaş",
+  "share_screen": "Ekranı paylaş",
   "show_chatroom": "Sohbet",
   "show_participants_list": "Katılımcılar",
   "show_settings": "Ayarlar",
-  "show_meeting_stats": "Toplantı İstatistiklerini Göster",
+  "show_meeting_stats": "Görüşme istatistiklerini görüntüle",
   "meeting_info": "Bilgi",
   "meeting_settings": "Ayarlar",
-  "host": "Ev Sahibi",
-  "lock_meeting": "Toplantıyı Kilitle",
-  "meeting_locked": "Toplantı kilitlendi",
+  "host": "Sunucu",
+  "lock_meeting": "Görüşmeyi kilitle",
+  "meeting_locked": "Görüşme kilitlendi",
   "@meeting_locked": {
     "description": "Title when meeting is locked"
   },
-  "meeting_locked_description": "Bu toplantı kilitli. Katılmak için lütfen toplantı sahibiyle iletişime geçin.",
+  "meeting_locked_description": "Bu görüşme kilitlenmiş. Katılmak için lütfen görüşme sahibi ile görüşün.",
   "@meeting_locked_description": {
     "description": "Description when meeting is locked"
   },
-  "meeting_locked_notification": "Toplantı kilitlendi. Yeni katılımcılar katılamaz.",
+  "meeting_locked_notification": "Görüşme kilitlendi. Yeni katılımcılar katılamaz.",
   "@meeting_locked_notification": {
     "description": "Toast notification when meeting is locked by host"
   },
-  "meeting_unlocked_notification": "Toplantı kilidi açıldı. Katılımcılar yeniden katılabilir.",
+  "meeting_unlocked_notification": "Görüşme kilidi açıldı. Katılımcılar yeniden katılabilir.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"
   },
-  "hide_profile_pictures": "Profil Resimlerini Gizle",
-  "picture_in_picture_mode": "Resim içinde resim modu",
+  "hide_profile_pictures": "Profil görsellerini gizle",
+  "picture_in_picture_mode": "Resim içinde resim kipi",
   "security": "Güvenlik",
-  "enable_waiting_room": "Bekleme Odasını Etkinleştir",
-  "hide_self_view": "Kendi Görünümünü Gizle",
-  "allow_all_participants_to": "Tüm katılımcıların şunları yapmasına izin ver:",
-  "chat": "Sohbet Etme",
-  "rename_themselves": "Adlarını Değiştirme",
-  "unmute_themselves": "Mikrofonlarını Açma",
-  "meeting": "Toplantı",
-  "show_meeting_timer": "Toplantı Zamanlayıcısını Göster",
-  "unsubscribe_video_by_default": "Gelen videoyu kapat",
+  "enable_waiting_room": "Bekleme odasını etkinleştir",
+  "hide_self_view": "Kendi görüntümü gizle",
+  "allow_all_participants_to": "Tüm katılımcılar şunları yapabilsin:",
+  "chat": "Sohbet etme",
+  "rename_themselves": "Adlarını değiştirme",
+  "unmute_themselves": "Mikrofonlarını açma",
+  "meeting": "Görüşme",
+  "show_meeting_timer": "Görüşme zamanlayıcısını görüntüle",
+  "unsubscribe_video_by_default": "Gelen görüntüyü kapat",
   "camera_background_blur": "Arka plan bulanıklığı",
   "audio_noise_cancellation": "Gürültü engelleme",
-  "dark_mode": "Karanlık Mod",
-  "show_connection_indicator": "Bağlantı Göstergesini Göster",
-  "desktop_notifications": "Masaüstü Bildirimleri",
-  "meeting_quality": "Toplantı Kalitesi",
-  "camera_resolution": "Kamera Çözünürlüğü",
-  "camera_max_bitrate": "Kamera Maksimum Bit Hızı",
-  "screen_sharing_resolution": "Ekran Paylaşımı Çözünürlüğü",
-  "screen_sharing_max_bitrate": "Ekran Paylaşımı Maksimum Bit Hızı",
-  "export_debug_log": "Hata Ayıklama Günlüğünü Dışa Aktar",
-  "type_a_message": "Bir mesaj yazın...",
-  "search_messages": "Mesajlarda Ara...",
-  "meeting_chat": "Toplantı Sohbeti",
-  "no_messages_found": "Mesaj bulunamadı",
-  "no_messages_yet": "Henüz mesaj yok",
-  "start_the_conversation": "Sohbeti Başlat",
+  "dark_mode": "Koyu kip",
+  "show_connection_indicator": "Bağlantı göstergesini görüntüle",
+  "desktop_notifications": "Masaüstü bildirimleri",
+  "meeting_quality": "Görüşme kalitesi",
+  "camera_resolution": "Kamera çözünürlüğü",
+  "camera_max_bitrate": "En yüksek kamera bit hızı",
+  "screen_sharing_resolution": "Ekran paylaşımı çözünürlüğü",
+  "screen_sharing_max_bitrate": "En yüksek ekran paylaşımı bit hızı",
+  "export_debug_log": "Hata ayıklama günlüğünü dışa aktar",
+  "type_a_message": "Bir ileti yazın...",
+  "search_messages": "İleti ara...",
+  "meeting_chat": "Görüşme sohbeti",
+  "no_messages_found": "Herhangi bir ileti bulunamadı",
+  "no_messages_yet": "Henüz bir ileti yok",
+  "start_the_conversation": "Görüşmeyi başlat",
   "unknown": "Bilinmiyor",
-  "bitrate_extreme_high_2000": "Aşırı Yüksek (2000 kbps)",
-  "bitrate_ultra_high_1900": "Ultra Yüksek (1900 kbps)",
-  "bitrate_ultra_high_1800": "Ultra Yüksek (1800 kbps)",
-  "bitrate_ultra_high_1700": "Ultra Yüksek (1700 kbps)",
-  "bitrate_ultra_high_1600": "Ultra Yüksek (1600 kbps)",
-  "bitrate_ultra_high_1500": "Ultra Yüksek (1500 kbps)",
-  "bitrate_very_high_1400": "Çok Yüksek (1400 kbps)",
-  "bitrate_very_high_1300": "Çok Yüksek (1300 kbps)",
-  "bitrate_very_high_1200": "Çok Yüksek (1200 kbps)",
-  "bitrate_very_high_1100": "Çok Yüksek (1100 kbps)",
-  "bitrate_high_1000": "Yüksek (1000 kbps)",
-  "bitrate_high_900": "Yüksek (900 kbps)",
-  "bitrate_high_800": "Yüksek (800 kbps)",
-  "bitrate_medium_high_700": "Orta Yüksek (700 kbps)",
-  "bitrate_medium_high_600": "Orta Yüksek (600 kbps)",
-  "bitrate_medium_high_500": "Orta Yüksek (500 kbps)",
-  "bitrate_medium_400": "Orta (400 kbps)",
-  "bitrate_medium_low_300": "Orta Düşük (300 kbps)",
-  "bitrate_low_200": "Düşük (200 kbps)",
-  "bitrate_very_low_100": "Çok Düşük (100 kbps)",
+  "bitrate_extreme_high_2000": "Aşırı yüksek (2000 kb/sn)",
+  "bitrate_ultra_high_1900": "Ultra yüksek (1900 kb/sn)",
+  "bitrate_ultra_high_1800": "Ultra yüksek (1800 kb/sn)",
+  "bitrate_ultra_high_1700": "Ultra yüksek (1700 kb/sn)",
+  "bitrate_ultra_high_1600": "Ultra yüksek (1600 kb/sn)",
+  "bitrate_ultra_high_1500": "Ultra yüksek (1500 kb/sn)",
+  "bitrate_very_high_1400": "Çok yüksek (1400 kb/sn)",
+  "bitrate_very_high_1300": "Çok yüksek (1300 kb/sn)",
+  "bitrate_very_high_1200": "Çok yüksek (1200 kb/sn)",
+  "bitrate_very_high_1100": "Çok yüksek (1100 kb/sn)",
+  "bitrate_high_1000": "Yüksek (1000 kb/sn)",
+  "bitrate_high_900": "Yüksek (900 kb/sn)",
+  "bitrate_high_800": "Yüksek (800 kb/sn)",
+  "bitrate_medium_high_700": "Orta yüksek (700 kb/sn)",
+  "bitrate_medium_high_600": "Orta yüksek (600 kb/sn)",
+  "bitrate_medium_high_500": "Orta yüksek (500 kb/sn)",
+  "bitrate_medium_400": "Orta (400 kb/sn)",
+  "bitrate_medium_low_300": "Orta düşük (300 kb/sn)",
+  "bitrate_low_200": "Düşük (200 kb/sn)",
+  "bitrate_very_low_100": "Çok düşük (100 kb/sn)",
   "resolution_360p": "360p",
   "resolution_720p": "720p",
   "resolution_1080p": "1080p",
   "resolution_4k": "4K",
   "join_meeting": "Gizlilikle konuşun",
-  "app_description": "Uçtan uca şifrelenmiş toplantılarımız gizliliği korur ve gerçek anlamda özgür ifade olanağı sağlar.",
-  "meeting_link": "Toplantı bağlantısı",
-  "meeting_detail": "Toplantı Detayı",
+  "app_description": "Uçtan uca şifrelenmiş görüşmelerimiz gizliliği korur ve gerçek anlamda özgür ifade olanağı sağlar.",
+  "meeting_link": "Görüşme bağlantısı",
+  "meeting_detail": "Görüşme bilgileri",
   "display_name": "Adınız",
-  "enter_display_name": "Adınızı girin",
-  "display_name_required": "Adınız gereklidir",
+  "enter_display_name": "Adınızı yazın",
+  "display_name_required": "Adınızı yazmanız zorunludur",
   "remember_display_name_on_device": "Gelecekteki görüşmeler için bu aygıtta adımı hatırla",
-  "join_meeting_button": "Toplantıya Katıl",
-  "create_meeting_button": "Toplantı oluştur",
-  "import_meeting_button": "Toplantıyı içe aktar",
-  "import_meeting_title": "Toplantıyı içe aktar",
-  "import_meeting_hint_text": "Toplantı bağlantısını yazın",
-  "open_home": "Ana Sayfayı Aç",
-  "start_simulation": "Simülasyonu Başlat",
-  "change_layout": "Düzeni Değiştir",
-  "layout_spaced_grid": "Aralıklı Izgara",
-  "layout_compact_grid": "Kompakt Izgara",
-  "layout_speaker_view": "Konuşmacı Görünümü",
-  "layout_multi_speaker_view": "Çoklu Konuşmacı Görünümü",
-  "no_active_speaker": "Aktif Konuşmacı Yok",
-  "camera_view": "Kamera Görünümü",
+  "join_meeting_button": "Görüşmeye katıl",
+  "create_meeting_button": "Görüşme oluştur",
+  "import_meeting_button": "Görüşmeyi içe aktar",
+  "import_meeting_title": "Görüşmeyi içe aktar",
+  "import_meeting_hint_text": "Görüşme bağlantısını yazın",
+  "open_home": "Girişi aç",
+  "start_simulation": "Benzetimi başlat",
+  "change_layout": "Yerleşimi değiştir",
+  "layout_spaced_grid": "Aralıklı ızgara",
+  "layout_compact_grid": "Sıkışık ızgara",
+  "layout_speaker_view": "Konuşmacı görünümü",
+  "layout_multi_speaker_view": "Çok konuşmacı görünümü",
+  "no_active_speaker": "Etkin konuşmacı yok",
+  "camera_view": "Kamera görünümü",
   "is_presenting": "sunum yapıyor",
-  "stop_presenting": "Sunumu Durdur",
+  "stop_presenting": "Sunumu durdur",
   "participant_joined": "Katılımcı katıldı🎉",
   "participant_left": "Katılımcı ayrıldı👋",
   "participant_name_prefix": "Ad: ",
   "participant_identity_prefix": "Kimlik: ",
   "setting_updated": "Ayar güncellendi",
   "changes_effect_next_screen_sharing": "Değişiklikler bir sonraki ekran paylaşımında geçerli olacak.",
-  "video_stats_copied": "Video istatistikleri panoya kopyalandı",
+  "video_stats_copied": "Görüntü istatistikleri panoya kopyalandı",
   "anonymous_user": "Anonim kullanıcı",
   "loading": "Yükleniyor...",
   "@loading": {
     "description": "Loading text"
   },
-  "video": "Video",
+  "video": "Görüntü",
   "audio": "Ses",
-  "turn_off_camera": "Kamerayı Kapat",
-  "turn_on_camera": "Kamerayı Aç",
-  "video_settings": "Video Ayarları",
+  "turn_off_camera": "Kamerayı kapat",
+  "turn_on_camera": "Kamerayı aç",
+  "video_settings": "Görüntü ayarları",
   "select_camera_device": "Bir kamera aygıtı seçin",
-  "turn_off_microphone": "Mikrofonu Kapat",
-  "turn_on_microphone": "Mikrofonu Aç",
-  "audio_settings": "Ses Ayarları",
+  "turn_off_microphone": "Mikrofonu kapat",
+  "turn_on_microphone": "Mikrofonu aç",
+  "audio_settings": "Ses ayarları",
   "select_microphone": "Bir mikrofon seçin",
   "select_speaker": "Bir hoparlör seçin",
-  "permission_not_given": "İzinler verilmedi",
-  "permission_camera": "Kameranızı etkinleştirmek için kamera izni gerekiyor",
-  "permission_microphone": "Mikrofonunuzu etkinleştirmek için kamera izni gerekiyor",
+  "permission_not_given": "İzinler verilmemiş",
+  "permission_camera": "Kameranızı kullanabilmek için kameraya erişme izni vermelisiniz",
+  "permission_microphone": "Mikrofonunuzu kullanabilmek için mikrofona erişme izni vermelisiniz",
   "camera_is_off": "Kamera kapalı",
   "copied_to_clipboard": "Panoya kopyalandı",
-  "personal_meeting": "Kişisel toplantı",
+  "personal_meeting": "Kişisel görüşme",
   "@personal_meeting": {
     "description": "Title for personal meeting dialog"
   },
-  "personal_meeting_description": "Her zaman kullanılabilen toplantı odanız",
+  "personal_meeting_description": "Her zaman kullanılabilen görüşme odanız",
   "@personal_meeting_description": {
     "description": "Description text for personal meeting room"
   },
-  "personal_meeting_room": "Kişisel toplantı odası",
+  "personal_meeting_room": "Kişisel görüşme odası",
   "@personal_meeting_room": {
     "description": "Title for personal meeting room dialog"
   },
-  "join_a_meeting": "Bir toplantıya katıl",
+  "join_a_meeting": "Bir görüşmeye katıl",
   "@join_a_meeting": {
     "description": "Title for join meeting dialog"
   },
-  "join_meeting_subtitle": "Güvenli bir toplantıya katılmak için Proton Meet bağlantınızı yapıştırın",
+  "join_meeting_subtitle": "Güvenli bir görüşmeye katılmak için Proton Meet bağlantınızı yapıştırın",
   "@join_meeting_subtitle": {
     "description": "Subtitle text for join meeting dialog"
   },
-  "please_enter_valid_meeting_link": "Lütfen geçerli bir toplantı bağlantısı yazın.",
+  "please_enter_valid_meeting_link": "Lütfen geçerli bir görüşme bağlantısı yazın.",
   "@please_enter_valid_meeting_link": {
     "description": "Error message when meeting link is invalid"
   },
-  "meeting_password_incorrect": "Toplantı parolası yanlış",
+  "meeting_password_incorrect": "Görüşme parolası yanlış",
   "@meeting_password_incorrect": {
     "description": "Error message when the meeting password embedded in the join link is invalid"
   },
-  "meeting_password_invalid": "Toplantı parolası geçersiz",
+  "meeting_password_invalid": "Görüşme parolası geçersiz",
   "link_copied_to_clipboard": "Bağlantı panoya kopyalandı",
   "@link_copied_to_clipboard": {
     "description": "Success message when meeting link is copied"
   },
-  "meeting_link_label": "Toplantı bağlantısı",
+  "meeting_link_label": "Görüşme bağlantısı",
   "@meeting_link_label": {
     "description": "Label for meeting link input field"
   },
@@ -260,31 +260,31 @@
   "@delete": {
     "description": "Delete action"
   },
-  "delete_meeting": "Toplantıyı sil",
+  "delete_meeting": "Görüşmeyi sil",
   "@delete_meeting": {
     "description": "Title for delete meeting dialog"
   },
-  "delete_meeting_confirmation": "Bu toplantıyı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+  "delete_meeting_confirmation": "Bu görüşmeyi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.",
   "@delete_meeting_confirmation": {
     "description": "Confirmation message for deleting a meeting"
   },
-  "creating_meeting": "Toplantı oluşturuluyor...",
+  "creating_meeting": "Görüşme oluşturuluyor...",
   "@creating_meeting": {
     "description": "Loading message shown while creating a meeting"
   },
-  "deleting_meeting": "Toplantı siliniyor...",
+  "deleting_meeting": "Görüşme siliniyor...",
   "@deleting_meeting": {
     "description": "Loading message shown while deleting a meeting"
   },
-  "updating_meeting": "Toplantı güncelleniyor...",
+  "updating_meeting": "Görüşme güncelleniyor...",
   "@updating_meeting": {
     "description": "Loading message shown while updating a meeting"
   },
-  "scheduling_meeting": "Toplantı planlanıyor...",
+  "scheduling_meeting": "Görüşme zamanlanıyor...",
   "@scheduling_meeting": {
     "description": "Loading message shown while scheduling a meeting"
   },
-  "guest_user_description": "Misafir kullanıcı olarak, bu panodan anonim ve ücretsiz toplantılar başlatabilirsiniz.",
+  "guest_user_description": "Misafir kullanıcı olarak, bu panodan anonim ve ücretsiz görüşmeler başlatabilirsiniz.",
   "@guest_user_description": {
     "description": "Description text explaining guest user capabilities"
   },
@@ -300,7 +300,7 @@
   "@already_have_account": {
     "description": "Text before login link for existing users"
   },
-  "we_hope_you_enjoyed_meeting": "Güvenli toplantınızdan memnun kaldığınızı umuyoruz! ",
+  "we_hope_you_enjoyed_meeting": "Güvenli görüşmenizden memnun kaldığınızı umuyoruz! ",
   "@we_hope_you_enjoyed_meeting": {
     "description": "Message shown after user leaves meeting"
   },
@@ -308,15 +308,15 @@
   "@left_by_mistake": {
     "description": "Text before rejoin link"
   },
-  "rejoin_meeting": "Toplantıya tekrar katıl",
+  "rejoin_meeting": "Görüşmeye yeniden katıl",
   "@rejoin_meeting": {
     "description": "Button text to rejoin a meeting"
   },
-  "left_meeting_title": "Toplantıdan ayrıldınız",
+  "left_meeting_title": "Görüşmeden ayrıldınız",
   "@left_meeting_title": {
     "description": "Title shown in left meeting bottom sheet"
   },
-  "left_meeting_subtitle_guest_free": "Kendi güvenli toplantınıza ev sahipliği yapın. Proton Meet üzerinde bir görüşme başlatın ve herkesi katılmaya davet etmek için bağlantıyı paylaşın. Basit, güvenli ve ücretsiz.",
+  "left_meeting_subtitle_guest_free": "Kendi güvenli görüşmenizi sunun. Proton Meet üzerinde bir görüşme başlatın ve herkesi katılmaya davet etmek için bağlantıyı paylaşın. Basit, güvenli ve ücretsiz.",
   "@left_meeting_subtitle_guest_free": {
     "description": "Subtitle shown for non-paid non-host users after leaving a meeting"
   },
@@ -324,15 +324,15 @@
   "@left_meeting_subtitle_guest_paid": {
     "description": "Subtitle shown for paid non-host users after leaving a meeting"
   },
-  "left_meeting_subtitle_host_free": "Bir toplantıya ev sahipliği yaptığınız için teşekkür ederiz.",
+  "left_meeting_subtitle_host_free": "Bir görüşmeye sahiplik ettiğiniz için teşekkür ederiz.",
   "@left_meeting_subtitle_host_free": {
     "description": "Subtitle shown for free host users after leaving a meeting"
   },
-  "left_meeting_subtitle_host_paid": "Ücretli bir toplantıya ev sahipliği yaptığınız için teşekkür ederiz.",
+  "left_meeting_subtitle_host_paid": "Ücretli bir görüşmeye sahiplik ettiğiniz için teşekkür ederiz.",
   "@left_meeting_subtitle_host_paid": {
     "description": "Subtitle shown for paid host users after leaving a meeting"
   },
-  "start_meeting_now": "Şimdi bir toplantı başlatın",
+  "start_meeting_now": "Şimdi bir görüşme başlatın",
   "@start_meeting_now": {
     "description": "Button text to start a meeting immediately from left meeting bottom sheet"
   },
@@ -340,7 +340,7 @@
   "@publish": {
     "description": "Dialog title for publishing camera and microphone"
   },
-  "publish_camera_mic_question": "Kameranızı ve Mikrofonunuzu yayınlamak ister misiniz?",
+  "publish_camera_mic_question": "Kameranızı ve mikrofonunuzu yayınlamak ister misiniz?",
   "@publish_camera_mic_question": {
     "description": "Question asking user to publish camera and microphone"
   },
@@ -352,23 +352,23 @@
   "@yes": {
     "description": "Positive response button text"
   },
-  "play_audio": "Sesi Çal",
+  "play_audio": "Sesi çal",
   "@play_audio": {
     "description": "Dialog title and button text for playing audio"
   },
-  "ios_safari_audio_activation": "iOS Safari için ses çalmayı manuel olarak etkinleştirmeniz gerekir!",
+  "ios_safari_audio_activation": "iOS Safari için ses çalmayı el ile açmalısınız!",
   "@ios_safari_audio_activation": {
     "description": "Message explaining iOS Safari audio activation requirement"
   },
-  "ignore": "Yoksay",
+  "ignore": "Yok say",
   "@ignore": {
     "description": "Button text to ignore an action"
   },
-  "unpublish": "Yayını Durdur",
+  "unpublish": "Yayını durdur",
   "@unpublish": {
     "description": "Dialog title for unpublishing camera and microphone"
   },
-  "unpublish_camera_mic_question": "Kamera ve Mikrofon yayınınızı durdurmak ister misiniz?",
+  "unpublish_camera_mic_question": "Kamera ve mikrofon yayınınızı durdurmak ister misiniz?",
   "@unpublish_camera_mic_question": {
     "description": "Question asking user to unpublish camera and microphone"
   },
@@ -380,7 +380,7 @@
   "@disconnect": {
     "description": "Dialog title and button text for disconnecting"
   },
-  "are_you_sure_disconnect": "Bağlantıyı kesmek istediğinizden emin misiniz?",
+  "are_you_sure_disconnect": "Bağlantıyı kesmek istediğinize emin misiniz?",
   "@are_you_sure_disconnect": {
     "description": "Confirmation question before disconnecting"
   },
@@ -388,11 +388,11 @@
   "@reconnect": {
     "description": "Dialog title and button text for reconnecting"
   },
-  "force_reconnection_message": "Bu işlem yeniden bağlanmaya zorlayacaktır",
+  "force_reconnection_message": "Bu işlem bağlantının yeniden kurulmasını dayatır",
   "@force_reconnection_message": {
     "description": "Message explaining that reconnection will be forced"
   },
-  "reconnection_successful": "Yeniden bağlantı başarılı oldu.",
+  "reconnection_successful": "Yeniden bağlantı kuruldu.",
   "@reconnection_successful": {
     "description": "Success message after reconnection"
   },
@@ -400,15 +400,15 @@
   "@no_connection": {
     "description": "Message shown when there is no network connection"
   },
-  "mls_not_synced": "MLS senkronize değil",
+  "mls_not_synced": "İletişim katmanı güvenliği eşitlenmemiş",
   "@mls_not_synced": {
     "description": "Message shown when MLS is not synced"
   },
-  "reconnecting_warning": "Yeniden bağlanılıyor",
+  "reconnecting_warning": "Bağlantı yeniden kuruluyor",
   "@reconnecting_warning": {
     "description": "Message shown when MLS is not synced or websocket trying to reconnect"
   },
-  "websocket_reconnecting": "WebSocket yeniden bağlanıyor",
+  "websocket_reconnecting": "WebSocket bağlantısı yeniden kuruluyor",
   "@websocket_reconnecting": {
     "description": "Message shown when WebSocket is reconnecting"
   },
@@ -420,7 +420,7 @@
   "@room_recording_reminder": {
     "description": "Dialog title for room recording status"
   },
-  "room_recording_active": "Oda kaydı aktif.",
+  "room_recording_active": "Oda kaydı açık.",
   "@room_recording_active": {
     "description": "Message when room recording is active"
   },
@@ -428,11 +428,11 @@
   "@room_recording_stopped": {
     "description": "Message when room recording is stopped"
   },
-  "meeting_being_recorded": "Bu toplantı kaydediliyor",
+  "meeting_being_recorded": "Bu görüşme kaydediliyor",
   "@meeting_being_recorded": {
     "description": "Title for recording in progress dialog"
   },
-  "recording_consent_message": "Toplantıya devam ederek, kaydedilmeyi kabul ediyor ve buna onay veriyorsunuz.",
+  "recording_consent_message": "Görüşmeye geçerek, kayıt alınacağını anlıyor ve rıza veriyorsunuz.",
   "@recording_consent_message": {
     "description": "Message about recording consent"
   },
@@ -465,7 +465,7 @@
   "@recording_label": {
     "description": "Chip shown next to participants currently recording the meeting"
   },
-  "agree_and_continue": "Kabul et ve devam et",
+  "agree_and_continue": "Kabul et ve ilerle",
   "@agree_and_continue": {
     "description": "Button text to agree and continue in meeting"
   },
@@ -473,23 +473,23 @@
   "@continue_button": {
     "description": "Button text to continue in meeting"
   },
-  "allow_subscription": "Aboneliğe izin ver",
+  "allow_subscription": "Abonele olunabilsin",
   "@allow_subscription": {
     "description": "Dialog title for allowing subscription"
   },
-  "allow_subscription_question": "Tüm katılımcıların yerel katılımcı tarafından yayınlanan parçalara abone olmasına izin verilsin mi?",
+  "allow_subscription_question": "Tüm katılımcılar yerel katılımcı tarafından yayınlanan parçalara abone olabilsin mi?",
   "@allow_subscription_question": {
     "description": "Question asking user to allow subscription"
   },
-  "simulate_scenario": "Senaryo Simüle Et",
+  "simulate_scenario": "Senaryo benzetimi yap",
   "@simulate_scenario": {
     "description": "Dialog title for simulating scenarios"
   },
-  "leave_room": "Odadan Ayrıl",
+  "leave_room": "Odadan ayrıl",
   "@leave_room": {
     "description": "Dialog title for leaving room"
   },
-  "are_you_sure_leave_room": "Bu odadan ayrılmak istediğinizden emin misiniz?",
+  "are_you_sure_leave_room": "Bu odadan ayrılmak istediğinize emin misiniz?",
   "@are_you_sure_leave_room": {
     "description": "Confirmation question before leaving room"
   },
@@ -501,7 +501,7 @@
   "@yes_response": {
     "description": "Positive response in confirmation dialogs"
   },
-  "personal_meeting_link": "Kişisel toplantı bağlantısı",
+  "personal_meeting_link": "Kişisel görüşme bağlantısı",
   "@personal_meeting_link": {
     "description": "Label for personal meeting link button"
   },
@@ -513,11 +513,11 @@
   "@regenerating": {
     "description": "Loading message shown while regenerating a meeting link"
   },
-  "start_secure_meeting": "Güvenli toplantı başlat",
+  "start_secure_meeting": "Güvenli görüşme başlat",
   "@start_secure_meeting": {
     "description": "Button text to start a secure meeting"
   },
-  "upcoming_meetings": "Yaklaşan toplantılar",
+  "upcoming_meetings": "Yaklaşan görüşmeler",
   "@upcoming_meetings": {
     "description": "Section title for upcoming meetings list"
   },
@@ -525,39 +525,39 @@
   "@my_rooms_count": {
     "description": "Title showing the count of my rooms"
   },
-  "my_meetings_count": "Toplantılarım",
+  "my_meetings_count": "Görüşmelerim",
   "@my_meetings_count": {
     "description": "Title showing the count of my meetings"
   },
-  "schedule_meeting": "Toplantı Planla",
+  "schedule_meeting": "Görüşme zamanla",
   "@schedule_meeting": {
     "description": "Button text to schedule a meeting"
   },
-  "start_meeting": "Toplantıyı Başlat",
+  "start_meeting": "Görüşmeyi başlat",
   "@start_meeting": {
     "description": "Button text to start a meeting"
   },
-  "recent_meetings": "Son Toplantılar",
+  "recent_meetings": "Son görüşmeler",
   "@recent_meetings": {
     "description": "Section title for recent meetings list"
   },
-  "start_instant_meeting": "Anında Toplantı Başlat",
+  "start_instant_meeting": "Anında görüşme başlat",
   "@start_instant_meeting": {
     "description": "Button text to start an instant meeting"
   },
-  "copy_link_button": "Bağlantıyı Kopyala",
+  "copy_link_button": "Bağlantıyı kopyala",
   "@copy_link_button": {
     "description": "Button text to copy a link"
   },
-  "start_now": "Şimdi Başlat",
+  "start_now": "Şimdi başlat",
   "@start_now": {
     "description": "Button text to start immediately"
   },
-  "leave_meeting": "Toplantıdan ayrıl",
+  "leave_meeting": "Görüşmeden ayrıl",
   "@leave_meeting": {
     "description": "Dialog title for leaving a meeting"
   },
-  "are_you_sure_leave_meeting": "Bu toplantıdan ayrılmak istediğinizden emin misiniz?",
+  "are_you_sure_leave_meeting": "Bu görüşmeden ayrılmak istediğinize emin misiniz?",
   "@are_you_sure_leave_meeting": {
     "description": "Confirmation question before leaving meeting"
   },
@@ -599,11 +599,11 @@
   "@enter_full_screen": {
     "description": "Tooltip for entering full screen mode"
   },
-  "enter_pip": "Resim içinde Resim moduna geç",
+  "enter_pip": "Resim içinde resim kipine geç",
   "@enter_pip": {
     "description": "Tooltip for entering Picture-in-Picture mode"
   },
-  "screen_sharing": "Ekran Paylaşımı",
+  "screen_sharing": "Ekran paylaşımı",
   "@screen_sharing": {
     "description": "Notification title for screen sharing"
   },
@@ -611,15 +611,15 @@
   "@sharing_your_screen": {
     "description": "Notification text when sharing screen"
   },
-  "screen_share_not_supported_mobile": "Ekran paylaşımı mobil web'de desteklenmiyor",
+  "screen_share_not_supported_mobile": "Ekran paylaşımı mobil web üzerinde desteklenmiyor",
   "@screen_share_not_supported_mobile": {
     "description": "Error message when screen sharing is not supported on mobile"
   },
-  "switch_speakerphone_on": "Telefon Hoparlörünü Kullan",
+  "switch_speakerphone_on": "Telefon hoparlörü kullanılsın",
   "@switch_speakerphone_on": {
     "description": "Tooltip for switching audio output to the phone speaker"
   },
-  "switch_speakerphone_off": "Varsayılan Ses Çıkışını Kullan",
+  "switch_speakerphone_off": "Varsayılan ses çıkışı kullanılsın",
   "@switch_speakerphone_off": {
     "description": "Tooltip for switching audio output back to the default device"
   },
@@ -643,15 +643,15 @@
   "@audio_output_phone_speakers": {
     "description": "Bottom sheet option: use the phone built-in loudspeaker"
   },
-  "please_grant_camera_permission": "Devam etmek için lütfen kamera izni verin",
+  "please_grant_camera_permission": "İlerlemek için lütfen kameraya erişme izni verin",
   "@please_grant_camera_permission": {
     "description": "Message requesting camera permission"
   },
-  "please_grant_microphone_permission": "Devam etmek için lütfen mikrofon izni verin",
+  "please_grant_microphone_permission": "İlerlemek için lütfen mikrofona erişme izni verin",
   "@please_grant_microphone_permission": {
     "description": "Message requesting microphone permission"
   },
-  "your_meeting_is_ready": "Toplantınız hazır",
+  "your_meeting_is_ready": "Görüşmeniz hazır",
   "@your_meeting_is_ready": {
     "description": "Title message when meeting is ready"
   },
@@ -659,15 +659,15 @@
   "@share_link_invite_description": {
     "description": "Instructions for sharing meeting link"
   },
-  "two_factor_authentication": "İki Adımlı Doğrulama",
+  "two_factor_authentication": "İki adımlı doğrulama",
   "@two_factor_authentication": {
     "description": "Title for two-factor authentication"
   },
-  "enter_2fa_code": "Devam etmek için lütfen İki adımlı doğrulama kodunuzu yazın",
+  "enter_2fa_code": "İlerlemek için lütfen iki adımlı doğrulama kodunuzu yazın",
   "@enter_2fa_code": {
     "description": "Prompt for entering 2FA code"
   },
-  "twofa_code": "İki adımlı doğrulama Kodu",
+  "twofa_code": "İki adımlı doğrulama kodu",
   "@twofa_code": {
     "description": "Label for 2FA code input field"
   },
@@ -687,11 +687,11 @@
   "@delete_proton_account": {
     "description": "Button text to delete Proton account"
   },
-  "invalid_meeting_link": "Geçersiz toplantı bağlantısı",
+  "invalid_meeting_link": "Görüşme bağlantısı geçersiz",
   "@invalid_meeting_link": {
     "description": "Error message for invalid meeting link"
   },
-  "permission_required": "İzin gerekli",
+  "permission_required": "İzin verilmesi gerekli",
   "@permission_required": {
     "description": "Label when permission is required"
   },
@@ -703,27 +703,27 @@
   "@subscribe_audio": {
     "description": "Menu item to subscribe to audio"
   },
-  "unsubscribe_video": "Video aboneliğinden ayrıl",
+  "unsubscribe_video": "Görüntü aboneliğinden ayrıl",
   "@unsubscribe_video": {
     "description": "Menu item to unsubscribe from video"
   },
-  "subscribe_video": "Videoya abone ol",
+  "subscribe_video": "Görüntüye abone ol",
   "@subscribe_video": {
     "description": "Menu item to subscribe to video"
   },
-  "remote_mute_video": "Videoyu uzaktan sessize al",
+  "remote_mute_video": "Görüntüyü uzaktan kapat",
   "@remote_mute_video": {
     "description": "Menu item to remotely mute video"
   },
-  "remote_mute_audio": "Sesi uzaktan sessize al",
+  "remote_mute_audio": "Sesi uzaktan kapat",
   "@remote_mute_audio": {
     "description": "Menu item to remotely mute audio"
   },
-  "force_mute": "Sessize almaya zorla",
+  "force_mute": "Zorla kapat",
   "@force_mute": {
     "description": "Menu item to force mute a participant"
   },
-  "force_mute_participant": "{name} adlı kullanıcıyı sessize almaya zorla",
+  "force_mute_participant": "{name} kullanıcısını zorla kapat",
   "@force_mute_participant": {
     "description": "Toast message when force muting a participant",
     "placeholders": {
@@ -749,7 +749,7 @@
   "@kick_out": {
     "description": "Menu item to kick out a participant"
   },
-  "kick_out_participant": "{name} adlı kullanıcıyı at",
+  "kick_out_participant": "{name} kullanıcısını at",
   "@kick_out_participant": {
     "description": "Toast message when kicking out a participant",
     "placeholders": {
@@ -770,11 +770,11 @@
   "@unsubscribe": {
     "description": "Menu item to unsubscribe"
   },
-  "preferred_fps": "Tercih Edilen FPS",
+  "preferred_fps": "İstenen kare/saniye",
   "@preferred_fps": {
     "description": "Tooltip for preferred FPS setting"
   },
-  "preferred_quality": "Tercih Edilen Kalite",
+  "preferred_quality": "İstenen kalite",
   "@preferred_quality": {
     "description": "Tooltip for preferred quality setting"
   },
@@ -790,7 +790,7 @@
   "@low": {
     "description": "Low quality option"
   },
-  "unnamed_room": "Adsız Oda",
+  "unnamed_room": "Adsız oda",
   "@unnamed_room": {
     "description": "Default name for rooms without a name"
   },
@@ -807,11 +807,11 @@
   "@chat_privacy_message": {
     "description": "Privacy message displayed in chat when there are no messages."
   },
-  "meeting_quality_feedback": "Toplantı Kalitesi Geri Bildirimi",
+  "meeting_quality_feedback": "Görüşme kalitesi geri bildirimi",
   "@meeting_quality_feedback": {
     "description": "Title for meeting quality feedback form"
   },
-  "quality_feedback_email_message": "Göndererek, bağlantı günlüğünü e-posta yoluyla bizimle paylaşmış olursunuz.",
+  "quality_feedback_email_message": "Gönderdiğinizde, bağlantı günlüğünü e-posta ile bizimle paylaşmış olursunuz.",
   "@quality_feedback_email_message": {
     "description": "Message explaining that connection log will be shared via email"
   },
@@ -903,11 +903,11 @@
   "@feature_not_ready": {
     "description": "Message when a feature is not ready"
   },
-  "video_stats_all_participants": "Video İstatistikleri - Tüm Katılımcılar",
+  "video_stats_all_participants": "Görüntü istatistikleri - Tüm katılımcılar",
   "@video_stats_all_participants": {
     "description": "Title for video statistics dialog"
   },
-  "video_stats": "video istatistikleri",
+  "video_stats": "görüntü istatistikleri",
   "@video_stats": {
     "description": "Label for video statistics"
   },
@@ -915,7 +915,7 @@
   "@page_not_found": {
     "description": "Error message when page is not found"
   },
-  "invalid_deeplink_format": "Geçersiz derin bağlantı biçimi: {name}",
+  "invalid_deeplink_format": "Derin bağlantı biçimi geçersiz: {name}",
   "@invalid_deeplink_format": {
     "description": "Error message for invalid deeplink format",
     "placeholders": {
@@ -924,11 +924,11 @@
       }
     }
   },
-  "open_settings": "Ayarları Aç",
+  "open_settings": "Ayarları aç",
   "@open_settings": {
     "description": "Button text to open settings"
   },
-  "schedule": "Planla",
+  "schedule": "Zamanla",
   "@schedule": {
     "description": "Button text to schedule"
   },
@@ -936,15 +936,15 @@
   "@start": {
     "description": "Button text to start"
   },
-  "start_an_instant_meeting": "Anında toplantı başlat",
+  "start_an_instant_meeting": "Anında görüşme başlat",
   "@start_an_instant_meeting": {
     "description": "Button text to start an instant meeting"
   },
-  "more": "Daha fazla",
+  "more": "Diğer",
   "@more": {
     "description": "Tooltip for more options button"
   },
-  "unlock_failed_too_many_times": "Kilit açma çok kez başarısız oldu",
+  "unlock_failed_too_many_times": "Çok sayıda başarısız kilit açma girişiminde bulunuldu",
   "@unlock_failed_too_many_times": {
     "description": "Error message when unlock fails too many times"
   },
@@ -952,27 +952,27 @@
   "@show_all_stats_debug": {
     "description": "Button text to show all stats in debug mode"
   },
-  "close_simulation": "Simülasyonu Kapat",
+  "close_simulation": "Benzetimi kapat",
   "@close_simulation": {
     "description": "Button text to close simulation"
   },
-  "close_all_rooms_exit_simulation": "Tüm odaları kapatmak ve simülasyon modundan çıkmak istediğinizden emin misiniz?",
+  "close_all_rooms_exit_simulation": "Tüm odaları kapatmak ve benzerim kipinden çıkmak istediğinize emin misiniz?",
   "@close_all_rooms_exit_simulation": {
     "description": "Confirmation question before closing simulation"
   },
-  "yes_close_all": "Evet, Tümünü Kapat",
+  "yes_close_all": "Evet, tümünü kapat",
   "@yes_close_all": {
     "description": "Button text to confirm closing all rooms"
   },
-  "simulation_mode": "Simülasyon Kipi",
+  "simulation_mode": "Benzetim kipi",
   "@simulation_mode": {
     "description": "Title for simulation mode"
   },
-  "simulation_mode_description": "Test için simüle edilmiş odalar oluşturun ve yönetin",
+  "simulation_mode_description": "Deneme için benzetilmiş odalar oluşturun ve yönetin",
   "@simulation_mode_description": {
     "description": "Description text for simulation mode"
   },
-  "simulated_rooms": "Simüle Edilmiş Odalar",
+  "simulated_rooms": "Benzetilmiş odalar",
   "@simulated_rooms": {
     "description": "Title for simulated rooms section"
   },
@@ -988,11 +988,11 @@
       }
     }
   },
-  "enable_video": "Videoyu Aç",
+  "enable_video": "Görüntüyü aç",
   "@enable_video": {
     "description": "Button text to enable video"
   },
-  "meeting_will_end_in": "Toplantı {time} içinde sona erecek",
+  "meeting_will_end_in": "Görüşme {time} içinde sona erecek",
   "@meeting_will_end_in": {
     "description": "Title for meeting will end dialog with countdown timer",
     "placeholders": {
@@ -1002,22 +1002,28 @@
       }
     }
   },
-  "meeting_expiry_banner_title_prefix": "Kalan süre: ",
-  "meeting_expiry_banner_description": "Ücretsiz toplantılar 1 saat ile sınırlıdır. Bu görüşme yakında sonlandırılacak.",
-  "host_close_meeting_description": "Toplantıdan ayrılmak mı yoksa herkes için sonlandırmak mı istiyorsunuz?",
+  "meeting_expiry_banner_title_prefix": "Görüşmenin sona erme zamanı: ",
+  "@meeting_expiry_banner_title_prefix": {
+    "description": "Title prefix for meeting expiry countdown banner; duration is appended"
+  },
+  "meeting_expiry_banner_description": "Ücretsiz görüşmeler 1 saat ile sınırlıdır. Bu görüşme kısa süre içinde sonlanacak.",
+  "@meeting_expiry_banner_description": {
+    "description": "Subtitle on meeting expiry warning banner for free meetings"
+  },
+  "host_close_meeting_description": "Görüşmeden ayrılmak mı yoksa herkes için sonlandırmak mı istiyorsunuz?",
   "@host_close_meeting_description": {
     "description": "Description text when host want to leave meeting"
   },
-  "close_meeting_description": "Ayrılmak istediğinizden emin misiniz? Toplantı sizsiz devam edecek.",
+  "close_meeting_description": "Ayrılmak istediğinize emin misiniz? Görüşme siz olmadan sürecek.",
   "@close_meeting_description": {
     "description": "Description text when host want to leave meeting"
   },
-  "meeting_will_end_description": "Bu toplantıdaki tek katılımcı siz olduğunuz için toplantı otomatik olarak kapanacaktır. Bu toplantıda kalmak istiyor musunuz?",
-  "meeting_created": "Toplantı oluşturuldu",
+  "meeting_will_end_description": "Bu görüşmedeki tek katılımcı siz olduğunuz için görüşme otomatik olarak sonlandırılacak. Bu görüşmede kalmak istiyor musunuz?",
+  "meeting_created": "Görüşme oluşturuldu",
   "@meeting_created": {
     "description": "Title for meeting created dialog"
   },
-  "room_initialing_hint": "Uzak video akışlarına abone olunuyor…",
+  "room_initialing_hint": "Uzak görüntü akışlarına abone olunuyor…",
   "@room_initialing_hint": {
     "description": "Hint for room initialing process"
   },
@@ -1029,7 +1035,7 @@
   "@meeting_details": {
     "description": "Button label to show meeting details"
   },
-  "meeting_details_section": "Toplantı ayrıntıları",
+  "meeting_details_section": "Görüşme ayrıntıları",
   "@meeting_details_section": {
     "description": "Section title for meeting details in info panel"
   },
@@ -1049,7 +1055,7 @@
   "@invite_link_label": {
     "description": "Label for invite link field"
   },
-  "messaging_layer_security": "Mesajlaşma Katmanı Güvenliği (MLS)",
+  "messaging_layer_security": "İletişim katmanı güvenliği (MLS)",
   "@messaging_layer_security": {
     "description": "Title for MLS section in meeting info panel"
   },
@@ -1069,7 +1075,7 @@
   "@recurrence_daily": {
     "description": "Recurrence frequency label for daily meetings"
   },
-  "recurrence_weekly": "Haftada bir",
+  "recurrence_weekly": "Haftalık",
   "@recurrence_weekly": {
     "description": "Recurrence frequency label for weekly meetings"
   },
@@ -1084,27 +1090,27 @@
   "@meeting_will_end_description": {
     "description": "Description text explaining why meeting will end"
   },
-  "stay_in_meeting": "Toplantıda kal",
+  "stay_in_meeting": "Görüşmede kal",
   "@stay_in_meeting": {
     "description": "Button text to stay in meeting"
   },
-  "end_meeting_for_all": "Toplantıyı herkes için sonlandır",
+  "end_meeting_for_all": "Görüşmeyi herkes için sonlandır",
   "@end_meeting_for_all": {
     "description": "Button text to end meeting for all"
   },
-  "stay_in_the_meeting": "Toplantıda kal",
+  "stay_in_the_meeting": "Görüşmede kal",
   "@stay_in_the_meeting": {
     "description": "Button text to stay in the meeting"
   },
-  "connection_lost": "Bağlantı koptu",
+  "connection_lost": "Bağlantı kesildi",
   "@connection_lost": {
     "description": "Connection lost description"
   },
-  "connection_lost_content": "Bağlantı koptu, lütfen toplantıya tekrar katılın",
+  "connection_lost_content": "Bağlantı kesildi. Lütfen görüşmeye yeniden katılın",
   "@connection_lost_content": {
     "description": "Connection lost description"
   },
-  "go_back_to_dashboard": "Panoya geri dön",
+  "go_back_to_dashboard": "Panoya dön",
   "@go_back_to_dashboard": {
     "description": "Description text for go back to the dashboard button"
   },
@@ -1120,7 +1126,7 @@
   "@early_access_title_for_login_user": {
     "description": "Message to let user know this is early access feature available for Lifetime and Visionary users"
   },
-  "schedule_a_meeting": "Toplantı planla",
+  "schedule_a_meeting": "Görüşme zamanla",
   "@schedule_a_meeting": {
     "description": "Menu item label to schedule a meeting in Proton Meet app"
   },
@@ -1144,7 +1150,7 @@
   "@edit_room": {
     "description": "Menu item label to edit a room"
   },
-  "edit_meeting": "Toplantıyı düzenle",
+  "edit_meeting": "Görüşmeyi düzenle",
   "@edit_meeting": {
     "description": "Menu item label to edit a meeting"
   },
@@ -1164,7 +1170,7 @@
   "@room_deleted": {
     "description": "Success message shown after a room is deleted"
   },
-  "meeting_deleted": "Toplantı silindi",
+  "meeting_deleted": "Görüşme silindi",
   "@meeting_deleted": {
     "description": "Success message shown after a meeting is deleted"
   },
@@ -1172,7 +1178,7 @@
   "@enter_room_name_hint": {
     "description": "Hint text for room name input field"
   },
-  "create_room_subtitle": "Toplantı odaları her zaman kullanılabilir",
+  "create_room_subtitle": "Görüşme odaları her zaman kullanılabilir",
   "@create_room_subtitle": {
     "description": "Subtitle text for create room dialog"
   },
@@ -1220,11 +1226,11 @@
   "@connection_quality_poor": {
     "description": "Tooltip message shown when connection quality is poor"
   },
-  "meeting_ended_by_host": "Toplantı sahibi toplantıyı sonlandırdı",
+  "meeting_ended_by_host": "Görüşme sahibi toplantıyı sonlandırdı",
   "@meeting_ended_by_host": {
     "description": "Toast message shown when the host ends the meeting for everyone"
   },
-  "client_kicked_out_by_host": "Toplantı sahibi sizi toplantıdan çıkardı",
+  "client_kicked_out_by_host": "Görüşme sahibi sizi toplantıdan çıkardı",
   "@client_kicked_out_by_host": {
     "description": "Toast message shown when the host removes current user from the meeting"
   },
@@ -1232,7 +1238,7 @@
   "@kicked_out_bottom_sheet_title": {
     "description": "Title shown in left meeting bottom sheet when current user is removed by host"
   },
-  "kicked_out_bottom_sheet_content": "Oturum sahibi sizi toplantıdan çıkardı.",
+  "kicked_out_bottom_sheet_content": "Görüşme sahibi sizi görüşmeden çıkardı.",
   "@kicked_out_bottom_sheet_content": {
     "description": "Content shown in left meeting bottom sheet when current user is removed by host"
   },
@@ -1644,7 +1650,7 @@
   "@always_show_status": {
     "description": "Setting label to always show connection status banner"
   },
-  "connection_check_mls_checking": "Bağlantı kontrolü\nMLS durumu denetleniyor...",
+  "connection_check_mls_checking": "Bağlantı denetimi\nİletişim katmanı güvenliği denetleniyor...",
   "@connection_check_mls_checking": {
     "description": "Message shown when checking MLS sync status"
   },
@@ -1652,11 +1658,11 @@
   "@connection_issue_restoring": {
     "description": "Message shown when connection issue is being resolved"
   },
-  "connection_check_mls_failed": "Bağlantı kontrolü\nMLS durum denetimi başarısız. Yeniden katılma tetikleniyor...",
+  "connection_check_mls_failed": "Bağlantı denetimi\nİletişim katmanı güvenliği denetlenemedi. Yeniden katılma tetikleniyor...",
   "@connection_check_mls_failed": {
     "description": "Message shown when MLS sync check fails"
   },
-  "connection_check_mls_passed": "Bağlantı kontrolü\nMLS durum denetimi başarılı",
+  "connection_check_mls_passed": "Bağlantı denetimi\nİletişim katmanı güvenliği denetlendi",
   "@connection_check_mls_passed": {
     "description": "Message shown when MLS sync check passes"
   },
@@ -1668,7 +1674,7 @@
   "@sign_in_card_title": {
     "description": "Title text for the sign-in card displayed on dashboard"
   },
-  "sign_in_card_description": "Görüşmeler planlayın, kişisel odanıza erişin ve yeni odalar oluşturun.",
+  "sign_in_card_description": "Görüşmeler zamanlayın, kişisel odanıza erişin ve yeni odalar oluşturun.",
   "@sign_in_card_description": {
     "description": "Description text for the sign-in card explaining benefits of signing in"
   },
@@ -1676,7 +1682,7 @@
   "@almost_there_title": {
     "description": "Title for the almost there bottom sheet"
   },
-  "almost_there_content_before": "Bir görüşme planlamak için ücretsiz bir ",
+  "almost_there_content_before": "Bir görüşme zamanlamak için ücretsiz bir ",
   "@almost_there_content_before": {
     "description": "Content before Proton account in almost there bottom sheet (schedule meeting)"
   },
@@ -1684,7 +1690,7 @@
   "@almost_there_content_before_create_room": {
     "description": "Content before Proton account in almost there bottom sheet (create room)"
   },
-  "almost_there_content_before_personal_room": "Kişisel toplantı odanızı kullanmak için ücretsiz bir ",
+  "almost_there_content_before_personal_room": "Kişisel görüşme odanızı kullanmak için ücretsiz bir ",
   "@almost_there_content_before_personal_room": {
     "description": "Content before Proton account in almost there bottom sheet (personal meeting room)"
   },
