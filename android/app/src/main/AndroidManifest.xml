@@ -15,7 +15,6 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -140,7 +139,7 @@
             android:name="proton.android.meet.meeting.MeetCallForegroundService"
             android:exported="false"
             android:stopWithTask="true"
-            android:foregroundServiceType="camera|microphone|mediaProjection|mediaPlayback" />
+            android:foregroundServiceType="camera|microphone|mediaProjection" />
         <receiver
             android:name="proton.android.meet.meeting.MeetCallActionReceiver"
             android:exported="false">
