@@ -88,6 +88,15 @@ object MeetCallController {
             return false
         }
 
+        if (!canPromoteToForeground(MeetCallForegroundService.FgsMode.MEETING)) {
+            Log.w(
+                    TAG,
+                    "startMeeting: no applicable foreground service type " +
+                            "(camera/microphone permission required)",
+            )
+            return false
+        }
+
         isMeetingActive = true
         if (isScreenSharing) {
             // Already in screen-share mode; refresh notification only.
@@ -113,6 +122,10 @@ object MeetCallController {
         val ctx = context.applicationContext
         if (!hasPostNotificationsPermission(ctx)) {
             Log.w(TAG, "startScreenShare: POST_NOTIFICATIONS not granted")
+            return false
+        }
+        if (!canPromoteToForeground(MeetCallForegroundService.FgsMode.SCREEN_SHARE)) {
+            Log.w(TAG, "startScreenShare: no applicable foreground service type")
             return false
         }
         if (!isMeetingActive) {
@@ -159,6 +172,13 @@ object MeetCallController {
         context.startActivity(intent)
     }
 
+    fun canPromoteToForeground(mode: MeetCallForegroundService.FgsMode): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            return true
+        }
+        return foregroundServiceTypes(mode) != 0
+    }
+
     fun foregroundServiceTypes(mode: MeetCallForegroundService.FgsMode): Int {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             return 0
@@ -172,9 +192,6 @@ object MeetCallController {
         }
         if (mode == MeetCallForegroundService.FgsMode.SCREEN_SHARE) {
             types = types or ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
-        }
-        if (types == 0) {
-            types = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
         }
         return types
     }

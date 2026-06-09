@@ -60,6 +60,11 @@ class MeetCallForegroundService : Service() {
         try {
             val notification = MeetCallController.buildNotification(this, mode)
             val serviceTypes = MeetCallController.foregroundServiceTypes(mode)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && serviceTypes == 0) {
+                Log.e(tag, "promoteToForeground: no applicable foreground service type")
+                stopSelf()
+                return
+            }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 startForeground(
                     MeetCallController.NOTIFICATION_ID,
