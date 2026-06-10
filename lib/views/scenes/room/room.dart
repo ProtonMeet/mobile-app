@@ -511,6 +511,32 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     }
   }
 
+  /// Wire the system call notification hang-up action to the same leave path
+  /// as the in-app Leave meeting button.
+  void _registerNotificationEndCallCallback() {
+    if (!android) return;
+
+    try {
+      final notificationService = ManagerFactory().get<NotificationService>();
+      if (notificationService is AndroidNotificationService) {
+        notificationService.setEndCallFromNotificationCallback(
+          _onEndCallFromNotification,
+        );
+      }
+    } catch (e) {
+      l.logger.e('[RoomPage] Error registering notification end-call: $e');
+    }
+  }
+
+  Future<void> _onEndCallFromNotification() async {
+    if (_isLeavingByUser) {
+      l.logger.d('[RoomPage] Skip duplicate notification end-call');
+      return;
+    }
+    l.logger.i('[RoomPage] End call requested from notification');
+    await _leaveRoom(isShowLeftMeetingBottomSheet: false);
+  }
+
   /// Show the persistent in-meeting notification immediately on entering
   /// the meeting.
   ///
@@ -526,13 +552,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         roomName: widget.meetInfo.meetName,
         callId: widget.meetInfo.meetLinkName,
       );
-      if (notificationService is AndroidNotificationService) {
-        notificationService.setEndCallFromNotificationCallback(() async {
-          if (mounted) {
-            _bloc.add(LeaveRoom());
-          }
-        });
-      }
+      _registerNotificationEndCallCallback();
       l.logger.d('[RoomPage] In-meeting notification show requested');
     } catch (e) {
       // Defensive: the service itself is hardened, but if the manager
@@ -1627,6 +1647,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     String? leftMeetingBottomSheetContent,
   }) async {
     _isLeavingByUser = true;
+    final meetingLink = widget.meetLink;
+    final isHost = _bloc.state.isHost;
+    final isPaidUser = _bloc.state.isPaidUser;
+    final meetLinkName = _bloc.state.meetInfo.meetLinkName;
+
     if (!_bloc.isClosed) {
       _bloc.stopLivekitActiveUuidRefresh();
     }
@@ -1678,18 +1703,18 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     // Hide notification when leaving room
     await _hideNotification('leaving room');
 
-    if (!mounted) return;
-
-    // Save meeting link for rejoin
-    final meetingLink = widget.meetLink;
-    final isHost = _bloc.state.isHost;
-    final isPaidUser = _bloc.state.isPaidUser;
-    final meetLinkName = _bloc.state.meetInfo.meetLinkName;
-
-    Navigator.of(
-      context,
-      rootNavigator: true,
-    ).popUntil((route) => route.isFirst);
+    final rootNavigator = Coordinator.rootNavigatorKey.currentState;
+    if (rootNavigator != null) {
+      rootNavigator.popUntil((route) => route.isFirst);
+    } else if (mounted) {
+      Navigator.of(
+        context,
+        rootNavigator: true,
+      ).popUntil((route) => route.isFirst);
+    } else {
+      l.logger.w('[Room] Leave room: no navigator available for pop');
+      return;
+    }
 
     final rootContext =
         Coordinator.rootNavigatorKey.currentState?.overlay?.context ??
@@ -2118,6 +2143,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                   localParticipant,
                 );
               }
+
+              _registerNotificationEndCallCallback();
             },
           ),
           BlocListener<RoomBloc, RoomState>(

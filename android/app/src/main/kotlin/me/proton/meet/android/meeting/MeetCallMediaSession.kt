@@ -28,7 +28,7 @@ class MeetCallMediaSession(context: Context) {
         session.setCallback(
             object : MediaSessionCompat.Callback() {
                 override fun onStop() {
-                    MeetCallController.endCallFromMediaSession(appContext)
+                    MeetCallController.notifyEndCallRequested()
                 }
             },
         )
