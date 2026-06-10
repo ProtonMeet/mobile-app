@@ -65,8 +65,14 @@ class AndroidNotificationService implements NotificationService {
           logger.e('[AndroidNotificationService] onReturnToCall failed: $e');
         }
       case 'onEndCallRequested':
+        if (_onEndCallCallback == null) {
+          logger.w(
+            '[AndroidNotificationService] onEndCallRequested: no callback',
+          );
+          return;
+        }
         try {
-          await _onEndCallCallback?.call();
+          await _onEndCallCallback!.call();
         } catch (e) {
           logger.e('[AndroidNotificationService] onEndCall failed: $e');
         }

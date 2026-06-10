@@ -147,21 +147,25 @@ object MeetCallController {
         MeetCallForegroundService.start(ctx, MeetCallForegroundService.FgsMode.MEETING)
     }
 
-    fun endCallFromNotification(context: Context) {
-        stopMeeting(context)
-        notifyEndCallRequested()
-    }
-
-    fun endCallFromMediaSession(context: Context) {
-        endCallFromNotification(context)
-    }
-
     fun notifyReturnToCall() {
         runCatching { methodChannel?.invokeMethod("onReturnToCall", null) }
     }
 
     fun notifyEndCallRequested() {
-        runCatching { methodChannel?.invokeMethod("onEndCallRequested", null) }
+        val channel = methodChannel
+        if (channel == null) {
+            Log.w(TAG, "notifyEndCallRequested: MethodChannel not attached")
+            return
+        }
+        val deliver = {
+            runCatching { channel.invokeMethod("onEndCallRequested", null) }
+                .onFailure { Log.e(TAG, "notifyEndCallRequested failed", it) }
+        }
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            deliver()
+        } else {
+            android.os.Handler(android.os.Looper.getMainLooper()).post { deliver() }
+        }
     }
 
     fun launchMeetingActivity(context: Context) {

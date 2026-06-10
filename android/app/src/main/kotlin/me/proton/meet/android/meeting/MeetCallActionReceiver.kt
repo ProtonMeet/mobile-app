@@ -19,7 +19,7 @@ class MeetCallActionReceiver : BroadcastReceiver() {
                 MeetCallController.notifyReturnToCall()
             }
             MeetCallController.ACTION_END_CALL -> {
-                MeetCallController.endCallFromNotification(context)
+                MeetCallController.notifyEndCallRequested()
             }
         }
     }
