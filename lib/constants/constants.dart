@@ -42,6 +42,20 @@ const int guestMeetingRoomSize = 4;
 /// delay subscription update
 const Duration delaySubscriptionUpdate = Duration(milliseconds: 5000);
 
+/// Initial delay before retrying a failed visible-camera bind.
+const Duration videoSubscriptionBindRetryDelay = Duration(seconds: 2);
+
+/// Max retries after [waitForVideoTrackBound] times out for a visible tile.
+const int maxVideoSubscriptionBindRetries = 3;
+
+const Duration audioSubscribeTimeout = Duration(seconds: 10);
+const Duration audioSubscribeRetryBaseDelay = Duration(seconds: 2);
+const Duration audioSubscribeRetryMaxDelay = Duration(seconds: 8);
+const int maxAudioSubscribeRetries = 3;
+
+/// Min interval between sort-path [reconcileInFlightAudioSubscribes] passes.
+const Duration audioReconcileMinInterval = Duration(seconds: 2);
+
 /// delay unsubscribe track
 const Duration delayUnsubscribeTrack = Duration(milliseconds: 2000);
 
