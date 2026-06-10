@@ -1,6 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
+import 'package:meet/constants/constants.dart';
+import 'package:meet/helper/extension/remote_track_publication_extension.dart';
+import 'package:meet/helper/subscribe_retry_backoff.dart';
 import 'package:meet/helper/logger.dart' as l;
 // import 'package:meet/helper/participant_stat_logger.dart';
 import 'package:meet/managers/channels/call_activity_channel.dart';
@@ -15,6 +20,7 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
   @override
   Future<void> close() {
     _bound = false;
+    _clearAllPendingSubscribes(clearRetryCounts: true);
     _signalListener.cancelAll();
     _signalListener.dispose();
     // _participantStatLogger.dispose();
@@ -22,8 +28,13 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
   }
 
   bool _bound = false;
+  bool _reconcilingInFlightAudioSubscribes = false;
+  DateTime? _lastAudioReconcileAt;
   late EventsListener<SignalEvent> _signalListener;
   final Set<String> _pendingSubscribeSids = <String>{};
+  final Map<String, Timer> _pendingSubscribeTimeouts = <String, Timer>{};
+  final Map<String, int> _subscribeRetryCounts = <String, int>{};
+  final Set<String> _bindingWaitSids = <String>{};
 
   /// logger for participant stats
   // final _participantStatLogger = ParticipantStatLogger();
@@ -85,11 +96,191 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
     }
   }
 
+  void _clearPendingSubscribe(String sid) {
+    _pendingSubscribeSids.remove(sid);
+    _pendingSubscribeTimeouts.remove(sid)?.cancel();
+  }
+
+  void _clearAllPendingSubscribes({bool clearRetryCounts = false}) {
+    _pendingSubscribeSids.clear();
+    for (final timer in _pendingSubscribeTimeouts.values) {
+      timer.cancel();
+    }
+    _pendingSubscribeTimeouts.clear();
+    _bindingWaitSids.clear();
+    _lastAudioReconcileAt = null;
+    if (clearRetryCounts) {
+      _subscribeRetryCounts.clear();
+    }
+  }
+
+  void _armSubscribeTimeout(RemoteTrackPublication pub) {
+    final sid = pub.sid;
+    _pendingSubscribeTimeouts[sid]?.cancel();
+    _pendingSubscribeTimeouts[sid] = Timer(audioSubscribeTimeout, () {
+      _pendingSubscribeTimeouts.remove(sid);
+      if (!_pendingSubscribeSids.contains(sid)) {
+        return;
+      }
+      _pendingSubscribeSids.remove(sid);
+      l.logger.w(
+        '[LiveKit] subscribe timeout sid=$sid kind=${pub.kind} '
+        'source=${pub.source} after ${audioSubscribeTimeout.inSeconds}s',
+      );
+      _scheduleSubscribeRetry(pub);
+    });
+  }
+
+  Duration _subscribeRetryBackoff(int retryIndex) {
+    return subscribeRetryBackoffWithJitter(
+      baseDelay: audioSubscribeRetryBaseDelay,
+      retryIndex: retryIndex,
+      maxDelay: audioSubscribeRetryMaxDelay,
+    );
+  }
+
+  bool get _hasInFlightSubscribeWork =>
+      _pendingSubscribeSids.isNotEmpty ||
+      _bindingWaitSids.isNotEmpty ||
+      _pendingSubscribeTimeouts.isNotEmpty;
+
+  bool _isPendingAudioSid(String sid) {
+    for (final participant in state.room.remoteParticipants.values) {
+      for (final pub in participant.audioTrackPublications) {
+        if (pub.sid == sid) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool get _hasInFlightAudioSubscribeWork {
+    if (!_hasInFlightSubscribeWork) {
+      return false;
+    }
+    for (final sid in _pendingSubscribeSids) {
+      if (_isPendingAudioSid(sid)) {
+        return true;
+      }
+    }
+    for (final sid in _bindingWaitSids) {
+      if (_isPendingAudioSid(sid)) {
+        return true;
+      }
+    }
+    for (final sid in _pendingSubscribeTimeouts.keys) {
+      if (_isPendingAudioSid(sid)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void _scheduleSubscribeRetry(RemoteTrackPublication pub) {
+    final sid = pub.sid;
+    final retries = _subscribeRetryCounts[sid] ?? 0;
+    if (retries >= maxAudioSubscribeRetries) {
+      l.logger.w('[LiveKit] subscribe retry exhausted sid=$sid');
+      _subscribeRetryCounts.remove(sid);
+      return;
+    }
+
+    _subscribeRetryCounts[sid] = retries + 1;
+    final backoff = _subscribeRetryBackoff(retries);
+    l.logger.d(
+      '[LiveKit] scheduling subscribe retry ${retries + 1}/'
+      '$maxAudioSubscribeRetries sid=$sid in ${backoff.inMilliseconds}ms',
+    );
+    Timer(backoff, () {
+      if (isClosed) {
+        return;
+      }
+      unawaited(_retrySubscribe(pub));
+    });
+  }
+
+  Future<void> _retrySubscribe(RemoteTrackPublication pub) async {
+    if (!_shouldAutoSubscribe(pub)) {
+      return;
+    }
+
+    if (pub.subscribed && pub.track != null) {
+      _clearPendingSubscribe(pub.sid);
+      _subscribeRetryCounts.remove(pub.sid);
+      return;
+    }
+
+    _clearPendingSubscribe(pub.sid);
+
+    if (pub.subscribed && pub.track == null) {
+      try {
+        await pub.unsubscribe();
+        l.logger.d(
+          '[LiveKit] unsubscribed stuck publication sid=${pub.sid} before retry',
+        );
+      } catch (e) {
+        l.logger.e(
+          '[LiveKit] unsubscribe before subscribe retry failed '
+          'sid=${pub.sid}: $e',
+        );
+      }
+    }
+
+    _subscribeIfAudioOrScreenShare(pub);
+  }
+
+  void _scheduleSubscribedTrackBindWait(RemoteTrackPublication pub) {
+    if (!_shouldAutoSubscribe(pub) || !pub.subscribed || pub.track != null) {
+      return;
+    }
+    if (!_bindingWaitSids.add(pub.sid)) {
+      return;
+    }
+
+    unawaited(() async {
+      try {
+        final bound = await pub.waitForTrackBound();
+        if (bound) {
+          _clearPendingSubscribe(pub.sid);
+          _subscribeRetryCounts.remove(pub.sid);
+          return;
+        }
+
+        l.logger.w(
+          '[LiveKit] subscribed-but-unbound timeout sid=${pub.sid} '
+          'kind=${pub.kind} source=${pub.source}',
+        );
+        _scheduleSubscribeRetry(pub);
+      } finally {
+        _bindingWaitSids.remove(pub.sid);
+      }
+    }());
+  }
+
+  bool _shouldAutoSubscribe(RemoteTrackPublication pub) {
+    return pub.kind == TrackType.AUDIO || pub.isScreenShare;
+  }
+
+  void _subscribeIfAudio(RemoteTrackPublication pub) {
+    if (pub.kind != TrackType.AUDIO) {
+      return;
+    }
+    _subscribePublication(pub);
+  }
+
+  void _subscribeIfScreenShare(RemoteTrackPublication pub) {
+    if (!pub.isScreenShare) {
+      return;
+    }
+    _subscribePublication(pub);
+  }
+
   /// Subscribe a single publication if it is audio (mic / screen-share audio)
   /// or screen-share video. Camera video is intentionally left for the UI
   /// grid to subscribe on demand (see ResponsiveCameraLayout).
   ///
-  /// Idempotent: bails when the publication is already subscribed.
+  /// Idempotent: bails when the publication is already subscribed and bound.
   ///
   /// Companion to `autoSubscribe: false` in [RoomManager.connectRoom]. With
   /// auto-subscribe disabled the SFU only forwards tracks we explicitly
@@ -97,15 +288,30 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
   /// re-published) track: initial roster walk, ParticipantConnected,
   /// TrackPublished, and as a defensive re-subscribe on TrackUnmuted.
   void _subscribeIfAudioOrScreenShare(RemoteTrackPublication pub) {
-    if (pub.subscribed) return;
-    final shouldSubscribe = pub.kind == TrackType.AUDIO || pub.isScreenShare;
-    if (!shouldSubscribe) return;
+    if (!_shouldAutoSubscribe(pub)) {
+      return;
+    }
+    _subscribePublication(pub);
+  }
+
+  void _subscribePublication(RemoteTrackPublication pub) {
+    if (pub.subscribed) {
+      if (pub.track != null) {
+        _clearPendingSubscribe(pub.sid);
+        _subscribeRetryCounts.remove(pub.sid);
+        return;
+      }
+      _scheduleSubscribedTrackBindWait(pub);
+      return;
+    }
 
     // Race-window dedup: Set.add returns false if the sid is already
     // pending, meaning a previous call has already sent UpdateSubscription
     // and we are still waiting for TrackSubscribedEvent. Bail to avoid a
     // duplicate RPC to the SFU.
-    if (!_pendingSubscribeSids.add(pub.sid)) return;
+    if (!_pendingSubscribeSids.add(pub.sid)) {
+      return;
+    }
 
     try {
       pub.subscribe();
@@ -113,9 +319,10 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
         '[LiveKit] subscribe sid=${pub.sid} kind=${pub.kind} '
         'source=${pub.source} (autoSubscribe=false policy)',
       );
+      _armSubscribeTimeout(pub);
     } catch (e) {
       // Allow a future retry: the in-flight request never made it out.
-      _pendingSubscribeSids.remove(pub.sid);
+      _clearPendingSubscribe(pub.sid);
       l.logger.e('[LiveKit] subscribe failed sid=${pub.sid}: $e');
     }
   }
@@ -142,12 +349,56 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
   }
 
   /// Re-apply the audio + screen-share subscribe policy for one remote
-  /// participant. Safe to call from sort/layout handlers as a defensive
-  /// backstop when `autoSubscribe: false`.
+  /// participant. Prefer event-driven subscribe paths; call explicitly when
+  /// a single participant needs a targeted backstop.
   void ensureParticipantAudioAndScreenShareSubscribed(
     RemoteParticipant participant,
   ) {
     _subscribeAudioAndScreenShareForParticipant(participant);
+  }
+
+  /// Screen-share sort-path backstop: subscribe one publication once per sid.
+  void ensureScreenShareSubscribed(RemoteTrackPublication pub) {
+    _subscribeIfScreenShare(pub);
+  }
+
+  /// Cheap sort-path backstop for audio only: O(1) guard on pending audio
+  /// sids, then only re-touches matching audio publications. Primary audio
+  /// subscribe policy remains ParticipantConnected, TrackPublished,
+  /// reconnect, and TrackUnmuted.
+  void reconcileInFlightAudioSubscribes() {
+    if (_reconcilingInFlightAudioSubscribes) {
+      // already reconciling, skip
+      return;
+    }
+    if (!_hasInFlightAudioSubscribeWork) {
+      return;
+    }
+    final now = DateTime.now();
+    if (_lastAudioReconcileAt != null &&
+        now.difference(_lastAudioReconcileAt!) < audioReconcileMinInterval) {
+      // rate limit reconcileInFlightAudioSubscribes to avoid excessive CPU usage
+      return;
+    }
+    _lastAudioReconcileAt = now;
+
+    _reconcilingInFlightAudioSubscribes = true;
+    try {
+      for (final participant in state.room.remoteParticipants.values) {
+        for (final pub in participant.audioTrackPublications) {
+          final sid = pub.sid;
+          if (_pendingSubscribeSids.contains(sid) ||
+              _bindingWaitSids.contains(sid) ||
+              _pendingSubscribeTimeouts.containsKey(sid)) {
+            _subscribeIfAudio(pub);
+          }
+        }
+      }
+    } catch (e) {
+      l.logger.e('[LiveKit] Error reconciling in-flight audio subscribes: $e');
+    } finally {
+      _reconcilingInFlightAudioSubscribes = false;
+    }
   }
 
   void setUpListeners() {
@@ -158,7 +409,7 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
     state.listener
       ..on<RoomDisconnectedEvent>((event) async {
         // Drop the in-flight guard; pubs from this connection are stale.
-        _pendingSubscribeSids.clear();
+        _clearAllPendingSubscribes(clearRetryCounts: true);
 
         /// End call activity when room disconnects
         await CallActivityChannel.end(immediately: true);
@@ -173,7 +424,7 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
         add(const SetLiveKitReconnecting(isLiveKitReconnecting: false));
         // ICE restart / reconnect can leave publications without an active
         // subscription when autoSubscribe is false. Re-walk the roster.
-        _pendingSubscribeSids.clear();
+        _clearAllPendingSubscribes(clearRetryCounts: true);
         _subscribeExistingAudioAndScreenShare();
       })
       ..on<ParticipantEvent>((event) {
@@ -218,7 +469,9 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
         // small set of in-flight subscribes. Done before the rejoin
         // short-circuit so the guard is freed even on stale events.
         for (final pub in event.participant.trackPublications.values) {
-          _pendingSubscribeSids.remove(pub.sid);
+          _clearPendingSubscribe(pub.sid);
+          _subscribeRetryCounts.remove(pub.sid);
+          _bindingWaitSids.remove(pub.sid);
         }
 
         // During rejoin, the old room is torn down and may emit stale ParticipantDisconnectedEvent.
@@ -243,9 +496,16 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
         // Race resolved: SDK now owns `pub.subscribed == true` for this
         // sid. Free the in-flight slot so any future re-subscribe (after
         // an explicit unsubscribe) is allowed through.
-        _pendingSubscribeSids.remove(event.publication.sid);
+        _clearPendingSubscribe(event.publication.sid);
+        _subscribeRetryCounts.remove(event.publication.sid);
+        _bindingWaitSids.remove(event.publication.sid);
 
-        _handleUnsubscribeVideoByDefault(event.publication);
+        final pub = event.publication;
+        if (_shouldAutoSubscribe(pub) && pub.track == null) {
+          _scheduleSubscribedTrackBindWait(pub);
+        }
+
+        _handleUnsubscribeVideoByDefault(pub);
         await _handleMuteAudioTrackIfSpeakerMuted(event.participant);
         // Schedule codec logging asynchronously to avoid blocking event loop
         if (kDebugMode) {
@@ -301,7 +561,9 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
       ..on<TrackUnsubscribedEvent>((event) {
         // Allow a future re-subscribe for this sid (e.g. user switches
         // back to screen-share view, or layout brings a tile into view).
-        _pendingSubscribeSids.remove(event.publication.sid);
+        _clearPendingSubscribe(event.publication.sid);
+        _subscribeRetryCounts.remove(event.publication.sid);
+        _bindingWaitSids.remove(event.publication.sid);
 
         add(DebouncedSortParticipants());
       })

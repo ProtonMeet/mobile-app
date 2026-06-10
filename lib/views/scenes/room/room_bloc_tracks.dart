@@ -52,14 +52,17 @@ mixin RoomTracksHandlers
     // O(1) duplicate guard for userMediaTracks.
     final Set<String> seenIdentities = <String>{};
     final Set<String> screenShareSubscribeEnsured = <String>{};
+
+    // reconcile in-flight audio subscribes, to avoid duplicate subscribes and improve performance
+    reconcileInFlightAudioSubscribes();
     for (var participant in room.remoteParticipants.values) {
       final identity = participant.identity;
       bool hasVideo = false;
       for (var t in participant.videoTrackPublications) {
         hasVideo = true;
         if (t.isScreenShare) {
-          if (screenShareSubscribeEnsured.add(identity)) {
-            ensureParticipantAudioAndScreenShareSubscribed(participant);
+          if (screenShareSubscribeEnsured.add(t.sid)) {
+            ensureScreenShareSubscribed(t);
           }
 
           /// Ensure high quality + 30 FPS for screen sharing.

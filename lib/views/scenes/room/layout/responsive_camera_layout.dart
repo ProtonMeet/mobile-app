@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/constants/constants.dart';
+import 'package:meet/helper/subscribe_retry_backoff.dart';
 import 'package:meet/helper/extension/remote_video_track_extension.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
@@ -59,6 +61,59 @@ class _ResponsiveCameraLayoutState extends State<ResponsiveCameraLayout> {
   bool _isUpdatingSubscriptions = false;
   // Queue for pending subscription updates during concurrent execution
   _PendingSubscriptionUpdate? _pendingUpdate;
+  Timer? _bindRetryTimer;
+  int _bindRetryAttempt = 0;
+
+  /// True when a visible remote participant has a camera publication that is
+  /// not subscribed or whose media track is not yet bound.
+  bool _hasUnboundVisibleCameraTracks(Set<String> visibleIdentities) {
+    for (final remoteParticipant in widget.room.remoteParticipants.values) {
+      if (!visibleIdentities.contains(remoteParticipant.identity)) {
+        continue;
+      }
+      for (final pub in remoteParticipant.videoTrackPublications) {
+        if (pub.isScreenShare) continue;
+        if (!pub.subscribed || pub.track == null) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  void _scheduleSubscriptionRetry(
+    List<ParticipantInfo> visibleWidgets,
+    List<ParticipantInfo> currentWidgets,
+  ) {
+    if (!mounted) return;
+    if (_bindRetryAttempt >= maxVideoSubscriptionBindRetries) {
+      l.logger.w(
+        '[ResponsiveCameraLayout] visible camera bind retries exhausted '
+        '(attempt=$_bindRetryAttempt)',
+      );
+      return;
+    }
+
+    _bindRetryTimer?.cancel();
+    final delay = subscribeRetryBackoffWithJitter(
+      baseDelay: videoSubscriptionBindRetryDelay,
+      retryIndex: _bindRetryAttempt,
+    );
+    _bindRetryAttempt++;
+    // Force the next pass to run even when visible identities are unchanged.
+    _lastVisibleSignature = null;
+    _lastCurrentSignature = null;
+
+    l.logger.d(
+      '[ResponsiveCameraLayout] scheduling camera bind retry in '
+      '${delay.inMilliseconds}ms (attempt=$_bindRetryAttempt)',
+    );
+
+    _bindRetryTimer = Timer(delay, () {
+      if (!mounted) return;
+      _updateVideoSubscriptions(visibleWidgets, currentWidgets);
+    });
+  }
 
   @override
   void didUpdateWidget(ResponsiveCameraLayout oldWidget) {
@@ -99,16 +154,14 @@ class _ResponsiveCameraLayoutState extends State<ResponsiveCameraLayout> {
     final currentSignature = currentIdentities.join(',');
 
     if (visibleSignature == _lastVisibleSignature &&
-        currentSignature == _lastCurrentSignature) {
+        currentSignature == _lastCurrentSignature &&
+        !_hasUnboundVisibleCameraTracks(visibleIdentities)) {
       return;
     }
 
     _isUpdatingSubscriptions = true;
 
     try {
-      _lastVisibleSignature = visibleSignature;
-      _lastCurrentSignature = currentSignature;
-
       // Get a snapshot of all remote participants to ensure we process all of them
       // This includes newly joined participants that might not be in visibleWidgets yet
       final allRemoteParticipants = widget.room.remoteParticipants.values
@@ -147,10 +200,19 @@ class _ResponsiveCameraLayoutState extends State<ResponsiveCameraLayout> {
               _pendingUnsubscribes.remove(remoteParticipant.identity);
             }
 
-            // Subscribe if not already subscribed
             if (!pub.subscribed) {
               pub.subscribe();
-              await pub.waitForVideoTrackBound();
+            }
+            // Wait when subscribed-but-not-yet-bound (RPC in flight) or after
+            // a fresh subscribe() above.
+            if (pub.track == null) {
+              final bound = await pub.waitForVideoTrackBound();
+              if (!bound) {
+                l.logger.w(
+                  '[ResponsiveCameraLayout] camera bind timeout for '
+                  '${remoteParticipant.identity} sid=${pub.sid}',
+                );
+              }
             }
 
             // Set appropriate quality and FPS based on visibility and simulcast support
@@ -225,6 +287,16 @@ class _ResponsiveCameraLayoutState extends State<ResponsiveCameraLayout> {
             }
           }
         }
+      }
+
+      if (_hasUnboundVisibleCameraTracks(visibleIdentities)) {
+        _scheduleSubscriptionRetry(visibleWidgets, currentWidgets);
+      } else {
+        _bindRetryAttempt = 0;
+        _bindRetryTimer?.cancel();
+        _bindRetryTimer = null;
+        _lastVisibleSignature = visibleSignature;
+        _lastCurrentSignature = currentSignature;
       }
     } finally {
       _isUpdatingSubscriptions = false;
@@ -514,6 +586,7 @@ class _ResponsiveCameraLayoutState extends State<ResponsiveCameraLayout> {
 
   @override
   void dispose() {
+    _bindRetryTimer?.cancel();
     // Cancel all pending unsubscribe operations
     _pendingUnsubscribes.clear();
     // Clear any pending update requests
