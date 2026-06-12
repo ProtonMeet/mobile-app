@@ -5598,6 +5598,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return BridgeError_MeetingLocked();
       case 21:
         return BridgeError_IncorrectPassword();
+      case 22:
+        return BridgeError_MlsServerVersionNotSupported();
       default:
         throw Exception("unreachable");
     }
@@ -6672,6 +6674,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return BridgeError_MeetingLocked();
       case 21:
         return BridgeError_IncorrectPassword();
+      case 22:
+        return BridgeError_MlsServerVersionNotSupported();
       default:
         throw UnimplementedError('');
     }
@@ -8090,6 +8094,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_i_32(20, serializer);
       case BridgeError_IncorrectPassword():
         sse_encode_i_32(21, serializer);
+      case BridgeError_MlsServerVersionNotSupported():
+        sse_encode_i_32(22, serializer);
     }
   }
 

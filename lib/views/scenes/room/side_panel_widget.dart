@@ -48,6 +48,7 @@ class _SidePanelOrSheetState extends State<SidePanelOrSheet> {
     }
   }
 
+  // To-do: check if we really need addPostFrameCallback here
   void _scheduleEnsureSheetState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

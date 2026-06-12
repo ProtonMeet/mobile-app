@@ -6374,6 +6374,9 @@ impl SseDecode for crate::errors::BridgeError {
             21 => {
                 return crate::errors::BridgeError::IncorrectPassword;
             }
+            22 => {
+                return crate::errors::BridgeError::MlsServerVersionNotSupported;
+            }
             _ => {
                 unimplemented!("");
             }
@@ -7705,6 +7708,9 @@ impl flutter_rust_bridge::IntoDart for crate::errors::BridgeError {
             }
             crate::errors::BridgeError::MeetingLocked => [20.into_dart()].into_dart(),
             crate::errors::BridgeError::IncorrectPassword => [21.into_dart()].into_dart(),
+            crate::errors::BridgeError::MlsServerVersionNotSupported => {
+                [22.into_dart()].into_dart()
+            }
             _ => {
                 unimplemented!("");
             }
@@ -8866,6 +8872,9 @@ impl SseEncode for crate::errors::BridgeError {
             }
             crate::errors::BridgeError::IncorrectPassword => {
                 <i32>::sse_encode(21, serializer);
+            }
+            crate::errors::BridgeError::MlsServerVersionNotSupported => {
+                <i32>::sse_encode(22, serializer);
             }
             _ => {
                 unimplemented!("");

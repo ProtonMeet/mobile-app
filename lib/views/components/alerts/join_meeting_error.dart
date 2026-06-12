@@ -48,7 +48,7 @@ import 'package:meet/views/scenes/dashboard/dashboard_page.dart';
   return (message: error, details: null);
 }
 
-Future<void> showJoinMeetingErrorDialog(
+void showJoinMeetingErrorDialog(
   BuildContext context, {
   required String errorMessage,
   String? errorDetails,
@@ -60,23 +60,22 @@ Future<void> showJoinMeetingErrorDialog(
   );
 
   // Wait for navigation to complete, then show dialog
-  return Future.delayed(Duration.zero, () {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (context.mounted) {
-        showDialog(
-          context: context,
-          builder: (_) => JoinMeetingErrorModal(
-            errorMessage: errorMessage,
-            errorDetails: errorDetails,
-            meetingLink: meetingLink,
-          ),
-        );
-      }
-    });
+  // To-do: check if we really need addPostFrameCallback here
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (_) => JoinMeetingErrorModal(
+          errorMessage: errorMessage,
+          errorDetails: errorDetails,
+          meetingLink: meetingLink,
+        ),
+      );
+    }
   });
 }
 
-Future<void> showJoinMeetingErrorBottomSheet(
+void showJoinMeetingErrorBottomSheet(
   BuildContext context, {
   required String errorMessage,
   String? errorDetails,
@@ -88,21 +87,20 @@ Future<void> showJoinMeetingErrorBottomSheet(
   );
 
   // Wait for navigation to complete, then show bottom sheet
-  return Future.delayed(Duration.zero, () {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (context.mounted) {
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => JoinMeetingErrorModal(
-            errorMessage: errorMessage,
-            errorDetails: errorDetails,
-            meetingLink: meetingLink,
-          ),
-        );
-      }
-    });
+  // To-do: check if we really need addPostFrameCallback here
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (context.mounted) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => JoinMeetingErrorModal(
+          errorMessage: errorMessage,
+          errorDetails: errorDetails,
+          meetingLink: meetingLink,
+        ),
+      );
+    }
   });
 }
 

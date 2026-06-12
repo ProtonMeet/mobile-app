@@ -37,6 +37,7 @@ final class AppSettingsDebugSection {
         title: 'Session expired sheet debug',
         onTap: () {
           Navigator.of(context).pop();
+          // To-do: check if we really need addPostFrameCallback here
           WidgetsBinding.instance.addPostFrameCallback((_) {
             unawaited(
               showSessionErrorDialog(
