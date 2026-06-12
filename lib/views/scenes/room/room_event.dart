@@ -9,6 +9,7 @@ import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
 import 'package:meet/views/scenes/room/participant_track.dart';
 import 'package:meet/views/scenes/room/room_state.dart';
+import 'package:proton_denoise/proton_denoise.dart';
 
 abstract class RoomBlocEvent extends Equatable {
   const RoomBlocEvent();
@@ -110,7 +111,7 @@ class ToggleScreenShare extends RoomBlocEvent {
   final String? notificationTitle;
   final String? notificationText;
 
-  ToggleScreenShare({this.notificationTitle, this.notificationText});
+  const ToggleScreenShare({this.notificationTitle, this.notificationText});
 
   @override
   List<Object?> get props => [notificationTitle, notificationText];
@@ -191,7 +192,15 @@ class InitializePip extends RoomBlocEvent {
   List<Object?> get props => [roomName];
 }
 
-class EnterPipMode extends RoomBlocEvent {}
+class EnterPipMode extends RoomBlocEvent {
+  /// When true (iOS PiP button), start PiP then send the app to the background.
+  final bool backgroundApp;
+
+  const EnterPipMode({this.backgroundApp = false});
+
+  @override
+  List<Object?> get props => [backgroundApp];
+}
 
 /// iOS: refresh native PiP video when active speaker / screen share changes.
 class SyncIosPipTrack extends RoomBlocEvent {}
@@ -228,9 +237,37 @@ class SetSpeakerPhone extends RoomBlocEvent {
   List<Object?> get props => [enabled];
 }
 
+/// Hardware or audio-session route change (headphones, Bluetooth, etc.).
+class AudioOutputDevicesChanged extends RoomBlocEvent {
+  final int? audioDeviceCount;
+  final bool hasExternalAudioOutput;
+  final bool hasBluetoothAudioOutput;
+
+  const AudioOutputDevicesChanged({
+    required this.hasExternalAudioOutput,
+    required this.hasBluetoothAudioOutput,
+    this.audioDeviceCount,
+  });
+
+  @override
+  List<Object?> get props => [
+    audioDeviceCount,
+    hasExternalAudioOutput,
+    hasBluetoothAudioOutput,
+  ];
+}
+
 /// Retry loading participants and resort when loadFrbParticipants fails
 class RetryLoadParticipants extends RoomBlocEvent {
   const RetryLoadParticipants();
+}
+
+/// Loads decrypted display names from meet-api and re-sorts participant tiles.
+///
+/// Used on room init (existing roster), MLS sync success, and when a remote
+/// participant connects. Unlike [SortParticipants], this fetches names first.
+class RefreshParticipantDisplayNames extends RoomBlocEvent {
+  const RefreshParticipantDisplayNames();
 }
 
 class SetHideSelfView extends RoomBlocEvent {
@@ -270,12 +307,12 @@ class SetAudioDenoiseEnabled extends RoomBlocEvent {
 }
 
 class SetAudioDenoiseType extends RoomBlocEvent {
-  final String typeId;
+  final DenoiseType type;
 
-  const SetAudioDenoiseType({required this.typeId});
+  const SetAudioDenoiseType({required this.type});
 
   @override
-  List<Object?> get props => [typeId];
+  List<Object?> get props => [type];
 }
 
 class SetForceShowConnectionStatusBanner extends RoomBlocEvent {

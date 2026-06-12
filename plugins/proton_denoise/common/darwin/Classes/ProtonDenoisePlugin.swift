@@ -1,6 +1,12 @@
 /*
  * Copyright (c) 2026 Proton AG
- * Flutter plugin entry + WebRTC track denoise (`me.proton.meet/denoise`).
+ *
+ * Flutter plugin entry + WebRTC mic denoise channel (`me.proton.meet/denoise`).
+ *
+ * Stack:
+ *   MeetAudioDenoiseNative — attach / detach / list types
+ *   *Processor — ExternalAudioProcessingDelegate on the local audio track
+ *     (RnnoiseProcessor, DeepFilterProcessor, DtlnRsProcessor)
  */
 
 import flutter_webrtc
@@ -21,9 +27,42 @@ public class ProtonDenoisePlugin: NSObject, FlutterPlugin {
   }
 }
 
-private enum DenoiseKind: String {
+private enum DenoiseKind: String, CaseIterable {
   case rnnoise
   case deepfilter
+  case deepfilter2
+  case dtlnRs = "dtln-rs"
+
+  var displayName: String {
+    switch self {
+    case .rnnoise: return "RNNoise"
+    case .deepfilter: return "DeepFilter 3"
+    case .deepfilter2: return "DeepFilter 2"
+    case .dtlnRs: return "DTLN"
+    }
+  }
+}
+
+private protocol DenoiseCaptureProcessor: ExternalAudioProcessingDelegate {
+  func setCaptureEnabled(_ enabled: Bool)
+}
+
+extension RnnoiseProcessor: DenoiseCaptureProcessor {
+  func setCaptureEnabled(_ enabled: Bool) {
+    if enabled { enable() } else { disable() }
+  }
+}
+
+extension DeepFilterProcessor: DenoiseCaptureProcessor {
+  func setCaptureEnabled(_ enabled: Bool) {
+    if enabled { enable() } else { disable() }
+  }
+}
+
+extension DtlnRsProcessor: DenoiseCaptureProcessor {
+  func setCaptureEnabled(_ enabled: Bool) {
+    if enabled { enable() } else { disable() }
+  }
 }
 
 /// Registers `me.proton.meet/denoise` and attaches denoise on flutter_webrtc local audio tracks.
@@ -37,35 +76,100 @@ private enum DenoiseKind: String {
     case .rnnoise:
       return RnnoiseProcessor()
     case .deepfilter:
-      return DeepFilterProcessor()
+      return DeepFilterProcessor(modelResourceName: ProtonDeepFilterNative.ModelResource.net3)
+    case .deepfilter2:
+      return DeepFilterProcessor(modelResourceName: ProtonDeepFilterNative.ModelResource.net2)
+    case .dtlnRs:
+      return DtlnRsProcessor()
     }
+  }
+
+  private static func stopProcessorOnTrack(
+    _ processor: ExternalAudioProcessingDelegate,
+    local: LocalAudioTrack
+  ) {
+    setProcessorEnabled(processor, enabled: false)
+    local.removeProcessing(processor)
+    if let deepfilter = processor as? DeepFilterProcessor {
+      // df_destroy is async on sessionQueue — do not call audioProcessingRelease here.
+      DeepFilterProcessor.scheduleTeardown(deepfilter)
+    } else {
+      processor.audioProcessingRelease()
+    }
+  }
+
+  private static func attachProcessor(
+    trackId: String,
+    kind: DenoiseKind,
+    local: LocalAudioTrack,
+    replacing oldProc: ExternalAudioProcessingDelegate?,
+    result: @escaping FlutterResult
+  ) {
+    let proc = makeProcessor(kind: kind)
+    let finish: () -> Void = {
+      // WebRTC calls initialize at factory setup; processors added later need explicit init.
+      proc.audioProcessingInitialize(withSampleRate: 48_000, channels: 1)
+      setProcessorEnabled(proc, enabled: true)
+      local.addProcessing(proc)
+      processors[trackId] = proc
+      attachedTrackId = trackId
+      attachedKind = kind
+      result(nil)
+    }
+
+    if let newDeepfilter = proc as? DeepFilterProcessor {
+      let oldDeepfilter = oldProc as? DeepFilterProcessor
+      // df_create on sessionQueue before addProcessing — avoids blocking WebRTC thread.
+      DeepFilterProcessor.replace(old: oldDeepfilter, new: newDeepfilter) { ready in
+        if !ready {
+          result(
+            FlutterError(
+              code: "DEEPFILTER",
+              message:
+                "DeepFilter failed to load — rebuild ios pods and confirm DeepFilterNet3_onnx.tar.gz is in the app bundle",
+              details: nil
+            ))
+          return
+        }
+        finish()
+      }
+      return
+    }
+
+    if let oldDeepfilter = oldProc as? DeepFilterProcessor {
+      DeepFilterProcessor.scheduleTeardown(oldDeepfilter)
+    }
+    finish()
   }
 
   private static func setProcessorEnabled(
     _ processor: ExternalAudioProcessingDelegate,
     enabled: Bool
   ) {
-    if let rnnoise = processor as? RnnoiseProcessor {
-      if enabled {
-        rnnoise.enable()
-      } else {
-        rnnoise.disable()
-      }
-    } else if let deepfilter = processor as? DeepFilterProcessor {
-      if enabled {
-        deepfilter.enable()
-      } else {
-        deepfilter.disable()
-      }
-    }
+    (processor as? DenoiseCaptureProcessor)?.setCaptureEnabled(enabled)
   }
 
   private static func isReady(kind: DenoiseKind) -> Bool {
     switch kind {
     case .rnnoise:
-      return true
+      return RnnoiseProcessor.isNativeReady
     case .deepfilter:
-      return false
+      return DeepFilterProcessor.isNativeReady(
+        modelResourceName: ProtonDeepFilterNative.ModelResource.net3
+      )
+    case .deepfilter2:
+      return ProtonDeepFilterNative.isNet2RuntimeSupported &&
+        DeepFilterProcessor.isNativeReady(
+          modelResourceName: ProtonDeepFilterNative.ModelResource.net2
+        )
+    case .dtlnRs:
+      return DtlnRsProcessor.isNativeReady
+    }
+  }
+
+  private static func listDenoiseTypesPayload() -> [[String: Any]] {
+    DenoiseKind.allCases.map { kind in
+      ["id": kind.rawValue, "displayName": kind.displayName, "isReady": isReady(kind: kind)]
     }
   }
 
@@ -77,10 +181,7 @@ private enum DenoiseKind: String {
     channel.setMethodCallHandler { call, result in
       switch call.method {
       case "listDenoiseTypes":
-        result([
-          ["id": "rnnoise", "displayName": "RNNoise", "isReady": isReady(kind: .rnnoise)],
-          ["id": "deepfilter", "displayName": "DeepFilter", "isReady": isReady(kind: .deepfilter)],
-        ])
+        result(listDenoiseTypesPayload())
       case "isTypeReady":
         guard let args = call.arguments as? [String: Any],
           let typeId = args["type"] as? String,
@@ -90,6 +191,19 @@ private enum DenoiseKind: String {
           return
         }
         result(isReady(kind: kind))
+      case "diagnoseDenoise":
+        result(DenoiseDiagnostics.payload())
+      case "warmUpDenoise":
+        if let args = call.arguments as? [String: Any],
+          let typeId = args["type"] as? String,
+          !typeId.isEmpty
+        {
+          var payload = DenoiseDiagnostics.warmUp(typeId: typeId)
+          payload["id"] = typeId
+          result(payload)
+        } else {
+          result(DenoiseDiagnostics.warmUpAll())
+        }
       case "attach":
         guard let args = call.arguments as? [String: Any],
           let trackId = args["trackId"] as? String,
@@ -103,7 +217,9 @@ private enum DenoiseKind: String {
         guard let plugin = FlutterWebRTCPlugin.sharedSingleton() else {
           result(
             FlutterError(
-              code: "WEBRTC", message: "FlutterWebRTCPlugin not initialized", details: nil))
+              code: "WEBRTC_NOT_READY",
+              message: "FlutterWebRTCPlugin not initialized — retry after the engine settles",
+              details: nil))
           return
         }
         guard let local = plugin.localTracks?[trackId] as? LocalAudioTrack else {
@@ -111,32 +227,48 @@ private enum DenoiseKind: String {
             FlutterError(code: "TRACK", message: "Local audio track not found", details: trackId))
           return
         }
+        if kind == .deepfilter2 && !ProtonDeepFilterNative.isNet2RuntimeSupported {
+          result(
+            FlutterError(
+              code: "UNSUPPORTED",
+              message: "DeepFilter 2 is not supported by the bundled libDF runtime",
+              details: nil
+            ))
+          return
+        }
         if attachedTrackId == trackId, attachedKind == kind,
           let existing = processors[trackId]
         {
+          // Idempotent re-attach — same track + backend already wired.
           setProcessorEnabled(existing, enabled: true)
           result(nil)
           return
         }
-        if let oldProc = processors[trackId] {
+
+        let oldProc = processors[trackId]
+        if let oldProc {
           setProcessorEnabled(oldProc, enabled: false)
           local.removeProcessing(oldProc)
           processors.removeValue(forKey: trackId)
+          if oldProc as? DeepFilterProcessor == nil {
+            oldProc.audioProcessingRelease()
+          }
         }
-        for (oldTrackId, oldProc) in processors where oldTrackId != trackId {
-          setProcessorEnabled(oldProc, enabled: false)
+        // One mic track at a time — detach denoise from any other local track.
+        for (oldTrackId, otherProc) in processors where oldTrackId != trackId {
           if let oldTrack = plugin.localTracks?[oldTrackId] as? LocalAudioTrack {
-            oldTrack.removeProcessing(oldProc)
+            stopProcessorOnTrack(otherProc, local: oldTrack)
           }
           processors.removeValue(forKey: oldTrackId)
         }
-        let proc = makeProcessor(kind: kind)
-        setProcessorEnabled(proc, enabled: true)
-        local.addProcessing(proc)
-        processors[trackId] = proc
-        attachedTrackId = trackId
-        attachedKind = kind
-        result(nil)
+
+        attachProcessor(
+          trackId: trackId,
+          kind: kind,
+          local: local,
+          replacing: oldProc,
+          result: result
+        )
       case "detach":
         guard let args = call.arguments as? [String: Any],
           let trackId = args["trackId"] as? String,
@@ -149,8 +281,7 @@ private enum DenoiseKind: String {
           let plugin = FlutterWebRTCPlugin.sharedSingleton(),
           let local = plugin.localTracks?[trackId] as? LocalAudioTrack
         {
-          setProcessorEnabled(proc, enabled: false)
-          local.removeProcessing(proc)
+          stopProcessorOnTrack(proc, local: local)
         }
         if attachedTrackId == trackId {
           attachedTrackId = nil

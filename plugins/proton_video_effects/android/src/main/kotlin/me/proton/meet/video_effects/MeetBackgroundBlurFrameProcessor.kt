@@ -61,6 +61,26 @@ internal class MeetBackgroundBlurFrameProcessor(
         isEnabled = enabled
     }
 
+    fun applyBlurConfig(blurSigma: Float, backgroundObscureOpacity: Float) {
+        engine.setBlurConfig(blurSigma, backgroundObscureOpacity)
+    }
+
+    fun setReplacementBackgroundImagePath(path: String?): Boolean =
+        engine.setReplacementBackgroundImagePath(path)
+
+    fun setReplacementBackgroundImageBytes(bytes: ByteArray?): Boolean =
+        engine.setReplacementBackgroundImageBytes(bytes)
+
+    fun clearReplacementBackground() {
+        engine.clearReplacementBackground()
+    }
+
+    fun setSegmentationModelPreference(model: String) {
+        engine.setSegmentationModelPreference(model)
+    }
+
+    fun segmentationModelDebugInfo(): Map<String, Any> = engine.segmentationModelDebugInfo()
+
     init {
         Log.i("ProtonVideoEffects", "FrameProcessor: constructed instance=$instanceId thread=${Thread.currentThread().name}",
         )

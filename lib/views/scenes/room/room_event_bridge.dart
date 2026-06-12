@@ -5,9 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/constants/constants.dart';
 import 'package:meet/helper/extension/remote_track_publication_extension.dart';
-import 'package:meet/helper/subscribe_retry_backoff.dart';
 import 'package:meet/helper/logger.dart' as l;
-// import 'package:meet/helper/participant_stat_logger.dart';
+import 'package:meet/helper/subscribe_retry_backoff.dart';
 import 'package:meet/managers/channels/call_activity_channel.dart';
 import 'package:meet/managers/room.manager.dart' show RoomManager;
 
@@ -594,6 +593,9 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
     // tracks now; camera video is left for the UI grid to subscribe on
     // demand (ResponsiveCameraLayout._updateVideoSubscriptions).
     _subscribeExistingAudioAndScreenShare();
+    // Existing roster: ParticipantConnected is not replayed for remotes already
+    // in the room when listeners attach, so refresh display names explicitly.
+    add(const RefreshParticipantDisplayNames());
     // add more mappings as needed...
   }
 

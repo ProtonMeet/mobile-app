@@ -52,6 +52,11 @@ repositories {
 android {
     namespace "proton.android.meet"
     compileSdkVersion libs.versions.compileSdk.get().toInteger()
+
+    // Keep DeepFilter ONNX tarball path stable in merged APK assets.
+    androidResources {
+        noCompress 'tar.gz', 'tgz', 'tar'
+    }
     
     // Force Kotlin version consistency
     configurations.all {

@@ -1,5 +1,11 @@
 /*
  * Copyright (c) 2026 Proton AG
+ *
+ * Desktop (Linux/Windows) backend for `me.proton.meet/denoise` and legacy `proton_denoise`.
+ *
+ * Effects channel: attach/detach records track + type; RNNoise handle is enabled for rnnoise.
+ * Live capture hook still depends on flutter_webrtc desktop audio processing (same as mobile).
+ * Legacy channel: direct RNNoise frame API for tests/tools.
  */
 
 #include "desktop_audio_denoise.h"
@@ -120,11 +126,14 @@ DesktopMethodResult DesktopAudioDenoise::HandleEffectsChannel(
   std::lock_guard<std::mutex> lock(g_mutex);
 
   if (method == "listDenoiseTypes") {
+    const bool rnnoise_ready = g_rnnoise != nullptr;
     result.success = true;
     result.json_list_payload =
         R"([{"id":"rnnoise","displayName":"RNNoise","isReady":)"
-        + std::string(g_rnnoise != nullptr ? "true" : "false") +
-        R"(},{"id":"deepfilter","displayName":"DeepFilter","isReady":false}])";
+        + std::string(rnnoise_ready ? "true" : "false") +
+        R"(},{"id":"deepfilter","displayName":"DeepFilter 3","isReady":false})"
+        R"(,{"id":"deepfilter2","displayName":"DeepFilter 2","isReady":false})"
+        R"(,{"id":"dtln-rs","displayName":"DTLN","isReady":false}])";
     return result;
   }
 
@@ -148,16 +157,22 @@ DesktopMethodResult DesktopAudioDenoise::HandleEffectsChannel(
       result.error_message = "trackId and type required";
       return result;
     }
-    if (type_id != "rnnoise" && type_id != "deepfilter") {
-      result.success = false;
-      result.error_code = "ARGS";
-      result.error_message = "Unknown denoise type";
-      return result;
-    }
-    if (type_id == "deepfilter") {
+    if (type_id == "deepfilter" || type_id == "deepfilter2") {
       result.success = false;
       result.error_code = "NOT_READY";
       result.error_message = "DeepFilter is not available on desktop yet";
+      return result;
+    }
+    if (type_id == "dtln-rs") {
+      result.success = false;
+      result.error_code = "NOT_READY";
+      result.error_message = "DTLN is not available on desktop yet";
+      return result;
+    }
+    if (type_id != "rnnoise") {
+      result.success = false;
+      result.error_code = "ARGS";
+      result.error_message = "Unknown denoise type";
       return result;
     }
     EnsureRnnoiseHandle();

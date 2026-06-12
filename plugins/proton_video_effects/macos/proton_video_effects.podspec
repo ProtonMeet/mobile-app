@@ -21,7 +21,6 @@ Pod::Spec.new do |s|
   }
 
   s.source_files = 'Classes/**/*'
-  s.resources = ['Resources/PrivacyInfo.xcprivacy']
   s.frameworks = 'Vision', 'CoreImage', 'Metal'
   s.dependency 'FlutterMacOS'
   s.dependency 'flutter_webrtc'

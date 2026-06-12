@@ -1,11 +1,20 @@
-# RNNoise: built from source at compile time (scripts/build_rnnoise.sh).
+# RNNoise: built from source at compile time (scripts/rnnoise/build_rnnoise.sh).
 third_party/rnnoise/lib/
 .rnnoise-build/
+# DeepFilter Apple dylibs: build-only staging; ship ios/DeepFilter.xcframework + macos/DeepFilter.framework.
+third_party/deepfilter/lib/ios/
+third_party/deepfilter/lib/macos/
 # RNNoise Android native build is under <repo>/build/native/proton_denoise/cxx (see build.gradle.kts).
 
-# Stale CocoaPods prepare_command output (not used).
+# CocoaPods prepare_command symlinks (scripts/link_apple_pod_sources.sh).
+ios/Classes/
+ios/Cpp/
 ios/Native/
+ios/Vendored/
+macos/Classes/
+macos/Cpp/
 macos/Native/
+macos/Vendored/
 
 # Miscellaneous
 *.class

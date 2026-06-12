@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/helper/background_blur/camera_background_blur_sync.dart';
 import 'package:meet/helper/denoise/denoise_audio_sync.dart';
@@ -115,17 +117,46 @@ mixin RoomSettingsHandlers
   ) async {
     final ffEnabled = isMeetAudioDenoiseEnabled();
     final effectiveEnabled = event.enabled && ffEnabled;
-    final type =
-        DenoiseType.fromId(state.audioDenoiseTypeId) ?? DenoiseType.rnnoise;
-    emit(state.copyWith(audioDenoiseEnabled: effectiveEnabled));
-    await syncLocalAudioDenoise(
-      room: state.room,
-      enabled: effectiveEnabled,
-      type: type,
+    final preferred = state.audioDenoiseType;
+    final type = effectiveEnabled
+        ? await DenoiseAudioService.instance.resolveTypeForAttach(preferred)
+        : preferred;
+    if (effectiveEnabled && type == null) {
+      l.logger.w(
+        '[AudioDenoise] enable skipped: no type available (ff=$ffEnabled)',
+      );
+      return;
+    }
+    final effectiveType = type ?? state.audioDenoiseType;
+    emit(
+      state.copyWith(
+        audioDenoiseEnabled: effectiveEnabled,
+        audioDenoiseType: effectiveType,
+      ),
     );
+    if (DenoiseAudioService.isDeepFilterType(effectiveType)) {
+      unawaited(
+        DenoiseAudioService.instance.warmUpDeepFilterIfNeeded(
+          type: effectiveType,
+        ),
+      );
+    }
+    if (type != null) {
+      await syncLocalAudioDenoise(
+        room: state.room,
+        enabled: effectiveEnabled,
+        type: type,
+      );
+    } else if (!effectiveEnabled) {
+      await syncLocalAudioDenoise(
+        room: state.room,
+        enabled: false,
+        type: preferred,
+      );
+    }
     l.logger.d(
       'Audio denoise enabled: $effectiveEnabled '
-      '(requested=${event.enabled}, ff=$ffEnabled, type=${type.id})',
+      '(requested=${event.enabled}, ff=$ffEnabled, type=${effectiveType.id})',
     );
   }
 
@@ -136,21 +167,31 @@ mixin RoomSettingsHandlers
     if (!isMeetAudioDenoiseEnabled()) {
       return;
     }
-    final type = DenoiseType.fromId(event.typeId);
-    if (type == null || type == DenoiseType.none) {
+    final requested = event.type;
+    if (requested == DenoiseType.none) {
       return;
     }
     final available = await DenoiseAudioService.instance
         .listAvailableTypesForUi();
-    if (!available.any((info) => info.type == type)) {
-      l.logger.w('Audio denoise type ${event.typeId} not available for UI');
+    if (!available.any((info) => info.type == requested)) {
+      l.logger.w('Audio denoise type ${requested.id} not available for UI');
       return;
     }
     final wasEnabled = state.audioDenoiseEnabled;
-    emit(state.copyWith(audioDenoiseTypeId: type.id));
-    if (wasEnabled) {
-      await syncLocalAudioDenoise(room: state.room, enabled: true, type: type);
+    emit(state.copyWith(audioDenoiseType: requested));
+    if (DenoiseAudioService.isDeepFilterType(requested)) {
+      unawaited(
+        DenoiseAudioService.instance.warmUpDeepFilterIfNeeded(type: requested),
+      );
     }
-    l.logger.d('Audio denoise type: ${type.id}');
+    if (wasEnabled) {
+      // Single attach replaces the active processor atomically on native side.
+      await syncLocalAudioDenoise(
+        room: state.room,
+        enabled: true,
+        type: requested,
+      );
+    }
+    l.logger.d('Audio denoise type: ${requested.id}');
   }
 }

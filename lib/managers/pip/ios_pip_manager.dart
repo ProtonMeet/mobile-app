@@ -105,6 +105,17 @@ class IosPipManager implements PipManagerInterface {
     }
   }
 
+  Future<void> moveAppToBackground() async {
+    if (!_initialized) {
+      return;
+    }
+    try {
+      await _channel.moveAppToBackground();
+    } catch (e) {
+      logger.w('[IosPipManager] moveAppToBackground failed: $e');
+    }
+  }
+
   @override
   Future<void> updatePipVideoTrack() async {
     if (!_initialized) {

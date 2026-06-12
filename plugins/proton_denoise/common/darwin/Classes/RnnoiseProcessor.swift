@@ -1,6 +1,6 @@
 import flutter_webrtc
 
-/// RNNoise capture processor for flutter_webrtc local audio tracks.
+/// RNNoise capture processor — in-place on WebRTC [RTCAudioBuffer] (48 kHz mono frames).
 @objc final class RnnoiseProcessor: NSObject, ExternalAudioProcessingDelegate {
   private(set) var isEnabled = false
   private var handle: OpaquePointer?
@@ -56,7 +56,7 @@ import flutter_webrtc
           frameSize,
           1
         )
-        offset += frameSize
+        offset += frameSize  // RNNoise fixed 480-sample hop at 48 kHz
       }
     }
   }
@@ -74,5 +74,14 @@ import flutter_webrtc
 
   func audioProcessingRelease() {
     disable()
+  }
+
+  static var isNativeReady: Bool {
+    guard let probe = proton_rnnoise_create() else {
+      return false
+    }
+    let frameSize = Int(proton_rnnoise_get_frame_size())
+    proton_rnnoise_destroy(probe)
+    return frameSize > 0
   }
 }

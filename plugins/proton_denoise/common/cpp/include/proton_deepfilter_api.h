@@ -19,18 +19,33 @@ extern "C" {
 
 typedef struct ProtonDeepFilterHandle ProtonDeepFilterHandle;
 
-PROTON_DEEPFILTER_EXPORT ProtonDeepFilterHandle* proton_deepfilter_create(void);
+/// Resolves df_* symbols from libdeepfilter.so (dlopen / RTLD_DEFAULT). Returns 1 when ready.
+PROTON_DEEPFILTER_EXPORT int proton_deepfilter_ensure_loaded();
 
-PROTON_DEEPFILTER_EXPORT void proton_deepfilter_destroy(ProtonDeepFilterHandle* handle);
+/// Creates a DeepFilterNet instance from a tar.gz ONNX model path.
+PROTON_DEEPFILTER_EXPORT ProtonDeepFilterHandle* proton_deepfilter_create(
+    const char* model_path);
 
-PROTON_DEEPFILTER_EXPORT int proton_deepfilter_get_frame_size(void);
+PROTON_DEEPFILTER_EXPORT void proton_deepfilter_destroy(
+    ProtonDeepFilterHandle* handle);
 
-PROTON_DEEPFILTER_EXPORT void proton_deepfilter_set_enabled(ProtonDeepFilterHandle* handle,
-                                                            int enabled);
+/// Frame size in samples per channel (typically 480 @ 48 kHz).
+PROTON_DEEPFILTER_EXPORT int proton_deepfilter_get_frame_size(
+    ProtonDeepFilterHandle* handle);
 
-PROTON_DEEPFILTER_EXPORT int proton_deepfilter_is_enabled(ProtonDeepFilterHandle* handle);
+PROTON_DEEPFILTER_EXPORT void proton_deepfilter_set_enabled(
+    ProtonDeepFilterHandle* handle,
+    int enabled);
 
-/// In-place pass-through until DeepFilter model is integrated.
+PROTON_DEEPFILTER_EXPORT int proton_deepfilter_is_enabled(
+    ProtonDeepFilterHandle* handle);
+
+/// Attenuation limit in dB (e.g. 100 = no practical limit).
+PROTON_DEEPFILTER_EXPORT void proton_deepfilter_set_atten_lim(
+    ProtonDeepFilterHandle* handle,
+    float lim_db);
+
+/// In-place denoise for interleaved float PCM.
 PROTON_DEEPFILTER_EXPORT float proton_deepfilter_process_interleaved(
     ProtonDeepFilterHandle* handle,
     float* samples,

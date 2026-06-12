@@ -4,9 +4,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/constants/constants.dart';
-import 'package:meet/helper/subscribe_retry_backoff.dart';
 import 'package:meet/helper/extension/remote_video_track_extension.dart';
 import 'package:meet/helper/logger.dart' as l;
+import 'package:meet/helper/subscribe_retry_backoff.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 import 'package:meet/views/scenes/room/participant/participant.dart';
 import 'package:meet/views/scenes/room/participant/participant_info.dart';
@@ -31,6 +31,7 @@ class ResponsiveCameraLayout extends StatefulWidget {
   final Map<String, ParticipantReaction> reactionsByIdentity;
   final Map<String, bool> raisedHandsByIdentity;
   final void Function(String)? onLowerHandByIdentity;
+
   /// When set, keep this remote participant's camera subscribed (iOS PiP off-grid).
   final String iosPipRemoteCameraSubscriptionIdentity;
 

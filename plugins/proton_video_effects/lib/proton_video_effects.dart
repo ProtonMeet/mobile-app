@@ -1,27 +1,111 @@
-/// On-device camera video effects (background blur; custom backgrounds planned).
+/// On-device camera video effects for Proton Meet.
+///
+/// Import this library only:
+/// `import 'package:proton_video_effects/proton_video_effects.dart';`
+///
+/// Native I/O is routed through [ProtonVideoEffects]. Implementation details
+/// live under `lib/src/` and are not part of the public API.
 library;
 
+export 'background_blur_config.dart';
 export 'background_blur_track_processor.dart';
-export 'proton_video_effects_channel.dart';
+export 'camera_background_mode.dart';
+export 'segmentation_model_debug_info.dart';
+export 'segmentation_model_preference.dart';
 
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'background_blur_config.dart';
+import 'background_blur_track_processor.dart';
+import 'segmentation_model_debug_info.dart';
+import 'segmentation_model_preference.dart';
+import 'src/proton_video_effects_channel.dart';
 
-import 'proton_video_effects_channel.dart';
-
-/// Facade for attaching effects to flutter_webrtc local camera tracks.
+/// Entry point for camera background blur and future video effects.
+///
+/// Use [instance] for all native calls. Typical Meet integration:
+///
+/// ```dart
+/// if (!ProtonVideoEffects.isSupported) return;
+///
+/// // Preferred — blur attaches when the LiveKit camera track starts
+/// final processor = ProtonVideoEffects.instance.createBlurTrackProcessor(
+///   config: const BackgroundBlurConfig(),
+/// );
+///
+/// // Or attach / detach on an existing WebRTC track id
+/// await ProtonVideoEffects.instance.attachBackgroundBlur(trackId: id);
+/// await ProtonVideoEffects.instance.detachBackgroundBlur(trackId: id);
+/// ```
+///
+/// Segmentation defaults (Vision on Apple, landscape MediaPipe on Android) are
+/// applied once before the first attach via [applyPlatformDefaultSegmentationModel].
 class ProtonVideoEffects {
   ProtonVideoEffects._();
+
+  /// Shared facade for the app process.
   static final ProtonVideoEffects instance = ProtonVideoEffects._();
 
   final ProtonVideoEffectsChannel _channel = ProtonVideoEffectsChannel();
 
+  /// `true` on iOS, Android, macOS, Linux, and Windows; `false` on web.
   static bool get isSupported => !kIsWeb;
 
+  /// LiveKit [BackgroundBlurTrackProcessor] sharing this facade's channel client.
+  ///
+  /// Pass the result to `LocalVideoTrack.createCameraTrack`. Do not construct
+  /// [BackgroundBlurTrackProcessor] yourself — it must share this facade's channel.
+  BackgroundBlurTrackProcessor createBlurTrackProcessor({
+    BackgroundBlurConfig? config,
+  }) {
+    return BackgroundBlurTrackProcessor(channel: _channel, config: config);
+  }
+
+  /// Whether the native blur pipeline and models are loaded on this device.
   Future<bool> isBackgroundBlurReady() => _channel.isBackgroundBlurReady();
 
-  Future<void> attachBackgroundBlur({required String trackId}) =>
-      _channel.attachBackgroundBlur(trackId: trackId);
+  /// Pushes blur tuning (σ, obscure opacity) to native without re-attaching.
+  Future<void> setBackgroundBlurConfig(BackgroundBlurConfig config) =>
+      _channel.setBackgroundBlurConfig(config);
 
+  /// Attaches blur processing to an existing local camera [trackId].
+  ///
+  /// Prefer [createBlurTrackProcessor] when creating a new track. Use this when
+  /// toggling blur on a track that is already capturing.
+  Future<void> attachBackgroundBlur({
+    required String trackId,
+    BackgroundBlurConfig? config,
+  }) => _channel.attachBackgroundBlur(trackId: trackId, config: config);
+
+  /// Stops blur on [trackId]; the camera track keeps running unblurred.
   Future<void> detachBackgroundBlur({required String trackId}) =>
       _channel.detachBackgroundBlur(trackId: trackId);
+
+  /// Still-image virtual background from a local file (not enabled in production).
+  Future<void> setReplacementBackgroundImagePath(String filePath) =>
+      _channel.setReplacementBackgroundImage(filePath: filePath);
+
+  /// Still-image virtual background from JPEG/PNG bytes (not enabled in production).
+  Future<void> setReplacementBackgroundImageBytes(Uint8List bytes) =>
+      _channel.setReplacementBackgroundImage(imageBytes: bytes);
+
+  /// Clears a replacement background and returns to blur mode (not enabled in production).
+  Future<void> clearReplacementBackground() =>
+      _channel.clearReplacementBackground();
+
+  /// Sets the platform segmentation backend once per process (before first attach).
+  ///
+  /// iOS / macOS → [SegmentationModelPreference.vision];
+  /// Android → [SegmentationModelPreference.landscape].
+  Future<void> applyPlatformDefaultSegmentationModel() =>
+      _channel.applyPlatformDefaultSegmentationModel();
+
+  /// Overrides the segmentation model (debug / QA tuning).
+  Future<void> setSegmentationModelPreference(
+    SegmentationModelPreference preference,
+  ) => _channel.setSegmentationModelPreference(preference);
+
+  /// Reads back which segmenter and backend native is using (debug UI).
+  Future<SegmentationModelDebugInfo> getSegmentationModelInfo() =>
+      _channel.getSegmentationModelInfo();
 }

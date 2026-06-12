@@ -11,6 +11,8 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
+  errors:
+    comment_references: ignore
   exclude:
     - lib/generated/**
     - lib/rust/**

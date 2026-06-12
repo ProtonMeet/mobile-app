@@ -5,6 +5,10 @@ import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:proton_video_effects/proton_video_effects.dart';
 
+/// Production blur tuning from [BackgroundBlurConfig] defaults in proton_video_effects.
+BackgroundBlurConfig resolveCameraBackgroundBlurConfig() =>
+    const BackgroundBlurConfig();
+
 /// Attaches or detaches native camera background blur for the local camera track.
 Future<void> syncLocalCameraBackgroundBlur({
   required Room room,
@@ -55,12 +59,15 @@ Future<void> syncLocalCameraBackgroundBlur({
     return;
   }
 
+  final blurConfig = resolveCameraBackgroundBlurConfig();
+
   try {
     if (!enabled) {
       await effects.detachBackgroundBlur(trackId: id);
       return;
     }
-    await effects.attachBackgroundBlur(trackId: id);
+    await effects.setBackgroundBlurConfig(blurConfig);
+    await effects.attachBackgroundBlur(trackId: id, config: blurConfig);
   } catch (e, st) {
     l.logger.e(
       '[CameraBackgroundBlur] sync failed: $e',

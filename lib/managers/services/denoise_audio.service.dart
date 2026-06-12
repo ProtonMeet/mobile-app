@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/managers/providers/unleash.data.provider.dart';
@@ -9,12 +10,16 @@ class DenoiseAudioService {
   DenoiseAudioService._();
   static final DenoiseAudioService instance = DenoiseAudioService._();
 
+  static const _deepFilterWarmupMinInterval = Duration(minutes: 30);
+
   UnleashDataProvider get _unleash =>
       ManagerFactory().get<DataProviderManager>().unleashDataProvider;
 
   DenoiseType _type = DenoiseType.rnnoise;
   bool _enabled = false;
   String? _attachedTrackId;
+  Future<void>? _deepFilterWarmupInFlight;
+  DateTime? _lastDeepFilterWarmupSuccess;
 
   bool get isEnabled => _enabled;
   DenoiseType get type => _type;
@@ -23,22 +28,118 @@ class DenoiseAudioService {
   bool get isAvailable =>
       ProtonDenoiseEffects.isSupported && _unleash.isMeetAudioDenoise();
 
-  /// Denoise algorithms the UI may show (respects Unleash sub-flags + native readiness).
+  /// Denoise algorithms the UI may show (Unleash sub-flags + native [isReady]).
   Future<List<DenoiseTypeInfo>> listAvailableTypesForUi() async {
     if (!isAvailable) {
       return const [];
     }
     final native = await ProtonDenoiseEffects.instance.listDenoiseTypes();
     return native.where((info) {
+      if (!info.isReady) {
+        return false;
+      }
       switch (info.type) {
         case DenoiseType.rnnoise:
           return _unleash.isMeetAudioDenoiseRnnoise();
         case DenoiseType.deepfilter:
+        case DenoiseType.deepfilter2:
           return _unleash.isMeetAudioDenoiseDeepfilter();
+        case DenoiseType.dtlnRs:
+          return _unleash.isMeetAudioDenoiseDtlnRs();
         case DenoiseType.none:
           return false;
       }
     }).toList();
+  }
+
+  static bool isDeepFilterType(DenoiseType type) =>
+      type == DenoiseType.deepfilter || type == DenoiseType.deepfilter2;
+
+  /// Loads DeepFilter ONNX + runs df_create off the mic-attach critical path.
+  /// Coalesces concurrent callers and skips if a recent warmup already succeeded.
+  Future<void> warmUpDeepFilterIfNeeded({DenoiseType? type}) async {
+    if (!isAvailable || !_unleash.isMeetAudioDenoiseDeepfilter()) {
+      return;
+    }
+    final types = _deepFilterWarmupTargets(type);
+    if (types.isEmpty) {
+      return;
+    }
+    if (_deepFilterWarmupInFlight != null) {
+      await _deepFilterWarmupInFlight;
+      return;
+    }
+    final last = _lastDeepFilterWarmupSuccess;
+    if (last != null &&
+        DateTime.now().difference(last) < _deepFilterWarmupMinInterval) {
+      return;
+    }
+
+    final future = _runDeepFilterWarmup(types);
+    _deepFilterWarmupInFlight = future;
+    try {
+      await future;
+    } finally {
+      _deepFilterWarmupInFlight = null;
+    }
+  }
+
+  List<DenoiseType> _deepFilterWarmupTargets(DenoiseType? type) {
+    if (type != null) {
+      if (!isDeepFilterType(type) || !_isTypeAllowedByFlags(type)) {
+        return const [];
+      }
+      return [type];
+    }
+    if (!_isTypeAllowedByFlags(DenoiseType.deepfilter)) {
+      return const [];
+    }
+    return const [DenoiseType.deepfilter];
+  }
+
+  Future<void> _runDeepFilterWarmup(List<DenoiseType> types) async {
+    for (final denoiseType in types) {
+      if (!await ProtonDenoiseEffects.instance.isTypeReady(denoiseType)) {
+        continue;
+      }
+      try {
+        final results = await ProtonDenoiseEffects.instance.warmUpDenoise(
+          type: denoiseType,
+        );
+        final result = results.isNotEmpty ? results.first : null;
+        if (result?.warmUpOk == true) {
+          _lastDeepFilterWarmupSuccess = DateTime.now();
+          l.logger.d(
+            '[DenoiseAudioService] DeepFilter warmup ok '
+            'type=${denoiseType.id} ms=${result!.warmUpMs}',
+          );
+        } else {
+          l.logger.w(
+            '[DenoiseAudioService] DeepFilter warmup failed type=${denoiseType.id}',
+          );
+        }
+      } catch (e, st) {
+        l.logger.w(
+          '[DenoiseAudioService] DeepFilter warmup error: $e',
+          error: e,
+          stackTrace: st,
+        );
+      }
+    }
+  }
+
+  /// Picks [preferred] when allowed + ready, otherwise the first UI-visible type.
+  Future<DenoiseType?> resolveTypeForAttach(DenoiseType preferred) async {
+    final available = await listAvailableTypesForUi();
+    if (available.isEmpty) {
+      return null;
+    }
+    for (final info in available) {
+      if (info.type == preferred) {
+        return preferred;
+      }
+    }
+    return available.first.type;
   }
 
   void setType(DenoiseType type) {
@@ -105,7 +206,10 @@ class DenoiseAudioService {
       case DenoiseType.rnnoise:
         return _unleash.isMeetAudioDenoiseRnnoise();
       case DenoiseType.deepfilter:
+      case DenoiseType.deepfilter2:
         return _unleash.isMeetAudioDenoiseDeepfilter();
+      case DenoiseType.dtlnRs:
+        return _unleash.isMeetAudioDenoiseDtlnRs();
       case DenoiseType.none:
         return false;
     }

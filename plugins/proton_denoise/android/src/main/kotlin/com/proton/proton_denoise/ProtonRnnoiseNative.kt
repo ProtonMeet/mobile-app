@@ -57,6 +57,39 @@ internal object ProtonRnnoiseNative {
         return nativeProcessInterleaved(handle, buffer, numFrames, numChannels)
     }
 
+    /** One RNNoise frame of mono PCM — matches iOS [RnnoiseProcessor] frame loop. */
+    fun processMonoInPlace(
+        handle: Long,
+        samples: FloatArray,
+        offset: Int,
+        frameSize: Int,
+    ): Float {
+        if (handle == 0L || !isAvailable || frameSize <= 0) {
+            return 0f
+        }
+        return nativeProcessMonoInPlace(handle, samples, offset, frameSize)
+    }
+
+    /** One RNNoise frame at a float offset inside a direct WebRTC capture buffer. */
+    fun processInterleavedAt(
+        handle: Long,
+        buffer: ByteBuffer,
+        floatOffset: Int,
+        numFrames: Int,
+        numChannels: Int,
+    ): Float {
+        if (handle == 0L || !isAvailable || !buffer.isDirect || numFrames <= 0) {
+            return 0f
+        }
+        return nativeProcessInterleavedAt(
+            handle,
+            buffer,
+            floatOffset,
+            numFrames,
+            numChannels,
+        )
+    }
+
     private external fun nativeCreate(): Long
 
     private external fun nativeDestroy(handle: Long)
@@ -68,6 +101,21 @@ internal object ProtonRnnoiseNative {
     private external fun nativeProcessInterleaved(
         handle: Long,
         buffer: ByteBuffer,
+        numFrames: Int,
+        numChannels: Int,
+    ): Float
+
+    private external fun nativeProcessMonoInPlace(
+        handle: Long,
+        samples: FloatArray,
+        offset: Int,
+        frameSize: Int,
+    ): Float
+
+    private external fun nativeProcessInterleavedAt(
+        handle: Long,
+        buffer: ByteBuffer,
+        floatOffset: Int,
         numFrames: Int,
         numChannels: Int,
     ): Float

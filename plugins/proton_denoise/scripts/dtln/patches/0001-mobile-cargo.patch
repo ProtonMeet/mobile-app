@@ -1,0 +1,31 @@
+diff --git a/Cargo.toml b/Cargo.toml
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -4,7 +4,11 @@ edition = "2021"
+ exclude = ["index.node"]
+ 
+ [lib]
+-crate-type = ["lib", "cdylib"]
++crate-type = ["lib", "staticlib"]
++
++[features]
++default = []
++napi = ["neon"]
+ 
+ [[bin]]
+ name = "dtln-rs"
+@@ -23,11 +27,12 @@ libc = "0.2.159"
+ num = "0.4.3"
+ anyhow = "1.0.89"
+-rustfft = { version = "6.2.0", features = ["avx"] }
++rustfft = { version = "6.2.0" }
+ realfft = "3.4.0"
+ 
+ [dependencies.neon]
+ version = "0.10"
+ default-features = false
+-features = ["napi-6"]
++optional = true
++features = ["napi-6"]
+ 
+ [build-dependencies]

@@ -21,6 +21,16 @@ mixin RoomTracksHandlers
         RoomEventsBinding {
   void registerTracksHandlers() {
     on<SortParticipants>(_onSortParticipants);
+    on<RefreshParticipantDisplayNames>(_onRefreshParticipantDisplayNames);
+  }
+
+  Future<void> _onRefreshParticipantDisplayNames(
+    RefreshParticipantDisplayNames event,
+    Emitter<RoomState> emit,
+  ) async {
+    final updated = await loadFrbParticipants();
+    emit(state.copyWith(frbParticipantsMap: updated));
+    add(SortParticipants());
   }
 
   /// Sorts and organizes all participant tracks in the room.

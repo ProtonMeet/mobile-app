@@ -29,6 +29,7 @@ import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/notification_service.dart';
 import 'package:meet/managers/preferences/preferences.manager.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
+import 'package:meet/managers/room.manager.dart' show RoomManager;
 import 'package:meet/managers/services/denoise_audio.service.dart';
 import 'package:meet/managers/services/in_app_review_service.dart';
 import 'package:meet/managers/user_activity.manager.dart';
@@ -88,7 +89,6 @@ import 'room_top_bar.dart';
 import 'side_panel_widget.dart';
 import 'speaker_phone/speaker_phone_panel.dart';
 import 'widgets/connection_status_banner.dart';
-import 'widgets/meeting_expiry_banner.dart';
 
 class RoomPage extends StatefulWidget {
   final Room room;
@@ -2654,7 +2654,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                     controller: _stopSharingTooltipController,
                     triggerMode: TooltipTriggerMode.manual,
                     message: context.local.tap_to_stop_sharing,
-                    preferredDirection: AxisDirection.up,
                     child: Material(
                       color: context.colors.signalDangerMajor3,
                       shape: const CircleBorder(),
@@ -2679,6 +2678,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                     ),
                   )
                 : null,
+            audioDenoiseType: state.audioDenoiseType,
             optionalActionsBuilder: () {
               final isSpeakerMuted = state.isSpeakerMuted ?? false;
 
@@ -2757,7 +2757,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                     icon: const Icon(Icons.picture_in_picture),
                     tooltip: context.local.enter_pip,
                     onPressed: () {
-                      _bloc.add(EnterPipMode());
+                      _bloc.add(EnterPipMode(backgroundApp: iOS));
                     },
                   ),
 
@@ -3266,31 +3266,30 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         final showAudioDenoise =
             showAudioDenoiseCandidate && denoiseTypeInfos.isNotEmpty;
         final denoiseTypeOptions = denoiseTypeInfos
-            .map(
-              (info) => DenoiseTypeUiOption(
-                id: info.type.id,
-                label: info.type.displayName,
-              ),
-            )
+            .map((info) => DenoiseTypeUiOption(type: info.type))
             .toList();
         return BlocSelector<
           RoomBloc,
           RoomState,
-          (bool, bool, bool, bool, String)
+          (bool, bool, bool, bool, DenoiseType)
         >(
           selector: (state) => (
             state.isRejoining,
             state.forceShowConnectionStatusBanner,
             state.cameraBackgroundBlurEnabled,
             state.audioDenoiseEnabled,
-            state.audioDenoiseTypeId,
+            state.audioDenoiseType,
           ),
           builder: (context, data) {
             final isRejoining = data.$1;
             final forceShowConnectionStatusBanner = data.$2;
             final cameraBackgroundBlurEnabled = data.$3;
             final audioDenoiseEnabled = data.$4;
-            final audioDenoiseTypeId = data.$5;
+            final storedAudioDenoiseType = data.$5;
+            final selectedAudioDenoiseType =
+                denoiseTypeOptions.any((o) => o.type == storedAudioDenoiseType)
+                ? storedAudioDenoiseType
+                : denoiseTypeOptions.firstOrNull?.type;
             final isAutoReconnectionEnabled = _bloc
                 .isMeetAutoReconnectionEnabled();
             final isNetworkToolEnabled = _bloc
@@ -3320,11 +3319,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                     }
                   : null,
               audioDenoiseTypeOptions: denoiseTypeOptions,
-              selectedAudioDenoiseTypeId: audioDenoiseTypeId,
+              selectedAudioDenoiseType: selectedAudioDenoiseType,
               onAudioDenoiseTypeSelected:
                   showAudioDenoise && denoiseTypeOptions.length > 1
-                  ? (typeId) {
-                      _bloc.add(SetAudioDenoiseType(typeId: typeId));
+                  ? (type) {
+                      _bloc.add(SetAudioDenoiseType(type: type));
                     }
                   : null,
               onHideSelfViewChanged: ({required bool value}) {

@@ -23,10 +23,19 @@ proton_denoise/
 ├── common/cpp/src/
 ├── third_party/rnnoise/include/rnnoise.h
 ├── cmake/rnnoise.cmake, rnnoise_upstream.cmake, shims/
-├── scripts/build_rnnoise.sh, build_rnnoise_apple.sh
-├── lib/proton_denoise.dart
-└── macos|windows|linux|ios|android/
+├── scripts/rnnoise/     # RNNoise CMake (build_rnnoise*.sh)
+├── scripts/dtln/        # dtln-rs prebuilts (build-dtln-rs*.sh)
+├── scripts/deepfilter/  # DeepFilter frameworks (build-deepfilter*.sh)
+├── lib/                 Dart facade ([ProtonDenoiseEffects.instance])
+├── common/darwin/       iOS + macOS channel + capture processors
+├── common/cpp/          RNNoise / DTLN / DeepFilter C API glue
+├── common/desktop/      Linux/Windows effects + legacy channel
+├── android/             Kotlin channel + JNI processors
+└── scripts/             RNNoise, dtln-rs, DeepFilter native builds
 ```
+
+Native channel: `me.proton.meet/denoise` — attach/detach on flutter_webrtc local audio tracks.
+Legacy desktop channel: `proton_denoise` — RNNoise frame API for tests.
 
 ## RNNoise build (compile time)
 
@@ -36,7 +45,9 @@ RNNoise is **not** vendored as prebuilt `.a` / `.lib` files. On each native buil
 2. Model weights are downloaded via upstream `download_model.sh` (needs `curl` or `wget`, once per cache).
 3. A static `librnnoise` is built for the active OS/arch via `CMAKE_OSX_DEPLOYMENT_TARGET` (no manual `-mmacosx-version-min` on iOS).
 
-**iOS / macOS:** CocoaPods runs `scripts/build_rnnoise_apple.sh` before compiling the pod. Requires **CMake 3.14+** on the build machine (`brew install cmake`). Xcode’s script phase uses a minimal `PATH`; the script searches Homebrew, `/Applications/CMake.app`, and `ANDROID_HOME/cmake/...`. Override with `RNNOISE_CMAKE=/path/to/cmake` if needed.
+**iOS / macOS:** CocoaPods runs `scripts/rnnoise/build_rnnoise_apple.sh` before compiling the pod. Requires **CMake 3.14+** on the build machine (`brew install cmake`). Xcode’s script phase uses a minimal `PATH`; the script searches Homebrew, `/Applications/CMake.app`, and `ANDROID_HOME/cmake/...`. Override with `RNNOISE_CMAKE=/path/to/cmake` if needed.
+
+**DeepFilter (iOS / macOS):** No app-level Podfile hooks. `prepare_command` symlinks vendored frameworks and the ONNX model under each platform pod root; `proton_denoise.podspec` declares `vendored_frameworks`, `resource_bundles`, and `user_target_xcconfig` link settings via `cocoapods/deepfilter_pod_support.rb`. Build prebuilts with `./scripts/deepfilter/build-deepfilter.sh ios|macos`.
 
 **Android:** Gradle `externalNativeBuild` (CMake) builds `libproton_denoise.so` with RNNoise via `cmake/rnnoise.cmake`; Kotlin JNI calls the same C API as Darwin.
 
@@ -51,7 +62,7 @@ Manual test (macOS arm64):
 ```bash
 TARGET_TEMP_DIR=/tmp/rnnoise-build MACOSX_DEPLOYMENT_TARGET=12.0 \
   PLATFORM_NAME=macosx ARCHS=arm64 CONFIGURATION=Debug \
-  ./scripts/build_rnnoise.sh apple /tmp/rnnoise-build/librnnoise.a
+  ./scripts/rnnoise/build_rnnoise.sh apple /tmp/rnnoise-build/librnnoise.a
 ```
 
 First build needs network access for git + Xiph model tarball.
@@ -67,9 +78,22 @@ dependencies:
 ```dart
 import 'package:proton_denoise/proton_denoise.dart';
 
-await ProtonDenoise.instance.initialize();
-await ProtonDenoise.instance.setEnabled(true);
+if (!ProtonDenoiseEffects.isSupported) return;
+
+await ProtonDenoiseEffects.instance.attachDenoise(
+  trackId: micTrackId,
+  type: DenoiseType.rnnoise,
+);
+
+// LiveKit track processor (shares the facade channel)
+final processor = ProtonDenoiseEffects.instance.createAudioDenoiseTrackProcessor(
+  type: DenoiseType.rnnoise,
+);
 ```
+
+Dart layout mirrors `proton_video_effects`: [ProtonDenoiseEffects.instance] is the only
+native I/O entry; `lib/src/proton_denoise_channel.dart` is internal. [ProtonDenoise]
+remains for desktop RNNoise frame tests via the legacy `proton_denoise` channel.
 
 ## flutter-webrtc integration (iOS / macOS)
 
