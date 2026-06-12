@@ -59,6 +59,10 @@ sealed class BridgeError with _$BridgeError implements FrbException {
 
   /// SRP authentication rejected the supplied password (API error code 2026).
   const factory BridgeError.incorrectPassword() = BridgeError_IncorrectPassword;
+
+  /// MLS server version is newer than this client supports.
+  const factory BridgeError.mlsServerVersionNotSupported() =
+      BridgeError_MlsServerVersionNotSupported;
 }
 
 class ResponseError {

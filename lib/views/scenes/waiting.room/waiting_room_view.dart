@@ -4,6 +4,7 @@ import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/views/components/alerts/join_meeting_error.dart';
 import 'package:meet/views/components/alerts/meeting_locked_error.dart';
+import 'package:meet/views/components/bottom.sheets/upgrade_due_to_meet_server_version_not_support_sheet.dart';
 import 'package:meet/views/components/loading_view.dart';
 import 'package:meet/views/scenes/core/responsive_v2.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
@@ -135,6 +136,7 @@ class _WaitingRoomPageState extends State<WaitingRoomPage>
                 final meetingLink =
                     state.meetLink?.meetingLinkName ??
                     state.args.meetingLink?.meetingLinkName;
+                // To-do: check if we really need addPostFrameCallback here
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (context.mounted) {
                     if (state.error ==
@@ -143,6 +145,11 @@ class _WaitingRoomPageState extends State<WaitingRoomPage>
                         context,
                         meetingLink: meetingLink,
                       );
+                    } else if (state.error ==
+                        WaitingRoomErrorCode
+                            .mlsServerVersionNotSupported
+                            .name) {
+                      showUpgradeDueToMeetServerVersionNotSupportSheet(context);
                     } else {
                       showJoinMeetingErrorBottomSheet(
                         context,

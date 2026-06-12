@@ -81,6 +81,10 @@ pub enum BridgeError {
     /// SRP authentication rejected the supplied password (API error code 2026).
     #[error("Incorrect meeting password.")]
     IncorrectPassword,
+
+    /// MLS server version is newer than this client supports.
+    #[error("MLS server version not supported. Please update the app.")]
+    MlsServerVersionNotSupported,
 }
 
 #[derive(Debug)]
@@ -158,6 +162,9 @@ impl From<MeetCoreError> for BridgeError {
         match value {
             MeetCoreError::MeetingLocked => BridgeError::MeetingLocked,
             MeetCoreError::IncorrectPassword => BridgeError::IncorrectPassword,
+            MeetCoreError::MlsServerVersionNotSupported => {
+                BridgeError::MlsServerVersionNotSupported
+            }
             MeetCoreError::HttpClientError {
                 status,
                 message,

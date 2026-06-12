@@ -281,6 +281,17 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
               ),
             );
             return;
+          } else if (e is BridgeError_MlsServerVersionNotSupported) {
+            l.logger.e(
+              '[WaitingRoomBloc] MLS server version not supported: $e',
+            );
+            emit(
+              state.copyWith(
+                isLoading: false,
+                error: WaitingRoomErrorCode.mlsServerVersionNotSupported.name,
+              ),
+            );
+            return;
           }
 
           // Log join meeting failed to meet-server if feature flag is enabled

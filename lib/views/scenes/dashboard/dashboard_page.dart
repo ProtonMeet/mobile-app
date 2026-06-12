@@ -408,6 +408,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   if (error != null &&
                       context.mounted &&
                       !PlatformInfoChannel.isInForceUpgradeState()) {
+                    // To-do: check if we really need addPostFrameCallback here
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       if (context.mounted &&
                           !PlatformInfoChannel.isInForceUpgradeState()) {
@@ -441,6 +442,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   if (errorResponse != null &&
                       context.mounted &&
                       !PlatformInfoChannel.isInForceUpgradeState()) {
+                    // To-do: check if we really need addPostFrameCallback here
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       if (context.mounted &&
                           !PlatformInfoChannel.isInForceUpgradeState()) {
@@ -576,6 +578,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     current.scheduledMeeting != null &&
                     current.scheduledMeetingData != null,
                 listener: (context, state) {
+                  // To-do: check if we really need addPostFrameCallback here
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (context.mounted &&
                         !PlatformInfoChannel.isInForceUpgradeState()) {

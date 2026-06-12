@@ -357,6 +357,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       await _leaveRoom(isShowLeftMeetingBottomSheet: false);
 
       // Show session sheet after room navigation completed (popUntil in _leaveRoom).
+      // To-do: check if we really need addPostFrameCallback here
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final rootContext =
             Coordinator.rootNavigatorKey.currentState?.overlay?.context ??
@@ -402,6 +403,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           }
         }
 
+        // To-do: check if we really need addPostFrameCallback here
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           if (mounted) {
             if (android && _cameraWasEnabledBeforePause) {
@@ -671,6 +673,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           'System',
         ),
       );
+      // To-do: check if we really need addPostFrameCallback here
       WidgetsBindingCompatible.instance?.addPostFrameCallback((
         timeStamp,
       ) async {

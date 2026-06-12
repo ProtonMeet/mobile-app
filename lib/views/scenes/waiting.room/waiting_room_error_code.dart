@@ -1,1 +1,6 @@
-enum WaitingRoomErrorCode { meetingLocked, incorrectPassword, generic }
+enum WaitingRoomErrorCode {
+  meetingLocked,
+  incorrectPassword,
+  mlsServerVersionNotSupported,
+  generic,
+}

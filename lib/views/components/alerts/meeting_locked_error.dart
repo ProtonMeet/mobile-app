@@ -13,7 +13,7 @@ class _MeetingLockedDialogConstants {
   static const double borderColorAlpha = 0.03;
 }
 
-Future<void> showMeetingLockedBottomSheet(
+void showMeetingLockedBottomSheet(
   BuildContext context, {
   String? meetingLink,
 }) {
@@ -23,22 +23,21 @@ Future<void> showMeetingLockedBottomSheet(
   );
 
   // Wait for navigation to complete, then show bottom sheet
-  return Future.delayed(Duration.zero, () {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (context.mounted) {
-        final mediaQuery = MediaQuery.of(context);
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          useSafeArea: true,
-          backgroundColor: Colors.transparent,
-          barrierColor: Colors.black.withValues(alpha: 0.35),
-          constraints: BoxConstraints(maxHeight: mediaQuery.size.height - 100),
-          routeSettings: const RouteSettings(name: 'meeting_locked'),
-          builder: (_) => MeetingLockedModal(meetingLink: meetingLink),
-        );
-      }
-    });
+  // To-do: check if we really need addPostFrameCallback here
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (context.mounted) {
+      final mediaQuery = MediaQuery.of(context);
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: Colors.transparent,
+        barrierColor: Colors.black.withValues(alpha: 0.35),
+        constraints: BoxConstraints(maxHeight: mediaQuery.size.height - 100),
+        routeSettings: const RouteSettings(name: 'meeting_locked'),
+        builder: (_) => MeetingLockedModal(meetingLink: meetingLink),
+      );
+    }
   });
 }
 
