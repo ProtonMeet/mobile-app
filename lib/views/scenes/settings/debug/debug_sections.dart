@@ -5,17 +5,22 @@ import 'package:flutter/material.dart';
 import 'package:meet/managers/services/in_app_review_service.dart';
 import 'package:meet/views/components/alerts/session_expired_dialog.dart';
 import 'package:meet/views/scenes/feedbacks/pre_rating_sheet.dart';
+import 'package:meet/views/scenes/settings/debug/background_blur_debug_screen.dart';
+import 'package:meet/views/scenes/settings/debug/denoise_diagnostics_debug_sheet.dart';
 import 'package:meet/views/scenes/settings/debug/left_meeting_sheet_menu.dart';
+import 'package:meet/views/scenes/settings/debug/offline_file_denoise_debug_sheet.dart';
 import 'package:meet/views/scenes/settings/settings_action_item.dart';
 import 'package:meet/views/scenes/settings/settings_section_header.dart';
 import 'package:meet/views/scenes/signin/auth_bloc.dart';
+import 'package:proton_denoise/proton_denoise.dart';
+import 'package:proton_video_effects/proton_video_effects.dart';
 
-/// Extra settings rows for debug builds only (`flutter run`, not release/profile).
+/// Developer/QA settings rows. Hidden in release via [kReleaseMode].
 final class AppSettingsDebugSection {
   AppSettingsDebugSection._();
 
   static List<Widget> items(BuildContext context, AuthBloc? authBloc) {
-    if (!kDebugMode) {
+    if (kReleaseMode) {
       return const <Widget>[];
     }
     return [
@@ -26,6 +31,36 @@ final class AppSettingsDebugSection {
         onTap: () =>
             LeftMeetingSheetDebugMenu.show(context, authBloc: authBloc),
         isFirst: true,
+      ),
+      if (ProtonDenoiseEffects.isSupported) ...[
+        const SizedBox(height: 1),
+        SettingsActionItem(
+          title: 'Denoise library diagnostics',
+          onTap: () => DenoiseDiagnosticsDebugSheet.show(context),
+        ),
+      ],
+      if (ProtonVideoEffects.isSupported) ...[
+        const SizedBox(height: 1),
+        SettingsActionItem(
+          title: 'Background blur preview',
+          onTap: () => BackgroundBlurDebugScreen.show(context),
+        ),
+      ],
+      const SizedBox(height: 1),
+      SettingsActionItem(
+        title: 'RNNoise file denoise (Android)',
+        onTap: () => OfflineFileDenoiseDebugSheet.show(
+          context,
+          type: DenoiseType.rnnoise,
+        ),
+      ),
+      const SizedBox(height: 1),
+      SettingsActionItem(
+        title: 'DTLN file denoise (Android)',
+        onTap: () => OfflineFileDenoiseDebugSheet.show(
+          context,
+          type: DenoiseType.dtlnRs,
+        ),
       ),
       const SizedBox(height: 1),
       SettingsActionItem(
@@ -49,7 +84,6 @@ final class AppSettingsDebugSection {
           });
         },
       ),
-
       const SizedBox(height: 1),
       SettingsActionItem(
         title: 'Rating sheet',
@@ -66,8 +100,6 @@ final class AppSettingsDebugSection {
         },
         isLast: true,
       ),
-
-      /// add some space between the items
       const SizedBox(height: 32),
     ];
   }

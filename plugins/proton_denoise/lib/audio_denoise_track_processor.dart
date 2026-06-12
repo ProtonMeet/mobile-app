@@ -1,19 +1,20 @@
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:livekit_client/livekit_client.dart';
-
-import 'proton_denoise_channel.dart';
-import 'src/denoise_platform.dart';
-import 'src/denoise_type.dart';
+import 'package:proton_denoise/denoise_type.dart';
+import 'package:proton_denoise/src/denoise_platform.dart';
+import 'package:proton_denoise/src/proton_denoise_channel.dart';
 
 /// LiveKit [TrackProcessor] that attaches native mic denoise on the local audio track.
 ///
-/// [processedTrack] stays null: processing runs in the flutter_webrtc capture pipeline.
+/// Create via [ProtonDenoiseEffects.createAudioDenoiseTrackProcessor] — not directly.
+///
+/// [processedTrack] is always null: native code processes audio in the WebRTC pipeline.
 class AudioDenoiseTrackProcessor extends TrackProcessor<AudioProcessorOptions> {
   AudioDenoiseTrackProcessor({
+    required ProtonDenoiseChannel channel,
     required this.type,
-    ProtonDenoiseChannel? channel,
-  }) : _channel = channel ?? ProtonDenoiseChannel();
+  }) : _channel = channel;
 
   final DenoiseType type;
   final ProtonDenoiseChannel _channel;
@@ -45,7 +46,7 @@ class AudioDenoiseTrackProcessor extends TrackProcessor<AudioProcessorOptions> {
       return;
     }
     try {
-      await _channel.attach(trackId: trackId, type: type);
+      await _channel.attachDenoise(trackId: trackId, type: type);
       _attachedTrackId = trackId;
       debugPrint('[ProtonDenoise] Attached ${type.id} for track $trackId');
     } catch (e, st) {
@@ -65,7 +66,7 @@ class AudioDenoiseTrackProcessor extends TrackProcessor<AudioProcessorOptions> {
     _attachedTrackId = null;
     if (id != null) {
       try {
-        await _channel.detach(trackId: id);
+        await _channel.detachDenoise(trackId: id);
       } catch (e, st) {
         debugPrint('[ProtonDenoise] detach failed: $e\n$st');
       }

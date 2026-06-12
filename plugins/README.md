@@ -1,60 +1,50 @@
-# Flutter Plugins
+# Proton Meet plugins
 
-This directory contains Flutter plugins and shared components for the Proton Meet application.
+Local Flutter plugins used by the Meet app. Each plugin lives in its own directory with a `pubspec.yaml` and is referenced from the root app via `path:` dependencies.
 
-## Purpose
+## Plugins
 
-- Build and maintain reusable Flutter plugins
-- Create wrapper implementations for external plugins (e.g., permissions handling)
-- Share common components across Proton applications
-- Enable code reuse between Proton Meet and Proton Meet applications
+| Plugin                                              | What it does                                                             |
+| --------------------------------------------------- | ------------------------------------------------------------------------ |
+| [`proton_denoise`](proton_denoise/)                 | Microphone denoising (RNNoise, DTLN, DeepFilter on mobile)               |
+| [`proton_video_effects`](proton_video_effects/)     | Camera effects — background blur (Vision on Apple, MediaPipe on Android) |
+| [`proton_screen_recorder`](proton_screen_recorder/) | Screen capture (iOS / macOS)                                             |
 
-## Plugins in this repo
+Details, build steps, and native setup are in each plugin’s `README.md`.
 
-| Plugin | Purpose |
-|--------|---------|
-| `proton_screen_recorder` | iOS/macOS screen capture |
-| `proton_denoise` | Cross-platform audio denoising (RNNoise backend; DeepFilter etc. later) |
+## Layout
 
-## Structure
-
-Each plugin should be organized in its own directory with the following structure:
-
-- `lib/` - Dart source code
-- `example/` - Example implementation
-- `test/` - Unit and integration tests
-- `README.md` - Plugin-specific documentation
-- `pubspec.yaml` - Plugin dependencies and metadata
-
-## Creating a New Plugin
-
-To create a new plugin, use the Flutter CLI command:
-
-```bash
-flutter create --org com.proton --template=plugin --platforms=ios,android,macos,web,linux,windows proton_plugin_name
+```
+proton_<name>/
+├── lib/           Dart API
+├── ios/ macos/ android …  Platform glue
+├── test/
+├── example/       Optional sample app
+└── README.md
 ```
 
-## Adding New Platforms
+## Adding a plugin
 
-To add a new platform to an existing plugin, use the following command from within the plugin directory:
+From this directory:
 
 ```bash
-flutter create --platforms=<platform_name> .
+flutter create --org com.proton --template=plugin \
+  --platforms=ios,android,macos,web,linux,windows \
+  proton_<name>
 ```
 
-This will create a new plugin with the following features:
+Then add a `path:` dependency in the root `pubspec.yaml`.
 
-- Platform-specific implementations
-- Example app
-- Test directory
-- Basic plugin structure
-- Platform interface
+## Adding a platform to an existing plugin
 
-## Development Guidelines
+From inside the plugin directory:
 
-1. Follow Flutter's plugin development best practices
-2. Maintain comprehensive documentation
-3. Include example implementations
-4. Write unit tests for core functionality
-5. Keep dependencies up to date
-6. Follow semantic versioning for releases
+```bash
+flutter create --platforms=<platform> .
+```
+
+## Conventions
+
+- Keep native build logic inside the plugin (podspecs, Gradle, scripts) — avoid app-level Podfile glue.
+- Document platform-specific setup in the plugin README.
+- Add tests for Dart-facing behavior; use `example/` when manual QA helps.

@@ -429,6 +429,14 @@ final class PipManager: NSObject {
     endBackgroundTaskIfNeeded()
   }
 
+  /// Mimics pressing the Home button so PiP stays visible over the home screen.
+  func moveAppToBackground(result: @escaping FlutterResult) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+      UIApplication.shared.perform(#selector(NSXPCConnection.suspend))
+      result(true)
+    }
+  }
+
   func disposePiP() {
     contentBoundsObservation?.invalidate()
     contentBoundsObservation = nil

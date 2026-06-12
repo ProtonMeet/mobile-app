@@ -1,51 +1,100 @@
-/// On-device microphone denoising (RNNoise; DeepFilter stub).
+/// On-device microphone denoising for Proton Meet.
+///
+/// Import this library only:
+/// `import 'package:proton_denoise/proton_denoise.dart';`
+///
+/// Native I/O is routed through [ProtonDenoiseEffects]. Implementation details
+/// live under `lib/src/` and are not part of the public API.
 library;
 
 export 'audio_denoise_track_processor.dart';
-export 'proton_denoise_channel.dart';
-export 'src/denoise_type.dart';
+export 'denoise_models.dart';
+export 'denoise_type.dart';
 
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-import 'proton_denoise_channel.dart';
+import 'audio_denoise_track_processor.dart';
+import 'denoise_models.dart';
+import 'denoise_type.dart';
 import 'src/denoise_platform.dart';
-import 'src/denoise_type.dart';
+import 'src/proton_denoise_channel.dart';
 
-/// Facade for attaching denoise to flutter_webrtc local audio tracks.
+/// Entry point for attaching denoise to flutter_webrtc local audio tracks.
+///
+/// Use [instance] for all native calls. Typical Meet integration:
+///
+/// ```dart
+/// if (!ProtonDenoiseEffects.isSupported) return;
+///
+/// // Preferred — denoise attaches when the LiveKit mic track starts
+/// final processor = ProtonDenoiseEffects.instance.createAudioDenoiseTrackProcessor(
+///   type: DenoiseType.rnnoise,
+/// );
+///
+/// // Or attach / detach on an existing WebRTC track id
+/// await ProtonDenoiseEffects.instance.attachDenoise(
+///   trackId: id,
+///   type: DenoiseType.rnnoise,
+/// );
+/// await ProtonDenoiseEffects.instance.detachDenoise(trackId: id);
+/// ```
 class ProtonDenoiseEffects {
   ProtonDenoiseEffects._();
+
   static final ProtonDenoiseEffects instance = ProtonDenoiseEffects._();
 
   final ProtonDenoiseChannel _channel = ProtonDenoiseChannel();
 
-  /// Native plugin on iOS, macOS, Android, Linux, and Windows.
+  /// `true` on iOS, Android, macOS, Linux, and Windows; `false` on web.
   static bool get isSupported => isProtonDenoisePlatformSupported;
 
   /// Same platforms as [isSupported] — WebRTC track attach pipeline.
   static bool get supportsWebRtcTrackPipeline =>
       isProtonDenoisePlatformSupported;
 
+  /// LiveKit [AudioDenoiseTrackProcessor] sharing this facade's channel client.
+  ///
+  /// Pass the result to `LocalAudioTrack.create`. Do not construct
+  /// [AudioDenoiseTrackProcessor] yourself — it must share this facade's channel.
+  AudioDenoiseTrackProcessor createAudioDenoiseTrackProcessor({
+    required DenoiseType type,
+  }) {
+    return AudioDenoiseTrackProcessor(channel: _channel, type: type);
+  }
+
   Future<List<DenoiseTypeInfo>> listDenoiseTypes() =>
       _channel.listDenoiseTypes();
 
   Future<bool> isTypeReady(DenoiseType type) => _channel.isTypeReady(type);
 
+  /// Per-backend native load probes for debug settings UI.
+  Future<List<DenoiseDiagnosticEntry>> diagnoseDenoise() =>
+      _channel.diagnoseDenoise();
+
+  /// Like [diagnoseDenoise] but includes fallback/error notes for debug UI.
+  Future<DenoiseDiagnosticsResult> diagnoseDenoiseWithStatus() =>
+      _channel.diagnoseDenoiseWithStatus();
+
+  /// Production-style warm-up probes per backend (omit [type] to warm all).
+  Future<List<DenoiseWarmUpResult>> warmUpDenoise({DenoiseType? type}) =>
+      _channel.warmUpDenoise(type: type);
+
   Future<void> attachDenoise({
     required String trackId,
     required DenoiseType type,
-  }) => _channel.attach(trackId: trackId, type: type);
+  }) => _channel.attachDenoise(trackId: trackId, type: type);
 
   Future<void> detachDenoise({required String trackId}) =>
-      _channel.detach(trackId: trackId);
+      _channel.detachDenoise(trackId: trackId);
 }
 
-/// Low-level C API wrapper (desktop tests / frame processing without WebRTC attach).
+/// Low-level RNNoise C API wrapper (desktop tests / frame processing without WebRTC attach).
 ///
-/// On iOS/macOS/Android the legacy `proton_denoise` channel is not registered;
-/// use [ProtonDenoiseEffects] for in-meeting mic denoise. Linux/Windows register both.
+/// On mobile, use [ProtonDenoiseEffects] for in-meeting mic denoise. Linux/Windows
+/// register both `me.proton.meet/denoise` and legacy `proton_denoise` channels.
 class ProtonDenoise {
   static bool get isSupported => ProtonDenoiseEffects.isSupported;
 

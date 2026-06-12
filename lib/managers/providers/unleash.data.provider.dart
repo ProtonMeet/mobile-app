@@ -52,6 +52,9 @@ enum UnleashFeature {
 
   /// DeepFilter backend under [meetAudioDenoise] (stub until model ships).
   meetAudioDenoiseDeepfilter,
+
+  /// dtln-rs (DTLN) backend under [meetAudioDenoise].
+  meetAudioDenoiseDtlnRs,
 }
 
 /// Function to retrieve all default toggles
@@ -116,6 +119,8 @@ extension UnleashFeatureExt on UnleashFeature {
         return "MeetAudioDenoiseRnnoise";
       case UnleashFeature.meetAudioDenoiseDeepfilter:
         return "MeetAudioDenoiseDeepfilter";
+      case UnleashFeature.meetAudioDenoiseDtlnRs:
+        return "MeetAudioDenoiseDtlnRs";
     }
   }
 
@@ -317,8 +322,8 @@ class UnleashDataProvider extends DataProvider {
 
   bool isMeetScreenShare() => isFeatureEnabled(UnleashFeature.meetScreenShare);
 
-  bool isMeetPictureInPicture() => true;
-  // isFeatureEnabled(UnleashFeature.meetPictureInPicture);
+  bool isMeetPictureInPicture() =>
+      isFeatureEnabled(UnleashFeature.meetPictureInPicture);
 
   bool isMeetClientMetricsLog() =>
       isFeatureEnabled(UnleashFeature.meetClientMetricsLog);
@@ -379,15 +384,16 @@ class UnleashDataProvider extends DataProvider {
   bool isMeetMobileInAppUpdate() =>
       isFeatureEnabled(UnleashFeature.meetMobileInAppUpdate);
 
-  /// Parent flag for native mic denoise (RNNoise / DeepFilter).
+  /// Parent flag for native mic denoise (RNNoise / DTLN / DeepFilter).
   bool isMeetAudioDenoise() =>
       isFeatureEnabled(UnleashFeature.meetAudioDenoise);
-
   bool isMeetAudioDenoiseRnnoise() =>
       isMeetAudioDenoise() &&
       isFeatureEnabled(UnleashFeature.meetAudioDenoiseRnnoise);
-
   bool isMeetAudioDenoiseDeepfilter() =>
       isMeetAudioDenoise() &&
       isFeatureEnabled(UnleashFeature.meetAudioDenoiseDeepfilter);
+  bool isMeetAudioDenoiseDtlnRs() =>
+      isMeetAudioDenoise() &&
+      isFeatureEnabled(UnleashFeature.meetAudioDenoiseDtlnRs);
 }

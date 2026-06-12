@@ -22,6 +22,7 @@ import 'package:meet/managers/notification_service.dart';
 import 'package:meet/managers/preferences/preferences.manager.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/managers/room.manager.dart';
+import 'package:meet/managers/services/denoise_audio.service.dart';
 import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/rust/proton_meet/models/meet_info.dart';
 import 'package:meet/rust/proton_meet/user_subscription.dart';
@@ -73,6 +74,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
   DateTime? _callStartTime;
 
   StreamSubscription? _deviceChangeSub;
+  StreamSubscription? _audioSessionDevicesSub;
 
   bool _screenShareToggleInFlight = false;
   static const int _joinLeaveChatSuppressThreshold = 50;
@@ -171,6 +173,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     _roomHealthSampleTimer?.cancel();
     _cancelFullScreenTimer();
     _deviceChangeSub?.cancel();
+    _audioSessionDevicesSub?.cancel();
     disposeReconnectionListeners();
     stopAloneCheckTimer();
     stopConnectionHealthCheck();
@@ -303,6 +306,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     on<ToggleSpeaker>(_onToggleSpeaker);
     on<ToggleSpeakerPhone>(_onToggleSpeakerPhone);
     on<SetSpeakerPhone>(_onSetSpeakerPhone);
+    on<AudioOutputDevicesChanged>(_onAudioOutputDevicesChanged);
     on<SetHideSelfView>(_onSetHideSelfView);
     on<SetForceShowConnectionStatusBanner>(
       _onSetForceShowConnectionStatusBanner,
@@ -442,6 +446,8 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     // Setup LiveKit listeners (bridge) See: room_event_bridge.dart
     setUpListeners();
 
+    unawaited(DenoiseAudioService.instance.warmUpDeepFilterIfNeeded());
+
     state.room.addListener(_onRoomDidUpdate);
 
     l.logger.d('RoomInitialized: ${event.room.name}');
@@ -533,7 +539,13 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       );
 
       // listen to audio session devices changed event as well, or device change event from hardware may triggered faster than audio session devices changed event
-      audioSession.devicesChangedEventStream.listen((event) async {
+      await _audioSessionDevicesSub?.cancel();
+      _audioSessionDevicesSub = audioSession.devicesChangedEventStream.listen((
+        _,
+      ) async {
+        if (state.isRejoining) {
+          return;
+        }
         final sessionDevices = await audioSession.getDevices();
         final audioSessionHasExternal = sessionDevices.any(
           (device) => device.type.isExternalAudioOutput,
@@ -551,8 +563,8 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
         final hasBluetoothAudioOutput = audioSessionHasBluetooth;
         if (hasExternalAudioOutput != state.hasExternalAudioOutput ||
             hasBluetoothAudioOutput != state.hasBluetoothAudioOutput) {
-          emit(
-            state.copyWith(
+          add(
+            AudioOutputDevicesChanged(
               hasExternalAudioOutput: hasExternalAudioOutput,
               hasBluetoothAudioOutput: hasBluetoothAudioOutput,
             ),
@@ -575,6 +587,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       ),
     );
 
+    await _deviceChangeSub?.cancel();
     _deviceChangeSub = Hardware.instance.onDeviceChange.stream.listen((
       value,
     ) async {
@@ -590,15 +603,6 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
           .where((d) => d.kind == 'audioinput' || d.kind == 'audiooutput')
           .toList();
       final currentAudioDeviceCount = audioDevices.length;
-
-      // If audio device count changed and we're on Android, reset speakerphone state so it will be applied to the new device (if user is using default device)
-      if (currentAudioDeviceCount != state.audioDeviceCount && android) {
-        Hardware.instance.setSpeakerphoneOn(state.isSpeakerPhone).catchError((
-          e,
-        ) {
-          l.logger.e('[RoomBloc] Error reapplying speakerphone state: $e');
-        });
-      }
       final nextHasExternal = value
           .where((d) => d.kind == 'audiooutput')
           .hasLabelSuggestingExternalAudioOutput;
@@ -623,8 +627,8 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
           nextHasExternal || hasExternalAudioOutputFromAudioSession;
       final hasBluetoothAudioOutput = hasBluetoothAudioOutputFromAudioSession;
 
-      emit(
-        state.copyWith(
+      add(
+        AudioOutputDevicesChanged(
           audioDeviceCount: currentAudioDeviceCount,
           hasExternalAudioOutput: hasExternalAudioOutput,
           hasBluetoothAudioOutput: hasBluetoothAudioOutput,
@@ -707,6 +711,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       l.logger.e('Error fetching meeting info: $e');
     }
   }
+
   /// Handles the event when the user dismisses the notification permission inform sheet.
   ///
   /// Parameters:
@@ -1163,6 +1168,30 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     } catch (e) {
       l.logger.e('Error setting speakerphone: $e');
     }
+  }
+
+  Future<void> _onAudioOutputDevicesChanged(
+    AudioOutputDevicesChanged event,
+    Emitter<RoomState> emit,
+  ) async {
+    if (state.isRejoining) {
+      return;
+    }
+
+    final nextCount = event.audioDeviceCount;
+    if (nextCount != null && nextCount != state.audioDeviceCount && android) {
+      Hardware.instance.setSpeakerphoneOn(state.isSpeakerPhone).catchError((e) {
+        l.logger.e('[RoomBloc] Error reapplying speakerphone state: $e');
+      });
+    }
+
+    emit(
+      state.copyWith(
+        audioDeviceCount: nextCount ?? state.audioDeviceCount,
+        hasExternalAudioOutput: event.hasExternalAudioOutput,
+        hasBluetoothAudioOutput: event.hasBluetoothAudioOutput,
+      ),
+    );
   }
 
   Future<void> _persistSpeakerPhonePreference(bool enabled) async {

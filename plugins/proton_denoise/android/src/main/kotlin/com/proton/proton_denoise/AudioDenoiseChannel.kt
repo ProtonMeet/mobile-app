@@ -1,5 +1,6 @@
 package com.proton.proton_denoise
 
+import android.content.pm.ApplicationInfo
 import android.util.Log
 import com.cloudwebrtc.webrtc.FlutterWebRTCPlugin
 import com.cloudwebrtc.webrtc.audio.AudioProcessingAdapter
@@ -9,18 +10,26 @@ import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
 
 /**
- * Flutter ↔ native hook: installs mic denoise when Flutter calls `attach` with a track id.
- * Mirrors [BackgroundBlurChannel] WebRTC lookup and `MeetAudioDenoiseNative` on Darwin.
+ * Flutter channel ↔ flutter_webrtc local audio track capture post-processing.
+ *
+ * Stack:
+ *   AudioDenoiseChannel — attach / detach / config (this file)
+ *   MeetAudio*Processor — per-backend frame callback (RNNoise, DeepFilter, DTLN)
+ *
+ * Processing runs on WebRTC's capture chain via [AudioProcessingController.capturePostProcessing].
  */
 class AudioDenoiseChannel(
     binding: FlutterPlugin.FlutterPluginBinding,
 ) : MethodChannel(binding.binaryMessenger, CHANNEL_NAME) {
 
+    private val appContext = binding.applicationContext
     private val engine = binding.flutterEngine
 
     private val processors = ConcurrentHashMap<String, AudioProcessingAdapterHolder>()
+    private val debugIoExecutor = Executors.newSingleThreadExecutor()
     private var attachedTrackId: String? = null
     private var attachedKind: DenoiseKind? = null
 
@@ -35,6 +44,54 @@ class AudioDenoiseChannel(
                     }
                     "attach" -> attach(call, result)
                     "detach" -> detach(call, result)
+                    "denoiseDebugAudioFile" -> {
+                        if (!isDebuggableBuild()) {
+                            result.error("UNAVAILABLE", "denoiseDebugAudioFile is debug-only", null)
+                            return@setMethodCallHandler
+                        }
+                        denoiseDebugAudioFile(call, result)
+                    }
+                    "isDtlnRsNativeReady" -> {
+                        if (!isDebuggableBuild()) {
+                            result.success(false)
+                            return@setMethodCallHandler
+                        }
+                        result.success(MeetAudioDtlnRsProcessor.isNativeReady)
+                    }
+                    "isRnnoiseNativeReady" -> {
+                        if (!isDebuggableBuild()) {
+                            result.success(false)
+                            return@setMethodCallHandler
+                        }
+                        result.success(MeetAudioRnnoiseProcessor.isNativeReady)
+                    }
+                    "diagnoseDenoise" ->
+                        debugIoExecutor.execute {
+                            try {
+                                result.success(DenoiseDiagnostics.payload(appContext))
+                            } catch (e: Throwable) {
+                                Log.e(TAG, "diagnoseDenoise failed", e)
+                                result.error("denoise", e.message, null)
+                            }
+                        }
+                    "warmUpDenoise" -> {
+                        val type = call.argument<String>("type")
+                        debugIoExecutor.execute {
+                            try {
+                                if (type.isNullOrEmpty()) {
+                                    result.success(DenoiseDiagnostics.warmUpAll(appContext))
+                                } else {
+                                    val payload =
+                                        DenoiseDiagnostics.warmUp(appContext, type).toMutableMap()
+                                    payload["id"] = type
+                                    result.success(payload)
+                                }
+                            } catch (e: Throwable) {
+                                Log.e(TAG, "warmUpDenoise failed", e)
+                                result.error("denoise", e.message, null)
+                            }
+                        }
+                    }
                     else -> result.notImplemented()
                 }
             } catch (e: Throwable) {
@@ -51,6 +108,7 @@ class AudioDenoiseChannel(
         }
         attachedTrackId = null
         attachedKind = null
+        debugIoExecutor.shutdownNow()
         Log.i(TAG, "dispose: released processors")
     }
 
@@ -63,15 +121,27 @@ class AudioDenoiseChannel(
             ),
             mapOf(
                 "id" to DenoiseKind.DEEPFILTER.id,
-                "displayName" to "DeepFilter",
-                "isReady" to MeetAudioDeepFilterProcessor.isNativeReady,
+                "displayName" to "DeepFilter 3",
+                "isReady" to MeetAudioDeepFilterProcessor.isNativeReady(appContext),
+            ),
+            mapOf(
+                "id" to DenoiseKind.DEEPFILTER2.id,
+                "displayName" to "DeepFilter 2",
+                "isReady" to false,
+            ),
+            mapOf(
+                "id" to DenoiseKind.DTLN_RS.id,
+                "displayName" to "DTLN",
+                "isReady" to MeetAudioDtlnRsProcessor.isNativeReady,
             ),
         )
 
     private fun isTypeReady(typeId: String?): Boolean =
         when (DenoiseKind.fromId(typeId)) {
             DenoiseKind.RNNOISE -> MeetAudioRnnoiseProcessor.isNativeReady
-            DenoiseKind.DEEPFILTER -> MeetAudioDeepFilterProcessor.isNativeReady
+            DenoiseKind.DEEPFILTER -> MeetAudioDeepFilterProcessor.isNativeReady(appContext)
+            DenoiseKind.DEEPFILTER2 -> false
+            DenoiseKind.DTLN_RS -> MeetAudioDtlnRsProcessor.isNativeReady
             null -> false
         }
 
@@ -117,13 +187,20 @@ class AudioDenoiseChannel(
                     return
                 }
                 if (attachedTrackId == trackId && attachedKind == kind) {
+                    // Idempotent re-attach — same track + backend already wired.
                     processors[trackId]?.setEnabled(true)
                     result.success(null)
                     return
                 }
                 clearOtherProcessors(keepTrackId = trackId, plugin = plugin)
                 detachProcessorFromTrack(trackId, plugin, removeFromMap = true)
-                val holder = AudioProcessingAdapterHolder(kind)
+                val holder = AudioProcessingAdapterHolder(kind, appContext)
+                // WebRTC calls initialize only once at factory setup; processors added later
+                // must be initialized explicitly (iOS creates RNNoise handle in init()).
+                holder.processor.initialize(
+                    MeetAudioPcm.WEBRTC_CAPTURE_SAMPLE_RATE_HZ,
+                    1,
+                )
                 holder.setEnabled(true)
                 controller.capturePostProcessing.addProcessor(holder.processor)
                 processors[trackId] = holder
@@ -131,6 +208,39 @@ class AudioDenoiseChannel(
                 attachedKind = kind
                 Log.i(TAG, "attach: installed capture processor for trackId=$trackId")
                 result.success(null)
+            }
+        }
+    }
+
+    private fun denoiseDebugAudioFile(call: MethodCall, result: MethodChannel.Result) {
+        val inputPath = call.argument<String>("inputPath")
+        val typeId = call.argument<String>("type") ?: DenoiseKind.DTLN_RS.id
+        if (inputPath.isNullOrBlank()) {
+            result.error("ARGS", "inputPath required", null)
+            return
+        }
+        val kind = DenoiseKind.fromId(typeId)
+        if (kind == null) {
+            result.error("ARGS", "Unknown denoise type: $typeId", null)
+            return
+        }
+        if (!isTypeReady(typeId)) {
+            result.error("UNAVAILABLE", "$typeId native library not ready", null)
+            return
+        }
+        debugIoExecutor.execute {
+            try {
+                val output = OfflineFileDenoiser.denoiseFileToWav(appContext, inputPath, kind)
+                result.success(
+                    mapOf(
+                        "outputPath" to output.outputPath,
+                        "sampleRateHz" to output.sampleRateHz,
+                        "type" to typeId,
+                    ),
+                )
+            } catch (e: Throwable) {
+                Log.e(TAG, "denoiseDebugAudioFile failed", e)
+                result.error("DENOISE_FAILED", e.message, null)
             }
         }
     }
@@ -151,6 +261,7 @@ class AudioDenoiseChannel(
     }
 
     private fun clearOtherProcessors(keepTrackId: String, plugin: FlutterWebRTCPlugin) {
+        // One mic track at a time — detach denoise from any other local track.
         for (id in processors.keys.filter { it != keepTrackId }) {
             detachProcessorFromTrack(id, plugin, removeFromMap = true)
         }
@@ -163,7 +274,21 @@ class AudioDenoiseChannel(
     ) {
         val holder = processors[trackId] ?: return
         holder.setEnabled(false)
-        audioProcessingController(plugin)?.capturePostProcessing?.removeProcessor(holder.processor)
+        val resolvedPlugin = plugin ?: FlutterWebRTCPlugin.sharedSingleton
+        val removed =
+            audioProcessingController(resolvedPlugin)
+                ?.capturePostProcessing
+                ?.let { chain ->
+                    chain.removeProcessor(holder.processor)
+                    true
+                } == true
+        if (!removed) {
+            Log.w(
+                TAG,
+                "detach: capture processor not removed for trackId=$trackId " +
+                    "(plugin=${resolvedPlugin != null})",
+            )
+        }
         holder.release()
         if (removeFromMap) {
             processors.remove(trackId)
@@ -233,25 +358,25 @@ class AudioDenoiseChannel(
         return "LocalAudioTrack(id=$id kind=$kind enabled=$enabled)"
     }
 
-    private class AudioProcessingAdapterHolder(kind: DenoiseKind) {
-        val processor: AudioProcessingAdapter.ExternalAudioFrameProcessing =
+    private class AudioProcessingAdapterHolder(
+        kind: DenoiseKind,
+        appContext: android.content.Context,
+    ) {
+        val processor: MeetAudioCaptureProcessor =
             when (kind) {
                 DenoiseKind.RNNOISE -> MeetAudioRnnoiseProcessor()
-                DenoiseKind.DEEPFILTER -> MeetAudioDeepFilterProcessor()
+                DenoiseKind.DEEPFILTER,
+                DenoiseKind.DEEPFILTER2,
+                -> MeetAudioDeepFilterProcessor(appContext)
+                DenoiseKind.DTLN_RS -> MeetAudioDtlnRsProcessor()
             }
 
         fun setEnabled(enabled: Boolean) {
-            when (processor) {
-                is MeetAudioRnnoiseProcessor -> processor.setEnabled(enabled)
-                is MeetAudioDeepFilterProcessor -> processor.setEnabled(enabled)
-            }
+            processor.setEnabled(enabled)
         }
 
         fun release() {
-            when (processor) {
-                is MeetAudioRnnoiseProcessor -> processor.release()
-                is MeetAudioDeepFilterProcessor -> Unit
-            }
+            processor.release()
         }
     }
 
@@ -261,16 +386,9 @@ class AudioDenoiseChannel(
         data class Found(val track: LocalAudioTrack) : LookupResult
     }
 
-    private enum class DenoiseKind(val id: String) {
-        RNNOISE("rnnoise"),
-        DEEPFILTER("deepfilter"),
-        ;
-
-        companion object {
-            fun fromId(id: String?): DenoiseKind? =
-                entries.firstOrNull { it.id == id }
-        }
-    }
+    /** Matches Flutter [kDebugMode] / `android:debuggable` (false for release & store builds). */
+    private fun isDebuggableBuild(): Boolean =
+        (appContext.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
 
     companion object {
         const val CHANNEL_NAME = "me.proton.meet/denoise"

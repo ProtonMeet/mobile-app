@@ -35,7 +35,8 @@ class IosPipPresentation {
   final IosPipTrackIds? trackIds;
 
   int get backgroundColorArgb => IosPipAvatarPalette.backgroundArgb(colorIndex);
-  int get profileTextColorArgb => IosPipAvatarPalette.profileTextArgb(colorIndex);
+  int get profileTextColorArgb =>
+      IosPipAvatarPalette.profileTextArgb(colorIndex);
 
   Map<String, dynamic> toMethodChannelArgs() {
     final ids = trackIds;
@@ -74,7 +75,7 @@ class IosPipPresentation {
   );
 }
 
-/// Zoom-style PiP: screen share → active speaker → speaker list → any participant.
+/// Zoom-style PiP: screen share → active speaker → speaker list → local (solo).
 IosPipPresentation? resolveIosPipPresentationFromState(RoomState state) {
   if (state.isRemoteScreenSharing || state.isLocalScreenSharing) {
     for (final info in state.screenSharingTracks) {
@@ -89,13 +90,25 @@ IosPipPresentation? resolveIosPipPresentationFromState(RoomState state) {
 
   final dominantSpeaker = dominantActiveSpeakerFromRoom(state);
   if (dominantSpeaker != null) {
-    final presentation = _presentationFromParticipantInfo(state, dominantSpeaker);
+    final presentation = _presentationFromParticipantInfo(
+      state,
+      dominantSpeaker,
+    );
     if (presentation != null) return presentation;
   }
 
   for (final info in activeSpeakerOrderFromRoom(state)) {
     final presentation = _presentationFromParticipantInfo(state, info);
     if (presentation != null) return presentation;
+  }
+
+  final local = state.room.localParticipant;
+  if (local != null) {
+    return _presentationFromParticipant(
+      state,
+      local,
+      local.name.isNotEmpty ? local.name : local.identity,
+    );
   }
 
   return null;
@@ -130,7 +143,8 @@ IosPipPresentation? _presentationFromParticipantInfo(
 }) {
   final preferScreen =
       preferScreenShare || info.type == ParticipantTrackType.kScreenShare;
-  final displayName = preferScreen &&
+  final displayName =
+      preferScreen &&
           isUsablePipDisplayName(info.displayName, info.participant.identity)
       ? info.displayName.trim()
       : pipDisplayNameFor(info.participant, state);

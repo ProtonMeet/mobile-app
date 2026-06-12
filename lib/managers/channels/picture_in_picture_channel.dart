@@ -36,6 +36,11 @@ class PictureInPictureChannel {
     await _pipChannel.invokeMethod('startPiP');
   }
 
+  /// Sends the app to the home screen after PiP starts (iOS only).
+  Future<void> moveAppToBackground() async {
+    await _pipChannel.invokeMethod('moveAppToBackground');
+  }
+
   Future<void> updatePipForPresentation(IosPipPresentation presentation) async {
     await _pipChannel.invokeMethod('updatePiP', presentation.toMethodChannelArgs());
   }

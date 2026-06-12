@@ -25,6 +25,7 @@ import 'package:meet/views/scenes/room/controls_bar/controls_video_action.dart';
 import 'package:meet/views/scenes/room/room_bloc.dart';
 import 'package:meet/views/scenes/room/room_event.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:proton_denoise/proton_denoise.dart';
 
 import 'controls_action.dart';
 import 'controls_audio_action.dart';
@@ -45,6 +46,7 @@ class ResponsiveControlsBar extends StatefulWidget {
     this.currentCameraPosition,
     this.applyCameraBackgroundBlur = false,
     this.applyAudioDenoise = false,
+    this.audioDenoiseType = DenoiseType.rnnoise,
   });
 
   final Room room;
@@ -62,6 +64,7 @@ class ResponsiveControlsBar extends StatefulWidget {
   final CameraPosition? currentCameraPosition;
   final bool applyCameraBackgroundBlur;
   final bool applyAudioDenoise;
+  final DenoiseType audioDenoiseType;
 
   @override
   State<ResponsiveControlsBar> createState() => _ResponsiveControlsBarState();
@@ -183,7 +186,11 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
     // Use debouncer to prevent rapid toggles
     await _microphoneToggleDebouncer.enable(participant);
     if (widget.applyAudioDenoise) {
-      await syncLocalAudioDenoise(room: widget.room, enabled: true);
+      await syncLocalAudioDenoise(
+        room: widget.room,
+        enabled: true,
+        type: widget.audioDenoiseType,
+      );
     }
     _onChange();
   }
@@ -359,8 +366,9 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
               // If we add this optional, can we still fit the trailing + END buttons?
               final need =
                   widget.buttonGap +
-                  widget.buttonWidth // this optional
-                  +
+                  widget
+                      .buttonWidth // this optional
+                      +
                   trailingReserve +
                   endReserve;
               if (used + need <= maxW) {

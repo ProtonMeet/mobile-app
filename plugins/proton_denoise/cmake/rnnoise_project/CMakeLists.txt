@@ -1,4 +1,4 @@
-# Standalone RNNoise build invoked by scripts/build_rnnoise.sh (Apple) and tests.
+# Standalone RNNoise build invoked by scripts/rnnoise/build_rnnoise.sh (Apple) and tests.
 cmake_minimum_required(VERSION 3.14)
 project(rnnoise_build C)
 

@@ -20,11 +20,14 @@ package me.proton.meet.video_effects
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.util.Log
+import androidx.exifinterface.media.ExifInterface
 import com.google.mediapipe.framework.image.BitmapImageBuilder
 import com.google.mediapipe.framework.image.ByteBufferExtractor
 import com.google.mediapipe.framework.image.MPImage
@@ -47,57 +50,16 @@ import java.util.concurrent.TimeUnit
 import java.util.Locale
 
 /**
- * MediaPipe selfie segmenter (single-class or multiclass) + bitmap-based background blur.
+ * Android blur engine — counterpart to `MeetBackgroundBlurMediaPipeEngine.swift`.
  *
- * Direct port of `MeetBackgroundBlurMediaPipeEngine.swift`. The high-level pipeline matches the
- * iOS engine exactly — see the Swift file for the design rationale on **confidence masks**, the
- * **single-slot in-flight gate**, the **mask snapshot** copy strategy, and the input/background
- * swap trick for the multiclass model.
+ * Per frame: async person mask (one inference in flight) → box-blur background + mask blend
+ * onto a fresh [VideoFrame]. Unlike iOS we round-trip through [Bitmap] (no in-place pixel buffer).
  *
- * Pipeline:
- *   1. **Asynchronous** segmentation — inference runs off the WebRTC video processing thread.
- *      The active backend is selected at construction time:
- *      * **Raw TFLite GPU** first. This loads the bundled `.tflite` model directly through
- *        `Interpreter + GpuDelegate` and reads the output tensor bytes, bypassing MediaPipe
- *        Tasks's GPU result-conversion layer.
- *      * **MediaPipe Tasks CPU** fallback. This remains the known-good path when TFLite GPU
- *        delegate compilation, probe inference, or runtime execution fails.
- *   2. The raw TFLite GPU path exists because MediaPipe Tasks Vision 0.10.35 crashes on Android
- *      GPU output conversion: `ImageSegmenter.convertToTaskResult` calls `PacketGetter
- *      .getImageWidth(...)` / `...FromImageList(...)` on a GPU-produced `Image`; on Adreno 7xx/8xx
- *      devices that `Image` can have `ImageFrame::format() == UNKNOWN`, which trips an
- *      uncatchable native `CHECK` in `image_frame.cc:109/298` and aborts the process. Raw TFLite
- *      avoids that `Image → ImageFrame` JNI boundary entirely.
- *   3. Each frame composites a downscaled box-blurred background + sharp foreground using a
- *      `Canvas` + `PorterDuff.Mode.SRC_IN` mask blend.
+ * Segmentation: raw TFLite + GpuDelegate when possible; MediaPipe Tasks CPU otherwise. GPU Tasks
+ * output conversion is avoided — MediaPipe 0.10.35 can abort on Adreno when reading GPU images.
+ * Multiclass masks invert background confidence so snapshots are always "person = high alpha".
  *
- * Mask interpretation (CPU path only) depends on the model:
- *   * Single-class `selfie_segmenter`: `confidenceMasks[0]` is the **foreground** probability.
- *   * Multiclass `selfie_multiclass_256x256`: `confidenceMasks[0]` is the **background**
- *     probability — we invert it once when copying out of MediaPipe's transient buffer so the
- *     cached snapshot is always "high alpha where person", regardless of model. Since the per-
- *     class confidences sum to 1, `1 − mask[0]` is exactly `Σ mask[1..5]` (soft foreground).
- *
- * The category-mask code path ([makeForegroundSnapshotFromCategory], [usesCategoryMaskOutput],
- * the `setOutputCategoryMask` branch in [createSegmenter]) is kept only for a future MediaPipe
- * Tasks version where GPU output conversion is fixed. The active GPU path today is raw TFLite
- * tensor output, not MediaPipe category masks.
- *
- * **Platform differences vs. iOS:**
- *   * No `CVPixelBuffer` equivalent for in-place mutation: we round-trip through `Bitmap` and
- *     return a fresh `VideoFrame` rather than modifying the camera buffer.
- *   * No Core Image. Background blur is a downscale → box-blur (3 passes ≈ Gaussian) → upscale
- *     pass; mask compositing is a `Canvas` layer with `PorterDuff.Mode.SRC_IN`. This is the
- *     closest equivalent to `CIBlendWithMask` that works on a pure CPU Bitmap (Android's only
- *     hardware-accelerated blur, `RenderEffect`, can't render *into* a `Bitmap`).
- *   * Frame size is controlled by [PROCESSING_LONG_SIDE]: set `<= 0` to keep original camera
- *     resolution, or set a positive cap to downscale first via `Buffer.cropAndScale` (GPU-
- *     accelerated for texture-backed camera buffers).
- *
- * Threading model:
- *   * `process(...)` runs on the WebRTC video-source thread.
- *   * MediaPipe's result listener runs on a MediaPipe-owned worker thread.
- *   * `maskLock` serialises every read/write of [currentMask] and [inferenceInFlight].
+ * [maskLock] guards [currentMask] and [inferenceInFlight]; compositing runs on the WebRTC thread.
  */
 internal class MeetBackgroundBlurMediaPipeEngine(
     private val context: Context,
@@ -107,9 +69,11 @@ internal class MeetBackgroundBlurMediaPipeEngine(
 
         private const val MULTICLASS_MODEL_ASSET = "selfie_multiclass_256x256.tflite"
         private const val SINGLECLASS_MODEL_ASSET = "selfie_segmenter.tflite"
+        private const val LANDSCAPE_MODEL_ASSET = "selfie_segmenter_landscape.tflite"
 
-        /** Both supported MediaPipe selfie models take a 256×256 input. */
-        private const val SEGMENTER_INPUT_SIZE = 256
+        private const val SQUARE_SEGMENTER_SIZE = 256
+        private const val LANDSCAPE_INPUT_WIDTH = 256
+        private const val LANDSCAPE_INPUT_HEIGHT = 144
 
         /**
          * Compositing resolution cap on the long edge.
@@ -122,13 +86,23 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         private const val PROCESSING_LONG_SIDE = 720
 
         /** Background blur runs at this fraction of the processing resolution. */
-        private const val BACKGROUND_BLUR_DOWNSAMPLE = 0.25f
+        private const val BACKGROUND_BLUR_DOWNSAMPLE = 0.2f
 
-        /**
-         * Radius for the (downscaled) box-blur. Three passes of box-blur with this radius
-         * approximate a Gaussian with σ ≈ radius × √(N/3) ≈ radius (for N=3 passes).
-         */
-        private const val BACKGROUND_BLUR_RADIUS = 8
+        private const val BACKGROUND_BLUR_PASSES = 2
+
+        /** Box-blur radius when [blurSigma] equals [DEFAULT_BLUR_SIGMA] (calibration anchor, not Dart default). */
+        private const val DEFAULT_BLUR_RADIUS = 8
+
+        /** Anchor for [backgroundBlurRadius]; Dart production σ is 128 via [setBlurConfig]. */
+        private const val DEFAULT_BLUR_SIGMA = 24f
+        private const val MIN_BLUR_SIGMA = 4f
+        private const val MAX_BLUR_SIGMA = 256f
+
+        /** Pushes uncertain mask values toward background so objects leak less. */
+        private const val MASK_FOREGROUND_GAMMA = 1.35f
+
+        /** Desaturate blurred plate (0 = full color, 1 = grayscale). */
+        private const val BACKGROUND_DESATURATION = 0.35f
 
         /**
          * σ for the mask feather, run on the 256² mask before upscale. After upscale to the
@@ -182,11 +156,24 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         MEDIAPIPE_CPU,
     }
 
-    private data class SegmenterAttempt(
-        val modelAsset: String,
+    private data class SegmenterModelConfig(
+        val asset: String,
+        val inputWidth: Int,
+        val inputHeight: Int,
         val isMulticlass: Boolean,
-        val backend: SegmenterBackendKind,
+        val modelKey: String,
     )
+
+    private data class SegmenterAttempt(
+        val config: SegmenterModelConfig,
+        val backend: SegmenterBackendKind,
+    ) {
+        val modelAsset: String get() = config.asset
+        val inputWidth: Int get() = config.inputWidth
+        val inputHeight: Int get() = config.inputHeight
+        val isMulticlass: Boolean get() = config.isMulticlass
+        val modelKey: String get() = config.modelKey
+    }
 
     private data class PerfSnapshot(
         val framesSeen: Long,
@@ -205,6 +192,12 @@ internal class MeetBackgroundBlurMediaPipeEngine(
     @Volatile
     private var tfliteBackend: TfliteGpuSegmenterBackend? = null
     private var isMulticlassModel: Boolean = false
+    private var segmenterInputWidth: Int = SQUARE_SEGMENTER_SIZE
+    private var segmenterInputHeight: Int = SQUARE_SEGMENTER_SIZE
+    private var activeModelKey: String = "single"
+
+    @Volatile
+    private var preferredModel: String? = null
 
     /** `true` when the active segmenter was configured with `setOutputCategoryMask(true)` rather
      *  than `setOutputConfidenceMasks(true)`. Drives both the result-listener decoding path
@@ -216,6 +209,106 @@ internal class MeetBackgroundBlurMediaPipeEngine(
 
     private val maskLock = Any()
     private var currentMask: MaskSnapshot? = null
+
+    // Matches Dart BackgroundBlurConfig until setBlurConfig runs.
+    @Volatile
+    private var blurSigma: Float = 128f
+
+    @Volatile
+    private var backgroundObscureOpacity: Float = 0.1f
+
+    private val replacementLock = Any()
+    private var replacementBackgroundBitmap: Bitmap? = null
+
+    fun setBlurConfig(blurSigma: Float, backgroundObscureOpacity: Float) {
+        this.blurSigma = blurSigma.coerceIn(MIN_BLUR_SIGMA, MAX_BLUR_SIGMA)
+        this.backgroundObscureOpacity = backgroundObscureOpacity.coerceIn(0f, 1f)
+    }
+
+    fun setReplacementBackgroundImagePath(path: String?): Boolean {
+        if (path.isNullOrEmpty()) {
+            clearReplacementBackground()
+            return true
+        }
+        val decoded = BitmapFactory.decodeFile(path) ?: return false
+        return storeReplacementBitmap(applyExifOrientation(decoded, path))
+    }
+
+    fun setReplacementBackgroundImageBytes(bytes: ByteArray?): Boolean {
+        if (bytes == null || bytes.isEmpty()) {
+            clearReplacementBackground()
+            return true
+        }
+        val decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: return false
+        return storeReplacementBitmap(applyExifOrientation(decoded, bytes))
+    }
+
+    fun clearReplacementBackground() {
+        synchronized(replacementLock) {
+            replacementBackgroundBitmap?.recycle()
+            replacementBackgroundBitmap = null
+        }
+    }
+
+    private fun storeReplacementBitmap(bitmap: Bitmap): Boolean {
+        synchronized(replacementLock) {
+            replacementBackgroundBitmap?.recycle()
+            replacementBackgroundBitmap = bitmap
+        }
+        return true
+    }
+
+    /** BitmapFactory ignores JPEG/HEIC EXIF rotation — upright the pixels for display. */
+    private fun applyExifOrientation(bitmap: Bitmap, path: String): Bitmap {
+        val orientation =
+            runCatching {
+                ExifInterface(path).getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL,
+                )
+            }.getOrDefault(ExifInterface.ORIENTATION_NORMAL)
+        return rotateBitmapForExif(bitmap, orientation)
+    }
+
+    private fun applyExifOrientation(bitmap: Bitmap, bytes: ByteArray): Bitmap {
+        val orientation =
+            runCatching {
+                ExifInterface(bytes.inputStream()).getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL,
+                )
+            }.getOrDefault(ExifInterface.ORIENTATION_NORMAL)
+        return rotateBitmapForExif(bitmap, orientation)
+    }
+
+    private fun rotateBitmapForExif(bitmap: Bitmap, orientation: Int): Bitmap {
+        val matrix = Matrix()
+        when (orientation) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+            ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
+            ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
+            ExifInterface.ORIENTATION_TRANSPOSE -> {
+                matrix.postRotate(90f)
+                matrix.postScale(-1f, 1f)
+            }
+            ExifInterface.ORIENTATION_TRANSVERSE -> {
+                matrix.postRotate(270f)
+                matrix.postScale(-1f, 1f)
+            }
+            else -> return bitmap
+        }
+        val rotated =
+            Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+        if (rotated !== bitmap) {
+            bitmap.recycle()
+        }
+        return rotated
+    }
+
+    private fun backgroundBlurRadius(): Int =
+        (blurSigma / DEFAULT_BLUR_SIGMA * DEFAULT_BLUR_RADIUS).toInt().coerceIn(1, 96)
 
     /** Single-slot pipeline guard: `true` between handing a frame to MediaPipe and receiving the
      *  result callback. While `true`, new frames are skipped (we don't queue them), which keeps
@@ -300,6 +393,8 @@ internal class MeetBackgroundBlurMediaPipeEngine(
                     val created = TfliteGpuSegmenterBackend(
                         modelAsset = attempt.modelAsset,
                         isMulticlassModel = attempt.isMulticlass,
+                        inputWidth = attempt.inputWidth,
+                        inputHeight = attempt.inputHeight,
                         modelBuffer = loadModelBuffer(attempt.modelAsset),
                     )
                     tfliteBackend = created
@@ -312,6 +407,9 @@ internal class MeetBackgroundBlurMediaPipeEngine(
                     usesCategoryMaskOutput = false
                 }
                 isMulticlassModel = attempt.isMulticlass
+                segmenterInputWidth = attempt.inputWidth
+                segmenterInputHeight = attempt.inputHeight
+                activeModelKey = attempt.modelKey
                 Log.i(TAG, "setupSegmenter: ready ($label)")
                 Log.i(TAG, "setupSegmenter: done, segmenter=ready")
                 return
@@ -333,26 +431,116 @@ internal class MeetBackgroundBlurMediaPipeEngine(
      * includes combinations whose model asset actually exists in the APK so we don't waste cycles
      * on missing bundles.
      */
+    fun setSegmentationModelPreference(model: String) {
+        preferredModel = model
+        closeSegmenterForReload()
+        setupSegmenter()
+    }
+
+    fun segmentationModelDebugInfo(): Map<String, Any> {
+        val backend = when {
+            tfliteBackend != null -> "tflite_gpu"
+            segmenter != null -> "mediapipe_cpu"
+            else -> "none"
+        }
+        return mapOf(
+            "model" to activeModelKey,
+            "backend" to backend,
+            "forced" to (preferredModel != null),
+            "supported" to true,
+        )
+    }
+
+    private fun modelConfig(modelKey: String): SegmenterModelConfig? =
+        when (modelKey) {
+            "single" ->
+                SegmenterModelConfig(
+                    SINGLECLASS_MODEL_ASSET,
+                    SQUARE_SEGMENTER_SIZE,
+                    SQUARE_SEGMENTER_SIZE,
+                    isMulticlass = false,
+                    modelKey = "single",
+                )
+            "landscape" ->
+                SegmenterModelConfig(
+                    LANDSCAPE_MODEL_ASSET,
+                    LANDSCAPE_INPUT_WIDTH,
+                    LANDSCAPE_INPUT_HEIGHT,
+                    isMulticlass = false,
+                    modelKey = "landscape",
+                )
+            "multiclass" ->
+                SegmenterModelConfig(
+                    MULTICLASS_MODEL_ASSET,
+                    SQUARE_SEGMENTER_SIZE,
+                    SQUARE_SEGMENTER_SIZE,
+                    isMulticlass = true,
+                    modelKey = "multiclass",
+                )
+            else -> null
+        }
+
+    private fun closeSegmenterForReload() {
+        val toClose = segmenter
+        val tfliteToClose = tfliteBackend
+        segmenter = null
+        tfliteBackend = null
+        val drainUntilNs = System.nanoTime() + INFERENCE_DRAIN_TIMEOUT_NS
+        while (System.nanoTime() < drainUntilNs) {
+            val stillInFlight = synchronized(maskLock) { inferenceInFlight }
+            if (!stillInFlight) break
+            try {
+                Thread.sleep(5)
+            } catch (ie: InterruptedException) {
+                Thread.currentThread().interrupt()
+                break
+            }
+        }
+        try {
+            toClose?.close()
+        } catch (e: Throwable) {
+            Log.w(TAG, "closeSegmenterForReload: segmenter.close failed", e)
+        }
+        try {
+            tfliteToClose?.close()
+        } catch (e: Throwable) {
+            Log.w(TAG, "closeSegmenterForReload: tflite.close failed", e)
+        }
+        synchronized(maskLock) {
+            currentMask = null
+            inferenceInFlight = false
+            pendingMpInputImage = null
+        }
+    }
+
     private fun buildSegmenterAttemptChain(): List<SegmenterAttempt> {
         val assets = try {
             context.assets.list("")?.toSet().orEmpty()
         } catch (_: Throwable) {
             emptySet()
         }
-        val hasMulticlass = MULTICLASS_MODEL_ASSET in assets
-        val hasSingleclass = SINGLECLASS_MODEL_ASSET in assets
+        preferredModel?.let { modelKey ->
+            val config = modelConfig(modelKey) ?: return emptyList()
+            if (config.asset in assets) {
+                return listOf(
+                    SegmenterAttempt(config, SegmenterBackendKind.TFLITE_GPU),
+                    SegmenterAttempt(config, SegmenterBackendKind.MEDIAPIPE_CPU),
+                )
+            }
+            return emptyList()
+        }
         val chain = mutableListOf<SegmenterAttempt>()
-        if (hasSingleclass) {
-            chain += SegmenterAttempt(SINGLECLASS_MODEL_ASSET, isMulticlass = false, SegmenterBackendKind.TFLITE_GPU)
+        listOf("landscape", "single").forEach { key ->
+            val config = modelConfig(key) ?: return@forEach
+            if (config.asset in assets) {
+                chain += SegmenterAttempt(config, SegmenterBackendKind.TFLITE_GPU)
+            }
         }
-        if (hasMulticlass) {
-            chain += SegmenterAttempt(MULTICLASS_MODEL_ASSET, isMulticlass = true, SegmenterBackendKind.TFLITE_GPU)
-        }
-        if (hasSingleclass) {
-            chain += SegmenterAttempt(SINGLECLASS_MODEL_ASSET, isMulticlass = false, SegmenterBackendKind.MEDIAPIPE_CPU)
-        }
-        if (hasMulticlass) {
-            chain += SegmenterAttempt(MULTICLASS_MODEL_ASSET, isMulticlass = true, SegmenterBackendKind.MEDIAPIPE_CPU)
+        listOf("landscape", "single").forEach { key ->
+            val config = modelConfig(key) ?: return@forEach
+            if (config.asset in assets) {
+                chain += SegmenterAttempt(config, SegmenterBackendKind.MEDIAPIPE_CPU)
+            }
         }
         return chain
     }
@@ -362,30 +550,14 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         delegate: Delegate,
         useCategoryMask: Boolean,
     ): ImageSegmenter {
-        // Hand MediaPipe the model as a direct `ByteBuffer` rather than going through
-        // `setModelAssetPath`. The path-based API uses `AssetManager.openFd()` + `mmap`, which
-        // requires the asset to be both stored uncompressed AND 16-byte aligned inside the APK
-        // for TFLite FlatBuffer parsing. AGP only guarantees 4-byte alignment for uncompressed
-        // assets, so on some devices MediaPipe reads tensor metadata at slightly wrong offsets
-        // and `Calculator::Open()` fails with the misleading
-        //   "Batch size mismatch, expected 1 but got N values with divergent batch sizes"
-        // pointing at internal U-Net feature tensors (e.g. [8, 4, 8, 512], [4, 4, 4, 768]).
-        //
-        // Direct `ByteBuffer`s are guaranteed aligned to 8 bytes by the JVM and to 16 bytes by
-        // Android's `DirectByteBuffer` implementation (for SIMD), so this avoids the issue
-        // entirely. The buffer is ~16 MB for the multiclass model — held by the segmenter for
-        // its lifetime, freed in `release()`.
+        // Load model into a direct ByteBuffer — APK mmap via setModelAssetPath can misalign TFLite
+        // metadata (AGP 4-byte vs 16-byte) and fail Open() with bogus "batch size mismatch".
         val modelBuffer = loadModelBuffer(modelAsset)
         val base = BaseOptions.builder()
             .setModelAssetBuffer(modelBuffer)
             .setDelegate(delegate)
             .build()
-        // Mask output type: today this is always confidence masks (`useCategoryMask=false`)
-        // because [buildSegmenterAttemptChain] only emits CPU entries — see file header for the
-        // GPU disablement context. The `useCategoryMask=true` branch is kept as documented dead
-        // code so that re-adding `Delegate.GPU` to the chain (after a MediaPipe Tasks Vision
-        // upgrade past 0.10.35) restores the workaround for the
-        // `image_frame.cc Invalid format: UNKNOWN` CHECK-fail without further plumbing.
+        // CPU chain uses confidence masks; category-mask branch kept for a future MediaPipe GPU fix.
         val opts = ImageSegmenter.ImageSegmenterOptions.builder()
             .setBaseOptions(base)
             .setRunningMode(RunningMode.LIVE_STREAM)
@@ -400,10 +572,7 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         return ImageSegmenter.createFromOptions(context, opts)
     }
 
-    /**
-     * Read the bundled TFLite model fully into a direct, aligned `ByteBuffer`. Sized exactly to
-     * the asset length so MediaPipe can consume it without re-allocating.
-     */
+    /** Asset → direct ByteBuffer sized to declaredLength (see [createSegmenter]). */
     private fun loadModelBuffer(modelAsset: String): ByteBuffer {
         return context.assets.openFd(modelAsset).use { fd ->
             val size = fd.declaredLength.toInt().also {
@@ -427,19 +596,12 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         }
     }
 
-    /**
-     * Raw TFLite GPU backend for selfie segmentation.
-     *
-     * Why this exists: MediaPipe Tasks's `ImageSegmenter` GPU path successfully runs inference on
-     * some Adreno devices, then crashes while converting the GPU-produced output `Image` back into
-     * an `ImageFrame` (`image_frame.cc:109/298`, uncatchable native CHECK). Raw TFLite avoids that
-     * layer entirely: it feeds the `.tflite` model directly and reads the output tensor bytes.
-     *
-     * GPU delegate thread-affinity is strict: create, run, and close all happen on [executor].
-     */
+    /** TFLite + GpuDelegate — bypasses MediaPipe Tasks GPU image conversion (Adreno CHECK crash). */
     private class TfliteGpuSegmenterBackend(
         private val modelAsset: String,
         private val isMulticlassModel: Boolean,
+        private val inputWidth: Int,
+        private val inputHeight: Int,
         private val modelBuffer: ByteBuffer,
     ) : AutoCloseable {
         private enum class OutputLayout {
@@ -458,8 +620,9 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         private var inputBuffer: ByteBuffer? = null
         private var outputBuffer: ByteBuffer? = null
         private var outputLayout: OutputLayout = OutputLayout.NHWC
-        private var outputWidth: Int = SEGMENTER_INPUT_SIZE
-        private var outputHeight: Int = SEGMENTER_INPUT_SIZE
+        private var outputWidth: Int = inputWidth
+        private var outputHeight: Int = inputHeight
+        private val inputPixelCount: Int = inputWidth * inputHeight
         private var outputChannels: Int = 1
         private var inputDataType: DataType = DataType.FLOAT32
         private var outputDataType: DataType = DataType.FLOAT32
@@ -477,7 +640,7 @@ internal class MeetBackgroundBlurMediaPipeEngine(
                 // Probe one empty frame so delegate compilation and output tensor reads fail here,
                 // where setupSegmenter can fall through to MediaPipe CPU, rather than on the first
                 // camera frame.
-                runOnGpuThread(IntArray(SEGMENTER_INPUT_SIZE * SEGMENTER_INPUT_SIZE))
+                runOnGpuThread(IntArray(inputPixelCount))
             })
             try {
                 future.get(TFLITE_GPU_INIT_TIMEOUT_MS, TimeUnit.MILLISECONDS)
@@ -559,8 +722,9 @@ internal class MeetBackgroundBlurMediaPipeEngine(
             require(inputShape.size == 4 && inputShape[0] == 1 && inputShape[3] == 3) {
                 "Unsupported input tensor shape=${inputShape.joinToString(prefix = "[", postfix = "]")}"
             }
-            require(inputShape[1] == SEGMENTER_INPUT_SIZE && inputShape[2] == SEGMENTER_INPUT_SIZE) {
-                "Unsupported input size=${inputShape.joinToString(prefix = "[", postfix = "]")}"
+            require(inputShape[1] == inputHeight && inputShape[2] == inputWidth) {
+                "Unsupported input size=${inputShape.joinToString(prefix = "[", postfix = "]")} " +
+                    "expected [1,$inputHeight,$inputWidth,3]"
             }
 
             val outputTensor = created.getOutputTensor(0)
@@ -576,7 +740,7 @@ internal class MeetBackgroundBlurMediaPipeEngine(
 
             inputBuffer = ByteBuffer
                 .allocateDirect(
-                    SEGMENTER_INPUT_SIZE * SEGMENTER_INPUT_SIZE * 3 *
+                    inputPixelCount * 3 *
                         if (inputDataType == DataType.FLOAT32) java.lang.Float.BYTES else 1,
                 )
                 .order(ByteOrder.nativeOrder())
@@ -600,12 +764,12 @@ internal class MeetBackgroundBlurMediaPipeEngine(
                     require(shape[0] == 1) {
                         "Unsupported output batch shape=${shape.joinToString(prefix = "[", postfix = "]")}"
                     }
-                    if (shape[1] == SEGMENTER_INPUT_SIZE && shape[2] == SEGMENTER_INPUT_SIZE) {
+                    if (shape[1] == inputHeight && shape[2] == inputWidth) {
                         outputLayout = OutputLayout.NHWC
                         outputHeight = shape[1]
                         outputWidth = shape[2]
                         outputChannels = shape[3]
-                    } else if (shape[2] == SEGMENTER_INPUT_SIZE && shape[3] == SEGMENTER_INPUT_SIZE) {
+                    } else if (shape[2] == inputHeight && shape[3] == inputWidth) {
                         outputLayout = OutputLayout.NCHW
                         outputChannels = shape[1]
                         outputHeight = shape[2]
@@ -651,8 +815,8 @@ internal class MeetBackgroundBlurMediaPipeEngine(
             val input = inputBuffer ?: error("TFLite input buffer is not initialised")
             val output = outputBuffer ?: error("TFLite output buffer is not initialised")
 
-            require(pixels.size == SEGMENTER_INPUT_SIZE * SEGMENTER_INPUT_SIZE) {
-                "Unexpected input pixels=${pixels.size}"
+            require(pixels.size == inputPixelCount) {
+                "Unexpected input pixels=${pixels.size} expected=$inputPixelCount"
             }
             input.rewind()
             var i = 0
@@ -826,18 +990,13 @@ internal class MeetBackgroundBlurMediaPipeEngine(
 
     /** Releases all native resources. Call from `detach`. */
     fun release() {
+        clearReplacementBackground()
         Log.i(TAG, "release: draining inference before closing segmenter")
-        // Pull the backend out *before* dropping our reference so process() starts returning raw
-        // frames the moment release() begins.
+        // Null refs first so process() passthroughs; then poll in-flight until drain timeout.
         val toClose = segmenter
         val tfliteToClose = tfliteBackend
         segmenter = null
         tfliteBackend = null
-
-        // Wait briefly for any in-flight inference to drain. Both backends run native work off the
-        // WebRTC thread; closing either one while a forward pass is running can crash or deadlock.
-        // We poll the in-flight flag (set by `process` / `dispatchAsyncSegmentation`, cleared by
-        // result callbacks) with a hard cap so detach never blocks indefinitely on a hung backend.
         val drainUntilNs = System.nanoTime() + INFERENCE_DRAIN_TIMEOUT_NS
         var drainSpins = 0
         while (System.nanoTime() < drainUntilNs) {
@@ -901,19 +1060,14 @@ internal class MeetBackgroundBlurMediaPipeEngine(
     // MARK: - Public entry point (called from the WebRTC video-processing thread).
 
     fun process(frame: VideoFrame): VideoFrame {
-        // Snapshot the backend ref ONCE per call. `release()` swaps refs to null then waits to
-        // drain in-flight inference; reading once here means a concurrent release won't have us
-        // dispatching to a half-closed backend mid-method.
+        // One backend read per frame — safe if release() nulls refs concurrently.
         val tflite = tfliteBackend
         val seg = segmenter
         if (tflite == null && seg == null) return frame
         val frameId = ++processFrameCount
         val shouldStageLog = frameId == 1L || frameId % STAGE_LOG_EVERY_NTH_FRAME == 0L
 
-        // Stage 0: gate. Decide whether to start a new inference. We dispatch only if the previous
-        // one has already completed — this gives the highest segmentation rate the device can
-        // sustain (typically 15-30 Hz on modern GPUs) without stacking up frames in MediaPipe's
-        // queue, which is what causes mask lag when the user moves quickly.
+        // Stage 0: dispatch only when idle — one inference in flight, no queued mask lag.
         val canDispatch: Boolean
         val snapshot: MaskSnapshot?
         val perfSnapshot: PerfSnapshot
@@ -931,9 +1085,7 @@ internal class MeetBackgroundBlurMediaPipeEngine(
             perfSnapshot = buildPerfSnapshotLocked()
         }
 
-        // Stage 1: WebRTC VideoFrame → ARGB Bitmap at processing resolution. If
-        // PROCESSING_LONG_SIDE <= 0 we preserve original frame resolution; otherwise we downscale
-        // via texture-accelerated `cropAndScale` before the CPU I420 → ARGB conversion.
+        // Stage 1: VideoFrame → ARGB bitmap (optional downscale via [PROCESSING_LONG_SIDE]).
         val inputBitmap = try {
             frameToBitmap(frame, capLongSide = PROCESSING_LONG_SIDE)
         } catch (oom: OutOfMemoryError) {
@@ -1025,11 +1177,13 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         srcBitmap: Bitmap,
     ) {
         try {
-            // Pre-scale to 256×256 ourselves. Squashing aspect ratio is fine — the models are
-            // trained on inputs already normalised to 256×256 and the mask is upscaled back to the
-            // camera aspect ratio at compositing time, so the squash/unsquash cancels out.
+            // Pre-scale to the active model input (256² or 256×144 landscape). Squashing aspect
+            // ratio is fine — masks are upscaled back to the camera aspect at compositing time.
             val scaled = Bitmap.createScaledBitmap(
-                srcBitmap, SEGMENTER_INPUT_SIZE, SEGMENTER_INPUT_SIZE, /* filter = */ true,
+                srcBitmap,
+                segmenterInputWidth,
+                segmenterInputHeight,
+                /* filter = */ true,
             )
             // `createScaledBitmap` may return the source if dimensions already match. The active
             // backend owns and recycles `small`, while `process()` still owns `srcBitmap`, so make
@@ -1305,18 +1459,29 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         } else {
             MASK_FEATHER_SIGMA_CONFIDENCE
         }
-        val featheredAlpha = featherMask(snapshot, featherSigma)
+        val hardenedAlpha = hardenForegroundAlpha(snapshot.foregroundAlpha, MASK_FOREGROUND_GAMMA)
+        val featheredAlpha = featherMask(
+            snapshot.copy(foregroundAlpha = hardenedAlpha),
+            featherSigma,
+        )
         val maskBitmap = upscaleAlphaToBitmap(featheredAlpha, snapshot.width, snapshot.height, w, h)
             ?: return null
 
-        val blurred = blurBackgroundBitmap(input)
+        val blurred = makeBackgroundPlate(input, w, h)
             ?: return null
 
         val out = ensureComposedBitmap(w, h)
         val canvas = Canvas(out)
 
-        // 1) Fill output with the blurred background.
+        // 1) Fill output with the blurred background, optionally veiled for extra privacy.
         canvas.drawBitmap(blurred, 0f, 0f, null)
+        if (backgroundObscureOpacity > 0f) {
+            val alpha = (backgroundObscureOpacity * 255f).toInt().coerceIn(0, 255)
+            val veilPaint = Paint().apply {
+                color = android.graphics.Color.argb(alpha, 115, 115, 122)
+            }
+            canvas.drawRect(0f, 0f, w.toFloat(), h.toFloat(), veilPaint)
+        }
 
         // 2) Off-screen layer: draw the foreground-alpha mask, then composite the sharp `input`
         //    on top with SRC_IN so it survives only where the mask is opaque. Restoring the
@@ -1433,12 +1598,98 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         return scaled
     }
 
+    private fun makeBackgroundPlate(input: Bitmap, dstW: Int, dstH: Int): Bitmap? {
+        val replacement = synchronized(replacementLock) { replacementBackgroundBitmap }
+        if (replacement != null && !replacement.isRecycled) {
+            return scaleBitmapCover(replacement, dstW, dstH)
+        }
+        return makeBlurredBackgroundPlate(input)
+    }
+
+    private fun scaleBitmapCover(source: Bitmap, dstW: Int, dstH: Int): Bitmap {
+        val srcW = source.width
+        val srcH = source.height
+        if (srcW <= 0 || srcH <= 0) {
+            return Bitmap.createBitmap(dstW, dstH, Bitmap.Config.ARGB_8888)
+        }
+        val scale = maxOf(dstW.toFloat() / srcW, dstH.toFloat() / srcH)
+        val scaledW = (srcW * scale).toInt().coerceAtLeast(1)
+        val scaledH = (srcH * scale).toInt().coerceAtLeast(1)
+        val scaled = Bitmap.createScaledBitmap(source, scaledW, scaledH, true)
+        val x = ((scaledW - dstW) / 2).coerceAtLeast(0)
+        val y = ((scaledH - dstH) / 2).coerceAtLeast(0)
+        val cropW = dstW.coerceAtMost(scaledW)
+        val cropH = dstH.coerceAtMost(scaledH)
+        val cropped = Bitmap.createBitmap(scaled, x, y, cropW, cropH)
+        if (scaled !== cropped && scaled !== source) {
+            scaled.recycle()
+        }
+        return cropped
+    }
+
+    /** Blurred camera plate when no replacement image is set. */
+    private fun makeBlurredBackgroundPlate(input: Bitmap): Bitmap? {
+        var plate = blurBackgroundBitmapOnce(input, recycleSource = false) ?: return null
+        var pass = 1
+        while (pass < BACKGROUND_BLUR_PASSES) {
+            plate = blurBackgroundBitmapOnce(plate, recycleSource = true) ?: return null
+            pass++
+        }
+        if (BACKGROUND_DESATURATION <= 0f) {
+            return plate
+        }
+        return desaturateBitmap(plate, BACKGROUND_DESATURATION)
+    }
+
+    private fun hardenForegroundAlpha(alpha: ByteArray, gamma: Float): ByteArray {
+        if (gamma <= 1f) return alpha
+        val out = ByteArray(alpha.size)
+        var i = 0
+        while (i < alpha.size) {
+            val n = (alpha[i].toInt() and 0xFF) / 255f
+            val hardened = Math.pow(n.toDouble(), gamma.toDouble()).toFloat()
+            out[i] = (hardened * 255f).toInt().coerceIn(0, 255).toByte()
+            i++
+        }
+        return out
+    }
+
+    private fun desaturateBitmap(bitmap: Bitmap, amount: Float): Bitmap {
+        if (amount <= 0f) return bitmap
+        val w = bitmap.width
+        val h = bitmap.height
+        val needed = w * h
+        val pixels = blurPixelsScratch?.takeIf { it.size == needed } ?: IntArray(needed).also {
+            blurPixelsScratch = it
+        }
+        bitmap.getPixels(pixels, 0, w, 0, 0, w, h)
+        val keep = (1f - amount.coerceIn(0f, 1f))
+        var i = 0
+        while (i < pixels.size) {
+            val px = pixels[i]
+            val a = px ushr 24
+            val r = (px ushr 16) and 0xFF
+            val g = (px ushr 8) and 0xFF
+            val b = px and 0xFF
+            val luma = (0.299f * r + 0.587f * g + 0.114f * b).toInt()
+            val nr = (r * keep + luma * (1f - keep)).toInt().coerceIn(0, 255)
+            val ng = (g * keep + luma * (1f - keep)).toInt().coerceIn(0, 255)
+            val nb = (b * keep + luma * (1f - keep)).toInt().coerceIn(0, 255)
+            pixels[i] = (a shl 24) or (nr shl 16) or (ng shl 8) or nb
+            i++
+        }
+        val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        out.setPixels(pixels, 0, w, 0, 0, w, h)
+        if (!bitmap.isRecycled) {
+            bitmap.recycle()
+        }
+        return out
+    }
+
     /**
-     * Background blur: downscale by [BACKGROUND_BLUR_DOWNSAMPLE], three iterations of box-blur
-     * at radius [BACKGROUND_BLUR_RADIUS] (≈ Gaussian), then upscale back. This matches the iOS
-     * pipeline's quarter-resolution Gaussian pass.
+     * One downscale → box-blur (5 iterations) → upscale pass at [BACKGROUND_BLUR_DOWNSAMPLE].
      */
-    private fun blurBackgroundBitmap(input: Bitmap): Bitmap? {
+    private fun blurBackgroundBitmapOnce(input: Bitmap, recycleSource: Boolean): Bitmap? {
         val w = input.width
         val h = input.height
         val dsW = (w * BACKGROUND_BLUR_DOWNSAMPLE).toInt().coerceAtLeast(8)
@@ -1452,10 +1703,14 @@ internal class MeetBackgroundBlurMediaPipeEngine(
             blurTmpScratch = it
         }
         downscaled.getPixels(pixels, 0, dsW, 0, 0, dsW, dsH)
-        repeat(3) { boxBlurPixelsInPlace(pixels, tmp, dsW, dsH, BACKGROUND_BLUR_RADIUS) }
+        val radius = backgroundBlurRadius()
+        repeat(5) { boxBlurPixelsInPlace(pixels, tmp, dsW, dsH, radius) }
         downscaled.setPixels(pixels, 0, dsW, 0, 0, dsW, dsH)
         val upscaled = Bitmap.createScaledBitmap(downscaled, w, h, /* filter = */ true)
         if (upscaled !== downscaled) downscaled.recycle()
+        if (recycleSource && input !== upscaled) {
+            input.recycle()
+        }
         return upscaled
     }
 

@@ -1,0 +1,75 @@
+diff --git a/src/lib.rs b/src/lib.rs
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -1,8 +1,12 @@
+ // Primary export functions for the NEON module.
++#[cfg(feature = "napi")]
+ use dtln_processor::DtlnDeferredProcessor;
++#[cfg(feature = "napi")]
+ use dtln_processor::DtlnProcessEngine;
+ 
++#[cfg(feature = "napi")]
+ use std::io::Result;
++#[cfg(feature = "napi")]
+ use std::sync::{Arc, Mutex};
+ pub mod constants;
+ pub mod dtln_engine;
+@@ -10,10 +14,13 @@ pub mod dtln_processor;
+ pub mod dtln_utilities;
+ pub mod tflite;
+ 
++#[cfg(feature = "napi")]
+ use neon::prelude::*;
+ 
++#[cfg(feature = "napi")]
+ use neon::types::buffer::TypedArray;
+ 
++#[cfg(feature = "napi")]
+ fn dtln_create_napi(mut cx: FunctionContext) -> JsResult<JsBox<Arc<Mutex<DtlnDeferredProcessor>>>> {
+     let dtln_processor = DtlnDeferredProcessor::new();
+     let Ok(dtln_processor) = dtln_processor else {
+@@ -23,6 +30,7 @@ fn dtln_create_napi(mut cx: FunctionContext) -> JsResult<JsBox<Arc<Mutex<DtlnDef
+     Ok(cx.boxed(Arc::new(Mutex::new(dtln_processor))))
+ }
+ 
++#[cfg(feature = "napi")]
+ fn dtln_stop_napi(mut cx: FunctionContext) -> JsResult<JsUndefined> {
+     let dtln_processor = cx.argument::<JsBox<Arc<Mutex<DtlnDeferredProcessor>>>>(0)?;
+     dtln_processor.lock().unwrap().stop();
+@@ -37,6 +45,7 @@ fn dtln_stop_napi(mut cx: FunctionContext) -> JsResult<JsUndefined> {
+ 
+ * @returns {boolean} - True if the processing thread is backed up.
+ */
++#[cfg(feature = "napi")]
+ fn dtln_denoise_napi(mut cx: FunctionContext) -> JsResult<JsBoolean> {
+     if cx.len() != 3 {
+         return cx.throw_error("Invalid number of arguments, expected <engine: JsBox, samples: Float32Array, output: Float32Array>");
+@@ -81,6 +90,7 @@ fn dtln_denoise_napi(mut cx: FunctionContext) -> JsResult<JsBoolean> {
+     }
+ }
+ 
++#[cfg(feature = "napi")]
+ #[neon::main]
+ fn main(mut cx: ModuleContext) -> NeonResult<()> {
+     cx.export_function("dtln_denoise", dtln_denoise_napi)?;
+diff --git a/src/dtln_processor.rs b/src/dtln_processor.rs
+--- a/src/dtln_processor.rs
++++ b/src/dtln_processor.rs
+@@ -1,7 +1,8 @@
+ // High level wrapper around DTLN that provides a simple interface.
+ 
+ use anyhow::{Context, Result};
+-use neon::prelude::*;
++#[cfg(feature = "napi")]
++use neon::prelude::*;
+ use std::sync::atomic::AtomicBool;
+ use std::sync::mpsc::Receiver;
+ use std::sync::{mpsc, Arc, Mutex};
+@@ -28,6 +29,7 @@ pub struct DtlnDeferredProcessor {
+     processor_handle: Option<thread::JoinHandle<()>>,
+ }
+ 
++#[cfg(feature = "napi")]
+ impl Finalize for DtlnDeferredProcessor {
+     fn finalize<'a, C: neon::prelude::Context<'a>>(self, _: &mut C) {
+         drop(self);

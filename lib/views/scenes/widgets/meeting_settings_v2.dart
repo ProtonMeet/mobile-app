@@ -7,6 +7,7 @@ import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/local_toast.dart';
 import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart';
+import 'package:proton_denoise/proton_denoise.dart';
 
 class MeetingSettingsV2 extends StatefulWidget {
   final void Function({required bool value})? onHideSelfViewChanged;
@@ -32,8 +33,8 @@ class MeetingSettingsV2 extends StatefulWidget {
   final bool audioDenoiseEnabled;
   final void Function({required bool value})? onAudioDenoiseChanged;
   final List<DenoiseTypeUiOption> audioDenoiseTypeOptions;
-  final String? selectedAudioDenoiseTypeId;
-  final void Function(String typeId)? onAudioDenoiseTypeSelected;
+  final DenoiseType? selectedAudioDenoiseType;
+  final void Function(DenoiseType type)? onAudioDenoiseTypeSelected;
 
   const MeetingSettingsV2({
     required this.hideSelfView,
@@ -57,7 +58,7 @@ class MeetingSettingsV2 extends StatefulWidget {
     this.audioDenoiseEnabled = false,
     this.onAudioDenoiseChanged,
     this.audioDenoiseTypeOptions = const [],
-    this.selectedAudioDenoiseTypeId,
+    this.selectedAudioDenoiseType,
     this.onAudioDenoiseTypeSelected,
     super.key,
   });
@@ -68,10 +69,12 @@ class MeetingSettingsV2 extends StatefulWidget {
 
 /// Denoise algorithm row shown when multiple backends are enabled via Unleash.
 class DenoiseTypeUiOption {
-  const DenoiseTypeUiOption({required this.id, required this.label});
+  const DenoiseTypeUiOption({required this.type});
 
-  final String id;
-  final String label;
+  final DenoiseType type;
+
+  String get id => type.id;
+  String get label => type.displayName;
 }
 
 class _MeetingSettingsV2Constants {
@@ -407,9 +410,9 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
               ...widget.audioDenoiseTypeOptions.map(
                 (option) => _SettingChoice(
                   title: option.label,
-                  selected: widget.selectedAudioDenoiseTypeId == option.id,
+                  selected: widget.selectedAudioDenoiseType == option.type,
                   onTap: () =>
-                      widget.onAudioDenoiseTypeSelected?.call(option.id),
+                      widget.onAudioDenoiseTypeSelected?.call(option.type),
                 ),
               ),
             _SettingSwitch(

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:livekit_client/livekit_client.dart';
+import 'package:meet/helper/background_blur/camera_background_blur_sync.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:proton_video_effects/proton_video_effects.dart';
@@ -22,7 +23,9 @@ class LocalVideoTrackHelper {
           .get<DataProviderManager>()
           .unleashDataProvider;
       if (unleash.isMeetCameraBackgroundBlur()) {
-        return BackgroundBlurTrackProcessor();
+        return ProtonVideoEffects.instance.createBlurTrackProcessor(
+          config: resolveCameraBackgroundBlurConfig(),
+        );
       }
     } catch (_) {}
     return null;
@@ -35,7 +38,7 @@ class LocalVideoTrackHelper {
   /// Otherwise, uses the default camera.
   ///
   /// When [processor] is null, [applyBackgroundBlur] is true, and Unleash toggle
-  /// MeetCameraBackgroundBlur is on (non-web), attaches [BackgroundBlurTrackProcessor].
+  /// MeetCameraBackgroundBlur is on (non-web), attaches blur via [ProtonVideoEffects.createBlurTrackProcessor].
   static Future<LocalVideoTrack> cameraTrack({
     required VideoParameters parameters,
     MediaDevice? device,

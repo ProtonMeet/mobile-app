@@ -1,6 +1,7 @@
 #include "proton_rnnoise_processor.h"
 
 #include <algorithm>
+#include <cstring>
 #include <rnnoise.h>
 
 namespace proton_rnnoise {
@@ -19,22 +20,50 @@ float ProcessInterleavedFixed(DenoiseState *state, size_t frame_size,
   float vad = 0.f;
 
   for (size_t ch = 0; ch < channels; ++ch) {
+    float in_frame[512];
+    float out_frame[512];
+    if (frame_size > sizeof(in_frame) / sizeof(in_frame[0])) {
+      return vad;
+    }
+
+    // Live capture: one RNNoise frame per call (iOS / Android WebRTC).
+    if (samples_per_channel == frame_size) {
+      for (size_t i = 0; i < frame_size; ++i) {
+        in_frame[i] = samples[i * channels + ch];
+      }
+      vad = rnnoise_process_frame(state, out_frame, in_frame);
+      for (size_t i = 0; i < frame_size; ++i) {
+        samples[i * channels + ch] = out_frame[i];
+      }
+      continue;
+    }
+
+    // Offline / batch: RNNoise v0.2 outputs one frame behind — align writes.
+    size_t prev_frame_start{};
+    bool has_prev_frame = false;
     for (size_t frame_start = 0;
          frame_start + frame_size <= samples_per_channel;
          frame_start += frame_size) {
-      float frame[512];
-      if (frame_size > sizeof(frame) / sizeof(frame[0])) {
-        return vad;
+      for (size_t i = 0; i < frame_size; ++i) {
+        in_frame[i] = samples[(frame_start + i) * channels + ch];
       }
 
-      for (size_t i = 0; i < frame_size; ++i) {
-        frame[i] = samples[(frame_start + i) * channels + ch];
+      vad = rnnoise_process_frame(state, out_frame, in_frame);
+
+      if (has_prev_frame) {
+        for (size_t i = 0; i < frame_size; ++i) {
+          samples[(prev_frame_start + i) * channels + ch] = out_frame[i];
+        }
       }
+      prev_frame_start = frame_start;
+      has_prev_frame = true;
+    }
 
-      vad = rnnoise_process_frame(state, frame, frame);
-
+    if (has_prev_frame) {
+      std::memset(in_frame, 0, frame_size * sizeof(float));
+      vad = rnnoise_process_frame(state, out_frame, in_frame);
       for (size_t i = 0; i < frame_size; ++i) {
-        samples[(frame_start + i) * channels + ch] = frame[i];
+        samples[(prev_frame_start + i) * channels + ch] = out_frame[i];
       }
     }
   }

@@ -13,6 +13,7 @@ import 'package:meet/views/scenes/room/layout/responsive_camera_layout.dart'
     show ResponsiveCameraLayout;
 import 'package:meet/views/scenes/room/participant/participant_info.dart';
 import 'package:meet/views/scenes/room/participant_detail.dart';
+import 'package:proton_denoise/proton_denoise.dart';
 
 /// Rejoin status enum for tracking rejoin process steps
 enum RejoinStatus {
@@ -100,8 +101,8 @@ class RoomState extends Equatable {
   /// In-room preference: native mic denoise (MeetAudioDenoise).
   final bool audioDenoiseEnabled;
 
-  /// Selected denoise algorithm id (e.g. `rnnoise`, `deepfilter`).
-  final String audioDenoiseTypeId;
+  /// Selected denoise algorithm.
+  final DenoiseType audioDenoiseType;
   final CameraPosition? currentCameraPosition;
 
   /// is screen sharing
@@ -318,7 +319,7 @@ class RoomState extends Equatable {
     this.unsubscribeVideoByDefault = false,
     this.cameraBackgroundBlurEnabled = false,
     this.audioDenoiseEnabled = false,
-    this.audioDenoiseTypeId = 'rnnoise',
+    this.audioDenoiseType = DenoiseType.rnnoise,
     this.showMeetingIsReady = false,
     this.meetingLink = '',
     this.isSpeakerMuted,
@@ -388,7 +389,7 @@ class RoomState extends Equatable {
     bool? unsubscribeVideoByDefault,
     bool? cameraBackgroundBlurEnabled,
     bool? audioDenoiseEnabled,
-    String? audioDenoiseTypeId,
+    DenoiseType? audioDenoiseType,
     DateTime? lastOpenChatTime,
     bool? showMeetingIsReady,
     String? meetingLink,
@@ -467,7 +468,7 @@ class RoomState extends Equatable {
       cameraBackgroundBlurEnabled:
           cameraBackgroundBlurEnabled ?? this.cameraBackgroundBlurEnabled,
       audioDenoiseEnabled: audioDenoiseEnabled ?? this.audioDenoiseEnabled,
-      audioDenoiseTypeId: audioDenoiseTypeId ?? this.audioDenoiseTypeId,
+      audioDenoiseType: audioDenoiseType ?? this.audioDenoiseType,
       meetingLink: meetingLink ?? this.meetingLink,
       showMeetingIsReady: showMeetingIsReady ?? this.showMeetingIsReady,
       isSpeakerMuted: isSpeakerMuted ?? this.isSpeakerMuted,
@@ -567,7 +568,7 @@ class RoomState extends Equatable {
     unsubscribeVideoByDefault,
     cameraBackgroundBlurEnabled,
     audioDenoiseEnabled,
-    audioDenoiseTypeId,
+    audioDenoiseType,
     meetingLink,
     showMeetingIsReady,
     isSpeakerMuted,

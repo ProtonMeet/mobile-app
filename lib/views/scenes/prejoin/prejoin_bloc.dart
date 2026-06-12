@@ -12,13 +12,14 @@ import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/preferences/preferences.manager.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
+import 'package:meet/managers/services/denoise_audio.service.dart';
 import 'package:meet/managers/services/force_upgrade.dart';
 import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/rust/proton_meet/user_config.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_event.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:proton_video_effects/proton_video_effects.dart'
-    show BackgroundBlurTrackProcessor, ProtonVideoEffects;
+    show ProtonVideoEffects;
 
 import 'prejoin_state.dart';
 
@@ -173,6 +174,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
             enterForceUpgradeFromApiIfNeeded(e.field0),
       ),
     );
+    unawaited(DenoiseAudioService.instance.warmUpDeepFilterIfNeeded());
     final isGuest = appCoreManager.userID == null;
     final userId = appCoreManager.userID;
 
@@ -641,21 +643,16 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     );
   }
 
-  /// Toggles the local camera background blur in the prejoin preview.
+  /// Toggles camera background blur in the prejoin preview.
   ///
-  /// Asymmetric for performance:
-  ///   * **Enable**  → recreate the local video track with `applyBackgroundBlur: true`. The
-  ///     [BackgroundBlurTrackProcessor] is wired during track creation and its `init()` calls
-  ///     the native `attach` channel — there's no way to "graft" the processor onto an existing
-  ///     LiveKit track, so a full stop/recreate is required.
-  ///   * **Disable** → just call the native `detachBackgroundBlur` on the current track id.
-  ///     The track keeps capturing raw frames; we avoid the stop/recreate flicker entirely.
-  ///     The `BackgroundBlurTrackProcessor` wrapper on the LiveKit track remains, but its
-  ///     `destroy()` is a no-op against the now-detached native processor (idempotent on the
-  ///     native side), so cleanup on later disposal is safe.
+  /// Enable and disable are intentionally asymmetric:
+  /// - **On** — recreate the camera track with `applyBackgroundBlur: true`. Blur attaches
+  ///   during track creation; it cannot be added to an already-running track.
+  /// - **Off** — call [ProtonVideoEffects.detachBackgroundBlur] on the current track id only.
+  ///   Avoids stop/recreate flicker; the camera keeps capturing unblurred frames.
   ///
-  /// No-op when the FF is off or when the camera is not currently capturing — we just store
-  /// the preference so the next track creation applies it.
+  /// If the camera is off or the feature flag is disabled, only the preference is stored
+  /// for the next track creation.
   Future<void> _onToggleCameraBackgroundBlur(
     PreJoinToggleCameraBackgroundBlur event,
     Emitter<PreJoinState> emit,

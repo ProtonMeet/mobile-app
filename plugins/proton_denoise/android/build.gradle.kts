@@ -64,23 +64,49 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    androidResources {
+        noCompress += listOf("tar.gz", "tgz", "tar")
+    }
+
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
+    }
+
+    val deepfilterRoot = file("${projectDir}/../third_party/deepfilter")
+    val deepfilterModel = File(deepfilterRoot, "models/DeepFilterNet3_onnx.tar.gz")
+    val deepfilterJniLibs = File(deepfilterRoot, "lib/android")
+    val deepfilterAssetsDir = layout.buildDirectory.dir("deepfilter-assets")
+
+    tasks.register<Copy>("stageDeepFilterAssets") {
+        from(deepfilterModel)
+        into(deepfilterAssetsDir.map { it.dir("deepfilter") })
+        onlyIf { deepfilterModel.isFile }
     }
 
     sourceSets {
         getByName("main") {
             java.srcDirs("src/main/kotlin")
+            if (deepfilterJniLibs.isDirectory) {
+                jniLibs.srcDir(deepfilterJniLibs)
+            }
+            assets.srcDir(deepfilterAssetsDir)
         }
         getByName("test") {
             java.srcDirs("src/test/kotlin")
         }
     }
 
+    tasks.named("preBuild").configure {
+        dependsOn("stageDeepFilterAssets")
+    }
+
     defaultConfig {
         minSdk = 24
-        // Do not set abiFilters here — AGP builds one libproton_denoise.so per ABI and the
-        // host app (e.g. Meet) decides which slices go into the universal APK/AAB.
+        // Match Meet app ABI slices (android/app/build.gradle). Legacy 32-bit x86 is omitted;
+        // dtln-rs prebuilts exist for armeabi-v7a, arm64-v8a, x86_64 only.
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
+        }
         externalNativeBuild {
             cmake {
                 cppFlags += "-std=c++17"

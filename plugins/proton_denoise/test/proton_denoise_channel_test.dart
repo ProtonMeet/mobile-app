@@ -19,9 +19,15 @@ void main() {
                 {'id': 'rnnoise', 'displayName': 'RNNoise', 'isReady': true},
                 {
                   'id': 'deepfilter',
-                  'displayName': 'DeepFilter',
+                  'displayName': 'DeepFilter 3',
                   'isReady': true,
                 },
+                {
+                  'id': 'deepfilter2',
+                  'displayName': 'DeepFilter 2',
+                  'isReady': true,
+                },
+                {'id': 'dtln-rs', 'displayName': 'DTLN', 'isReady': false},
               ];
             case 'isTypeReady':
               return true;
@@ -37,14 +43,16 @@ void main() {
   });
 
   test('listDenoiseTypes parses native payload', () async {
-    final types = await ProtonDenoiseChannel().listDenoiseTypes();
-    expect(types, hasLength(2));
+    final types = await ProtonDenoiseEffects.instance.listDenoiseTypes();
+    expect(types, hasLength(4));
     expect(types[0].type, DenoiseType.rnnoise);
     expect(types[1].type, DenoiseType.deepfilter);
+    expect(types[2].type, DenoiseType.deepfilter2);
+    expect(types[3].type, DenoiseType.dtlnRs);
   });
 
-  test('attach sends trackId and type', () async {
-    await ProtonDenoiseChannel().attach(
+  test('attachDenoise sends trackId and type', () async {
+    await ProtonDenoiseEffects.instance.attachDenoise(
       trackId: 'audio-1',
       type: DenoiseType.rnnoise,
     );

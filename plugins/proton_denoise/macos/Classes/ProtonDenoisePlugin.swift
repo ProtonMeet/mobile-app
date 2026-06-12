@@ -1,1 +1,1 @@
-../../common/darwin/Classes/ProtonDenoisePlugin.swift
+/Users/Yanfeng/Documents/ProtonMailGit/Wallet/WalletApp/proton-meet-app/plugins/proton_denoise/common/darwin/Classes/ProtonDenoisePlugin.swift

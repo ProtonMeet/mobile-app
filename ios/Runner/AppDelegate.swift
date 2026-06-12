@@ -377,6 +377,8 @@ import app_links
       case "disposePiP":
         PipManager.shared.disposePiP()
         result(nil)
+      case "moveAppToBackground":
+        PipManager.shared.moveAppToBackground(result: result)
       default:
         result(FlutterMethodNotImplemented)
       }

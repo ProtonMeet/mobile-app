@@ -1,24 +1,27 @@
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:livekit_client/livekit_client.dart';
+import 'package:proton_video_effects/background_blur_config.dart';
+import 'package:proton_video_effects/src/proton_video_effects_channel.dart';
 
-import 'proton_video_effects_channel.dart';
-
-/// TODO:: this seems unnesscery must have. we can dirrectly use ProtonVideoEffects
 /// LiveKit [TrackProcessor] that attaches native background blur on the camera track.
 ///
-/// [processedTrack] is always null: the encoder keeps the same source track while native
-/// code processes frames in the flutter_webrtc capturer pipeline.
+/// Create via [ProtonVideoEffects.createBlurTrackProcessor] — not directly.
+///
+/// [processedTrack] is always null: native code processes frames in the WebRTC pipeline.
 class BackgroundBlurTrackProcessor
     extends TrackProcessor<VideoProcessorOptions> {
-  BackgroundBlurTrackProcessor({ProtonVideoEffectsChannel? channel})
-    : _channel = channel ?? ProtonVideoEffectsChannel();
+  BackgroundBlurTrackProcessor({
+    required ProtonVideoEffectsChannel channel,
+    BackgroundBlurConfig? config,
+  }) : _channel = channel,
+       _config = config;
 
-  ProtonVideoEffectsChannel _channel;
+  final ProtonVideoEffectsChannel _channel;
+  BackgroundBlurConfig? _config;
 
-  /// For tests: inject a mock channel.
-  void debugOverrideChannel(ProtonVideoEffectsChannel channel) {
-    _channel = channel;
+  void setBackgroundBlurConfig(BackgroundBlurConfig config) {
+    _config = config;
   }
 
   String? _attachedTrackId;
@@ -45,7 +48,11 @@ class BackgroundBlurTrackProcessor
       return;
     }
     try {
-      await _channel.attachBackgroundBlur(trackId: trackId);
+      final config = _config;
+      if (config != null) {
+        await _channel.setBackgroundBlurConfig(config);
+      }
+      await _channel.attachBackgroundBlur(trackId: trackId, config: config);
       _attachedTrackId = trackId;
       debugPrint(
         '[ProtonVideoEffects] Attached background blur for track $trackId',
@@ -75,12 +82,8 @@ class BackgroundBlurTrackProcessor
   }
 
   @override
-  Future<void> onPublish(Room room) async {
-    ///
-  }
+  Future<void> onPublish(Room room) async {}
 
   @override
-  Future<void> onUnpublish() async {
-    ///
-  }
+  Future<void> onUnpublish() async {}
 }
