@@ -1476,10 +1476,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     List<ParticipantInfo> participantTracks,
     List<ParticipantInfo> speakerTracks,
     Map<String, bool> raisedHandsByIdentity,
-    String iosPipRemoteCameraSubscriptionIdentity,
-  ) {
+    String iosPipRemoteCameraSubscriptionIdentity, {
+    required bool isRejoining,
+    required bool isLiveKitReconnecting,
+  }) {
     // Hide participant tiles during rejoin, show them only after rejoin completes
-    if (_bloc.state.isRejoining || _bloc.state.isLiveKitReconnecting) {
+    if (isRejoining || isLiveKitReconnecting) {
       return Container(
         color: Colors.transparent,
         width: context.width,
@@ -2352,6 +2354,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                         List<ParticipantInfo> speakerTracks,
                         Map<String, bool> raisedHandsByIdentity,
                         String iosPipRemoteCameraSubscriptionIdentity,
+                        bool isRejoining,
+                        bool isLiveKitReconnecting,
                       )
                     >(
                       selector: (state) => (
@@ -2359,6 +2363,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                         state.speakerTracks,
                         state.raisedHandsByIdentity,
                         state.iosPipRemoteCameraSubscriptionIdentity,
+                        state.isRejoining,
+                        state.isLiveKitReconnecting,
                       ),
                       builder: (context, data) => buildCameraLayout(
                         context,
@@ -2366,6 +2372,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                         data.$2,
                         data.$3,
                         data.$4,
+                        isRejoining: data.$5,
+                        isLiveKitReconnecting: data.$6,
                       ),
                     ),
               ),

@@ -425,6 +425,10 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
         // subscription when autoSubscribe is false. Re-walk the roster.
         _clearAllPendingSubscribes(clearRetryCounts: true);
         _subscribeExistingAudioAndScreenShare();
+
+        // re-sort participants and refresh participant display names
+        add(SortParticipants());
+        add(const RefreshParticipantDisplayNames());
       })
       ..on<ParticipantEvent>((event) {
         // Use debounced sort for high-frequency participant events to reduce CPU load
