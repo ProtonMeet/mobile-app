@@ -97,6 +97,14 @@
   "@meeting_locked_notification": {
     "description": "Toast notification when meeting is locked by host"
   },
+  "meet_server_version_not_supported_title": "Güncelleme gerekli",
+  "@meet_server_version_not_supported_title": {
+    "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
+  },
+  "meet_server_version_not_supported_description": "Uygulama sürümünüz bu görüşmeye bağlanamıyor. İlerlemek için Proton Meet uygulamasını güncelleyin.",
+  "@meet_server_version_not_supported_description": {
+    "description": "Description when the client must be updated to join a meeting"
+  },
   "meeting_unlocked_notification": "Görüşme kilidi açıldı. Katılımcılar yeniden katılabilir.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"
@@ -179,6 +187,15 @@
   "camera_view": "Kamera görünümü",
   "is_presenting": "sunum yapıyor",
   "stop_presenting": "Sunumu durdur",
+  "tap_to_stop_sharing": "Paylaşımı durdurmak için dokunun",
+  "notification_permission_settings_title": "Bildirim izinlerini verin",
+  "@notification_permission_settings_title": {
+    "description": "Title when notification permission was denied and screen sharing requires it"
+  },
+  "notification_permission_settings_message": "Ekran paylaşımı sırasında görüşmenin arka planda etkin kalabilmesi için bildirim izninin verilmesi gerekir.\n\nDaha önce izin vermemişsiniz. Ekranınızı paylaşmak için sistem ayarlarınızdan bildirimlere izin verin:\n• Ayarları açın\n• Bu uygulamayı bulun\n• Bildirimlere izin verin",
+  "@notification_permission_settings_message": {
+    "description": "Body for notification permission inform sheet shown before screen sharing"
+  },
   "participant_joined": "Katılımcı katıldı🎉",
   "participant_left": "Katılımcı ayrıldı👋",
   "participant_name_prefix": "Ad: ",
