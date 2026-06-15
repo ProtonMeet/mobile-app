@@ -88,7 +88,7 @@ import 'room_state.dart';
 import 'room_top_bar.dart';
 import 'side_panel_widget.dart';
 import 'speaker_phone/speaker_phone_panel.dart';
-import 'widgets/connection_status_banner.dart';
+import 'widgets/room_connection_aware_media_area.dart';
 
 class RoomPage extends StatefulWidget {
   final Room room;
@@ -1476,20 +1476,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     List<ParticipantInfo> participantTracks,
     List<ParticipantInfo> speakerTracks,
     Map<String, bool> raisedHandsByIdentity,
-    String iosPipRemoteCameraSubscriptionIdentity, {
-    required bool isRejoining,
-    required bool isLiveKitReconnecting,
-  }) {
-    // Hide participant tiles during rejoin, show them only after rejoin completes
-    if (isRejoining || isLiveKitReconnecting) {
-      return Container(
-        color: Colors.transparent,
-        width: context.width,
-        height: context.height,
-        child: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
+    String iosPipRemoteCameraSubscriptionIdentity,
+  ) {
     final room = _bloc.state.room;
     final showLowerHand =
         _bloc.state.isLocalParticipantAdminOrHost &&
@@ -2335,169 +2323,136 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
+  Widget _buildCameraMediaContent(BuildContext context) {
+    return BlocSelector<
+      RoomBloc,
+      RoomState,
+      (
+        List<ParticipantInfo> participantTracks,
+        List<ParticipantInfo> speakerTracks,
+        Map<String, bool> raisedHandsByIdentity,
+        String iosPipRemoteCameraSubscriptionIdentity,
+      )
+    >(
+      selector: (state) => (
+        state.participantTracks,
+        state.speakerTracks,
+        state.raisedHandsByIdentity,
+        state.iosPipRemoteCameraSubscriptionIdentity,
+      ),
+      builder: (context, data) => buildCameraLayout(
+        context,
+        data.$1,
+        data.$2,
+        data.$3,
+        data.$4,
+      ),
+    );
+  }
+
+  Widget _buildScreenSharingMediaContent(BuildContext context) {
+    return BlocSelector<
+      RoomBloc,
+      RoomState,
+      (
+        int index,
+        List<ParticipantInfo> tracks,
+        bool isFullScreen,
+        Map<String, bool> raisedHandsByIdentity,
+      )
+    >(
+      selector: (state) => (
+        state.screenSharingIndex,
+        state.screenSharingTracks,
+        state.isFullScreen,
+        state.raisedHandsByIdentity,
+      ),
+      builder: (context, state) {
+        final tracks = state.$2;
+        final index = state.$1;
+        final isFullScreen = state.$3;
+        final raisedHandsByIdentity = state.$4;
+
+        if (tracks.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final safeIndex = min(index, tracks.length - 1);
+
+        _ensureScreenShareSubscribed(tracks[safeIndex].participant);
+        final showLowerHand =
+            _bloc.state.isLocalParticipantAdminOrHost &&
+            _bloc.isMeetAdminLowerHandEnabled();
+
+        return GestureDetector(
+          onTap: () {
+            if (!_bloc.state.isFullScreen) {
+              _bloc.add(ToggleFullScreen());
+            } else {
+              _resetAutoFullScreenTimer();
+            }
+          },
+          child: InteractiveViewer(
+            minScale: 0.5,
+            maxScale: 5.0,
+            child: ParticipantWidget.widgetFor(
+              context.width,
+              context.height,
+              getParticipantDisplayColors(
+                context,
+                tracks[safeIndex].participant.identity.hashCode,
+              ),
+              tracks[safeIndex],
+              showStatsLayer: false,
+              roundedBorder: false,
+              isFullScreen: isFullScreen,
+              reaction: _activeReactions[tracks[safeIndex].participant.identity],
+              isRaisedHand:
+                  raisedHandsByIdentity[tracks[safeIndex].participant.identity] ==
+                  true,
+              onLowerHand: showLowerHand
+                  ? () {
+                      unawaited(
+                        publishAdminLowerHand(
+                          tracks[safeIndex].participant.identity,
+                        ),
+                      );
+                    }
+                  : null,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  List<Widget> _buildMainContentSidePanels(BuildContext context) => [
+    if (_showParticipantList && !_showChatBubble)
+      buildParticipantList(context),
+    if (_showChatBubble) buildChatBubble(context),
+    if (_showSettings) buildMeetingSettings(context),
+    if (_showMeetingInfo) buildMeetingInfo(context),
+  ];
+
   /// Builds the main content area (without controls bar)
   /// This is shared between mobile and desktop views
   Widget _buildMainContent(BuildContext context) {
-    if (!_isScreenSharing || _isCameraView) {
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          return Column(
-            children: [
-              const ConnectionStatusBanner(),
-              Expanded(
-                child:
-                    BlocSelector<
-                      RoomBloc,
-                      RoomState,
-                      (
-                        List<ParticipantInfo> participantTracks,
-                        List<ParticipantInfo> speakerTracks,
-                        Map<String, bool> raisedHandsByIdentity,
-                        String iosPipRemoteCameraSubscriptionIdentity,
-                        bool isRejoining,
-                        bool isLiveKitReconnecting,
-                      )
-                    >(
-                      selector: (state) => (
-                        state.participantTracks,
-                        state.speakerTracks,
-                        state.raisedHandsByIdentity,
-                        state.iosPipRemoteCameraSubscriptionIdentity,
-                        state.isRejoining,
-                        state.isLiveKitReconnecting,
-                      ),
-                      builder: (context, data) => buildCameraLayout(
-                        context,
-                        data.$1,
-                        data.$2,
-                        data.$3,
-                        data.$4,
-                        isRejoining: data.$5,
-                        isLiveKitReconnecting: data.$6,
-                      ),
-                    ),
-              ),
+    final mediaContent = (!_isScreenSharing || _isCameraView)
+        ? _buildCameraMediaContent(context)
+        : _buildScreenSharingMediaContent(context);
 
-              ///
-              if (_showParticipantList && !_showChatBubble)
-                buildParticipantList(context),
-
-              ///
-              if (_showChatBubble) buildChatBubble(context),
-
-              ///
-              if (_showSettings) buildMeetingSettings(context),
-
-              ///
-              if (_showMeetingInfo) buildMeetingInfo(context),
-            ],
-          );
-        },
-      );
-    } else {
-      // Screen sharing view
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          return Column(
-            children: [
-              Expanded(
-                child:
-                    BlocSelector<
-                      RoomBloc,
-                      RoomState,
-                      (
-                        int index,
-                        List<ParticipantInfo> tracks,
-                        bool isFullScreen,
-                        Map<String, bool> raisedHandsByIdentity,
-                      )
-                    >(
-                      selector: (state) {
-                        return (
-                          state.screenSharingIndex,
-                          state.screenSharingTracks,
-                          state.isFullScreen,
-                          state.raisedHandsByIdentity,
-                        );
-                      },
-                      builder: (context, state) {
-                        final tracks = state.$2;
-                        final index = state.$1;
-                        final isFullScreen = state.$3;
-                        final raisedHandsByIdentity = state.$4;
-
-                        if (tracks.isEmpty) {
-                          return const SizedBox.shrink();
-                        }
-
-                        final safeIndex = min(index, tracks.length - 1);
-
-                        _ensureScreenShareSubscribed(
-                          tracks[safeIndex].participant,
-                        );
-                        final showLowerHand =
-                            _bloc.state.isLocalParticipantAdminOrHost &&
-                            _bloc.isMeetAdminLowerHandEnabled();
-
-                        return GestureDetector(
-                          onTap: () {
-                            // Immediately enter full screen when tapping screen share
-                            if (!_bloc.state.isFullScreen) {
-                              _bloc.add(ToggleFullScreen());
-                            } else {
-                              _resetAutoFullScreenTimer();
-                            }
-                          },
-                          child: InteractiveViewer(
-                            minScale: 0.5,
-                            maxScale: 5.0,
-                            child: ParticipantWidget.widgetFor(
-                              context.width,
-                              context.height,
-                              getParticipantDisplayColors(
-                                context,
-                                tracks[safeIndex].participant.identity.hashCode,
-                              ),
-                              tracks[safeIndex],
-                              showStatsLayer: false,
-                              roundedBorder: false,
-                              isFullScreen: isFullScreen,
-                              reaction:
-                                  _activeReactions[tracks[safeIndex]
-                                      .participant
-                                      .identity],
-                              isRaisedHand:
-                                  raisedHandsByIdentity[tracks[safeIndex]
-                                      .participant
-                                      .identity] ==
-                                  true,
-                              onLowerHand: showLowerHand
-                                  ? () {
-                                      unawaited(
-                                        publishAdminLowerHand(
-                                          tracks[safeIndex]
-                                              .participant
-                                              .identity,
-                                        ),
-                                      );
-                                    }
-                                  : null,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-              ),
-              if (_showParticipantList && !_showChatBubble)
-                buildParticipantList(context),
-              if (_showChatBubble) buildChatBubble(context),
-              if (_showSettings) buildMeetingSettings(context),
-              if (_showMeetingInfo) buildMeetingInfo(context),
-            ],
-          );
-        },
-      );
-    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Column(
+          children: [
+            Expanded(
+              child: RoomConnectionAwareMediaArea(child: mediaContent),
+            ),
+            ..._buildMainContentSidePanels(context),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildNormalMobileView(BuildContext context) {
