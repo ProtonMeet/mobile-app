@@ -2,12 +2,17 @@
 # Package libdeepfilter.dylib slices as DeepFilter.xcframework (iOS).
 set -euo pipefail
 
-plugin_root="$(cd "$(dirname "$0")/../.." && pwd)"
-repo_root="$(cd "${plugin_root}/../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../native_build_env.sh
+source "${SCRIPT_DIR}/../native_build_env.sh"
+
+plugin_root="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+repo_root="$(native_repo_root)"
 df_root="${plugin_root}/third_party/deepfilter"
 apple_staging="${DEEPFILTER_STAGING_DIR:-${repo_root}/.local/deepfilter-staging}/apple/ios"
 header="${df_root}/include/deep_filter.h"
 xcframework="${df_root}/ios/DeepFilter.xcframework"
+min_ios="${DEEPFILTER_MIN_IOS:-$(native_main_app_ios_deployment_target "${repo_root}")}"
 build_staging="$(mktemp -d)"
 trap 'rm -rf "${build_staging}"' EXIT
 
@@ -42,7 +47,7 @@ framework module DeepFilter {
   export *
 }
 EOF
-  cat >"${fw_dir}/Info.plist" <<'EOF'
+  cat >"${fw_dir}/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -63,6 +68,8 @@ EOF
   <string>1.0</string>
   <key>CFBundleVersion</key>
   <string>1</string>
+  <key>MinimumOSVersion</key>
+  <string>${min_ios}</string>
 </dict>
 </plist>
 EOF
@@ -93,5 +100,11 @@ fi
 mkdir -p "${df_root}/ios"
 rm -rf "${xcframework}"
 xcodebuild "${xc_args[@]}" -output "${xcframework}"
+
+while IFS= read -r plist; do
+  /usr/libexec/PlistBuddy -c "Set :MinimumOSVersion ${min_ios}" "${plist}" 2>/dev/null \
+    || /usr/libexec/PlistBuddy -c "Add :MinimumOSVersion string ${min_ios}" "${plist}"
+  echo "package_deepfilter_framework: set MinimumOSVersion=${min_ios} in ${plist}"
+done < <(find "${xcframework}" -path '*/DeepFilter.framework/Info.plist')
 
 echo "package_deepfilter_framework: created ${xcframework}"

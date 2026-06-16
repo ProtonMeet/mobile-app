@@ -9,6 +9,26 @@ native_repo_root() {
   cd "${script_dir}/../../.." && pwd
 }
 
+# Match ios/Flutter/AppFrameworkInfo.plist / Podfile platform (Runner app minimum).
+native_main_app_ios_deployment_target() {
+  local repo_root="${1:-$(native_repo_root)}"
+  local version=""
+  local app_plist="${repo_root}/ios/Flutter/AppFrameworkInfo.plist"
+  local podfile="${repo_root}/ios/Podfile"
+
+  if [[ -f "${app_plist}" ]]; then
+    version="$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "${app_plist}" 2>/dev/null || true)"
+  fi
+  if [[ -z "${version}" && -f "${podfile}" ]]; then
+    version="$(grep -E "^platform :ios, " "${podfile}" | sed -E "s/platform :ios, ['\"]([^'\"]+)['\"].*/\1/" | head -1)"
+  fi
+  if [[ -z "${version}" ]]; then
+    echo "native build: could not resolve main app iOS deployment target" >&2
+    version="16.0"
+  fi
+  echo "${version}"
+}
+
 native_prepend_path() {
   local dir ndk_cmake
   for dir in \
