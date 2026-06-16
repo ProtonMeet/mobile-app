@@ -97,6 +97,14 @@
   "@meeting_locked_notification": {
     "description": "Toast notification when meeting is locked by host"
   },
+  "meet_server_version_not_supported_title": "Mise à jour nécessaire",
+  "@meet_server_version_not_supported_title": {
+    "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
+  },
+  "meet_server_version_not_supported_description": "La version de votre application ne permet pas se connecter à cette réunion. Veuillez mettre à jour Proton Meet afin de poursuivre.",
+  "@meet_server_version_not_supported_description": {
+    "description": "Description when the client must be updated to join a meeting"
+  },
   "meeting_unlocked_notification": "Réunion déverrouillée. Les participants peuvent de nouveau la rejoindre.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"
@@ -179,6 +187,15 @@
   "camera_view": "Affichage de la caméra",
   "is_presenting": "présente",
   "stop_presenting": "Arrêter de présenter",
+  "tap_to_stop_sharing": "Appuyez pour arrêter de partager",
+  "notification_permission_settings_title": "Autoriser l'accès aux notifications",
+  "@notification_permission_settings_title": {
+    "description": "Title when notification permission was denied and screen sharing requires it"
+  },
+  "notification_permission_settings_message": "Le partage d'écran nécessite l'autorisation des notifications afin que la réunion puisse rester active en arrière-plan.\n\nVous avez précédemment refusé l'accès. Pour partager votre écran, veuillez activer les notifications dans les paramètres de votre système :\n• Ouvrez Paramètres\n• Recherchez cette application\n• Autorisez les notifications",
+  "@notification_permission_settings_message": {
+    "description": "Body for notification permission inform sheet shown before screen sharing"
+  },
   "participant_joined": "Le participant a rejoint la réunion🎉",
   "participant_left": "Le participant est parti👋",
   "participant_name_prefix": "Nom : ",
@@ -1454,7 +1471,7 @@
   "@calendar_share_ics": {
     "description": "Menu label for sharing ICS file"
   },
-  "calendar_outlook": "Ajouter à Outlook Calendrier",
+  "calendar_outlook": "Ajouter au calendrier Outlook",
   "@calendar_outlook": {
     "description": "Menu label for opening Outlook Calendar"
   },

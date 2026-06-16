@@ -97,6 +97,14 @@
   "@meeting_locked_notification": {
     "description": "Toast notification when meeting is locked by host"
   },
+  "meet_server_version_not_supported_title": "Update required",
+  "@meet_server_version_not_supported_title": {
+    "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
+  },
+  "meet_server_version_not_supported_description": "Your app version can't connect to this meeting. Please update Proton Meet to continue.",
+  "@meet_server_version_not_supported_description": {
+    "description": "Description when the client must be updated to join a meeting"
+  },
   "meeting_unlocked_notification": "Spotkanie odblokowane. Uczestnicy mogą ponownie dołączać.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"
@@ -114,7 +122,7 @@
   "show_meeting_timer": "Pokaż licznik spotkania",
   "unsubscribe_video_by_default": "Wyłącz przychodzące wideo",
   "camera_background_blur": "Background blur",
-  "audio_noise_cancellation": "Noise cancellation",
+  "audio_noise_cancellation": "Redukcja szumów",
   "dark_mode": "Tryb ciemny",
   "show_connection_indicator": "Pokaż wskaźnik połączenia",
   "desktop_notifications": "Powiadomienia na pulpicie",
@@ -179,6 +187,15 @@
   "camera_view": "Widok kamery",
   "is_presenting": "prezentuje",
   "stop_presenting": "Zakończ prezentację",
+  "tap_to_stop_sharing": "Tap to stop sharing",
+  "notification_permission_settings_title": "Enable notification access",
+  "@notification_permission_settings_title": {
+    "description": "Title when notification permission was denied and screen sharing requires it"
+  },
+  "notification_permission_settings_message": "Screen sharing requires notification permission so the meeting can stay active in the background.\n\nYou previously denied access. To share your screen, please enable Notifications in your system settings:\n• Open Settings\n• Find this app\n• Allow Notifications",
+  "@notification_permission_settings_message": {
+    "description": "Body for notification permission inform sheet shown before screen sharing"
+  },
   "participant_joined": "Uczestnik dołączył🎉",
   "participant_left": "Uczestnik opuścił👋",
   "participant_name_prefix": "Imię: ",
@@ -631,11 +648,11 @@
   "@audio_output_earpiece": {
     "description": "Bottom sheet option: use Earpiece audio output routing"
   },
-  "audio_output_bluetooth_device": "Bluetooth device",
+  "audio_output_bluetooth_device": "Urządzenie Bluetooth",
   "@audio_output_bluetooth_device": {
     "description": "Bottom sheet option: use Bluetooth device audio output routing"
   },
-  "audio_output_headphones": "Headphones",
+  "audio_output_headphones": "Słuchawki",
   "@audio_output_headphones": {
     "description": "Bottom sheet option: use Headphones audio output routing"
   },

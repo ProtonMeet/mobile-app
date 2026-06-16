@@ -97,6 +97,14 @@
   "@meeting_locked_notification": {
     "description": "Toast notification when meeting is locked by host"
   },
+  "meet_server_version_not_supported_title": "Update vereist",
+  "@meet_server_version_not_supported_title": {
+    "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
+  },
+  "meet_server_version_not_supported_description": "De versie van uw app kan niet verbinden met deze vergadering. Update Proton Meet om door te gaan.",
+  "@meet_server_version_not_supported_description": {
+    "description": "Description when the client must be updated to join a meeting"
+  },
   "meeting_unlocked_notification": "Vergadering ontgrendeld. Deelnemers kunnen weer deelnemen.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"
@@ -179,6 +187,15 @@
   "camera_view": "Cameraweergave",
   "is_presenting": "presenteert",
   "stop_presenting": "Stoppen met presenteren",
+  "tap_to_stop_sharing": "Tik om het delen te stoppen",
+  "notification_permission_settings_title": "Schakel toegang tot meldingen in",
+  "@notification_permission_settings_title": {
+    "description": "Title when notification permission was denied and screen sharing requires it"
+  },
+  "notification_permission_settings_message": "Voor het delen van schermen is toestemming voor meldingen vereist, zodat de vergadering op de achtergrond actief kan blijven.\n\nU heeft eerder de toegang geweigerd. Schakel Meldingen in uw systeeminstellingen in om uw scherm te delen:\n• Instellingen openen\n• Zoek deze app\n• Meldingen toestaan",
+  "@notification_permission_settings_message": {
+    "description": "Body for notification permission inform sheet shown before screen sharing"
+  },
   "participant_joined": "Deelnemer doet mee🎉",
   "participant_left": "Deelnemer is vertrokken👋",
   "participant_name_prefix": "Naam:",
@@ -1002,11 +1019,11 @@
       }
     }
   },
-  "meeting_expiry_banner_title_prefix": "Meeting will end in ",
+  "meeting_expiry_banner_title_prefix": "Vergadering eindigt over ",
   "@meeting_expiry_banner_title_prefix": {
     "description": "Title prefix for meeting expiry countdown banner; duration is appended"
   },
-  "meeting_expiry_banner_description": "Free meetings are limited to 1 hour. This call will disconnect soon.",
+  "meeting_expiry_banner_description": "Gratis vergaderingen zijn beperkt tot 1 uur. Dit gesprek wordt binnenkort verbroken.",
   "@meeting_expiry_banner_description": {
     "description": "Subtitle on meeting expiry warning banner for free meetings"
   },

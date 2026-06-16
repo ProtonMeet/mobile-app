@@ -97,6 +97,14 @@
   "@meeting_locked_notification": {
     "description": "Toast notification when meeting is locked by host"
   },
+  "meet_server_version_not_supported_title": "Aktualisierung erforderlich",
+  "@meet_server_version_not_supported_title": {
+    "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
+  },
+  "meet_server_version_not_supported_description": "Mit der Version deiner App kann keine Verbindung zu diesem Meeting hergestellt werden. Bitte aktualisiere Proton Meet, um fortzufahren.",
+  "@meet_server_version_not_supported_description": {
+    "description": "Description when the client must be updated to join a meeting"
+  },
   "meeting_unlocked_notification": "Meeting entsperrt. Teilnehmer können wieder beitreten.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"
@@ -179,6 +187,15 @@
   "camera_view": "Kameraansicht",
   "is_presenting": "präsentiert",
   "stop_presenting": "Präsentation beenden",
+  "tap_to_stop_sharing": "Antippen, um die Freigabe zu beenden",
+  "notification_permission_settings_title": "Zugriff auf Benachrichtigungen aktivieren",
+  "@notification_permission_settings_title": {
+    "description": "Title when notification permission was denied and screen sharing requires it"
+  },
+  "notification_permission_settings_message": "Für die Bildschirmfreigabe ist die Berechtigung für Benachrichtigungen erforderlich, damit die Besprechung im Hintergrund aktiv bleiben kann.\n\nSie haben den Zugriff zuvor abgelehnt. Um Ihren Bildschirm freizugeben, aktivieren Sie bitte die Benachrichtigungen in Ihren Systemeinstellungen:\n• Öffnen Sie die Einstellungen\n• Suchen Sie diese App\n• Erlauben Sie Benachrichtigungen",
+  "@notification_permission_settings_message": {
+    "description": "Body for notification permission inform sheet shown before screen sharing"
+  },
   "participant_joined": "Teilnehmer ist beigetreten🎉",
   "participant_left": "Teilnehmer ist gegangen👋",
   "participant_name_prefix": "Name: ",

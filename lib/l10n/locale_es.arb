@@ -97,6 +97,14 @@
   "@meeting_locked_notification": {
     "description": "Toast notification when meeting is locked by host"
   },
+  "meet_server_version_not_supported_title": "Actualización requerida",
+  "@meet_server_version_not_supported_title": {
+    "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
+  },
+  "meet_server_version_not_supported_description": "La versión de su aplicación no puede conectarse a esta reunión. Actualice Proton Meet para continuar.",
+  "@meet_server_version_not_supported_description": {
+    "description": "Description when the client must be updated to join a meeting"
+  },
   "meeting_unlocked_notification": "Reunión desbloqueada. Los participantes se pueden volver a unir.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"
@@ -179,6 +187,15 @@
   "camera_view": "Vista de la cámara",
   "is_presenting": "está presentando",
   "stop_presenting": "Detener la presentación",
+  "tap_to_stop_sharing": "Pulse para dejar de compartir",
+  "notification_permission_settings_title": "Habilitar acceso de notificación",
+  "@notification_permission_settings_title": {
+    "description": "Title when notification permission was denied and screen sharing requires it"
+  },
+  "notification_permission_settings_message": "Compartir pantalla requiere permisos de notificación para que la reunión se mantenga activa en segundo plano.\n\nPreviamente denegó el acceso. Para compartir su pantalla, active las notificaciones en los ajustes de sistema:\n• Abra Ajustes\n• Busque esta aplicación\n• Permita las notificaciones",
+  "@notification_permission_settings_message": {
+    "description": "Body for notification permission inform sheet shown before screen sharing"
+  },
   "participant_joined": "Se unió un participante🎉",
   "participant_left": "Se fue un participante👋",
   "participant_name_prefix": "Nombre: ",

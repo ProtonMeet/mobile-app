@@ -97,6 +97,14 @@
   "@meeting_locked_notification": {
     "description": "Toast notification when meeting is locked by host"
   },
+  "meet_server_version_not_supported_title": "Update required",
+  "@meet_server_version_not_supported_title": {
+    "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
+  },
+  "meet_server_version_not_supported_description": "Your app version can't connect to this meeting. Please update Proton Meet to continue.",
+  "@meet_server_version_not_supported_description": {
+    "description": "Description when the client must be updated to join a meeting"
+  },
   "meeting_unlocked_notification": "Reunião desbloqueada. Os participantes podem entrar novamente.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"
@@ -113,7 +121,7 @@
   "meeting": "Reunião",
   "show_meeting_timer": "Mostrar cronômetro da reunião",
   "unsubscribe_video_by_default": "Desativar vídeo de entrada",
-  "camera_background_blur": "Background blur",
+  "camera_background_blur": "Desfoque de fundo",
   "audio_noise_cancellation": "Cancelamento de ruído",
   "dark_mode": "Modo escuro",
   "show_connection_indicator": "Mostrar indicador de conexão",
@@ -179,6 +187,15 @@
   "camera_view": "Visualização da câmera",
   "is_presenting": "está apresentando",
   "stop_presenting": "Interromper apresentação",
+  "tap_to_stop_sharing": "Tap to stop sharing",
+  "notification_permission_settings_title": "Ativar acesso às notificações",
+  "@notification_permission_settings_title": {
+    "description": "Title when notification permission was denied and screen sharing requires it"
+  },
+  "notification_permission_settings_message": "Screen sharing requires notification permission so the meeting can stay active in the background.\n\nYou previously denied access. To share your screen, please enable Notifications in your system settings:\n• Open Settings\n• Find this app\n• Allow Notifications",
+  "@notification_permission_settings_message": {
+    "description": "Body for notification permission inform sheet shown before screen sharing"
+  },
   "participant_joined": "Participante entrou🎉",
   "participant_left": "Participante saiu👋",
   "participant_name_prefix": "Nome: ",
@@ -320,15 +337,15 @@
   "@left_meeting_subtitle_guest_free": {
     "description": "Subtitle shown for non-paid non-host users after leaving a meeting"
   },
-  "left_meeting_subtitle_guest_paid": "Thank you for joining.",
+  "left_meeting_subtitle_guest_paid": "Obrigado por participar.",
   "@left_meeting_subtitle_guest_paid": {
     "description": "Subtitle shown for paid non-host users after leaving a meeting"
   },
-  "left_meeting_subtitle_host_free": "Thank you for hosting a meeting.",
+  "left_meeting_subtitle_host_free": "brigado por organizar a reunião.",
   "@left_meeting_subtitle_host_free": {
     "description": "Subtitle shown for free host users after leaving a meeting"
   },
-  "left_meeting_subtitle_host_paid": "Thank you for hosting a premium meeting.",
+  "left_meeting_subtitle_host_paid": "Obrigado por organizar a reunião premium.",
   "@left_meeting_subtitle_host_paid": {
     "description": "Subtitle shown for paid host users after leaving a meeting"
   },
@@ -815,7 +832,7 @@
   "@quality_feedback_email_message": {
     "description": "Message explaining that connection log will be shared via email"
   },
-  "call_quality_how_was": "How was the call quality?",
+  "call_quality_how_was": "Como estava a qualidade da chamada?",
   "@call_quality_how_was": {
     "description": "Prompt above star rating on post-meeting feedback"
   },
@@ -843,7 +860,7 @@
   "@call_quality_feedback_submitted": {
     "description": "Toast after successful meeting feedback"
   },
-  "call_quality_could_not_send": "Could not send feedback",
+  "call_quality_could_not_send": "Não foi possível enviar o feedback",
   "@call_quality_could_not_send": {
     "description": "Toast when meeting feedback API fails"
   },
@@ -859,39 +876,39 @@
   "@call_quality_category_screen": {
     "description": "Section label for screen-share feedback options"
   },
-  "call_quality_audio_breaking": "Audio was breaking up",
+  "call_quality_audio_breaking": "O áudio estava cortado",
   "@call_quality_audio_breaking": {
     "description": "Low-rating feedback option"
   },
-  "call_quality_audio_couldnt_hear": "I couldn't hear others",
+  "call_quality_audio_couldnt_hear": "Eu não conseguia ouvir os outros",
   "@call_quality_audio_couldnt_hear": {
     "description": "Low-rating feedback option"
   },
-  "call_quality_audio_others_couldnt_hear": "Others couldn't hear me",
+  "call_quality_audio_others_couldnt_hear": "Os outros não conseguiam me ouvir",
   "@call_quality_audio_others_couldnt_hear": {
     "description": "Low-rating feedback option"
   },
-  "call_quality_video_poor": "Video quality was poor",
+  "call_quality_video_poor": "A qualidade do vídeo era ruim",
   "@call_quality_video_poor": {
     "description": "Low-rating feedback option"
   },
-  "call_quality_video_couldnt_see": "I couldn't see others' video",
+  "call_quality_video_couldnt_see": "Eu não conseguia ver os vídeos dos outros",
   "@call_quality_video_couldnt_see": {
     "description": "Low-rating feedback option"
   },
-  "call_quality_video_others_couldnt_see": "Others couldn't see my video",
+  "call_quality_video_others_couldnt_see": "Outras pessoas não conseguiram ver meu vídeo",
   "@call_quality_video_others_couldnt_see": {
     "description": "Low-rating feedback option"
   },
-  "call_quality_screen_blurry": "The presentation was blurry",
+  "call_quality_screen_blurry": "A apresentação estava desfocada",
   "@call_quality_screen_blurry": {
     "description": "Low-rating feedback option"
   },
-  "call_quality_screen_couldnt_see": "I couldn't see the presentation",
+  "call_quality_screen_couldnt_see": "Eu não consegui ver a apresentação",
   "@call_quality_screen_couldnt_see": {
     "description": "Low-rating feedback option"
   },
-  "call_quality_screen_couldnt_present": "I couldn't present",
+  "call_quality_screen_couldnt_present": "Eu não pude fazer a apresentação",
   "@call_quality_screen_couldnt_present": {
     "description": "Low-rating feedback option"
   },
@@ -1002,7 +1019,7 @@
       }
     }
   },
-  "meeting_expiry_banner_title_prefix": "Meeting will end in ",
+  "meeting_expiry_banner_title_prefix": "A reunião terminará em ",
   "@meeting_expiry_banner_title_prefix": {
     "description": "Title prefix for meeting expiry countdown banner; duration is appended"
   },
@@ -1142,7 +1159,7 @@
   "@emoji_reactions": {
     "description": "Emoji reactions tooltip"
   },
-  "lower_participant_hand": "Lower participant's hand",
+  "lower_participant_hand": "Baixar a mão do participante",
   "@lower_participant_hand": {
     "description": "Tooltip text for lowering a participant's raised hand"
   },
@@ -1202,7 +1219,7 @@
   "@you_are_using_free_meet_plan": {
     "description": "Message shown to host indicating they are using the free plan"
   },
-  "call_supports_up_to": "This call supports up to ",
+  "call_supports_up_to": "Esta chamada permite até ",
   "@call_supports_up_to": {
     "description": "Message prefix showing the maximum number of participants allowed in the call"
   },
