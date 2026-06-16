@@ -39,11 +39,14 @@ class AndroidNotificationService implements NotificationService {
     return completer.future;
   }
 
+  void _ensureMethodCallHandler() {
+    _channel.setMethodCallHandler(_onNativeMethodCall);
+  }
+
   @override
   Future<void> init() async {
+    _ensureMethodCallHandler();
     if (_isInitialized) return;
-
-    _channel.setMethodCallHandler(_onNativeMethodCall);
 
     try {
       final ok = await _channel.invokeMethod<bool>('init');
@@ -64,6 +67,7 @@ class AndroidNotificationService implements NotificationService {
         } catch (e) {
           logger.e('[AndroidNotificationService] onReturnToCall failed: $e');
         }
+        break;
       case 'onEndCallRequested':
         if (_onEndCallCallback == null) {
           logger.w(
@@ -76,6 +80,7 @@ class AndroidNotificationService implements NotificationService {
         } catch (e) {
           logger.e('[AndroidNotificationService] onEndCall failed: $e');
         }
+        break;
       default:
         break;
     }
@@ -249,6 +254,7 @@ class AndroidNotificationService implements NotificationService {
 
   /// Called when the user ends the meeting from the system call notification.
   void setEndCallFromNotificationCallback(Future<void> Function()? callback) {
+    _ensureMethodCallHandler();
     _onEndCallCallback = callback;
   }
 
@@ -264,6 +270,7 @@ class AndroidNotificationService implements NotificationService {
     _onNotificationTapCallback = null;
     _onEndCallCallback = null;
     _channel.setMethodCallHandler(null);
+    _isInitialized = false;
   }
 
   @override

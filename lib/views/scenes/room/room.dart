@@ -335,7 +335,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       try {
         final notificationService = ManagerFactory().get<NotificationService>();
         notificationService.hideBackgroundNotification();
-        notificationService.dispose();
+        notificationService.clearBackgroundNotificationTapCallback();
       } catch (e) {
         // NotificationService might not be registered on non-Android platforms
       }
