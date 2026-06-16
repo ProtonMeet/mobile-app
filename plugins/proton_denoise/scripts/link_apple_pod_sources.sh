@@ -26,6 +26,15 @@ if [ -f "${CPP_SRC}/proton_deepfilter_processor.cc" ]; then
 fi
 
 PLATFORM_NAME="$(basename "${PLATFORM_DIR}")"
+REPO_ROOT="$(cd "${PLUGIN_ROOT}/../.." && pwd)"
+APP_MIN_IOS=""
+if [ -f "${REPO_ROOT}/ios/Flutter/AppFrameworkInfo.plist" ]; then
+  APP_MIN_IOS="$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "${REPO_ROOT}/ios/Flutter/AppFrameworkInfo.plist" 2>/dev/null || true)"
+fi
+if [ -z "${APP_MIN_IOS}" ] && [ -f "${REPO_ROOT}/ios/Podfile" ]; then
+  APP_MIN_IOS="$(grep -E "^platform :ios, " "${REPO_ROOT}/ios/Podfile" | sed -E "s/platform :ios, ['\"]([^'\"]+)['\"].*/\1/" | head -1)"
+fi
+DEEPFILTER_MIN_IOS="${DEEPFILTER_MIN_IOS:-${APP_MIN_IOS:-16.0}}"
 DEEPFILTER_IOS_XC="${PLUGIN_ROOT}/third_party/deepfilter/ios/DeepFilter.xcframework"
 DEEPFILTER_MAC_FW="${PLUGIN_ROOT}/third_party/deepfilter/macos/DeepFilter.framework"
 DEEPFILTER_MODEL="${PLUGIN_ROOT}/third_party/deepfilter/models/DeepFilterNet3_onnx.tar.gz"
@@ -41,6 +50,10 @@ case "${PLATFORM_NAME}" in
   ios)
     if [ -d "${DEEPFILTER_IOS_XC}" ]; then
       ln -sfh "${DEEPFILTER_IOS_XC}" "${PLATFORM_DIR}/Vendored/DeepFilter.xcframework"
+      find "${DEEPFILTER_IOS_XC}" -path '*/DeepFilter.framework/Info.plist' | while read -r plist; do
+        /usr/libexec/PlistBuddy -c "Set :MinimumOSVersion ${DEEPFILTER_MIN_IOS}" "${plist}" 2>/dev/null \
+          || /usr/libexec/PlistBuddy -c "Add :MinimumOSVersion string ${DEEPFILTER_MIN_IOS}" "${plist}"
+      done
     fi
     ;;
   macos)

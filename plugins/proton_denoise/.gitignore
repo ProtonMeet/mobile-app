@@ -7,14 +7,18 @@ third_party/deepfilter/lib/macos/
 # RNNoise Android native build is under <repo>/build/native/proton_denoise/cxx (see build.gradle.kts).
 
 # CocoaPods prepare_command symlinks (scripts/link_apple_pod_sources.sh).
+# Canonical sources: common/darwin/Classes/*.swift and common/cpp/src/*.cc — do not duplicate here.
+# After adding/removing shared sources, run: cd macos && pod install  (and ios/ for iOS).
 ios/Classes/
 ios/Cpp/
 ios/Native/
 ios/Vendored/
+ios/Resources/DeepFilterNet3_onnx.tar.gz
 macos/Classes/
 macos/Cpp/
 macos/Native/
 macos/Vendored/
+macos/Resources/DeepFilterNet3_onnx.tar.gz
 
 # Miscellaneous
 *.class
