@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
+import 'package:meet/helper/extension/frb_upcoming_meetings.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/helper/logger.dart' as l;
@@ -141,6 +142,16 @@ class DashboardScreenState extends State<DashboardScreen> {
         widget.bloc.add(LoadSignInCardVisibilityEvent());
       }
     }
+  }
+
+  bool _shouldShowDashboardSearchBar(DashboardState state) {
+    // if my meetings tab, show search bar if there are any meetings before filter
+    if (state.upcomingTab == MeetUpcomingTab.myMeetings) {
+      return state.myMeetingsCount > 0;
+    }
+    // if my rooms tab, show search bar if there are any rooms (except personal meeting room)
+    return state.meetinsDisplay.isNotEmpty &&
+        !state.meetinsDisplay.every((meeting) => meeting.isPersonalMeeting);
   }
 
   void _onScroll() {
@@ -462,10 +473,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                       child: _buildGuestPersonalMeetingEntry(context),
                     ),
                   ),
-                if (currentState.meetinsDisplay.isNotEmpty &&
-                    !currentState.meetinsDisplay.every(
-                      (meeting) => meeting.isPersonalMeeting,
-                    ))
+                if (_shouldShowDashboardSearchBar(currentState))
                   SliverToBoxAdapter(
                     child: Container(
                       key: _searchBarKey,
