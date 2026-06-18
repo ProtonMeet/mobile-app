@@ -5325,14 +5325,13 @@ dependencies = [
 name = "proton-meet-chat"
 version = "0.1.0"
 dependencies = [
- "base64",
- "chrono",
- "proton-meet-crypto",
+ "mimi-content",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
  "thiserror 2.0.18",
- "tokio",
- "uuid",
+ "unicode-segmentation",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -5346,7 +5345,7 @@ dependencies = [
 
 [[package]]
 name = "proton-meet-core"
-version = "1.1.6-19"
+version = "1.1.7-2"
 dependencies = [
  "anyhow",
  "argon2",
@@ -5366,11 +5365,13 @@ dependencies = [
  "gloo-timers 0.3.0",
  "idb",
  "identity",
+ "indexmap 2.14.0",
  "js-sys",
  "log",
  "meet-identifiers",
  "meet-mls",
  "meet-type",
+ "mimi-content",
  "mls-rs",
  "mls-rs-codec",
  "mls-rs-crypto-rustcrypto",

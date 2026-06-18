@@ -1125,10 +1125,7 @@ mod tests {
             [],
         )?;
         // Literal overflows IEEE double → SQLite stores +inf; serde_json rejects it as JSON Number.
-        db.0.execute(
-            "INSERT INTO t_inf (id, v) VALUES ('i', 1e999)",
-            [],
-        )?;
+        db.0.execute("INSERT INTO t_inf (id, v) VALUES ('i', 1e999)", [])?;
 
         let mut stmt = db.0.prepare("SELECT * FROM t_inf WHERE id = 'i'")?;
         let mut rows = stmt.query([])?;

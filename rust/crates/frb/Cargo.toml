@@ -17,7 +17,7 @@ flutter_rust_bridge = { version = "=2.11.1" }
 proton-meet-app = { path = "../meet" }
 proton-meet-calendar = { path = "../meet-calendar" }
 proton-meet-core = { path = "../meet-core" }
-proton-meet-chat = { path = "../meet-chat" }
+proton-meet-chat = { path = "../meet-chat", features = ["legacy-wire"] }
 proton-meet-crypto = { path = "../meet-crypto" }
 proton-meet-common = { path = "../meet-common" }
 tokio = { workspace = true }

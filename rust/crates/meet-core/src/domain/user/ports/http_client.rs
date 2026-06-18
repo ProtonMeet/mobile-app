@@ -65,10 +65,7 @@ pub trait HttpClient: Send + Sync {
         encrypted_display_name: &str,
     ) -> Result<AccessTokenInfo, HttpClientError>;
 
-    async fn get_meet_info(
-        &self,
-        meet_link_name: &str,
-    ) -> Result<MeetingInfo, HttpClientError>;
+    async fn get_meet_info(&self, meet_link_name: &str) -> Result<MeetingInfo, HttpClientError>;
 
     async fn get_active_meetings(&self) -> Result<Vec<Meeting>, HttpClientError>;
 

@@ -18,7 +18,6 @@ pub struct UserSettingsDto {
     pub address_id: String,
 }
 
-
 impl From<UserSettingsResponse> for UserSettings {
     fn from(response: UserSettingsResponse) -> Self {
         UserSettings {

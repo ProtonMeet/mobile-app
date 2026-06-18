@@ -156,6 +156,9 @@ pub enum MeetCoreError {
     #[error("Mls service error: {0}")]
     MlsServiceError(#[from] MlsServiceError),
 
+    #[error("Chat error: {0}")]
+    ChatError(#[from] proton_meet_chat::ChatError),
+
     #[error("Mls status code: {0}")]
     MlsStatusCode(u32),
 }
@@ -165,8 +168,9 @@ impl MeetCoreError {
     pub fn is_retryable_switch_join(&self) -> bool {
         match self {
             Self::MlsStatusCode(422) => true,
-            Self::RoomJoinFailed { reason, .. } => reason
-                .contains("didn't receive the welcome message from the server"),
+            Self::RoomJoinFailed { reason, .. } => {
+                reason.contains("didn't receive the welcome message from the server")
+            }
             _ => false,
         }
     }
@@ -574,6 +578,7 @@ pub enum MeetCoreErrorEnum {
     UuidError,
     NotRoomAdmin,
     MlsStatusCode,
+    ChatError,
 }
 
 #[cfg(target_family = "wasm")]
@@ -620,6 +625,7 @@ impl From<MeetCoreError> for MeetCoreErrorEnum {
             MeetCoreError::UnExpectedMlsMessageContent { .. } => Self::MlsSpecError,
             MeetCoreError::RatchetTreeNotFound => Self::MlsProtocolError,
             MeetCoreError::MlsServiceError(_) => Self::InternalError,
+            MeetCoreError::ChatError(_) => Self::ChatError,
             MeetCoreError::MlsStatusCode(status) => Self::MlsStatusCode,
         }
     }
@@ -693,12 +699,10 @@ mod tests {
             }
             .is_retryable_switch_join()
         );
-        assert!(
-            !MeetCoreError::RoomJoinFailed {
-                room_id: "room".into(),
-                reason: "Join proposal state is not valid".into(),
-            }
-            .is_retryable_switch_join()
-        );
+        assert!(!MeetCoreError::RoomJoinFailed {
+            room_id: "room".into(),
+            reason: "Join proposal state is not valid".into(),
+        }
+        .is_retryable_switch_join());
     }
 }

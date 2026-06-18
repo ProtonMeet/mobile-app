@@ -200,6 +200,16 @@ pub struct Service {
     join_proposal_welcome_notify: Arc<Notify>,
 }
 
+fn mimi_sub_from_credential(credential: &Credential) -> Result<String, anyhow::Error> {
+    match credential {
+        Credential::SdCwtDraft04 { sd_kbt, .. } => {
+            let mut sd_kbt = sd_kbt.as_ref().clone();
+            Ok(ProtonMeetIdentity::sub(&mut sd_kbt)?.to_string())
+        }
+        _ => Err(anyhow::anyhow!("Expected SdCwtDraft04 credential")),
+    }
+}
+
 /// Calculate retry delay with exponential backoff and jitter
 /// - attempt_num: 0-indexed attempt number (0 = first retry after initial failure)
 /// - base_ms: base delay in milliseconds
@@ -2064,6 +2074,20 @@ impl UserService for Service {
         meeting_link_name: &str,
         message: &str,
     ) -> Result<mls_types::MlsMessage, anyhow::Error> {
+        self.encrypt_application_message_bytes(
+            meeting_link_name,
+            MediaType::default(),
+            message.as_bytes(),
+        )
+        .await
+    }
+
+    async fn encrypt_application_message_bytes(
+        &self,
+        meeting_link_name: &str,
+        media_type: MediaType,
+        content: &[u8],
+    ) -> Result<mls_types::MlsMessage, anyhow::Error> {
         let mls_group_lock = {
             let store_lock = self.mls_store.read().await;
             store_lock
@@ -2076,9 +2100,7 @@ impl UserService for Service {
         };
         let mut mls_group = mls_group_lock.write().await;
 
-        let encrypted_message = mls_group
-            .encrypt_message(MediaType::default(), message.as_bytes())
-            .await?;
+        let encrypted_message = mls_group.encrypt_message(media_type, content).await?;
         Ok(encrypted_message)
     }
 
@@ -2087,6 +2109,19 @@ impl UserService for Service {
         meeting_link_name: &str,
         message: mls_types::MlsMessage,
     ) -> Result<(String, UserId), anyhow::Error> {
+        let (content, _media_type, sender_id, _sender_mimi_uri) = self
+            .decrypt_application_message_bytes(meeting_link_name, message)
+            .await?;
+        let content_string = String::from_utf8(content)
+            .map_err(|e| anyhow::anyhow!("Failed to convert content to UTF-8: {e}"))?;
+        Ok((content_string, sender_id))
+    }
+
+    async fn decrypt_application_message_bytes(
+        &self,
+        meeting_link_name: &str,
+        message: mls_types::MlsMessage,
+    ) -> Result<(Vec<u8>, MediaType, UserId, String), anyhow::Error> {
         match message.content_type()? {
             ContentType::Application => {}
             _ => {
@@ -2113,23 +2148,52 @@ impl UserService for Service {
 
         match decrypted_message {
             ReceivedMessage::ApplicationMessage {
-                content, sender, ..
+                content,
+                media_type,
+                sender,
             } => {
-                let content_string = String::from_utf8(content)
-                    .map_err(|e| anyhow::anyhow!("Failed to convert content to UTF-8: {e}"))?;
                 let sender = mls_group.find_member(sender)?;
                 if let Credential::SdCwtDraft04 { claimset, .. } = sender.credential() {
                     if let Some(claimset) = claimset {
                         let uuid = Uuid::from_bytes(claimset.uuid);
-                        return Ok((content_string, UserId::new(uuid.to_string())));
+                        let sender_mimi_uri = mimi_sub_from_credential(sender.credential())?;
+                        return Ok((
+                            content,
+                            media_type,
+                            UserId::new(uuid.to_string()),
+                            sender_mimi_uri,
+                        ));
                     }
                 }
-                return Err(anyhow::anyhow!("Failed to get participant id from credential"));
+                Err(anyhow::anyhow!("Failed to get participant id from credential"))
             }
             _ => Err(anyhow::anyhow!(
                 "Expected ApplicationMessage but received different message type: {decrypted_message:?}"
             )),
         }
+    }
+
+    async fn local_mimi_sender_uri(
+        &self,
+        meeting_link_name: &str,
+    ) -> Result<String, anyhow::Error> {
+        let mls_group_lock = {
+            let store_lock = self.mls_store.read().await;
+            store_lock
+                .group_map
+                .get(meeting_link_name)
+                .ok_or_else(|| {
+                    anyhow::anyhow!("Failed to find mls group for room {meeting_link_name}")
+                })?
+                .clone()
+        };
+        let mls_group = mls_group_lock.read().await;
+        let own_leaf_index = *mls_group.own_leaf_index()?;
+        let member = mls_group
+            .roster()
+            .find(|m| *m.leaf_index() == own_leaf_index)
+            .ok_or_else(|| anyhow::anyhow!("Own leaf not found in roster"))?;
+        mimi_sub_from_credential(member.credential())
     }
 
     async fn handle_websocket_message(

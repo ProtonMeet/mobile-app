@@ -29,7 +29,7 @@ use super::user_config::UserConfig;
 use flutter_rust_bridge::{frb, DartFnFuture};
 use proton_meet_app::user_config::user_config::{ConfigStorage, VideoMaxBitrate, VideoResolution};
 use proton_meet_calendar::{IcsEvent, RecurrenceRule};
-use proton_meet_chat::domain::models::chat_message::MeetChatMessage;
+use proton_meet_chat::legacy_wire::MeetChatMessage;
 pub use proton_meet_core::errors::core::MeetCoreError;
 use proton_meet_core::{
     app::App,
