@@ -8,4 +8,3 @@ pub enum _ConnectionState {
     Connected = 2,
     Reconnecting = 3,
 }
-

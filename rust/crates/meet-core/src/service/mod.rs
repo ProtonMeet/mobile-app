@@ -2,7 +2,6 @@
 
 mod services_bundle;
 
-pub mod message_service;
 // forder name is same with module name, ignore for now and refactor later
 pub mod mls_service;
 #[allow(clippy::module_inception)]

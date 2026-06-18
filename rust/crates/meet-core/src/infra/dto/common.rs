@@ -8,4 +8,3 @@ use serde::Deserialize;
 pub struct ProtonEmptyResponse {
     pub code: u32,
 }
-

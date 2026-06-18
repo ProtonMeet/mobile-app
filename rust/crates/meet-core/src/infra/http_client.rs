@@ -143,8 +143,8 @@ impl ProtonHttpClient {
         http_host: String,
     ) -> Result<Self, anyhow::Error> {
         let (app_version, user_agent) = config.spec;
-        let mls_default_headers = Self::mls_default_headers(&app_version, &user_agent)
-            .map_err(anyhow::Error::from)?;
+        let mls_default_headers =
+            Self::mls_default_headers(&app_version, &user_agent).map_err(anyhow::Error::from)?;
         let app = App::new(app_version.clone())?.with_user_agent(user_agent.clone());
 
         #[cfg(not(target_family = "wasm"))]
@@ -206,9 +206,7 @@ impl ProtonHttpClient {
                     })?,
                 );
             }
-            mls_builder
-                .default_headers(mls_default_headers)
-                .build()?
+            mls_builder.default_headers(mls_default_headers).build()?
         };
 
         #[cfg(target_family = "wasm")]
@@ -838,10 +836,7 @@ mod tests {
         )
         .expect("client should build");
         assert_eq!(client.app_version, "macos-meet@9.8.7");
-        assert_eq!(
-            client.user_agent,
-            "ProtonMeet/1.0 (macOS 14.0; MacBookPro)"
-        );
+        assert_eq!(client.user_agent, "ProtonMeet/1.0 (macOS 14.0; MacBookPro)");
     }
 
     #[test]

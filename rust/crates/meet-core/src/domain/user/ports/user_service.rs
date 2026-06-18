@@ -89,11 +89,27 @@ pub trait UserService {
         message: &str,
     ) -> Result<MlsMessage, anyhow::Error>;
 
+    async fn encrypt_application_message_bytes(
+        &self,
+        meeting_link_name: &str,
+        media_type: mls_types::MediaType,
+        content: &[u8],
+    ) -> Result<MlsMessage, anyhow::Error>;
+
     async fn decrypt_application_message(
         &self,
         meeting_link_name: &str,
         message: MlsMessage,
     ) -> Result<(String, UserId), anyhow::Error>;
+
+    async fn decrypt_application_message_bytes(
+        &self,
+        meeting_link_name: &str,
+        message: MlsMessage,
+    ) -> Result<(Vec<u8>, mls_types::MediaType, UserId, String), anyhow::Error>;
+
+    async fn local_mimi_sender_uri(&self, meeting_link_name: &str)
+        -> Result<String, anyhow::Error>;
 
     async fn join_room(
         &self,

@@ -1,4 +1,3 @@
-
 #[derive(Debug, thiserror::Error)]
 pub enum AccessTokenError {
     #[error("Invalid API Key or Secret Key")]

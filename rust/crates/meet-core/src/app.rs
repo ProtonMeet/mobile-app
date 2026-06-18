@@ -1,4 +1,11 @@
 use crate::app_state::{preferred_user_key_for_crypto, AppState, UserState, UserStateInfo};
+use crate::chat::legacy::{decrypt_legacy, encrypt_legacy};
+use crate::chat::{
+    self, compose_local_echo, ChatComposeRequest, ChatIncomingEvent, ChatOutgoingPacket,
+    ParticipantId, LEGACY_MEET_MEDIA, MIMI_CONTENT_MEDIA,
+};
+#[cfg(target_family = "wasm")]
+use crate::chat::{ChatComposeResult, ChatIncomingEventInfo, MessageId, ReplyTarget};
 use crate::domain::room::RoomService;
 use crate::domain::user::models::access_token::AccessToken;
 use crate::domain::user::models::meet_link_info::{MeetInfo, MeetParticipant};
@@ -34,9 +41,10 @@ use crate::service::service::Service;
 use crate::utils::{instant, try_join};
 use backon::{ExponentialBuilder, Retryable};
 use chrono::{DateTime, Utc};
+use mimi_content::MimiContentSerialize;
 use mls_rs_codec::MlsEncode;
 use mls_trait::MlsClientConfig;
-use mls_types::MlsMessage;
+use mls_types::{MediaType, MlsMessage};
 use muon::client::Auth;
 use muon::env::EnvId;
 use muon::store::Store;
@@ -860,54 +868,128 @@ impl App {
     }
 
     pub async fn encrypt_message(&self, message: &str) -> Result<Vec<u8>, MeetCoreError> {
-        let app_state = self.state.read().await;
-        let user_info = app_state
-            .active_user_info
-            .as_ref()
-            .ok_or(MeetCoreError::ParticipantNotFound)?;
-        let user_id = user_info.user_id();
-        let meeting_id = self
-            .user_service
-            .read()
-            .await
-            .get_meeting_id(&user_id)
-            .await?;
-        let encrypted_message = self
-            .user_service
-            .read()
-            .await
-            .encrypt_application_message(meeting_id.as_str(), message)
-            .await?;
-        Ok(encrypted_message.mls_encode_to_vec()?)
+        encrypt_legacy(self, message).await
     }
 
     pub async fn decrypt_message(
         &self,
         data: Vec<u8>,
     ) -> Result<DecryptedMessageInfo, MeetCoreError> {
+        decrypt_legacy(self, data).await
+    }
+
+    fn now_ms() -> u64 {
+        Utc::now().timestamp_millis().try_into().unwrap_or(0)
+    }
+
+    pub(crate) async fn active_meeting_link(&self) -> Result<String, MeetCoreError> {
         let app_state = self.state.read().await;
         let user_info = app_state
             .active_user_info
             .as_ref()
             .ok_or(MeetCoreError::ParticipantNotFound)?;
         let user_id = user_info.user_id();
-        let meeting_id = self
-            .user_service
+        self.user_service
             .read()
             .await
             .get_meeting_id(&user_id)
-            .await?;
-        let mls_message = MlsMessage::from_bytes(&data)?;
-        let (decrypted_message, sender_id) = self
+            .await
+            .map_err(Into::into)
+    }
+
+    async fn active_user_id(&self) -> Result<UserId, MeetCoreError> {
+        let app_state = self.state.read().await;
+        let user_info = app_state
+            .active_user_info
+            .as_ref()
+            .ok_or(MeetCoreError::ParticipantNotFound)?;
+        Ok(user_info.user_id())
+    }
+
+    async fn local_sender_uri(&self, meeting_link_name: &str) -> Result<String, MeetCoreError> {
+        self.user_service
+            .read()
+            .await
+            .local_mimi_sender_uri(meeting_link_name)
+            .await
+            .map_err(|e| MeetCoreError::MlsProtocolError {
+                message: e.to_string(),
+            })
+    }
+
+    pub async fn compose_chat(
+        &self,
+        request: ChatComposeRequest,
+    ) -> Result<ChatOutgoingPacket, MeetCoreError> {
+        let meeting = self.active_meeting_link().await?;
+        let sender_uri = self.local_sender_uri(&meeting).await?;
+        let room_uri = chat::meet_room_uri(&meeting);
+        let wire_ts = Self::now_ms();
+        let (content, id) = chat::build_mimi_message(&request, &sender_uri, &room_uri, wire_ts)?;
+        let cbor = content.to_cbor_bytes().map_err(|e| {
+            MeetCoreError::ChatError(chat::ChatError::InvalidMimiContent(e.to_string()))
+        })?;
+        let media = MediaType {
+            media_type: MIMI_CONTENT_MEDIA.into(),
+            parameters: vec![],
+        };
+        let mls_msg = self
             .user_service
             .read()
             .await
-            .decrypt_application_message(meeting_id.as_str(), mls_message)
-            .await?;
-        Ok(DecryptedMessageInfo {
-            message: decrypted_message,
-            sender_participant_id: sender_id.to_string(),
+            .encrypt_application_message_bytes(&meeting, media, &cbor)
+            .await
+            .map_err(|e| MeetCoreError::MlsProtocolError {
+                message: e.to_string(),
+            })?;
+        let payload = mls_msg.mls_encode_to_vec()?;
+        let local_participant = self.active_user_id().await?;
+        let local_echo = compose_local_echo(
+            &request,
+            id,
+            ParticipantId(local_participant.to_string()),
+            wire_ts,
+        );
+        Ok(ChatOutgoingPacket {
+            payload,
+            local_echo,
         })
+    }
+
+    pub async fn decode_chat(&self, data: Vec<u8>) -> Result<ChatIncomingEvent, MeetCoreError> {
+        let meeting = self.active_meeting_link().await?;
+        let ciphertext = chat::extract_mls_ciphertext(&data)?;
+        let mls_msg = MlsMessage::from_bytes(&ciphertext)?;
+        let (content, media_type, sender_id, sender_mimi_uri) = self
+            .user_service
+            .read()
+            .await
+            .decrypt_application_message_bytes(&meeting, mls_msg)
+            .await
+            .map_err(|e| MeetCoreError::MlsProtocolError {
+                message: e.to_string(),
+            })?;
+        let received_at = Self::now_ms();
+        let sender = ParticipantId(sender_id.to_string());
+        match media_type.media_type.as_str() {
+            MIMI_CONTENT_MEDIA => {
+                let mimi = chat::parse_mimi_content(&content)?;
+                let id = chat::compute_message_id_from_content(&mimi, &sender_mimi_uri, &meeting)?;
+                chat::decode_mimi_content(&mimi, id, sender, received_at).map_err(Into::into)
+            }
+            LEGACY_MEET_MEDIA | "text/plain" => {
+                let text = String::from_utf8(content).map_err(|e| {
+                    MeetCoreError::ChatError(chat::ChatError::InvalidMimiContent(e.to_string()))
+                })?;
+                Ok(chat::decode_legacy_plaintext(&text, sender, received_at))
+            }
+            other => Ok(ChatIncomingEvent::Unsupported {
+                id: chat::legacy_message_id(&sender.0, other, received_at),
+                sender,
+                received_at_ms: received_at,
+                protocol: chat::ChatProtocol::Legacy,
+            }),
+        }
     }
 
     pub async fn set_mls_group_update_handler<F, Fut>(&self, callback: F)
@@ -2950,6 +3032,66 @@ impl App {
         data: Vec<u8>,
     ) -> Result<DecryptedMessageInfo, JsValue> {
         self.decrypt_message(data).await.map_err(|e| e.into())
+    }
+
+    #[wasm_bindgen(js_name = composeChatMessage)]
+    pub async fn compose_chat_message_wasm(
+        &self,
+        text: String,
+        reply_to_id: Option<String>,
+        reply_topic_id: Option<String>,
+    ) -> Result<ChatComposeResult, crate::errors::core::MeetCoreErrorEnum> {
+        let reply_to = match reply_to_id {
+            None => None,
+            Some(id) => Some(ReplyTarget {
+                message_id: MessageId::from_hex(&id).map_err(MeetCoreError::from)?,
+                topic_id: reply_topic_id
+                    .map(|t| MessageId::from_hex(&t).map_err(MeetCoreError::from))
+                    .transpose()?,
+            }),
+        };
+        self.compose_chat(ChatComposeRequest::Message { text, reply_to })
+            .await
+            .map(Into::into)
+            .map_err(Into::into)
+    }
+
+    #[wasm_bindgen(js_name = composeChatReaction)]
+    pub async fn compose_chat_reaction_wasm(
+        &self,
+        target_id: String,
+        emoji: String,
+    ) -> Result<ChatComposeResult, crate::errors::core::MeetCoreErrorEnum> {
+        let target = MessageId::from_hex(&target_id).map_err(MeetCoreError::from)?;
+        self.compose_chat(ChatComposeRequest::React { target, emoji })
+            .await
+            .map(Into::into)
+            .map_err(Into::into)
+    }
+
+    #[wasm_bindgen(js_name = composeChatUnreact)]
+    pub async fn compose_chat_unreact_wasm(
+        &self,
+        target_id: String,
+        replaces_id: String,
+    ) -> Result<ChatComposeResult, crate::errors::core::MeetCoreErrorEnum> {
+        let target = MessageId::from_hex(&target_id).map_err(MeetCoreError::from)?;
+        let replaces = MessageId::from_hex(&replaces_id).map_err(MeetCoreError::from)?;
+        self.compose_chat(ChatComposeRequest::Unreact { target, replaces })
+            .await
+            .map(Into::into)
+            .map_err(Into::into)
+    }
+
+    #[wasm_bindgen(js_name = decodeChat)]
+    pub async fn decode_chat_wasm(
+        &self,
+        data: Vec<u8>,
+    ) -> Result<ChatIncomingEventInfo, crate::errors::core::MeetCoreErrorEnum> {
+        self.decode_chat(data)
+            .await
+            .map(Into::into)
+            .map_err(Into::into)
     }
 
     #[cfg(all(target_family = "wasm", not(test)))]

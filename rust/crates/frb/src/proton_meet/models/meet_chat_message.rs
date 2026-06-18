@@ -1,5 +1,5 @@
 use flutter_rust_bridge::frb;
-pub use proton_meet_chat::domain::models::chat_message::MeetChatMessage;
+pub use proton_meet_chat::legacy_wire::MeetChatMessage;
 
 #[frb(mirror(MeetChatMessage))]
 pub struct _MeetChatMessage {

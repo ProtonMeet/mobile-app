@@ -274,6 +274,102 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn mimi_chat_roundtrip_between_two_participants() {
+        use mimi_content::MimiContentSerialize;
+        use mls_rs_codec::MlsEncode;
+        use mls_types::{MediaType, MlsMessage};
+        use proton_meet_chat::{
+            build_mimi_message, compute_message_id_from_content, decode_mimi_content,
+            extract_mls_ciphertext, meet_room_uri, parse_mimi_content, ChatComposeRequest,
+            ChatIncomingEvent, ChatProtocol, ParticipantId, MIMI_CONTENT_MEDIA,
+        };
+
+        let meet_link = "test_mimi_chat_roundtrip";
+        let config = MlsClientConfig::default();
+        let service1 = create_test_service("mimi-user1", meet_link).await;
+        let service2 = create_test_service("mimi-user2", meet_link).await;
+        setup_two_user_group_with_commit_bundle(
+            &service1,
+            &service2,
+            meet_link,
+            config.ciphersuite,
+        )
+        .await;
+
+        let wire_ts = 1_700_000_000_123u64;
+        let sender_uri = service1.local_mimi_sender_uri(meet_link).await.unwrap();
+        let room_uri = meet_room_uri(meet_link);
+        let request = ChatComposeRequest::Message {
+            text: "hello thread".into(),
+            reply_to: None,
+        };
+        let (content, _id) = build_mimi_message(&request, &sender_uri, &room_uri, wire_ts).unwrap();
+        let cbor = MimiContentSerialize::to_cbor_bytes(&content).unwrap();
+        let media = MediaType {
+            media_type: MIMI_CONTENT_MEDIA.into(),
+            parameters: vec![],
+        };
+        let mls_msg = service1
+            .encrypt_application_message_bytes(meet_link, media.clone(), &cbor)
+            .await
+            .unwrap();
+
+        let (decrypted, media_type, sender_id, sender_mimi_uri) = service2
+            .decrypt_application_message_bytes(meet_link, mls_msg)
+            .await
+            .unwrap();
+        assert_eq!(media_type.media_type, MIMI_CONTENT_MEDIA);
+        assert_eq!(decrypted, cbor);
+
+        let mimi = parse_mimi_content(&decrypted).unwrap();
+        let id = compute_message_id_from_content(&mimi, &sender_mimi_uri, meet_link).unwrap();
+        let received_at = 1_700_000_001_000u64;
+        let event =
+            decode_mimi_content(&mimi, id, ParticipantId(sender_id.to_string()), received_at)
+                .unwrap();
+        match event {
+            ChatIncomingEvent::Message { text, protocol, .. } => {
+                assert_eq!(text, "hello thread");
+                assert_eq!(protocol, ChatProtocol::MimiV1);
+            }
+            _ => panic!("expected message event"),
+        }
+
+        let mls_msg_legacy = service1
+            .encrypt_application_message_bytes(meet_link, media, &cbor)
+            .await
+            .unwrap();
+        let mls_bytes = mls_msg_legacy.mls_encode_to_vec().unwrap();
+        let latin1: String = mls_bytes.iter().map(|&b| char::from(b)).collect();
+        let json = serde_json::json!({
+            "type": "message",
+            "id": sender_id.to_string(),
+            "message": latin1,
+            "timestamp": wire_ts,
+        });
+        let extracted = extract_mls_ciphertext(json.to_string().as_bytes()).unwrap();
+        assert_eq!(extracted, mls_bytes);
+        let mls_msg2 = MlsMessage::from_bytes(&extracted).unwrap();
+        let (decrypted2, _, _, sender_mimi_uri2) = service2
+            .decrypt_application_message_bytes(meet_link, mls_msg2)
+            .await
+            .unwrap();
+        let mimi2 = parse_mimi_content(&decrypted2).unwrap();
+        let id2 = compute_message_id_from_content(&mimi2, &sender_mimi_uri2, meet_link).unwrap();
+        let event2 = decode_mimi_content(
+            &mimi2,
+            id2,
+            ParticipantId(sender_id.to_string()),
+            received_at,
+        )
+        .unwrap();
+        match event2 {
+            ChatIncomingEvent::Message { text, .. } => assert_eq!(text, "hello thread"),
+            _ => panic!("expected message event"),
+        }
+    }
+
+    #[tokio::test]
     async fn test_create_external_proposal() {
         // Setup test constants
         let meet_link_name = "test_external_proposal";

@@ -4,6 +4,7 @@ pub(crate) const JOIN_TYPE_SWITCH_THRESHOLD: u32 = 20;
 
 pub mod app;
 pub mod app_state;
+pub mod chat;
 pub mod domain;
 pub mod errors;
 pub mod infra;

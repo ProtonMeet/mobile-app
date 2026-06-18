@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::domain::user::models::participant_track_settings::ParticipantTrackSettings;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "PascalCase")]
