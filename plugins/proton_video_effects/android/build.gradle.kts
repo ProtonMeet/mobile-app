@@ -72,12 +72,23 @@ android {
     }
 }
 
+// LiteRT V1 keeps the org.tensorflow.lite Java API but ships 16 KB-aligned native libs.
+private val litertVersion = "1.4.2"
+
+configurations.configureEach {
+    exclude(group = "org.tensorflow", module = "tensorflow-lite")
+    exclude(group = "org.tensorflow", module = "tensorflow-lite-api")
+    exclude(group = "org.tensorflow", module = "tensorflow-lite-gpu")
+    exclude(group = "org.tensorflow", module = "tensorflow-lite-gpu-api")
+}
+
 dependencies {
     implementation("androidx.exifinterface:exifinterface:1.4.1")
     implementation("com.google.mediapipe:tasks-vision:0.10.35")
-    implementation("org.tensorflow:tensorflow-lite:2.17.0")
-    implementation("org.tensorflow:tensorflow-lite-gpu:2.17.0")
-    implementation("org.tensorflow:tensorflow-lite-gpu-api:2.17.0")
+    implementation("com.google.ai.edge.litert:litert:$litertVersion")
+    implementation("com.google.ai.edge.litert:litert-api:$litertVersion")
+    implementation("com.google.ai.edge.litert:litert-gpu:$litertVersion")
+    implementation("com.google.ai.edge.litert:litert-gpu-api:$litertVersion")
     // flutter_webrtc ships WebRTC at runtime; compileOnly avoids duplicate classes.
     compileOnly("io.github.webrtc-sdk:android:144.7559.01")
 
