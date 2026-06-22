@@ -61,13 +61,10 @@ kotlinx-serialization-json = "1.6.3"
 # `selfie_*.tflite` assets.
 mediapipe-tasks-vision = "0.10.35"
 
-# TensorFlow Lite + GPU delegate — used by `MeetBackgroundBlurTfliteBackend` to run the same
-# `selfie_*.tflite` assets directly on the GPU, bypassing MediaPipe Tasks's `ImageSegmenter`
-# result-conversion path which crashes (uncatchable native CHECK in `image_frame.cc`) on Adreno
-# GPUs in 0.10.35. Raw TFLite reads output tensors directly so it doesn't go anywhere near the
-# broken `Image → ImageFrame` JNI boundary. Versions are pinned together because TFLite Java
-# bindings and TFLite GPU plugin must match.
-tensorflow-lite = "2.17.0"
+# LiteRT V1 (Interpreter + GpuDelegate) for `MeetBackgroundBlurTfliteBackend` in
+# `proton_video_effects`. Replaces org.tensorflow:tensorflow-lite* (4 KB-aligned on x86_64).
+# 1.4.x ships 16 KB page-size aligned native libs for arm64/x86_64.
+litert = "1.4.2"
 
 # WebRTC Android (must match the fork bundled by `flutter_webrtc` on pub.dev — currently
 # `io.github.webrtc-sdk:android:144.7559.01` as of flutter_webrtc 1.4.0). Added as `compileOnly`
@@ -238,9 +235,10 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
 
 mediapipe-tasks-vision = { module = "com.google.mediapipe:tasks-vision", version.ref = "mediapipe-tasks-vision" }
-tensorflow-lite = { module = "org.tensorflow:tensorflow-lite", version.ref = "tensorflow-lite" }
-tensorflow-lite-gpu = { module = "org.tensorflow:tensorflow-lite-gpu", version.ref = "tensorflow-lite" }
-tensorflow-lite-gpu-api = { module = "org.tensorflow:tensorflow-lite-gpu-api", version.ref = "tensorflow-lite" }
+litert = { module = "com.google.ai.edge.litert:litert", version.ref = "litert" }
+litert-api = { module = "com.google.ai.edge.litert:litert-api", version.ref = "litert" }
+litert-gpu = { module = "com.google.ai.edge.litert:litert-gpu", version.ref = "litert" }
+litert-gpu-api = { module = "com.google.ai.edge.litert:litert-gpu-api", version.ref = "litert" }
 webrtc-sdk-android = { module = "io.github.webrtc-sdk:android", version.ref = "webrtc-sdk" }
 
 ## OnRamp
