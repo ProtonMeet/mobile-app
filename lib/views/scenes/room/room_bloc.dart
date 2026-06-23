@@ -976,10 +976,16 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       // NOTE: captureScreenAudio is unsupported on iOS (handled by the
       // Broadcast Extension), so we only enable it elsewhere.
       final captureScreenAudio = !iOS;
+      final screenShareCaptureOptions = event.screenShareSourceId != null
+          ? room.roomOptions.defaultScreenShareCaptureOptions.copyWith(
+              sourceId: event.screenShareSourceId,
+            )
+          : null;
       try {
         await participant.setScreenShareEnabled(
           true,
           captureScreenAudio: captureScreenAudio,
+          screenShareCaptureOptions: screenShareCaptureOptions,
         );
         // Re-arm the E2EE key immediately after the new screen-share track
         // is published. LiveKit builds the frame cryptor per track; if a

@@ -208,7 +208,7 @@ mixin RoomTracksHandlers
         wasLocalScreenSharing) {
       // Remote screen sharing just started while local was active - disable local
       // Route through bloc handler so we also cleanup local screen share tracks
-      add(ToggleScreenShare());
+      add(const ToggleScreenShare());
     }
 
     // Update camera enabled state for local participant

@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:just_the_tooltip/just_the_tooltip.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart' show DesktopCapturerSource;
 import 'package:livekit_client/livekit_client.dart' hide ConnectionState;
 import 'package:logger/logger.dart';
 import 'package:meet/constants/constants.dart';
@@ -16,6 +17,7 @@ import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
+import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/helper/local_toast.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/user.agent.dart';
@@ -2340,13 +2342,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         state.raisedHandsByIdentity,
         state.iosPipRemoteCameraSubscriptionIdentity,
       ),
-      builder: (context, data) => buildCameraLayout(
-        context,
-        data.$1,
-        data.$2,
-        data.$3,
-        data.$4,
-      ),
+      builder: (context, data) =>
+          buildCameraLayout(context, data.$1, data.$2, data.$3, data.$4),
     );
   }
 
@@ -2406,9 +2403,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               showStatsLayer: false,
               roundedBorder: false,
               isFullScreen: isFullScreen,
-              reaction: _activeReactions[tracks[safeIndex].participant.identity],
+              reaction:
+                  _activeReactions[tracks[safeIndex].participant.identity],
               isRaisedHand:
-                  raisedHandsByIdentity[tracks[safeIndex].participant.identity] ==
+                  raisedHandsByIdentity[tracks[safeIndex]
+                      .participant
+                      .identity] ==
                   true,
               onLowerHand: showLowerHand
                   ? () {
@@ -2427,8 +2427,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   }
 
   List<Widget> _buildMainContentSidePanels(BuildContext context) => [
-    if (_showParticipantList && !_showChatBubble)
-      buildParticipantList(context),
+    if (_showParticipantList && !_showChatBubble) buildParticipantList(context),
     if (_showChatBubble) buildChatBubble(context),
     if (_showSettings) buildMeetingSettings(context),
     if (_showMeetingInfo) buildMeetingInfo(context),
@@ -2445,9 +2444,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       builder: (context, constraints) {
         return Column(
           children: [
-            Expanded(
-              child: RoomConnectionAwareMediaArea(child: mediaContent),
-            ),
+            Expanded(child: RoomConnectionAwareMediaArea(child: mediaContent)),
             ..._buildMainContentSidePanels(context),
           ],
         );
@@ -2506,6 +2503,42 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           ],
         );
       },
+    );
+  }
+
+  /// On desktop, shows LiveKit's window/screen picker before starting share.
+  Future<void> _onToggleScreenSharePressed(BuildContext context) async {
+    if (!_bloc.isScreenShareFeatureEnabled()) return;
+
+    if (_bloc.state.isLocalScreenSharing) {
+      _bloc.add(const ToggleScreenShare());
+      return;
+    }
+
+    final notificationTitle = context.local.screen_sharing;
+    final notificationText = context.local.sharing_your_screen;
+
+    if (lkPlatformIsDesktop()) {
+      final source = await showDialog<DesktopCapturerSource>(
+        context: context,
+        builder: (context) => ScreenSelectDialog(),
+      );
+      if (!context.mounted || source == null) return;
+      _bloc.add(
+        ToggleScreenShare(
+          screenShareSourceId: source.id,
+          notificationTitle: notificationTitle,
+          notificationText: notificationText,
+        ),
+      );
+      return;
+    }
+
+    _bloc.add(
+      ToggleScreenShare(
+        notificationTitle: notificationTitle,
+        notificationText: notificationText,
+      ),
     );
   }
 
@@ -2656,12 +2689,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               //     when there is nothing to stop).
               final isScreenShareEnabled = _bloc.isScreenShareFeatureEnabled();
               void onScreenShareTapped() {
-                _bloc.add(
-                  ToggleScreenShare(
-                    notificationTitle: context.local.screen_sharing,
-                    notificationText: context.local.sharing_your_screen,
-                  ),
-                );
+                unawaited(_onToggleScreenSharePressed(context));
               }
 
               final shareAction = isScreenShareEnabled
@@ -2732,10 +2760,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
                 /// Participants
                 ControlAction(
-                  icon: context.images.iconParticipants.svg(
-                    width: 24,
-                    height: 24,
-                  ),
+                  icon: context.images.iconParticipants.svg24(),
                   badge: '${state.room.remoteParticipants.length + 1}',
                   tooltip:
                       '${context.local.show_participants_list} (${state.room.remoteParticipants.length + 1})',
