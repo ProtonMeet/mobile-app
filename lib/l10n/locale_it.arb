@@ -97,11 +97,11 @@
   "@meeting_locked_notification": {
     "description": "Toast notification when meeting is locked by host"
   },
-  "meet_server_version_not_supported_title": "Update required",
+  "meet_server_version_not_supported_title": "Aggiornamento necessario",
   "@meet_server_version_not_supported_title": {
     "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
   },
-  "meet_server_version_not_supported_description": "Your app version can't connect to this meeting. Please update Proton Meet to continue.",
+  "meet_server_version_not_supported_description": "La versione della tua app non è in grado di connettersi a questa riunione. Aggiorna Proton Meet per continuare.",
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
@@ -187,12 +187,12 @@
   "camera_view": "Vista fotocamera",
   "is_presenting": "sta presentando",
   "stop_presenting": "Interrompi presentazione",
-  "tap_to_stop_sharing": "Tap to stop sharing",
-  "notification_permission_settings_title": "Enable notification access",
+  "tap_to_stop_sharing": "Tocca per interrompere la condivisione",
+  "notification_permission_settings_title": "Abilita accesso alle notifiche",
   "@notification_permission_settings_title": {
     "description": "Title when notification permission was denied and screen sharing requires it"
   },
-  "notification_permission_settings_message": "Screen sharing requires notification permission so the meeting can stay active in the background.\n\nYou previously denied access. To share your screen, please enable Notifications in your system settings:\n• Open Settings\n• Find this app\n• Allow Notifications",
+  "notification_permission_settings_message": "La condivisione dello schermo richiede l'autorizzazione alle notifiche affinché la riunione rimanga attiva in background.\n\nIn precedenza hai negato l'accesso. Per condividere lo schermo, abilita le notifiche nelle impostazioni di sistema:\n• Apri Impostazioni\n• Trova questa app\n• Abilita notifiche",
   "@notification_permission_settings_message": {
     "description": "Body for notification permission inform sheet shown before screen sharing"
   },
