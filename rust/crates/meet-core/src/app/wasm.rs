@@ -1,6 +1,8 @@
 use super::{App, DecryptedMessageInfo};
 
-use crate::chat::{ChatComposeRequest, ChatComposeResult, ChatIncomingEventInfo, MessageId, ReplyTarget};
+use crate::chat::{
+    ChatComposeRequest, ChatComposeResult, ChatIncomingEventInfo, MessageId, ReplyTarget,
+};
 use crate::domain::user::models::{
     access_token::AccessToken, meeting_link_name::MeetingLinkName,
     meeting_password::MeetingPassword,

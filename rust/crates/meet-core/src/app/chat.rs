@@ -108,8 +108,7 @@ impl App {
         match media_type.media_type.as_str() {
             MIMI_CONTENT_MEDIA => {
                 let mimi = chat::parse_mimi_content(&content)?;
-                let id =
-                    chat::compute_message_id_from_content(&mimi, &sender_mimi_uri, &meeting)?;
+                let id = chat::compute_message_id_from_content(&mimi, &sender_mimi_uri, &meeting)?;
                 chat::decode_mimi_content(&mimi, id, sender, received_at).map_err(Into::into)
             }
             LEGACY_MEET_MEDIA | "text/plain" => {

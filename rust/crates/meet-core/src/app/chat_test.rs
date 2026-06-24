@@ -1,8 +1,6 @@
 use mls_rs_codec::MlsEncode;
 use mls_types::MediaType;
-use proton_meet_chat::{
-    ChatComposeRequest, ChatIncomingEvent, ChatProtocol, LEGACY_MEET_MEDIA,
-};
+use proton_meet_chat::{ChatComposeRequest, ChatIncomingEvent, ChatProtocol, LEGACY_MEET_MEDIA};
 
 use crate::app::test_support::{
     build_app, build_app_with_mls_service, default_app_state, state_with_participant_only,
@@ -76,10 +74,7 @@ async fn compose_chat_mimi_roundtrip_between_two_apps() {
         ChatIncomingEvent::Message { .. }
     ));
 
-    let event = app2
-        .decode_chat(packet.payload)
-        .await
-        .expect("decode chat");
+    let event = app2.decode_chat(packet.payload).await.expect("decode chat");
     match event {
         ChatIncomingEvent::Message { text, protocol, .. } => {
             assert_eq!(text, "hello from app");

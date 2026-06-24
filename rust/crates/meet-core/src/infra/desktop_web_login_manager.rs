@@ -9,7 +9,9 @@ use tokio::sync::Mutex;
 
 use crate::errors::core::MeetCoreError;
 use crate::infra::auth_store::AuthStore;
-use crate::infra::desktop_web_login::{self, DesktopWebLoginPoll, DesktopWebLoginStart, PendingState};
+use crate::infra::desktop_web_login::{
+    self, DesktopWebLoginPoll, DesktopWebLoginStart, PendingState,
+};
 use crate::infra::http_client::{ApiConfig, ProtonHttpClient};
 
 /// Standalone manager for one desktop web login attempt.
@@ -31,9 +33,11 @@ impl DesktopWebLoginManager {
         main_http: ProtonHttpClient,
         session_auth: Arc<Mutex<Auth>>,
     ) -> Result<Self, MeetCoreError> {
-        let env_id: EnvId = env.parse().map_err(|_| MeetCoreError::AuthenticationFailed {
-            message: format!("Invalid environment for desktop web login: {env}"),
-        })?;
+        let env_id: EnvId = env
+            .parse()
+            .map_err(|_| MeetCoreError::AuthenticationFailed {
+                message: format!("Invalid environment for desktop web login: {env}"),
+            })?;
         let config = ApiConfig {
             spec: (app_version, user_agent),
             auth: None,
@@ -59,8 +63,7 @@ impl DesktopWebLoginManager {
         &mut self,
         child_client_id: String,
     ) -> Result<DesktopWebLoginStart, MeetCoreError> {
-        let (start, pending) =
-            desktop_web_login::start(&self.login_http, child_client_id).await?;
+        let (start, pending) = desktop_web_login::start(&self.login_http, child_client_id).await?;
         self.pending = Some(pending);
         Ok(start)
     }
@@ -103,11 +106,12 @@ pub async fn promote_auth_to_main_session(
         env,
         auth: session_auth.clone(),
     };
-    let client = main_http
-        .build_client(store)
-        .map_err(|e| MeetCoreError::AuthenticationFailed {
-            message: format!("Failed to apply desktop login session: {e}"),
-        })?;
+    let client =
+        main_http
+            .build_client(store)
+            .map_err(|e| MeetCoreError::AuthenticationFailed {
+                message: format!("Failed to apply desktop login session: {e}"),
+            })?;
     main_http.replace_session(client);
     Ok(())
 }

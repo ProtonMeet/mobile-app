@@ -127,11 +127,11 @@ pub async fn start(
     http_client: &ProtonHttpClient,
     child_client_id: String,
 ) -> Result<(DesktopWebLoginStart, PendingState), MeetCoreError> {
-    let (login_client, login_auth) = http_client
-        .new_isolated_login_client()
-        .map_err(|e| MeetCoreError::AuthenticationFailed {
+    let (login_client, login_auth) = http_client.new_isolated_login_client().map_err(|e| {
+        MeetCoreError::AuthenticationFailed {
             message: format!("Failed to create desktop login session: {e}"),
-        })?;
+        }
+    })?;
 
     let env = login_client.env().clone();
     let WithCodeFlow::Poll(poll_flow) = login_client.auth().from_fork().with_code().await else {
