@@ -2218,7 +2218,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                 final isRoomInitialized = data.$1;
                 final isTrackInitialized = data.$2;
                 final isRoomReady = isRoomInitialized && isTrackInitialized;
-                if (isRoomReady) {
+                if (isRoomReady && !desktop) {
                   _bloc.add(StartAutoFullScreenTimer());
                 }
                 return Scaffold(
@@ -2556,8 +2556,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       builder: (context, data) {
         final isScreenSharing = data.$1;
         final isFullScreen = data.$2;
-        // Always render the widget, but slide it up when full screen and controls bar are hidden
-        final shouldHide = isFullScreen;
+        // Slide header away in fullscreen on mobile only.
+        final shouldHide = !desktop && isFullScreen;
         const headerHeight = 60.0;
 
         return AnimatedContainer(
@@ -2595,7 +2595,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     return BlocSelector<RoomBloc, RoomState, bool>(
       selector: (state) => state.isFullScreen,
       builder: (context, isFullScreen) {
-        final shouldHide = isFullScreen;
+        final shouldHide = !desktop && isFullScreen;
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),
