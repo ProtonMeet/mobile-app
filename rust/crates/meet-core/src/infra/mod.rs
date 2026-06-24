@@ -1,6 +1,10 @@
 pub mod adapters;
 pub mod auth_store;
 pub mod crypto_client;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod desktop_web_login;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod desktop_web_login_manager;
 pub mod dto;
 pub mod event_api;
 pub mod http_client;

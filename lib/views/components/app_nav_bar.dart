@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/helper/desktop_content_fit.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/views/components/search_button.dart';
@@ -79,7 +80,10 @@ class AppNavBar extends StatelessWidget {
         ? baseColor.withValues(alpha: 0.4)
         : baseColor;
     final showTitle = title != null && title!.isNotEmpty;
-    final topPadding = MediaQuery.of(context).padding.top;
+    final topPadding =
+        MediaQuery.of(context).padding.top +
+        DesktopContentFit.extraTopPadding(context);
+    final windowChromeInsets = DesktopContentFit.minimumSafeArea(context);
     final totalHeight = kToolbarHeight + topPadding;
 
     return SliverPersistentHeader(
@@ -88,6 +92,7 @@ class AppNavBar extends StatelessWidget {
         height: totalHeight,
         toolbarHeight: kToolbarHeight,
         topPadding: topPadding,
+        windowContentInsets: windowChromeInsets,
         blurSigma: blurSigma,
         overlayColor: overlayColor,
         dividerOpacity: dividerOpacity,
@@ -119,6 +124,7 @@ class _FixedNavBarDelegate extends SliverPersistentHeaderDelegate {
     required this.height,
     required this.toolbarHeight,
     required this.topPadding,
+    required this.windowContentInsets,
     required this.blurSigma,
     required this.overlayColor,
     required this.dividerOpacity,
@@ -145,6 +151,7 @@ class _FixedNavBarDelegate extends SliverPersistentHeaderDelegate {
   final double height;
   final double toolbarHeight;
   final double topPadding;
+  final EdgeInsets windowContentInsets;
   final double blurSigma;
   final Color overlayColor;
   final double? dividerOpacity;
@@ -189,6 +196,7 @@ class _FixedNavBarDelegate extends SliverPersistentHeaderDelegate {
               Positioned.fill(child: Container(color: overlayColor)),
               SafeArea(
                 bottom: false,
+                minimum: windowContentInsets,
                 child: Container(
                   height: toolbarHeight,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -242,6 +250,7 @@ class _FixedNavBarDelegate extends SliverPersistentHeaderDelegate {
     return height != oldDelegate.height ||
         toolbarHeight != oldDelegate.toolbarHeight ||
         topPadding != oldDelegate.topPadding ||
+        windowContentInsets != oldDelegate.windowContentInsets ||
         blurSigma != oldDelegate.blurSigma ||
         overlayColor != oldDelegate.overlayColor ||
         dividerOpacity != oldDelegate.dividerOpacity ||

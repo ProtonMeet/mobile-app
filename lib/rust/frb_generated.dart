@@ -14,10 +14,12 @@ import 'logger.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'panic_hook.dart';
 import 'proton_meet/core.dart';
+import 'proton_meet/desktop_web_login.dart';
 import 'proton_meet/meet_auth_store.dart';
 import 'proton_meet/meet_link.dart';
 import 'proton_meet/models/app_event.dart';
 import 'proton_meet/models/connection_state.dart';
+import 'proton_meet/models/desktop_web_login.dart';
 import 'proton_meet/models/event.dart';
 import 'proton_meet/models/join_type.dart';
 import 'proton_meet/models/meet_chat_message.dart';
@@ -98,7 +100,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => 1986912733;
+  int get rustContentHash => -1316254534;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -501,6 +503,28 @@ abstract class RustLibApi extends BaseApi {
     required bool showSelfTile,
   });
 
+  Future<void> crateProtonMeetDesktopWebLoginDesktopWebLoginCancel({
+    required DesktopWebLogin that,
+  });
+
+  Future<DesktopWebLogin> crateProtonMeetDesktopWebLoginDesktopWebLoginNew({
+    required String env,
+    required String appVersion,
+    required String userAgent,
+    required String httpHost,
+    required AppCore app,
+  });
+
+  Future<ProtonUserSession?> crateProtonMeetDesktopWebLoginDesktopWebLoginPoll({
+    required DesktopWebLogin that,
+  });
+
+  Future<DesktopWebLoginStart>
+  crateProtonMeetDesktopWebLoginDesktopWebLoginStart({
+    required DesktopWebLogin that,
+    required String childClientId,
+  });
+
   Future<void>
   crateProtonMeetStorageUserKeyProviderFrbUserKeyProviderClearAuthDartCallback({
     required FrbUserKeyProvider that,
@@ -650,6 +674,15 @@ abstract class RustLibApi extends BaseApi {
   RustArcDecrementStrongCountFnType get rust_arc_decrement_strong_count_AppCore;
 
   CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_AppCorePtr;
+
+  RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_DesktopWebLogin;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_DesktopWebLogin;
+
+  CrossPlatformFinalizerArg
+  get rust_arc_decrement_strong_count_DesktopWebLoginPtr;
 
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_FrbUserKeyProvider;
@@ -3693,6 +3726,167 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<void> crateProtonMeetDesktopWebLoginDesktopWebLoginCancel({
+    required DesktopWebLogin that,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+            that,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 74,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kCrateProtonMeetDesktopWebLoginDesktopWebLoginCancelConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetDesktopWebLoginDesktopWebLoginCancelConstMeta =>
+      const TaskConstMeta(
+        debugName: "DesktopWebLogin_cancel",
+        argNames: ["that"],
+      );
+
+  @override
+  Future<DesktopWebLogin> crateProtonMeetDesktopWebLoginDesktopWebLoginNew({
+    required String env,
+    required String appVersion,
+    required String userAgent,
+    required String httpHost,
+    required AppCore app,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(env, serializer);
+          sse_encode_String(appVersion, serializer);
+          sse_encode_String(userAgent, serializer);
+          sse_encode_String(httpHost, serializer);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            app,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 75,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData:
+              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta: kCrateProtonMeetDesktopWebLoginDesktopWebLoginNewConstMeta,
+        argValues: [env, appVersion, userAgent, httpHost, app],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetDesktopWebLoginDesktopWebLoginNewConstMeta =>
+      const TaskConstMeta(
+        debugName: "DesktopWebLogin_new",
+        argNames: ["env", "appVersion", "userAgent", "httpHost", "app"],
+      );
+
+  @override
+  Future<ProtonUserSession?> crateProtonMeetDesktopWebLoginDesktopWebLoginPoll({
+    required DesktopWebLogin that,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+            that,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 76,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_box_autoadd_proton_user_session,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta: kCrateProtonMeetDesktopWebLoginDesktopWebLoginPollConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetDesktopWebLoginDesktopWebLoginPollConstMeta =>
+      const TaskConstMeta(
+        debugName: "DesktopWebLogin_poll",
+        argNames: ["that"],
+      );
+
+  @override
+  Future<DesktopWebLoginStart>
+  crateProtonMeetDesktopWebLoginDesktopWebLoginStart({
+    required DesktopWebLogin that,
+    required String childClientId,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+            that,
+            serializer,
+          );
+          sse_encode_String(childClientId, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 77,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_desktop_web_login_start,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta: kCrateProtonMeetDesktopWebLoginDesktopWebLoginStartConstMeta,
+        argValues: [that, childClientId],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetDesktopWebLoginDesktopWebLoginStartConstMeta =>
+      const TaskConstMeta(
+        debugName: "DesktopWebLogin_start",
+        argNames: ["that", "childClientId"],
+      );
+
+  @override
   Future<void>
   crateProtonMeetStorageUserKeyProviderFrbUserKeyProviderClearAuthDartCallback({
     required FrbUserKeyProvider that,
@@ -3708,7 +3902,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 74,
+            funcId: 78,
             port: port_,
           );
         },
@@ -3738,7 +3932,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 75)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 79)!;
         },
         codec: SseCodec(
           decodeSuccessData:
@@ -3778,7 +3972,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 76,
+            funcId: 80,
             port: port_,
           );
         },
@@ -3817,7 +4011,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 77,
+            funcId: 81,
             port: port_,
           );
         },
@@ -3860,7 +4054,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(access, serializer);
           sse_encode_String(refresh, serializer);
           sse_encode_list_String(scopes, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 78)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 82)!;
         },
         codec: SseCodec(
           decodeSuccessData:
@@ -3891,7 +4085,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(env, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 79)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 83)!;
         },
         codec: SseCodec(
           decodeSuccessData:
@@ -3937,7 +4131,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 80,
+            funcId: 84,
             port: port_,
           );
         },
@@ -3981,7 +4175,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 81,
+            funcId: 85,
             port: port_,
           );
         },
@@ -4018,7 +4212,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 82,
+            funcId: 86,
             port: port_,
           );
         },
@@ -4047,7 +4241,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 83)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 87)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -4080,7 +4274,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(identity, serializer);
           sse_encode_String(name, serializer);
           sse_encode_String(room, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 84)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 88)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -4108,7 +4302,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 85,
+            funcId: 89,
             port: port_,
           );
         },
@@ -4133,7 +4327,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 86)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 90)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_frb_upcoming_meeting,
@@ -4166,7 +4360,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(meetingLinkName, serializer);
           sse_encode_String(meetingPassword, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 87)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 91)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_frb_upcoming_meeting,
@@ -4194,7 +4388,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 88)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 92)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_opt_box_autoadd_u_8,
@@ -4217,7 +4411,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 89)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 93)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -4240,7 +4434,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 90)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 94)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -4263,7 +4457,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 91)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 95)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -4286,7 +4480,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 92)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 96)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -4309,7 +4503,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 93)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 97)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -4332,7 +4526,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 94)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 98)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -4357,7 +4551,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 95)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 99)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -4382,7 +4576,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 96)!;
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 100,
+          )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -4407,7 +4605,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 97)!;
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 101,
+          )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -4437,7 +4639,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 98)!;
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 102,
+          )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -4467,7 +4673,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 99,
+            funcId: 103,
             port: port_,
           );
         },
@@ -4501,7 +4707,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 100,
+            funcId: 104,
           )!;
         },
         codec: SseCodec(
@@ -4531,7 +4737,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 101,
+            funcId: 105,
           )!;
         },
         codec: SseCodec(
@@ -4562,7 +4768,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 102,
+            funcId: 106,
           )!;
         },
         codec: SseCodec(
@@ -4589,7 +4795,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 103,
+            funcId: 107,
           )!;
         },
         codec: SseCodec(
@@ -4616,7 +4822,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 104,
+            funcId: 108,
           )!;
         },
         codec: SseCodec(
@@ -4643,7 +4849,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 105,
+            funcId: 109,
           )!;
         },
         codec: SseCodec(
@@ -4670,7 +4876,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 106,
+            funcId: 110,
           )!;
         },
         codec: SseCodec(
@@ -4697,7 +4903,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 107,
+            funcId: 111,
           )!;
         },
         codec: SseCodec(
@@ -4724,7 +4930,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 108,
+            funcId: 112,
           )!;
         },
         codec: SseCodec(
@@ -4751,7 +4957,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 109,
+            funcId: 113,
           )!;
         },
         codec: SseCodec(
@@ -4780,7 +4986,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 110,
+            funcId: 114,
             port: port_,
           );
         },
@@ -4810,7 +5016,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 111,
+            funcId: 115,
             port: port_,
           );
         },
@@ -4841,7 +5047,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 112,
+            funcId: 116,
             port: port_,
           );
         },
@@ -4871,7 +5077,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 113,
+            funcId: 117,
             port: port_,
           );
         },
@@ -4904,7 +5110,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 114,
+            funcId: 118,
             port: port_,
           );
         },
@@ -5148,6 +5354,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore;
 
   RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_DesktopWebLogin => wire
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_DesktopWebLogin => wire
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin;
+
+  RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_FrbUserKeyProvider => wire
       .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerFrbUserKeyProvider;
 
@@ -5195,6 +5409,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  DesktopWebLogin
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return DesktopWebLoginImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
   FrbUserKeyProvider
   dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerFrbUserKeyProvider(
     dynamic raw,
@@ -5237,6 +5460,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return AppCoreImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  DesktopWebLogin
+  dco_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return DesktopWebLoginImpl.frbInternalDcoDecode(raw as List<dynamic>);
   }
 
   @protected
@@ -5355,6 +5587,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return AppCoreImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  DesktopWebLogin
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return DesktopWebLoginImpl.frbInternalDcoDecode(raw as List<dynamic>);
   }
 
   @protected
@@ -5484,6 +5725,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ProtonUser dco_decode_box_autoadd_proton_user(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_proton_user(raw);
+  }
+
+  @protected
+  ProtonUserSession dco_decode_box_autoadd_proton_user_session(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_proton_user_session(raw);
   }
 
   @protected
@@ -5624,6 +5871,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ConnectionState dco_decode_connection_state(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return ConnectionState.values[raw as int];
+  }
+
+  @protected
+  DesktopWebLoginStart dco_decode_desktop_web_login_start(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1)
+      throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return DesktopWebLoginStart(loginUrl: dco_decode_String(arr[0]));
   }
 
   @protected
@@ -5924,6 +6180,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   MeetLink? dco_decode_opt_box_autoadd_meet_link(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_meet_link(raw);
+  }
+
+  @protected
+  ProtonUserSession? dco_decode_opt_box_autoadd_proton_user_session(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_proton_user_session(raw);
   }
 
   @protected
@@ -6236,6 +6500,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  DesktopWebLogin
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return DesktopWebLoginImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
   FrbUserKeyProvider
   sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerFrbUserKeyProvider(
     SseDeserializer deserializer,
@@ -6290,6 +6566,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return AppCoreImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  DesktopWebLogin
+  sse_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return DesktopWebLoginImpl.frbInternalSseDecode(
       sse_decode_usize(deserializer),
       sse_decode_i_32(deserializer),
     );
@@ -6378,6 +6666,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return AppCoreImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  DesktopWebLogin
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return DesktopWebLoginImpl.frbInternalSseDecode(
       sse_decode_usize(deserializer),
       sse_decode_i_32(deserializer),
     );
@@ -6535,6 +6835,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ProtonUser sse_decode_box_autoadd_proton_user(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_proton_user(deserializer));
+  }
+
+  @protected
+  ProtonUserSession sse_decode_box_autoadd_proton_user_session(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_proton_user_session(deserializer));
   }
 
   @protected
@@ -6703,6 +7011,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_i_32(deserializer);
     return ConnectionState.values[inner];
+  }
+
+  @protected
+  DesktopWebLoginStart sse_decode_desktop_web_login_start(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_loginUrl = sse_decode_String(deserializer);
+    return DesktopWebLoginStart(loginUrl: var_loginUrl);
   }
 
   @protected
@@ -7119,6 +7436,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ProtonUserSession? sse_decode_opt_box_autoadd_proton_user_session(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_proton_user_session(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   RecurrenceFrequency? sse_decode_opt_box_autoadd_recurrence_frequency(
     SseDeserializer deserializer,
   ) {
@@ -7523,6 +7853,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+    DesktopWebLogin self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as DesktopWebLoginImpl).frbInternalSseEncode(move: true),
+      serializer,
+    );
+  }
+
+  @protected
+  void
   sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerFrbUserKeyProvider(
     FrbUserKeyProvider self,
     SseSerializer serializer,
@@ -7582,6 +7925,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(
       (self as AppCoreImpl).frbInternalSseEncode(move: false),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+    DesktopWebLogin self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as DesktopWebLoginImpl).frbInternalSseEncode(move: false),
       serializer,
     );
   }
@@ -7771,6 +8127,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+    DesktopWebLogin self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as DesktopWebLoginImpl).frbInternalSseEncode(move: null),
+      serializer,
+    );
+  }
+
+  @protected
+  void
   sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerFrbUserKeyProvider(
     FrbUserKeyProvider self,
     SseSerializer serializer,
@@ -7950,6 +8319,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_proton_user_session(
+    ProtonUserSession self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_proton_user_session(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_recurrence_frequency(
     RecurrenceFrequency self,
     SseSerializer serializer,
@@ -8119,6 +8497,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_desktop_web_login_start(
+    DesktopWebLoginStart self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.loginUrl, serializer);
   }
 
   @protected
@@ -8470,6 +8857,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_meet_link(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_proton_user_session(
+    ProtonUserSession? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_proton_user_session(self, serializer);
     }
   }
 
@@ -9316,6 +9716,39 @@ class AppCoreImpl extends RustOpaque implements AppCore {
       RustLib.instance.api.crateProtonMeetCoreAppCoreUpdateShowSelfTile(
         that: this,
         showSelfTile: showSelfTile,
+      );
+}
+
+@sealed
+class DesktopWebLoginImpl extends RustOpaque implements DesktopWebLogin {
+  // Not to be used by end users
+  DesktopWebLoginImpl.frbInternalDcoDecode(List<dynamic> wire)
+    : super.frbInternalDcoDecode(wire, _kStaticData);
+
+  // Not to be used by end users
+  DesktopWebLoginImpl.frbInternalSseDecode(BigInt ptr, int externalSizeOnNative)
+    : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
+
+  static final _kStaticData = RustArcStaticData(
+    rustArcIncrementStrongCount:
+        RustLib.instance.api.rust_arc_increment_strong_count_DesktopWebLogin,
+    rustArcDecrementStrongCount:
+        RustLib.instance.api.rust_arc_decrement_strong_count_DesktopWebLogin,
+    rustArcDecrementStrongCountPtr:
+        RustLib.instance.api.rust_arc_decrement_strong_count_DesktopWebLoginPtr,
+  );
+
+  Future<void> cancel() => RustLib.instance.api
+      .crateProtonMeetDesktopWebLoginDesktopWebLoginCancel(that: this);
+
+  /// Returns `None` while waiting; `Some(session)` when the user has signed in.
+  Future<ProtonUserSession?> poll() => RustLib.instance.api
+      .crateProtonMeetDesktopWebLoginDesktopWebLoginPoll(that: this);
+
+  Future<DesktopWebLoginStart> start({required String childClientId}) =>
+      RustLib.instance.api.crateProtonMeetDesktopWebLoginDesktopWebLoginStart(
+        that: this,
+        childClientId: childClientId,
       );
 }
 

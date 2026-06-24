@@ -1,5 +1,6 @@
 pub mod app_event;
 pub mod connection_state;
+pub mod desktop_web_login;
 pub mod event;
 pub mod join_type;
 pub mod meet_chat_message;

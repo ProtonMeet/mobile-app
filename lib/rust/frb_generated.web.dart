@@ -15,10 +15,12 @@ import 'logger.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_web.dart';
 import 'panic_hook.dart';
 import 'proton_meet/core.dart';
+import 'proton_meet/desktop_web_login.dart';
 import 'proton_meet/meet_auth_store.dart';
 import 'proton_meet/meet_link.dart';
 import 'proton_meet/models/app_event.dart';
 import 'proton_meet/models/connection_state.dart';
+import 'proton_meet/models/desktop_web_login.dart';
 import 'proton_meet/models/event.dart';
 import 'proton_meet/models/join_type.dart';
 import 'proton_meet/models/meet_chat_message.dart';
@@ -57,6 +59,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore;
 
   CrossPlatformFinalizerArg
+  get rust_arc_decrement_strong_count_DesktopWebLoginPtr => wire
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin;
+
+  CrossPlatformFinalizerArg
   get rust_arc_decrement_strong_count_FrbUserKeyProviderPtr => wire
       .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerFrbUserKeyProvider;
 
@@ -78,6 +84,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   AppCore
   dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+    dynamic raw,
+  );
+
+  @protected
+  DesktopWebLogin
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
     dynamic raw,
   );
 
@@ -108,6 +120,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   AppCore
   dco_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+    dynamic raw,
+  );
+
+  @protected
+  DesktopWebLogin
+  dco_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
     dynamic raw,
   );
 
@@ -186,6 +204,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  DesktopWebLogin
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+    dynamic raw,
+  );
+
+  @protected
   FrbUserKeyProvider
   dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerFrbUserKeyProvider(
     dynamic raw,
@@ -243,6 +267,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ProtonUser dco_decode_box_autoadd_proton_user(dynamic raw);
 
   @protected
+  ProtonUserSession dco_decode_box_autoadd_proton_user_session(dynamic raw);
+
+  @protected
   RecurrenceFrequency dco_decode_box_autoadd_recurrence_frequency(dynamic raw);
 
   @protected
@@ -282,6 +309,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ConnectionState dco_decode_connection_state(dynamic raw);
+
+  @protected
+  DesktopWebLoginStart dco_decode_desktop_web_login_start(dynamic raw);
 
   @protected
   EventAction dco_decode_event_action(dynamic raw);
@@ -385,6 +415,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   MeetLink? dco_decode_opt_box_autoadd_meet_link(dynamic raw);
 
   @protected
+  ProtonUserSession? dco_decode_opt_box_autoadd_proton_user_session(
+    dynamic raw,
+  );
+
+  @protected
   RecurrenceFrequency? dco_decode_opt_box_autoadd_recurrence_frequency(
     dynamic raw,
   );
@@ -486,6 +521,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  DesktopWebLogin
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   FrbUserKeyProvider
   sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerFrbUserKeyProvider(
     SseDeserializer deserializer,
@@ -512,6 +553,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   AppCore
   sse_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  DesktopWebLogin
+  sse_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
     SseDeserializer deserializer,
   );
 
@@ -556,6 +603,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   AppCore
   sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  DesktopWebLogin
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
     SseDeserializer deserializer,
   );
 
@@ -623,6 +676,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ProtonUser sse_decode_box_autoadd_proton_user(SseDeserializer deserializer);
 
   @protected
+  ProtonUserSession sse_decode_box_autoadd_proton_user_session(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   RecurrenceFrequency sse_decode_box_autoadd_recurrence_frequency(
     SseDeserializer deserializer,
   );
@@ -668,6 +726,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ConnectionState sse_decode_connection_state(SseDeserializer deserializer);
+
+  @protected
+  DesktopWebLoginStart sse_decode_desktop_web_login_start(
+    SseDeserializer deserializer,
+  );
 
   @protected
   EventAction sse_decode_event_action(SseDeserializer deserializer);
@@ -787,6 +850,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MeetLink? sse_decode_opt_box_autoadd_meet_link(SseDeserializer deserializer);
+
+  @protected
+  ProtonUserSession? sse_decode_opt_box_autoadd_proton_user_session(
+    SseDeserializer deserializer,
+  );
 
   @protected
   RecurrenceFrequency? sse_decode_opt_box_autoadd_recurrence_frequency(
@@ -911,6 +979,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+    DesktopWebLogin self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
   sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerFrbUserKeyProvider(
     FrbUserKeyProvider self,
     SseSerializer serializer,
@@ -941,6 +1016,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void
   sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
     AppCore self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+    DesktopWebLogin self,
     SseSerializer serializer,
   );
 
@@ -1035,6 +1117,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+    DesktopWebLogin self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
   sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerFrbUserKeyProvider(
     FrbUserKeyProvider self,
     SseSerializer serializer,
@@ -1113,6 +1202,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_proton_user_session(
+    ProtonUserSession self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_recurrence_frequency(
     RecurrenceFrequency self,
     SseSerializer serializer,
@@ -1172,6 +1267,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_connection_state(
     ConnectionState self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_desktop_web_login_start(
+    DesktopWebLoginStart self,
     SseSerializer serializer,
   );
 
@@ -1325,6 +1426,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_opt_box_autoadd_meet_link(
     MeetLink? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_proton_user_session(
+    ProtonUserSession? self,
     SseSerializer serializer,
   );
 
@@ -1483,6 +1590,22 @@ class RustLibWire implements BaseWire {
       );
 
   void
+  rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+    int ptr,
+  ) => wasmModule
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+        ptr,
+      );
+
+  void
+  rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+    int ptr,
+  ) => wasmModule
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+        ptr,
+      );
+
+  void
   rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerFrbUserKeyProvider(
     int ptr,
   ) => wasmModule
@@ -1560,6 +1683,16 @@ extension type RustLibWasmModule._(JSObject _) implements JSObject {
 
   external void
   rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+    int ptr,
+  );
+
+  external void
+  rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+    int ptr,
+  );
+
+  external void
+  rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
     int ptr,
   );
 
