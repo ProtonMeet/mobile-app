@@ -3396,7 +3396,7 @@ mod tests {
     }
 
     /// Helper function to create a mock HTTP client with common MLS expectations
-    fn create_mock_http_client_for_mls(
+    pub fn create_mock_http_client_for_mls(
         email: &str,
         meeting_link_name: &str,
         is_host: bool,
@@ -6145,3 +6145,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         }
     }
 }
+
+#[cfg(test)]
+pub use tests::create_mock_http_client_for_mls;

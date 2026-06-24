@@ -8,6 +8,7 @@ use proton_meet_macro::async_trait;
 
 use crate::domain::user::models::Address;
 use crate::domain::user::ports::user_api::UserApi;
+use crate::domain::user::ports::HttpClient;
 use crate::errors::http_client::HttpClientError;
 use crate::errors::login::LoginError;
 use crate::infra::dto::addresses::ApiAddressesResponse;

@@ -271,6 +271,10 @@ impl ProtonHttpClient {
 
 #[async_trait]
 impl HttpClient for ProtonHttpClient {
+    fn get_session(&self) -> muon::Client {
+        ProtonHttpClient::get_session(self)
+    }
+
     async fn get_group_info(
         &self,
         base64_sd_kbt: &str,

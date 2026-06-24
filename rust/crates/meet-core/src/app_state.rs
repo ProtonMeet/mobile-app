@@ -139,3 +139,69 @@ mod preferred_user_key_tests {
         assert_eq!(preferred_user_key_for_crypto(&keys).unwrap().id, "only");
     }
 }
+
+#[cfg(test)]
+mod user_state_tests {
+    use super::*;
+
+    fn sample_user(id: &str) -> ProtonUser {
+        ProtonUser {
+            id: id.to_string(),
+            name: "Test User".to_string(),
+            email: "test@example.com".to_string(),
+            ..Default::default()
+        }
+    }
+
+    fn sample_key(id: &str) -> ProtonUserKey {
+        ProtonUserKey {
+            id: id.to_string(),
+            version: 0,
+            private_key: String::new(),
+            recovery_secret: None,
+            recovery_secret_signature: None,
+            token: None,
+            fingerprint: String::new(),
+            signature: None,
+            primary: 1,
+            active: 1,
+        }
+    }
+
+    fn sample_address(id: &str) -> Address {
+        Address {
+            id: id.to_string(),
+            email: "test@example.com".to_string(),
+            keys: vec![],
+        }
+    }
+
+    #[test]
+    fn new_stores_fields() {
+        let user = sample_user("user-1");
+        let keys = vec![sample_key("key-1")];
+        let addresses = vec![sample_address("addr-1")];
+
+        let state = UserState::new(user.clone(), keys.clone(), addresses.clone());
+
+        assert_eq!(state.user_data().id, user.id);
+        assert_eq!(state.user_keys().len(), 1);
+        assert_eq!(state.user_keys()[0].id, "key-1");
+        assert_eq!(state.user_addresses().len(), 1);
+        assert_eq!(state.user_addresses()[0].id, "addr-1");
+    }
+
+    #[test]
+    fn clone_produces_equal_state() {
+        let state = UserState::new(
+            sample_user("user-1"),
+            vec![sample_key("key-1")],
+            vec![sample_address("addr-1")],
+        );
+        let cloned = state.clone();
+
+        assert_eq!(cloned.user_data().id, state.user_data().id);
+        assert_eq!(cloned.user_keys().len(), state.user_keys().len());
+        assert_eq!(cloned.user_addresses().len(), state.user_addresses().len());
+    }
+}

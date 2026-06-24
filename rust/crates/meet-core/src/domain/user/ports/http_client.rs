@@ -16,6 +16,8 @@ use proton_meet_macro::async_trait_with_mock;
 
 #[async_trait_with_mock]
 pub trait HttpClient: Send + Sync {
+    fn get_session(&self) -> muon::Client;
+
     async fn get_group_info(
         &self,
         base64_sd_kbt: &str,

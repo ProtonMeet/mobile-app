@@ -169,5 +169,8 @@ test_proton_meet_rust_db.*
 
 backup_files/
 
+# Local tooling (e.g. chromedriver for wasm-pack tests)
+.local/
+
 
 .cursor/

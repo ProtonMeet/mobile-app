@@ -1486,11 +1486,9 @@ impl UserService for Service {
             .store()
             .await?;
 
-        let mut proposals = Vec::new();
-
-        proposals.push(ProposalArg::PskExternal {
+        let proposals = vec![ProposalArg::PskExternal {
             id: ExternalPskId(meeting_link_name.as_bytes().to_vec()),
-        });
+        }];
 
         let (bundle, ..) = group.new_commit(proposals).await?;
         group.merge_pending_commit().await?;
@@ -4634,4 +4632,7 @@ impl std::fmt::Debug for Service {
 #[cfg(not(target_family = "wasm"))]
 #[cfg(test)]
 #[path = "service_test.rs"]
-mod service_test;
+pub(crate) mod service_test;
+
+#[cfg(all(test, not(target_family = "wasm")))]
+pub(crate) use service_test::create_mock_http_client_for_mls;
