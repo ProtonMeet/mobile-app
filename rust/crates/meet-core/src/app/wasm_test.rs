@@ -52,5 +52,8 @@ async fn login_test_for_error_handling() {
     .unwrap();
 
     let result = app.test_wasm().await;
-    assert!(result.is_err(), "TestFunctions::test_wasm should return InvalidUrl error");
+    assert!(
+        result.is_err(),
+        "TestFunctions::test_wasm should return InvalidUrl error"
+    );
 }
