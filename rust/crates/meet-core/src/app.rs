@@ -232,6 +232,10 @@ impl App {
         })
     }
 
+    pub fn http_client(&self) -> ProtonHttpClient {
+        self.http_client.clone()
+    }
+
     pub async fn from_config(
         config: ApiConfig,
         db_path: String,
@@ -250,12 +254,12 @@ impl App {
         let original_auth = auth.clone();
         let mut auth_store = if config.proxy.is_none() {
             Box::new(AuthStore::from_env_str(
-                env,
+                env.clone(),
                 Arc::new(tokio::sync::Mutex::new(auth)),
             ))
         } else {
             Box::new(AuthStore::from_custom_env_str(
-                env,
+                env.clone(),
                 Arc::new(tokio::sync::Mutex::new(auth)),
             ))
         };

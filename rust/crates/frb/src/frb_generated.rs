@@ -27,6 +27,7 @@
 
 use crate::logger::*;
 use crate::proton_meet::core::*;
+use crate::proton_meet::desktop_web_login::*;
 use crate::proton_meet::meet_auth_store::*;
 use crate::proton_meet::storage::user_key_provider::*;
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
@@ -41,7 +42,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.11.1";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1986912733;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1316254534;
 
 // Section: executor
 
@@ -4331,6 +4332,245 @@ fn wire__crate__proton_meet__core__AppCore_update_show_self_tile_impl(
         },
     )
 }
+fn wire__crate__proton_meet__desktop_web_login__DesktopWebLogin_cancel_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "DesktopWebLogin_cancel",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<DesktopWebLogin>,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, ()>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_that, 0, true,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => {
+                                    api_that_guard =
+                                        Some(api_that.lockable_decode_async_ref_mut().await)
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                        let mut api_that_guard = api_that_guard.unwrap();
+                        let output_ok = Result::<_, ()>::Ok({
+                            crate::proton_meet::desktop_web_login::DesktopWebLogin::cancel(
+                                &mut *api_that_guard,
+                            )
+                            .await;
+                        })?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__proton_meet__desktop_web_login__DesktopWebLogin_new_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "DesktopWebLogin_new",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_env = <String>::sse_decode(&mut deserializer);
+            let api_app_version = <String>::sse_decode(&mut deserializer);
+            let api_user_agent = <String>::sse_decode(&mut deserializer);
+            let api_http_host = <String>::sse_decode(&mut deserializer);
+            let api_app = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::errors::BridgeError>((move || {
+                    let mut api_app_guard = None;
+                    let decode_indices_ =
+                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                &api_app, 0, false,
+                            ),
+                        ]);
+                    for i in decode_indices_ {
+                        match i {
+                            0 => api_app_guard = Some(api_app.lockable_decode_sync_ref()),
+                            _ => unreachable!(),
+                        }
+                    }
+                    let api_app_guard = api_app_guard.unwrap();
+                    let output_ok = crate::proton_meet::desktop_web_login::DesktopWebLogin::new(
+                        api_env,
+                        api_app_version,
+                        api_user_agent,
+                        api_http_host,
+                        &*api_app_guard,
+                    )?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__proton_meet__desktop_web_login__DesktopWebLogin_poll_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "DesktopWebLogin_poll",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<DesktopWebLogin>,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::errors::BridgeError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_that, 0, true,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => {
+                                    api_that_guard =
+                                        Some(api_that.lockable_decode_async_ref_mut().await)
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                        let mut api_that_guard = api_that_guard.unwrap();
+                        let output_ok =
+                            crate::proton_meet::desktop_web_login::DesktopWebLogin::poll(
+                                &mut *api_that_guard,
+                            )
+                            .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__proton_meet__desktop_web_login__DesktopWebLogin_start_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "DesktopWebLogin_start",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<DesktopWebLogin>,
+            >>::sse_decode(&mut deserializer);
+            let api_child_client_id = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::errors::BridgeError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_that, 0, true,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => {
+                                    api_that_guard =
+                                        Some(api_that.lockable_decode_async_ref_mut().await)
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                        let mut api_that_guard = api_that_guard.unwrap();
+                        let output_ok =
+                            crate::proton_meet::desktop_web_login::DesktopWebLogin::start(
+                                &mut *api_that_guard,
+                                api_child_client_id,
+                            )
+                            .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
 fn wire__crate__proton_meet__storage__user_key_provider__FrbUserKeyProvider_clear_auth_dart_callback_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -6032,6 +6272,9 @@ flutter_rust_bridge::frb_generated_moi_arc_impl_value!(
     flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>
 );
 flutter_rust_bridge::frb_generated_moi_arc_impl_value!(
+    flutter_rust_bridge::for_generated::RustAutoOpaqueInner<DesktopWebLogin>
+);
+flutter_rust_bridge::frb_generated_moi_arc_impl_value!(
     flutter_rust_bridge::for_generated::RustAutoOpaqueInner<FrbUserKeyProvider>
 );
 flutter_rust_bridge::frb_generated_moi_arc_impl_value!(
@@ -6059,6 +6302,16 @@ impl SseDecode for AppCore {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut inner = <RustOpaqueMoi<
             flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
+        >>::sse_decode(deserializer);
+        return flutter_rust_bridge::for_generated::rust_auto_opaque_decode_owned(inner);
+    }
+}
+
+impl SseDecode for DesktopWebLogin {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <RustOpaqueMoi<
+            flutter_rust_bridge::for_generated::RustAutoOpaqueInner<DesktopWebLogin>,
         >>::sse_decode(deserializer);
         return flutter_rust_bridge::for_generated::rust_auto_opaque_decode_owned(inner);
     }
@@ -6121,6 +6374,16 @@ impl SseDecode for std::collections::HashMap<String, bool> {
 }
 
 impl SseDecode for RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <usize>::sse_decode(deserializer);
+        return decode_rust_opaque_moi(inner);
+    }
+}
+
+impl SseDecode
+    for RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<DesktopWebLogin>>
+{
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut inner = <usize>::sse_decode(deserializer);
@@ -6412,6 +6675,16 @@ impl SseDecode for crate::proton_meet::models::connection_state::ConnectionState
             2 => crate::proton_meet::models::connection_state::ConnectionState::Connected,
             3 => crate::proton_meet::models::connection_state::ConnectionState::Reconnecting,
             _ => unreachable!("Invalid variant for ConnectionState: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::proton_meet::models::desktop_web_login::DesktopWebLoginStart {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_loginUrl = <String>::sse_decode(deserializer);
+        return crate::proton_meet::models::desktop_web_login::DesktopWebLoginStart {
+            login_url: var_loginUrl,
         };
     }
 }
@@ -6876,6 +7149,21 @@ impl SseDecode for Option<crate::proton_meet::models::meet_link::MeetLink> {
         if (<bool>::sse_decode(deserializer)) {
             return Some(
                 <crate::proton_meet::models::meet_link::MeetLink>::sse_decode(deserializer),
+            );
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<crate::proton_meet::models::proton_user_session::ProtonUserSession> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(
+                <crate::proton_meet::models::proton_user_session::ProtonUserSession>::sse_decode(
+                    deserializer,
+                ),
             );
         } else {
             return None;
@@ -7425,19 +7713,23 @@ fn pde_ffi_dispatcher_primary_impl(
 71 => wire__crate__proton_meet__core__AppCore_update_screensharing_max_bitrate_impl(port, ptr, rust_vec_len, data_len),
 72 => wire__crate__proton_meet__core__AppCore_update_screensharing_resolution_impl(port, ptr, rust_vec_len, data_len),
 73 => wire__crate__proton_meet__core__AppCore_update_show_self_tile_impl(port, ptr, rust_vec_len, data_len),
-74 => wire__crate__proton_meet__storage__user_key_provider__FrbUserKeyProvider_clear_auth_dart_callback_impl(port, ptr, rust_vec_len, data_len),
-76 => wire__crate__proton_meet__storage__user_key_provider__FrbUserKeyProvider_set_get_passphrase_callback_impl(port, ptr, rust_vec_len, data_len),
-77 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_clear_auth_dart_callback_impl(port, ptr, rust_vec_len, data_len),
-80 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_set_auth_impl(port, ptr, rust_vec_len, data_len),
-81 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_set_auth_dart_callback_impl(port, ptr, rust_vec_len, data_len),
-82 => wire__crate__logger__RotatingFileWriter_new_impl(port, ptr, rust_vec_len, data_len),
-85 => wire__crate__flutter_logger__flutter_log_layer_default_impl(port, ptr, rust_vec_len, data_len),
-99 => wire__crate__init__init_app_impl(port, ptr, rust_vec_len, data_len),
-110 => wire__crate__proton_meet__user_config__load_config_impl(port, ptr, rust_vec_len, data_len),
-111 => wire__crate__flutter_logger__rust_level_from_string_ref_impl(port, ptr, rust_vec_len, data_len),
-112 => wire__crate__flutter_logger__rust_level_to_str_impl(port, ptr, rust_vec_len, data_len),
-113 => wire__crate__proton_meet__user_config__save_config_impl(port, ptr, rust_vec_len, data_len),
-114 => wire__crate__flutter_logger__set_flutter_log_callback_impl(port, ptr, rust_vec_len, data_len),
+74 => wire__crate__proton_meet__desktop_web_login__DesktopWebLogin_cancel_impl(port, ptr, rust_vec_len, data_len),
+75 => wire__crate__proton_meet__desktop_web_login__DesktopWebLogin_new_impl(port, ptr, rust_vec_len, data_len),
+76 => wire__crate__proton_meet__desktop_web_login__DesktopWebLogin_poll_impl(port, ptr, rust_vec_len, data_len),
+77 => wire__crate__proton_meet__desktop_web_login__DesktopWebLogin_start_impl(port, ptr, rust_vec_len, data_len),
+78 => wire__crate__proton_meet__storage__user_key_provider__FrbUserKeyProvider_clear_auth_dart_callback_impl(port, ptr, rust_vec_len, data_len),
+80 => wire__crate__proton_meet__storage__user_key_provider__FrbUserKeyProvider_set_get_passphrase_callback_impl(port, ptr, rust_vec_len, data_len),
+81 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_clear_auth_dart_callback_impl(port, ptr, rust_vec_len, data_len),
+84 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_set_auth_impl(port, ptr, rust_vec_len, data_len),
+85 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_set_auth_dart_callback_impl(port, ptr, rust_vec_len, data_len),
+86 => wire__crate__logger__RotatingFileWriter_new_impl(port, ptr, rust_vec_len, data_len),
+89 => wire__crate__flutter_logger__flutter_log_layer_default_impl(port, ptr, rust_vec_len, data_len),
+103 => wire__crate__init__init_app_impl(port, ptr, rust_vec_len, data_len),
+114 => wire__crate__proton_meet__user_config__load_config_impl(port, ptr, rust_vec_len, data_len),
+115 => wire__crate__flutter_logger__rust_level_from_string_ref_impl(port, ptr, rust_vec_len, data_len),
+116 => wire__crate__flutter_logger__rust_level_to_str_impl(port, ptr, rust_vec_len, data_len),
+117 => wire__crate__proton_meet__user_config__save_config_impl(port, ptr, rust_vec_len, data_len),
+118 => wire__crate__flutter_logger__set_flutter_log_callback_impl(port, ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
 }
@@ -7451,34 +7743,34 @@ fn pde_ffi_dispatcher_sync_impl(
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
                         59 => wire__crate__proton_meet__core__AppCore_subscribe_events_impl(ptr, rust_vec_len, data_len),
-75 => wire__crate__proton_meet__storage__user_key_provider__FrbUserKeyProvider_new_impl(ptr, rust_vec_len, data_len),
-78 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_from_session_impl(ptr, rust_vec_len, data_len),
-79 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_new_impl(ptr, rust_vec_len, data_len),
-83 => wire__crate__proton_meet__user_subscription__can_pay_impl(ptr, rust_vec_len, data_len),
-84 => wire__crate__proton_meet__token__create_token_impl(ptr, rust_vec_len, data_len),
-86 => wire__crate__proton_meet__models__upcoming_meeting__frb_upcoming_meeting_default_values_impl(ptr, rust_vec_len, data_len),
-87 => wire__crate__proton_meet__models__upcoming_meeting__frb_upcoming_meeting_new_for_join_impl(ptr, rust_vec_len, data_len),
-88 => wire__crate__proton_meet__user_subscription__get_user_byte_impl(ptr, rust_vec_len, data_len),
-89 => wire__crate__proton_meet__user_subscription__has_paid_drive_impl(ptr, rust_vec_len, data_len),
-90 => wire__crate__proton_meet__user_subscription__has_paid_lumo_impl(ptr, rust_vec_len, data_len),
-91 => wire__crate__proton_meet__user_subscription__has_paid_mail_impl(ptr, rust_vec_len, data_len),
-92 => wire__crate__proton_meet__user_subscription__has_paid_meet_impl(ptr, rust_vec_len, data_len),
-93 => wire__crate__proton_meet__user_subscription__has_paid_pass_impl(ptr, rust_vec_len, data_len),
-94 => wire__crate__proton_meet__user_subscription__has_paid_vpn_impl(ptr, rust_vec_len, data_len),
-95 => wire__crate__proton_meet__user_subscription__has_paid_wallet_impl(ptr, rust_vec_len, data_len),
-96 => wire__crate__proton_meet__user_subscription__has_pass_lifetime_impl(ptr, rust_vec_len, data_len),
-97 => wire__crate__proton_meet__user_subscription__has_pass_lifetime_or_via_simple_login_impl(ptr, rust_vec_len, data_len),
-98 => wire__crate__proton_meet__user_subscription__has_pass_via_simple_login_impl(ptr, rust_vec_len, data_len),
-100 => wire__crate__logger__init_rust_logging_impl(ptr, rust_vec_len, data_len),
-101 => wire__crate__panic_hook__initialize_panic_hook_impl(ptr, rust_vec_len, data_len),
-102 => wire__crate__proton_meet__user_subscription__is_admin_impl(ptr, rust_vec_len, data_len),
-103 => wire__crate__proton_meet__user_subscription__is_delinquent_impl(ptr, rust_vec_len, data_len),
-104 => wire__crate__proton_meet__user_subscription__is_free_impl(ptr, rust_vec_len, data_len),
-105 => wire__crate__proton_meet__user_subscription__is_member_impl(ptr, rust_vec_len, data_len),
-106 => wire__crate__proton_meet__user_subscription__is_paid_impl(ptr, rust_vec_len, data_len),
-107 => wire__crate__proton_meet__user_subscription__is_private_impl(ptr, rust_vec_len, data_len),
-108 => wire__crate__proton_meet__user_subscription__is_self_impl(ptr, rust_vec_len, data_len),
-109 => wire__crate__proton_meet__meet_link__is_url_password_valid_impl(ptr, rust_vec_len, data_len),
+79 => wire__crate__proton_meet__storage__user_key_provider__FrbUserKeyProvider_new_impl(ptr, rust_vec_len, data_len),
+82 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_from_session_impl(ptr, rust_vec_len, data_len),
+83 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_new_impl(ptr, rust_vec_len, data_len),
+87 => wire__crate__proton_meet__user_subscription__can_pay_impl(ptr, rust_vec_len, data_len),
+88 => wire__crate__proton_meet__token__create_token_impl(ptr, rust_vec_len, data_len),
+90 => wire__crate__proton_meet__models__upcoming_meeting__frb_upcoming_meeting_default_values_impl(ptr, rust_vec_len, data_len),
+91 => wire__crate__proton_meet__models__upcoming_meeting__frb_upcoming_meeting_new_for_join_impl(ptr, rust_vec_len, data_len),
+92 => wire__crate__proton_meet__user_subscription__get_user_byte_impl(ptr, rust_vec_len, data_len),
+93 => wire__crate__proton_meet__user_subscription__has_paid_drive_impl(ptr, rust_vec_len, data_len),
+94 => wire__crate__proton_meet__user_subscription__has_paid_lumo_impl(ptr, rust_vec_len, data_len),
+95 => wire__crate__proton_meet__user_subscription__has_paid_mail_impl(ptr, rust_vec_len, data_len),
+96 => wire__crate__proton_meet__user_subscription__has_paid_meet_impl(ptr, rust_vec_len, data_len),
+97 => wire__crate__proton_meet__user_subscription__has_paid_pass_impl(ptr, rust_vec_len, data_len),
+98 => wire__crate__proton_meet__user_subscription__has_paid_vpn_impl(ptr, rust_vec_len, data_len),
+99 => wire__crate__proton_meet__user_subscription__has_paid_wallet_impl(ptr, rust_vec_len, data_len),
+100 => wire__crate__proton_meet__user_subscription__has_pass_lifetime_impl(ptr, rust_vec_len, data_len),
+101 => wire__crate__proton_meet__user_subscription__has_pass_lifetime_or_via_simple_login_impl(ptr, rust_vec_len, data_len),
+102 => wire__crate__proton_meet__user_subscription__has_pass_via_simple_login_impl(ptr, rust_vec_len, data_len),
+104 => wire__crate__logger__init_rust_logging_impl(ptr, rust_vec_len, data_len),
+105 => wire__crate__panic_hook__initialize_panic_hook_impl(ptr, rust_vec_len, data_len),
+106 => wire__crate__proton_meet__user_subscription__is_admin_impl(ptr, rust_vec_len, data_len),
+107 => wire__crate__proton_meet__user_subscription__is_delinquent_impl(ptr, rust_vec_len, data_len),
+108 => wire__crate__proton_meet__user_subscription__is_free_impl(ptr, rust_vec_len, data_len),
+109 => wire__crate__proton_meet__user_subscription__is_member_impl(ptr, rust_vec_len, data_len),
+110 => wire__crate__proton_meet__user_subscription__is_paid_impl(ptr, rust_vec_len, data_len),
+111 => wire__crate__proton_meet__user_subscription__is_private_impl(ptr, rust_vec_len, data_len),
+112 => wire__crate__proton_meet__user_subscription__is_self_impl(ptr, rust_vec_len, data_len),
+113 => wire__crate__proton_meet__meet_link__is_url_password_valid_impl(ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
 }
@@ -7496,6 +7788,21 @@ impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<
 
 impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<AppCore>> for AppCore {
     fn into_into_dart(self) -> FrbWrapper<AppCore> {
+        self.into()
+    }
+}
+
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<DesktopWebLogin> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        flutter_rust_bridge::for_generated::rust_auto_opaque_encode::<_, MoiArc<_>>(self.0)
+            .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<DesktopWebLogin> {}
+
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<DesktopWebLogin>> for DesktopWebLogin {
+    fn into_into_dart(self) -> FrbWrapper<DesktopWebLogin> {
         self.into()
     }
 }
@@ -7782,6 +8089,27 @@ impl
         self,
     ) -> FrbWrapper<crate::proton_meet::models::connection_state::ConnectionState> {
         self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart
+    for crate::proton_meet::models::desktop_web_login::DesktopWebLoginStart
+{
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.login_url.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::proton_meet::models::desktop_web_login::DesktopWebLoginStart
+{
+}
+impl
+    flutter_rust_bridge::IntoIntoDart<
+        crate::proton_meet::models::desktop_web_login::DesktopWebLoginStart,
+    > for crate::proton_meet::models::desktop_web_login::DesktopWebLoginStart
+{
+    fn into_into_dart(self) -> crate::proton_meet::models::desktop_web_login::DesktopWebLoginStart {
+        self
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -8591,6 +8919,13 @@ impl SseEncode for AppCore {
     }
 }
 
+impl SseEncode for DesktopWebLogin {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<DesktopWebLogin>>>::sse_encode(flutter_rust_bridge::for_generated::rust_auto_opaque_encode::<_, MoiArc<_>>(self), serializer);
+    }
+}
+
 impl SseEncode for FrbUserKeyProvider {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -8634,6 +8969,17 @@ impl SseEncode for std::collections::HashMap<String, bool> {
 }
 
 impl SseEncode for RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        let (ptr, size) = self.sse_encode_raw();
+        <usize>::sse_encode(ptr, serializer);
+        <i32>::sse_encode(size, serializer);
+    }
+}
+
+impl SseEncode
+    for RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<DesktopWebLogin>>
+{
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         let (ptr, size) = self.sse_encode_raw();
@@ -8909,6 +9255,13 @@ impl SseEncode for crate::proton_meet::models::connection_state::ConnectionState
             },
             serializer,
         );
+    }
+}
+
+impl SseEncode for crate::proton_meet::models::desktop_web_login::DesktopWebLoginStart {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.login_url, serializer);
     }
 }
 
@@ -9283,6 +9636,18 @@ impl SseEncode for Option<crate::proton_meet::models::meet_link::MeetLink> {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
             <crate::proton_meet::models::meet_link::MeetLink>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<crate::proton_meet::models::proton_user_session::ProtonUserSession> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::proton_meet::models::proton_user_session::ProtonUserSession>::sse_encode(
+                value, serializer,
+            );
         }
     }
 }
@@ -9687,6 +10052,7 @@ mod io {
     use super::*;
     use crate::logger::*;
     use crate::proton_meet::core::*;
+    use crate::proton_meet::desktop_web_login::*;
     use crate::proton_meet::meet_auth_store::*;
     use crate::proton_meet::storage::user_key_provider::*;
     use flutter_rust_bridge::for_generated::byteorder::{
@@ -9711,6 +10077,20 @@ mod io {
         ptr: *const std::ffi::c_void,
     ) {
         MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>>::decrement_strong_count(ptr as _);
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn frbgen_meet_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+        ptr: *const std::ffi::c_void,
+    ) {
+        MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<DesktopWebLogin>>::increment_strong_count(ptr as _);
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn frbgen_meet_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+        ptr: *const std::ffi::c_void,
+    ) {
+        MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<DesktopWebLogin>>::decrement_strong_count(ptr as _);
     }
 
     #[unsafe(no_mangle)]
@@ -9783,6 +10163,7 @@ mod web {
     use super::*;
     use crate::logger::*;
     use crate::proton_meet::core::*;
+    use crate::proton_meet::desktop_web_login::*;
     use crate::proton_meet::meet_auth_store::*;
     use crate::proton_meet::storage::user_key_provider::*;
     use flutter_rust_bridge::for_generated::byteorder::{
@@ -9809,6 +10190,20 @@ mod web {
         ptr: *const std::ffi::c_void,
     ) {
         MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>>::decrement_strong_count(ptr as _);
+    }
+
+    #[wasm_bindgen]
+    pub fn rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+        ptr: *const std::ffi::c_void,
+    ) {
+        MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<DesktopWebLogin>>::increment_strong_count(ptr as _);
+    }
+
+    #[wasm_bindgen]
+    pub fn rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerDesktopWebLogin(
+        ptr: *const std::ffi::c_void,
+    ) {
+        MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<DesktopWebLogin>>::decrement_strong_count(ptr as _);
     }
 
     #[wasm_bindgen]

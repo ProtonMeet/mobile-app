@@ -100,9 +100,8 @@ fn get_app_core_runtime_handle() -> Option<Handle> {
 
 #[frb(opaque)]
 pub struct AppCore {
-    inner: Arc<App>,
-    #[allow(dead_code)]
-    auth_store: Arc<ProtonMeetAuthStore>,
+    pub(crate) inner: Arc<App>,
+    pub(crate) auth_store: Arc<ProtonMeetAuthStore>,
     user_config: UserConfig,
     //  event bus
     event_tx: broadcast::Sender<AppEvent>,

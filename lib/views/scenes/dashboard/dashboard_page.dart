@@ -39,6 +39,7 @@ import 'package:meet/views/scenes/settings/app_settings.dart';
 import 'package:meet/views/scenes/signin/auth_bloc.dart';
 import 'package:meet/views/scenes/signin/auth_event.dart';
 import 'package:meet/views/scenes/signin/auth_state.dart';
+import 'package:meet/views/scenes/signin/desktop_web_login_sheet.dart';
 import 'package:meet/views/scenes/signin/signin.coordinator.dart';
 import 'package:meet/views/scenes/signin/signin.view.dart';
 import 'package:path_provider/path_provider.dart';
@@ -202,7 +203,10 @@ class _DashboardPageState extends State<DashboardPage> {
   /// Start the sign in flow
   Future<void> _startSignInFlow() async {
     if (desktop) {
-      _showFlutterSignIn(context);
+      await showDesktopWebLoginSheet(
+        context,
+        onLoginSuccess: (user) => widget.authBloc.add(LoggedInUser(user)),
+      );
     } else {
       widget.authBloc.add(LoginWithNative());
     }
@@ -485,7 +489,11 @@ class _DashboardPageState extends State<DashboardPage> {
                     current.shouldShowFlutterSignIn,
                 listener: (context, state) {
                   if (!PlatformInfoChannel.isInForceUpgradeState()) {
-                    _showFlutterSignIn(context);
+                    if (desktop) {
+                      unawaited(_startSignInFlow());
+                    } else {
+                      _showFlutterSignIn(context);
+                    }
                   }
                 },
               ),
@@ -644,7 +652,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         onScheduleMeeting: _handleSchedule,
                         onPersonalMeeting: _handlePersonalMeeting,
                         onCreateRoom: _handleCreateRoom,
-                        onShowFlutterSignIn: () => _showFlutterSignIn(context),
+                        onShowFlutterSignIn: () => unawaited(_startSignInFlow()),
                         scrollController: _dashboardScrollController,
                         displayName: state.displayName,
                         isSignedIn: state.isSignedIn,

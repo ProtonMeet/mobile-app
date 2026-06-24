@@ -48,7 +48,7 @@ use crate::infra::mls_response_ext::MlsResponseExt;
 use crate::infra::proton_response_ext::ProtonResponseExt;
 use reqwest;
 use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use tokio::sync::RwLock;
 use url::Url;
 
@@ -84,7 +84,7 @@ pub struct ProxyConfig {
 
 #[derive(Debug, Clone)]
 pub struct ProtonHttpClient {
-    session: Client,
+    session: Arc<Mutex<Client>>,
     http_host: String,
     mls_session: reqwest::Client,
     app_version: String,
@@ -114,7 +114,50 @@ impl ProtonHttpClient {
     }
 
     pub fn get_session(&self) -> Client {
-        self.session.clone()
+        self.session
+            .lock()
+            .expect("ProtonHttpClient session lock poisoned")
+            .clone()
+    }
+
+    /// Build a muon client with the given auth store (loads auth into the local store).
+    pub(crate) fn build_client(
+        &self,
+        store: crate::infra::auth_store::AuthStore,
+    ) -> Result<Client, HttpClientError> {
+        let app = App::new(self.app_version.clone())
+            .map_err(|e| HttpClientError::MlsHttpError {
+                message: format!("invalid app version: {e}"),
+            })?
+            .with_user_agent(self.user_agent.clone());
+        Client::builder(app, store)
+            .build()
+            .map_err(HttpClientError::from)
+    }
+
+    /// Replace the active muon session (e.g. after promoting desktop web login auth).
+    pub(crate) fn replace_session(&self, client: Client) {
+        *self
+            .session
+            .lock()
+            .expect("ProtonHttpClient session lock poisoned") = client;
+    }
+
+    /// Fresh muon client for desktop web login — does not touch the main session.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn new_isolated_login_client(
+        &self,
+    ) -> Result<(Client, Arc<tokio::sync::Mutex<Auth>>), HttpClientError> {
+        use crate::infra::auth_store::AuthStore;
+
+        let env = self.get_session().env().clone();
+        let login_auth = Arc::new(tokio::sync::Mutex::new(Auth::None));
+        let login_store = AuthStore {
+            env,
+            auth: login_auth.clone(),
+        };
+        let client = self.build_client(login_store)?;
+        Ok((client, login_auth))
     }
 
     fn mls_default_headers(
@@ -215,7 +258,7 @@ impl ProtonHttpClient {
             .build()?;
 
         Ok(Self {
-            session,
+            session: Arc::new(Mutex::new(session)),
             http_host,
             mls_session,
             app_version,
@@ -510,7 +553,7 @@ impl HttpClient for ProtonHttpClient {
             .body_json(RemoveParticipantRequest {
                 access_token: access_token.to_string(),
             })?;
-        let res = self.session.send(req).await?;
+        let res = self.get_session().send(req).await?;
         #[cfg(debug_assertions)]
         tracing::debug!(
             "Remove participant response code: {}, body: {:?}",
