@@ -1,17 +1,13 @@
 use std::sync::Arc;
 
 use flutter_rust_bridge::frb;
-use proton_meet_core::{
-    infra::desktop_web_login_manager::DesktopWebLoginManager,
-    muon::Store,
-};
+use proton_meet_core::{infra::desktop_web_login_manager::DesktopWebLoginManager, muon::Store};
 
 use crate::errors::BridgeError;
 use crate::proton_meet::core::AppCore;
 use crate::proton_meet::meet_auth_store::ProtonMeetAuthStore;
 use crate::proton_meet::models::{
-    desktop_web_login::DesktopWebLoginStart,
-    proton_user_session::ProtonUserSession,
+    desktop_web_login::DesktopWebLoginStart, proton_user_session::ProtonUserSession,
 };
 
 /// Ephemeral desktop web login flow. Create when opening the login UI; drop after success or cancel.
@@ -79,11 +75,8 @@ impl DesktopWebLogin {
                 auth: _,
             } => {
                 let auth = self.auth_store.get_auth().await;
-                let session = ProtonUserSession::from_user_data_and_auth(
-                    user_data,
-                    auth,
-                    mailbox_password,
-                )?;
+                let session =
+                    ProtonUserSession::from_user_data_and_auth(user_data, auth, mailbox_password)?;
                 Ok(Some(session))
             }
         }

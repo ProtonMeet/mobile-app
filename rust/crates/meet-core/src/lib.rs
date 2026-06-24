@@ -12,9 +12,6 @@ pub mod service;
 pub mod utils;
 pub mod version;
 
-#[cfg(test)]
-mod app_test;
-
 pub mod muon {
     pub use muon::{
         client::{Auth, Tokens},

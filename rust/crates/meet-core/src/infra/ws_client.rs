@@ -324,7 +324,7 @@ impl WsClient {
             .store(enabled, Ordering::Relaxed);
     }
 
-    fn worker_cookie_bridge_enabled(&self) -> bool {
+    pub fn worker_cookie_bridge_enabled(&self) -> bool {
         self.worker_cookie_bridge_enabled.load(Ordering::Relaxed)
     }
 
