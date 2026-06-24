@@ -8,6 +8,7 @@ import 'package:meet/helper/extension/remote_video_track_extension.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/subscribe_retry_backoff.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
+import 'package:meet/views/scenes/room/layout/camera_grid_layout_config.dart';
 import 'package:meet/views/scenes/room/participant/participant.dart';
 import 'package:meet/views/scenes/room/participant/participant_info.dart';
 
@@ -156,7 +157,7 @@ class _ResponsiveCameraLayoutState extends State<ResponsiveCameraLayout> {
 
     if (visibleSignature == _lastVisibleSignature &&
         currentSignature == _lastCurrentSignature &&
-        !_hasUnboundVisibleCameraTracks(visibleIdentities)) {
+        !_hasUnboundVisibleCameraTracks(currentIdentities)) {
       return;
     }
 
@@ -290,7 +291,7 @@ class _ResponsiveCameraLayoutState extends State<ResponsiveCameraLayout> {
         }
       }
 
-      if (_hasUnboundVisibleCameraTracks(visibleIdentities)) {
+      if (_hasUnboundVisibleCameraTracks(currentIdentities)) {
         _scheduleSubscriptionRetry(visibleWidgets, currentWidgets);
       } else {
         _bindRetryAttempt = 0;
@@ -325,47 +326,24 @@ class _ResponsiveCameraLayoutState extends State<ResponsiveCameraLayout> {
       builder: (context, constraints) {
         final screenWidth = constraints.maxWidth;
         final screenHeight = constraints.maxHeight - 10;
-        final minWidgetWidth = 48;
+        final orientation = MediaQuery.of(context).orientation;
+        // Grid presets and breakpoints: see CameraGridLayoutConfig.
+        final minWidgetWidth = CameraGridLayoutConfig.minTileWidth(screenWidth);
+        final configurations = CameraGridLayoutConfig.configurationsFor(
+          screenWidth,
+          orientation,
+        );
 
-        int bestCol = 1;
-        int maxWidgets = 1;
+        final selected = CameraGridLayoutConfig.selectBest(
+          screenWidth: screenWidth,
+          screenHeight: screenHeight,
+          configurations: configurations,
+          minWidgetWidth: minWidgetWidth,
+        );
+        var bestCol = selected.cols;
+        final maxWidgets = selected.maxWidgets;
         double ratio;
 
-        final orientation = MediaQuery.of(context).orientation;
-
-        final configurations = orientation == Orientation.portrait
-            ? [
-                [2, 2],
-                [1, 2],
-                [1, 1],
-              ]
-            : [
-                [3, 1],
-                [2, 1],
-                [1, 1],
-              ];
-
-        int tmpBestCol = 1;
-        int tmpMaxWidgets = 1;
-
-        for (var config in configurations) {
-          final col = config[0];
-          final row = config[1];
-          final widgetWidth = screenWidth / col;
-          final widgetHeight = screenHeight / row;
-
-          if (widgetWidth >= minWidgetWidth &&
-              widgetHeight * row <= screenHeight) {
-            tmpBestCol = col;
-            tmpMaxWidgets = col * row;
-            break;
-          }
-        }
-
-        bestCol = tmpBestCol;
-        maxWidgets = tmpMaxWidgets;
-
-        // Default ratio for non-mobile; may be adjusted for last page below
         final tileW = screenWidth / bestCol;
         final tileH = screenHeight / (maxWidgets / bestCol);
         ratio = tileW / tileH;
@@ -387,9 +365,11 @@ class _ResponsiveCameraLayoutState extends State<ResponsiveCameraLayout> {
         final end = min(start + maxWidgets, totalParticipants);
         final currentWidgets = widget.participantTracks.sublist(start, end);
 
-        // Pre-subscribe to a larger window: current page + 2 pages ahead/behind
-        // This ensures tracks are ready before switching pages
-        final cachePages = 2;
+        // Pre-subscribe to nearby pages; radius scales down on large grids.
+        // See CameraGridLayoutConfig.subscriptionCachePageRadius.
+        final cachePages = CameraGridLayoutConfig.subscriptionCachePageRadius(
+          maxWidgets,
+        );
         final cacheStart = max(start - (maxWidgets * cachePages), 0);
         final cacheEnd = min(
           end + (maxWidgets * cachePages),
@@ -438,33 +418,22 @@ class _ResponsiveCameraLayoutState extends State<ResponsiveCameraLayout> {
           }
         });
 
-        // Optional: on the last page for non-mobile, try to tighten ratio
         if (currentPage == totalPages - 1) {
-          final configurationsForLastPage = orientation == Orientation.portrait
-              ? [
-                  [1, 1],
-                  [1, 2],
-                  [2, 2],
-                ]
-              : [
-                  [1, 1],
-                  [2, 1],
-                  [3, 1],
-                ];
-          for (var config in configurationsForLastPage) {
-            final col = config[0];
-            final row = config[1];
-            if (col * row >= currentWidgets.length) {
-              final widgetWidth = screenWidth / col;
-              final widgetHeight = screenHeight / row;
-              if (widgetWidth >= minWidgetWidth &&
-                  widgetHeight * row <= screenHeight) {
-                bestCol = col;
-                // Set ratio based on this layout
-                ratio = widgetWidth / widgetHeight;
-                break;
-              }
-            }
+          final lastPageConfigurations =
+              CameraGridLayoutConfig.lastPageConfigurationsFor(
+                screenWidth,
+                orientation,
+              );
+          final lastPage = CameraGridLayoutConfig.selectBestForLastPage(
+            screenWidth: screenWidth,
+            screenHeight: screenHeight,
+            configurations: lastPageConfigurations,
+            minWidgetWidth: minWidgetWidth,
+            itemCount: currentWidgets.length,
+          );
+          if (lastPage != null) {
+            bestCol = lastPage.cols;
+            ratio = lastPage.ratio;
           }
         }
 

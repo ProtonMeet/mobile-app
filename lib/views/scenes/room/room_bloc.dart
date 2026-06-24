@@ -733,6 +733,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
   /// - [event]: The toggle full screen event
   /// - [emit]: State emitter for updating the room state
   void _onToggleFullScreen(ToggleFullScreen event, Emitter<RoomState> emit) {
+    if (desktop) return;
     // Block any attempt to ENTER fullscreen while a local screen share is active.
     // The controls bar is the only place the "Stop sharing" action lives now,
     // so it must stay visible. Exiting fullscreen is always allowed.
@@ -1018,6 +1019,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
   /// auto-fullscreen behavior resumes as soon as sharing ends without
   /// requiring an explicit "start timer" event from the UI.
   void _startAutoFullScreenTimer() {
+    if (desktop) return;
     try {
       _cancelFullScreenTimer();
       _autoFullScreenTimer = Timer(autoFullScreenDelay, () {
@@ -1061,6 +1063,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     Emitter<RoomState> emit,
   ) {
     _cancelFullScreenTimer();
+    if (desktop) return;
     emit(state.copyWith(isFullScreen: false));
     _startAutoFullScreenTimer();
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
+import 'package:meet/views/scenes/room/layout/camera_grid_layout_config.dart';
 import 'package:meet/views/scenes/room/participant/participant.dart';
 import 'package:meet/views/scenes/room/participant/participant_info.dart';
 
@@ -37,18 +38,6 @@ class _FixedSizingCameraLayoutState extends State<FixedSizingCameraLayout> {
     }
   }
 
-  int _calculateRowCount(int total) {
-    if (total <= 2) return 1;
-    if (total <= 4) return 2;
-    return 2;
-  }
-
-  int _calculateColumnCount(int total) {
-    if (total <= 1) return 1;
-    if (total <= 4) return 2;
-    return 3;
-  }
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -56,10 +45,13 @@ class _FixedSizingCameraLayoutState extends State<FixedSizingCameraLayout> {
         final screenWidth = constraints.maxWidth;
         final screenHeight = constraints.maxHeight;
 
-        final int columns = _calculateColumnCount(
-          widget.participantTracks.length,
+        // Compact grid sizing: see CameraGridLayoutConfig.fixedSizingGrid.
+        final grid = CameraGridLayoutConfig.fixedSizingGrid(
+          participantCount: widget.participantTracks.length,
+          width: screenWidth,
         );
-        final int rows = _calculateRowCount(widget.participantTracks.length);
+        final int columns = grid.columns;
+        final int rows = grid.rows;
         final int itemsPerPage = columns * rows;
         final totalPages = (widget.participantTracks.length / itemsPerPage)
             .ceil();
