@@ -2,7 +2,7 @@ pub use proton_meet_core::infra::dto::proton_user::UserData;
 use proton_meet_core::{
     domain::user::models::{MeetParticipant, MeetingType},
     errors::login::LoginError,
-    muon::{Auth, Store, Tokens},
+    muon::{Auth, Tokens},
     ProtonUser,
 };
 use proton_meet_crypto::MeetCrypto;
@@ -249,7 +249,7 @@ impl AppCore {
 
         // Get auth information from auth store
         let auth = self.auth_store.get_auth().await;
-        ProtonUserSession::from_user_data_and_auth(user_data, auth, mailbox_password)
+        ProtonUserSession::from_user_data_and_auth(Box::new(user_data), auth, mailbox_password)
     }
 
     pub async fn login_with_two_factor(
@@ -264,7 +264,7 @@ impl AppCore {
 
         // Get auth information from auth store
         let auth = self.auth_store.get_auth().await;
-        ProtonUserSession::from_user_data_and_auth(user_data, auth, mailbox_password)
+        ProtonUserSession::from_user_data_and_auth(Box::new(user_data), auth, mailbox_password)
     }
 
     pub async fn get_user(&self, user_id: String) -> Result<ProtonUser, BridgeError> {

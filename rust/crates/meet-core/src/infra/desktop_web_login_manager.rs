@@ -8,6 +8,7 @@ use muon::env::EnvId;
 use tokio::sync::Mutex;
 
 use crate::errors::core::MeetCoreError;
+use crate::errors::http_client::HttpClientError;
 use crate::infra::auth_store::AuthStore;
 use crate::infra::desktop_web_login::{
     self, DesktopWebLoginPoll, DesktopWebLoginStart, PendingState,
@@ -25,7 +26,7 @@ pub struct DesktopWebLoginManager {
 
 #[cfg(not(target_arch = "wasm32"))]
 impl DesktopWebLoginManager {
-    pub fn new(
+    pub async fn new(
         env: String,
         app_version: String,
         user_agent: String,
@@ -47,6 +48,7 @@ impl DesktopWebLoginManager {
             proxy: None,
         };
         let login_http = ProtonHttpClient::new(config, Box::new(AuthStore::new(env_id)), http_host)
+            .await
             .map_err(|e| MeetCoreError::AuthenticationFailed {
                 message: format!("Failed to create desktop login HTTP client: {e}"),
             })?;
@@ -106,12 +108,20 @@ pub async fn promote_auth_to_main_session(
         env,
         auth: session_auth.clone(),
     };
-    let client =
-        main_http
-            .build_client(store)
-            .map_err(|e| MeetCoreError::AuthenticationFailed {
-                message: format!("Failed to apply desktop login session: {e}"),
-            })?;
-    main_http.replace_session(client);
+    let client = main_http
+        .build_client(store)
+        .await
+        .map_err(|e| MeetCoreError::AuthenticationFailed {
+            message: format!("Failed to apply desktop login session: {e}"),
+        })?;
+    main_http
+        .replace_session(client)
+        .await
+        .map_err(|e| MeetCoreError::AuthenticationFailed {
+            message: match e {
+                HttpClientError::MlsHttpError { message } => message,
+                other => format!("Unable to complete sign-in. Please try again. ({other})"),
+            },
+        })?;
     Ok(())
 }

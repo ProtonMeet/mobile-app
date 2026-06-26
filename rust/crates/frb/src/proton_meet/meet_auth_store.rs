@@ -3,9 +3,10 @@ use std::sync::Arc;
 use crate::errors::BridgeError;
 use async_trait::async_trait;
 use flutter_rust_bridge::{frb, DartFnFuture};
+use proton_meet_core::muon::Auth;
 use proton_meet_core::{
-    infra::auth_store::AuthStore,
-    muon::{Auth, EnvId, Store, StoreError, Tokens},
+    infra::auth_store::{AuthStore, MUON_DEFAULT_SESSION_KEY},
+    muon::{EnvId, Store, StoreError, Tokens},
 };
 
 pub type DartCallback = dyn Fn(ChildAuthSession) -> DartFnFuture<String> + Send + Sync;
@@ -60,8 +61,16 @@ impl ProtonMeetAuthStore {
         scopes: Vec<String>,
     ) -> Result<(), BridgeError> {
         let auth = Auth::internal(user_id, uid, Tokens::access(access, refresh, scopes));
-        let _ = self.inner.set_auth(auth).await;
+        let _ = self.inner.set_auth(&MUON_DEFAULT_SESSION_KEY, auth).await;
         Ok(())
+    }
+
+    #[frb(ignore)]
+    pub async fn get_auth(&self) -> Auth {
+        self.inner
+            .get_auth(&MUON_DEFAULT_SESSION_KEY)
+            .await
+            .unwrap_or(Auth::None)
     }
 
     pub async fn set_auth_dart_callback(
@@ -111,19 +120,40 @@ impl ProtonMeetAuthStore {
 }
 
 #[async_trait]
-impl Store for ProtonMeetAuthStore {
+impl Store<()> for ProtonMeetAuthStore {
     fn env(&self) -> EnvId {
         self.inner.env()
     }
 
-    async fn get_auth(&self) -> Auth {
-        self.inner.get_auth().await
+    async fn get_auth(&self, key: &()) -> std::result::Result<Auth, StoreError> {
+        self.inner.get_auth(key).await
     }
 
-    async fn set_auth(&mut self, auth: Auth) -> std::result::Result<Auth, StoreError> {
-        let result = self.inner.set_auth(auth.clone()).await?;
-        self.refresh_auth_credential(auth.clone()).await;
-        Ok(result)
+    async fn set_auth(&mut self, key: &(), auth: Auth) -> std::result::Result<(), StoreError> {
+        self.inner.set_auth(key, auth.clone()).await?;
+        self.refresh_auth_credential(auth).await;
+        Ok(())
+    }
+
+    async fn remove_auth(&mut self, key: &()) -> std::result::Result<Option<Auth>, StoreError> {
+        self.inner.remove_auth(key).await
+    }
+
+    async fn get_all_auth(
+        &self,
+    ) -> std::result::Result<std::collections::HashMap<(), Auth>, StoreError> {
+        self.inner.get_all_auth().await
+    }
+
+    async fn set_all_auth(
+        &mut self,
+        auth: std::collections::HashMap<(), Auth>,
+    ) -> std::result::Result<(), StoreError> {
+        self.inner.set_all_auth(auth).await
+    }
+
+    async fn remove_all_auth(&mut self) -> std::result::Result<(), StoreError> {
+        self.inner.remove_all_auth().await
     }
 }
 

@@ -1,7 +1,6 @@
 use proton_meet_macro::async_trait;
 
 use crate::domain::user::ports::event_api::EventApi;
-use crate::domain::user::ports::HttpClient;
 use crate::errors::http_client::HttpClientError;
 use crate::infra::dto::event::{EventsResponse, GetEventsResponse, LatestEventIdResponse};
 use crate::infra::http_client::ProtonHttpClient;

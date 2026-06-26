@@ -2151,17 +2151,19 @@ impl UserService for Service {
                 sender,
             } => {
                 let sender = mls_group.find_member(sender)?;
-                if let Credential::SdCwtDraft04 { claimset, .. } = sender.credential() {
-                    if let Some(claimset) = claimset {
-                        let uuid = Uuid::from_bytes(claimset.uuid);
-                        let sender_mimi_uri = mimi_sub_from_credential(sender.credential())?;
-                        return Ok((
-                            content,
-                            media_type,
-                            UserId::new(uuid.to_string()),
-                            sender_mimi_uri,
-                        ));
-                    }
+                if let Credential::SdCwtDraft04 {
+                    claimset: Some(claimset),
+                    ..
+                } = sender.credential()
+                {
+                    let uuid = Uuid::from_bytes(claimset.uuid);
+                    let sender_mimi_uri = mimi_sub_from_credential(sender.credential())?;
+                    return Ok((
+                        content,
+                        media_type,
+                        UserId::new(uuid.to_string()),
+                        sender_mimi_uri,
+                    ));
                 }
                 Err(anyhow::anyhow!("Failed to get participant id from credential"))
             }
@@ -4405,6 +4407,7 @@ impl Service {
 }
 
 const JOIN_PROPOSAL_TIMEOUT: u64 = 15;
+#[async_trait]
 impl NewUserService for Service {
     async fn join_room_with_switch_join_type(
         &self,

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use flutter_rust_bridge::frb;
-use proton_meet_core::{infra::desktop_web_login_manager::DesktopWebLoginManager, muon::Store};
+use proton_meet_core::infra::desktop_web_login_manager::DesktopWebLoginManager;
 
 use crate::errors::BridgeError;
 use crate::proton_meet::core::AppCore;
@@ -21,7 +21,7 @@ pub struct DesktopWebLogin {
 #[cfg(not(target_arch = "wasm32"))]
 #[frb]
 impl DesktopWebLogin {
-    pub fn new(
+    pub async fn new(
         env: String,
         app_version: String,
         user_agent: String,
@@ -36,6 +36,7 @@ impl DesktopWebLogin {
             app.inner.http_client(),
             app.auth_store.inner.auth.clone(),
         )
+        .await
         .map_err(|e| BridgeError::Login(e.to_string()))?;
         Ok(Self {
             inner,

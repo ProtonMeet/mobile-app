@@ -462,37 +462,34 @@ impl WsClient {
     }
 
     async fn try_resolve_text_response(&self, text: &str) -> bool {
-        match serde_json::from_str::<WebSocketTextResponse>(text) {
-            Ok(response) => {
-                if let Some(request_id) = response.request_id {
-                    let was_timed_out = {
-                        let mut timed_out = self.timed_out_text_requests.lock().await;
-                        timed_out.remove(&request_id)
-                    };
-                    if was_timed_out {
+        if let Ok(response) = serde_json::from_str::<WebSocketTextResponse>(text) {
+            if let Some(request_id) = response.request_id {
+                let was_timed_out = {
+                    let mut timed_out = self.timed_out_text_requests.lock().await;
+                    timed_out.remove(&request_id)
+                };
+                if was_timed_out {
+                    tracing::warn!(
+                        "Discarding late websocket response for timed-out request_id={}",
+                        request_id
+                    );
+                    return true;
+                }
+
+                let sender = {
+                    let mut pending = self.pending_text_requests.lock().await;
+                    pending.remove(&request_id)
+                };
+                if let Some(sender) = sender {
+                    if sender.send(response.command).is_err() {
                         tracing::warn!(
-                            "Discarding late websocket response for timed-out request_id={}",
+                            "Dropped websocket response because requester is gone: request_id={}",
                             request_id
                         );
-                        return true;
                     }
-
-                    let sender = {
-                        let mut pending = self.pending_text_requests.lock().await;
-                        pending.remove(&request_id)
-                    };
-                    if let Some(sender) = sender {
-                        if sender.send(response.command).is_err() {
-                            tracing::warn!(
-                                "Dropped websocket response because requester is gone: request_id={}",
-                                request_id
-                            );
-                        }
-                        return true;
-                    }
+                    return true;
                 }
             }
-            Err(_) => {}
         }
         false
     }
@@ -501,16 +498,12 @@ impl WsClient {
 #[async_trait]
 impl WebSocketClient for WsClient {
     async fn connect(&self, base64_sd_kbt: &str) -> Result<(), anyhow::Error> {
+        let _connect_guard = self.connect_lock.lock().await;
+
         #[cfg(target_family = "wasm")]
         {
             let url = self.build_ws_url("v1/ws")?;
             let use_worker_cookie_bridge = self.worker_cookie_bridge_enabled();
-            let _connect_guard = if use_worker_cookie_bridge {
-                Some(self.connect_lock.lock().await)
-            } else {
-                None
-            };
-
             if use_worker_cookie_bridge {
                 tracing::trace!("worker cookie replay start");
             }

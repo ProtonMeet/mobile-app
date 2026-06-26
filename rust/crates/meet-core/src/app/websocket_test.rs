@@ -1,9 +1,10 @@
+use proton_meet_macro::unified_test;
 use std::future::ready;
 
 use crate::app::test_support::{build_app_with_ws, default_app_state};
 use crate::domain::user::ports::{ConnectionState, MockWebSocketClient};
 
-#[tokio::test]
+#[unified_test]
 async fn get_ws_state_returns_mock_connection_state() {
     let mut ws = MockWebSocketClient::new();
     ws.expect_get_connection_state()
@@ -15,7 +16,7 @@ async fn get_ws_state_returns_mock_connection_state() {
     assert_eq!(state, ConnectionState::Connected);
 }
 
-#[tokio::test]
+#[unified_test]
 async fn set_websocket_ping_interval_delegates_to_client() {
     let mut ws = MockWebSocketClient::new();
     ws.expect_set_ping_interval_seconds()
@@ -27,7 +28,7 @@ async fn set_websocket_ping_interval_delegates_to_client() {
     app.set_websocket_ping_interval(Some(30)).await.unwrap();
 }
 
-#[tokio::test]
+#[unified_test]
 async fn set_websocket_max_ping_failures_delegates_to_client() {
     let mut ws = MockWebSocketClient::new();
     ws.expect_set_max_ping_failures()
@@ -39,7 +40,7 @@ async fn set_websocket_max_ping_failures_delegates_to_client() {
     app.set_websocket_max_ping_failures(Some(3)).await.unwrap();
 }
 
-#[tokio::test]
+#[unified_test]
 async fn set_websocket_pong_timeout_delegates_to_client() {
     let mut ws = MockWebSocketClient::new();
     ws.expect_set_pong_timeout_seconds()
@@ -51,7 +52,7 @@ async fn set_websocket_pong_timeout_delegates_to_client() {
     app.set_websocket_pong_timeout(Some(10)).await.unwrap();
 }
 
-#[tokio::test]
+#[unified_test]
 async fn disconnect_wss_intentional_delegates_to_client() {
     let mut ws = MockWebSocketClient::new();
     ws.expect_disconnect()
@@ -63,7 +64,7 @@ async fn disconnect_wss_intentional_delegates_to_client() {
     app.disconnect_wss_intentional().await.unwrap();
 }
 
-#[tokio::test]
+#[unified_test]
 async fn disconnect_wss_unintentional_delegates_to_client() {
     let mut ws = MockWebSocketClient::new();
     ws.expect_disconnect()
@@ -75,7 +76,7 @@ async fn disconnect_wss_unintentional_delegates_to_client() {
     app.disconnect_wss_unintentional().await.unwrap();
 }
 
-#[tokio::test]
+#[unified_test]
 async fn is_websocket_has_reconnected_delegates_to_service() {
     use std::sync::Arc;
 

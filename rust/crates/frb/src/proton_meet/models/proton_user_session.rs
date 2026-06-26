@@ -21,7 +21,7 @@ impl ProtonUserSession {
     /// Builds a ProtonUserSession from UserData, Auth, and mailbox password
     #[frb(ignore)]
     pub(crate) fn from_user_data_and_auth(
-        user_data: UserData,
+        user_data: Box<UserData>,
         auth: Auth,
         mailbox_password: String,
     ) -> Result<Self, BridgeError> {

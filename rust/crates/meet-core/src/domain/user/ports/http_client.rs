@@ -16,7 +16,7 @@ use proton_meet_macro::async_trait_with_mock;
 
 #[async_trait_with_mock]
 pub trait HttpClient: Send + Sync {
-    fn get_session(&self) -> muon::Client;
+    fn get_session(&self) -> muon::Session<()>;
 
     async fn get_group_info(
         &self,

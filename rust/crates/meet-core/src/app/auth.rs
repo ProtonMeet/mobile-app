@@ -16,7 +16,7 @@ impl App {
             .send()
             .await
         {
-            muon::client::flow::ForkFlowResult::Success(_client, selector) => Ok(selector),
+            muon::client::flow::ForkFlowResult::Success(_session, selector) => Ok(selector),
             other => {
                 error!("Fork session failed: {:?}", other);
                 Err(MeetCoreError::HttpClientError {
