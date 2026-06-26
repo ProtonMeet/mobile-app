@@ -71,14 +71,30 @@ extension DtlnRsProcessor: DenoiseCaptureProcessor {
   private static var attachedTrackId: String?
   private static var attachedKind: DenoiseKind?
 
-  private static func makeProcessor(kind: DenoiseKind) -> ExternalAudioProcessingDelegate {
+  private static func parseDeepFilterAttenLimDb(_ args: [String: Any]) -> Float {
+    if let value = args["deepFilterAttenLimDb"] as? NSNumber {
+      return min(max(value.floatValue, 1), 100)
+    }
+    return ProtonDeepFilterNative.defaultAttenLimDb
+  }
+
+  private static func makeProcessor(
+    kind: DenoiseKind,
+    deepFilterAttenLimDb: Float = ProtonDeepFilterNative.defaultAttenLimDb
+  ) -> ExternalAudioProcessingDelegate {
     switch kind {
     case .rnnoise:
       return RnnoiseProcessor()
     case .deepfilter:
-      return DeepFilterProcessor(modelResourceName: ProtonDeepFilterNative.ModelResource.net3)
+      return DeepFilterProcessor(
+        modelResourceName: ProtonDeepFilterNative.ModelResource.net3,
+        attenLimDb: deepFilterAttenLimDb
+      )
     case .deepfilter2:
-      return DeepFilterProcessor(modelResourceName: ProtonDeepFilterNative.ModelResource.net2)
+      return DeepFilterProcessor(
+        modelResourceName: ProtonDeepFilterNative.ModelResource.net2,
+        attenLimDb: deepFilterAttenLimDb
+      )
     case .dtlnRs:
       return DtlnRsProcessor()
     }
@@ -103,9 +119,10 @@ extension DtlnRsProcessor: DenoiseCaptureProcessor {
     kind: DenoiseKind,
     local: LocalAudioTrack,
     replacing oldProc: ExternalAudioProcessingDelegate?,
+    deepFilterAttenLimDb: Float,
     result: @escaping FlutterResult
   ) {
-    let proc = makeProcessor(kind: kind)
+    let proc = makeProcessor(kind: kind, deepFilterAttenLimDb: deepFilterAttenLimDb)
     let finish: () -> Void = {
       // WebRTC calls initialize at factory setup; processors added later need explicit init.
       proc.audioProcessingInitialize(withSampleRate: 48_000, channels: 1)
@@ -236,11 +253,13 @@ extension DtlnRsProcessor: DenoiseCaptureProcessor {
             ))
           return
         }
+        let deepFilterAttenLimDb = parseDeepFilterAttenLimDb(args)
         if attachedTrackId == trackId, attachedKind == kind,
           let existing = processors[trackId]
         {
           // Idempotent re-attach — same track + backend already wired.
           setProcessorEnabled(existing, enabled: true)
+          (existing as? DeepFilterProcessor)?.setAttenLimDb(deepFilterAttenLimDb)
           result(nil)
           return
         }
@@ -267,8 +286,29 @@ extension DtlnRsProcessor: DenoiseCaptureProcessor {
           kind: kind,
           local: local,
           replacing: oldProc,
+          deepFilterAttenLimDb: deepFilterAttenLimDb,
           result: result
         )
+      case "setDeepFilterAttenLim":
+        guard let args = call.arguments as? [String: Any],
+          let trackId = args["trackId"] as? String,
+          !trackId.isEmpty,
+          let attenValue = args["attenLimDb"] as? NSNumber
+        else {
+          result(FlutterError(code: "ARGS", message: "trackId and attenLimDb required", details: nil))
+          return
+        }
+        guard let processor = processors[trackId] as? DeepFilterProcessor else {
+          result(
+            FlutterError(
+              code: "TRACK",
+              message: "No DeepFilter processor for track",
+              details: trackId
+            ))
+          return
+        }
+        processor.setAttenLimDb(min(max(attenValue.floatValue, 1), 100))
+        result(nil)
       case "detach":
         guard let args = call.arguments as? [String: Any],
           let trackId = args["trackId"] as? String,

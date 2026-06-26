@@ -241,6 +241,13 @@ JNIEXPORT void JNICALL Java_com_proton_proton_1denoise_ProtonDeepFilterNative_na
   return;
 }
 
+// nosemgrep
+JNIEXPORT void JNICALL Java_com_proton_proton_1denoise_ProtonDeepFilterNative_nativeSetAttenLim(
+    JNIEnv* /*env*/, jclass /*clazz*/, jlong handle, jfloat lim_db) {
+  proton_deepfilter_set_atten_lim(FromDeepFilterHandle(handle), lim_db);
+  return;
+}
+
 JNIEXPORT jfloat JNICALL
 Java_com_proton_proton_1denoise_ProtonDeepFilterNative_nativeProcessInterleavedAt(
     JNIEnv* env,

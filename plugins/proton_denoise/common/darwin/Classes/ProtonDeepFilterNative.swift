@@ -10,8 +10,30 @@ enum ProtonDeepFilterNative {
   /// DF2 ONNX panics in tract 0.21.x (main libDF); needs a separate v0.3.1 build.
   static let isNet2RuntimeSupported = false
 
+  /// Voice-call default — caps suppression depth (dB). 100 ≈ unlimited.
+  static let defaultAttenLimDb: Float = 30
+
+  private static let sessionQueueKey = DispatchSpecificKey<Void>()
+
   /// All df_* calls must run on this queue — never block the main thread on it.
-  static let sessionQueue = DispatchQueue(label: "me.proton.meet.deepfilter.session")
+  static let sessionQueue: DispatchQueue = {
+    let queue = DispatchQueue(label: "me.proton.meet.deepfilter.session")
+    queue.setSpecific(key: sessionQueueKey, value: ())
+    return queue
+  }()
+
+  static func isOnSessionQueue() -> Bool {
+    DispatchQueue.getSpecific(key: sessionQueueKey) != nil
+  }
+
+  /// Runs [block] on [sessionQueue] without deadlocking when already on that queue.
+  static func performOnSessionQueue(_ block: () -> Void) {
+    if isOnSessionQueue() {
+      block()
+    } else {
+      sessionQueue.sync(execute: block)
+    }
+  }
 
   private static let searchBundles: [Bundle] = [
     Bundle.main,
@@ -113,14 +135,27 @@ enum ProtonDeepFilterNative {
   }
 
   /// Caller must be on [sessionQueue].
-  static func createOnSessionQueue(modelResourceName: String) -> OpaquePointer? {
+  static func createOnSessionQueue(
+    modelResourceName: String,
+    attenLimDb: Float = defaultAttenLimDb
+  ) -> OpaquePointer? {
     dispatchPrecondition(condition: .onQueue(sessionQueue))
     guard let path = bundledModelPath(resourceName: modelResourceName), hasRuntimeSymbols() else {
       return nil
     }
     return path.withCString { cPath in
-      proton_deepfilter_create(cPath)
+      guard let raw = proton_deepfilter_create(cPath) else {
+        return nil
+      }
+      proton_deepfilter_set_atten_lim(raw, attenLimDb)
+      return raw
     }
+  }
+
+  /// Caller must be on [sessionQueue].
+  static func setAttenLimOnSessionQueue(_ handle: OpaquePointer?, limDb: Float) {
+    dispatchPrecondition(condition: .onQueue(sessionQueue))
+    proton_deepfilter_set_atten_lim(handle, limDb)
   }
 
   /// Caller must be on [sessionQueue].
@@ -143,15 +178,33 @@ enum ProtonDeepFilterNative {
     offset: Int,
     scratch: inout [Float]
   ) {
-    _ = scratch
     sessionQueue.sync {
-      guard frameSize > 0 else {
-        return
-      }
-      proton_deepfilter_set_enabled(handle, 1)
-      let base = channelBuffer.advanced(by: offset)
-      _ = proton_deepfilter_process_interleaved(handle, base, frameSize, 1)
+      processInterleavedOnSessionQueue(
+        handle,
+        channelBuffer: channelBuffer,
+        frameSize: frameSize,
+        offset: offset,
+        scratch: &scratch
+      )
     }
+  }
+
+  /// Caller must be on [sessionQueue].
+  static func processInterleavedOnSessionQueue(
+    _ handle: OpaquePointer,
+    channelBuffer: UnsafeMutablePointer<Float>,
+    frameSize: Int,
+    offset: Int,
+    scratch: inout [Float]
+  ) {
+    dispatchPrecondition(condition: .onQueue(sessionQueue))
+    _ = scratch
+    guard frameSize > 0 else {
+      return
+    }
+    proton_deepfilter_set_enabled(handle, 1)
+    let base = channelBuffer.advanced(by: offset)
+    _ = proton_deepfilter_process_interleaved(handle, base, frameSize, 1)
   }
 
   #else
@@ -259,17 +312,29 @@ enum ProtonDeepFilterNative {
   }
 
   /// Caller must be on [sessionQueue].
-  static func createOnSessionQueue(modelResourceName: String) -> OpaquePointer? {
+  static func createOnSessionQueue(
+    modelResourceName: String,
+    attenLimDb: Float = defaultAttenLimDb
+  ) -> OpaquePointer? {
     dispatchPrecondition(condition: .onQueue(sessionQueue))
     guard let path = bundledModelPath(resourceName: modelResourceName), let dfCreate else {
       return nil
     }
     return path.withCString { cPath in
-      guard let raw = dfCreate(cPath, 100, nil) else {
+      guard let raw = dfCreate(cPath, attenLimDb, nil) else {
         return nil
       }
       return OpaquePointer(raw)
     }
+  }
+
+  /// Caller must be on [sessionQueue].
+  static func setAttenLimOnSessionQueue(_ handle: OpaquePointer?, limDb: Float) {
+    dispatchPrecondition(condition: .onQueue(sessionQueue))
+    guard let handle, let dfSetAttenFn else {
+      return
+    }
+    dfSetAttenFn(UnsafeMutableRawPointer(handle), limDb)
   }
 
   /// Caller must be on [sessionQueue].
@@ -299,26 +364,43 @@ enum ProtonDeepFilterNative {
     scratch: inout [Float]
   ) {
     sessionQueue.sync {
-      guard let dfProcessFrame, frameSize > 0 else {
+      processInterleavedOnSessionQueue(
+        handle,
+        channelBuffer: channelBuffer,
+        frameSize: frameSize,
+        offset: offset,
+        scratch: &scratch
+      )
+    }
+  }
+
+  /// Caller must be on [sessionQueue].
+  static func processInterleavedOnSessionQueue(
+    _ handle: OpaquePointer,
+    channelBuffer: UnsafeMutablePointer<Float>,
+    frameSize: Int,
+    offset: Int,
+    scratch: inout [Float]
+  ) {
+    dispatchPrecondition(condition: .onQueue(sessionQueue))
+    guard let dfProcessFrame, frameSize > 0 else {
+      return
+    }
+    if scratch.count < frameSize {
+      scratch = [Float](repeating: 0, count: frameSize)
+    }
+    let base = channelBuffer.advanced(by: offset)
+    scratch.withUnsafeMutableBufferPointer { output in
+      guard let outBase = output.baseAddress else {
         return
       }
-      // Blocks WebRTC thread for one df frame — keep hop size small.
-      if scratch.count < frameSize {
-        scratch = [Float](repeating: 0, count: frameSize)
-      }
-      let base = channelBuffer.advanced(by: offset)
-      scratch.withUnsafeMutableBufferPointer { output in
-        guard let outBase = output.baseAddress else {
-          return
-        }
-        _ = dfProcessFrame(
-          UnsafeMutableRawPointer(handle),
-          base,
-          outBase
-        )
-        for i in 0..<frameSize {
-          base[i] = outBase[i]
-        }
+      _ = dfProcessFrame(
+        UnsafeMutableRawPointer(handle),
+        base,
+        outBase
+      )
+      for i in 0..<frameSize {
+        base[i] = outBase[i]
       }
     }
   }

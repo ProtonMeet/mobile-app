@@ -38,6 +38,8 @@
  * SOFTWARE.
  */
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
@@ -108,6 +110,23 @@ class _SoundWaveformWidgetState extends State<SoundWaveformWidget>
       vsync: this,
       duration: Duration(milliseconds: widget.durationInMilliseconds),
     )..repeat();
+  }
+
+  @override
+  void didUpdateWidget(SoundWaveformWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.audioTrack.mediaStreamTrack.id !=
+        widget.audioTrack.mediaStreamTrack.id) {
+      unawaited(_restartVisualizer());
+    }
+  }
+
+  Future<void> _restartVisualizer() async {
+    await _stopVisualizer(widget.audioTrack);
+    if (!mounted) {
+      return;
+    }
+    await _startVisualizer(widget.audioTrack);
   }
 
   @override

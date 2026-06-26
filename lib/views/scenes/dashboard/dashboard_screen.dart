@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
-import 'package:meet/helper/extension/frb_upcoming_meetings.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/helper/logger.dart' as l;

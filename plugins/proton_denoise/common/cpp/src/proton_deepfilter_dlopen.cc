@@ -155,7 +155,7 @@ ProtonDeepFilterHandle* proton_deepfilter_create(const char* model_path) {
     return nullptr;
   }
 
-  DFState* state = g_df_create(model_path, 100.f, nullptr);
+  DFState* state = g_df_create(model_path, PROTON_DEEPFILTER_DEFAULT_ATTEN_LIM_DB, nullptr);
   if (state == nullptr) {
     return nullptr;
   }

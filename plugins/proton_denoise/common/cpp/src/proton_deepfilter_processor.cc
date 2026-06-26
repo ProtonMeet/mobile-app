@@ -71,7 +71,7 @@ ProtonDeepFilterHandle* proton_deepfilter_create(const char* model_path) {
   if (model_path == nullptr || model_path[0] == '\0') {
     return nullptr;
   }
-  DFState* state = df_create(model_path, 100.f, nullptr);
+  DFState* state = df_create(model_path, PROTON_DEEPFILTER_DEFAULT_ATTEN_LIM_DB, nullptr);
   if (state == nullptr) {
     return nullptr;
   }
