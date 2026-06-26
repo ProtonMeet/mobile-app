@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/services.dart';
 import 'package:meta/meta.dart';
+import 'package:proton_denoise/deepfilter_config.dart';
 import 'package:proton_denoise/denoise_models.dart';
 import 'package:proton_denoise/denoise_type.dart';
 import 'package:proton_denoise/src/denoise_platform.dart';
@@ -230,8 +231,34 @@ class ProtonDenoiseChannel {
   Future<void> attachDenoise({
     required String trackId,
     required DenoiseType type,
+    double? deepFilterAttenLimDb,
   }) async {
-    await _invokeAttachDetach('attach', trackId, type);
+    await _invokeAttachDetach(
+      'attach',
+      trackId,
+      type,
+      deepFilterAttenLimDb: deepFilterAttenLimDb,
+    );
+  }
+
+  Future<void> setDeepFilterAttenLim({
+    required String trackId,
+    required double attenLimDb,
+  }) async {
+    if (!isProtonDenoisePlatformSupported) {
+      return;
+    }
+    try {
+      await _channel.invokeMethod<void>('setDeepFilterAttenLim', {
+        'trackId': trackId,
+        'attenLimDb': attenLimDb,
+      });
+    } on MissingPluginException {
+      return;
+    } on PlatformException catch (e) {
+      debugPrint('[ProtonDenoise] setDeepFilterAttenLim failed: $e');
+      rethrow;
+    }
   }
 
   Future<void> detachDenoise({required String trackId}) async {
@@ -241,14 +268,22 @@ class ProtonDenoiseChannel {
   Future<void> _invokeAttachDetach(
     String method,
     String trackId,
-    DenoiseType? type,
-  ) async {
+    DenoiseType? type, {
+    double? deepFilterAttenLimDb,
+  }) async {
     if (!isProtonDenoisePlatformSupported) {
       return;
     }
     final args = <String, dynamic>{'trackId': trackId};
     if (type != null) {
       args['type'] = type.id;
+    }
+    if (deepFilterAttenLimDb != null &&
+        (type == DenoiseType.deepfilter || type == DenoiseType.deepfilter2)) {
+      args['deepFilterAttenLimDb'] = deepFilterAttenLimDb.clamp(
+        kDeepFilterMinAttenLimDb,
+        kDeepFilterMaxAttenLimDb,
+      );
     }
     try {
       await _channel.invokeMethod<void>(method, args);

@@ -17,6 +17,9 @@ extern "C" {
 #define PROTON_DEEPFILTER_EXPORT __attribute__((visibility("default")))
 #endif
 
+/// Voice-call default: caps noise suppression depth (dB). 100 = libDF unlimited.
+#define PROTON_DEEPFILTER_DEFAULT_ATTEN_LIM_DB 30.f
+
 typedef struct ProtonDeepFilterHandle ProtonDeepFilterHandle;
 
 /// Resolves df_* symbols from libdeepfilter.so (dlopen / RTLD_DEFAULT). Returns 1 when ready.

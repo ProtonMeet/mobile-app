@@ -3,19 +3,38 @@ import flutter_webrtc
 /// DeepFilterNet capture processor — session queue matches Android [ProtonDeepFilterNative].
 @objc final class DeepFilterProcessor: NSObject, ExternalAudioProcessingDelegate {
   private let modelResourceName: String
+  private var attenLimDb: Float
   private let stateLock = NSLock()
   private(set) var isEnabled = false
   private var handle: OpaquePointer?
   private var frameSize: Int = 0
   private var scratchBuffer: [Float] = []
+  private var tornDown = false
 
-  @objc init(modelResourceName: String) {
+  @objc init(
+    modelResourceName: String,
+    attenLimDb: Float = ProtonDeepFilterNative.defaultAttenLimDb
+  ) {
     self.modelResourceName = modelResourceName
+    self.attenLimDb = attenLimDb
     super.init()
   }
 
+  func setAttenLimDb(_ limDb: Float) {
+    attenLimDb = limDb
+    ProtonDeepFilterNative.performOnSessionQueue {
+      stateLock.lock()
+      let activeHandle = handle
+      stateLock.unlock()
+      if let activeHandle {
+        ProtonDeepFilterNative.setAttenLimOnSessionQueue(activeHandle, limDb: limDb)
+      }
+    }
+  }
+
   deinit {
-    ProtonDeepFilterNative.sessionQueue.sync {
+    // replace()/scheduleTeardown() already run on sessionQueue; sync here deadlocks.
+    ProtonDeepFilterNative.performOnSessionQueue {
       tearDownOnSessionQueue()
     }
   }
@@ -81,6 +100,7 @@ import flutter_webrtc
     completion: @escaping (Bool) -> Void
   ) {
     ProtonDeepFilterNative.sessionQueue.async {
+      old?.disable()
       old?.tearDownOnSessionQueue()
       let ready = new.warmUpOnSessionQueue()
       DispatchQueue.main.async {
@@ -100,7 +120,10 @@ import flutter_webrtc
     stateLock.unlock()
 
     guard ProtonDeepFilterNative.isBundled(modelResourceName: modelResourceName),
-      let created = ProtonDeepFilterNative.createOnSessionQueue(modelResourceName: modelResourceName)
+      let created = ProtonDeepFilterNative.createOnSessionQueue(
+        modelResourceName: modelResourceName,
+        attenLimDb: attenLimDb
+      )
     else {
       return false
     }
@@ -125,6 +148,11 @@ import flutter_webrtc
   private func tearDownOnSessionQueue() {
     dispatchPrecondition(condition: .onQueue(ProtonDeepFilterNative.sessionQueue))
     stateLock.lock()
+    guard !tornDown else {
+      stateLock.unlock()
+      return
+    }
+    tornDown = true
     let toDestroy = handle
     handle = nil
     frameSize = 0
@@ -155,18 +183,35 @@ import flutter_webrtc
     }
 
     var scratch = scratchBuffer
-    for ch in 0..<channels {
-      let channelBuffer = audioBuffer.rawBuffer(forChannel: ch)
-      var offset = 0
-      while offset + activeFrameSize <= frames {
-        ProtonDeepFilterNative.processInterleaved(
-          activeHandle,
-          channelBuffer: channelBuffer,
-          frameSize: activeFrameSize,
-          offset: offset,
-          scratch: &scratch
-        )
-        offset += activeFrameSize  // df expects fixed hop size per channel
+    ProtonDeepFilterNative.sessionQueue.sync {
+      stateLock.lock()
+      let stillEnabled = isEnabled
+      let liveHandle = handle
+      let liveFrameSize = frameSize
+      stateLock.unlock()
+
+      guard stillEnabled,
+        let liveHandle,
+        liveHandle == activeHandle,
+        liveFrameSize == activeFrameSize,
+        liveFrameSize > 0
+      else {
+        return
+      }
+
+      for ch in 0..<channels {
+        let channelBuffer = audioBuffer.rawBuffer(forChannel: ch)
+        var offset = 0
+        while offset + liveFrameSize <= frames {
+          ProtonDeepFilterNative.processInterleavedOnSessionQueue(
+            liveHandle,
+            channelBuffer: channelBuffer,
+            frameSize: liveFrameSize,
+            offset: offset,
+            scratch: &scratch
+          )
+          offset += liveFrameSize  // df expects fixed hop size per channel
+        }
       }
     }
   }

@@ -44,6 +44,7 @@ class AudioDenoiseChannel(
                     }
                     "attach" -> attach(call, result)
                     "detach" -> detach(call, result)
+                    "setDeepFilterAttenLim" -> setDeepFilterAttenLim(call, result)
                     "denoiseDebugAudioFile" -> {
                         if (!isDebuggableBuild()) {
                             result.error("UNAVAILABLE", "denoiseDebugAudioFile is debug-only", null)
@@ -145,9 +146,16 @@ class AudioDenoiseChannel(
             null -> false
         }
 
+    private fun parseDeepFilterAttenLimDb(call: MethodCall): Float {
+        val raw = call.argument<Number>("deepFilterAttenLimDb")
+        return raw?.toFloat()?.coerceIn(1f, 100f)
+            ?: MeetAudioDeepFilterProcessor.DEFAULT_ATTEN_LIM_DB
+    }
+
     private fun attach(call: MethodCall, result: MethodChannel.Result) {
         val trackId = call.argument<String>("trackId")
         val typeId = call.argument<String>("type")
+        val deepFilterAttenLimDb = parseDeepFilterAttenLimDb(call)
         if (trackId.isNullOrEmpty() || typeId.isNullOrEmpty()) {
             result.error("ARGS", "trackId and type required", null)
             return
@@ -188,13 +196,21 @@ class AudioDenoiseChannel(
                 }
                 if (attachedTrackId == trackId && attachedKind == kind) {
                     // Idempotent re-attach — same track + backend already wired.
-                    processors[trackId]?.setEnabled(true)
+                    processors[trackId]?.let { holder ->
+                        holder.setEnabled(true)
+                        holder.applyDeepFilterAttenLim(deepFilterAttenLimDb)
+                    }
                     result.success(null)
                     return
                 }
                 clearOtherProcessors(keepTrackId = trackId, plugin = plugin)
                 detachProcessorFromTrack(trackId, plugin, removeFromMap = true)
-                val holder = AudioProcessingAdapterHolder(kind, appContext)
+                val holder =
+                    AudioProcessingAdapterHolder(
+                        kind,
+                        appContext,
+                        deepFilterAttenLimDb = deepFilterAttenLimDb,
+                    )
                 // WebRTC calls initialize only once at factory setup; processors added later
                 // must be initialized explicitly (iOS creates RNNoise handle in init()).
                 holder.processor.initialize(
@@ -210,6 +226,22 @@ class AudioDenoiseChannel(
                 result.success(null)
             }
         }
+    }
+
+    private fun setDeepFilterAttenLim(call: MethodCall, result: MethodChannel.Result) {
+        val trackId = call.argument<String>("trackId")
+        val attenLimDb = call.argument<Number>("attenLimDb")?.toFloat()
+        if (trackId.isNullOrEmpty() || attenLimDb == null) {
+            result.error("ARGS", "trackId and attenLimDb required", null)
+            return
+        }
+        val holder = processors[trackId]
+        if (holder == null) {
+            result.error("TRACK", "No denoise processor for trackId=$trackId", null)
+            return
+        }
+        holder.applyDeepFilterAttenLim(attenLimDb.coerceIn(1f, 100f))
+        result.success(null)
     }
 
     private fun denoiseDebugAudioFile(call: MethodCall, result: MethodChannel.Result) {
@@ -361,18 +393,23 @@ class AudioDenoiseChannel(
     private class AudioProcessingAdapterHolder(
         kind: DenoiseKind,
         appContext: android.content.Context,
+        deepFilterAttenLimDb: Float = MeetAudioDeepFilterProcessor.DEFAULT_ATTEN_LIM_DB,
     ) {
         val processor: MeetAudioCaptureProcessor =
             when (kind) {
                 DenoiseKind.RNNOISE -> MeetAudioRnnoiseProcessor()
                 DenoiseKind.DEEPFILTER,
                 DenoiseKind.DEEPFILTER2,
-                -> MeetAudioDeepFilterProcessor(appContext)
+                -> MeetAudioDeepFilterProcessor(appContext, deepFilterAttenLimDb)
                 DenoiseKind.DTLN_RS -> MeetAudioDtlnRsProcessor()
             }
 
         fun setEnabled(enabled: Boolean) {
             processor.setEnabled(enabled)
+        }
+
+        fun applyDeepFilterAttenLim(attenLimDb: Float) {
+            (processor as? MeetAudioDeepFilterProcessor)?.setAttenLimDb(attenLimDb)
         }
 
         fun release() {

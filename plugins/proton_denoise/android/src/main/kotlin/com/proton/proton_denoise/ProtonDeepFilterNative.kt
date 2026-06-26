@@ -42,6 +42,13 @@ internal object ProtonDeepFilterNative {
         nativeSetEnabled(handle, enabled)
     }
 
+    fun setAttenLim(handle: Long, limDb: Float) {
+        if (handle == 0L || !ensureProtonDenoiseLoaded()) {
+            return
+        }
+        nativeSetAttenLim(handle, limDb)
+    }
+
     fun processInterleavedAt(
         handle: Long,
         buffer: ByteBuffer,
@@ -106,6 +113,8 @@ internal object ProtonDeepFilterNative {
     private external fun nativeGetFrameSize(handle: Long): Int
 
     private external fun nativeSetEnabled(handle: Long, enabled: Boolean)
+
+    private external fun nativeSetAttenLim(handle: Long, limDb: Float)
 
     private external fun nativeProcessInterleavedAt(
         handle: Long,

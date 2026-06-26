@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit
  */
 internal class MeetAudioDeepFilterProcessor(
     private val appContext: Context,
+    private var attenLimDb: Float = DEFAULT_ATTEN_LIM_DB,
 ) : MeetAudioCaptureProcessor {
     private val lock = Any()
     private val sessionExecutor = Executors.newSingleThreadExecutor { runnable ->
@@ -33,6 +34,15 @@ internal class MeetAudioDeepFilterProcessor(
             }
             if (handle != 0L) {
                 ProtonDeepFilterNative.setEnabled(handle, value)
+            }
+        }
+    }
+
+    fun setAttenLimDb(value: Float) {
+        synchronized(lock) {
+            attenLimDb = value
+            if (handle != 0L) {
+                ProtonDeepFilterNative.setAttenLim(handle, value)
             }
         }
     }
@@ -121,6 +131,7 @@ internal class MeetAudioDeepFilterProcessor(
         synchronized(lock) {
             if (handle == 0L) {
                 handle = created
+                ProtonDeepFilterNative.setAttenLim(handle, attenLimDb)
                 ProtonDeepFilterNative.setEnabled(handle, enabled)
                 Log.i(
                     TAG,
@@ -151,6 +162,7 @@ internal class MeetAudioDeepFilterProcessor(
 
     companion object {
         private const val TAG = "MeetAudioDeepFilter"
+        const val DEFAULT_ATTEN_LIM_DB = 30f
 
         fun isNativeReady(context: Context): Boolean =
             ProtonDeepFilterNative.isAvailable &&

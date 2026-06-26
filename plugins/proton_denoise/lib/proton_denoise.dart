@@ -8,6 +8,7 @@
 library;
 
 export 'audio_denoise_track_processor.dart';
+export 'deepfilter_config.dart';
 export 'denoise_models.dart';
 export 'denoise_type.dart';
 
@@ -85,7 +86,20 @@ class ProtonDenoiseEffects {
   Future<void> attachDenoise({
     required String trackId,
     required DenoiseType type,
-  }) => _channel.attachDenoise(trackId: trackId, type: type);
+    double? deepFilterAttenLimDb,
+  }) => _channel.attachDenoise(
+    trackId: trackId,
+    type: type,
+    deepFilterAttenLimDb: deepFilterAttenLimDb,
+  );
+
+  Future<void> setDeepFilterAttenLim({
+    required String trackId,
+    required double attenLimDb,
+  }) => _channel.setDeepFilterAttenLim(
+    trackId: trackId,
+    attenLimDb: attenLimDb,
+  );
 
   Future<void> detachDenoise({required String trackId}) =>
       _channel.detachDenoise(trackId: trackId);

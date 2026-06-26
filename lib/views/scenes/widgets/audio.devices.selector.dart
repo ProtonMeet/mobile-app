@@ -21,6 +21,7 @@ class AudioDevicesSelector extends StatefulWidget {
   final double? width;
   final double minMerge;
   final bool autoSelectDevice;
+  final OverlayAnchor overlayAnchor;
   const AudioDevicesSelector({
     required this.micDevices,
     required this.speakerDevices,
@@ -36,6 +37,7 @@ class AudioDevicesSelector extends StatefulWidget {
     this.width = 280,
     this.minMerge = 16,
     this.autoSelectDevice = false,
+    this.overlayAnchor = OverlayAnchor.auto,
     super.key,
   });
 
@@ -46,6 +48,7 @@ class AudioDevicesSelector extends StatefulWidget {
 class _AudioDevicesSelectorState extends State<AudioDevicesSelector> {
   OverlayEntry? _overlayEntry;
   bool _isOverlayVisible = false;
+  bool _overlayShowsBelow = false;
   bool _enabled = false;
   final GlobalKey _buttonKey = GlobalKey();
 
@@ -102,6 +105,19 @@ class _AudioDevicesSelectorState extends State<AudioDevicesSelector> {
   }
 
   void _showOverlay() {
+    final renderBox =
+        _buttonKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null) {
+      final placement = computeOverlayPlacement(
+        context: context,
+        position: renderBox.localToGlobal(Offset.zero),
+        buttonSize: renderBox.size,
+        preferredHeight: 320,
+        minMargin: widget.minMerge,
+        anchor: widget.overlayAnchor,
+      );
+      setState(() => _overlayShowsBelow = placement.showsBelow);
+    }
     _overlayEntry = _createOverlayEntry();
     Overlay.of(context).insert(_overlayEntry!);
     setState(() {
@@ -124,8 +140,19 @@ class _AudioDevicesSelectorState extends State<AudioDevicesSelector> {
         _buttonKey.currentContext?.findRenderObject() as RenderBox?;
     final Offset? position = renderBox?.localToGlobal(Offset.zero);
     final Size? buttonSize = renderBox?.size;
-    final overlayWidth = 320.0;
-    final overlayHeight = 320.0;
+    const overlayWidth = 320.0;
+    const overlayHeight = 320.0;
+    final placement = position != null && buttonSize != null
+        ? computeOverlayPlacement(
+            context: context,
+            position: position,
+            buttonSize: buttonSize,
+            preferredHeight: overlayHeight,
+            minMargin: widget.minMerge,
+            anchor: widget.overlayAnchor,
+          )
+        : null;
+
     return OverlayEntry(
       builder: (context) => GestureDetector(
         onTap: _removeOverlay,
@@ -134,7 +161,7 @@ class _AudioDevicesSelectorState extends State<AudioDevicesSelector> {
           color: Colors.black.withValues(alpha: 0.3),
           child: Stack(
             children: [
-              if (position != null && buttonSize != null)
+              if (position != null && buttonSize != null && placement != null)
                 Positioned(
                   left: computeOverlayLeft(
                     context: context,
@@ -143,12 +170,14 @@ class _AudioDevicesSelectorState extends State<AudioDevicesSelector> {
                     overlayWidth: overlayWidth,
                     minMargin: widget.minMerge,
                   ),
-                  top: position.dy - overlayHeight - 4,
+                  top: placement.top,
                   child: GestureDetector(
                     onTap: () {},
                     child: Container(
                       width: overlayWidth,
-                      height: overlayHeight,
+                      constraints: BoxConstraints(
+                        maxHeight: placement.maxHeight,
+                      ),
                       padding: const EdgeInsets.symmetric(
                         vertical: 20,
                         horizontal: 12,
@@ -297,8 +326,12 @@ class _AudioDevicesSelectorState extends State<AudioDevicesSelector> {
                   ),
                   child: Icon(
                     _isOverlayVisible
-                        ? Icons.keyboard_arrow_up
-                        : Icons.keyboard_arrow_down,
+                        ? (_overlayShowsBelow
+                              ? Icons.keyboard_arrow_up
+                              : Icons.keyboard_arrow_down)
+                        : (_overlayShowsBelow
+                              ? Icons.keyboard_arrow_down
+                              : Icons.keyboard_arrow_up),
                     color: context.colors.textNorm,
                     size: 22,
                   ),
