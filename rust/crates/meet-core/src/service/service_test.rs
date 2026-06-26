@@ -64,7 +64,9 @@ mod tests {
         reexports::{cose_key_set::CoseKeySet, Issuer, IssuerParams, SpiceOidcClaims},
         MimiProvider, ProtonMeetClaims,
     };
-    use proton_meet_mls::{kv::MemKv, CommitBundle, MlsClientConfig, MlsGroup, MlsStore};
+    use proton_meet_mls::{
+        kv::MemKv, CommitBundle, MlsClient, MlsClientConfig, MlsGroup, MlsGroupConfig, MlsStore,
+    };
     use uuid::Uuid;
 
     use crate::domain::user::ports::{user_service::UserService, ConnectionState};
@@ -2964,6 +2966,448 @@ mod tests {
         (group_info_message, ratchet_tree_option)
     }
 
+    async fn mls_direct_test_create_client(email: &str) -> MlsClient<MemKv> {
+        use meet_identifiers::Domain;
+        use mls_trait::MlsClientTrait;
+        use proton_claims::reexports::cose_key_set::CoseKeySet;
+
+        let kv = MemKv::new();
+        let (client, _) = MlsClient::new(kv, MlsClientConfig::default())
+            .await
+            .unwrap();
+        let domain = Domain::new_random();
+
+        let cnf = client.get_holder_confirmation_key_pem().unwrap();
+        let (sd_cwt, issuer_signing_key) =
+            mock_sdcwt_issuance(&cnf, &domain, email, proton_claims::Role::User, false).unwrap();
+
+        let cks = CoseKeySet::new(&issuer_signing_key).unwrap();
+        client.initialize(MemKv::new(), sd_cwt, &cks, &cks).unwrap()
+    }
+
+    async fn mls_direct_test_create_host_group(
+        client: &mut MlsClient<MemKv>,
+    ) -> (Arc<RwLock<MlsGroup<MemKv>>>, CommitBundle) {
+        use identity::Disclosure;
+        use mls_trait::{MlsClientTrait, MlsGroupTrait};
+        use proton_meet_mls::MlsGroupConfig;
+
+        let user_id = client.sd_cwt_mut().unwrap().user_id().unwrap();
+        let group_id = GroupId::new(&user_id.domain);
+
+        let mut group = client
+            .new_group(
+                &group_id,
+                Disclosure::Full,
+                MlsGroupConfig::default(user_id.clone(), true),
+            )
+            .await
+            .unwrap()
+            .store()
+            .await
+            .unwrap();
+
+        let (bundle, _) = group.new_commit(vec![]).await.unwrap();
+        group.merge_pending_commit().await.unwrap();
+
+        (Arc::new(RwLock::new(group)), bundle)
+    }
+
+    async fn mls_direct_test_join_member(
+        joiner: &mut MlsClient<MemKv>,
+        host_group: &Arc<RwLock<MlsGroup<MemKv>>>,
+        existing_groups: &[Arc<RwLock<MlsGroup<MemKv>>>],
+    ) -> Arc<RwLock<MlsGroup<MemKv>>> {
+        use identity::Disclosure;
+        use mls_trait::{MlsClientTrait, MlsGroupTrait};
+
+        let (mls_message, ratchet_tree_mls_types) = {
+            let host = host_group.read().await;
+            let group_info = host
+                .group_info_for_ext_commit()
+                .await
+                .expect("host should export group info for external commit");
+            let encoded = group_info.mls_encode_to_vec().unwrap();
+            let mls_message = mls_types::MlsMessage::from_bytes(&encoded).unwrap();
+            let ratchet_tree_mls_types: mls_types::PublicRatchetTree = host.ratchet_tree().into();
+            (mls_message, ratchet_tree_mls_types)
+        };
+
+        let (group, commit_bundle) = joiner
+            .join_group_via_external_commit(
+                mls_message,
+                ratchet_tree_mls_types,
+                Disclosure::Full,
+                vec![],
+            )
+            .await
+            .expect("external join should succeed");
+        let group = group.store().await.expect("joined group should store");
+
+        for existing in existing_groups {
+            existing
+                .write()
+                .await
+                .decrypt_message(commit_bundle.commit.clone())
+                .await
+                .expect("existing member should process join commit");
+        }
+
+        Arc::new(RwLock::new(group))
+    }
+
+    async fn mls_direct_test_find_group_index_by_own_leaf(
+        groups: &[Arc<RwLock<MlsGroup<MemKv>>>],
+        leaf_index: u32,
+    ) -> usize {
+        let leaf_index = LeafIndex::try_from(leaf_index).expect("valid leaf index");
+        for (idx, group) in groups.iter().enumerate() {
+            let own_leaf = group.read().await.own_leaf_index().unwrap();
+            if own_leaf == leaf_index {
+                return idx;
+            }
+        }
+        panic!("no group owns leaf index {leaf_index}");
+    }
+
+    async fn mls_direct_test_remove_member_and_sync(
+        committer: &Arc<RwLock<MlsGroup<MemKv>>>,
+        all_groups: &mut Vec<Arc<RwLock<MlsGroup<MemKv>>>>,
+        leaf_index: u32,
+    ) {
+        use mls_trait::{MlsGroupTrait, ProposalArg};
+
+        let removed_group_idx =
+            mls_direct_test_find_group_index_by_own_leaf(all_groups, leaf_index).await;
+        let leaf_index = LeafIndex::try_from(leaf_index).expect("valid leaf index");
+
+        let commit_message = {
+            let mut group = committer.write().await;
+            let (commit_bundle, _) = group
+                .new_commit(vec![ProposalArg::Remove(leaf_index)])
+                .await
+                .expect("remove commit should succeed");
+            group
+                .merge_pending_commit()
+                .await
+                .expect("remove commit should merge");
+            commit_bundle.commit
+        };
+
+        for (idx, group) in all_groups.iter().enumerate() {
+            if idx == removed_group_idx {
+                continue;
+            }
+            group
+                .write()
+                .await
+                .decrypt_message(commit_message.clone())
+                .await
+                .expect("remaining member should process removal commit");
+        }
+
+        all_groups.remove(removed_group_idx);
+    }
+
+    async fn mls_direct_test_assert_groups_in_sync(
+        groups: &[Arc<RwLock<MlsGroup<MemKv>>>],
+        expected_member_count: usize,
+    ) {
+        use mls_trait::MlsGroupTrait;
+
+        let epoch = *groups[0].read().await.epoch();
+        for (idx, group) in groups.iter().enumerate() {
+            let group_read = group.read().await;
+            assert_eq!(*group_read.epoch(), epoch, "group {idx} epoch mismatch",);
+            assert_eq!(
+                group_read.roster().count(),
+                expected_member_count,
+                "group {idx} roster count mismatch",
+            );
+        }
+    }
+
+    async fn mls_direct_test_join_members(
+        host_group: &Arc<RwLock<MlsGroup<MemKv>>>,
+        groups: &mut Vec<Arc<RwLock<MlsGroup<MemKv>>>>,
+        join_count: usize,
+        email_prefix: &str,
+    ) {
+        for offset in 0..join_count {
+            let email = format!("{email_prefix}{offset}@proton.me");
+            let mut joiner = mls_direct_test_create_client(&email).await;
+            let new_group = mls_direct_test_join_member(&mut joiner, host_group, groups).await;
+            groups.push(new_group);
+        }
+    }
+
+    async fn mls_direct_test_validate_with_external_client(
+        client: &MlsClient<MemKv>,
+        group_info_message: mls_spec::messages::MlsMessage,
+        ratchet_tree_option: RatchetTreeOption,
+    ) -> Result<(), anyhow::Error> {
+        use identity::{Disclosure, PresentationContext};
+        use mls_trait::MlsClientTrait;
+
+        let signing_identity =
+            client.new_signing_identity(Disclosure::Full, &PresentationContext::Default)?;
+        let ext_client = mls_rs::external_client::ExternalClient::builder()
+            .signer(client.signature_sk.clone(), signing_identity)
+            .identity_provider(client.identity_provider()?)
+            .crypto_provider(client.delegate()?.crypto_provider())
+            .build();
+
+        let group_info: mls_types::MlsMessage = group_info_message.try_into().map_err(|e| {
+            anyhow::anyhow!("Failed to convert group info for external client validation: {e}")
+        })?;
+        let ratchet_tree: mls_types::PublicRatchetTree =
+            ratchet_tree_option.try_into().map_err(|e| {
+                anyhow::anyhow!(
+                    "Failed to convert ratchet tree option for external client validation: {e}"
+                )
+            })?;
+
+        ext_client
+            .observe_group(group_info.into(), Some(ratchet_tree.into()), None)
+            .await
+            .map(|_| ())
+            .map_err(|e| anyhow::anyhow!("ExternalClient observe_group failed: {e}"))
+    }
+
+    async fn mls_direct_test_join_member_on_host_only(
+        joiner: &mut MlsClient<MemKv>,
+        host_group: &Arc<RwLock<MlsGroup<MemKv>>>,
+    ) {
+        use mls_trait::{MlsClientTrait, MlsGroupTrait};
+
+        let (mls_message, ratchet_tree_mls_types) =
+            mls_direct_test_host_snapshot_for_proposals(host_group).await;
+
+        let (_group, commit_bundle) = joiner
+            .join_group_via_external_commit(
+                mls_message,
+                ratchet_tree_mls_types,
+                Disclosure::Full,
+                vec![],
+            )
+            .await
+            .expect("external join commit should succeed");
+
+        host_group
+            .write()
+            .await
+            .decrypt_message(commit_bundle.commit)
+            .await
+            .expect("host should process external join commit");
+    }
+
+    async fn mls_direct_test_host_snapshot_for_proposals(
+        host_group: &Arc<RwLock<MlsGroup<MemKv>>>,
+    ) -> (mls_types::MlsMessage, mls_types::PublicRatchetTree) {
+        use mls_trait::MlsGroupTrait;
+
+        let host = host_group.read().await;
+        let group_info = host
+            .group_info_for_ext_commit()
+            .await
+            .expect("host should export group info");
+        let encoded = group_info.mls_encode_to_vec().unwrap();
+        let mls_message = mls_types::MlsMessage::from_bytes(&encoded).unwrap();
+        let ratchet_tree: mls_types::PublicRatchetTree = host.ratchet_tree().into();
+        (mls_message, ratchet_tree)
+    }
+
+    fn mls_direct_test_pick_random_removable_leaves(
+        roster_leaves: &[u32],
+        host_leaf: u32,
+        rng: &mut StdRng,
+        min_roster_for_remove: usize,
+    ) -> Vec<u32> {
+        if roster_leaves.len() < min_roster_for_remove {
+            return Vec::new();
+        }
+        let mut removable: Vec<u32> = roster_leaves
+            .iter()
+            .copied()
+            .filter(|leaf| *leaf != host_leaf)
+            .collect();
+        if removable.is_empty() {
+            return Vec::new();
+        }
+        let num_removes = rng.gen_range(0..=removable.len());
+        removable.shuffle(rng);
+        let selected: Vec<u32> = removable.into_iter().take(num_removes).collect();
+        debug_assert!(
+            selected.iter().all(|leaf| *leaf != host_leaf),
+            "picked remove leaves must not include the host leaf"
+        );
+        selected
+    }
+
+    fn mls_direct_test_assert_no_self_remove(
+        own_leaf: LeafIndex,
+        remove_leaves: &[u32],
+        context: &str,
+    ) {
+        for leaf in remove_leaves {
+            let leaf_index = LeafIndex::try_from(*leaf).expect("remove leaf index should be valid");
+            assert_ne!(
+                leaf_index, own_leaf,
+                "self-remove is not allowed ({context})"
+            );
+        }
+    }
+
+    async fn mls_direct_test_welcome_join_on_host(
+        host_group: &Arc<RwLock<MlsGroup<MemKv>>>,
+        joiner: &MlsClient<MemKv>,
+    ) {
+        use mls_trait::{MlsClientTrait, MlsGroupTrait};
+
+        let (key_packages, _) = joiner
+            .new_key_packages(1, Disclosure::Full)
+            .await
+            .expect("joiner should generate a key package");
+        let key_package = key_packages
+            .into_iter()
+            .next()
+            .expect("joiner should return one key package");
+
+        let mut host = host_group.write().await;
+        let (_commit_bundle, _) = host
+            .new_commit(vec![ProposalArg::Add(Box::new(key_package))])
+            .await
+            .expect("host should commit Add proposal");
+        host.merge_pending_commit()
+            .await
+            .expect("host should merge Add commit");
+    }
+
+    async fn mls_direct_test_welcome_joins_on_host(
+        host_group: &Arc<RwLock<MlsGroup<MemKv>>>,
+        join_count: usize,
+        name_prefix: &str,
+    ) {
+        for idx in 0..join_count {
+            let email = format!("{name_prefix}{idx}@proton.me");
+            let joiner = mls_direct_test_create_client(&email).await;
+            mls_direct_test_welcome_join_on_host(host_group, &joiner).await;
+        }
+    }
+
+    async fn mls_direct_test_remove_member_on_host(
+        host_group: &Arc<RwLock<MlsGroup<MemKv>>>,
+        leaf_index_u32: u32,
+    ) {
+        use mls_trait::MlsGroupTrait;
+
+        let leaf_index =
+            LeafIndex::try_from(leaf_index_u32).expect("valid leaf index for Remove");
+        let mut host = host_group.write().await;
+        let own_leaf = host.own_leaf_index().unwrap();
+        mls_direct_test_assert_no_self_remove(
+            own_leaf,
+            &[leaf_index_u32],
+            "host remove commit",
+        );
+
+        let (_commit_bundle, _) = host
+            .new_commit(vec![ProposalArg::Remove(leaf_index)])
+            .await
+            .expect("host should commit Remove proposal");
+        host.merge_pending_commit()
+            .await
+            .expect("host should merge Remove commit");
+    }
+
+    async fn mls_direct_test_validate_host_with_external_client(
+        host_client: &MlsClient<MemKv>,
+        host_group: &Arc<RwLock<MlsGroup<MemKv>>>,
+        phase: &str,
+    ) {
+        use mls_trait::MlsGroupTrait;
+
+        let roster = host_group.read().await.roster().count();
+        let epoch = *host_group.read().await.epoch();
+        let (group_info_message, ratchet_tree_option) =
+            mls_group_export_snapshot(host_group).await;
+        mls_direct_test_validate_with_external_client(
+            host_client,
+            group_info_message,
+            ratchet_tree_option,
+        )
+        .await
+        .unwrap_or_else(|e| {
+            panic!(
+                "ExternalClient observe_group failed after {phase} (epoch={epoch} roster={roster}): {e}"
+            )
+        });
+        eprintln!(
+            "[parent_hash_churn] {phase} epoch={epoch} roster={roster} observe_group=ok"
+        );
+    }
+
+    async fn mls_direct_test_batched_add_remove_round_on_host(
+        host_group: &Arc<RwLock<MlsGroup<MemKv>>>,
+        num_adds: usize,
+        remove_leaves: &[u32],
+        round: usize,
+    ) {
+        use mls_trait::MlsGroupTrait;
+
+        let own_leaf = host_group.read().await.own_leaf_index().unwrap();
+        mls_direct_test_assert_no_self_remove(
+            own_leaf,
+            remove_leaves,
+            &format!("round {round} before commit"),
+        );
+
+        let (group_info_message, ratchet_tree) =
+            mls_direct_test_host_snapshot_for_proposals(host_group).await;
+
+        for add_idx in 0..num_adds {
+            let email = format!("random-churn-r{round}-add-{add_idx}@proton.me");
+            let joiner = mls_direct_test_create_client(&email).await;
+            let proposal = joiner
+                .join_via_external_proposal(
+                    group_info_message.clone(),
+                    ratchet_tree.clone(),
+                    Disclosure::Full,
+                )
+                .await
+                .expect("external add proposal should succeed");
+
+            let (received, _) = host_group
+                .write()
+                .await
+                .decrypt_message(proposal)
+                .await
+                .expect("host should decrypt external add proposal");
+            assert!(
+                matches!(received, ReceivedMessage::Proposal),
+                "host should receive an Add proposal, got {received:?}"
+            );
+        }
+
+        let commit_args: Vec<ProposalArg> = remove_leaves
+            .iter()
+            .map(|leaf| {
+                ProposalArg::Remove(
+                    LeafIndex::try_from(*leaf).expect("remove leaf index should be valid"),
+                )
+            })
+            .collect();
+
+        let mut host = host_group.write().await;
+        let (_commit_bundle, _) = host
+            .new_commit(commit_args)
+            .await
+            .expect("batched add/remove commit should succeed");
+        host.merge_pending_commit()
+            .await
+            .expect("batched add/remove commit should merge");
+    }
+
     #[tokio::test]
     async fn test_mls_group_member_removal() {
         use identity::Disclosure;
@@ -3177,6 +3621,181 @@ mod tests {
         println!("✅ Test passed: MLS group member removal works correctly");
         println!("Final epoch: {:?}", group1.epoch());
         println!("Remaining members: {:?}", group1.roster().count());
+    }
+
+    /// Regression for mls-rs parent-hash validation after tree churn (awslabs#352).
+    ///
+    /// Replays `even_larger_group_fails_with_parent_hash_mismatch_blank_intermediate_nonblank_grandparent`:
+    /// welcome-join 6 → remove leaf 1 → welcome-join 6 → remove leaf 2 → welcome-join 6, validating
+    /// with `ExternalClient::observe_group` after each phase on the host group only.
+    ///
+    /// On mls-rs before the `different_unmerged` fix this fails with `ParentHashMismatch`.
+    #[tokio::test]
+    #[ignore = "slow MLS churn regression — CI: test:rust:slow-mls-churn"]
+    async fn test_large_group_parent_hash_survives_sequential_add_remove_churn() {
+        let mut host_client = mls_direct_test_create_client("host@proton.me").await;
+        let (host_group, _) = mls_direct_test_create_host_group(&mut host_client).await;
+
+        mls_direct_test_validate_host_with_external_client(
+            &host_client,
+            &host_group,
+            "initial host group",
+        )
+        .await;
+
+        mls_direct_test_welcome_joins_on_host(&host_group, 6, "phase1-").await;
+        mls_direct_test_validate_host_with_external_client(
+            &host_client,
+            &host_group,
+            "after phase1 joins (b-g)",
+        )
+        .await;
+
+        mls_direct_test_remove_member_on_host(&host_group, 1).await;
+        mls_direct_test_validate_host_with_external_client(
+            &host_client,
+            &host_group,
+            "after remove leaf 1",
+        )
+        .await;
+
+        mls_direct_test_welcome_joins_on_host(&host_group, 6, "phase2-").await;
+        mls_direct_test_validate_host_with_external_client(
+            &host_client,
+            &host_group,
+            "after phase2 joins (h-m)",
+        )
+        .await;
+
+        mls_direct_test_remove_member_on_host(&host_group, 2).await;
+        mls_direct_test_validate_host_with_external_client(
+            &host_client,
+            &host_group,
+            "after remove leaf 2",
+        )
+        .await;
+
+        mls_direct_test_welcome_joins_on_host(&host_group, 6, "phase3-").await;
+        mls_direct_test_validate_host_with_external_client(
+            &host_client,
+            &host_group,
+            "after phase3 joins (n-s)",
+        )
+        .await;
+    }
+
+    /// Random batched add/remove rounds on the host MLS group only. Each round commits
+    /// external Add proposals and zero or more Remove proposals in one epoch, then validates
+    /// the exported GroupInfo + ratchet tree via `ExternalClient::observe_group`.
+    #[tokio::test]
+    #[ignore = "slow MLS churn regression — CI: test:rust:slow-mls-churn"]
+    async fn test_large_group_random_batched_churn_validates_host_each_epoch() {
+        use mls_trait::MlsGroupTrait;
+
+        const ROUNDS: usize = 100;
+        const MAX_ADDS_PER_ROUND: usize = 20;
+        const SEED: u64 = 42;
+        const SEED_MEMBERS: usize = 3;
+        const MIN_ROSTER_FOR_REMOVE: usize = 2;
+
+        let mut rng = StdRng::seed_from_u64(SEED);
+
+        let mut host_client = mls_direct_test_create_client("random-churn-host@proton.me").await;
+        let (host_group, _) = mls_direct_test_create_host_group(&mut host_client).await;
+
+        for seed_idx in 0..SEED_MEMBERS {
+            let email = format!("random-churn-seed-{seed_idx}@proton.me");
+            let mut joiner = mls_direct_test_create_client(&email).await;
+            mls_direct_test_join_member_on_host_only(&mut joiner, &host_group).await;
+        }
+
+        let (seed_group_info, seed_ratchet_tree) = mls_group_export_snapshot(&host_group).await;
+        mls_direct_test_validate_with_external_client(
+            &host_client,
+            seed_group_info,
+            seed_ratchet_tree,
+        )
+        .await
+        .expect("external client should validate seeded host group");
+
+        eprintln!(
+            "[random_churn] seed={SEED} seeded roster={} epoch={}",
+            host_group.read().await.roster().count(),
+            host_group.read().await.epoch(),
+        );
+
+        for round in 1..=ROUNDS {
+            let epoch_before = *host_group.read().await.epoch();
+            let roster_before = host_group.read().await.roster().count();
+            let host_leaf = *host_group.read().await.own_leaf_index().unwrap();
+            let roster_leaves: Vec<u32> = host_group
+                .read()
+                .await
+                .roster()
+                .map(|member| *member.leaf_index())
+                .collect();
+
+            let mut num_adds = rng.gen_range(0..=MAX_ADDS_PER_ROUND);
+            let remove_leaves = mls_direct_test_pick_random_removable_leaves(
+                &roster_leaves,
+                host_leaf,
+                &mut rng,
+                MIN_ROSTER_FOR_REMOVE,
+            );
+            mls_direct_test_assert_no_self_remove(
+                LeafIndex::try_from(host_leaf).expect("host leaf index should be valid"),
+                &remove_leaves,
+                &format!("round {round}/{ROUNDS} after pick"),
+            );
+            let num_removes = remove_leaves.len();
+            if num_adds == 0 && num_removes == 0 {
+                num_adds = 1;
+            }
+
+            eprintln!(
+                "[random_churn] round={round}/{ROUNDS} epoch={epoch_before} roster={roster_before} num_adds={num_adds} num_removes={num_removes} remove_leaves={remove_leaves:?}"
+            );
+
+            mls_direct_test_batched_add_remove_round_on_host(
+                &host_group,
+                num_adds,
+                &remove_leaves,
+                round,
+            )
+            .await;
+
+            let epoch_after = *host_group.read().await.epoch();
+            let roster_after = host_group.read().await.roster().count();
+            let expected_roster = roster_before + num_adds - num_removes;
+
+            assert_eq!(
+                epoch_after,
+                epoch_before + 1,
+                "round {round} should advance epoch by one"
+            );
+            assert_eq!(
+                roster_after, expected_roster,
+                "round {round} roster size mismatch"
+            );
+
+            let (group_info_message, ratchet_tree_option) =
+                mls_group_export_snapshot(&host_group).await;
+            mls_direct_test_validate_with_external_client(
+                &host_client,
+                group_info_message,
+                ratchet_tree_option,
+            )
+            .await
+            .unwrap_or_else(|e| {
+                panic!(
+                    "round {round}/{ROUNDS} epoch_before={epoch_before} epoch_after={epoch_after} roster_before={roster_before} roster_after={roster_after} num_adds={num_adds} num_removes={num_removes} remove_leaves={remove_leaves:?}: {e}"
+                )
+            });
+
+            eprintln!(
+                "[random_churn] round={round}/{ROUNDS} done epoch={epoch_after} roster={roster_after} observe_group=ok"
+            );
+        }
     }
 
     #[tokio::test]

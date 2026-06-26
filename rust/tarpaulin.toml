@@ -13,6 +13,11 @@ exclude-files = [
     "crates/meet-chat/src/main.rs",
 ]
 features = "test"
+# Slow MLS churn regressions run in CI job test:rust:slow-mls-churn
+skip = [
+    "test_large_group_parent_hash_survives_sequential_add_remove_churn",
+    "test_large_group_random_batched_churn_validates_host_each_epoch",
+]
 # Sets a percentage threshold for failure ranging from 0-100, if coverage is below exit with a non-zero code
 # fail-under = 70
 # Coverage tracing backend to use [possible values: Auto, Ptrace, Llvm]
