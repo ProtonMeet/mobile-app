@@ -95,7 +95,7 @@ pub fn default_app_state() -> AppState {
     }
 }
 
-fn test_http_client_with_host(http_host: &str) -> ProtonHttpClient {
+async fn test_http_client_with_host(http_host: &str) -> ProtonHttpClient {
     let config = ApiConfig {
         spec: (
             "macos-meet@1.0.0".to_string(),
@@ -112,18 +112,19 @@ fn test_http_client_with_host(http_host: &str) -> ProtonHttpClient {
         Box::new(AuthStore::atlas(None)),
         http_host.to_string(),
     )
+    .await
     .expect("failed to build test http client")
 }
 
 /// Real atlas host — may succeed when CI has network access.
-pub fn test_proton_http_client() -> Arc<ProtonHttpClient> {
-    Arc::new(test_http_client_with_host("atlas.proton.black/api"))
+pub async fn test_proton_http_client() -> Arc<ProtonHttpClient> {
+    Arc::new(test_http_client_with_host("atlas.proton.black/api").await)
 }
 
 const UNREACHABLE_MUON_SERVER: &str = "http://127.0.0.1:1";
 
 /// Unreachable muon env so session-based HTTP calls fail without hitting atlas.
-pub fn unreachable_test_proton_http_client() -> Arc<ProtonHttpClient> {
+pub async fn unreachable_test_proton_http_client() -> Arc<ProtonHttpClient> {
     let config = ApiConfig {
         spec: (
             "macos-meet@1.0.0".to_string(),
@@ -144,6 +145,7 @@ pub fn unreachable_test_proton_http_client() -> Arc<ProtonHttpClient> {
             )),
             "127.0.0.1:1".to_string(),
         )
+        .await
         .expect("failed to build unreachable test http client"),
     )
 }
@@ -178,7 +180,7 @@ pub fn minimal_room_service() -> Arc<RoomService> {
 }
 
 pub async fn build_app(state: AppState) -> App {
-    build_app_with_http(state, test_proton_http_client()).await
+    build_app_with_http(state, test_proton_http_client().await).await
 }
 
 pub async fn build_app_with_http(state: AppState, http_client: Arc<ProtonHttpClient>) -> App {
@@ -199,7 +201,7 @@ pub async fn build_app_with_test_http(
     state: AppState,
     test_http: Arc<dyn crate::domain::user::ports::HttpClient>,
 ) -> App {
-    let http_client = test_proton_http_client();
+    let http_client = test_proton_http_client().await;
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(minimal_ws_mock()),
@@ -214,7 +216,7 @@ pub async fn build_app_with_test_http(
 }
 
 pub async fn build_app_with_service(state: AppState, service: Service) -> App {
-    let http_client = test_proton_http_client();
+    let http_client = test_proton_http_client().await;
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(minimal_ws_mock()),
@@ -360,7 +362,7 @@ pub fn room_service_with_http_and_crypto(
 }
 
 pub async fn build_app_with_room(state: AppState, room_service: Arc<RoomService>) -> App {
-    let http_client = test_proton_http_client();
+    let http_client = test_proton_http_client().await;
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(minimal_ws_mock()),
@@ -379,7 +381,7 @@ pub async fn build_app_with_room_and_ws(
     room_service: Arc<RoomService>,
     ws: MockWebSocketClient,
 ) -> App {
-    let http_client = test_proton_http_client();
+    let http_client = test_proton_http_client().await;
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(ws),
@@ -398,7 +400,7 @@ pub async fn build_app_with_room_and_service(
     service: Service,
     room_service: Arc<RoomService>,
 ) -> App {
-    let http_client = test_proton_http_client();
+    let http_client = test_proton_http_client().await;
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(minimal_ws_mock()),
@@ -417,7 +419,7 @@ pub async fn build_app_with_ws_and_service(
     state: AppState,
     service: Service,
 ) -> App {
-    let http_client = test_proton_http_client();
+    let http_client = test_proton_http_client().await;
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         ws,
@@ -435,7 +437,7 @@ pub async fn build_app_with_user_key_provider(
     state: AppState,
     user_key_provider: Arc<dyn UserKeyProvider>,
 ) -> App {
-    let http_client = test_proton_http_client();
+    let http_client = test_proton_http_client().await;
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(minimal_ws_mock()),
@@ -454,7 +456,7 @@ pub async fn build_app_with_room_and_user_key_provider(
     room_service: Arc<RoomService>,
     user_key_provider: Arc<dyn UserKeyProvider>,
 ) -> App {
-    let http_client = test_proton_http_client();
+    let http_client = test_proton_http_client().await;
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(minimal_ws_mock()),
@@ -469,7 +471,7 @@ pub async fn build_app_with_room_and_user_key_provider(
 }
 
 pub async fn build_app_with_ws(ws: MockWebSocketClient, state: AppState) -> App {
-    let http_client = test_proton_http_client();
+    let http_client = test_proton_http_client().await;
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(ws),
@@ -549,7 +551,7 @@ pub async fn two_user_mls_services_with_group(
     use mls_rs_codec::MlsEncode;
     use mls_spec::{messages::MlsMessageContent, Parsable};
     use mls_trait::MlsClientConfig;
-    use proton_meet_mls::{CipherSuite, MlsGroupTrait};
+    use proton_meet_mls::MlsGroupTrait;
 
     let (service1, store1) = mls_test_service(user1_id, meet_link).await;
     let (service2, store2) = mls_test_service(user2_id, meet_link).await;
@@ -623,7 +625,7 @@ pub async fn build_app_with_service_room_and_ws(
     room_service: Arc<RoomService>,
     ws: MockWebSocketClient,
 ) -> App {
-    let http_client = test_proton_http_client();
+    let http_client = test_proton_http_client().await;
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(ws),

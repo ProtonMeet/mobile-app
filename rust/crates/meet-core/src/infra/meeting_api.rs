@@ -3,7 +3,6 @@ use proton_meet_macro::async_trait;
 use crate::domain::user::models::meeting::Meeting;
 use crate::domain::user::models::{CreateMeetingParams, MeetingInfo, UpdateMeetingScheduleParams};
 use crate::domain::user::ports::meeting_api::MeetingApi;
-use crate::domain::user::ports::HttpClient;
 use crate::errors::http_client::HttpClientError;
 use crate::infra::dto::common::ProtonEmptyResponse;
 use crate::infra::dto::end_meeting::EndMeetingRequest;

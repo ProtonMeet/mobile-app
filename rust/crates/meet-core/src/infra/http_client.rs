@@ -10,7 +10,7 @@ use muon::{
     common::Host,
     store::DynStore,
     tls::{TlsCert, Verifier, VerifyRes},
-    App, Client,
+    App, Client, Session,
 };
 
 use proton_meet_macro::async_trait;
@@ -25,6 +25,7 @@ use crate::domain::user::models::participant_track_settings::ParticipantTrackSet
 use crate::domain::user::models::user_settings::UserSettings;
 use crate::domain::user::ports::HttpClient;
 use crate::errors::http_client::HttpClientError;
+use crate::infra::auth_store::{BoxedStore, MUON_DEFAULT_SESSION_KEY};
 use crate::infra::dto::access_token::{
     AccessTokenRequest, AccessTokenResponse, GetSdCwtRequest, GetSdCwtResponse,
 };
@@ -71,7 +72,7 @@ pub struct ApiConfig {
     /// could be [altas, prod, or rul link]
     pub env: Option<String>,
     /// The muon auth store. web doesn't need but flutter side needs
-    pub store: Option<DynStore>,
+    pub store: Option<DynStore<()>>,
     /// The proxy address. Enable `allow-dangerous-env`` feature to use this
     pub proxy: Option<ProxyConfig>,
 }
@@ -84,7 +85,8 @@ pub struct ProxyConfig {
 
 #[derive(Debug, Clone)]
 pub struct ProtonHttpClient {
-    session: Arc<Mutex<Client>>,
+    client: Arc<Mutex<Client<()>>>,
+    session: Arc<Mutex<Session<()>>>,
     http_host: String,
     mls_session: reqwest::Client,
     app_version: String,
@@ -113,41 +115,67 @@ impl ProtonHttpClient {
         Ok(url)
     }
 
-    pub fn get_session(&self) -> Client {
+    pub fn get_session(&self) -> Session<()> {
         self.session
             .lock()
             .expect("ProtonHttpClient session lock poisoned")
             .clone()
     }
 
+    pub fn muon_client(&self) -> Client<()> {
+        self.client
+            .lock()
+            .expect("ProtonHttpClient client lock poisoned")
+            .clone()
+    }
+
     /// Build a muon client with the given auth store (loads auth into the local store).
-    pub(crate) fn build_client(
+    #[cfg(not(target_arch = "wasm32"))]
+    pub(crate) async fn build_client(
         &self,
         store: crate::infra::auth_store::AuthStore,
-    ) -> Result<Client, HttpClientError> {
+    ) -> Result<Client<()>, HttpClientError> {
         let app = App::new(self.app_version.clone())
             .map_err(|e| HttpClientError::MlsHttpError {
                 message: format!("invalid app version: {e}"),
             })?
             .with_user_agent(self.user_agent.clone());
-        Client::builder(app, store)
+        Client::builder(app, BoxedStore(Box::new(store)))
+            .await
             .build()
             .map_err(HttpClientError::from)
     }
 
     /// Replace the active muon session (e.g. after promoting desktop web login auth).
-    pub(crate) fn replace_session(&self, client: Client) {
-        *self
+    #[cfg(not(target_arch = "wasm32"))]
+    pub(crate) async fn replace_session(&self, client: Client<()>) -> Result<(), HttpClientError> {
+        let session = match client.get_session(MUON_DEFAULT_SESSION_KEY).await {
+            Some(session) => session,
+            None => client
+                .new_session_without_credentials(MUON_DEFAULT_SESSION_KEY)
+                .await
+                .map_err(HttpClientError::from)?,
+        };
+        const SESSION_UPDATE_FAILED: &str = "Unable to complete sign-in. Please try again.";
+        let mut client_guard = self.client.lock().map_err(|_| HttpClientError::MlsHttpError {
+            message: SESSION_UPDATE_FAILED.to_string(),
+        })?;
+        *client_guard = client;
+        let mut session_guard = self
             .session
             .lock()
-            .expect("ProtonHttpClient session lock poisoned") = client;
+            .map_err(|_| HttpClientError::MlsHttpError {
+                message: SESSION_UPDATE_FAILED.to_string(),
+            })?;
+        *session_guard = session;
+        Ok(())
     }
 
-    /// Fresh muon client for desktop web login — does not touch the main session.
+    /// Fresh muon session for desktop web login — does not touch the main session.
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn new_isolated_login_client(
+    pub async fn new_isolated_login_client(
         &self,
-    ) -> Result<(Client, Arc<tokio::sync::Mutex<Auth>>), HttpClientError> {
+    ) -> Result<(Session<()>, Arc<tokio::sync::Mutex<Auth>>), HttpClientError> {
         use crate::infra::auth_store::AuthStore;
 
         let env = self.get_session().env().clone();
@@ -156,8 +184,15 @@ impl ProtonHttpClient {
             env,
             auth: login_auth.clone(),
         };
-        let client = self.build_client(login_store)?;
-        Ok((client, login_auth))
+        let client = self.build_client(login_store).await?;
+        let session = match client.get_session(MUON_DEFAULT_SESSION_KEY).await {
+            Some(session) => session,
+            None => client
+                .new_session_without_credentials(MUON_DEFAULT_SESSION_KEY)
+                .await
+                .map_err(HttpClientError::from)?,
+        };
+        Ok((session, login_auth))
     }
 
     fn mls_default_headers(
@@ -180,9 +215,9 @@ impl ProtonHttpClient {
         Ok(headers)
     }
 
-    pub fn new(
+    pub async fn new(
         config: ApiConfig,
-        auth_store: Box<dyn Store>,
+        auth_store: Box<dyn Store<()>>,
         http_host: String,
     ) -> Result<Self, anyhow::Error> {
         let (app_version, user_agent) = config.spec;
@@ -191,9 +226,9 @@ impl ProtonHttpClient {
         let app = App::new(app_version.clone())?.with_user_agent(user_agent.clone());
 
         #[cfg(not(target_family = "wasm"))]
-        let mut builder = Client::builder(app, auth_store);
+        let mut builder = Client::builder(app, BoxedStore(auth_store)).await;
         #[cfg(target_family = "wasm")]
-        let builder = Client::builder(app, auth_store);
+        let builder = Client::builder(app, BoxedStore(auth_store)).await;
 
         #[cfg(not(target_family = "wasm"))]
         if let Some(proxy) = &config.proxy {
@@ -206,7 +241,15 @@ impl ProtonHttpClient {
                 )));
             }
         }
-        let session = builder.build()?;
+        let client = builder.build()?;
+        let session = match client.get_session(MUON_DEFAULT_SESSION_KEY).await {
+            Some(session) => session,
+            None => {
+                client
+                    .new_session_without_credentials(MUON_DEFAULT_SESSION_KEY)
+                    .await?
+            }
+        };
 
         #[cfg(not(target_family = "wasm"))]
         let mls_session = {
@@ -258,6 +301,7 @@ impl ProtonHttpClient {
             .build()?;
 
         Ok(Self {
+            client: Arc::new(Mutex::new(client)),
             session: Arc::new(Mutex::new(session)),
             http_host,
             mls_session,
@@ -271,7 +315,7 @@ impl ProtonHttpClient {
 
 #[async_trait]
 impl HttpClient for ProtonHttpClient {
-    fn get_session(&self) -> muon::Client {
+    fn get_session(&self) -> Session<()> {
         ProtonHttpClient::get_session(self)
     }
 
@@ -777,26 +821,45 @@ mod tests {
     use super::*;
     use async_trait::async_trait;
     use muon::{env::EnvId, store::StoreError};
+    use proton_meet_macro::unified_test;
+
+    use std::collections::HashMap;
 
     #[derive(Debug)]
     struct MockStore;
 
     #[async_trait]
-    impl Store for MockStore {
+    impl Store<()> for MockStore {
         fn env(&self) -> EnvId {
             EnvId::Prod
         }
 
-        async fn get_auth(&self) -> Auth {
-            Auth::None
+        async fn get_auth(&self, _key: &()) -> Result<Auth, StoreError> {
+            Ok(Auth::None)
         }
 
-        async fn set_auth(&mut self, auth: Auth) -> Result<Auth, StoreError> {
-            Ok(auth)
+        async fn set_auth(&mut self, _key: &(), _auth: Auth) -> Result<(), StoreError> {
+            Ok(())
+        }
+
+        async fn remove_auth(&mut self, _key: &()) -> Result<Option<Auth>, StoreError> {
+            Ok(None)
+        }
+
+        async fn get_all_auth(&self) -> Result<HashMap<(), Auth>, StoreError> {
+            Ok(HashMap::new())
+        }
+
+        async fn set_all_auth(&mut self, _auth: HashMap<(), Auth>) -> Result<(), StoreError> {
+            Ok(())
+        }
+
+        async fn remove_all_auth(&mut self) -> Result<(), StoreError> {
+            Ok(())
         }
     }
 
-    fn create_test_client(http_host: &str) -> ProtonHttpClient {
+    async fn create_test_client(http_host: &str) -> ProtonHttpClient {
         let config = ApiConfig {
             spec: ("macos-meet@0.0.1".to_string(), "test-agent".to_string()),
             auth: None,
@@ -806,20 +869,22 @@ mod tests {
             proxy: None,
         };
 
-        ProtonHttpClient::new(config, Box::new(MockStore), http_host.to_string()).unwrap()
+        ProtonHttpClient::new(config, Box::new(MockStore), http_host.to_string())
+            .await
+            .unwrap()
     }
 
-    #[test]
-    fn test_build_http_url_with_meet_proton_me() {
-        let client = create_test_client("meet.proton.me/api");
+    #[unified_test]
+    async fn test_build_http_url_with_meet_proton_me() {
+        let client = create_test_client("meet.proton.me/api").await;
 
         let url = client.build_http_url("v1/meetings").unwrap();
         assert_eq!(url.as_str(), "https://meet.proton.me/api/v1/meetings");
     }
 
-    #[test]
-    fn test_build_http_url_with_path() {
-        let client = create_test_client("meet.proton.me/meet/api/");
+    #[unified_test]
+    async fn test_build_http_url_with_path() {
+        let client = create_test_client("meet.proton.me/meet/api/").await;
 
         let url = client
             .build_http_url("v1/meetings/links/test/info")
@@ -830,9 +895,9 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_build_http_url_with_mls_endpoints() {
-        let client = create_test_client("meet.proton.me/meet/api");
+    #[unified_test]
+    async fn test_build_http_url_with_mls_endpoints() {
+        let client = create_test_client("meet.proton.me/meet/api").await;
 
         let url = client.build_http_url("v1/groupInfo").unwrap();
         assert_eq!(url.as_str(), "https://meet.proton.me/meet/api/v1/groupInfo");
@@ -847,24 +912,24 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_build_http_url_with_trailing_slash() {
-        let client = create_test_client("meet.proton.me/meet/api/");
+    #[unified_test]
+    async fn test_build_http_url_with_trailing_slash() {
+        let client = create_test_client("meet.proton.me/meet/api/").await;
 
         let url = client.build_http_url("v1/groupInfo").unwrap();
         assert_eq!(url.as_str(), "https://meet.proton.me/meet/api/v1/groupInfo");
     }
 
-    #[test]
-    fn test_build_http_url_with_explicit_https() {
-        let client = create_test_client("https://meet.proton.me/meet/api");
+    #[unified_test]
+    async fn test_build_http_url_with_explicit_https() {
+        let client = create_test_client("https://meet.proton.me/meet/api").await;
 
         let url = client.build_http_url("v1/groupInfo").unwrap();
         assert_eq!(url.as_str(), "https://meet.proton.me/meet/api/v1/groupInfo");
     }
 
-    #[test]
-    fn test_mls_session_stores_client_spec() {
+    #[unified_test]
+    async fn test_mls_session_stores_client_spec() {
         let config = ApiConfig {
             spec: (
                 "macos-meet@9.8.7".to_string(),
@@ -881,13 +946,14 @@ mod tests {
             Box::new(MockStore),
             "meet.proton.me/meet/api".to_string(),
         )
+        .await
         .expect("client should build");
         assert_eq!(client.app_version, "macos-meet@9.8.7");
         assert_eq!(client.user_agent, "ProtonMeet/1.0 (macOS 14.0; MacBookPro)");
     }
 
-    #[test]
-    fn test_mls_session_uses_pinning_for_prod_env() {
+    #[unified_test]
+    async fn test_mls_session_uses_pinning_for_prod_env() {
         let config = ApiConfig {
             spec: ("macos-meet@0.0.1".to_string(), "test-agent".to_string()),
             auth: None,
@@ -900,7 +966,8 @@ mod tests {
             config,
             Box::new(MockStore),
             "meet.proton.me/meet/api".to_string(),
-        );
+        )
+        .await;
         assert!(
             client.is_ok(),
             "prod env should build successfully: {:?}",
@@ -908,8 +975,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_mls_session_uses_pinning_for_explicit_prod_env() {
+    #[unified_test]
+    async fn test_mls_session_uses_pinning_for_explicit_prod_env() {
         let config = ApiConfig {
             spec: ("macos-meet@0.0.1".to_string(), "test-agent".to_string()),
             auth: None,
@@ -922,7 +989,8 @@ mod tests {
             config,
             Box::new(MockStore),
             "meet.proton.me/meet/api".to_string(),
-        );
+        )
+        .await;
         assert!(
             client.is_ok(),
             "explicit prod env should build: {:?}",
@@ -930,8 +998,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_mls_session_skips_pinning_for_atlas_env() {
+    #[unified_test]
+    async fn test_mls_session_skips_pinning_for_atlas_env() {
         let config = ApiConfig {
             spec: ("macos-meet@0.0.1".to_string(), "test-agent".to_string()),
             auth: None,
@@ -944,12 +1012,13 @@ mod tests {
             config,
             Box::new(MockStore),
             "meet-mls.proton.black".to_string(),
-        );
+        )
+        .await;
         assert!(client.is_ok(), "atlas env should build: {:?}", client.err());
     }
 
-    #[test]
-    fn test_mls_session_skips_pinning_for_custom_url_env() {
+    #[unified_test]
+    async fn test_mls_session_skips_pinning_for_custom_url_env() {
         let config = ApiConfig {
             spec: ("macos-meet@0.0.1".to_string(), "test-agent".to_string()),
             auth: None,
@@ -959,7 +1028,7 @@ mod tests {
             proxy: None,
         };
         let client =
-            ProtonHttpClient::new(config, Box::new(MockStore), "localhost:8080".to_string());
+            ProtonHttpClient::new(config, Box::new(MockStore), "localhost:8080".to_string()).await;
         assert!(
             client.is_ok(),
             "custom URL env should build: {:?}",

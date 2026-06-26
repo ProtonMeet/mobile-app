@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -12,6 +13,43 @@ use muon::{
     store::{Store, StoreError},
 };
 use tokio::sync::Mutex;
+
+/// Single-session key used by Meet's one-account `AuthStore`.
+pub const MUON_DEFAULT_SESSION_KEY: () = ();
+
+/// Sized wrapper so muon can ingest a boxed store via `Client::builder`.
+pub struct BoxedStore(pub Box<dyn Store<()>>);
+
+#[async_trait]
+impl Store<()> for BoxedStore {
+    fn env(&self) -> EnvId {
+        self.0.env()
+    }
+
+    async fn get_auth(&self, key: &()) -> Result<Auth, StoreError> {
+        self.0.get_auth(key).await
+    }
+
+    async fn set_auth(&mut self, key: &(), auth: Auth) -> Result<(), StoreError> {
+        self.0.set_auth(key, auth).await
+    }
+
+    async fn remove_auth(&mut self, key: &()) -> Result<Option<Auth>, StoreError> {
+        self.0.remove_auth(key).await
+    }
+
+    async fn get_all_auth(&self) -> Result<HashMap<(), Auth>, StoreError> {
+        self.0.get_all_auth().await
+    }
+
+    async fn set_all_auth(&mut self, auth: HashMap<(), Auth>) -> Result<(), StoreError> {
+        self.0.set_all_auth(auth).await
+    }
+
+    async fn remove_all_auth(&mut self) -> Result<(), StoreError> {
+        self.0.remove_all_auth().await
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct AuthStore {
@@ -63,20 +101,51 @@ impl AuthStore {
 }
 
 #[async_trait]
-impl Store for AuthStore {
+impl Store<()> for AuthStore {
     fn env(&self) -> EnvId {
         self.env.clone()
     }
 
-    async fn get_auth(&self) -> Auth {
-        let auth = self.auth.lock().await.clone();
-        auth.clone()
+    async fn get_auth(&self, _key: &()) -> Result<Auth, StoreError> {
+        Ok(self.auth.lock().await.clone())
     }
 
-    async fn set_auth(&mut self, auth: Auth) -> Result<Auth, StoreError> {
-        let mut old_auth = self.auth.lock().await;
-        *old_auth = auth.clone();
-        Ok(auth)
+    async fn set_auth(&mut self, _key: &(), auth: Auth) -> Result<(), StoreError> {
+        *self.auth.lock().await = auth;
+        Ok(())
+    }
+
+    async fn remove_auth(&mut self, _key: &()) -> Result<Option<Auth>, StoreError> {
+        let mut guard = self.auth.lock().await;
+        if matches!(*guard, Auth::None) {
+            return Ok(None);
+        }
+        let removed = guard.clone();
+        *guard = Auth::None;
+        Ok(Some(removed))
+    }
+
+    async fn get_all_auth(&self) -> Result<HashMap<(), Auth>, StoreError> {
+        let auth = self.get_auth(&MUON_DEFAULT_SESSION_KEY).await?;
+        if matches!(auth, Auth::None) {
+            Ok(HashMap::new())
+        } else {
+            Ok(HashMap::from([(MUON_DEFAULT_SESSION_KEY, auth)]))
+        }
+    }
+
+    async fn set_all_auth(&mut self, auth: HashMap<(), Auth>) -> Result<(), StoreError> {
+        if let Some(auth) = auth.get(&MUON_DEFAULT_SESSION_KEY) {
+            self.set_auth(&MUON_DEFAULT_SESSION_KEY, auth.clone()).await
+        } else {
+            self.remove_auth(&MUON_DEFAULT_SESSION_KEY).await?;
+            Ok(())
+        }
+    }
+
+    async fn remove_all_auth(&mut self) -> Result<(), StoreError> {
+        self.remove_auth(&MUON_DEFAULT_SESSION_KEY).await?;
+        Ok(())
     }
 }
 

@@ -4398,7 +4398,7 @@ fn wire__crate__proton_meet__desktop_web_login__DesktopWebLogin_new_impl(
     rust_vec_len_: i32,
     data_len_: i32,
 ) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
             debug_name: "DesktopWebLogin_new",
             port: Some(port_),
@@ -4422,31 +4422,38 @@ fn wire__crate__proton_meet__desktop_web_login__DesktopWebLogin_new_impl(
                 flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
             >>::sse_decode(&mut deserializer);
             deserializer.end();
-            move |context| {
-                transform_result_sse::<_, crate::errors::BridgeError>((move || {
-                    let mut api_app_guard = None;
-                    let decode_indices_ =
-                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
-                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
-                                &api_app, 0, false,
-                            ),
-                        ]);
-                    for i in decode_indices_ {
-                        match i {
-                            0 => api_app_guard = Some(api_app.lockable_decode_sync_ref()),
-                            _ => unreachable!(),
+            move |context| async move {
+                transform_result_sse::<_, crate::errors::BridgeError>(
+                    (move || async move {
+                        let mut api_app_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_app, 0, false,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => {
+                                    api_app_guard = Some(api_app.lockable_decode_async_ref().await)
+                                }
+                                _ => unreachable!(),
+                            }
                         }
-                    }
-                    let api_app_guard = api_app_guard.unwrap();
-                    let output_ok = crate::proton_meet::desktop_web_login::DesktopWebLogin::new(
-                        api_env,
-                        api_app_version,
-                        api_user_agent,
-                        api_http_host,
-                        &*api_app_guard,
-                    )?;
-                    Ok(output_ok)
-                })())
+                        let api_app_guard = api_app_guard.unwrap();
+                        let output_ok =
+                            crate::proton_meet::desktop_web_login::DesktopWebLogin::new(
+                                api_env,
+                                api_app_version,
+                                api_user_agent,
+                                api_http_host,
+                                &*api_app_guard,
+                            )
+                            .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
             }
         },
     )

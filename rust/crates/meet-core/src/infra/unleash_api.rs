@@ -1,7 +1,7 @@
 use proton_meet_macro::async_trait;
 
 use crate::domain::user::models::UnleashResponse;
-use crate::domain::user::ports::{HttpClient, UnleashApi};
+use crate::domain::user::ports::UnleashApi;
 use crate::errors::http_client::{response_error_from_api_failure_body, HttpClientError};
 use crate::infra::http_client::ProtonHttpClient;
 use crate::infra::http_client_util::HttpClientUtil;

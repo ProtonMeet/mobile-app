@@ -10,7 +10,7 @@ use crate::domain::user::ports::{
 };
 use crate::errors::core::MeetCoreError;
 use crate::infra::{
-    auth_store::AuthStore,
+    auth_store::{AuthStore, MUON_DEFAULT_SESSION_KEY},
     crypto_client::MeetCryptoClient,
     http_client::{ApiConfig, ProtonHttpClient},
     ports::user_key_provider::UserKeyProvider,
@@ -125,7 +125,7 @@ impl App {
         app_version: String,
         user_agent: String,
         db_path: String,
-        auth_store: Box<dyn Store>,
+        auth_store: Box<dyn Store<()>>,
         http_host: String,
         ws_host: String,
         user_state: Option<UserState>,
@@ -149,7 +149,7 @@ impl App {
             // }),
             proxy: None,
         };
-        let http_client = Arc::new(ProtonHttpClient::new(config, auth_store, http_host)?);
+        let http_client = Arc::new(ProtonHttpClient::new(config, auth_store, http_host).await?);
         let persister = Persister::new(db_path).await?;
         let ws_client = Arc::new(WsClient::new_with_prod_tls_pinning(ws_host, is_prod_env));
         let mls_store = Arc::new(RwLock::new(MlsStore {
@@ -257,20 +257,38 @@ impl App {
             ))
         };
 
-        let initialized_auth = auth_store.get_auth().await;
+        let initialized_auth = auth_store
+            .get_auth(&MUON_DEFAULT_SESSION_KEY)
+            .await
+            .map_err(|e| MeetCoreError::AuthStoreError {
+                message: e.to_string(),
+            })?;
         #[cfg(debug_assertions)]
         debug!("initialized_auth: {:?}", initialized_auth);
         // need to set the auth again or the auth_store will be empty
         // todo: check and report to muon team if this is a bug
-        let fixed_auth = auth_store.set_auth(original_auth).await.map_err(|e| {
-            MeetCoreError::AuthStoreError {
-                message: e.to_string(),
-            }
-        })?;
+        if matches!(original_auth, Auth::None) {
+            auth_store
+                .remove_auth(&MUON_DEFAULT_SESSION_KEY)
+                .await
+                .map_err(|e| MeetCoreError::AuthStoreError {
+                    message: e.to_string(),
+                })?;
+        } else {
+            auth_store
+                .set_auth(&MUON_DEFAULT_SESSION_KEY, original_auth)
+                .await
+                .map_err(|e| MeetCoreError::AuthStoreError {
+                    message: e.to_string(),
+                })?;
+        }
         #[cfg(debug_assertions)]
-        debug!("fixed_auth: {:?}", fixed_auth);
+        debug!(
+            "fixed_auth: {:?}",
+            auth_store.get_auth(&MUON_DEFAULT_SESSION_KEY).await
+        );
 
-        let http_client = Arc::new(ProtonHttpClient::new(config, auth_store, http_host)?);
+        let http_client = Arc::new(ProtonHttpClient::new(config, auth_store, http_host).await?);
         let persister = Persister::new(db_path).await?;
 
         let ws_client = Arc::new(WsClient::new_with_prod_tls_pinning(ws_host, is_prod_env));
@@ -609,7 +627,7 @@ impl App {
     }
 }
 
-#[cfg(all(test, not(target_family = "wasm")))]
+// #[cfg(all(test, not(target_family = "wasm")))]
 impl App {
     pub(crate) fn from_test_parts(
         state: Arc<RwLock<AppState>>,

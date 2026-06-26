@@ -10,7 +10,7 @@ use base64::Engine;
 use muon::client::flow::{WithCodeFlow, WithCodePollFlow};
 use muon::client::Auth;
 use muon::env::EnvId;
-use muon::Client;
+use muon::Session;
 use rand::RngCore;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -31,14 +31,14 @@ pub struct DesktopWebLoginStart {
 pub enum DesktopWebLoginPoll {
     Pending,
     Complete {
-        user_data: UserData,
+        user_data: Box<UserData>,
         mailbox_password: String,
         auth: Auth,
     },
 }
 
 pub struct PendingState {
-    poll_flow: WithCodePollFlow,
+    poll_flow: WithCodePollFlow<()>,
     encryption_key: [u8; 32],
     login_auth: Arc<Mutex<Auth>>,
 }
@@ -61,7 +61,7 @@ fn account_url_for_env(env: &EnvId) -> Result<String, MeetCoreError> {
     match env {
         EnvId::Prod => Ok("https://account.proton.me".to_string()),
         EnvId::Atlas(None) => Ok("https://account.proton.black".to_string()),
-        EnvId::Atlas(Some(atlas_env)) => Ok(format!("https://account.{}.proton.black", atlas_env)),
+        EnvId::Atlas(Some(atlas_env)) => Ok(format!("https://account.{atlas_env}.proton.black")),
         EnvId::Custom(_) => Err(MeetCoreError::AuthenticationFailed {
             message: "Desktop web login is not supported for custom environments".to_string(),
         }),
@@ -127,11 +127,12 @@ pub async fn start(
     http_client: &ProtonHttpClient,
     child_client_id: String,
 ) -> Result<(DesktopWebLoginStart, PendingState), MeetCoreError> {
-    let (login_client, login_auth) = http_client.new_isolated_login_client().map_err(|e| {
-        MeetCoreError::AuthenticationFailed {
-            message: format!("Failed to create desktop login session: {e}"),
-        }
-    })?;
+    let (login_client, login_auth) =
+        http_client.new_isolated_login_client().await.map_err(|e| {
+            MeetCoreError::AuthenticationFailed {
+                message: format!("Failed to create desktop login session: {e}"),
+            }
+        })?;
 
     let env = login_client.env().clone();
     let WithCodeFlow::Poll(poll_flow) = login_client.auth().from_fork().with_code().await else {
@@ -166,14 +167,14 @@ pub async fn poll(
                 login_auth: pending.login_auth,
             }),
         )),
-        WithCodeFlow::Ok(client, payload) => {
-            client.sync_stores().await;
+        WithCodeFlow::Ok(session, payload) => {
+            session.client().sync_stores().await;
             let auth = pending.login_auth.lock().await.clone();
             let mailbox_password = decrypt_payload(&pending.encryption_key, payload.as_deref())?;
-            let user_data = fetch_user_data(http_client, &client).await?;
+            let user_data = fetch_user_data(http_client, &session).await?;
             Ok((
                 DesktopWebLoginPoll::Complete {
-                    user_data,
+                    user_data: Box::new(user_data),
                     mailbox_password,
                     auth,
                 },
@@ -188,10 +189,10 @@ pub async fn poll(
 
 async fn fetch_user_data(
     http_client: &ProtonHttpClient,
-    client: &Client,
+    session: &Session<()>,
 ) -> Result<UserData, MeetCoreError> {
     http_client
-        .get_user_data(client)
+        .get_user_data(session)
         .await
         .map_err(|e| MeetCoreError::AuthenticationFailed {
             message: format!("Failed to load user after desktop login: {e}"),
