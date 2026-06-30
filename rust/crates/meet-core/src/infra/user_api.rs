@@ -71,7 +71,10 @@ impl UserApi for ProtonHttpClient {
 }
 
 impl ProtonHttpClient {
-    pub(crate) async fn get_user_data(&self, session: &Session<()>) -> Result<UserData, LoginError> {
+    pub(crate) async fn get_user_data(
+        &self,
+        session: &Session<()>,
+    ) -> Result<UserData, LoginError> {
         let req = self
             .get("/core/v4/users")
             .allowed_time(Duration::from_secs(15));

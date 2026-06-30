@@ -211,7 +211,11 @@ async fn create_meeting_without_session_propagates_room_service_error() {
 
 #[tokio::test]
 async fn delete_meeting_propagates_http_error_without_network() {
-    let app = build_app_with_http(default_app_state(), unreachable_test_proton_http_client().await).await;
+    let app = build_app_with_http(
+        default_app_state(),
+        unreachable_test_proton_http_client().await,
+    )
+    .await;
     let err = app.delete_meeting("LINK123".to_string()).await;
     assert!(err.is_err());
 }
@@ -413,7 +417,11 @@ async fn get_upcoming_meetings_success_with_empty_list() {
 
 #[tokio::test]
 async fn send_meeting_feedback_propagates_http_error() {
-    let app = build_app_with_http(default_app_state(), unreachable_test_proton_http_client().await).await;
+    let app = build_app_with_http(
+        default_app_state(),
+        unreachable_test_proton_http_client().await,
+    )
+    .await;
     let err = app
         .send_meeting_feedback("link", 3, vec!["audio".to_string()])
         .await;
