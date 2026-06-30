@@ -6,9 +6,16 @@ import kotlin.math.min
 import kotlin.math.sin
 
 /**
- * Band-limited 48 kHz ↔ 16 kHz converters for DTLN (factor 3).
- * Stateful across WebRTC buffers to avoid boundary clicks.
+ * Legacy 48 kHz ↔ 16 kHz FIR resamplers for the pre-web-parity DTLN path.
+ *
+ * @deprecated Web-parity DTLN uses [MeetAudioPcm.resample] instead. The decimator here also
+ *   produced fewer samples than expected per WebRTC buffer (length mismatch). Remove with
+ *   [MeetAudioDtlnPipeline.processLegacy].
  */
+@Deprecated(
+    "Legacy DTLN resampler; web parity uses linear resample. Remove with processLegacy.",
+    level = DeprecationLevel.WARNING,
+)
 internal object MeetAudioFirResampler {
     private const val TAPS = 45
     internal const val FACTOR = 3
@@ -50,7 +57,11 @@ internal object MeetAudioFirResampler {
     }
 }
 
-/** Anti-aliased decimation 48 kHz → 16 kHz (÷3). */
+/** @deprecated See [MeetAudioFirResampler]. */
+@Deprecated(
+    "Legacy DTLN decimator; remove with MeetAudioFirResampler.",
+    level = DeprecationLevel.WARNING,
+)
 internal class FirDecimateBy3(
     private val kernel: FloatArray,
 ) {
@@ -99,7 +110,11 @@ internal class FirDecimateBy3(
     }
 }
 
-/** Band-limited interpolation 16 kHz → 48 kHz (×3). */
+/** @deprecated See [MeetAudioFirResampler]. */
+@Deprecated(
+    "Legacy DTLN interpolator; remove with MeetAudioFirResampler.",
+    level = DeprecationLevel.WARNING,
+)
 internal class FirInterpolateBy3(
     private val phases: Array<FloatArray>,
 ) {
@@ -152,7 +167,11 @@ internal class FirInterpolateBy3(
     }
 }
 
-/** Routes 48↔16 through FIR; other rates use stateless linear fallback. */
+/** @deprecated See [MeetAudioFirResampler]. */
+@Deprecated(
+    "Legacy DTLN rate converter; remove with processLegacy.",
+    level = DeprecationLevel.WARNING,
+)
 internal class MeetAudioDtlnRateConverter {
     private var decimator: FirDecimateBy3? = null
     private var interpolator: FirInterpolateBy3? = null

@@ -3,6 +3,16 @@ package com.proton.proton_denoise
 import kotlin.math.abs
 import kotlin.math.exp
 
+/**
+ * Mobile-only DTLN post-process (not in web / web-parity path).
+ *
+ * @deprecated Disabled via [MeetAudioDtlnPipeline.ENABLE_TAIL_SUPPRESSOR]. Remove with
+ *   [MeetAudioDtlnPipeline.processLegacy].
+ */
+@Deprecated(
+    "Mobile-only DTLN tail expander; not used in web-parity path. Remove with processLegacy.",
+    level = DeprecationLevel.WARNING,
+)
 internal data class MeetAudioTailSuppressorState(
     var levelEnvelope: Float = 0f,
     var tailLowpass: Float = 0f,
@@ -13,6 +23,10 @@ internal data class MeetAudioTailSuppressorState(
     }
 }
 
+@Deprecated(
+    "Mobile-only DTLN tail expander; not used in web-parity path. Remove with processLegacy.",
+    level = DeprecationLevel.WARNING,
+)
 internal data class MeetAudioTailSuppressorConfig(
     val openLevel: Float,
     val minGain: Float,
@@ -44,7 +58,11 @@ internal data class MeetAudioTailSuppressorConfig(
     }
 }
 
-/** Soft downward expander — attenuates low-level musical / electrical tails after words. */
+/** @deprecated See [MeetAudioTailSuppressorState]. */
+@Deprecated(
+    "Mobile-only DTLN tail expander; not used in web-parity path. Remove with processLegacy.",
+    level = DeprecationLevel.WARNING,
+)
 internal object MeetAudioTailSuppressor {
     fun apply(
         samples: FloatArray,

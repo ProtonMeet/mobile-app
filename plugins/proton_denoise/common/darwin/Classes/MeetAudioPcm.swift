@@ -47,6 +47,26 @@ enum MeetAudioPcm {
     }
   }
 
+  static func fitToLength(_ samples: [Float], targetLen: Int) -> [Float] {
+    if targetLen <= 0 {
+      return []
+    }
+    if samples.count == targetLen {
+      return samples
+    }
+    if samples.count > targetLen {
+      return Array(samples.prefix(targetLen))
+    }
+    var out = samples
+    out.append(contentsOf: [Float](repeating: 0, count: targetLen - samples.count))
+    return out
+  }
+
+  @available(
+    *,
+    deprecated,
+    message: "Unused; web-parity DTLN uses streaming ring buffers instead of per-buffer padding."
+  )
   static func padToMultiple(_ samples: [Float], blockSize: Int) -> [Float] {
     if blockSize <= 0 {
       return samples

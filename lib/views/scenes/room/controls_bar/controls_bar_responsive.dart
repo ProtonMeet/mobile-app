@@ -174,8 +174,7 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
   Future<void> _disableAudio() async {
     final participant = this.participant;
     if (participant == null) return;
-    await syncLocalAudioDenoise(room: widget.room, enabled: false);
-    // Use debouncer to prevent rapid toggles
+    // Keep denoise attached while muted (web parity) — mute only toggles track enabled.
     await _microphoneToggleDebouncer.disable(participant);
     _onChange();
   }
@@ -183,10 +182,9 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
   Future<void> _enableAudio() async {
     final participant = this.participant;
     if (participant == null) return;
-    // Use debouncer to prevent rapid toggles
     await _microphoneToggleDebouncer.enable(participant);
     if (widget.applyAudioDenoise) {
-      await syncLocalAudioDenoise(
+      await syncLocalAudioDenoiseIfNeeded(
         room: widget.room,
         enabled: true,
         type: widget.audioDenoiseType,

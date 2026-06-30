@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
+import 'package:meet/helper/denoise/denoise_audio_capture_options.dart';
 import 'package:meet/helper/extension/local_video_track_extension.dart';
 import 'package:meet/helper/extension/media_device_list_ext.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
@@ -356,7 +357,9 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
           state.isAudioEnabled &&
           state.isMicrophonePermissionGranted) {
         audioTrack = await LocalAudioTrack.create(
-          AudioCaptureOptions(deviceId: audioDevices.first.deviceId),
+          resolveDenoiseAwareAudioCaptureOptions(
+            deviceId: audioDevices.first.deviceId,
+          ),
         );
         await audioTrack.start();
       }
@@ -466,7 +469,9 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       LocalAudioTrack? audioTrack;
       if (state.selectedAudioDevice != null) {
         audioTrack = await LocalAudioTrack.create(
-          AudioCaptureOptions(deviceId: state.selectedAudioDevice!.deviceId),
+          resolveDenoiseAwareAudioCaptureOptions(
+            deviceId: state.selectedAudioDevice!.deviceId,
+          ),
         );
         await audioTrack.start();
       }
@@ -561,7 +566,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     LocalAudioTrack? audioTrack;
     if (state.isAudioEnabled) {
       audioTrack = await LocalAudioTrack.create(
-        AudioCaptureOptions(deviceId: event.device.deviceId),
+        resolveDenoiseAwareAudioCaptureOptions(deviceId: event.device.deviceId),
       );
       await audioTrack.start();
     }
