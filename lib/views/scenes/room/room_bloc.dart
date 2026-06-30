@@ -9,6 +9,7 @@ import 'package:livekit_client/livekit_client.dart';
 import 'package:logger/logger.dart';
 import 'package:meet/constants/constants.dart';
 import 'package:meet/helper/background_blur/camera_background_blur_sync.dart';
+import 'package:meet/helper/denoise/denoise_audio_sync.dart';
 import 'package:meet/helper/extension/bridge_error.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/media_device_list_ext.dart';
@@ -203,6 +204,8 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     }
 
     state.room.removeListener(_onRoomDidUpdate);
+    DenoiseAudioLifecycle.instance.dispose();
+    await DenoiseAudioService.instance.dispose();
     await state.listener.cancelAll();
     await state.listener.dispose();
 
@@ -1275,9 +1278,20 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     Emitter<RoomState> emit,
   ) async {
     try {
+      DenoiseAudioLifecycle.instance.abandon();
       await state.room.setAudioInputDevice(event.device);
       emit(state.copyWith(currentAudioInputDeviceId: event.device.deviceId));
       l.logger.d('Audio input device set: ${event.device.deviceId}');
+      if (state.audioDenoiseEnabled && isMeetAudioDenoiseEnabled()) {
+        unawaited(
+          syncLocalAudioDenoiseIfNeeded(
+            room: state.room,
+            enabled: true,
+            type: state.audioDenoiseType,
+            reason: DenoiseAttachReason.deviceChange,
+          ),
+        );
+      }
     } catch (e) {
       l.logger.e('Error setting audio input device: $e');
     }

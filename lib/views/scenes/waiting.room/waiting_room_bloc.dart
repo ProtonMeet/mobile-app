@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/constants/constants.dart';
+import 'package:meet/helper/denoise/denoise_audio_capture_options.dart';
 import 'package:meet/helper/extension/bridge_error.extension.dart';
 import 'package:meet/helper/extension/bridge_session_check.extension.dart';
 import 'package:meet/helper/extension/local_video_track_extension.dart';
@@ -218,7 +219,7 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
                 // Create audio track after prepareConnection and pre-connect E2EE keys if needed
                 if (event.selectedAudioDevice != null && event.isAudioEnabled) {
                   final track = await LocalAudioTrack.create(
-                    AudioCaptureOptions(
+                    resolveDenoiseAwareAudioCaptureOptions(
                       autoGainControl: false,
                       deviceId: event.selectedAudioDevice!.deviceId,
                     ),

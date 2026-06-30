@@ -49,6 +49,25 @@ internal object MeetAudioPcm {
         }
     }
 
+  fun fitToLength(samples: FloatArray, targetLen: Int): FloatArray {
+        if (targetLen <= 0) {
+            return FloatArray(0)
+        }
+        if (samples.size == targetLen) {
+            return samples
+        }
+        if (samples.size > targetLen) {
+            return samples.copyOf(targetLen)
+        }
+        val out = samples.copyOf(targetLen)
+        // Web worklet outputs silence until the output ring has enough denoised samples.
+        return out
+    }
+
+    @Deprecated(
+        "Unused; web-parity DTLN uses streaming ring buffers instead of per-buffer padding.",
+        level = DeprecationLevel.WARNING,
+    )
     fun padToMultiple(samples: FloatArray, blockSize: Int): FloatArray {
         if (blockSize <= 0) {
             return samples

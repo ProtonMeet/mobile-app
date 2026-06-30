@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
+import 'package:meet/helper/denoise/denoise_audio_capture_options.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/meet_join_link_parser.dart';
@@ -476,7 +477,9 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
               LocalAudioTrack newAudioTrack;
               if (oldAudioInputDevice != null) {
                 newAudioTrack = await LocalAudioTrack.create(
-                  AudioCaptureOptions(deviceId: oldAudioInputDevice.deviceId),
+                  resolveDenoiseAwareAudioCaptureOptions(
+                    deviceId: oldAudioInputDevice.deviceId,
+                  ),
                 );
               } else {
                 // Fallback to default device

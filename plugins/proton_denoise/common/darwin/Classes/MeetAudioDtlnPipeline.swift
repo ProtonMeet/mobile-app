@@ -1,7 +1,12 @@
 import Foundation
 
-// MARK: - Tail suppressor (co-located so CocoaPods always compiles it)
+// MARK: - Tail suppressor (legacy — not used in web-parity DTLN)
 
+@available(
+  *,
+  deprecated,
+  message: "Mobile-only DTLN tail expander; not used in web-parity path. Remove with processLegacy."
+)
 struct MeetAudioTailSuppressorState {
   var levelEnvelope: Float = 0
   var tailLowpass: Float = 0
@@ -12,6 +17,11 @@ struct MeetAudioTailSuppressorState {
   }
 }
 
+@available(
+  *,
+  deprecated,
+  message: "Mobile-only DTLN tail expander; not used in web-parity path. Remove with processLegacy."
+)
 struct MeetAudioTailSuppressorConfig {
   let openLevel: Float
   let minGain: Float
@@ -39,7 +49,11 @@ struct MeetAudioTailSuppressorConfig {
   )
 }
 
-/// Soft downward expander — attenuates low-level musical / electrical tails after words.
+@available(
+  *,
+  deprecated,
+  message: "Mobile-only DTLN tail expander; not used in web-parity path. Remove with processLegacy."
+)
 enum MeetAudioTailSuppressor {
   static func apply(
     samples: inout [Float],
@@ -91,13 +105,44 @@ enum MeetAudioTailSuppressor {
 
 // MARK: - DTLN pipeline
 
-/// Streaming state for 16 kHz mono blocks (DTLN hop = 128 samples).
+/// Live capture state. Active path uses [MeetAudioDtlnWebParityState] only.
 struct MeetAudioDtlnStreamState {
+  @available(
+    *,
+    deprecated,
+    message: "Legacy pipeline only (useWebParity = false). Remove with processLegacy."
+  )
   var pending16k: [Float] = []
+
+  @available(
+    *,
+    deprecated,
+    message: "Legacy pipeline only (useWebParity = false). Remove with processLegacy."
+  )
   var ready16k: [Float] = []
+
+  @available(
+    *,
+    deprecated,
+    message: "Legacy FIR resampler; web parity uses linear resample. Remove with processLegacy."
+  )
   var rateConverter = MeetAudioDtlnRateConverter()
+
+  @available(
+    *,
+    deprecated,
+    message: "Mobile tail suppressor; not used in web-parity DTLN. Remove with processLegacy."
+  )
   var tail16k = MeetAudioTailSuppressorState()
+
+  @available(
+    *,
+    deprecated,
+    message: "Mobile tail suppressor; not used in web-parity DTLN. Remove with processLegacy."
+  )
   var tailPostUpsample = MeetAudioTailSuppressorState()
+
+  var webParity = MeetAudioDtlnWebParityState()
 
   mutating func reset() {
     pending16k.removeAll(keepingCapacity: false)
@@ -105,12 +150,94 @@ struct MeetAudioDtlnStreamState {
     rateConverter.reset()
     tail16k.reset()
     tailPostUpsample.reset()
+    webParity.reset()
+  }
+}
+
+/// Web worklet ring-buffer state (512-sample DTLN frames @ 16 kHz).
+struct MeetAudioDtlnWebParityState {
+  var inputRing: [Float] = []
+  var outputRing: [Float] = []
+
+  mutating func reset() {
+    inputRing.removeAll(keepingCapacity: false)
+    outputRing.removeAll(keepingCapacity: false)
+  }
+}
+
+enum MeetAudioDtlnWebParity {
+  /// Matches web `DENOISE_FRAME_SAMPLES` in audio-worklet-processor.ts
+  static let frameSamples = 512
+
+  static func resampleTo16k(_ mono: [Float], sampleRateHz: Int) -> [Float] {
+    if sampleRateHz == MeetAudioPcm.dtlnSampleRateHz || mono.isEmpty {
+      return mono
+    }
+    return MeetAudioPcm.resample(mono, fromRate: sampleRateHz, toRate: MeetAudioPcm.dtlnSampleRateHz)
+  }
+
+  static func resampleFrom16k(_ mono16k: [Float], sampleRateHz: Int, targetFrames: Int) -> [Float] {
+    if sampleRateHz == MeetAudioPcm.dtlnSampleRateHz || mono16k.isEmpty {
+      return MeetAudioPcm.fitToLength(mono16k, targetLen: targetFrames)
+    }
+    let upsampled = MeetAudioPcm.resample(
+      mono16k,
+      fromRate: MeetAudioPcm.dtlnSampleRateHz,
+      toRate: sampleRateHz
+    )
+    return MeetAudioPcm.fitToLength(upsampled, targetLen: targetFrames)
+  }
+
+  static func processAt16k(
+    handle: OpaquePointer?,
+    at16k: [Float],
+    state: inout MeetAudioDtlnWebParityState
+  ) -> [Float] {
+    guard let handle, !at16k.isEmpty else {
+      return at16k
+    }
+    state.inputRing.append(contentsOf: at16k)
+    while state.inputRing.count >= frameSamples {
+      var block = Array(state.inputRing.prefix(frameSamples))
+      state.inputRing.removeFirst(frameSamples)
+      guard ProtonDtlnRsNative.denoiseInterleaved(handle, &block) else {
+        return [Float](repeating: 0, count: at16k.count)
+      }
+      state.outputRing.append(contentsOf: block)
+    }
+    return drainSilencePadded(from: &state.outputRing, count: at16k.count)
+  }
+
+  private static func drainSilencePadded(from ring: inout [Float], count: Int) -> [Float] {
+    var out = [Float](repeating: 0, count: count)
+    let available = min(count, ring.count)
+    if available > 0 {
+      out.replaceSubrange(0..<available, with: ring.prefix(available))
+      ring.removeFirst(available)
+    }
+    return out
   }
 }
 
 /// dtln-rs processing shared by live capture (mirrors Android [MeetAudioDtlnPipeline]).
+///
+/// **Active path** (`useWebParity` = true, mirrors ProtonMeet/noise-suppression worklet):
+/// 1. Linear resample capture → 16 kHz mono
+/// 2. Ring-buffer 512-sample `dtln_denoise` frames
+/// 3. Drain output ring (silence until denoised samples ready)
+/// 4. Linear resample → capture rate
 enum MeetAudioDtlnPipeline {
   static let internalSampleRateHz = MeetAudioPcm.dtlnSampleRateHz
+
+  /// Match web useAudioToggle + ProtonMeet/noise-suppression worklet.
+  static let useWebParity = true
+
+  @available(
+    *,
+    deprecated,
+    message: "Mobile tail expander; not in web DTLN. Only read when useWebParity is false."
+  )
+  static let enableTailSuppressor = false
 
   static func processInterleavedInPlace(
     handle: OpaquePointer?,
@@ -125,60 +252,28 @@ enum MeetAudioDtlnPipeline {
     }
 
     let mono = MeetAudioPcm.downmix(floats, channels: numChannels)
-    let blockShift = max(ProtonDtlnRsNative.getBlockShift(), 128)
-    // DTLN model is 16 kHz — resample capture before block-wise denoise.
-    let at16k = streamState.rateConverter.downsample(
-      mono,
-      fromRate: sampleRateHz,
-      toRate: internalSampleRateHz
-    )
-
-    // Feed real samples only — never zero-pad per WebRTC buffer (breaks overlap + adds noise).
-    streamState.pending16k.append(contentsOf: at16k)
-    while streamState.pending16k.count >= blockShift {
-      var block = Array(streamState.pending16k.prefix(blockShift))
-      streamState.pending16k.removeFirst(blockShift)
-      guard ProtonDtlnRsNative.denoiseInterleaved(handle, &block) else {
-        return
-      }
-      streamState.ready16k.append(contentsOf: block)
-    }
-
-    var out16k: [Float]
-    if streamState.ready16k.count >= at16k.count {
-      out16k = Array(streamState.ready16k.prefix(at16k.count))
-      streamState.ready16k.removeFirst(at16k.count)
+    let denoisedAtRate: [Float]
+    if useWebParity {
+      let at16k = MeetAudioDtlnWebParity.resampleTo16k(mono, sampleRateHz: sampleRateHz)
+      let out16k = MeetAudioDtlnWebParity.processAt16k(
+        handle: handle,
+        at16k: at16k,
+        state: &streamState.webParity
+      )
+      denoisedAtRate = MeetAudioDtlnWebParity.resampleFrom16k(
+        out16k,
+        sampleRateHz: sampleRateHz,
+        targetFrames: mono.count
+      )
     } else {
-      // Pipeline priming (~8 ms): blend available denoised samples with dry tail.
-      let denoisedCount = streamState.ready16k.count
-      var blended = streamState.ready16k
-      if denoisedCount < at16k.count {
-        blended.append(contentsOf: at16k[denoisedCount..<at16k.count])
-      }
-      out16k = blended
-      streamState.ready16k.removeAll(keepingCapacity: true)
+      denoisedAtRate = processLegacy(
+        handle: handle,
+        mono: mono,
+        sampleRateHz: sampleRateHz,
+        streamState: &streamState
+      )
     }
 
-    MeetAudioTailSuppressor.apply(
-      samples: &out16k,
-      sampleRateHz: internalSampleRateHz,
-      state: &streamState.tail16k,
-      config: .dtln16k
-    )
-
-    // 100% denoised — do not blend with dry capture here. DTLN + resamplers add
-    // ~8–15 ms latency; mixing with undelayed dry causes a light echo/shadow.
-    var denoisedAtRate = streamState.rateConverter.upsample(
-      out16k,
-      fromRate: internalSampleRateHz,
-      toRate: sampleRateHz
-    )
-    MeetAudioTailSuppressor.apply(
-      samples: &denoisedAtRate,
-      sampleRateHz: sampleRateHz,
-      state: &streamState.tailPostUpsample,
-      config: .dtlnPostUpsample
-    )
     let outInterleaved = MeetAudioPcm.upmixToChannels(
       denoisedAtRate,
       channels: numChannels,
@@ -191,10 +286,82 @@ enum MeetAudioDtlnPipeline {
     }
   }
 
+  @available(
+    *,
+    deprecated,
+    message: "Pre-web-parity mobile pipeline. Remove when useWebParity is permanently true."
+  )
+  private static func processLegacy(
+    handle: OpaquePointer?,
+    mono: [Float],
+    sampleRateHz: Int,
+    streamState: inout MeetAudioDtlnStreamState
+  ) -> [Float] {
+    let blockShift = max(ProtonDtlnRsNative.getBlockShift(), 128)
+    let at16k = streamState.rateConverter.downsample(
+      mono,
+      fromRate: sampleRateHz,
+      toRate: internalSampleRateHz
+    )
+
+    streamState.pending16k.append(contentsOf: at16k)
+    while streamState.pending16k.count >= blockShift {
+      var block = Array(streamState.pending16k.prefix(blockShift))
+      streamState.pending16k.removeFirst(blockShift)
+      guard ProtonDtlnRsNative.denoiseInterleaved(handle, &block) else {
+        return mono
+      }
+      streamState.ready16k.append(contentsOf: block)
+    }
+
+    var out16k: [Float]
+    if streamState.ready16k.count >= at16k.count {
+      out16k = Array(streamState.ready16k.prefix(at16k.count))
+      streamState.ready16k.removeFirst(at16k.count)
+    } else {
+      let denoisedCount = streamState.ready16k.count
+      var blended = streamState.ready16k
+      if denoisedCount < at16k.count {
+        blended.append(contentsOf: at16k[denoisedCount..<at16k.count])
+      }
+      out16k = blended
+      streamState.ready16k.removeAll(keepingCapacity: true)
+    }
+
+    if enableTailSuppressor {
+      MeetAudioTailSuppressor.apply(
+        samples: &out16k,
+        sampleRateHz: internalSampleRateHz,
+        state: &streamState.tail16k,
+        config: .dtln16k
+      )
+    }
+
+    var denoisedAtRate = streamState.rateConverter.upsample(
+      out16k,
+      fromRate: internalSampleRateHz,
+      toRate: sampleRateHz
+    )
+    if enableTailSuppressor {
+      MeetAudioTailSuppressor.apply(
+        samples: &denoisedAtRate,
+        sampleRateHz: sampleRateHz,
+        state: &streamState.tailPostUpsample,
+        config: .dtlnPostUpsample
+      )
+    }
+    return MeetAudioPcm.fitToLength(denoisedAtRate, targetLen: mono.count)
+  }
+
 }
 
-// MARK: - Band-limited 48 kHz ↔ 16 kHz (co-located so CocoaPods always compiles it)
+// MARK: - Band-limited 48 kHz ↔ 16 kHz (legacy — web parity uses linear resample)
 
+@available(
+  *,
+  deprecated,
+  message: "Legacy DTLN FIR resampler; web parity uses linear resample. Remove with processLegacy."
+)
 private enum MeetAudioFirResampler {
   static let taps = 45
   static let factor = 3
@@ -241,6 +408,11 @@ private enum MeetAudioFirResampler {
   }
 }
 
+@available(
+  *,
+  deprecated,
+  message: "Legacy DTLN decimator; remove with MeetAudioFirResampler."
+)
 fileprivate final class FirDecimateBy3 {
   private let kernel: [Float]
   private var window: [Float]
@@ -295,6 +467,11 @@ fileprivate final class FirDecimateBy3 {
   }
 }
 
+@available(
+  *,
+  deprecated,
+  message: "Legacy DTLN interpolator; remove with MeetAudioFirResampler."
+)
 fileprivate final class FirInterpolateBy3 {
   private let phases: [[Float]]
   private var history: [Float]
@@ -355,6 +532,11 @@ fileprivate final class FirInterpolateBy3 {
   }
 }
 
+@available(
+  *,
+  deprecated,
+  message: "Legacy DTLN rate converter; remove with processLegacy."
+)
 final class MeetAudioDtlnRateConverter {
   private var decimator: FirDecimateBy3?
   private var interpolator: FirInterpolateBy3?
