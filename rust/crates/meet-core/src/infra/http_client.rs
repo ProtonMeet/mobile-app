@@ -157,9 +157,12 @@ impl ProtonHttpClient {
                 .map_err(HttpClientError::from)?,
         };
         const SESSION_UPDATE_FAILED: &str = "Unable to complete sign-in. Please try again.";
-        let mut client_guard = self.client.lock().map_err(|_| HttpClientError::MlsHttpError {
-            message: SESSION_UPDATE_FAILED.to_string(),
-        })?;
+        let mut client_guard = self
+            .client
+            .lock()
+            .map_err(|_| HttpClientError::MlsHttpError {
+                message: SESSION_UPDATE_FAILED.to_string(),
+            })?;
         *client_guard = client;
         let mut session_guard = self
             .session

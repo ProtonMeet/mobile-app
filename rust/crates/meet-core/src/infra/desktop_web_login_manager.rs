@@ -108,12 +108,13 @@ pub async fn promote_auth_to_main_session(
         env,
         auth: session_auth.clone(),
     };
-    let client = main_http
-        .build_client(store)
-        .await
-        .map_err(|e| MeetCoreError::AuthenticationFailed {
-            message: format!("Failed to apply desktop login session: {e}"),
-        })?;
+    let client =
+        main_http
+            .build_client(store)
+            .await
+            .map_err(|e| MeetCoreError::AuthenticationFailed {
+                message: format!("Failed to apply desktop login session: {e}"),
+            })?;
     main_http
         .replace_session(client)
         .await

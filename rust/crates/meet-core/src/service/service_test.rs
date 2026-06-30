@@ -3301,15 +3301,10 @@ mod tests {
     ) {
         use mls_trait::MlsGroupTrait;
 
-        let leaf_index =
-            LeafIndex::try_from(leaf_index_u32).expect("valid leaf index for Remove");
+        let leaf_index = LeafIndex::try_from(leaf_index_u32).expect("valid leaf index for Remove");
         let mut host = host_group.write().await;
         let own_leaf = host.own_leaf_index().unwrap();
-        mls_direct_test_assert_no_self_remove(
-            own_leaf,
-            &[leaf_index_u32],
-            "host remove commit",
-        );
+        mls_direct_test_assert_no_self_remove(own_leaf, &[leaf_index_u32], "host remove commit");
 
         let (_commit_bundle, _) = host
             .new_commit(vec![ProposalArg::Remove(leaf_index)])
@@ -3329,8 +3324,7 @@ mod tests {
 
         let roster = host_group.read().await.roster().count();
         let epoch = *host_group.read().await.epoch();
-        let (group_info_message, ratchet_tree_option) =
-            mls_group_export_snapshot(host_group).await;
+        let (group_info_message, ratchet_tree_option) = mls_group_export_snapshot(host_group).await;
         mls_direct_test_validate_with_external_client(
             host_client,
             group_info_message,
@@ -3342,9 +3336,7 @@ mod tests {
                 "ExternalClient observe_group failed after {phase} (epoch={epoch} roster={roster}): {e}"
             )
         });
-        eprintln!(
-            "[parent_hash_churn] {phase} epoch={epoch} roster={roster} observe_group=ok"
-        );
+        eprintln!("[parent_hash_churn] {phase} epoch={epoch} roster={roster} observe_group=ok");
     }
 
     async fn mls_direct_test_batched_add_remove_round_on_host(

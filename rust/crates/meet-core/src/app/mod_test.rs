@@ -11,13 +11,21 @@ use crate::service::service::Service;
 
 #[tokio::test]
 async fn ping_propagates_http_error_without_network() {
-    let app = build_app_with_http(default_app_state(), unreachable_test_proton_http_client().await).await;
+    let app = build_app_with_http(
+        default_app_state(),
+        unreachable_test_proton_http_client().await,
+    )
+    .await;
     assert!(app.ping().await.is_err());
 }
 
 #[tokio::test]
 async fn fetch_toggles_propagates_http_error() {
-    let app = build_app_with_http(default_app_state(), unreachable_test_proton_http_client().await).await;
+    let app = build_app_with_http(
+        default_app_state(),
+        unreachable_test_proton_http_client().await,
+    )
+    .await;
     assert!(app.fetch_toggles().await.is_err());
 }
 
