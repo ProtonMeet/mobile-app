@@ -7,7 +7,7 @@ homepage: https://github.com/ProtonMeet
 
 environment:
   sdk: ">=3.8.0 <4.0.0"
-  flutter: ">=3.35.0"
+  flutter: ">=3.44.0"
 
 resolution: workspace
 

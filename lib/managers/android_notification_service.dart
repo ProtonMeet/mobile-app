@@ -67,7 +67,6 @@ class AndroidNotificationService implements NotificationService {
         } catch (e) {
           logger.e('[AndroidNotificationService] onReturnToCall failed: $e');
         }
-        break;
       case 'onEndCallRequested':
         if (_onEndCallCallback == null) {
           logger.w(
@@ -80,7 +79,6 @@ class AndroidNotificationService implements NotificationService {
         } catch (e) {
           logger.e('[AndroidNotificationService] onEndCall failed: $e');
         }
-        break;
       default:
         break;
     }
@@ -137,8 +135,9 @@ class AndroidNotificationService implements NotificationService {
 
     final permissionService = PermissionService();
 
-    final effectiveCallId =
-        (callId != null && callId.isNotEmpty) ? callId : roomName;
+    final effectiveCallId = (callId != null && callId.isNotEmpty)
+        ? callId
+        : roomName;
     if (effectiveCallId.isEmpty) {
       logger.w('[AndroidNotificationService] Skip: empty callId');
       return;
@@ -302,9 +301,7 @@ class AndroidNotificationService implements NotificationService {
       );
       return false;
     }
-    logger.i(
-      '[AndroidNotificationService] Requesting notification permission',
-    );
+    logger.i('[AndroidNotificationService] Requesting notification permission');
     final granted = await permissionService.ensureNotificationPermission();
     if (!granted) {
       logger.w(
