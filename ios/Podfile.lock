@@ -1,43 +1,15 @@
 PODS:
-  - add_2_calendar (0.0.1):
-    - Flutter
-  - app_links (7.0.0):
-    - Flutter
-  - audio_session (0.0.1):
-    - Flutter
-  - connectivity_plus (0.0.1):
-    - Flutter
-  - device_info_plus (0.0.1):
-    - Flutter
   - Flutter (1.0.0)
-  - flutter_secure_storage_darwin (10.0.0):
-    - Flutter
-    - FlutterMacOS
-  - flutter_timezone (0.0.1):
-    - Flutter
   - flutter_webrtc (1.4.0):
     - Flutter
     - WebRTC-SDK (= 144.7559.01)
-  - fluttertoast (0.0.2):
-    - Flutter
-  - in_app_review (2.0.0):
-    - Flutter
-  - integration_test (0.0.1):
-    - Flutter
-  - livekit_client (2.7.0):
+  - livekit_client (2.8.1):
     - Flutter
     - flutter_webrtc
     - WebRTC-SDK (= 144.7559.01)
-  - local_auth_darwin (0.0.1):
-    - Flutter
-    - FlutterMacOS
   - MediaPipeTasksCommon (0.10.35)
   - MediaPipeTasksVision (0.10.35):
     - MediaPipeTasksCommon (= 0.10.35)
-  - package_info_plus (0.4.5):
-    - Flutter
-  - permission_handler_apple (9.3.0):
-    - Flutter
   - proton_denoise (1.0.0):
     - Flutter
     - flutter_webrtc
@@ -49,46 +21,16 @@ PODS:
     - MediaPipeTasksVision (= 0.10.35)
   - rust_builder (0.0.1):
     - Flutter
-  - share_plus (0.0.1):
-    - Flutter
-  - shared_preferences_foundation (0.0.1):
-    - Flutter
-    - FlutterMacOS
-  - url_launcher_ios (0.0.1):
-    - Flutter
-  - wakelock_plus (0.0.1):
-    - Flutter
   - WebRTC-SDK (144.7559.01)
-  - webview_flutter_wkwebview (0.0.1):
-    - Flutter
-    - FlutterMacOS
 
 DEPENDENCIES:
-  - add_2_calendar (from `.symlinks/plugins/add_2_calendar/ios`)
-  - app_links (from `.symlinks/plugins/app_links/ios`)
-  - audio_session (from `.symlinks/plugins/audio_session/ios`)
-  - connectivity_plus (from `.symlinks/plugins/connectivity_plus/ios`)
-  - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
   - Flutter (from `Flutter`)
-  - flutter_secure_storage_darwin (from `.symlinks/plugins/flutter_secure_storage_darwin/darwin`)
-  - flutter_timezone (from `.symlinks/plugins/flutter_timezone/ios`)
   - flutter_webrtc (from `.symlinks/plugins/flutter_webrtc/ios`)
-  - fluttertoast (from `.symlinks/plugins/fluttertoast/ios`)
-  - in_app_review (from `.symlinks/plugins/in_app_review/ios`)
-  - integration_test (from `.symlinks/plugins/integration_test/ios`)
   - livekit_client (from `.symlinks/plugins/livekit_client/ios`)
-  - local_auth_darwin (from `.symlinks/plugins/local_auth_darwin/darwin`)
-  - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
-  - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - proton_denoise (from `.symlinks/plugins/proton_denoise/ios`)
   - proton_screen_recorder (from `.symlinks/plugins/proton_screen_recorder/ios`)
   - proton_video_effects (from `.symlinks/plugins/proton_video_effects/ios`)
   - rust_builder (from `.symlinks/plugins/rust_builder/ios`)
-  - share_plus (from `.symlinks/plugins/share_plus/ios`)
-  - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
-  - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
-  - wakelock_plus (from `.symlinks/plugins/wakelock_plus/ios`)
-  - webview_flutter_wkwebview (from `.symlinks/plugins/webview_flutter_wkwebview/darwin`)
 
 SPEC REPOS:
   trunk:
@@ -97,38 +39,12 @@ SPEC REPOS:
     - WebRTC-SDK
 
 EXTERNAL SOURCES:
-  add_2_calendar:
-    :path: ".symlinks/plugins/add_2_calendar/ios"
-  app_links:
-    :path: ".symlinks/plugins/app_links/ios"
-  audio_session:
-    :path: ".symlinks/plugins/audio_session/ios"
-  connectivity_plus:
-    :path: ".symlinks/plugins/connectivity_plus/ios"
-  device_info_plus:
-    :path: ".symlinks/plugins/device_info_plus/ios"
   Flutter:
     :path: Flutter
-  flutter_secure_storage_darwin:
-    :path: ".symlinks/plugins/flutter_secure_storage_darwin/darwin"
-  flutter_timezone:
-    :path: ".symlinks/plugins/flutter_timezone/ios"
   flutter_webrtc:
     :path: ".symlinks/plugins/flutter_webrtc/ios"
-  fluttertoast:
-    :path: ".symlinks/plugins/fluttertoast/ios"
-  in_app_review:
-    :path: ".symlinks/plugins/in_app_review/ios"
-  integration_test:
-    :path: ".symlinks/plugins/integration_test/ios"
   livekit_client:
     :path: ".symlinks/plugins/livekit_client/ios"
-  local_auth_darwin:
-    :path: ".symlinks/plugins/local_auth_darwin/darwin"
-  package_info_plus:
-    :path: ".symlinks/plugins/package_info_plus/ios"
-  permission_handler_apple:
-    :path: ".symlinks/plugins/permission_handler_apple/ios"
   proton_denoise:
     :path: ".symlinks/plugins/proton_denoise/ios"
   proton_screen_recorder:
@@ -137,46 +53,18 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/proton_video_effects/ios"
   rust_builder:
     :path: ".symlinks/plugins/rust_builder/ios"
-  share_plus:
-    :path: ".symlinks/plugins/share_plus/ios"
-  shared_preferences_foundation:
-    :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
-  url_launcher_ios:
-    :path: ".symlinks/plugins/url_launcher_ios/ios"
-  wakelock_plus:
-    :path: ".symlinks/plugins/wakelock_plus/ios"
-  webview_flutter_wkwebview:
-    :path: ".symlinks/plugins/webview_flutter_wkwebview/darwin"
 
 SPEC CHECKSUMS:
-  add_2_calendar: e626377f607d055070093cbd56abd1fafa1a02a5
-  app_links: a754cbec3c255bd4bbb4d236ecc06f28cd9a7ce8
-  audio_session: 9bb7f6c970f21241b19f5a3658097ae459681ba0
-  connectivity_plus: cb623214f4e1f6ef8fe7403d580fdad517d2f7dd
-  device_info_plus: 21fcca2080fbcd348be798aa36c3e5ed849eefbe
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  flutter_secure_storage_darwin: acdb3f316ed05a3e68f856e0353b133eec373a23
-  flutter_timezone: 7c838e17ffd4645d261e87037e5bebf6d38fe544
   flutter_webrtc: ec91d94b484ad49cf191ef93413f64a40ffd3b4c
-  fluttertoast: fe6790210fdba20801685be946e3a2124b72eef5
-  in_app_review: 7dd1ea365263f834b8464673f9df72c80c17c937
-  integration_test: 4a889634ef21a45d28d50d622cf412dc6d9f586e
-  livekit_client: 9b9a08c5c78f694ac6a9e70c1c269704ba574b73
-  local_auth_darwin: c3ee6cce0a8d56be34c8ccb66ba31f7f180aaebb
+  livekit_client: a28e738fa0d6b16d780631bfe7a4ea76a9be382d
   MediaPipeTasksCommon: ae27d88c4d185db114a1a768c504f8270dda79b5
   MediaPipeTasksVision: 1d6c3efa89830a131dbd0dc4fb80dea283fac521
-  package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
-  permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
   proton_denoise: 473cd6865c80a1cb0410866a5c952bb49e115401
   proton_screen_recorder: 86a2cace4e5522337dfdc1c6be6ad8c2d848e0ee
   proton_video_effects: 07d9de7ab5329e6620a65cf520d939ee09ccd368
   rust_builder: e5e181121263dc90680706deeeb4621278fa7d17
-  share_plus: 50da8cb520a8f0f65671c6c6a99b3617ed10a58a
-  shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
-  url_launcher_ios: 7a95fa5b60cc718a708b8f2966718e93db0cef1b
-  wakelock_plus: e29112ab3ef0b318e58cfa5c32326458be66b556
   WebRTC-SDK: ab9b5319e458c2bfebdc92b3600740da35d5630d
-  webview_flutter_wkwebview: 8ebf4fded22593026f7dbff1fbff31ea98573c8d
 
 PODFILE CHECKSUM: bb3c45b446be48fcd71353d56d6c95bf72ca700d
 

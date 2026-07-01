@@ -20,7 +20,7 @@ version: 1.1.0+122
 
 environment:
   sdk: ">=3.8.0 <4.0.0"
-  flutter: ">=3.35.0"
+  flutter: ">=3.44.0"
 
 # Path plugins that share dependency versions with this app (see resolution: workspace).
 workspace:
@@ -172,14 +172,10 @@ dev_dependencies:
   flutter_lints: 6.0.0
   ffigen: ^20.0.0
   build_runner: ^2.10.5
-  # Keep analyzer on 10.0.1: (1) flutter_test pins meta 1.17.0 but analyzer >=10.0.2 needs meta ^1.18.0;
-  # (2) freezed ^3.2.x allows analyzer >=9 <11 — 12.x is incompatible until you upgrade freezed + SDK line-up.
-  analyzer: 10.0.1
   #auto gen assets to const
   flutter_gen_runner: ^5.12.0
   flutter_gen: ^5.12.0
-  freezed: ^3.2.3
-  test: ^1.30.0
+  # freezed: ^3.2.3
 
   json_serializable: ^6.13.1
 
@@ -188,6 +184,7 @@ dev_dependencies:
 
   # for ui tests
   golden_toolkit: ^0.15.0
+  # 5.6.4: analyzer <13 — required for Linux CI mobile-builder (flutter_test pins test_api 0.7.11).
   mockito: 5.6.4
   alchemist: 0.14.0 # golden_toolkit replacement
   #path provider mock
@@ -196,6 +193,8 @@ dev_dependencies:
   bloc_test: ^10.0.0
   # flutter_gen configs
   device_info_plus_platform_interface: 7.0.3
+  # 1.31.0 → test_api 0.7.11 (Linux CI flutter_test). 1.31.1+ needs 0.7.12 (macOS FVM 3.44.4).
+  test:
 
 flutter_gen:
   output: lib/constants/
