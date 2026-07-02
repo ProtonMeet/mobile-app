@@ -14,6 +14,11 @@ pub fn legacy_message_id(sender: &str, text: &str, received_at_ms: u64) -> Messa
     MessageId::from_bytes(h.finalize().into())
 }
 
+fn legacy_m_type_from_json_text(text: &str) -> Option<String> {
+    let value: serde_json::Value = serde_json::from_str(text.trim()).ok()?;
+    value.get("type")?.as_str().map(str::to_owned)
+}
+
 pub fn decode_legacy_plaintext(
     text: &str,
     sender: ParticipantId,
@@ -27,6 +32,7 @@ pub fn decode_legacy_plaintext(
         in_reply_to: None,
         topic_id: None,
         protocol: ChatProtocol::Legacy,
+        legacy_m_type: legacy_m_type_from_json_text(text),
     }
 }
 
@@ -77,6 +83,7 @@ fn decode_render_message(
         in_reply_to: content.in_reply_to.as_ref().map(domain_id_from_mimi),
         topic_id: content.topic_id().and_then(optional_message_id_from_bstr),
         protocol: ChatProtocol::MimiV1,
+        legacy_m_type: None,
     })
 }
 
@@ -161,6 +168,48 @@ mod tests {
     use mimi_content::MimiContentSerialize;
 
     const TARGET_HEX: &str = "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20";
+
+    #[test]
+    fn decode_legacy_plaintext_extracts_type_from_json() {
+        let json = r#"{"type":"text","text":"hello"}"#;
+        let event = decode_legacy_plaintext(json, ParticipantId("alice".into()), 1000);
+        match event {
+            ChatIncomingEvent::Message {
+                text,
+                legacy_m_type,
+                protocol,
+                ..
+            } => {
+                assert_eq!(text, json);
+                assert_eq!(legacy_m_type.as_deref(), Some("text"));
+                assert_eq!(protocol, ChatProtocol::Legacy);
+            }
+            _ => panic!("expected message"),
+        }
+    }
+
+    #[test]
+    fn decode_legacy_plaintext_non_json_has_no_legacy_m_type() {
+        let event = decode_legacy_plaintext("plain hello", ParticipantId("bob".into()), 2000);
+        match event {
+            ChatIncomingEvent::Message { legacy_m_type, .. } => {
+                assert_eq!(legacy_m_type, None);
+            }
+            _ => panic!("expected message"),
+        }
+    }
+
+    #[test]
+    fn decode_legacy_plaintext_json_without_type_has_no_legacy_m_type() {
+        let json = r#"{"text":"hello"}"#;
+        let event = decode_legacy_plaintext(json, ParticipantId("carol".into()), 3000);
+        match event {
+            ChatIncomingEvent::Message { legacy_m_type, .. } => {
+                assert_eq!(legacy_m_type, None);
+            }
+            _ => panic!("expected message"),
+        }
+    }
 
     #[test]
     fn decode_text_message_event() {

@@ -76,6 +76,7 @@ pub enum ChatIncomingEvent {
         in_reply_to: Option<MessageId>,
         topic_id: Option<MessageId>,
         protocol: ChatProtocol,
+        legacy_m_type: Option<String>, // Only used for legacy messages
     },
     Reaction {
         id: MessageId,
