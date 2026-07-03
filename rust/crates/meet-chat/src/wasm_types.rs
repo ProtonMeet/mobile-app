@@ -41,6 +41,7 @@ pub struct ChatIncomingEventInfo {
     pub emoji: Option<String>,
     pub replaces_id: Option<String>,
     pub protocol: ChatProtocolInfo,
+    pub legacy_m_type: Option<String>,
 }
 
 impl From<ChatIncomingEvent> for ChatIncomingEventInfo {
@@ -54,6 +55,7 @@ impl From<ChatIncomingEvent> for ChatIncomingEventInfo {
                 in_reply_to,
                 topic_id,
                 protocol,
+                legacy_m_type,
             } => ChatIncomingEventInfo {
                 kind: ChatEventKind::Message,
                 id: id.to_hex(),
@@ -66,6 +68,7 @@ impl From<ChatIncomingEvent> for ChatIncomingEventInfo {
                 emoji: None,
                 replaces_id: None,
                 protocol: protocol.into(),
+                legacy_m_type,
             },
             ChatIncomingEvent::Reaction {
                 id,
@@ -87,6 +90,7 @@ impl From<ChatIncomingEvent> for ChatIncomingEventInfo {
                 emoji,
                 replaces_id: replaces.map(|m| m.to_hex()),
                 protocol: protocol.into(),
+                legacy_m_type: None,
             },
             ChatIncomingEvent::Unsupported {
                 id,
@@ -105,6 +109,7 @@ impl From<ChatIncomingEvent> for ChatIncomingEventInfo {
                 emoji: None,
                 replaces_id: None,
                 protocol: protocol.into(),
+                legacy_m_type: None,
             },
         }
     }
@@ -142,6 +147,7 @@ mod tests {
             in_reply_to: None,
             topic_id: None,
             protocol: ChatProtocol::MimiV1,
+            legacy_m_type: None,
         });
         assert_eq!(info.kind, ChatEventKind::Message);
         assert_eq!(info.id, id.to_hex());

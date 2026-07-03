@@ -17,6 +17,7 @@ pub fn compose_local_echo(
                 .as_ref()
                 .map(|r| r.topic_id.unwrap_or(r.message_id)),
             protocol: ChatProtocol::MimiV1,
+            legacy_m_type: None,
         },
         ChatComposeRequest::React { target, emoji } => ChatIncomingEvent::Reaction {
             id,
