@@ -148,5 +148,5 @@ dependencies {
     // WebRTC SDK types referenced by AudioProcessingAdapter (ExternalAudioProcessingFactory).
     compileOnly("io.github.webrtc-sdk:android:144.7559.01")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
-    testImplementation("org.mockito:mockito-core:5.0.0")
+    testImplementation("org.mockito:mockito-core:5.23.0")
 }

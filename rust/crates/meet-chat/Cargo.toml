@@ -10,7 +10,7 @@ crate-type = ["rlib", "cdylib"]
 thiserror = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-sha2 = { version = "0.10", features = ["oid"] }
+sha2 = { workspace = true, features = ["oid"] }
 mimi-content = { workspace = true }
 unicode-segmentation = "1.12"
 wasm-bindgen = { workspace = true, optional = true }

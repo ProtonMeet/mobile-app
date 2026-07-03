@@ -17,9 +17,10 @@ members = [
 ignored = ["serde_bytes"]
 
 [workspace.dependencies]
-anyhow = { version = "1.0.97" }
-thiserror = { version = "2.0.17" }
+anyhow = { version = "1.0.103" }
+thiserror = { version = "2.0.18" }
 base64 = { version = "0.22.1" }
+sha2 = { version = "0.10"}
 
 # other proton internal dependencies
 proton-srp = { version = "0.8.0", default-features = false, registry = "proton_public" }
@@ -59,7 +60,7 @@ serde-wasm-bindgen = { version = "0.6.5" }
 getrandom = { version = "0.3.3", features = ["wasm_js"] }
 
 ###
-mockall = { version = "0.14.0" }
+mockall = { version = "0.15.0" }
 
 ## experimental
 livekit = { version = "0.7.11" }
