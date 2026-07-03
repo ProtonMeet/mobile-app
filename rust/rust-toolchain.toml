@@ -1,0 +1,18 @@
+# rustup override for the meet Rust workspace (run `cargo` from rust/ or any subdirectory).
+# See https://rust-lang.github.io/rustup/overrides.html
+[toolchain]
+channel = "1.95.0"
+targets = [
+    "aarch64-linux-android",
+    "armv7-linux-androideabi",
+    "i686-linux-android",
+    "x86_64-linux-android",
+    "aarch64-apple-ios",
+    "aarch64-apple-ios-sim",
+    "x86_64-apple-ios",
+    "aarch64-apple-darwin",
+    "x86_64-apple-darwin",
+    "wasm32-unknown-unknown",
+]
+components = ["clippy", "rustfmt"]
+profile = "minimal"

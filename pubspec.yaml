@@ -52,7 +52,7 @@ dependencies:
   flutter_timezone: ^5.0.1
 
   # frb
-  flutter_rust_bridge: 2.11.1
+  flutter_rust_bridge: 2.12.0
   freezed_annotation: ^3.1.0
   json_annotation: ^4.12.0
 
@@ -175,7 +175,7 @@ dev_dependencies:
   #auto gen assets to const
   flutter_gen_runner: ^5.12.0
   flutter_gen: ^5.12.0
-  # freezed: ^3.2.3
+  freezed:
 
   json_serializable: ^6.13.1
 
@@ -185,7 +185,7 @@ dev_dependencies:
   # for ui tests
   golden_toolkit: ^0.15.0
   # 5.6.4: analyzer <13 — required for Linux CI mobile-builder (flutter_test pins test_api 0.7.11).
-  mockito: 5.6.4
+  mockito:
   alchemist: 0.14.0 # golden_toolkit replacement
   #path provider mock
   path_provider_platform_interface: ^2.1.2

@@ -1,5 +1,7 @@
+#![allow(clippy::items_after_test_module)]
+
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use std::{
         collections::HashMap,
         future::ready,
@@ -65,7 +67,7 @@ mod tests {
         MimiProvider, ProtonMeetClaims,
     };
     use proton_meet_mls::{
-        kv::MemKv, CommitBundle, MlsClient, MlsClientConfig, MlsGroup, MlsGroupConfig, MlsStore,
+        kv::MemKv, CommitBundle, MlsClient, MlsClientConfig, MlsGroup, MlsStore,
     };
     use uuid::Uuid;
 
@@ -2968,7 +2970,6 @@ mod tests {
 
     async fn mls_direct_test_create_client(email: &str) -> MlsClient<MemKv> {
         use meet_identifiers::Domain;
-        use mls_trait::MlsClientTrait;
         use proton_claims::reexports::cose_key_set::CoseKeySet;
 
         let kv = MemKv::new();
@@ -3127,7 +3128,7 @@ mod tests {
         }
     }
 
-    async fn mls_direct_test_join_members(
+    pub async fn mls_direct_test_join_members(
         host_group: &Arc<RwLock<MlsGroup<MemKv>>>,
         groups: &mut Vec<Arc<RwLock<MlsGroup<MemKv>>>>,
         join_count: usize,
@@ -3147,7 +3148,6 @@ mod tests {
         ratchet_tree_option: RatchetTreeOption,
     ) -> Result<(), anyhow::Error> {
         use identity::{Disclosure, PresentationContext};
-        use mls_trait::MlsClientTrait;
 
         let signing_identity =
             client.new_signing_identity(Disclosure::Full, &PresentationContext::Default)?;
