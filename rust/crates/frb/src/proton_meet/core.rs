@@ -1129,8 +1129,12 @@ impl AppCore {
     ) -> Result<String, BridgeError> {
         let start = chrono::DateTime::<chrono::Utc>::from_timestamp(meeting.start_timestamp, 0)
             .ok_or_else(|| BridgeError::ParseError("Invalid start timestamp".to_string()))?;
-        let end = chrono::DateTime::<chrono::Utc>::from_timestamp(meeting.end_timestamp, 0)
+        let mut end = chrono::DateTime::<chrono::Utc>::from_timestamp(meeting.end_timestamp, 0)
             .ok_or_else(|| BridgeError::ParseError("Invalid end timestamp".to_string()))?;
+        if end <= start {
+            let duration_minutes = meeting.duration_minutes.max(1);
+            end = start + chrono::Duration::minutes(duration_minutes);
+        }
         let recurrence = meeting.recurrence.map(|frequency| RecurrenceRule {
             frequency,
             interval: 1,
@@ -1150,10 +1154,9 @@ impl AppCore {
             recurrence,
             uid,
             time_zone: meeting.time_zone,
+            duration_minutes: Some(meeting.duration_minutes),
         };
-        let ics = event
-            .to_ics()
-            .map_err(|e| BridgeError::Std(e.to_string()))?;
+        let ics = event.to_ics();
         Ok(ics)
     }
 }

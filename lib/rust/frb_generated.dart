@@ -6424,16 +6424,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ScheduleMeetingRequest dco_decode_schedule_meeting_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 7)
-      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return ScheduleMeetingRequest(
       title: dco_decode_String(arr[0]),
       startTimestamp: dco_decode_i_64(arr[1]),
       endTimestamp: dco_decode_i_64(arr[2]),
-      recurrence: dco_decode_opt_box_autoadd_recurrence_frequency(arr[3]),
-      location: dco_decode_opt_String(arr[4]),
-      description: dco_decode_opt_String(arr[5]),
-      timeZone: dco_decode_opt_String(arr[6]),
+      durationMinutes: dco_decode_i_64(arr[3]),
+      recurrence: dco_decode_opt_box_autoadd_recurrence_frequency(arr[4]),
+      location: dco_decode_opt_String(arr[5]),
+      description: dco_decode_opt_String(arr[6]),
+      timeZone: dco_decode_opt_String(arr[7]),
     );
   }
 
@@ -7766,6 +7767,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_title = sse_decode_String(deserializer);
     var var_startTimestamp = sse_decode_i_64(deserializer);
     var var_endTimestamp = sse_decode_i_64(deserializer);
+    var var_durationMinutes = sse_decode_i_64(deserializer);
     var var_recurrence = sse_decode_opt_box_autoadd_recurrence_frequency(
       deserializer,
     );
@@ -7776,6 +7778,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       title: var_title,
       startTimestamp: var_startTimestamp,
       endTimestamp: var_endTimestamp,
+      durationMinutes: var_durationMinutes,
       recurrence: var_recurrence,
       location: var_location,
       description: var_description,
@@ -9144,6 +9147,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.title, serializer);
     sse_encode_i_64(self.startTimestamp, serializer);
     sse_encode_i_64(self.endTimestamp, serializer);
+    sse_encode_i_64(self.durationMinutes, serializer);
     sse_encode_opt_box_autoadd_recurrence_frequency(
       self.recurrence,
       serializer,

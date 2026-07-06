@@ -13,6 +13,7 @@ class ScheduleMeetingRequest {
   final String title;
   final PlatformInt64 startTimestamp;
   final PlatformInt64 endTimestamp;
+  final PlatformInt64 durationMinutes;
   final RecurrenceFrequency? recurrence;
   final String? location;
   final String? description;
@@ -22,6 +23,7 @@ class ScheduleMeetingRequest {
     required this.title,
     required this.startTimestamp,
     required this.endTimestamp,
+    required this.durationMinutes,
     this.recurrence,
     this.location,
     this.description,
@@ -33,6 +35,7 @@ class ScheduleMeetingRequest {
       title.hashCode ^
       startTimestamp.hashCode ^
       endTimestamp.hashCode ^
+      durationMinutes.hashCode ^
       recurrence.hashCode ^
       location.hashCode ^
       description.hashCode ^
@@ -46,6 +49,7 @@ class ScheduleMeetingRequest {
           title == other.title &&
           startTimestamp == other.startTimestamp &&
           endTimestamp == other.endTimestamp &&
+          durationMinutes == other.durationMinutes &&
           recurrence == other.recurrence &&
           location == other.location &&
           description == other.description &&

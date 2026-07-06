@@ -6,3 +6,6 @@ edition = "2021"
 [dependencies]
 chrono = { workspace = true }
 chrono-tz = "0.10"
+
+[features]
+test = []
