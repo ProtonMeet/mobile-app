@@ -2765,7 +2765,7 @@ pub(crate) mod tests {
     /// let services = vec![&service1, &service2, &service3, &service4];
     /// let groups = setup_n_user_group(services, "test_meet", ciphersuite).await;
     /// ```
-    async fn setup_n_user_group(
+    pub async fn setup_n_user_group(
         services: Vec<&Service>,
         meet_link_name: &str,
         ciphersuite: proton_meet_mls::CipherSuite,
@@ -2902,7 +2902,7 @@ pub(crate) mod tests {
         )
     }
 
-    async fn create_test_service(user_id: &str, meet_link_name: &str) -> Service {
+    pub async fn create_test_service(user_id: &str, meet_link_name: &str) -> Service {
         create_test_service_with_host(user_id, meet_link_name, false).await
     }
 
@@ -2947,7 +2947,7 @@ pub(crate) mod tests {
     }
 
     /// TLS snapshot of GroupInfo + ratchet tree from a group (for proposals or ExternalClient checks).
-    async fn mls_group_export_snapshot(
+    pub async fn mls_group_export_snapshot(
         group: &Arc<RwLock<MlsGroup<MemKv>>>,
     ) -> (mls_spec::messages::MlsMessage, RatchetTreeOption) {
         let group_read = group.read().await;
@@ -5965,7 +5965,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
     }
 
     /// Builds a `Service` that reuses `base_service`'s MLS store but swaps HTTP for join-room tests.
-    async fn join_switch_service_with_http(
+    pub async fn join_switch_service_with_http(
         base_service: &Service,
         email_for_sd_cwt_mock: &str,
         meet_link_name: &str,
@@ -6758,4 +6758,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 }
 
 #[cfg(test)]
-pub use tests::create_mock_http_client_for_mls;
+pub use tests::{
+    create_mock_http_client_for_mls, create_test_service, join_switch_service_with_http,
+    mls_group_export_snapshot, setup_n_user_group,
+};
