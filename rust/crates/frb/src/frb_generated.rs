@@ -7542,6 +7542,7 @@ impl SseDecode for crate::proton_meet::models::schedule_meeting::ScheduleMeeting
         let mut var_title = <String>::sse_decode(deserializer);
         let mut var_startTimestamp = <i64>::sse_decode(deserializer);
         let mut var_endTimestamp = <i64>::sse_decode(deserializer);
+        let mut var_durationMinutes = <i64>::sse_decode(deserializer);
         let mut var_recurrence = <Option<
             crate::proton_meet::models::recurrence_frequency::RecurrenceFrequency,
         >>::sse_decode(deserializer);
@@ -7552,6 +7553,7 @@ impl SseDecode for crate::proton_meet::models::schedule_meeting::ScheduleMeeting
             title: var_title,
             start_timestamp: var_startTimestamp,
             end_timestamp: var_endTimestamp,
+            duration_minutes: var_durationMinutes,
             recurrence: var_recurrence,
             location: var_location,
             description: var_description,
@@ -8802,6 +8804,7 @@ impl flutter_rust_bridge::IntoDart
             self.title.into_into_dart().into_dart(),
             self.start_timestamp.into_into_dart().into_dart(),
             self.end_timestamp.into_into_dart().into_dart(),
+            self.duration_minutes.into_into_dart().into_dart(),
             self.recurrence.into_into_dart().into_dart(),
             self.location.into_into_dart().into_dart(),
             self.description.into_into_dart().into_dart(),
@@ -9957,6 +9960,7 @@ impl SseEncode for crate::proton_meet::models::schedule_meeting::ScheduleMeeting
         <String>::sse_encode(self.title, serializer);
         <i64>::sse_encode(self.start_timestamp, serializer);
         <i64>::sse_encode(self.end_timestamp, serializer);
+        <i64>::sse_encode(self.duration_minutes, serializer);
         <Option<crate::proton_meet::models::recurrence_frequency::RecurrenceFrequency>>::sse_encode(
             self.recurrence,
             serializer,

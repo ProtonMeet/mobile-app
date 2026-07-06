@@ -5,6 +5,7 @@ pub struct ScheduleMeetingRequest {
     pub title: String,
     pub start_timestamp: i64, // Unix timestamp in seconds
     pub end_timestamp: i64,   // Unix timestamp in seconds
+    pub duration_minutes: i64,
     pub recurrence: Option<RecurrenceFrequency>,
     pub location: Option<String>,
     pub description: Option<String>,

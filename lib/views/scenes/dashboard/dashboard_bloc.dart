@@ -2129,15 +2129,7 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       data.startTime.minute,
     );
 
-    final endDate = data.endDate ?? data.startDate;
-    final endTime = data.endTime ?? data.startTime;
-    final endDateTime = DateTime(
-      endDate.year,
-      endDate.month,
-      endDate.day,
-      endTime.hour,
-      endTime.minute,
-    );
+    final endDateTime = _resolveScheduleMeetingEndDateTime(data, startDateTime);
 
     final startTimestamp = startDateTime.millisecondsSinceEpoch ~/ 1000;
     final endTimestamp = endDateTime.millisecondsSinceEpoch ~/ 1000;
@@ -2148,6 +2140,7 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       title: data.title,
       startTimestamp: startTimestamp,
       endTimestamp: endTimestamp,
+      durationMinutes: data.durationMinutes,
       recurrence: rustRecurrence,
       description: (trimmedLink != null && trimmedLink.isNotEmpty)
           ? trimmedLink
@@ -2158,6 +2151,26 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
     final appCoreManager = ManagerFactory().get<AppCoreManager>();
     final appCore = appCoreManager.appCore;
     return appCore.exportScheduleMeetingToIcs(meeting: request);
+  }
+
+  DateTime _resolveScheduleMeetingEndDateTime(
+    ScheduleMeetingData data,
+    DateTime startDateTime,
+  ) {
+    if (data.endDate != null && data.endTime != null) {
+      final explicitEnd = DateTime(
+        data.endDate!.year,
+        data.endDate!.month,
+        data.endDate!.day,
+        data.endTime!.hour,
+        data.endTime!.minute,
+      );
+      if (explicitEnd.isAfter(startDateTime)) {
+        return explicitEnd;
+      }
+    }
+
+    return startDateTime.add(Duration(minutes: data.durationMinutes));
   }
 
   frb_recurrence_frequency.RecurrenceFrequency? _mapRecurrenceFrequency(
