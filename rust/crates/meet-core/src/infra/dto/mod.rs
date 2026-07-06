@@ -8,6 +8,7 @@ pub mod meet_link_info;
 pub mod meeting;
 pub mod meeting_feedback;
 pub mod participant_track_settings;
+pub mod proton_settings;
 pub mod proton_user;
 pub mod realtime;
 pub mod remove_participant;

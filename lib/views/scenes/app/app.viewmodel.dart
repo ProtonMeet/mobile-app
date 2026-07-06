@@ -8,6 +8,7 @@ import 'package:meet/constants/env.dart';
 import 'package:meet/constants/proton.color.dart';
 import 'package:meet/constants/proton.image.dart';
 import 'package:meet/helper/logger.dart';
+import 'package:meet/helper/sentry_telemetry.dart';
 import 'package:meet/helper/user.agent.dart';
 import 'package:meet/managers/android_notification_service.dart';
 import 'package:meet/managers/app.core.manager.dart';
@@ -160,6 +161,7 @@ class AppViewModelImpl extends AppViewModel {
 
       final appCoreManager = AppCoreManager(apiEnv, storage);
       await appCoreManager.init();
+      await SentryTelemetry().refreshIfNeeded(appCoreManager);
       serviceManager.register(appCoreManager);
 
       /// data provider manager

@@ -14,6 +14,8 @@ pub trait UserApi: Send + Sync {
     async fn logout(&self);
     async fn get_user_info(&self) -> Result<ProtonUser, LoginError>;
     async fn get_user_addresses(&self) -> Result<Vec<Address>, HttpClientError>;
+    /// `GET /core/v4/settings` — reads `UserSettings.Telemetry` only (response has many other fields).
+    async fn get_proton_telemetry_enabled(&self) -> Result<bool, HttpClientError>;
 }
 
 #[cfg(test)]

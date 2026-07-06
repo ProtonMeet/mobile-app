@@ -272,6 +272,13 @@ impl AppCore {
         Ok(user)
     }
 
+    pub async fn get_proton_telemetry_enabled(&self) -> Result<bool, BridgeError> {
+        self.inner
+            .get_proton_telemetry_enabled()
+            .await
+            .map_err(Into::into)
+    }
+
     pub async fn fetch_user_state(
         &self,
         user_id: String,

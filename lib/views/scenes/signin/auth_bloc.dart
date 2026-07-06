@@ -5,6 +5,7 @@ import 'package:meet/helper/extension/bridge_session_check.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/external.url.dart';
 import 'package:meet/helper/logger.dart' as l;
+import 'package:meet/helper/sentry_telemetry.dart';
 import 'package:meet/helper/user.agent.dart';
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/channels/platform.channel.manager.dart';
@@ -131,6 +132,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           isSignedOut: checkedUser == null,
         ),
       );
+      if (checkedUser != null) {
+        await SentryTelemetry().refreshIfNeeded(appCoreManager);
+      }
     } catch (e) {
       l.logger.e("Error initializing auth: $e");
       emit(state.copyWith(isLoading: false, error: e.toString()));
@@ -170,6 +174,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         error: '',
       ),
     );
+    await SentryTelemetry().refreshIfNeeded(appCoreManager);
   }
 
   Future<({bool camera, bool microphone})> _requestPermissions() async {
@@ -227,6 +232,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     await serviceManager.logout();
+    SentryTelemetry().resetForGuest();
     emit(
       state.copyWith(
         isSignedOut: true,

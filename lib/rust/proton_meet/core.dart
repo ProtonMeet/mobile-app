@@ -119,6 +119,8 @@ abstract class AppCore implements RustOpaqueInterface {
 
   Future<int> getParticipantsCount({required String meetLinkName});
 
+  Future<bool> getProtonTelemetryEnabled();
+
   Future<List<FrbUpcomingMeeting>> getUpcomingMeetings();
 
   Future<ProtonUser> getUser({required String userId});

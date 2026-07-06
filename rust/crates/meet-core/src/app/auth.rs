@@ -1,6 +1,7 @@
 use super::App;
 use crate::app_state::UserState;
 use crate::domain::user::models::UserId;
+use crate::domain::user::ports::user_api::UserApi;
 use crate::domain::user::ports::UserService;
 use crate::errors::core::MeetCoreError;
 use crate::infra::dto::proton_user::UserData;
@@ -150,5 +151,24 @@ impl App {
             .get_user(&UserId::new(user_id))
             .await?;
         Ok(user_data)
+    }
+
+    /// Reads `UserSettings.Telemetry` from `GET /core/v4/settings`.
+    ///
+    /// The settings payload includes many account fields; Meet only parses Telemetry
+    /// for Sentry gating. See `ProtonSettingsUserSettingsDto`.
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get_proton_telemetry_enabled(&self) -> Result<bool, MeetCoreError> {
+        let proton_http = self
+            .proton_http
+            .as_ref()
+            .ok_or(MeetCoreError::InternalError {
+                message: "Proton HTTP client unavailable".to_string(),
+                details: None,
+            })?;
+        proton_http
+            .get_proton_telemetry_enabled()
+            .await
+            .map_err(MeetCoreError::from)
     }
 }
