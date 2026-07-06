@@ -552,7 +552,7 @@ impl App {
         }
     }
 
-    async fn join_room_with_switch_join_type(
+    pub async fn join_room_with_switch_join_type(
         &self,
         switch_join_type: bool,
     ) -> Result<(), MeetCoreError> {
@@ -581,7 +581,7 @@ impl App {
         let join_call_start = instant::now();
         let meeting_link_name = MeetingLinkName::from(meeting_id);
 
-        (|| async {
+        let join_result = (|| async {
             self.user_service
                 .read()
                 .await
@@ -599,7 +599,23 @@ impl App {
                 .with_max_delay(Duration::from_secs(10)),
         )
         .when(|e| e.is_retryable_switch_join())
-        .await?;
+        .await;
+
+        if let Err(e) = join_result {
+            if e.is_retryable_switch_join() {
+                debug!(
+                    "Error joining room with switch join type: {:?}, retrying with switch_join_type=false",
+                    &e
+                );
+                self.user_service
+                    .read()
+                    .await
+                    .join_room_with_switch_join_type(&user_token_info, &meeting_link_name, false)
+                    .await?;
+            } else {
+                return Err(e);
+            }
+        }
 
         {
             let mut app_state = self.state.write().await;

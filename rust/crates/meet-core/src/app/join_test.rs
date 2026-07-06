@@ -6,21 +6,33 @@
 
 use mockall::predicate::eq;
 use std::future::ready;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 
 use crate::app::test_support::{
     app_state_with_mls_participant, build_app, build_app_with_room, build_app_with_room_and_ws,
-    build_app_with_service_room_and_ws, build_app_with_ws, default_app_state,
-    join_test_service_with_mls_client, room_service_with_http, room_service_with_http_and_crypto,
-    room_service_with_meeting_api, state_with_active_participant, state_with_participant_only,
+    build_app_with_service, build_app_with_service_room_and_ws, build_app_with_ws,
+    default_app_state, join_test_service_with_mls_client, room_service_with_http,
+    room_service_with_http_and_crypto, room_service_with_meeting_api,
+    state_with_active_participant, state_with_participant_only,
 };
 use crate::domain::user::models::meet_link_info::MeetParticipant;
 use crate::domain::user::ports::crypto_client::MockCryptoClient;
 use crate::domain::user::ports::meeting_api::MockMeetingApi;
+use crate::domain::user::ports::user_service::UserService;
 use crate::domain::user::ports::MockHttpClient;
 use crate::errors::{core::MeetCoreError, http_client::HttpClientError};
-use crate::infra::dto::realtime::JoinType;
+use crate::infra::dto::realtime::{
+    GroupInfoVersion, JoinType, RatchetTreeAndGroupInfo, VersionedGroupInfoData,
+};
+use crate::service::service::{
+    create_test_service, join_switch_service_with_http, mls_group_export_snapshot,
+    setup_n_user_group,
+};
 use crate::JOIN_TYPE_SWITCH_THRESHOLD;
+use mls_spec::drafts::ratchet_tree_options::RatchetTreeOption;
 use proton_meet_crypto::MEET_DISPLAY_NAME_AAD;
+use proton_meet_mls::MlsClientConfig;
 
 #[test]
 fn get_join_type_stays_external_commit_when_not_new_join_type() {
@@ -349,6 +361,91 @@ async fn leave_meeting_propagates_when_mls_client_missing() {
     )
     .await;
     assert!(app.leave_meeting().await.is_err());
+}
+
+#[tokio::test]
+async fn join_room_with_switch_join_type_falls_back_to_false_on_retryable_error() {
+    let meet_link_name = "join_switch_app_fallback";
+    let config = MlsClientConfig::default();
+    let existing_member_count = JOIN_TYPE_SWITCH_THRESHOLD as usize;
+    let services = futures::future::join_all((0..existing_member_count).map(|idx| {
+        let user_id = format!("user{idx}");
+        async move { create_test_service(&user_id, meet_link_name).await }
+    }))
+    .await;
+    let service_refs = services.iter().collect::<Vec<_>>();
+    let groups = setup_n_user_group(service_refs, meet_link_name, config.ciphersuite).await;
+    let host_group = groups[0].clone();
+
+    let (group_info_msg, ratchet_tree_opt) = mls_group_export_snapshot(&host_group).await;
+    let ratchet_tree = match &ratchet_tree_opt {
+        RatchetTreeOption::Full { ratchet_tree } => ratchet_tree,
+        _ => panic!("expected full ratchet tree"),
+    };
+    let member_count = ratchet_tree
+        .iter()
+        .filter_map(|slot| slot.as_ref())
+        .filter_map(|node| node.as_leaf_node())
+        .count();
+    assert_eq!(member_count, existing_member_count);
+
+    let joiner_service = create_test_service("joiner", meet_link_name).await;
+    let joiner_token = joiner_service
+        .create_mls_client("access_token", meet_link_name, "meet_password", None)
+        .await
+        .unwrap();
+
+    let versioned = Arc::new(VersionedGroupInfoData {
+        version: GroupInfoVersion::V1,
+        data: RatchetTreeAndGroupInfo {
+            ratchet_tree: ratchet_tree_opt,
+            group_info: group_info_msg,
+        },
+    });
+
+    let proposal_attempts = Arc::new(AtomicUsize::new(0));
+    let external_commit_attempts = Arc::new(AtomicUsize::new(0));
+
+    let join_service =
+        join_switch_service_with_http(&joiner_service, "joiner", meet_link_name, |http| {
+            http.expect_get_group_info().returning({
+                let v = versioned.clone();
+                move |_| Box::pin(ready(Ok((*v).clone())))
+            });
+            http.expect_join_group_by_proposal().returning({
+                let proposal_attempts = proposal_attempts.clone();
+                move |_, _| {
+                    proposal_attempts.fetch_add(1, Ordering::SeqCst);
+                    Box::pin(ready(Err(HttpClientError::MlsStatusCode(422))))
+                }
+            });
+            http.expect_update_group_info().returning({
+                let external_commit_attempts = external_commit_attempts.clone();
+                move |_, _, _, _, _| {
+                    external_commit_attempts.fetch_add(1, Ordering::SeqCst);
+                    Box::pin(ready(Ok(())))
+                }
+            });
+        })
+        .await;
+
+    let mut state = default_app_state();
+    state.active_user_info = Some(joiner_token);
+    let app = build_app_with_service(state, join_service).await;
+
+    app.join_room_with_switch_join_type(true)
+        .await
+        .expect("should fall back to external commit after retryable proposal failures");
+
+    assert!(
+        proposal_attempts.load(Ordering::SeqCst) >= 1,
+        "proposal join should be attempted with switch_join_type=true"
+    );
+    assert_eq!(
+        external_commit_attempts.load(Ordering::SeqCst),
+        1,
+        "fallback should join via external commit with switch_join_type=false"
+    );
 }
 
 // --- Manual integration (real backend). Run: cargo test -p proton-meet-core join_meeting -- --ignored ---

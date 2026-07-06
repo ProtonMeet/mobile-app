@@ -4658,4 +4658,7 @@ impl std::fmt::Debug for Service {
 pub(crate) mod service_test;
 
 #[cfg(all(test, not(target_family = "wasm")))]
-pub(crate) use service_test::create_mock_http_client_for_mls;
+pub(crate) use service_test::{
+    create_mock_http_client_for_mls, create_test_service, join_switch_service_with_http,
+    mls_group_export_snapshot, setup_n_user_group,
+};
