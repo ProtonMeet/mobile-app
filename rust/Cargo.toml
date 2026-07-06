@@ -11,6 +11,23 @@ members = [
     "crates/meet-chat",
     "crates/meet-macro",
     "crates/meet-common",
+    "crates/fuzz",
+]
+# The fuzz crate is a workspace member so it inherits the pinned Cargo.lock and the
+# `[patch.crates-io.ciborium]` fork (mimi-content needs it). It is excluded from
+# default-members so a plain `cargo build` (which would fail without the libFuzzer
+# sanitizer runtime) does not try to build it — use `cargo fuzz` instead.
+default-members = [
+    "crates/frb",
+    "crates/meet",
+    "crates/meet-calendar",
+    "crates/meet-core",
+    "crates/meet-crypto",
+    "crates/meet-mls",
+    "crates/meet-cli",
+    "crates/meet-chat",
+    "crates/meet-macro",
+    "crates/meet-common",
 ]
 
 [workspace.metadata.cargo-machete]

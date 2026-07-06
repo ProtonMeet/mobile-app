@@ -1,0 +1,140 @@
+[package]
+name = "proton-meet-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+serde_json = { workspace = true }
+mimi-content = { workspace = true }
+mls-spec = { workspace = true }
+arbitrary = { version = "1", features = ["derive"] }
+
+# --- stateful MLS harness deps (all light: no openssl/sqlite/muon) ---
+mls-trait = { workspace = true, features = ["test-utils"] }
+mls-types = { workspace = true, features = ["test-utils"] }
+mls-rs-codec = { workspace = true }
+identity = { workspace = true, features = ["test-utils"] }
+proton-claims = { workspace = true }
+meet-identifiers = { workspace = true }
+cose-key-thumbprint = { workspace = true }
+ed25519-dalek = { version = "2.1", features = ["pem", "pkcs8", "rand_core"] }
+rand = { workspace = true }
+sha2 = "0.10"
+uuid = { version = "1.17.0", features = ["v4"] }
+tokio = { workspace = true }
+
+[dependencies.proton-meet-mls]
+path = "../meet-mls"
+
+[dependencies.proton-meet-chat]
+path = "../meet-chat"
+features = ["legacy-wire"]
+
+# Shared harness library (TestMlsEnv + operation model) used by the stateful MLS
+# fuzz targets. The fuzz_target bins reference it as `proton_meet_fuzz`.
+[lib]
+path = "src/lib.rs"
+
+# ------------------------------------------------------------------ fuzz targets
+[[bin]]
+name = "mimi_content"
+path = "fuzz_targets/mimi_content.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "chat_envelope"
+path = "fuzz_targets/chat_envelope.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "legacy_chat_json"
+path = "fuzz_targets/legacy_chat_json.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "message_id_hex"
+path = "fuzz_targets/message_id_hex.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "mls_message"
+path = "fuzz_targets/mls_message.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "mls_state_machine"
+path = "fuzz_targets/mls_state_machine.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "mls_kv_reload"
+path = "fuzz_targets/mls_kv_reload.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "mls_ratchet_tree"
+path = "fuzz_targets/mls_ratchet_tree.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "mls_liveness"
+path = "fuzz_targets/mls_liveness.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "mls_catchup"
+path = "fuzz_targets/mls_catchup.rs"
+test = false
+doc = false
+bench = false
+
+# ------------------------------------------------------- helper (non-fuzz) bins
+# A plain (non-libFuzzer) helper binary used to mint structurally-valid seeds.
+# Build/run it with a normal toolchain: `cargo run --bin gen_seeds`.
+[[bin]]
+name = "gen_seeds"
+path = "src/bin/gen_seeds.rs"
+test = false
+doc = false
+bench = false
+
+# Deterministic sanity probe: proves the MLS operations actually succeed
+# (join grows the roster, remove shrinks it, members converge). Run with a
+# normal toolchain: `cargo run --bin mls_sanity`.
+[[bin]]
+name = "mls_sanity"
+path = "src/bin/mls_sanity.rs"
+test = false
+doc = false
+bench = false
+
+# Deterministic reproduction of mls-rs PR #361 (leaf-index reuse sender aliasing).
+[[bin]]
+name = "mls_repro_361"
+path = "src/bin/mls_repro_361.rs"
+test = false
+doc = false
+bench = false
