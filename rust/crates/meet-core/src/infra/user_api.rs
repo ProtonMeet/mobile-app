@@ -11,6 +11,7 @@ use crate::domain::user::ports::user_api::UserApi;
 use crate::errors::http_client::HttpClientError;
 use crate::errors::login::LoginError;
 use crate::infra::dto::addresses::ApiAddressesResponse;
+use crate::infra::dto::proton_settings::ProtonSettingsResponse;
 use crate::infra::dto::proton_user::{ApiProtonUserResponse, UserData};
 use crate::infra::http_client::ProtonHttpClient;
 use crate::infra::http_client_util::HttpClientUtil;
@@ -67,6 +68,16 @@ impl UserApi for ProtonHttpClient {
             .iter()
             .map(|address| address.into())
             .collect())
+    }
+
+    async fn get_proton_telemetry_enabled(&self) -> Result<bool, HttpClientError> {
+        // `/core/v4/settings` returns a large UserSettings object; DTO keeps Telemetry only.
+        let req = self
+            .get("/core/v4/settings")
+            .allowed_time(Duration::from_secs(15));
+        let res = self.get_session().send(req).await?;
+        let settings = res.parse_response::<ProtonSettingsResponse>()?;
+        Ok(settings.user_settings.telemetry != 0)
     }
 }
 

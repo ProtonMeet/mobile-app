@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:meet/helper/sentry_telemetry.dart';
 import 'package:meet/helper/user.agent.dart';
 import 'package:sentry/sentry.dart';
 
@@ -8,6 +9,9 @@ import 'package:sentry/sentry.dart';
 class TagEventProcessor implements EventProcessor {
   @override
   FutureOr<SentryEvent?> apply(SentryEvent event, Hint hint) async {
+    if (!SentryTelemetry().canSendToSentry) {
+      return null;
+    }
     // Filter out Sentry's own errors to prevent infinite loops
     if (event.logger == 'sentry') {
       return null; // Don't send Sentry's own errors
