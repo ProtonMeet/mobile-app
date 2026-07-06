@@ -101,7 +101,7 @@
   "@meet_server_version_not_supported_title": {
     "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
   },
-  "meet_server_version_not_supported_description": "Mit der Version deiner App kann keine Verbindung zu diesem Meeting hergestellt werden. Bitte aktualisiere Proton Meet, um fortzufahren.",
+  "meet_server_version_not_supported_description": "Mit deiner App-Version kann keine Verbindung zu diesem Meeting hergestellt werden. Bitte aktualisiere Proton Meet, um fortzufahren.",
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
@@ -1227,7 +1227,7 @@
   "@call_reached_limit": {
     "description": "Message prefix showing the call has reached the limit"
   },
-  "participants_suffix": " Teilnehmer erreicht.",
+  "participants_suffix": " Teilnehmer.",
   "@participants_suffix": {
     "description": "Message suffix after the participant count"
   },
