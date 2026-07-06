@@ -1,0 +1,6 @@
+target
+corpus
+artifacts
+coverage
+FUZZING_REPORT_CONFLUENCE.md
+FUZZING_REPORT.md
