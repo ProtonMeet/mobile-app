@@ -1,3 +1,4 @@
+import 'package:meet/constants/constants.dart';
 import 'package:meet/helper/extension/datetime.dart';
 import 'package:test/test.dart';
 
@@ -25,10 +26,27 @@ void main() {
   });
 
   testUnit('Round-trip conversion from seconds to DateTime', () {
-    // Take a given number of seconds, convert to DateTime, and back.
-    const originalSeconds = 1672531200; // Example: Jan 1, 2023 UTC
-    final date = DateTime.fromMillisecondsSinceEpoch(originalSeconds * 1000,
-        isUtc: true);
+    const originalSeconds = 1672531200; // Jan 1, 2023 UTC
+    final date = DateTime.fromMillisecondsSinceEpoch(
+      originalSeconds * 1000,
+      isUtc: true,
+    );
     expect(date.secondsSinceEpoch(), equals(originalSeconds));
+  });
+
+  testUnit('earliestScheduleDateTime rounds to schedule interval', () {
+    final earliest = earliestScheduleDateTime();
+    expect(earliest.minute % scheduleMeetingTimeRoundMinutes, equals(0));
+  });
+
+  testUnit('getMinimumScheduleTimeIfToday includes lead on today', () {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final minimum = today.getMinimumScheduleTimeIfToday(null);
+    expect(minimum, isNotNull);
+    expect(
+      minimum!.hour * 60 + minimum.minute,
+      greaterThanOrEqualTo(now.hour * 60 + now.minute),
+    );
   });
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:meet/constants/constants.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 // 30 days in milliseconds
@@ -57,6 +58,50 @@ extension UnixTimestampExtension on DateTime {
   int secondsSinceEpoch() {
     return millisecondsSinceEpoch ~/ Duration.millisecondsPerSecond;
   }
+}
+
+/// Earliest wall-clock start for scheduling, in [timeZone] (or local when invalid).
+///
+/// Adds [leadMinutes] then rounds up to the next [roundMinutes] boundary.
+DateTime earliestScheduleDateTime({
+  String? timeZone,
+  int leadMinutes = scheduleMeetingMinLeadMinutes,
+  int roundMinutes = scheduleMeetingTimeRoundMinutes,
+}) {
+  late DateTime now;
+  try {
+    if (timeZone != null && timeZone.isNotEmpty) {
+      final location = tz.getLocation(timeZone);
+      final tzNow = tz.TZDateTime.now(location);
+      now = DateTime(
+        tzNow.year,
+        tzNow.month,
+        tzNow.day,
+        tzNow.hour,
+        tzNow.minute,
+      );
+    } else {
+      throw StateError('fallback to local');
+    }
+  } catch (_) {
+    final local = DateTime.now();
+    now = DateTime(local.year, local.month, local.day, local.hour, local.minute);
+  }
+
+  var target = now.add(Duration(minutes: leadMinutes));
+  if (roundMinutes > 1) {
+    final remainder = target.minute % roundMinutes;
+    if (remainder != 0) {
+      target = target.add(Duration(minutes: roundMinutes - remainder));
+    }
+  }
+  return DateTime(
+    target.year,
+    target.month,
+    target.day,
+    target.hour,
+    target.minute,
+  );
 }
 
 /// Extension to check if a date/time combination is in the future, respecting timezone.
@@ -139,5 +184,49 @@ extension DateTimeTimezoneExtension on DateTime {
     }
 
     return null;
+  }
+
+  /// Minimum selectable time when scheduling on this date (today only), including
+  /// [scheduleMeetingMinLeadMinutes] lead time. Returns null when this date is
+  /// not today in [timeZone] or when no slot remains today.
+  DateTime? getMinimumScheduleTimeIfToday(String? timeZone) {
+    final earliest = earliestScheduleDateTime(timeZone: timeZone);
+    if (year != earliest.year ||
+        month != earliest.month ||
+        day != earliest.day) {
+      return null;
+    }
+    if (!_isTodayInTimeZone(timeZone)) {
+      return null;
+    }
+    return DateTime(year, month, day, earliest.hour, earliest.minute);
+  }
+
+  /// Whether [time] on this date is a valid schedule start (not in the past and
+  /// respects the scheduling lead time when this date is today).
+  bool isValidScheduleStart(TimeOfDay time, String? timeZone) {
+    final minimum = getMinimumScheduleTimeIfToday(timeZone);
+    if (minimum != null) {
+      final selected = DateTime(year, month, day, time.hour, time.minute);
+      return !selected.isBefore(minimum);
+    }
+    return isDateTimeInFuture(time, timeZone);
+  }
+
+  bool _isTodayInTimeZone(String? timeZone) {
+    try {
+      if (timeZone != null && timeZone.isNotEmpty) {
+        final location = tz.getLocation(timeZone);
+        final tzNow = tz.TZDateTime.now(location);
+        return year == tzNow.year && month == tzNow.month && day == tzNow.day;
+      }
+    } catch (_) {
+      // fall through to local
+    }
+    final today = DateUtils.dateOnly(DateTime.now());
+    final thisDateOnly = DateUtils.dateOnly(this);
+    return thisDateOnly.year == today.year &&
+        thisDateOnly.month == today.month &&
+        thisDateOnly.day == today.day;
   }
 }
