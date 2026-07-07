@@ -273,7 +273,7 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
     if (widget.initialData != null) {
       _applyInitialData(widget.initialData!);
     } else {
-      // Set default end time to 1 hour after start time
+      _setDefaultStartDateTime();
       _applyDuration();
     }
     _loadDeviceTimeZone();
@@ -352,6 +352,7 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
     if (selectedDate != null) {
       setState(() {
         _startDate = selectedDate;
+        _clampStartTimeToMinimum();
         // Update end date if it's before start date
         if (_endDate != null && _endDate!.isBefore(selectedDate)) {
           _endDate = selectedDate.add(const Duration(hours: 1));
@@ -390,6 +391,7 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
                       height: 220,
                       child: CupertinoTheme(
                         data: CupertinoThemeData(
+                          brightness: Brightness.dark,
                           primaryColor: context.colors.interActionNorm,
                         ),
                         child: CupertinoDatePicker(
@@ -523,7 +525,8 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
     required TimeOfDay initialTime,
   }) async {
     // Get minimum time if selected date is today in the selected timezone
-    final minimumDateTime = _startDate.getMinimumTimeIfToday(_selectedTimeZone);
+    final minimumDateTime =
+        _startDate.getMinimumScheduleTimeIfToday(_selectedTimeZone);
 
     final initialDateTime = DateTime(
       _startDate.year,
@@ -560,6 +563,7 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
                       height: 220,
                       child: CupertinoTheme(
                         data: CupertinoThemeData(
+                          brightness: Brightness.dark,
                           barBackgroundColor: context.colors.protonBlue,
                         ),
                         child: CupertinoDatePicker(
@@ -653,9 +657,37 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
         if (!_hasInitialTimeZone) {
           _selectedTimeZone = resolved;
         }
+        if (widget.initialData == null) {
+          _setDefaultStartDateTime();
+          _applyDuration();
+        }
       });
     } catch (e) {
       l.logger.e('[ScheduleMeetingDialog] Error loading device time zone: $e');
+    }
+  }
+
+  void _setDefaultStartDateTime() {
+    final earliest = earliestScheduleDateTime(timeZone: _selectedTimeZone);
+    _startDate = DateTime(earliest.year, earliest.month, earliest.day);
+    _startTime = TimeOfDay(hour: earliest.hour, minute: earliest.minute);
+  }
+
+  void _clampStartTimeToMinimum() {
+    final minimum = _startDate.getMinimumScheduleTimeIfToday(_selectedTimeZone);
+    if (minimum == null) {
+      return;
+    }
+    final selected = DateTime(
+      _startDate.year,
+      _startDate.month,
+      _startDate.day,
+      _startTime.hour,
+      _startTime.minute,
+    );
+    if (selected.isBefore(minimum)) {
+      _startTime = TimeOfDay(hour: minimum.hour, minute: minimum.minute);
+      _applyDuration();
     }
   }
 
@@ -681,6 +713,7 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
       onSelect: (zone) {
         setState(() {
           _selectedTimeZone = zone;
+          _clampStartTimeToMinimum();
         });
       },
     );
@@ -745,7 +778,7 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
 
   /// Checks if the selected start date/time is in the future, respecting the selected timezone
   bool _isDateTimeInFuture() {
-    return _startDate.isDateTimeInFuture(_startTime, _selectedTimeZone);
+    return _startDate.isValidScheduleStart(_startTime, _selectedTimeZone);
   }
 
   String _formatDate(DateTime date) {

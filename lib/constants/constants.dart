@@ -36,6 +36,12 @@ const VideoMaxBitrate defaultScreenSharingMaxBitrate = VideoMaxBitrate.kbps1000;
 const CameraPosition defaultCameraPosition = CameraPosition.front;
 const int maxDisplayNameLength = 50;
 
+/// Earliest start when scheduling a new meeting (buffer while the user fills the form).
+const int scheduleMeetingMinLeadMinutes = 15;
+
+/// Round schedule start times up to this minute interval.
+const int scheduleMeetingTimeRoundMinutes = 5;
+
 /// guest meeting room size
 const int guestMeetingRoomSize = 4;
 
