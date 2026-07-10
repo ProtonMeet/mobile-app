@@ -1604,7 +1604,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       }
 
       if (kDebugMode) {
-        l.logger.d('Latest group key: $groupKey, epoch: $epoch');
+        l.logger.d('Latest MLS group epoch: $epoch');
         l.logger.d('Latest group display code: $displayCode');
       }
       // Emit updated state with new epoch / displayCode / counts.

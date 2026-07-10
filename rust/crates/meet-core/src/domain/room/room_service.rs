@@ -215,14 +215,12 @@ impl RoomService {
             .http_client
             .fetch_access_token(meet_link_name, display_name, &encrypted_display_name)
             .await?;
-        info!(
+        #[cfg(debug_assertions)]
+        tracing::debug!(
             "join_meeting step=fetch_access_token ms={} token_len={}",
             token_start.elapsed().as_millis(),
             access_token_info.access_token.len()
         );
-
-        #[cfg(debug_assertions)]
-        tracing::debug!("access_token: {:?}", &access_token_info.access_token);
 
         info!(
             "join_meeting step=done total_ms={}",

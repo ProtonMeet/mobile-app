@@ -6,5 +6,7 @@ pub mod persister;
 mod idb;
 #[cfg(not(target_family = "wasm"))]
 mod sqlite;
+#[cfg(not(target_family = "wasm"))]
+mod sqlite_test;
 
 pub mod error;

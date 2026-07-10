@@ -24,8 +24,11 @@ pub fn init_rust_logging(
     file_name: &str,
     flutter_layer: bool,
 ) -> Result<(), BridgeError> {
-    // Set the RUST_LOG environment variable
+    // Release builds must not emit debug-level Rust logs to logcat / log files.
+    #[cfg(debug_assertions)]
     env::set_var("RUST_LOG", "debug");
+    #[cfg(not(debug_assertions))]
+    env::set_var("RUST_LOG", "info");
     info!("Initializing Rust logging with file: {}", file_path);
 
     // Acquire the lock on LOG_GUARD
