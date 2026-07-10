@@ -81,6 +81,25 @@ impl Default for FlutterLogLayer {
     }
 }
 
+/// Strip sensitive material from log lines forwarded to Dart (defense in depth).
+fn redact_sensitive_log_message(msg: &str) -> String {
+    let mut redacted = msg.to_string();
+    for marker in [
+        "BEGIN PGP PRIVATE KEY BLOCK",
+        "BEGIN PGP MESSAGE",
+        "BEGIN PGP SIGNED MESSAGE",
+    ] {
+        if let Some(start) = redacted.find(marker) {
+            let end = redacted[start..]
+                .find("END PGP")
+                .map(|i| start + i + 20)
+                .unwrap_or(redacted.len());
+            redacted.replace_range(start..end.min(redacted.len()), "<redacted pgp material>");
+        }
+    }
+    redacted
+}
+
 impl<S> Layer<S> for FlutterLogLayer
 where
     S: Subscriber,
@@ -135,6 +154,7 @@ where
             if let Ok(handle) = tokio::runtime::Handle::try_current() {
                 // We're in a Tokio runtime context, spawn safely
                 let callback = callback.clone();
+                let msg = redact_sensitive_log_message(&msg);
                 handle.spawn(async move {
                     let _ = callback(level, msg).await; // do not crash app on error
                 });

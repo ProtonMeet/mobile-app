@@ -62,9 +62,7 @@ class AppCoreManager implements Manager {
       final String uid = await storage.get("sessionId");
       final String accessToken = await storage.get("accessToken");
       final String refreshToken = await storage.get("refreshToken");
-      if (kDebugMode) {
-        logger.i("sessionId = '$uid';");
-      }
+      logger.d("sessionId = '$uid';");
       authStore = ProtonMeetAuthStore.fromSession(
         env: env.toString(),
         userId: userId,

@@ -8,7 +8,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
     all(target_family = "wasm", feature = "wasm"),
     wasm_bindgen(getter_with_clone)
 )]
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "PascalCase")]
 pub struct ProtonUserKey {
     #[serde(rename = "ID")]
@@ -22,4 +22,30 @@ pub struct ProtonUserKey {
     pub signature: Option<String>,
     pub primary: u32,
     pub active: u32,
+}
+
+impl std::fmt::Debug for ProtonUserKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ProtonUserKey")
+            .field("id", &self.id)
+            .field("version", &self.version)
+            .field("private_key", &"<redacted>")
+            .field(
+                "recovery_secret",
+                &self.recovery_secret.as_ref().map(|_| "<redacted>"),
+            )
+            .field(
+                "recovery_secret_signature",
+                &self
+                    .recovery_secret_signature
+                    .as_ref()
+                    .map(|_| "<redacted>"),
+            )
+            .field("token", &self.token.as_ref().map(|_| "<redacted>"))
+            .field("fingerprint", &self.fingerprint)
+            .field("signature", &self.signature.as_ref().map(|_| "<redacted>"))
+            .field("primary", &self.primary)
+            .field("active", &self.active)
+            .finish()
+    }
 }

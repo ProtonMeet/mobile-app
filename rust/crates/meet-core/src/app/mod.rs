@@ -23,7 +23,7 @@ use muon::{client::Auth, env::EnvId, store::Store};
 use proton_meet_mls::MlsStore;
 use std::{collections::HashMap, future::Future, sync::Arc};
 use tokio::sync::RwLock;
-use tracing::{debug, error};
+use tracing::error;
 
 #[cfg(target_family = "wasm")]
 use {wasm_bindgen::prelude::wasm_bindgen, wasm_bindgen::JsValue};
@@ -257,14 +257,13 @@ impl App {
             ))
         };
 
-        let initialized_auth = auth_store
+        let _initialized_auth = auth_store
             .get_auth(&MUON_DEFAULT_SESSION_KEY)
             .await
             .map_err(|e| MeetCoreError::AuthStoreError {
                 message: e.to_string(),
             })?;
-        #[cfg(debug_assertions)]
-        debug!("initialized_auth: {:?}", initialized_auth);
+        // Auth session details must not be logged (contains tokens).
         // need to set the auth again or the auth_store will be empty
         // todo: check and report to muon team if this is a bug
         if matches!(original_auth, Auth::None) {
@@ -282,11 +281,6 @@ impl App {
                     message: e.to_string(),
                 })?;
         }
-        #[cfg(debug_assertions)]
-        debug!(
-            "fixed_auth: {:?}",
-            auth_store.get_auth(&MUON_DEFAULT_SESSION_KEY).await
-        );
 
         let http_client = Arc::new(ProtonHttpClient::new(config, auth_store, http_host).await?);
         let persister = Persister::new(db_path).await?;
