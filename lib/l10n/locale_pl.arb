@@ -172,7 +172,7 @@
   "display_name_required": "Imię jest wymagane",
   "remember_display_name_on_device": "Zapamiętaj moje imię na tym urządzeniu podczas przyszłych spotkań",
   "join_meeting_button": "Dołącz do spotkania",
-  "create_meeting_button": "Utwórz spotkanie",
+  "create_meeting_button": "Utwórz",
   "import_meeting_button": "Importuj spotkanie",
   "import_meeting_title": "Importuj spotkanie",
   "import_meeting_hint_text": "Wpisz link do spotkania",

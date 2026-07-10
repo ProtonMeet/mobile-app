@@ -172,7 +172,7 @@
   "display_name_required": "Your name is required",
   "remember_display_name_on_device": "Remember my name on this device for future meetings",
   "join_meeting_button": "Join meeting",
-  "create_meeting_button": "Create meeting",
+  "create_meeting_button": "Create",
   "import_meeting_button": "Import meeting",
   "import_meeting_title": "Import meeting",
   "import_meeting_hint_text": "Enter the meeting link",
@@ -464,15 +464,21 @@
   "@recording_in_progress_with_name": {
     "description": "Top banner when exactly one named participant is recording",
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "recording_in_progress_with_name_and_others": "Recording in progress · {name} and {count} others are recording",
   "@recording_in_progress_with_name_and_others": {
     "description": "Top banner when multiple participants are recording",
     "placeholders": {
-      "name": { "type": "String" },
-      "count": { "type": "int" }
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
     }
   },
   "recording_label": "Recording",

@@ -172,7 +172,7 @@
   "display_name_required": "Требуется указать ваше имя",
   "remember_display_name_on_device": "Запомнить моё имя на этом устройстве для будущих встреч",
   "join_meeting_button": "Присоединиться к встрече",
-  "create_meeting_button": "Создать встречу",
+  "create_meeting_button": "Создать",
   "import_meeting_button": "Импортировать встречу",
   "import_meeting_title": "Импортировать встречу",
   "import_meeting_hint_text": "Введите ссылку на встречу",
