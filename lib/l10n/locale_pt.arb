@@ -97,7 +97,7 @@
   "@meeting_locked_notification": {
     "description": "Toast notification when meeting is locked by host"
   },
-  "meet_server_version_not_supported_title": "Update required",
+  "meet_server_version_not_supported_title": "Atualização necessária",
   "@meet_server_version_not_supported_title": {
     "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
   },

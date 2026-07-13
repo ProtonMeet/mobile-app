@@ -1,0 +1,1798 @@
+{
+  "@@locale": "cs",
+  "@@last_modified": "2024-02-12T00:10:57.227125",
+  "app_name": "Proton Meet",
+  "@app_name": {
+    "description": "The name of the application"
+  },
+  "logout": "Odhlásit se",
+  "login": "Přihlásit se",
+  "sign_in": "Přihlásit se",
+  "sign_out": "Odhlásit se",
+  "learn_more": "Více informací",
+  "no_data": "Žádná data",
+  "submit": "Odeslat",
+  "cancel": "Zrušit",
+  "close": "Zavřít",
+  "ok": "OK",
+  "unlock_app": "Odemknout aplikaci",
+  "search": "Hledat",
+  "placeholder": "Zástupný text",
+  "something_went_wrong": "Něco se pokazilo",
+  "retry": "Opakovat",
+  "@retry": {
+    "description": "Retry loading dashboard after an error"
+  },
+  "report_a_problem": "Nahlásit problém",
+  "sign_in_to_proton_title": "Přihlaste se do Protonu",
+  "sign_in_to_proton_subtitle": "Zadejte údaje ke svému účtu Proton.",
+  "options": "Možnosti",
+  "@options": {
+    "description": "Title for options dialog"
+  },
+  "manage_accounts": "Spravovat účty",
+  "@manage_accounts": {
+    "description": "Title for manage accounts dialog"
+  },
+  "delete_account": "Smazat účet",
+  "@delete_account": {
+    "description": "Title for delete account dialog"
+  },
+  "signin_intro_title": "Vítejte v Proton Meet",
+  "@signin_intro_title": {
+    "description": "Title in the sign-in intro sheet"
+  },
+  "signin_intro_subtitle": "Chcete-li pokračovat, přihlaste se nebo si vytvořte účet",
+  "@signin_intro_subtitle": {
+    "description": "Subtitle in the sign-in intro sheet"
+  },
+  "signin_intro_create_account": "Vytvořit účet",
+  "@signin_intro_create_account": {
+    "description": "Primary button label in the sign-in intro sheet"
+  },
+  "signin_intro_sign_in": "Přihlásit se",
+  "@signin_intro_sign_in": {
+    "description": "Secondary button label in the sign-in intro sheet"
+  },
+  "sign_in_username_or_email": "Uživatelské jméno nebo e-mail",
+  "email": "E-mail",
+  "user_name": "Uživatelské jméno",
+  "account": "Účet",
+  "password": "Heslo",
+  "session_expired_content": "Z bezpečnostních důvodů vaše relace vypršela. Chcete-li pokračovat ve správě schůzek, přihlaste se znovu.",
+  "session_expired_title": "Platnost relace vypršela!",
+  "session_expired_continue_without_signing_in": "Pokračovat bez přihlášení",
+  "@session_expired_continue_without_signing_in": {
+    "description": "Secondary button label for session expired bottom sheet"
+  },
+  "force_upgrade": "Vynutit aktualizaci",
+  "upgrade": "Aktualizovat",
+  "search_participants": "Hledat účastníky…",
+  "participants_count": "{count, plural, one {Účastník ({count})} few {Účastníci ({count})} many {Účastníků ({count})} other {Účastníků ({count})}}",
+  "no_participants_found": "Nebyli nalezeni žádní účastníci",
+  "try_different_search_term": "Zkuste vyhledat jiný výraz",
+  "you": "(Vy)",
+  "invite_participant": "Pozvat účastníka",
+  "leave": "Opustit",
+  "emoji_reaction": "Emoji reakce",
+  "unshare_screen": "Ukončit sdílení obrazovky",
+  "share_screen": "Sdílet obrazovku",
+  "show_chatroom": "Chat",
+  "show_participants_list": "Účastníci",
+  "show_settings": "Nastavení",
+  "show_meeting_stats": "Zobrazit statistiky schůzky",
+  "meeting_info": "Info",
+  "meeting_settings": "Nastavení",
+  "host": "Hostitel",
+  "lock_meeting": "Uzamknout schůzku",
+  "meeting_locked": "Schůzka uzamčena",
+  "@meeting_locked": {
+    "description": "Title when meeting is locked"
+  },
+  "meeting_locked_description": "Tato schůzka je uzamčena. Pro připojení kontaktujte hostitele.",
+  "@meeting_locked_description": {
+    "description": "Description when meeting is locked"
+  },
+  "meeting_locked_notification": "Schůzka byla uzamčena. Nemohou se připojit žádní noví účastníci.",
+  "@meeting_locked_notification": {
+    "description": "Toast notification when meeting is locked by host"
+  },
+  "meet_server_version_not_supported_title": "Vyžadována aktualizace",
+  "@meet_server_version_not_supported_title": {
+    "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
+  },
+  "meet_server_version_not_supported_description": "Verze vaší aplikace se k této schůzce nemůže připojit. Chcete-li pokračovat, aktualizujte prosím aplikaci Proton Meet.",
+  "@meet_server_version_not_supported_description": {
+    "description": "Description when the client must be updated to join a meeting"
+  },
+  "meeting_unlocked_notification": "Schůzka byla odemčena. Účastníci se mohou opět připojit.",
+  "@meeting_unlocked_notification": {
+    "description": "Toast notification when meeting is unlocked by host"
+  },
+  "hide_profile_pictures": "Skrýt profilové obrázky",
+  "picture_in_picture_mode": "Režim obraz v obraze",
+  "security": "Zabezpečení",
+  "enable_waiting_room": "Povolit čekárnu",
+  "hide_self_view": "Skrýt vlastní náhled",
+  "allow_all_participants_to": "Povolit všem účastníkům:",
+  "chat": "Chatovat",
+  "rename_themselves": "Přejmenovávat se",
+  "unmute_themselves": "Zapnout si mikrofon",
+  "meeting": "Schůzka",
+  "show_meeting_timer": "Zobrazit časovač schůzky",
+  "unsubscribe_video_by_default": "Vypnout příchozí video",
+  "camera_background_blur": "Rozmazané pozadí",
+  "audio_noise_cancellation": "Potlačení hluku",
+  "dark_mode": "Tmavý režim",
+  "show_connection_indicator": "Zobrazit ukazatel připojení",
+  "desktop_notifications": "Oznámení na ploše",
+  "meeting_quality": "Kvalita schůzky",
+  "camera_resolution": "Rozlišení kamery",
+  "camera_max_bitrate": "Maximální přenosová rychlost kamery",
+  "screen_sharing_resolution": "Rozlišení sdílení obrazovky",
+  "screen_sharing_max_bitrate": "Maximální přenosová rychlost sdílení obrazovky",
+  "export_debug_log": "Exportovat log ladění",
+  "type_a_message": "Napište zprávu…",
+  "search_messages": "Hledat zprávy…",
+  "meeting_chat": "Chat schůzky",
+  "no_messages_found": "Nebyly nalezeny žádné zprávy",
+  "no_messages_yet": "Zatím žádné zprávy",
+  "start_the_conversation": "Zahajte konverzaci",
+  "unknown": "Neznámé",
+  "bitrate_extreme_high_2000": "Extrémně vysoká (2000 kb/s)",
+  "bitrate_ultra_high_1900": "Ultra vysoká (1900 kb/s)",
+  "bitrate_ultra_high_1800": "Ultra vysoká (1800 kb/s)",
+  "bitrate_ultra_high_1700": "Ultra vysoká (1700 kb/s)",
+  "bitrate_ultra_high_1600": "Ultra vysoká (1600 kb/s)",
+  "bitrate_ultra_high_1500": "Ultra vysoká (1500 kb/s)",
+  "bitrate_very_high_1400": "Velmi vysoká (1400 kb/s)",
+  "bitrate_very_high_1300": "Velmi vysoká (1300 kb/s)",
+  "bitrate_very_high_1200": "Velmi vysoká (1200 kb/s)",
+  "bitrate_very_high_1100": "Velmi vysoká (1100 kb/s)",
+  "bitrate_high_1000": "Vysoká (1000 kb/s)",
+  "bitrate_high_900": "Vysoká (900 kb/s)",
+  "bitrate_high_800": "Vysoká (800 kb/s)",
+  "bitrate_medium_high_700": "Středně vysoká (700 kb/s)",
+  "bitrate_medium_high_600": "Středně vysoká (600 kb/s)",
+  "bitrate_medium_high_500": "Středně vysoká (500 kb/s)",
+  "bitrate_medium_400": "Střední (400 kb/s)",
+  "bitrate_medium_low_300": "Středně nízká (300 kb/s)",
+  "bitrate_low_200": "Nízká (200 kb/s)",
+  "bitrate_very_low_100": "Velmi nízká (100 kb/s)",
+  "resolution_360p": "360p",
+  "resolution_720p": "720p",
+  "resolution_1080p": "1080p",
+  "resolution_4k": "4K",
+  "join_meeting": "Hovořte důvěrně",
+  "app_description": "Naše koncově šifrované schůzky chrání soukromí a umožňují skutečně svobodné vyjádření.",
+  "meeting_link": "Odkaz na schůzku",
+  "meeting_detail": "Podrobnosti schůzky",
+  "display_name": "Vaše jméno",
+  "enter_display_name": "Zadejte své jméno",
+  "display_name_required": "Vaše jméno je povinné",
+  "remember_display_name_on_device": "Pamatovat si mé jméno na tomto zařízení pro budoucí schůzky",
+  "join_meeting_button": "Připojit se ke schůzce",
+  "create_meeting_button": "Vytvořit schůzku",
+  "import_meeting_button": "Importovat schůzku",
+  "import_meeting_title": "Importovat schůzku",
+  "import_meeting_hint_text": "Zadejte odkaz na schůzku",
+  "open_home": "Otevřít domovskou obrazovku",
+  "start_simulation": "Spustit simulaci",
+  "change_layout": "Změnit uspořádání",
+  "layout_spaced_grid": "Rozložená mřížka",
+  "layout_compact_grid": "Kompaktní mřížka",
+  "layout_speaker_view": "Pohled řečníka",
+  "layout_multi_speaker_view": "Pohled více řečníků",
+  "no_active_speaker": "Žádný aktivní řečník",
+  "camera_view": "Zobrazení kamery",
+  "is_presenting": "prezentuje",
+  "stop_presenting": "Zastavit prezentaci",
+  "tap_to_stop_sharing": "Klepnutím zastavit sdílení",
+  "notification_permission_settings_title": "Povolit přístup k upozorněním",
+  "@notification_permission_settings_title": {
+    "description": "Title when notification permission was denied and screen sharing requires it"
+  },
+  "notification_permission_settings_message": "Sdílení obrazovky vyžaduje oprávnění k zasílání upozornění, aby schůzka mohla běžet na pozadí.\n\nDříve jste přístup zamítli. Chcete-li sdílet svou obrazovku, povolte prosím upozornění v nastavení systému:\n• Otevřete Nastavení\n• Vyhledejte tuto aplikaci\n• Povolte upozornění",
+  "@notification_permission_settings_message": {
+    "description": "Body for notification permission inform sheet shown before screen sharing"
+  },
+  "participant_joined": "Účastník se připojil🎉",
+  "participant_left": "Účastník odešel👋",
+  "participant_name_prefix": "Jméno: ",
+  "participant_identity_prefix": "Identita: ",
+  "setting_updated": "Nastavení bylo aktualizováno",
+  "changes_effect_next_screen_sharing": "Změny se projeví při příštím sdílení obrazovky.",
+  "video_stats_copied": "Statistiky videa byly zkopírovány do schránky",
+  "anonymous_user": "Anonymní uživatel",
+  "loading": "Načítání…",
+  "@loading": {
+    "description": "Loading text"
+  },
+  "video": "Video",
+  "audio": "Zvuk",
+  "turn_off_camera": "Vypnout kameru",
+  "turn_on_camera": "Zapnout kameru",
+  "video_settings": "Nastavení videa",
+  "select_camera_device": "Vyberte zařízení kamery",
+  "turn_off_microphone": "Vypnout mikrofon",
+  "turn_on_microphone": "Zapnout mikrofon",
+  "audio_settings": "Nastavení zvuku",
+  "select_microphone": "Vyberte mikrofon",
+  "select_speaker": "Vyberte reproduktor",
+  "permission_not_given": "Povolení nebyla udělena",
+  "permission_camera": "Pro zapnutí kamery je nutné povolit přístup ke kameře.",
+  "permission_microphone": "Pro zapnutí mikrofonu je nutné povolit přístup k mikrofonu.",
+  "camera_is_off": "Kamera je vypnutá",
+  "copied_to_clipboard": "Zkopírováno do schránky",
+  "personal_meeting": "Osobní schůzka",
+  "@personal_meeting": {
+    "description": "Title for personal meeting dialog"
+  },
+  "personal_meeting_description": "Vaše vždy dostupná zasedací místnost",
+  "@personal_meeting_description": {
+    "description": "Description text for personal meeting room"
+  },
+  "personal_meeting_room": "Osobní zasedací místnost",
+  "@personal_meeting_room": {
+    "description": "Title for personal meeting room dialog"
+  },
+  "join_a_meeting": "Připojit se ke schůzce",
+  "@join_a_meeting": {
+    "description": "Title for join meeting dialog"
+  },
+  "join_meeting_subtitle": "Pro připojení k bezpečné schůzce vložte svůj odkaz na Proton Meet",
+  "@join_meeting_subtitle": {
+    "description": "Subtitle text for join meeting dialog"
+  },
+  "please_enter_valid_meeting_link": "Zadejte prosím platný odkaz na schůzku.",
+  "@please_enter_valid_meeting_link": {
+    "description": "Error message when meeting link is invalid"
+  },
+  "meeting_password_incorrect": "Heslo ke schůzce je nesprávné",
+  "@meeting_password_incorrect": {
+    "description": "Error message when the meeting password embedded in the join link is invalid"
+  },
+  "meeting_password_invalid": "Heslo ke schůzce je neplatné",
+  "link_copied_to_clipboard": "Odkaz zkopírován do schránky",
+  "@link_copied_to_clipboard": {
+    "description": "Success message when meeting link is copied"
+  },
+  "meeting_link_label": "Odkaz na schůzku",
+  "@meeting_link_label": {
+    "description": "Label for meeting link input field"
+  },
+  "copy_link": "Kopírovat odkaz",
+  "@copy_link": {
+    "description": "Button text to copy meeting link"
+  },
+  "copy_link_and_close": "Kopírovat odkaz a zavřít",
+  "@copy_link_and_close": {
+    "description": "Button text to copy link and close dialog"
+  },
+  "copy": "Kopírovat",
+  "@copy": {
+    "description": "Copy action"
+  },
+  "delete": "Smazat",
+  "@delete": {
+    "description": "Delete action"
+  },
+  "delete_meeting": "Smazat schůzku",
+  "@delete_meeting": {
+    "description": "Title for delete meeting dialog"
+  },
+  "delete_meeting_confirmation": "Opravdu chcete smazat tuto schůzku? Tuto akci nelze vzít zpět.",
+  "@delete_meeting_confirmation": {
+    "description": "Confirmation message for deleting a meeting"
+  },
+  "creating_meeting": "Vytváření schůzky…",
+  "@creating_meeting": {
+    "description": "Loading message shown while creating a meeting"
+  },
+  "deleting_meeting": "Mazání schůzky…",
+  "@deleting_meeting": {
+    "description": "Loading message shown while deleting a meeting"
+  },
+  "updating_meeting": "Aktualizace schůzky…",
+  "@updating_meeting": {
+    "description": "Loading message shown while updating a meeting"
+  },
+  "scheduling_meeting": "Plánování schůzky…",
+  "@scheduling_meeting": {
+    "description": "Loading message shown while scheduling a meeting"
+  },
+  "guest_user_description": "Jako host můžete z tohoto ovládacího panelu zahajovat anonymní a bezplatné schůzky.",
+  "@guest_user_description": {
+    "description": "Description text explaining guest user capabilities"
+  },
+  "create_free_account": "Vytvořit bezplatný účet",
+  "@create_free_account": {
+    "description": "Button text to create a free account"
+  },
+  "please_sign_in_to_access_feature": "Pro přístup k této funkci se prosím přihlaste! ",
+  "@please_sign_in_to_access_feature": {
+    "description": "Message prompting user to sign in"
+  },
+  "already_have_account": "Máte již účet? ",
+  "@already_have_account": {
+    "description": "Text before login link for existing users"
+  },
+  "we_hope_you_enjoyed_meeting": "Doufáme, že jste si svou bezpečnou schůzku užili! ",
+  "@we_hope_you_enjoyed_meeting": {
+    "description": "Message shown after user leaves meeting"
+  },
+  "left_by_mistake": "Odešli jste omylem? ",
+  "@left_by_mistake": {
+    "description": "Text before rejoin link"
+  },
+  "rejoin_meeting": "Znovu se připojit ke schůzce",
+  "@rejoin_meeting": {
+    "description": "Button text to rejoin a meeting"
+  },
+  "left_meeting_title": "Opustili jste schůzku",
+  "@left_meeting_title": {
+    "description": "Title shown in left meeting bottom sheet"
+  },
+  "left_meeting_subtitle_guest_free": "Pořádejte vlastní zabezpečené schůzky. Zahajte hovor v aplikaci Proton Meet a sdílejte odkaz, abyste mohli kohokoli pozvat. Je to jednoduché, bezpečné a zdarma.",
+  "@left_meeting_subtitle_guest_free": {
+    "description": "Subtitle shown for non-paid non-host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_guest_paid": "Děkujeme, že jste se připojili.",
+  "@left_meeting_subtitle_guest_paid": {
+    "description": "Subtitle shown for paid non-host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_host_free": "Děkujeme, že jste uspořádali schůzku.",
+  "@left_meeting_subtitle_host_free": {
+    "description": "Subtitle shown for free host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_host_paid": "Děkujeme, že jste uspořádali prémiovou schůzku.",
+  "@left_meeting_subtitle_host_paid": {
+    "description": "Subtitle shown for paid host users after leaving a meeting"
+  },
+  "start_meeting_now": "Zahájit schůzku nyní",
+  "@start_meeting_now": {
+    "description": "Button text to start a meeting immediately from left meeting bottom sheet"
+  },
+  "publish": "Publikovat",
+  "@publish": {
+    "description": "Dialog title for publishing camera and microphone"
+  },
+  "publish_camera_mic_question": "Chcete zveřejnit svou kameru a mikrofon?",
+  "@publish_camera_mic_question": {
+    "description": "Question asking user to publish camera and microphone"
+  },
+  "no": "NE",
+  "@no": {
+    "description": "Negative response button text"
+  },
+  "yes": "ANO",
+  "@yes": {
+    "description": "Positive response button text"
+  },
+  "play_audio": "Přehrát zvuk",
+  "@play_audio": {
+    "description": "Dialog title and button text for playing audio"
+  },
+  "ios_safari_audio_activation": "Pro iOS Safari musíte manuálně aktivovat přehrávání zvuku!",
+  "@ios_safari_audio_activation": {
+    "description": "Message explaining iOS Safari audio activation requirement"
+  },
+  "ignore": "Ignorovat",
+  "@ignore": {
+    "description": "Button text to ignore an action"
+  },
+  "unpublish": "Zrušit zveřejnění",
+  "@unpublish": {
+    "description": "Dialog title for unpublishing camera and microphone"
+  },
+  "unpublish_camera_mic_question": "Chcete zrušit zveřejnění své kamery a mikrofonu?",
+  "@unpublish_camera_mic_question": {
+    "description": "Question asking user to unpublish camera and microphone"
+  },
+  "error": "Chyba",
+  "@error": {
+    "description": "Generic error dialog title"
+  },
+  "disconnect": "Odpojit",
+  "@disconnect": {
+    "description": "Dialog title and button text for disconnecting"
+  },
+  "are_you_sure_disconnect": "Opravdu se chcete odpojit?",
+  "@are_you_sure_disconnect": {
+    "description": "Confirmation question before disconnecting"
+  },
+  "reconnect": "Znovu připojit",
+  "@reconnect": {
+    "description": "Dialog title and button text for reconnecting"
+  },
+  "force_reconnection_message": "Tímto se vynutí opětovné připojení",
+  "@force_reconnection_message": {
+    "description": "Message explaining that reconnection will be forced"
+  },
+  "reconnection_successful": "Opětovné připojení bylo úspěšné.",
+  "@reconnection_successful": {
+    "description": "Success message after reconnection"
+  },
+  "no_connection": "Žádné připojení",
+  "@no_connection": {
+    "description": "Message shown when there is no network connection"
+  },
+  "mls_not_synced": "MLS nesynchronizováno",
+  "@mls_not_synced": {
+    "description": "Message shown when MLS is not synced"
+  },
+  "reconnecting_warning": "Opětovné připojování",
+  "@reconnecting_warning": {
+    "description": "Message shown when MLS is not synced or websocket trying to reconnect"
+  },
+  "websocket_reconnecting": "WebSocket se znovu připojuje",
+  "@websocket_reconnecting": {
+    "description": "Message shown when WebSocket is reconnecting"
+  },
+  "received_data": "Přijatá data",
+  "@received_data": {
+    "description": "Dialog title for received data"
+  },
+  "room_recording_reminder": "Připomenutí nahrávání místnosti",
+  "@room_recording_reminder": {
+    "description": "Dialog title for room recording status"
+  },
+  "room_recording_active": "Nahrávání místnosti je aktivní.",
+  "@room_recording_active": {
+    "description": "Message when room recording is active"
+  },
+  "room_recording_stopped": "Nahrávání místnosti je zastaveno.",
+  "@room_recording_stopped": {
+    "description": "Message when room recording is stopped"
+  },
+  "meeting_being_recorded": "Tato schůzka je nahrávána",
+  "@meeting_being_recorded": {
+    "description": "Title for recording in progress dialog"
+  },
+  "recording_consent_message": "Pokračováním ve schůzce berete na vědomí, že je nahrávána, a souhlasíte s tím.",
+  "@recording_consent_message": {
+    "description": "Message about recording consent"
+  },
+  "recording_in_progress": "Probíhá nahrávání",
+  "@recording_in_progress": {
+    "description": "Top banner shown to all participants when the meeting is being recorded"
+  },
+  "recording_in_progress_with_name": "Probíhá nahrávání · {name} nahrává",
+  "@recording_in_progress_with_name": {
+    "description": "Top banner when exactly one named participant is recording",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "recording_in_progress_with_name_and_others": "Probíhá nahrávání · {name} a {count} další nahrávají",
+  "@recording_in_progress_with_name_and_others": {
+    "description": "Top banner when multiple participants are recording",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recording_label": "Nahrávání",
+  "@recording_label": {
+    "description": "Chip shown next to participants currently recording the meeting"
+  },
+  "agree_and_continue": "Souhlasit a pokračovat",
+  "@agree_and_continue": {
+    "description": "Button text to agree and continue in meeting"
+  },
+  "continue_button": "Pokračovat",
+  "@continue_button": {
+    "description": "Button text to continue in meeting"
+  },
+  "allow_subscription": "Povolit odběr",
+  "@allow_subscription": {
+    "description": "Dialog title for allowing subscription"
+  },
+  "allow_subscription_question": "Povolit všem účastníkům přihlásit odběr stop zevřejněných lokálním účastníkem?",
+  "@allow_subscription_question": {
+    "description": "Question asking user to allow subscription"
+  },
+  "simulate_scenario": "Simulovat scénář",
+  "@simulate_scenario": {
+    "description": "Dialog title for simulating scenarios"
+  },
+  "leave_room": "Opustit místnost",
+  "@leave_room": {
+    "description": "Dialog title for leaving room"
+  },
+  "are_you_sure_leave_room": "Opravdu chcete tuto místnost opustit?",
+  "@are_you_sure_leave_room": {
+    "description": "Confirmation question before leaving room"
+  },
+  "no_response": "Ne",
+  "@no_response": {
+    "description": "Negative response in confirmation dialogs"
+  },
+  "yes_response": "Ano",
+  "@yes_response": {
+    "description": "Positive response in confirmation dialogs"
+  },
+  "personal_meeting_link": "Odkaz na osobní schůzku",
+  "@personal_meeting_link": {
+    "description": "Label for personal meeting link button"
+  },
+  "regenerate_link": "Vygenerovat nový odkaz",
+  "@regenerate_link": {
+    "description": "Button text to regenerate a meeting link"
+  },
+  "regenerating": "Generování…",
+  "@regenerating": {
+    "description": "Loading message shown while regenerating a meeting link"
+  },
+  "start_secure_meeting": "Zahájit bezpečnou schůzku",
+  "@start_secure_meeting": {
+    "description": "Button text to start a secure meeting"
+  },
+  "upcoming_meetings": "Nadcházející schůzky",
+  "@upcoming_meetings": {
+    "description": "Section title for upcoming meetings list"
+  },
+  "my_rooms_count": "Moje místnosti",
+  "@my_rooms_count": {
+    "description": "Title showing the count of my rooms"
+  },
+  "my_meetings_count": "Moje schůzky",
+  "@my_meetings_count": {
+    "description": "Title showing the count of my meetings"
+  },
+  "schedule_meeting": "Naplánovat schůzku",
+  "@schedule_meeting": {
+    "description": "Button text to schedule a meeting"
+  },
+  "start_meeting": "Zahájit schůzku",
+  "@start_meeting": {
+    "description": "Button text to start a meeting"
+  },
+  "recent_meetings": "Nedávné schůzky",
+  "@recent_meetings": {
+    "description": "Section title for recent meetings list"
+  },
+  "start_instant_meeting": "Zahájit okamžitou schůzku",
+  "@start_instant_meeting": {
+    "description": "Button text to start an instant meeting"
+  },
+  "copy_link_button": "Kopírovat odkaz",
+  "@copy_link_button": {
+    "description": "Button text to copy a link"
+  },
+  "start_now": "Zahájit nyní",
+  "@start_now": {
+    "description": "Button text to start immediately"
+  },
+  "leave_meeting": "Opustit schůzku",
+  "@leave_meeting": {
+    "description": "Dialog title for leaving a meeting"
+  },
+  "are_you_sure_leave_meeting": "Opravdu chcete tuto schůzku opustit?",
+  "@are_you_sure_leave_meeting": {
+    "description": "Confirmation question before leaving meeting"
+  },
+  "user_is_presenting": "{name} (vy) prezentujete",
+  "@user_is_presenting": {
+    "description": "String for local user presenting screen share",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "remote_user_is_presenting": "{name} prezentuje",
+  "@remote_user_is_presenting": {
+    "description": "String for remote user presenting screen share",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "screen_share": "Sdílet obrazovku",
+  "@screen_share": {
+    "description": "Tooltip and button text for screen sharing"
+  },
+  "disable_denoising": "deaktivovat potlačení šumu",
+  "@disable_denoising": {
+    "description": "Tooltip for disabling audio denoising"
+  },
+  "enable_denoising": "aktivovat potlačení šumu",
+  "@enable_denoising": {
+    "description": "Tooltip for enabling audio denoising"
+  },
+  "exit_full_screen": "ukončit režim celé obrazovky",
+  "@exit_full_screen": {
+    "description": "Tooltip for exiting full screen mode"
+  },
+  "enter_full_screen": "přejít do režimu celé obrazovky",
+  "@enter_full_screen": {
+    "description": "Tooltip for entering full screen mode"
+  },
+  "enter_pip": "Spustit obraz v obraze",
+  "@enter_pip": {
+    "description": "Tooltip for entering Picture-in-Picture mode"
+  },
+  "screen_sharing": "Sdílení obrazovky",
+  "@screen_sharing": {
+    "description": "Notification title for screen sharing"
+  },
+  "sharing_your_screen": "Sdílení vaší obrazovky",
+  "@sharing_your_screen": {
+    "description": "Notification text when sharing screen"
+  },
+  "screen_share_not_supported_mobile": "Sdílení obrazovky není na mobilním webu podporováno",
+  "@screen_share_not_supported_mobile": {
+    "description": "Error message when screen sharing is not supported on mobile"
+  },
+  "switch_speakerphone_on": "Použít reproduktor telefonu",
+  "@switch_speakerphone_on": {
+    "description": "Tooltip for switching audio output to the phone speaker"
+  },
+  "switch_speakerphone_off": "Použít výchozí zvukový výstup",
+  "@switch_speakerphone_off": {
+    "description": "Tooltip for switching audio output back to the default device"
+  },
+  "audio_output_default_device": "Výchozí zařízení",
+  "@audio_output_default_device": {
+    "description": "Bottom sheet option: use default audio output routing (e.g. earpiece or headphones)"
+  },
+  "audio_output_earpiece": "Sluchátko",
+  "@audio_output_earpiece": {
+    "description": "Bottom sheet option: use Earpiece audio output routing"
+  },
+  "audio_output_bluetooth_device": "Zařízení Bluetooth",
+  "@audio_output_bluetooth_device": {
+    "description": "Bottom sheet option: use Bluetooth device audio output routing"
+  },
+  "audio_output_headphones": "Sluchátka",
+  "@audio_output_headphones": {
+    "description": "Bottom sheet option: use Headphones audio output routing"
+  },
+  "audio_output_phone_speakers": "Reproduktory telefonu",
+  "@audio_output_phone_speakers": {
+    "description": "Bottom sheet option: use the phone built-in loudspeaker"
+  },
+  "please_grant_camera_permission": "Chcete-li pokračovat, povolte přístup ke kameře",
+  "@please_grant_camera_permission": {
+    "description": "Message requesting camera permission"
+  },
+  "please_grant_microphone_permission": "Chcete-li pokračovat, povolte přístup k mikrofonu",
+  "@please_grant_microphone_permission": {
+    "description": "Message requesting microphone permission"
+  },
+  "your_meeting_is_ready": "Vaše schůzka je připravena",
+  "@your_meeting_is_ready": {
+    "description": "Title message when meeting is ready"
+  },
+  "share_link_invite_description": "Sdílejte tento odkaz a pozvěte ostatní. Můžete jej také kdykoli najít kliknutím na ikonu informací na panelu nástrojů.",
+  "@share_link_invite_description": {
+    "description": "Instructions for sharing meeting link"
+  },
+  "two_factor_authentication": "Dvoufázové ověření",
+  "@two_factor_authentication": {
+    "description": "Title for two-factor authentication"
+  },
+  "enter_2fa_code": "Chcete-li pokračovat, zadejte svůj 2FA kód",
+  "@enter_2fa_code": {
+    "description": "Prompt for entering 2FA code"
+  },
+  "twofa_code": "2FA kód",
+  "@twofa_code": {
+    "description": "Label for 2FA code input field"
+  },
+  "verify": "Ověřit",
+  "@verify": {
+    "description": "Button text to verify"
+  },
+  "switch_to": "Přepnout na",
+  "@switch_to": {
+    "description": "Text before account name in account switcher"
+  },
+  "add_another_account": "Přidat další účet",
+  "@add_another_account": {
+    "description": "Button text to add another account"
+  },
+  "delete_proton_account": "Smazat účet Proton",
+  "@delete_proton_account": {
+    "description": "Button text to delete Proton account"
+  },
+  "invalid_meeting_link": "Neplatný odkaz na schůzku",
+  "@invalid_meeting_link": {
+    "description": "Error message for invalid meeting link"
+  },
+  "permission_required": "Vyžadováno oprávnění",
+  "@permission_required": {
+    "description": "Label when permission is required"
+  },
+  "unsubscribe_audio": "Zrušit odběr zvuku",
+  "@unsubscribe_audio": {
+    "description": "Menu item to unsubscribe from audio"
+  },
+  "subscribe_audio": "Přihlásit odběr zvuku",
+  "@subscribe_audio": {
+    "description": "Menu item to subscribe to audio"
+  },
+  "unsubscribe_video": "Zrušit odběr videa",
+  "@unsubscribe_video": {
+    "description": "Menu item to unsubscribe from video"
+  },
+  "subscribe_video": "Přihlásit odběr videa",
+  "@subscribe_video": {
+    "description": "Menu item to subscribe to video"
+  },
+  "remote_mute_video": "Vzdáleně ztlumit video",
+  "@remote_mute_video": {
+    "description": "Menu item to remotely mute video"
+  },
+  "remote_mute_audio": "Vzdáleně ztlumit zvuk",
+  "@remote_mute_audio": {
+    "description": "Menu item to remotely mute audio"
+  },
+  "force_mute": "Vynutit ztlumení",
+  "@force_mute": {
+    "description": "Menu item to force mute a participant"
+  },
+  "force_mute_participant": "Vynutit ztlumení {name}",
+  "@force_mute_participant": {
+    "description": "Toast message when force muting a participant",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "force_disable_camera": "Vynutit deaktivaci kamery",
+  "@force_disable_camera": {
+    "description": "Menu item to force disable camera"
+  },
+  "force_disable_camera_participant": "Vynutit deaktivaci kamery {name}",
+  "@force_disable_camera_participant": {
+    "description": "Toast message when force disabling camera",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "kick_out": "Vyloučit",
+  "@kick_out": {
+    "description": "Menu item to kick out a participant"
+  },
+  "kick_out_participant": "Vyloučit {name}",
+  "@kick_out_participant": {
+    "description": "Toast message when kicking out a participant",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "subscribe_menu": "Menu odběru",
+  "@subscribe_menu": {
+    "description": "Tooltip for subscribe menu button"
+  },
+  "subscribe": "Přihlásit odběr",
+  "@subscribe": {
+    "description": "Menu item to subscribe"
+  },
+  "unsubscribe": "Zrušit odběr",
+  "@unsubscribe": {
+    "description": "Menu item to unsubscribe"
+  },
+  "preferred_fps": "Preferovaná FPS",
+  "@preferred_fps": {
+    "description": "Tooltip for preferred FPS setting"
+  },
+  "preferred_quality": "Preferovaná kvalita",
+  "@preferred_quality": {
+    "description": "Tooltip for preferred quality setting"
+  },
+  "high": "VYSOKÁ",
+  "@high": {
+    "description": "High quality option"
+  },
+  "medium": "STŘEDNÍ",
+  "@medium": {
+    "description": "Medium quality option"
+  },
+  "low": "NÍZKÁ",
+  "@low": {
+    "description": "Low quality option"
+  },
+  "unnamed_room": "Nepojmenovaná místnost",
+  "@unnamed_room": {
+    "description": "Default name for rooms without a name"
+  },
+  "participants_count_text": "{count} účastníků",
+  "@participants_count_text": {
+    "description": "Text showing number of participants",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_privacy_message": "Toto je chat s koncovým šifrováním a dočasnými zprávami, které po ukončení hovoru zmizí.",
+  "@chat_privacy_message": {
+    "description": "Privacy message displayed in chat when there are no messages."
+  },
+  "meeting_quality_feedback": "Zpětná vazba ke kvalitě schůzky",
+  "@meeting_quality_feedback": {
+    "description": "Title for meeting quality feedback form"
+  },
+  "quality_feedback_email_message": "Odesláním budete sdílet log připojení s námi prostřednictvím e-mailu.",
+  "@quality_feedback_email_message": {
+    "description": "Message explaining that connection log will be shared via email"
+  },
+  "call_quality_how_was": "Jaká byla kvalita hovoru?",
+  "@call_quality_how_was": {
+    "description": "Prompt above star rating on post-meeting feedback"
+  },
+  "call_quality_what_went_wrong": "Co se pokazilo?",
+  "@call_quality_what_went_wrong": {
+    "description": "Heading when user rated call quality below threshold"
+  },
+  "call_quality_problem_subtitle": "S jakým problémem jste se setkali?",
+  "@call_quality_problem_subtitle": {
+    "description": "Subtitle under what went wrong on low-rating feedback"
+  },
+  "call_quality_add_optional_details": "Přidat nepovinné detaily",
+  "@call_quality_add_optional_details": {
+    "description": "Expand control for free-text feedback"
+  },
+  "call_quality_share_more_details": "Sdílet více detailů",
+  "@call_quality_share_more_details": {
+    "description": "Placeholder for optional feedback text"
+  },
+  "call_quality_help_text": "Nepovinná zpětná vazba je odesílána bezpečně, aby pomohla zlepšit kvalitu hovoru.",
+  "@call_quality_help_text": {
+    "description": "Short privacy note under the rating on post-meeting feedback"
+  },
+  "call_quality_feedback_submitted": "Vaše zpětná vazba byla odeslána",
+  "@call_quality_feedback_submitted": {
+    "description": "Toast after successful meeting feedback"
+  },
+  "call_quality_could_not_send": "Zpětnou vazbu se nepodařilo odeslat",
+  "@call_quality_could_not_send": {
+    "description": "Toast when meeting feedback API fails"
+  },
+  "call_quality_category_audio": "Zvuk",
+  "@call_quality_category_audio": {
+    "description": "Section label for audio-related feedback options"
+  },
+  "call_quality_category_video": "Video",
+  "@call_quality_category_video": {
+    "description": "Section label for video-related feedback options"
+  },
+  "call_quality_category_screen": "Sdílení obrazovky",
+  "@call_quality_category_screen": {
+    "description": "Section label for screen-share feedback options"
+  },
+  "call_quality_audio_breaking": "Zvuk se přerušoval",
+  "@call_quality_audio_breaking": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_audio_couldnt_hear": "Neslyšel(a) jsem ostatní",
+  "@call_quality_audio_couldnt_hear": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_audio_others_couldnt_hear": "Ostatní mě neslyšeli",
+  "@call_quality_audio_others_couldnt_hear": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_poor": "Kvalita videa byla špatná",
+  "@call_quality_video_poor": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_couldnt_see": "Neviděl(a) jsem video ostatních",
+  "@call_quality_video_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_others_couldnt_see": "Ostatní neviděli mé video",
+  "@call_quality_video_others_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_blurry": "Prezentace byla rozmazaná",
+  "@call_quality_screen_blurry": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_couldnt_see": "Neviděl(a) jsem prezentaci",
+  "@call_quality_screen_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_couldnt_present": "Nemohl(a) jsem prezentovat",
+  "@call_quality_screen_couldnt_present": {
+    "description": "Low-rating feedback option"
+  },
+  "skip": "Přeskočit",
+  "@skip": {
+    "description": "Button text to skip an action"
+  },
+  "feature_not_ready": "Tato funkce ještě není připravena.",
+  "@feature_not_ready": {
+    "description": "Message when a feature is not ready"
+  },
+  "video_stats_all_participants": "Statistiky videa – Všichni účastníci",
+  "@video_stats_all_participants": {
+    "description": "Title for video statistics dialog"
+  },
+  "video_stats": "statistiky videa",
+  "@video_stats": {
+    "description": "Label for video statistics"
+  },
+  "page_not_found": "Stránka nenalezena",
+  "@page_not_found": {
+    "description": "Error message when page is not found"
+  },
+  "invalid_deeplink_format": "Neplatný formát deeplinku: {name}",
+  "@invalid_deeplink_format": {
+    "description": "Error message for invalid deeplink format",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "open_settings": "Otevřít nastavení",
+  "@open_settings": {
+    "description": "Button text to open settings"
+  },
+  "schedule": "Naplánovat",
+  "@schedule": {
+    "description": "Button text to schedule"
+  },
+  "start": "Zahájit",
+  "@start": {
+    "description": "Button text to start"
+  },
+  "start_an_instant_meeting": "Zahájit okamžitou schůzku",
+  "@start_an_instant_meeting": {
+    "description": "Button text to start an instant meeting"
+  },
+  "more": "Více",
+  "@more": {
+    "description": "Tooltip for more options button"
+  },
+  "unlock_failed_too_many_times": "Odemknutí se příliš mnohokrát nezdařilo",
+  "@unlock_failed_too_many_times": {
+    "description": "Error message when unlock fails too many times"
+  },
+  "show_all_stats_debug": "Zobrazit všechny statistiky (režim ladění)",
+  "@show_all_stats_debug": {
+    "description": "Button text to show all stats in debug mode"
+  },
+  "close_simulation": "Zavřít simulaci",
+  "@close_simulation": {
+    "description": "Button text to close simulation"
+  },
+  "close_all_rooms_exit_simulation": "Opravdu chcete zavřít všechny místnosti a ukončit režim simulace?",
+  "@close_all_rooms_exit_simulation": {
+    "description": "Confirmation question before closing simulation"
+  },
+  "yes_close_all": "Ano, zavřít vše",
+  "@yes_close_all": {
+    "description": "Button text to confirm closing all rooms"
+  },
+  "simulation_mode": "Režim simulace",
+  "@simulation_mode": {
+    "description": "Title for simulation mode"
+  },
+  "simulation_mode_description": "Vytvářejte a spravujte simulované místnosti pro testování",
+  "@simulation_mode_description": {
+    "description": "Description text for simulation mode"
+  },
+  "simulated_rooms": "Simulované místnosti",
+  "@simulated_rooms": {
+    "description": "Title for simulated rooms section"
+  },
+  "room_with_users": "Místnost {key} ({count} uživatelů)",
+  "@room_with_users": {
+    "description": "Text showing room ID and user count",
+    "placeholders": {
+      "key": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "enable_video": "Aktivovat video",
+  "@enable_video": {
+    "description": "Button text to enable video"
+  },
+  "meeting_will_end_in": "Schůzka skončí za {time}",
+  "@meeting_will_end_in": {
+    "description": "Title for meeting will end dialog with countdown timer",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "0:30"
+      }
+    }
+  },
+  "meeting_expiry_banner_title_prefix": "Schůzka skončí za ",
+  "@meeting_expiry_banner_title_prefix": {
+    "description": "Title prefix for meeting expiry countdown banner; duration is appended"
+  },
+  "meeting_expiry_banner_description": "Bezplatné schůzky jsou omezeny na 1 hodinu. Tento hovor bude brzy ukončen.",
+  "@meeting_expiry_banner_description": {
+    "description": "Subtitle on meeting expiry warning banner for free meetings"
+  },
+  "host_close_meeting_description": "Chcete schůzku opustit, nebo ji pro všechny ukončit?",
+  "@host_close_meeting_description": {
+    "description": "Description text when host want to leave meeting"
+  },
+  "close_meeting_description": "Opravdu chcete odejít? Schůzka bude pokračovat bez vás.",
+  "@close_meeting_description": {
+    "description": "Description text when host want to leave meeting"
+  },
+  "meeting_will_end_description": "Vzhledem k tomu, že jste jediným účastníkem této schůzky, schůzka se automaticky zavře. Chcete v této schůzce zůstat?",
+  "meeting_created": "Schůzka vytvořena",
+  "@meeting_created": {
+    "description": "Title for meeting created dialog"
+  },
+  "room_initialing_hint": "Přihlášení k odběru vzdálených video stop…",
+  "@room_initialing_hint": {
+    "description": "Hint for room initialing process"
+  },
+  "add_to_calendar": "Přidat do kalendáře",
+  "@add_to_calendar": {
+    "description": "Button label to add a meeting to calendar"
+  },
+  "meeting_details": "Detaily",
+  "@meeting_details": {
+    "description": "Button label to show meeting details"
+  },
+  "meeting_details_section": "Detaily schůzky",
+  "@meeting_details_section": {
+    "description": "Section title for meeting details in info panel"
+  },
+  "title_label": "Název",
+  "@title_label": {
+    "description": "Label for meeting title field"
+  },
+  "date_label": "Datum",
+  "@date_label": {
+    "description": "Label for meeting date field"
+  },
+  "time_label": "Čas",
+  "@time_label": {
+    "description": "Label for meeting time field"
+  },
+  "invite_link_label": "Odkaz na pozvánku",
+  "@invite_link_label": {
+    "description": "Label for invite link field"
+  },
+  "messaging_layer_security": "Messaging Layer Security (MLS)",
+  "@messaging_layer_security": {
+    "description": "Title for MLS section in meeting info panel"
+  },
+  "participants_label": "Účastníci",
+  "@participants_label": {
+    "description": "Label for participants count field"
+  },
+  "epoch_label": "Epoch",
+  "@epoch_label": {
+    "description": "Label for epoch field"
+  },
+  "security_code_label": "Bezpečnostní kód",
+  "@security_code_label": {
+    "description": "Label for security code field"
+  },
+  "recurrence_daily": "Denně",
+  "@recurrence_daily": {
+    "description": "Recurrence frequency label for daily meetings"
+  },
+  "recurrence_weekly": "Týdně",
+  "@recurrence_weekly": {
+    "description": "Recurrence frequency label for weekly meetings"
+  },
+  "recurrence_monthly": "Měsíčně",
+  "@recurrence_monthly": {
+    "description": "Recurrence frequency label for monthly meetings"
+  },
+  "recurrence_yearly": "Ročně",
+  "@recurrence_yearly": {
+    "description": "Recurrence frequency label for yearly meetings"
+  },
+  "@meeting_will_end_description": {
+    "description": "Description text explaining why meeting will end"
+  },
+  "stay_in_meeting": "Zůstat ve schůzce",
+  "@stay_in_meeting": {
+    "description": "Button text to stay in meeting"
+  },
+  "end_meeting_for_all": "Ukončit schůzku pro všechny",
+  "@end_meeting_for_all": {
+    "description": "Button text to end meeting for all"
+  },
+  "stay_in_the_meeting": "Zůstat ve schůzce",
+  "@stay_in_the_meeting": {
+    "description": "Button text to stay in the meeting"
+  },
+  "connection_lost": "Připojení ztraceno",
+  "@connection_lost": {
+    "description": "Connection lost description"
+  },
+  "connection_lost_content": "Připojení ztraceno, připojte se prosím ke schůzce znovu",
+  "@connection_lost_content": {
+    "description": "Connection lost description"
+  },
+  "go_back_to_dashboard": "Zpět na ovládací panel",
+  "@go_back_to_dashboard": {
+    "description": "Description text for go back to the dashboard button"
+  },
+  "early_access_description": "Tato funkce je během předběžného přístupu dostupná výhradně uživatelům Lifetime a Visionary.",
+  "@early_access_description": {
+    "description": "Description text explaining guest user capabilities"
+  },
+  "early_access_title": "Pro přístup k této funkci se přihlaste",
+  "@early_access_title": {
+    "description": "Message prompting user to sign in for this early access feature"
+  },
+  "early_access_title_for_login_user": "Funkce předběžného přístupu",
+  "@early_access_title_for_login_user": {
+    "description": "Message to let user know this is early access feature available for Lifetime and Visionary users"
+  },
+  "schedule_a_meeting": "Naplánovat schůzku",
+  "@schedule_a_meeting": {
+    "description": "Menu item label to schedule a meeting in Proton Meet app"
+  },
+  "create_a_room": "Vytvořit místnost",
+  "@create_a_room": {
+    "description": "Menu item label to create a room"
+  },
+  "create_new_room": "Vytvořit novou místnost",
+  "@create_new_room": {
+    "description": "Menu item label to create a new room"
+  },
+  "emoji_reactions": "Reakce pomocí emoji",
+  "@emoji_reactions": {
+    "description": "Emoji reactions tooltip"
+  },
+  "lower_participant_hand": "Dát ruku účastníka dolů",
+  "@lower_participant_hand": {
+    "description": "Tooltip text for lowering a participant's raised hand"
+  },
+  "edit_room": "Upravit místnost",
+  "@edit_room": {
+    "description": "Menu item label to edit a room"
+  },
+  "edit_meeting": "Upravit schůzku",
+  "@edit_meeting": {
+    "description": "Menu item label to edit a meeting"
+  },
+  "join_with_a_link": "Připojit se pomocí odkazu",
+  "@join_with_a_link": {
+    "description": "Menu item label to join a meeting with a link"
+  },
+  "room_name": "Název",
+  "@room_name": {
+    "description": "Label for room name input field header"
+  },
+  "room_id": "ID místnosti",
+  "@room_id": {
+    "description": "Label for room ID display"
+  },
+  "room_deleted": "Místnost smazána",
+  "@room_deleted": {
+    "description": "Success message shown after a room is deleted"
+  },
+  "meeting_deleted": "Schůzka smazána",
+  "@meeting_deleted": {
+    "description": "Success message shown after a meeting is deleted"
+  },
+  "enter_room_name_hint": "např. Designový tým, Týdenní standup",
+  "@enter_room_name_hint": {
+    "description": "Hint text for room name input field"
+  },
+  "create_room_subtitle": "Zasedací místnosti lze používat kdykoli",
+  "@create_room_subtitle": {
+    "description": "Subtitle text for create room dialog"
+  },
+  "create_button": "Vytvořit",
+  "@create_button": {
+    "description": "Button text to create"
+  },
+  "save": "Uložit",
+  "@save": {
+    "description": "Button text to save"
+  },
+  "create_and_copy_link": "Vytvořit a kopírovat odkaz",
+  "@create_and_copy_link": {
+    "description": "Button text to create meeting and copy link"
+  },
+  "you_are_using_paid_meet_plan": "Používáte placený plán Meet.",
+  "@you_are_using_paid_meet_plan": {
+    "description": "Message shown to host indicating they are using a paid plan"
+  },
+  "you_are_using_free_meet_plan": "Používáte bezplatný plán Meet.",
+  "@you_are_using_free_meet_plan": {
+    "description": "Message shown to host indicating they are using the free plan"
+  },
+  "call_supports_up_to": "Tento hovor podporuje až ",
+  "@call_supports_up_to": {
+    "description": "Message prefix showing the maximum number of participants allowed in the call"
+  },
+  "call_reached_limit": "Tento hovor dosáhl ",
+  "@call_reached_limit": {
+    "description": "Message prefix showing the call has reached the limit"
+  },
+  "participants_suffix": " účastníků.",
+  "@participants_suffix": {
+    "description": "Message suffix after the participant count"
+  },
+  "participants_reached_limit_suffix": " účastníků, což je maximální počet.",
+  "@participants_reached_limit_suffix": {
+    "description": "Message suffix after the call reached limit message"
+  },
+  "no_more_participants_can_join": "Odeberte účastníka nebo přejděte na vyšší tarif, abyste mohli pozvat více lidí.",
+  "@no_more_participants_can_join": {
+    "description": "Message shown when the call has reached the maximum number of participants"
+  },
+  "connection_quality_poor": "Špatné připojení",
+  "@connection_quality_poor": {
+    "description": "Tooltip message shown when connection quality is poor"
+  },
+  "meeting_ended_by_host": "Hostitel ukončil schůzku",
+  "@meeting_ended_by_host": {
+    "description": "Toast message shown when the host ends the meeting for everyone"
+  },
+  "client_kicked_out_by_host": "Hostitel vás odebral ze schůzky",
+  "@client_kicked_out_by_host": {
+    "description": "Toast message shown when the host removes current user from the meeting"
+  },
+  "kicked_out_bottom_sheet_title": "Byli jste odebráni",
+  "@kicked_out_bottom_sheet_title": {
+    "description": "Title shown in left meeting bottom sheet when current user is removed by host"
+  },
+  "kicked_out_bottom_sheet_content": "Hostitel vás odebral ze schůzky.",
+  "@kicked_out_bottom_sheet_content": {
+    "description": "Content shown in left meeting bottom sheet when current user is removed by host"
+  },
+  "add_title": "Přidat název",
+  "@add_title": {
+    "description": "Placeholder text for meeting title input field"
+  },
+  "schedule_at": "v",
+  "@schedule_at": {
+    "description": "Label for schedule at, used in schedule dialog"
+  },
+  "schedule_duration_min": "min",
+  "@schedule_duration_min": {
+    "description": "Label for schedule duration in minutes"
+  },
+  "schedule_duration_hr": "h",
+  "@schedule_duration_hr": {
+    "description": "Label for schedule duration in hours"
+  },
+  "schedule_recurrence_none": "Neopakuje se",
+  "@schedule_recurrence_none": {
+    "description": "Label for schedule recurrence none"
+  },
+  "schedule_recurrence_daily": "Denně",
+  "@schedule_recurrence_daily": {
+    "description": "Label for schedule recurrence daily"
+  },
+  "schedule_recurrence_weekly": "Týdně",
+  "@schedule_recurrence_weekly": {
+    "description": "Label for schedule recurrence weekly"
+  },
+  "schedule_recurrence_monthly": "Měsíčně",
+  "@schedule_recurrence_monthly": {
+    "description": "Label for schedule recurrence monthly"
+  },
+  "schedule_recurrence_yearly": "Ročně",
+  "@schedule_recurrence_yearly": {
+    "description": "Label for schedule recurrence yearly"
+  },
+  "schedule_time_zone_search_hint": "Hledat časové pásmo",
+  "@schedule_time_zone_search_hint": {
+    "description": "Label for schedule time zone search hint"
+  },
+  "schedule_time_zone_current": "Aktuální časové pásmo",
+  "@schedule_time_zone_current": {
+    "description": "Label for schedule time zone current"
+  },
+  "schedule_time_zone_selected": "Vybrané časové pásmo",
+  "@schedule_time_zone_selected": {
+    "description": "Label for schedule time zone selected"
+  },
+  "month_jan": "Leden",
+  "@month_jan": {
+    "description": "Full month name for January"
+  },
+  "month_feb": "Únor",
+  "@month_feb": {
+    "description": "Full month name for February"
+  },
+  "month_mar": "Březen",
+  "@month_mar": {
+    "description": "Full month name for March"
+  },
+  "month_apr": "Duben",
+  "@month_apr": {
+    "description": "Full month name for April"
+  },
+  "month_may": "Květen",
+  "@month_may": {
+    "description": "Full month name for May"
+  },
+  "month_jun": "Červen",
+  "@month_jun": {
+    "description": "Full month name for June"
+  },
+  "month_jul": "Červenec",
+  "@month_jul": {
+    "description": "Full month name for July"
+  },
+  "month_aug": "Srpen",
+  "@month_aug": {
+    "description": "Full month name for August"
+  },
+  "month_sep": "Září",
+  "@month_sep": {
+    "description": "Full month name for September"
+  },
+  "month_oct": "Říjen",
+  "@month_oct": {
+    "description": "Full month name for October"
+  },
+  "month_nov": "Listopad",
+  "@month_nov": {
+    "description": "Full month name for November"
+  },
+  "month_dec": "Prosinec",
+  "@month_dec": {
+    "description": "Full month name for December"
+  },
+  "month_short_jan": "Led",
+  "@month_short_jan": {
+    "description": "Abbreviated month name January (order Jan–Dec)"
+  },
+  "month_short_feb": "Úno",
+  "@month_short_feb": {
+    "description": "Abbreviated month name February"
+  },
+  "month_short_mar": "bře",
+  "@month_short_mar": {
+    "description": "Abbreviated month name March"
+  },
+  "month_short_apr": "dub",
+  "@month_short_apr": {
+    "description": "Abbreviated month name April"
+  },
+  "month_short_may": "kvě",
+  "@month_short_may": {
+    "description": "Abbreviated month name May"
+  },
+  "month_short_jun": "čvn",
+  "@month_short_jun": {
+    "description": "Abbreviated month name June"
+  },
+  "month_short_jul": "čvc",
+  "@month_short_jul": {
+    "description": "Abbreviated month name July"
+  },
+  "month_short_aug": "srp",
+  "@month_short_aug": {
+    "description": "Abbreviated month name August"
+  },
+  "month_short_sep": "zář",
+  "@month_short_sep": {
+    "description": "Abbreviated month name September"
+  },
+  "month_short_oct": "říj",
+  "@month_short_oct": {
+    "description": "Abbreviated month name October"
+  },
+  "month_short_nov": "lis",
+  "@month_short_nov": {
+    "description": "Abbreviated month name November"
+  },
+  "month_short_dec": "pro",
+  "@month_short_dec": {
+    "description": "Abbreviated month name December"
+  },
+  "weekday_monday": "Pondělí",
+  "@weekday_monday": {
+    "description": "Weekday name for Monday"
+  },
+  "weekday_tuesday": "Úterý",
+  "@weekday_tuesday": {
+    "description": "Weekday name for Tuesday"
+  },
+  "weekday_wednesday": "Středa",
+  "@weekday_wednesday": {
+    "description": "Weekday name for Wednesday"
+  },
+  "weekday_thursday": "Čtvrtek",
+  "@weekday_thursday": {
+    "description": "Weekday name for Thursday"
+  },
+  "weekday_friday": "Pátek",
+  "@weekday_friday": {
+    "description": "Weekday name for Friday"
+  },
+  "weekday_saturday": "Sobota",
+  "@weekday_saturday": {
+    "description": "Weekday name for Saturday"
+  },
+  "weekday_sunday": "Neděle",
+  "@weekday_sunday": {
+    "description": "Weekday name for Sunday"
+  },
+  "weekday_short_monday": "po",
+  "@weekday_short_monday": {
+    "description": "Short weekday label Monday (list order Mon–Sun)"
+  },
+  "weekday_short_tuesday": "út",
+  "@weekday_short_tuesday": {
+    "description": "Short weekday label Tuesday"
+  },
+  "weekday_short_wednesday": "st",
+  "@weekday_short_wednesday": {
+    "description": "Short weekday label Wednesday"
+  },
+  "weekday_short_thursday": "čt",
+  "@weekday_short_thursday": {
+    "description": "Short weekday label Thursday"
+  },
+  "weekday_short_friday": "pá",
+  "@weekday_short_friday": {
+    "description": "Short weekday label Friday"
+  },
+  "weekday_short_saturday": "so",
+  "@weekday_short_saturday": {
+    "description": "Short weekday label Saturday"
+  },
+  "weekday_short_sunday": "ne",
+  "@weekday_short_sunday": {
+    "description": "Short weekday label Sunday"
+  },
+  "calendar_system": "Přidat do kalendáře v telefonu",
+  "@calendar_system": {
+    "description": "Menu label for opening system calendar"
+  },
+  "calendar_google": "Přidat do Kalendáře Google",
+  "@calendar_google": {
+    "description": "Menu label for opening Google Calendar"
+  },
+  "calendar_share_ics": "Sdílet soubor události",
+  "@calendar_share_ics": {
+    "description": "Menu label for sharing ICS file"
+  },
+  "calendar_outlook": "Přidat do kalendáře Outlook",
+  "@calendar_outlook": {
+    "description": "Menu label for opening Outlook Calendar"
+  },
+  "calendar_proton": "Přidat do Proton Calendar",
+  "@calendar_proton": {
+    "description": "Menu label for opening Proton Calendar"
+  },
+  "scheduled_meeting_share": "Sdílet",
+  "@scheduled_meeting_share": {
+    "description": "Share button label in scheduled meeting summary"
+  },
+  "scheduled_meeting_done": "Hotovo",
+  "@scheduled_meeting_done": {
+    "description": "Done button label in scheduled meeting summary"
+  },
+  "scheduled_meeting_link": "Odkaz",
+  "@scheduled_meeting_link": {
+    "description": "Link label in scheduled meeting summary"
+  },
+  "upcoming_today": "DNES",
+  "@upcoming_today": {
+    "description": "Upcoming meetings header label for today"
+  },
+  "upcoming_tomorrow": "ZÍTRA",
+  "@upcoming_tomorrow": {
+    "description": "Upcoming meetings header label for tomorrow"
+  },
+  "on_yesterday": "VČERA",
+  "@on_yesterday": {
+    "description": "Meetings header label for yesterday"
+  },
+  "upcoming_prefix": "NADCHÁZEJÍCÍ",
+  "@upcoming_prefix": {
+    "description": "Prefix for upcoming meetings header label"
+  },
+  "ended_prefix": "UKONČENO",
+  "@ended_prefix": {
+    "description": "Prefix for ended/past meetings header label"
+  },
+  "ended_today": "Ukončeno dnes",
+  "@ended_today": {
+    "description": "Label for meetings ended today"
+  },
+  "ended_yesterday": "Ukončeno včera",
+  "@ended_yesterday": {
+    "description": "Label for meetings ended yesterday"
+  },
+  "ended_on": "Ukončeno dne",
+  "@ended_on": {
+    "description": "Label for meetings ended on a specific date"
+  },
+  "created_prefix": "VYTVOŘENO",
+  "@created_prefix": {
+    "description": "Prefix for newly created meetings header label"
+  },
+  "created_today": "Vytvořeno dnes",
+  "@created_today": {
+    "description": "Label for meetings created today"
+  },
+  "created_yesterday": "Vytvořeno včera",
+  "@created_yesterday": {
+    "description": "Label for meetings created yesterday"
+  },
+  "created_last_week": "Vytvořeno minulý týden",
+  "@created_last_week": {
+    "description": "Label for meetings created within the last week"
+  },
+  "created": "Vytvořeno dne",
+  "@created": {
+    "description": "Label prefix for created time"
+  },
+  "last_used_today": "Naposledy použito dnes",
+  "@last_used_today": {
+    "description": "Label for meetings last used today"
+  },
+  "last_used_yesterday": "Naposledy použito včera",
+  "@last_used_yesterday": {
+    "description": "Label for meetings last used yesterday"
+  },
+  "last_used": "Naposledy použito dne",
+  "@last_used": {
+    "description": "Label prefix for last used time"
+  },
+  "created_on": "Vytvořeno {day}, {month} {year}",
+  "@created_on": {
+    "description": "Label for meetings created on a specific date",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      },
+      "day": {
+        "type": "int"
+      },
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "secure_meeting": "Zabezpečená schůzka",
+  "@secure_meeting": {
+    "description": "Default meeting name when no title is set"
+  },
+  "premium_meeting": "Prémiová schůzka",
+  "@premium_meeting": {
+    "description": "Default meeting name for paid meeting"
+  },
+  "free_meeting": "Bezplatná schůzka",
+  "@free_meeting": {
+    "description": "Default meeting name for free meeting"
+  },
+  "share_with_people_you_trust": "Sdílejte s důvěryhodnými lidmi",
+  "@share_with_people_you_trust": {
+    "description": "Personal meeting hint text"
+  },
+  "time_am": "dop.",
+  "@time_am": {
+    "description": "AM suffix for 12-hour time format"
+  },
+  "time_pm": "odp.",
+  "@time_pm": {
+    "description": "PM suffix for 12-hour time format"
+  },
+  "start_typing_to_search": "Chcete-li hledat, začněte psát…",
+  "@start_typing_to_search": {
+    "description": "Placeholder text shown when search query is empty"
+  },
+  "no_results_found_for": "Nebyly nalezeny žádné výsledky pro „{searchQuery}“",
+  "@no_results_found_for": {
+    "description": "Message shown when search returns no results",
+    "placeholders": {
+      "searchQuery": {
+        "type": "String",
+        "example": "meeting name"
+      }
+    }
+  },
+  "sort_newest": "Nejnovější",
+  "@sort_newest": {
+    "description": "Sort option label for newest items"
+  },
+  "sort_last_used": "Naposledy použité",
+  "@sort_last_used": {
+    "description": "Sort option label for last used items"
+  },
+  "sort_by": "Seřadit podle {option}",
+  "@sort_by": {
+    "description": "Toast notification message when sort option is selected",
+    "placeholders": {
+      "option": {
+        "type": "String"
+      }
+    }
+  },
+  "sort_upcoming": "Nadcházející",
+  "@sort_upcoming": {
+    "description": "Sort option label for upcoming meetings"
+  },
+  "sort_new_created": "Nově vytvořeno",
+  "@sort_new_created": {
+    "description": "Sort option label for newly created items"
+  },
+  "sort_past_meeting": "Minulé",
+  "@sort_past_meeting": {
+    "description": "Sort option label for past meetings"
+  },
+  "version": "Verze {versionDisplay}",
+  "@version": {
+    "description": "Version text with version number",
+    "placeholders": {
+      "versionDisplay": {
+        "type": "String",
+        "example": "1.0.0-dev (00)"
+      }
+    }
+  },
+  "unable_to_reconnect": "Nelze se znovu připojit",
+  "@unable_to_reconnect": {
+    "description": "Title shown when reconnection fails"
+  },
+  "reconnection_failed_message": "Nepodařilo se nám obnovit připojení. Zkuste se ke schůzce připojit znovu.",
+  "@reconnection_failed_message": {
+    "description": "Message shown when reconnection fails"
+  },
+  "connection": "Připojení",
+  "@connection": {
+    "description": "Section title for connection settings"
+  },
+  "reconnect_meeting": "Znovu se připojit ke schůzce",
+  "@reconnect_meeting": {
+    "description": "Button label to reconnect to meeting"
+  },
+  "always_show_status": "Vždy zobrazit stav",
+  "@always_show_status": {
+    "description": "Setting label to always show connection status banner"
+  },
+  "connection_check_mls_checking": "Kontrola připojení\nOvěřování stavu MLS…",
+  "@connection_check_mls_checking": {
+    "description": "Message shown when checking MLS sync status"
+  },
+  "connection_issue_restoring": "Problém s připojením\nPracujeme na obnovení plné funkčnosti…",
+  "@connection_issue_restoring": {
+    "description": "Message shown when connection issue is being resolved"
+  },
+  "connection_check_mls_failed": "Kontrola připojení\nKontrola stavu MLS selhala, probíhá opětovné připojení…",
+  "@connection_check_mls_failed": {
+    "description": "Message shown when MLS sync check fails"
+  },
+  "connection_check_mls_passed": "Kontrola připojení\nKontrola stavu MLS byla úspěšná",
+  "@connection_check_mls_passed": {
+    "description": "Message shown when MLS sync check passes"
+  },
+  "trying_to_reconnect": "Pokus o opětovné připojení…",
+  "@trying_to_reconnect": {
+    "description": "Message shown when attempting to reconnect to meeting"
+  },
+  "sign_in_card_title": "Přihlaste se nebo si vytvořte účet",
+  "@sign_in_card_title": {
+    "description": "Title text for the sign-in card displayed on dashboard"
+  },
+  "sign_in_card_description": "Plánujte schůzky, přistupujte ke své osobní místnosti a vytvářejte nové místnosti.",
+  "@sign_in_card_description": {
+    "description": "Description text for the sign-in card explaining benefits of signing in"
+  },
+  "almost_there_title": "Už to bude",
+  "@almost_there_title": {
+    "description": "Title for the almost there bottom sheet"
+  },
+  "almost_there_content_before": "Chcete-li naplánovat schůzku, vytvořte si bezplatný ",
+  "@almost_there_content_before": {
+    "description": "Content before Proton account in almost there bottom sheet (schedule meeting)"
+  },
+  "almost_there_content_before_create_room": "Chcete-li vytvořit místnost, vytvořte si bezplatný ",
+  "@almost_there_content_before_create_room": {
+    "description": "Content before Proton account in almost there bottom sheet (create room)"
+  },
+  "almost_there_content_before_personal_room": "Chcete-li používat svou osobní zasedací místnost, vytvořte si bezplatný ",
+  "@almost_there_content_before_personal_room": {
+    "description": "Content before Proton account in almost there bottom sheet (personal meeting room)"
+  },
+  "almost_there_proton_account": "účet Proton",
+  "@almost_there_proton_account": {
+    "description": "Proton account text in almost there bottom sheet"
+  },
+  "almost_there_content_after": ". Poté budete automaticky přesměrováni zpět do Proton Meet.",
+  "@almost_there_content_after": {
+    "description": "Content after Proton account in almost there bottom sheet"
+  },
+  "app_settings_title": "Nastavení aplikace",
+  "@app_settings_title": {
+    "description": "Title for the app settings bottom sheet"
+  },
+  "settings_section_general": "Obecné",
+  "@settings_section_general": {
+    "description": "Section header in app settings"
+  },
+  "settings_section_support": "Podpora",
+  "@settings_section_support": {
+    "description": "Section header for support links in app settings"
+  },
+  "settings_section_legal": "Právní ustanovení",
+  "@settings_section_legal": {
+    "description": "Section header for legal links in app settings"
+  },
+  "languages": "Jazyky",
+  "@languages": {
+    "description": "Label for language selection in settings"
+  },
+  "privacy_policy": "Zásady ochrany osobních údajů",
+  "@privacy_policy": {
+    "description": "Link to privacy policy"
+  },
+  "terms_and_conditions": "Smluvní podmínky",
+  "@terms_and_conditions": {
+    "description": "Link to terms and conditions"
+  },
+  "knowledge_base": "Databáze znalostí",
+  "@knowledge_base": {
+    "description": "Link to help center / knowledge base"
+  },
+  "system_default_mode": "Systémový výchozí",
+  "@system_default_mode": {
+    "description": "Use device language for app UI"
+  },
+  "pre_rating_sheet_title": "Baví vás Proton Meet?",
+  "@pre_rating_sheet_title": {
+    "description": "Title on the pre-rating bottom sheet before in-app review"
+  },
+  "pre_rating_sheet_subtitle": "Čteme veškerou zpětnou vazbu a vážíme si jí.",
+  "@pre_rating_sheet_subtitle": {
+    "description": "Subtitle on the pre-rating bottom sheet"
+  },
+  "pre_rating_sheet_yes_enjoy_proton_meet": "Ano",
+  "@pre_rating_sheet_yes_enjoy_proton_meet": {
+    "description": "Primary button on the pre-rating sheet to open store review"
+  },
+  "pre_rating_sheet_not_really_enjoy_proton_meet": "Spíše ne",
+  "@pre_rating_sheet_not_really_enjoy_proton_meet": {
+    "description": "Secondary button on the pre-rating sheet"
+  },
+  "store_review_thanks_toast": "Děkujeme za vaši zpětnou vazbu",
+  "@store_review_thanks_toast": {
+    "description": "Toast shown before the OS in-app store review prompt"
+  },
+  "iap_native_test_title": "Tarify (nativní)",
+  "@iap_native_test_title": {
+    "description": "Title for dev sheet that invokes native IAP / plans"
+  },
+  "iap_native_test_body": "Používá nativní platební systém Proton (stejný kanál jako Proton Wallet). Je nutné se přihlásit.",
+  "@iap_native_test_body": {
+    "description": "Explains native channel test sheet"
+  },
+  "iap_native_test_current_plan": "Aktuální tarif",
+  "@iap_native_test_current_plan": {
+    "description": "Button: native.navigation.plan.subscription"
+  },
+  "iap_native_test_upgrade": "Navýšit",
+  "@iap_native_test_upgrade": {
+    "description": "Button: native.navigation.plan.upgrade"
+  },
+  "iap_native_test_sign_in_required": "Přihlaste se pomocí účtu Proton a získejte přístup k nativním platbám.",
+  "@iap_native_test_sign_in_required": {
+    "description": "Message shown when sign in is required to open native payments"
+  }
+}

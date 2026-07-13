@@ -1,0 +1,1798 @@
+{
+  "@@locale": "da",
+  "@@last_modified": "2024-02-12T00:10:57.227125",
+  "app_name": "Proton Meet",
+  "@app_name": {
+    "description": "The name of the application"
+  },
+  "logout": "Log ud",
+  "login": "Log ind",
+  "sign_in": "Log ind",
+  "sign_out": "Log ud",
+  "learn_more": "Få mere at vide",
+  "no_data": "Ingen data",
+  "submit": "Send",
+  "cancel": "Annuller",
+  "close": "Luk",
+  "ok": "Ok",
+  "unlock_app": "Lås App Op",
+  "search": "Søg",
+  "placeholder": "Pladsholder",
+  "something_went_wrong": "Noget gik galt",
+  "retry": "Prøv igen",
+  "@retry": {
+    "description": "Retry loading dashboard after an error"
+  },
+  "report_a_problem": "Rapportér et problem",
+  "sign_in_to_proton_title": "Log ind på Proton",
+  "sign_in_to_proton_subtitle": "Indtast dine Proton-kontooplysninger.",
+  "options": "Indstillinger",
+  "@options": {
+    "description": "Title for options dialog"
+  },
+  "manage_accounts": "Administrer konti",
+  "@manage_accounts": {
+    "description": "Title for manage accounts dialog"
+  },
+  "delete_account": "Slet konto",
+  "@delete_account": {
+    "description": "Title for delete account dialog"
+  },
+  "signin_intro_title": "Velkommen til Proton Meet",
+  "@signin_intro_title": {
+    "description": "Title in the sign-in intro sheet"
+  },
+  "signin_intro_subtitle": "Log ind eller opret en konto for at fortsætte",
+  "@signin_intro_subtitle": {
+    "description": "Subtitle in the sign-in intro sheet"
+  },
+  "signin_intro_create_account": "Opret en konto",
+  "@signin_intro_create_account": {
+    "description": "Primary button label in the sign-in intro sheet"
+  },
+  "signin_intro_sign_in": "Log ind",
+  "@signin_intro_sign_in": {
+    "description": "Secondary button label in the sign-in intro sheet"
+  },
+  "sign_in_username_or_email": "Brugernavn eller e-mail",
+  "email": "E-mail",
+  "user_name": "Brugernavn",
+  "account": "Konto",
+  "password": "Adgangskode",
+  "session_expired_content": "Af hensyn til din sikkerhed, er din session udløbet. Log ind igen for at fortsætte med at administrere dine møder.",
+  "session_expired_title": "Sessionen er udløbet!",
+  "session_expired_continue_without_signing_in": "Fortsæt uden at logge ind",
+  "@session_expired_continue_without_signing_in": {
+    "description": "Secondary button label for session expired bottom sheet"
+  },
+  "force_upgrade": "Påtving opgradering",
+  "upgrade": "Opgrader",
+  "search_participants": "Søg i deltagere...",
+  "participants_count": "Deltagere ({count})",
+  "no_participants_found": "Ingen deltagere fundet",
+  "try_different_search_term": "Prøv et andet søgeord",
+  "you": "(Dig)",
+  "invite_participant": "Inviter deltagere",
+  "leave": "Forlad",
+  "emoji_reaction": "Emoji-reaktion",
+  "unshare_screen": "Stop skærmdeling",
+  "share_screen": "Start skærmdeling",
+  "show_chatroom": "Chat",
+  "show_participants_list": "Deltagere",
+  "show_settings": "Indstillinger",
+  "show_meeting_stats": "vis mødestatistikker",
+  "meeting_info": "Info",
+  "meeting_settings": "Indstillinger",
+  "host": "Vært",
+  "lock_meeting": "Lås møde",
+  "meeting_locked": "Møde låst",
+  "@meeting_locked": {
+    "description": "Title when meeting is locked"
+  },
+  "meeting_locked_description": "Dette møde er låst. Kontakt værten for at deltage.",
+  "@meeting_locked_description": {
+    "description": "Description when meeting is locked"
+  },
+  "meeting_locked_notification": "Møde låst. Ingen nye deltagere kan tilslutte sig.",
+  "@meeting_locked_notification": {
+    "description": "Toast notification when meeting is locked by host"
+  },
+  "meet_server_version_not_supported_title": "Opdatering kræves",
+  "@meet_server_version_not_supported_title": {
+    "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
+  },
+  "meet_server_version_not_supported_description": "Din version af appen kan ikke oprette forbindelse til dette møde. Opdater Proton Meet for at fortsætte.",
+  "@meet_server_version_not_supported_description": {
+    "description": "Description when the client must be updated to join a meeting"
+  },
+  "meeting_unlocked_notification": "Møde låst op. Deltagere kan tilslutte sig igen.",
+  "@meeting_unlocked_notification": {
+    "description": "Toast notification when meeting is unlocked by host"
+  },
+  "hide_profile_pictures": "Skjul profilbillede",
+  "picture_in_picture_mode": "Billede-i-billede-tilstand",
+  "security": "Sikkerhed",
+  "enable_waiting_room": "Aktivér venteværelse",
+  "hide_self_view": "Skjul selvvisning",
+  "allow_all_participants_to": "Tillad alle deltagere at:",
+  "chat": "Chat",
+  "rename_themselves": "Omdøbe dem selv",
+  "unmute_themselves": "Slå mikrofonen til selv",
+  "meeting": "Møde",
+  "show_meeting_timer": "Vis mødetimer",
+  "unsubscribe_video_by_default": "Slå indgående video fra",
+  "camera_background_blur": "Baggrundssløring",
+  "audio_noise_cancellation": "Støjreduktion",
+  "dark_mode": "Mørk tilstand",
+  "show_connection_indicator": "Vis forbindelsesindikator",
+  "desktop_notifications": "Skrivebordsnotifikationer",
+  "meeting_quality": "Mødekvalitet",
+  "camera_resolution": "Kameraopløsning",
+  "camera_max_bitrate": "Maks kamera-bitrate",
+  "screen_sharing_resolution": "Opløsning for skærmdeling",
+  "screen_sharing_max_bitrate": "Maks skærmdelings-bitrate",
+  "export_debug_log": "Eksportér debug log",
+  "type_a_message": "Skriv en besked...",
+  "search_messages": "Søg i beskeder...",
+  "meeting_chat": "Mødechat",
+  "no_messages_found": "Ingen beskeder fundet",
+  "no_messages_yet": "Ingen beskeder endnu",
+  "start_the_conversation": "Start samtalen",
+  "unknown": "Ukendt",
+  "bitrate_extreme_high_2000": "Ekstremt høj (2000 kbps)",
+  "bitrate_ultra_high_1900": "Ultra høj (1900 kbps)",
+  "bitrate_ultra_high_1800": "Ultra høj (1800 kbps)",
+  "bitrate_ultra_high_1700": "Ultra høj (1700 kbps)",
+  "bitrate_ultra_high_1600": "Ultra høj (1600 kbps)",
+  "bitrate_ultra_high_1500": "Ultra høj (1500 kbps)",
+  "bitrate_very_high_1400": "Meget høj (1400 kbps)",
+  "bitrate_very_high_1300": "Meget høj (1300 kbps)",
+  "bitrate_very_high_1200": "Meget høj (1200 kbps)",
+  "bitrate_very_high_1100": "Meget høj (1100 kbps)",
+  "bitrate_high_1000": "Høj (1000 kbps)",
+  "bitrate_high_900": "Høj (900 kbps)",
+  "bitrate_high_800": "Høj (800 kbps)",
+  "bitrate_medium_high_700": "Mellemhøj (700 kbps)",
+  "bitrate_medium_high_600": "Mellemhøj (600 kbps)",
+  "bitrate_medium_high_500": "Mellemhøj (500 kbps)",
+  "bitrate_medium_400": "Middel (400 kbps)",
+  "bitrate_medium_low_300": "Mellemlav (300 kbps)",
+  "bitrate_low_200": "Lav (200 kbps)",
+  "bitrate_very_low_100": "Meget lav (100 kbps)",
+  "resolution_360p": "360p",
+  "resolution_720p": "720p",
+  "resolution_1080p": "1080p",
+  "resolution_4k": "4K",
+  "join_meeting": "Snak fortroligt",
+  "app_description": "Vores end-to-end krypterede møder beskytter privatliv og giver dig mulighed for at udtrykke dig selv frit.",
+  "meeting_link": "Link til møde",
+  "meeting_detail": "Mødedetalje",
+  "display_name": "Dit navn",
+  "enter_display_name": "Indtast dit navn",
+  "display_name_required": "Dit navn er påkrævet",
+  "remember_display_name_on_device": "Husk mit navn på denne enhed til fremtidige møder",
+  "join_meeting_button": "Deltag i mødet",
+  "create_meeting_button": "Opret møde",
+  "import_meeting_button": "Importér møde",
+  "import_meeting_title": "Importér møde",
+  "import_meeting_hint_text": "Indtast link til møde",
+  "open_home": "Åbn Hjem",
+  "start_simulation": "Start Simulering",
+  "change_layout": "Skift layout",
+  "layout_spaced_grid": "Udvidet gitter",
+  "layout_compact_grid": "Kompakt gitter",
+  "layout_speaker_view": "Visning for taler",
+  "layout_multi_speaker_view": "Visning for flere talere",
+  "no_active_speaker": "Ingen aktiv taler",
+  "camera_view": "Kameravisning",
+  "is_presenting": "præsenterer",
+  "stop_presenting": "Stop præsentation",
+  "tap_to_stop_sharing": "Tryk for at stoppe deling",
+  "notification_permission_settings_title": "Aktivér adgang til notifikationer",
+  "@notification_permission_settings_title": {
+    "description": "Title when notification permission was denied and screen sharing requires it"
+  },
+  "notification_permission_settings_message": "Skærmdeling kræver adgang til notifikationer, så mødet kan forblive aktivt i baggrunden.\n\nDu har tidligere nægtet adgang. Aktivér venligst Notifikationer i dine systemindstillinger for at dele din skærm:\n• Åbn Indstillinger\n• Find denne app\n• Tillad Notifikationer",
+  "@notification_permission_settings_message": {
+    "description": "Body for notification permission inform sheet shown before screen sharing"
+  },
+  "participant_joined": "Deltager tilsluttede sig🎉",
+  "participant_left": "Deltager forlod👋",
+  "participant_name_prefix": "Navn: ",
+  "participant_identity_prefix": "Identitet: ",
+  "setting_updated": "Indstilling opdateret",
+  "changes_effect_next_screen_sharing": "Ændringerne træder i kræft ved næste skærmdeling.",
+  "video_stats_copied": "Videostatistik kopieret til udklipsholder",
+  "anonymous_user": "Anonym bruger",
+  "loading": "Indlæser ...",
+  "@loading": {
+    "description": "Loading text"
+  },
+  "video": "Video",
+  "audio": "Lyd",
+  "turn_off_camera": "Slå kamera fra",
+  "turn_on_camera": "Slå kamera til",
+  "video_settings": "Videoindstillinger",
+  "select_camera_device": "Vælg en kamera-enhed",
+  "turn_off_microphone": "Slå mikrofon fra",
+  "turn_on_microphone": "Slå mikrofon til",
+  "audio_settings": "Lydindstillinger",
+  "select_microphone": "Vælg en mikrofon",
+  "select_speaker": "Vælg en højtaler",
+  "permission_not_given": "Tilladelser ikke givet",
+  "permission_camera": "Vi krævede tilladelse til kameraet for at slå dit kamera til",
+  "permission_microphone": "Vi krævede tilladelse til kameraet for at slå din mikrofon til",
+  "camera_is_off": "Kameraet er slået fra",
+  "copied_to_clipboard": "Kopieret til udklipsholder",
+  "personal_meeting": "Personligt møde",
+  "@personal_meeting": {
+    "description": "Title for personal meeting dialog"
+  },
+  "personal_meeting_description": "Dit altid-tilgængelige møderum",
+  "@personal_meeting_description": {
+    "description": "Description text for personal meeting room"
+  },
+  "personal_meeting_room": "Personligt møderum",
+  "@personal_meeting_room": {
+    "description": "Title for personal meeting room dialog"
+  },
+  "join_a_meeting": "Deltag i et møde",
+  "@join_a_meeting": {
+    "description": "Title for join meeting dialog"
+  },
+  "join_meeting_subtitle": "Indsæt dit Proton Meet link for at deltage i et sikkert møde",
+  "@join_meeting_subtitle": {
+    "description": "Subtitle text for join meeting dialog"
+  },
+  "please_enter_valid_meeting_link": "Indtast venligst et gyldigt mødelink.",
+  "@please_enter_valid_meeting_link": {
+    "description": "Error message when meeting link is invalid"
+  },
+  "meeting_password_incorrect": "Adgangskoden til mødet er forkert",
+  "@meeting_password_incorrect": {
+    "description": "Error message when the meeting password embedded in the join link is invalid"
+  },
+  "meeting_password_invalid": "Adgangskoden til mødet er ugyldig",
+  "link_copied_to_clipboard": "Link kopieret til udklipsholder",
+  "@link_copied_to_clipboard": {
+    "description": "Success message when meeting link is copied"
+  },
+  "meeting_link_label": "Link til møde",
+  "@meeting_link_label": {
+    "description": "Label for meeting link input field"
+  },
+  "copy_link": "Kopiér link",
+  "@copy_link": {
+    "description": "Button text to copy meeting link"
+  },
+  "copy_link_and_close": "Kopiér link og luk",
+  "@copy_link_and_close": {
+    "description": "Button text to copy link and close dialog"
+  },
+  "copy": "Kopiér",
+  "@copy": {
+    "description": "Copy action"
+  },
+  "delete": "Slet",
+  "@delete": {
+    "description": "Delete action"
+  },
+  "delete_meeting": "Slet møde",
+  "@delete_meeting": {
+    "description": "Title for delete meeting dialog"
+  },
+  "delete_meeting_confirmation": "Er du sikker på, at du vil slette dette møde? Denne handling kan ikke fortrydes.",
+  "@delete_meeting_confirmation": {
+    "description": "Confirmation message for deleting a meeting"
+  },
+  "creating_meeting": "Opretter møde ...",
+  "@creating_meeting": {
+    "description": "Loading message shown while creating a meeting"
+  },
+  "deleting_meeting": "Sletter møde ...",
+  "@deleting_meeting": {
+    "description": "Loading message shown while deleting a meeting"
+  },
+  "updating_meeting": "Opdaterer møde ...",
+  "@updating_meeting": {
+    "description": "Loading message shown while updating a meeting"
+  },
+  "scheduling_meeting": "Planlægger møde ...",
+  "@scheduling_meeting": {
+    "description": "Loading message shown while scheduling a meeting"
+  },
+  "guest_user_description": "Som gæstebruger kan du starte anonyme og gratis møder fra dette kontrolpanel.",
+  "@guest_user_description": {
+    "description": "Description text explaining guest user capabilities"
+  },
+  "create_free_account": "Opret en gratis konto",
+  "@create_free_account": {
+    "description": "Button text to create a free account"
+  },
+  "please_sign_in_to_access_feature": "Log ind for at få adgang til denne funktion! ",
+  "@please_sign_in_to_access_feature": {
+    "description": "Message prompting user to sign in"
+  },
+  "already_have_account": "Har allerede en konto? ",
+  "@already_have_account": {
+    "description": "Text before login link for existing users"
+  },
+  "we_hope_you_enjoyed_meeting": "Vi håber du nød dit sikre møde! ",
+  "@we_hope_you_enjoyed_meeting": {
+    "description": "Message shown after user leaves meeting"
+  },
+  "left_by_mistake": "Forlod du ved en fejl? ",
+  "@left_by_mistake": {
+    "description": "Text before rejoin link"
+  },
+  "rejoin_meeting": "Deltag i mødet igen",
+  "@rejoin_meeting": {
+    "description": "Button text to rejoin a meeting"
+  },
+  "left_meeting_title": "Du forlod mødet",
+  "@left_meeting_title": {
+    "description": "Title shown in left meeting bottom sheet"
+  },
+  "left_meeting_subtitle_guest_free": "Hold dit eget sikrede møde. Start et opkald i Proton Meet og del linket for at invitere andre til at deltage. Enkelt, sikkert og gratis.",
+  "@left_meeting_subtitle_guest_free": {
+    "description": "Subtitle shown for non-paid non-host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_guest_paid": "Tak for din deltagelse.",
+  "@left_meeting_subtitle_guest_paid": {
+    "description": "Subtitle shown for paid non-host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_host_free": "Tak fordi du afholdte et møde.",
+  "@left_meeting_subtitle_host_free": {
+    "description": "Subtitle shown for free host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_host_paid": "Tak fordi du afholdte et premium-møde.",
+  "@left_meeting_subtitle_host_paid": {
+    "description": "Subtitle shown for paid host users after leaving a meeting"
+  },
+  "start_meeting_now": "Start et møde nu",
+  "@start_meeting_now": {
+    "description": "Button text to start a meeting immediately from left meeting bottom sheet"
+  },
+  "publish": "Deling",
+  "@publish": {
+    "description": "Dialog title for publishing camera and microphone"
+  },
+  "publish_camera_mic_question": "Vil du dele dit kamera & din mikrofon?",
+  "@publish_camera_mic_question": {
+    "description": "Question asking user to publish camera and microphone"
+  },
+  "no": "NEJ",
+  "@no": {
+    "description": "Negative response button text"
+  },
+  "yes": "JA",
+  "@yes": {
+    "description": "Positive response button text"
+  },
+  "play_audio": "Afspil Lyd",
+  "@play_audio": {
+    "description": "Dialog title and button text for playing audio"
+  },
+  "ios_safari_audio_activation": "Du skal manuelt aktivere lyd på iOS Safari!",
+  "@ios_safari_audio_activation": {
+    "description": "Message explaining iOS Safari audio activation requirement"
+  },
+  "ignore": "Ignorer",
+  "@ignore": {
+    "description": "Button text to ignore an action"
+  },
+  "unpublish": "Stop deling",
+  "@unpublish": {
+    "description": "Dialog title for unpublishing camera and microphone"
+  },
+  "unpublish_camera_mic_question": "Vil du stoppe deling af dit kamera & din mikrofon?",
+  "@unpublish_camera_mic_question": {
+    "description": "Question asking user to unpublish camera and microphone"
+  },
+  "error": "Fejl",
+  "@error": {
+    "description": "Generic error dialog title"
+  },
+  "disconnect": "Afbryd",
+  "@disconnect": {
+    "description": "Dialog title and button text for disconnecting"
+  },
+  "are_you_sure_disconnect": "Er du sikker på, at du vil afbryde?",
+  "@are_you_sure_disconnect": {
+    "description": "Confirmation question before disconnecting"
+  },
+  "reconnect": "Genopret forbindelse",
+  "@reconnect": {
+    "description": "Dialog title and button text for reconnecting"
+  },
+  "force_reconnection_message": "Dette tvinger genoprettelse af forbindelsen",
+  "@force_reconnection_message": {
+    "description": "Message explaining that reconnection will be forced"
+  },
+  "reconnection_successful": "Genoprettede forbindelsen.",
+  "@reconnection_successful": {
+    "description": "Success message after reconnection"
+  },
+  "no_connection": "Ingen forbindelse",
+  "@no_connection": {
+    "description": "Message shown when there is no network connection"
+  },
+  "mls_not_synced": "MLS er ikke synkroniseret",
+  "@mls_not_synced": {
+    "description": "Message shown when MLS is not synced"
+  },
+  "reconnecting_warning": "Genopretter forbindelsen",
+  "@reconnecting_warning": {
+    "description": "Message shown when MLS is not synced or websocket trying to reconnect"
+  },
+  "websocket_reconnecting": "WebSocket genopretter forbindelsen",
+  "@websocket_reconnecting": {
+    "description": "Message shown when WebSocket is reconnecting"
+  },
+  "received_data": "Modtog data",
+  "@received_data": {
+    "description": "Dialog title for received data"
+  },
+  "room_recording_reminder": "Påmindelse om mødeoptagelse",
+  "@room_recording_reminder": {
+    "description": "Dialog title for room recording status"
+  },
+  "room_recording_active": "Mødeoptagelse er aktiv.",
+  "@room_recording_active": {
+    "description": "Message when room recording is active"
+  },
+  "room_recording_stopped": "Mødeoptagelse er stoppet.",
+  "@room_recording_stopped": {
+    "description": "Message when room recording is stopped"
+  },
+  "meeting_being_recorded": "Dette møde bliver optaget",
+  "@meeting_being_recorded": {
+    "description": "Title for recording in progress dialog"
+  },
+  "recording_consent_message": "Ved at fortsætte i mødet, anerkender du og giver samtykke til at blive optaget.",
+  "@recording_consent_message": {
+    "description": "Message about recording consent"
+  },
+  "recording_in_progress": "Optagelse i gang",
+  "@recording_in_progress": {
+    "description": "Top banner shown to all participants when the meeting is being recorded"
+  },
+  "recording_in_progress_with_name": "Optagelse i gang · {name} optager",
+  "@recording_in_progress_with_name": {
+    "description": "Top banner when exactly one named participant is recording",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "recording_in_progress_with_name_and_others": "Optagelse i gang · {name} og {count} andre optager",
+  "@recording_in_progress_with_name_and_others": {
+    "description": "Top banner when multiple participants are recording",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recording_label": "Optagelse",
+  "@recording_label": {
+    "description": "Chip shown next to participants currently recording the meeting"
+  },
+  "agree_and_continue": "Accepter og fortsæt",
+  "@agree_and_continue": {
+    "description": "Button text to agree and continue in meeting"
+  },
+  "continue_button": "Fortsæt",
+  "@continue_button": {
+    "description": "Button text to continue in meeting"
+  },
+  "allow_subscription": "Tillad abonnement",
+  "@allow_subscription": {
+    "description": "Dialog title for allowing subscription"
+  },
+  "allow_subscription_question": "Tillad at alle deltagere abonnerer på tracks udgivet af en lokal deltager?",
+  "@allow_subscription_question": {
+    "description": "Question asking user to allow subscription"
+  },
+  "simulate_scenario": "Simulér Scenarie",
+  "@simulate_scenario": {
+    "description": "Dialog title for simulating scenarios"
+  },
+  "leave_room": "Forlad Rum",
+  "@leave_room": {
+    "description": "Dialog title for leaving room"
+  },
+  "are_you_sure_leave_room": "Er du sikker på du vil forlade dette rum?",
+  "@are_you_sure_leave_room": {
+    "description": "Confirmation question before leaving room"
+  },
+  "no_response": "Nej",
+  "@no_response": {
+    "description": "Negative response in confirmation dialogs"
+  },
+  "yes_response": "Ja",
+  "@yes_response": {
+    "description": "Positive response in confirmation dialogs"
+  },
+  "personal_meeting_link": "Personligt mødelink",
+  "@personal_meeting_link": {
+    "description": "Label for personal meeting link button"
+  },
+  "regenerate_link": "Generer link igen",
+  "@regenerate_link": {
+    "description": "Button text to regenerate a meeting link"
+  },
+  "regenerating": "Genererer...",
+  "@regenerating": {
+    "description": "Loading message shown while regenerating a meeting link"
+  },
+  "start_secure_meeting": "Start sikkert møde",
+  "@start_secure_meeting": {
+    "description": "Button text to start a secure meeting"
+  },
+  "upcoming_meetings": "Kommende møder",
+  "@upcoming_meetings": {
+    "description": "Section title for upcoming meetings list"
+  },
+  "my_rooms_count": "Mine rum",
+  "@my_rooms_count": {
+    "description": "Title showing the count of my rooms"
+  },
+  "my_meetings_count": "Mine møder",
+  "@my_meetings_count": {
+    "description": "Title showing the count of my meetings"
+  },
+  "schedule_meeting": "Planlæg Møde",
+  "@schedule_meeting": {
+    "description": "Button text to schedule a meeting"
+  },
+  "start_meeting": "Start Møde",
+  "@start_meeting": {
+    "description": "Button text to start a meeting"
+  },
+  "recent_meetings": "Seneste Møder",
+  "@recent_meetings": {
+    "description": "Section title for recent meetings list"
+  },
+  "start_instant_meeting": "Start Møde Nu",
+  "@start_instant_meeting": {
+    "description": "Button text to start an instant meeting"
+  },
+  "copy_link_button": "Kopiér Link",
+  "@copy_link_button": {
+    "description": "Button text to copy a link"
+  },
+  "start_now": "Start Nu",
+  "@start_now": {
+    "description": "Button text to start immediately"
+  },
+  "leave_meeting": "Forlad møde",
+  "@leave_meeting": {
+    "description": "Dialog title for leaving a meeting"
+  },
+  "are_you_sure_leave_meeting": "Er du sikker på, at du vil forlade dette møde?",
+  "@are_you_sure_leave_meeting": {
+    "description": "Confirmation question before leaving meeting"
+  },
+  "user_is_presenting": "{name} (dig) præsenterer",
+  "@user_is_presenting": {
+    "description": "String for local user presenting screen share",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "remote_user_is_presenting": "{name} præsenterer",
+  "@remote_user_is_presenting": {
+    "description": "String for remote user presenting screen share",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "screen_share": "Skærmdeling",
+  "@screen_share": {
+    "description": "Tooltip and button text for screen sharing"
+  },
+  "disable_denoising": "deaktiver støjreduktion",
+  "@disable_denoising": {
+    "description": "Tooltip for disabling audio denoising"
+  },
+  "enable_denoising": "aktivér støjreduktion",
+  "@enable_denoising": {
+    "description": "Tooltip for enabling audio denoising"
+  },
+  "exit_full_screen": "afslut fuld skærm",
+  "@exit_full_screen": {
+    "description": "Tooltip for exiting full screen mode"
+  },
+  "enter_full_screen": "skift til fuld skærm",
+  "@enter_full_screen": {
+    "description": "Tooltip for entering full screen mode"
+  },
+  "enter_pip": "Skift til billede-i-billede",
+  "@enter_pip": {
+    "description": "Tooltip for entering Picture-in-Picture mode"
+  },
+  "screen_sharing": "Skærmdeling",
+  "@screen_sharing": {
+    "description": "Notification title for screen sharing"
+  },
+  "sharing_your_screen": "Deler din skærm",
+  "@sharing_your_screen": {
+    "description": "Notification text when sharing screen"
+  },
+  "screen_share_not_supported_mobile": "Skærmdeling er ikke understøttet i en browser på mobilen",
+  "@screen_share_not_supported_mobile": {
+    "description": "Error message when screen sharing is not supported on mobile"
+  },
+  "switch_speakerphone_on": "Brug Telefonens Højtaler",
+  "@switch_speakerphone_on": {
+    "description": "Tooltip for switching audio output to the phone speaker"
+  },
+  "switch_speakerphone_off": "Brug standard lydudgang",
+  "@switch_speakerphone_off": {
+    "description": "Tooltip for switching audio output back to the default device"
+  },
+  "audio_output_default_device": "Standardenhed",
+  "@audio_output_default_device": {
+    "description": "Bottom sheet option: use default audio output routing (e.g. earpiece or headphones)"
+  },
+  "audio_output_earpiece": "Øresnegl",
+  "@audio_output_earpiece": {
+    "description": "Bottom sheet option: use Earpiece audio output routing"
+  },
+  "audio_output_bluetooth_device": "Bluetooth-enhed",
+  "@audio_output_bluetooth_device": {
+    "description": "Bottom sheet option: use Bluetooth device audio output routing"
+  },
+  "audio_output_headphones": "Hovedtelefoner",
+  "@audio_output_headphones": {
+    "description": "Bottom sheet option: use Headphones audio output routing"
+  },
+  "audio_output_phone_speakers": "Højtalere i telefonen",
+  "@audio_output_phone_speakers": {
+    "description": "Bottom sheet option: use the phone built-in loudspeaker"
+  },
+  "please_grant_camera_permission": "Giv tilladelse til kameraet for at fortsætte",
+  "@please_grant_camera_permission": {
+    "description": "Message requesting camera permission"
+  },
+  "please_grant_microphone_permission": "Giv tilladelse til mikrofonen for at fortsætte",
+  "@please_grant_microphone_permission": {
+    "description": "Message requesting microphone permission"
+  },
+  "your_meeting_is_ready": "Dit møde er klar",
+  "@your_meeting_is_ready": {
+    "description": "Title message when meeting is ready"
+  },
+  "share_link_invite_description": "Del dette link for at invitere andre. Du kan finde det til enhver tid ved at klikke på info-ikonet i værktøjslinjen.",
+  "@share_link_invite_description": {
+    "description": "Instructions for sharing meeting link"
+  },
+  "two_factor_authentication": "To-faktor-godkendelse",
+  "@two_factor_authentication": {
+    "description": "Title for two-factor authentication"
+  },
+  "enter_2fa_code": "Indtast venligst din 2FA-kode for at fortsætte",
+  "@enter_2fa_code": {
+    "description": "Prompt for entering 2FA code"
+  },
+  "twofa_code": "2FA-kode",
+  "@twofa_code": {
+    "description": "Label for 2FA code input field"
+  },
+  "verify": "Bekræft",
+  "@verify": {
+    "description": "Button text to verify"
+  },
+  "switch_to": "Skift til",
+  "@switch_to": {
+    "description": "Text before account name in account switcher"
+  },
+  "add_another_account": "Tilføj en anden konto",
+  "@add_another_account": {
+    "description": "Button text to add another account"
+  },
+  "delete_proton_account": "Slet Proton-konto",
+  "@delete_proton_account": {
+    "description": "Button text to delete Proton account"
+  },
+  "invalid_meeting_link": "Ugyldigt link til møde",
+  "@invalid_meeting_link": {
+    "description": "Error message for invalid meeting link"
+  },
+  "permission_required": "Tilladelse påkrævet",
+  "@permission_required": {
+    "description": "Label when permission is required"
+  },
+  "unsubscribe_audio": "Afmeld fra lyd",
+  "@unsubscribe_audio": {
+    "description": "Menu item to unsubscribe from audio"
+  },
+  "subscribe_audio": "Tilmeld til lyd",
+  "@subscribe_audio": {
+    "description": "Menu item to subscribe to audio"
+  },
+  "unsubscribe_video": "Afmeld fra video",
+  "@unsubscribe_video": {
+    "description": "Menu item to unsubscribe from video"
+  },
+  "subscribe_video": "Tilmeld til video",
+  "@subscribe_video": {
+    "description": "Menu item to subscribe to video"
+  },
+  "remote_mute_video": "Slå video fra eksternt",
+  "@remote_mute_video": {
+    "description": "Menu item to remotely mute video"
+  },
+  "remote_mute_audio": "Slå lyd fra eksternt",
+  "@remote_mute_audio": {
+    "description": "Menu item to remotely mute audio"
+  },
+  "force_mute": "Påtving at slå lyd fra",
+  "@force_mute": {
+    "description": "Menu item to force mute a participant"
+  },
+  "force_mute_participant": "Påtving at slå lyd fra for {name}",
+  "@force_mute_participant": {
+    "description": "Toast message when force muting a participant",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "force_disable_camera": "Påtving at slå video fra",
+  "@force_disable_camera": {
+    "description": "Menu item to force disable camera"
+  },
+  "force_disable_camera_participant": "Påtving at slå video fra for {name}",
+  "@force_disable_camera_participant": {
+    "description": "Toast message when force disabling camera",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "kick_out": "Smid ud",
+  "@kick_out": {
+    "description": "Menu item to kick out a participant"
+  },
+  "kick_out_participant": "Smid {name} ud",
+  "@kick_out_participant": {
+    "description": "Toast message when kicking out a participant",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "subscribe_menu": "Abonnementmenu",
+  "@subscribe_menu": {
+    "description": "Tooltip for subscribe menu button"
+  },
+  "subscribe": "Abonner",
+  "@subscribe": {
+    "description": "Menu item to subscribe"
+  },
+  "unsubscribe": "Afmeld",
+  "@unsubscribe": {
+    "description": "Menu item to unsubscribe"
+  },
+  "preferred_fps": "Foretrukket FPS",
+  "@preferred_fps": {
+    "description": "Tooltip for preferred FPS setting"
+  },
+  "preferred_quality": "Foretrukken kvalitet",
+  "@preferred_quality": {
+    "description": "Tooltip for preferred quality setting"
+  },
+  "high": "HØJ",
+  "@high": {
+    "description": "High quality option"
+  },
+  "medium": "MEDIUM",
+  "@medium": {
+    "description": "Medium quality option"
+  },
+  "low": "LAV",
+  "@low": {
+    "description": "Low quality option"
+  },
+  "unnamed_room": "Unavngivet rum",
+  "@unnamed_room": {
+    "description": "Default name for rooms without a name"
+  },
+  "participants_count_text": "{count} deltagere",
+  "@participants_count_text": {
+    "description": "Text showing number of participants",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_privacy_message": "Denne chat er end-to-end krypteret, og beskeder forsvinder når opkaldet afsluttes.",
+  "@chat_privacy_message": {
+    "description": "Privacy message displayed in chat when there are no messages."
+  },
+  "meeting_quality_feedback": "Feedback på mødekvalitet",
+  "@meeting_quality_feedback": {
+    "description": "Title for meeting quality feedback form"
+  },
+  "quality_feedback_email_message": "Du deler forbindelsenloggen med os via e-mail ved at indsende.",
+  "@quality_feedback_email_message": {
+    "description": "Message explaining that connection log will be shared via email"
+  },
+  "call_quality_how_was": "Hvordan var opkaldskvaliteten?",
+  "@call_quality_how_was": {
+    "description": "Prompt above star rating on post-meeting feedback"
+  },
+  "call_quality_what_went_wrong": "Hvad gik der galt?",
+  "@call_quality_what_went_wrong": {
+    "description": "Heading when user rated call quality below threshold"
+  },
+  "call_quality_problem_subtitle": "Hvilket problem oplevede du?",
+  "@call_quality_problem_subtitle": {
+    "description": "Subtitle under what went wrong on low-rating feedback"
+  },
+  "call_quality_add_optional_details": "Tilføj valgfrie oplysninger",
+  "@call_quality_add_optional_details": {
+    "description": "Expand control for free-text feedback"
+  },
+  "call_quality_share_more_details": "Del flere oplysninger",
+  "@call_quality_share_more_details": {
+    "description": "Placeholder for optional feedback text"
+  },
+  "call_quality_help_text": "Valgfri feedback sendes sikkert for at hjælpe os med at forbedre opkaldskvaliteten.",
+  "@call_quality_help_text": {
+    "description": "Short privacy note under the rating on post-meeting feedback"
+  },
+  "call_quality_feedback_submitted": "Din feedback er indsendt",
+  "@call_quality_feedback_submitted": {
+    "description": "Toast after successful meeting feedback"
+  },
+  "call_quality_could_not_send": "Kunne ikke sende feedback",
+  "@call_quality_could_not_send": {
+    "description": "Toast when meeting feedback API fails"
+  },
+  "call_quality_category_audio": "Lyd",
+  "@call_quality_category_audio": {
+    "description": "Section label for audio-related feedback options"
+  },
+  "call_quality_category_video": "Video",
+  "@call_quality_category_video": {
+    "description": "Section label for video-related feedback options"
+  },
+  "call_quality_category_screen": "Skærmdeling",
+  "@call_quality_category_screen": {
+    "description": "Section label for screen-share feedback options"
+  },
+  "call_quality_audio_breaking": "Lyden blev løbende afbrudt",
+  "@call_quality_audio_breaking": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_audio_couldnt_hear": "Jeg kunne ikke høre andre",
+  "@call_quality_audio_couldnt_hear": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_audio_others_couldnt_hear": "Andre kunne ikke høre mig",
+  "@call_quality_audio_others_couldnt_hear": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_poor": "Videokvaliteten var dårlig",
+  "@call_quality_video_poor": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_couldnt_see": "Jeg kunne ikke se andres video",
+  "@call_quality_video_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_others_couldnt_see": "Andre kunne ikke se min video",
+  "@call_quality_video_others_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_blurry": "Præsentationen var sløret",
+  "@call_quality_screen_blurry": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_couldnt_see": "Jeg kunne ikke se præsentationen",
+  "@call_quality_screen_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_couldnt_present": "Jeg kunne ikke præsentere",
+  "@call_quality_screen_couldnt_present": {
+    "description": "Low-rating feedback option"
+  },
+  "skip": "Spring over",
+  "@skip": {
+    "description": "Button text to skip an action"
+  },
+  "feature_not_ready": "Denne funktion er ikke klar endnu.",
+  "@feature_not_ready": {
+    "description": "Message when a feature is not ready"
+  },
+  "video_stats_all_participants": "Videostatistik - alle deltagere",
+  "@video_stats_all_participants": {
+    "description": "Title for video statistics dialog"
+  },
+  "video_stats": "videostatistik",
+  "@video_stats": {
+    "description": "Label for video statistics"
+  },
+  "page_not_found": "Siden blev ikke fundet",
+  "@page_not_found": {
+    "description": "Error message when page is not found"
+  },
+  "invalid_deeplink_format": "Ugyldigt format for dybt link: {name}",
+  "@invalid_deeplink_format": {
+    "description": "Error message for invalid deeplink format",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "open_settings": "Åbn indstillinger",
+  "@open_settings": {
+    "description": "Button text to open settings"
+  },
+  "schedule": "Planlæg",
+  "@schedule": {
+    "description": "Button text to schedule"
+  },
+  "start": "Start",
+  "@start": {
+    "description": "Button text to start"
+  },
+  "start_an_instant_meeting": "Start møde nu",
+  "@start_an_instant_meeting": {
+    "description": "Button text to start an instant meeting"
+  },
+  "more": "Mere",
+  "@more": {
+    "description": "Tooltip for more options button"
+  },
+  "unlock_failed_too_many_times": "Lås op mislykkedes for mange gange",
+  "@unlock_failed_too_many_times": {
+    "description": "Error message when unlock fails too many times"
+  },
+  "show_all_stats_debug": "Vis al statistik (fejlfinding)",
+  "@show_all_stats_debug": {
+    "description": "Button text to show all stats in debug mode"
+  },
+  "close_simulation": "Luk simulering",
+  "@close_simulation": {
+    "description": "Button text to close simulation"
+  },
+  "close_all_rooms_exit_simulation": "Er du sikker på, at du vil lukke alle rum og afslutte simuleringstilstand?",
+  "@close_all_rooms_exit_simulation": {
+    "description": "Confirmation question before closing simulation"
+  },
+  "yes_close_all": "Ja, luk alle",
+  "@yes_close_all": {
+    "description": "Button text to confirm closing all rooms"
+  },
+  "simulation_mode": "Simuleringstilstand",
+  "@simulation_mode": {
+    "description": "Title for simulation mode"
+  },
+  "simulation_mode_description": "Opret og administrer simulerede rum til testing",
+  "@simulation_mode_description": {
+    "description": "Description text for simulation mode"
+  },
+  "simulated_rooms": "Simulerede rum",
+  "@simulated_rooms": {
+    "description": "Title for simulated rooms section"
+  },
+  "room_with_users": "Rum {key} ({count} brugere)",
+  "@room_with_users": {
+    "description": "Text showing room ID and user count",
+    "placeholders": {
+      "key": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "enable_video": "Aktivér video",
+  "@enable_video": {
+    "description": "Button text to enable video"
+  },
+  "meeting_will_end_in": "Mødet slutter om {time}",
+  "@meeting_will_end_in": {
+    "description": "Title for meeting will end dialog with countdown timer",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "0:30"
+      }
+    }
+  },
+  "meeting_expiry_banner_title_prefix": "Mødet slutter om ",
+  "@meeting_expiry_banner_title_prefix": {
+    "description": "Title prefix for meeting expiry countdown banner; duration is appended"
+  },
+  "meeting_expiry_banner_description": "Gratis møder er begrænset til 1 time. Opkaldet afbrydes snart.",
+  "@meeting_expiry_banner_description": {
+    "description": "Subtitle on meeting expiry warning banner for free meetings"
+  },
+  "host_close_meeting_description": "Er du sikker på, at du vil forlade mødet, eller afslutte det for alle?",
+  "@host_close_meeting_description": {
+    "description": "Description text when host want to leave meeting"
+  },
+  "close_meeting_description": "Er du sikker på, at du vil forlade mødet? Mødet fortsætter uden dig.",
+  "@close_meeting_description": {
+    "description": "Description text when host want to leave meeting"
+  },
+  "meeting_will_end_description": "Da du er den eneste deltager i dette møde, vil mødet automatisk lukke. Vil du blive i dette møde?",
+  "meeting_created": "Møde oprettet",
+  "@meeting_created": {
+    "description": "Title for meeting created dialog"
+  },
+  "room_initialing_hint": "Abonnerer på eksterne video tracks...",
+  "@room_initialing_hint": {
+    "description": "Hint for room initialing process"
+  },
+  "add_to_calendar": "Tilføj til kalender",
+  "@add_to_calendar": {
+    "description": "Button label to add a meeting to calendar"
+  },
+  "meeting_details": "Detaljer",
+  "@meeting_details": {
+    "description": "Button label to show meeting details"
+  },
+  "meeting_details_section": "Mødedetaljer",
+  "@meeting_details_section": {
+    "description": "Section title for meeting details in info panel"
+  },
+  "title_label": "Titel",
+  "@title_label": {
+    "description": "Label for meeting title field"
+  },
+  "date_label": "Dato",
+  "@date_label": {
+    "description": "Label for meeting date field"
+  },
+  "time_label": "Tid",
+  "@time_label": {
+    "description": "Label for meeting time field"
+  },
+  "invite_link_label": "Invitationslink",
+  "@invite_link_label": {
+    "description": "Label for invite link field"
+  },
+  "messaging_layer_security": "Messaging Layer Security (MLS)",
+  "@messaging_layer_security": {
+    "description": "Title for MLS section in meeting info panel"
+  },
+  "participants_label": "Deltagere",
+  "@participants_label": {
+    "description": "Label for participants count field"
+  },
+  "epoch_label": "Epoch",
+  "@epoch_label": {
+    "description": "Label for epoch field"
+  },
+  "security_code_label": "Sikkerhedskode",
+  "@security_code_label": {
+    "description": "Label for security code field"
+  },
+  "recurrence_daily": "Dagligt",
+  "@recurrence_daily": {
+    "description": "Recurrence frequency label for daily meetings"
+  },
+  "recurrence_weekly": "Ugentligt",
+  "@recurrence_weekly": {
+    "description": "Recurrence frequency label for weekly meetings"
+  },
+  "recurrence_monthly": "Månedligt",
+  "@recurrence_monthly": {
+    "description": "Recurrence frequency label for monthly meetings"
+  },
+  "recurrence_yearly": "Årligt",
+  "@recurrence_yearly": {
+    "description": "Recurrence frequency label for yearly meetings"
+  },
+  "@meeting_will_end_description": {
+    "description": "Description text explaining why meeting will end"
+  },
+  "stay_in_meeting": "Blive i mødet",
+  "@stay_in_meeting": {
+    "description": "Button text to stay in meeting"
+  },
+  "end_meeting_for_all": "Afslut mødet for alle",
+  "@end_meeting_for_all": {
+    "description": "Button text to end meeting for all"
+  },
+  "stay_in_the_meeting": "Blive i mødet",
+  "@stay_in_the_meeting": {
+    "description": "Button text to stay in the meeting"
+  },
+  "connection_lost": "Forbindelse afbrudt",
+  "@connection_lost": {
+    "description": "Connection lost description"
+  },
+  "connection_lost_content": "Forbindelsen blev tabt, tilslut mødet igen",
+  "@connection_lost_content": {
+    "description": "Connection lost description"
+  },
+  "go_back_to_dashboard": "Gå tilbage til kontrolpanelet",
+  "@go_back_to_dashboard": {
+    "description": "Description text for go back to the dashboard button"
+  },
+  "early_access_description": "Denne funktion er kun tilgængelig for Lifetime og Visionary brugere under tidlig adgang.",
+  "@early_access_description": {
+    "description": "Description text explaining guest user capabilities"
+  },
+  "early_access_title": "Log ind for at få adgang til denne funktion",
+  "@early_access_title": {
+    "description": "Message prompting user to sign in for this early access feature"
+  },
+  "early_access_title_for_login_user": "Tidlig adgang funktion",
+  "@early_access_title_for_login_user": {
+    "description": "Message to let user know this is early access feature available for Lifetime and Visionary users"
+  },
+  "schedule_a_meeting": "Planlæg et møde",
+  "@schedule_a_meeting": {
+    "description": "Menu item label to schedule a meeting in Proton Meet app"
+  },
+  "create_a_room": "Opret rum",
+  "@create_a_room": {
+    "description": "Menu item label to create a room"
+  },
+  "create_new_room": "Opret nyt rum",
+  "@create_new_room": {
+    "description": "Menu item label to create a new room"
+  },
+  "emoji_reactions": "Emoji-reaktioner",
+  "@emoji_reactions": {
+    "description": "Emoji reactions tooltip"
+  },
+  "lower_participant_hand": "Tag deltagerens hånd ned",
+  "@lower_participant_hand": {
+    "description": "Tooltip text for lowering a participant's raised hand"
+  },
+  "edit_room": "Rediger rum",
+  "@edit_room": {
+    "description": "Menu item label to edit a room"
+  },
+  "edit_meeting": "Rediger møde",
+  "@edit_meeting": {
+    "description": "Menu item label to edit a meeting"
+  },
+  "join_with_a_link": "Tilslut med et link",
+  "@join_with_a_link": {
+    "description": "Menu item label to join a meeting with a link"
+  },
+  "room_name": "Navn",
+  "@room_name": {
+    "description": "Label for room name input field header"
+  },
+  "room_id": "Rum-ID",
+  "@room_id": {
+    "description": "Label for room ID display"
+  },
+  "room_deleted": "Rum slettet",
+  "@room_deleted": {
+    "description": "Success message shown after a room is deleted"
+  },
+  "meeting_deleted": "Møde slettet",
+  "@meeting_deleted": {
+    "description": "Success message shown after a meeting is deleted"
+  },
+  "enter_room_name_hint": "f.eks. Design team, Ugentligt standup",
+  "@enter_room_name_hint": {
+    "description": "Hint text for room name input field"
+  },
+  "create_room_subtitle": "Møderum kan bruges når som helst",
+  "@create_room_subtitle": {
+    "description": "Subtitle text for create room dialog"
+  },
+  "create_button": "Opret",
+  "@create_button": {
+    "description": "Button text to create"
+  },
+  "save": "Gem",
+  "@save": {
+    "description": "Button text to save"
+  },
+  "create_and_copy_link": "Opret og kopiér link",
+  "@create_and_copy_link": {
+    "description": "Button text to create meeting and copy link"
+  },
+  "you_are_using_paid_meet_plan": "Du bruger et betalt Meet abonnement.",
+  "@you_are_using_paid_meet_plan": {
+    "description": "Message shown to host indicating they are using a paid plan"
+  },
+  "you_are_using_free_meet_plan": "Du bruger det gratis Meet abonnement.",
+  "@you_are_using_free_meet_plan": {
+    "description": "Message shown to host indicating they are using the free plan"
+  },
+  "call_supports_up_to": "Dette opkald understøtter op til ",
+  "@call_supports_up_to": {
+    "description": "Message prefix showing the maximum number of participants allowed in the call"
+  },
+  "call_reached_limit": "Dette opkald har nået ",
+  "@call_reached_limit": {
+    "description": "Message prefix showing the call has reached the limit"
+  },
+  "participants_suffix": " deltagere.",
+  "@participants_suffix": {
+    "description": "Message suffix after the participant count"
+  },
+  "participants_reached_limit_suffix": " grænsen for antal deltagere.",
+  "@participants_reached_limit_suffix": {
+    "description": "Message suffix after the call reached limit message"
+  },
+  "no_more_participants_can_join": "Fjern en deltager eller opgrader dit abonnement for at invitere flere personer.",
+  "@no_more_participants_can_join": {
+    "description": "Message shown when the call has reached the maximum number of participants"
+  },
+  "connection_quality_poor": "Dårlig forbindelse",
+  "@connection_quality_poor": {
+    "description": "Tooltip message shown when connection quality is poor"
+  },
+  "meeting_ended_by_host": "Værten har afsluttet mødet",
+  "@meeting_ended_by_host": {
+    "description": "Toast message shown when the host ends the meeting for everyone"
+  },
+  "client_kicked_out_by_host": "Værten har fjernet dig fra mødet",
+  "@client_kicked_out_by_host": {
+    "description": "Toast message shown when the host removes current user from the meeting"
+  },
+  "kicked_out_bottom_sheet_title": "Du er blevet fjernet",
+  "@kicked_out_bottom_sheet_title": {
+    "description": "Title shown in left meeting bottom sheet when current user is removed by host"
+  },
+  "kicked_out_bottom_sheet_content": "Værten fjernede dig fra mødet.",
+  "@kicked_out_bottom_sheet_content": {
+    "description": "Content shown in left meeting bottom sheet when current user is removed by host"
+  },
+  "add_title": "Tilføj titel",
+  "@add_title": {
+    "description": "Placeholder text for meeting title input field"
+  },
+  "schedule_at": "den",
+  "@schedule_at": {
+    "description": "Label for schedule at, used in schedule dialog"
+  },
+  "schedule_duration_min": "min",
+  "@schedule_duration_min": {
+    "description": "Label for schedule duration in minutes"
+  },
+  "schedule_duration_hr": "t",
+  "@schedule_duration_hr": {
+    "description": "Label for schedule duration in hours"
+  },
+  "schedule_recurrence_none": "Gentages ikke",
+  "@schedule_recurrence_none": {
+    "description": "Label for schedule recurrence none"
+  },
+  "schedule_recurrence_daily": "Dagligt",
+  "@schedule_recurrence_daily": {
+    "description": "Label for schedule recurrence daily"
+  },
+  "schedule_recurrence_weekly": "Ugentligt",
+  "@schedule_recurrence_weekly": {
+    "description": "Label for schedule recurrence weekly"
+  },
+  "schedule_recurrence_monthly": "Månedligt",
+  "@schedule_recurrence_monthly": {
+    "description": "Label for schedule recurrence monthly"
+  },
+  "schedule_recurrence_yearly": "Årligt",
+  "@schedule_recurrence_yearly": {
+    "description": "Label for schedule recurrence yearly"
+  },
+  "schedule_time_zone_search_hint": "Søg i tidszoner",
+  "@schedule_time_zone_search_hint": {
+    "description": "Label for schedule time zone search hint"
+  },
+  "schedule_time_zone_current": "Nuværende tidszone",
+  "@schedule_time_zone_current": {
+    "description": "Label for schedule time zone current"
+  },
+  "schedule_time_zone_selected": "Valgt tidszone",
+  "@schedule_time_zone_selected": {
+    "description": "Label for schedule time zone selected"
+  },
+  "month_jan": "Januar",
+  "@month_jan": {
+    "description": "Full month name for January"
+  },
+  "month_feb": "Februar",
+  "@month_feb": {
+    "description": "Full month name for February"
+  },
+  "month_mar": "Marts",
+  "@month_mar": {
+    "description": "Full month name for March"
+  },
+  "month_apr": "April",
+  "@month_apr": {
+    "description": "Full month name for April"
+  },
+  "month_may": "Maj",
+  "@month_may": {
+    "description": "Full month name for May"
+  },
+  "month_jun": "Juni",
+  "@month_jun": {
+    "description": "Full month name for June"
+  },
+  "month_jul": "Juli",
+  "@month_jul": {
+    "description": "Full month name for July"
+  },
+  "month_aug": "August",
+  "@month_aug": {
+    "description": "Full month name for August"
+  },
+  "month_sep": "September",
+  "@month_sep": {
+    "description": "Full month name for September"
+  },
+  "month_oct": "Oktober",
+  "@month_oct": {
+    "description": "Full month name for October"
+  },
+  "month_nov": "November",
+  "@month_nov": {
+    "description": "Full month name for November"
+  },
+  "month_dec": "December",
+  "@month_dec": {
+    "description": "Full month name for December"
+  },
+  "month_short_jan": "jan",
+  "@month_short_jan": {
+    "description": "Abbreviated month name January (order Jan–Dec)"
+  },
+  "month_short_feb": "feb",
+  "@month_short_feb": {
+    "description": "Abbreviated month name February"
+  },
+  "month_short_mar": "mar",
+  "@month_short_mar": {
+    "description": "Abbreviated month name March"
+  },
+  "month_short_apr": "apr",
+  "@month_short_apr": {
+    "description": "Abbreviated month name April"
+  },
+  "month_short_may": "maj",
+  "@month_short_may": {
+    "description": "Abbreviated month name May"
+  },
+  "month_short_jun": "jun",
+  "@month_short_jun": {
+    "description": "Abbreviated month name June"
+  },
+  "month_short_jul": "jul",
+  "@month_short_jul": {
+    "description": "Abbreviated month name July"
+  },
+  "month_short_aug": "aug",
+  "@month_short_aug": {
+    "description": "Abbreviated month name August"
+  },
+  "month_short_sep": "sep",
+  "@month_short_sep": {
+    "description": "Abbreviated month name September"
+  },
+  "month_short_oct": "okt",
+  "@month_short_oct": {
+    "description": "Abbreviated month name October"
+  },
+  "month_short_nov": "nov",
+  "@month_short_nov": {
+    "description": "Abbreviated month name November"
+  },
+  "month_short_dec": "dec",
+  "@month_short_dec": {
+    "description": "Abbreviated month name December"
+  },
+  "weekday_monday": "Mandag",
+  "@weekday_monday": {
+    "description": "Weekday name for Monday"
+  },
+  "weekday_tuesday": "Tirsdag",
+  "@weekday_tuesday": {
+    "description": "Weekday name for Tuesday"
+  },
+  "weekday_wednesday": "Onsdag",
+  "@weekday_wednesday": {
+    "description": "Weekday name for Wednesday"
+  },
+  "weekday_thursday": "Torsdag",
+  "@weekday_thursday": {
+    "description": "Weekday name for Thursday"
+  },
+  "weekday_friday": "Fredag",
+  "@weekday_friday": {
+    "description": "Weekday name for Friday"
+  },
+  "weekday_saturday": "Lørdag",
+  "@weekday_saturday": {
+    "description": "Weekday name for Saturday"
+  },
+  "weekday_sunday": "Søndag",
+  "@weekday_sunday": {
+    "description": "Weekday name for Sunday"
+  },
+  "weekday_short_monday": "man",
+  "@weekday_short_monday": {
+    "description": "Short weekday label Monday (list order Mon–Sun)"
+  },
+  "weekday_short_tuesday": "tir",
+  "@weekday_short_tuesday": {
+    "description": "Short weekday label Tuesday"
+  },
+  "weekday_short_wednesday": "ons",
+  "@weekday_short_wednesday": {
+    "description": "Short weekday label Wednesday"
+  },
+  "weekday_short_thursday": "tor",
+  "@weekday_short_thursday": {
+    "description": "Short weekday label Thursday"
+  },
+  "weekday_short_friday": "fre",
+  "@weekday_short_friday": {
+    "description": "Short weekday label Friday"
+  },
+  "weekday_short_saturday": "lør",
+  "@weekday_short_saturday": {
+    "description": "Short weekday label Saturday"
+  },
+  "weekday_short_sunday": "søn",
+  "@weekday_short_sunday": {
+    "description": "Short weekday label Sunday"
+  },
+  "calendar_system": "Tilføj til kalender på telefonen",
+  "@calendar_system": {
+    "description": "Menu label for opening system calendar"
+  },
+  "calendar_google": "Tilføj til Google Calendar",
+  "@calendar_google": {
+    "description": "Menu label for opening Google Calendar"
+  },
+  "calendar_share_ics": "Del event-fil",
+  "@calendar_share_ics": {
+    "description": "Menu label for sharing ICS file"
+  },
+  "calendar_outlook": "Tilføj til Outlook Calendar",
+  "@calendar_outlook": {
+    "description": "Menu label for opening Outlook Calendar"
+  },
+  "calendar_proton": "Tilføj til Proton Calendar",
+  "@calendar_proton": {
+    "description": "Menu label for opening Proton Calendar"
+  },
+  "scheduled_meeting_share": "Del",
+  "@scheduled_meeting_share": {
+    "description": "Share button label in scheduled meeting summary"
+  },
+  "scheduled_meeting_done": "Færdig",
+  "@scheduled_meeting_done": {
+    "description": "Done button label in scheduled meeting summary"
+  },
+  "scheduled_meeting_link": "Link",
+  "@scheduled_meeting_link": {
+    "description": "Link label in scheduled meeting summary"
+  },
+  "upcoming_today": "I DAG",
+  "@upcoming_today": {
+    "description": "Upcoming meetings header label for today"
+  },
+  "upcoming_tomorrow": "I MORGEN",
+  "@upcoming_tomorrow": {
+    "description": "Upcoming meetings header label for tomorrow"
+  },
+  "on_yesterday": "I GÅR",
+  "@on_yesterday": {
+    "description": "Meetings header label for yesterday"
+  },
+  "upcoming_prefix": "KOMMENDE",
+  "@upcoming_prefix": {
+    "description": "Prefix for upcoming meetings header label"
+  },
+  "ended_prefix": "AFSLUTTET",
+  "@ended_prefix": {
+    "description": "Prefix for ended/past meetings header label"
+  },
+  "ended_today": "Sluttede i dag",
+  "@ended_today": {
+    "description": "Label for meetings ended today"
+  },
+  "ended_yesterday": "Sluttede i går",
+  "@ended_yesterday": {
+    "description": "Label for meetings ended yesterday"
+  },
+  "ended_on": "Sluttede den",
+  "@ended_on": {
+    "description": "Label for meetings ended on a specific date"
+  },
+  "created_prefix": "OPRETTET",
+  "@created_prefix": {
+    "description": "Prefix for newly created meetings header label"
+  },
+  "created_today": "Oprettet i dag",
+  "@created_today": {
+    "description": "Label for meetings created today"
+  },
+  "created_yesterday": "Oprettet i går",
+  "@created_yesterday": {
+    "description": "Label for meetings created yesterday"
+  },
+  "created_last_week": "Oprettet sidste uge",
+  "@created_last_week": {
+    "description": "Label for meetings created within the last week"
+  },
+  "created": "Oprettet den",
+  "@created": {
+    "description": "Label prefix for created time"
+  },
+  "last_used_today": "Sidst brugt i dag",
+  "@last_used_today": {
+    "description": "Label for meetings last used today"
+  },
+  "last_used_yesterday": "Sidst brugt i går",
+  "@last_used_yesterday": {
+    "description": "Label for meetings last used yesterday"
+  },
+  "last_used": "Sidst brugt den",
+  "@last_used": {
+    "description": "Label prefix for last used time"
+  },
+  "created_on": "Oprettet den {day}. {month}, {year}",
+  "@created_on": {
+    "description": "Label for meetings created on a specific date",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      },
+      "day": {
+        "type": "int"
+      },
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "secure_meeting": "Sikkert møde",
+  "@secure_meeting": {
+    "description": "Default meeting name when no title is set"
+  },
+  "premium_meeting": "Premium møde",
+  "@premium_meeting": {
+    "description": "Default meeting name for paid meeting"
+  },
+  "free_meeting": "Gratis møde",
+  "@free_meeting": {
+    "description": "Default meeting name for free meeting"
+  },
+  "share_with_people_you_trust": "Del med personer du stoler på",
+  "@share_with_people_you_trust": {
+    "description": "Personal meeting hint text"
+  },
+  "time_am": "AM",
+  "@time_am": {
+    "description": "AM suffix for 12-hour time format"
+  },
+  "time_pm": "PM",
+  "@time_pm": {
+    "description": "PM suffix for 12-hour time format"
+  },
+  "start_typing_to_search": "Begynd at skrive for at søge...",
+  "@start_typing_to_search": {
+    "description": "Placeholder text shown when search query is empty"
+  },
+  "no_results_found_for": "Ingen resultater fundet for \\\"{searchQuery}\\\"",
+  "@no_results_found_for": {
+    "description": "Message shown when search returns no results",
+    "placeholders": {
+      "searchQuery": {
+        "type": "String",
+        "example": "meeting name"
+      }
+    }
+  },
+  "sort_newest": "Nyeste",
+  "@sort_newest": {
+    "description": "Sort option label for newest items"
+  },
+  "sort_last_used": "Senest brugt",
+  "@sort_last_used": {
+    "description": "Sort option label for last used items"
+  },
+  "sort_by": "Sortér efter {option}",
+  "@sort_by": {
+    "description": "Toast notification message when sort option is selected",
+    "placeholders": {
+      "option": {
+        "type": "String"
+      }
+    }
+  },
+  "sort_upcoming": "Kommende",
+  "@sort_upcoming": {
+    "description": "Sort option label for upcoming meetings"
+  },
+  "sort_new_created": "Senest oprettet",
+  "@sort_new_created": {
+    "description": "Sort option label for newly created items"
+  },
+  "sort_past_meeting": "Tidligere",
+  "@sort_past_meeting": {
+    "description": "Sort option label for past meetings"
+  },
+  "version": "Version {versionDisplay}",
+  "@version": {
+    "description": "Version text with version number",
+    "placeholders": {
+      "versionDisplay": {
+        "type": "String",
+        "example": "1.0.0-dev (00)"
+      }
+    }
+  },
+  "unable_to_reconnect": "Kunne ikke genoprette forbindelsen",
+  "@unable_to_reconnect": {
+    "description": "Title shown when reconnection fails"
+  },
+  "reconnection_failed_message": "Vi kunne ikke genoprette forbindelsen. Prøv at tilslutte mødet igen",
+  "@reconnection_failed_message": {
+    "description": "Message shown when reconnection fails"
+  },
+  "connection": "Forbindelse",
+  "@connection": {
+    "description": "Section title for connection settings"
+  },
+  "reconnect_meeting": "Genopret forbindelse til mødet",
+  "@reconnect_meeting": {
+    "description": "Button label to reconnect to meeting"
+  },
+  "always_show_status": "Vis altid status",
+  "@always_show_status": {
+    "description": "Setting label to always show connection status banner"
+  },
+  "connection_check_mls_checking": "Forbindelsestjek\nTjekker MLS status...",
+  "@connection_check_mls_checking": {
+    "description": "Message shown when checking MLS sync status"
+  },
+  "connection_issue_restoring": "Problem med forbindelsen\nVi arbejder på at genoprette fuld funktionalitet...",
+  "@connection_issue_restoring": {
+    "description": "Message shown when connection issue is being resolved"
+  },
+  "connection_check_mls_failed": "Forbindelsestjek\nMLS statustjek mislykkedes, tilslutter igen...",
+  "@connection_check_mls_failed": {
+    "description": "Message shown when MLS sync check fails"
+  },
+  "connection_check_mls_passed": "Forbindelsestjek\nMLS statustjek lykkedes",
+  "@connection_check_mls_passed": {
+    "description": "Message shown when MLS sync check passes"
+  },
+  "trying_to_reconnect": "Prøver at genoprette forbindelse...",
+  "@trying_to_reconnect": {
+    "description": "Message shown when attempting to reconnect to meeting"
+  },
+  "sign_in_card_title": "Log ind eller opret en konto",
+  "@sign_in_card_title": {
+    "description": "Title text for the sign-in card displayed on dashboard"
+  },
+  "sign_in_card_description": "Planlæg møder, få adgang til dit personlige rum, og opret nye rum.",
+  "@sign_in_card_description": {
+    "description": "Description text for the sign-in card explaining benefits of signing in"
+  },
+  "almost_there_title": "Du er der næsten",
+  "@almost_there_title": {
+    "description": "Title for the almost there bottom sheet"
+  },
+  "almost_there_content_before": "For at planlægge et møde, så opret en gratis ",
+  "@almost_there_content_before": {
+    "description": "Content before Proton account in almost there bottom sheet (schedule meeting)"
+  },
+  "almost_there_content_before_create_room": "For at oprette et rum, så opret en gratis ",
+  "@almost_there_content_before_create_room": {
+    "description": "Content before Proton account in almost there bottom sheet (create room)"
+  },
+  "almost_there_content_before_personal_room": "For at bruge dit personlige møderum, opret en gratis ",
+  "@almost_there_content_before_personal_room": {
+    "description": "Content before Proton account in almost there bottom sheet (personal meeting room)"
+  },
+  "almost_there_proton_account": "Proton-konto",
+  "@almost_there_proton_account": {
+    "description": "Proton account text in almost there bottom sheet"
+  },
+  "almost_there_content_after": ". Du bliver stillet videre til Proton Meet automatisk.",
+  "@almost_there_content_after": {
+    "description": "Content after Proton account in almost there bottom sheet"
+  },
+  "app_settings_title": "App-indstillinger",
+  "@app_settings_title": {
+    "description": "Title for the app settings bottom sheet"
+  },
+  "settings_section_general": "Generelt",
+  "@settings_section_general": {
+    "description": "Section header in app settings"
+  },
+  "settings_section_support": "Support",
+  "@settings_section_support": {
+    "description": "Section header for support links in app settings"
+  },
+  "settings_section_legal": "Juridisk",
+  "@settings_section_legal": {
+    "description": "Section header for legal links in app settings"
+  },
+  "languages": "Sprog",
+  "@languages": {
+    "description": "Label for language selection in settings"
+  },
+  "privacy_policy": "Privatlivspolitik",
+  "@privacy_policy": {
+    "description": "Link to privacy policy"
+  },
+  "terms_and_conditions": "Vilkår og betingelser",
+  "@terms_and_conditions": {
+    "description": "Link to terms and conditions"
+  },
+  "knowledge_base": "Vidensbase",
+  "@knowledge_base": {
+    "description": "Link to help center / knowledge base"
+  },
+  "system_default_mode": "Systemstandard",
+  "@system_default_mode": {
+    "description": "Use device language for app UI"
+  },
+  "pre_rating_sheet_title": "Kan du lide Proton Meet?",
+  "@pre_rating_sheet_title": {
+    "description": "Title on the pre-rating bottom sheet before in-app review"
+  },
+  "pre_rating_sheet_subtitle": "Vi læser og sætter pris på alt feedback.",
+  "@pre_rating_sheet_subtitle": {
+    "description": "Subtitle on the pre-rating bottom sheet"
+  },
+  "pre_rating_sheet_yes_enjoy_proton_meet": "Ja",
+  "@pre_rating_sheet_yes_enjoy_proton_meet": {
+    "description": "Primary button on the pre-rating sheet to open store review"
+  },
+  "pre_rating_sheet_not_really_enjoy_proton_meet": "Ikke specielt",
+  "@pre_rating_sheet_not_really_enjoy_proton_meet": {
+    "description": "Secondary button on the pre-rating sheet"
+  },
+  "store_review_thanks_toast": "Tak for din feedback",
+  "@store_review_thanks_toast": {
+    "description": "Toast shown before the OS in-app store review prompt"
+  },
+  "iap_native_test_title": "Abonnementer (native)",
+  "@iap_native_test_title": {
+    "description": "Title for dev sheet that invokes native IAP / plans"
+  },
+  "iap_native_test_body": "Bruger Protons native betalings-stack (samme kanal som Proton Wallet). Login påkrævet.",
+  "@iap_native_test_body": {
+    "description": "Explains native channel test sheet"
+  },
+  "iap_native_test_current_plan": "Nuværende abonnement",
+  "@iap_native_test_current_plan": {
+    "description": "Button: native.navigation.plan.subscription"
+  },
+  "iap_native_test_upgrade": "Opgrader",
+  "@iap_native_test_upgrade": {
+    "description": "Button: native.navigation.plan.upgrade"
+  },
+  "iap_native_test_sign_in_required": "Log ind med en Proton-konto for at åbne native betalinger.",
+  "@iap_native_test_sign_in_required": {
+    "description": "Message shown when sign in is required to open native payments"
+  }
+}

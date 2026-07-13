@@ -1,0 +1,1798 @@
+{
+  "@@locale": "ca",
+  "@@last_modified": "2024-02-12T00:10:57.227125",
+  "app_name": "Proton Meet",
+  "@app_name": {
+    "description": "The name of the application"
+  },
+  "logout": "Tanca la sessió",
+  "login": "Inicia la sessió",
+  "sign_in": "Inicia la sessió",
+  "sign_out": "Tanca sessió",
+  "learn_more": "Més informació",
+  "no_data": "Sense dades",
+  "submit": "Envia",
+  "cancel": "Cancel·la",
+  "close": "Tanca",
+  "ok": "D'acord",
+  "unlock_app": "Desbloqueja l'aplicació",
+  "search": "Cerca",
+  "placeholder": "Marcador de posició",
+  "something_went_wrong": "S'ha produït un error",
+  "retry": "Torneu-ho a provar",
+  "@retry": {
+    "description": "Retry loading dashboard after an error"
+  },
+  "report_a_problem": "Informa d'un problema",
+  "sign_in_to_proton_title": "Inicieu la sessió a Proton",
+  "sign_in_to_proton_subtitle": "Introduïu les dades del vostre compte de Proton.",
+  "options": "Opcions",
+  "@options": {
+    "description": "Title for options dialog"
+  },
+  "manage_accounts": "Gestioneu els comptes",
+  "@manage_accounts": {
+    "description": "Title for manage accounts dialog"
+  },
+  "delete_account": "Elimina el compte",
+  "@delete_account": {
+    "description": "Title for delete account dialog"
+  },
+  "signin_intro_title": "Us donem la benvinguda a Proton Meet",
+  "@signin_intro_title": {
+    "description": "Title in the sign-in intro sheet"
+  },
+  "signin_intro_subtitle": "Inicieu la sessió o creeu un compte per a continuar",
+  "@signin_intro_subtitle": {
+    "description": "Subtitle in the sign-in intro sheet"
+  },
+  "signin_intro_create_account": "Crea un compte",
+  "@signin_intro_create_account": {
+    "description": "Primary button label in the sign-in intro sheet"
+  },
+  "signin_intro_sign_in": "Inicia la sessió",
+  "@signin_intro_sign_in": {
+    "description": "Secondary button label in the sign-in intro sheet"
+  },
+  "sign_in_username_or_email": "Nom d'usuari o correu electrònic",
+  "email": "Correu electrònic",
+  "user_name": "Nom d'usuari",
+  "account": "Compte",
+  "password": "Contrasenya",
+  "session_expired_content": "Per la vostra seguretat, la sessió ha caducat. Inicieu la sessió de nou per a continuar gestionant les vostres reunions.",
+  "session_expired_title": "La sessió ha caducat!",
+  "session_expired_continue_without_signing_in": "Continua sense iniciar la sessió",
+  "@session_expired_continue_without_signing_in": {
+    "description": "Secondary button label for session expired bottom sheet"
+  },
+  "force_upgrade": "Força l'actualització",
+  "upgrade": "Millora el pla",
+  "search_participants": "Cerqueu participants...",
+  "participants_count": "Participants({count})",
+  "no_participants_found": "No s'ha trobat cap participant",
+  "try_different_search_term": "Proveu un terme de cerca diferent",
+  "you": "(Vós)",
+  "invite_participant": "Convideu a un participant",
+  "leave": "Surt",
+  "emoji_reaction": "Reacció amb emojis",
+  "unshare_screen": "Deixa de compartir la pantalla",
+  "share_screen": "Comparteix la pantalla",
+  "show_chatroom": "Xat",
+  "show_participants_list": "Participants",
+  "show_settings": "Preferències",
+  "show_meeting_stats": "mostra les estadístiques de la reunió",
+  "meeting_info": "Informació",
+  "meeting_settings": "Preferències",
+  "host": "Amfitrió",
+  "lock_meeting": "Bloqueja la reunió",
+  "meeting_locked": "S'ha bloquejat la reunió",
+  "@meeting_locked": {
+    "description": "Title when meeting is locked"
+  },
+  "meeting_locked_description": "Aquesta reunió està bloquejada. Poseu-vos en contacte amb l'amfitrió per a unir-vos-hi.",
+  "@meeting_locked_description": {
+    "description": "Description when meeting is locked"
+  },
+  "meeting_locked_notification": "Reunió bloquejada. No s'hi poden afegir nous participants.",
+  "@meeting_locked_notification": {
+    "description": "Toast notification when meeting is locked by host"
+  },
+  "meet_server_version_not_supported_title": "Cal una actualització",
+  "@meet_server_version_not_supported_title": {
+    "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
+  },
+  "meet_server_version_not_supported_description": "La versió de l'aplicació no permet connectar-vos a la reunió. Actualitzeu Proton Meet per continuar.",
+  "@meet_server_version_not_supported_description": {
+    "description": "Description when the client must be updated to join a meeting"
+  },
+  "meeting_unlocked_notification": "S'ha desbloquejat la reunió. Els participants ja poden tornar a entrar.",
+  "@meeting_unlocked_notification": {
+    "description": "Toast notification when meeting is unlocked by host"
+  },
+  "hide_profile_pictures": "Amaga les fotos de perfil",
+  "picture_in_picture_mode": "Mode picture-in-picture",
+  "security": "Seguretat",
+  "enable_waiting_room": "Habilita la sala d'espera",
+  "hide_self_view": "Amagar la vista pròpia",
+  "allow_all_participants_to": "Aquesta trucada admet fins a:",
+  "chat": "Xat",
+  "rename_themselves": "Canvia el nom",
+  "unmute_themselves": "Activar el micròfon propi",
+  "meeting": "Reunió",
+  "show_meeting_timer": "Mostra el temporitzador de la reunió",
+  "unsubscribe_video_by_default": "Desactiva el vídeo entrant",
+  "camera_background_blur": "Desenfocament del fons",
+  "audio_noise_cancellation": "Cancel·lació de soroll",
+  "dark_mode": "Mode fosc",
+  "show_connection_indicator": "Mostra l'indicador de connexió",
+  "desktop_notifications": "Notificacions d'escriptori",
+  "meeting_quality": "Qualitat de la reunió",
+  "camera_resolution": "Resolució de la càmera",
+  "camera_max_bitrate": "Taxa de bits màxima de la càmera",
+  "screen_sharing_resolution": "Resolució de la pantalla compartida",
+  "screen_sharing_max_bitrate": "Taxa de bits màxima de la pantalla compartida",
+  "export_debug_log": "Exporteu el registre de depuració",
+  "type_a_message": "Escriviu un missatge...",
+  "search_messages": "Cerqueu missatges...",
+  "meeting_chat": "Xat de la reunió",
+  "no_messages_found": "No s'ha trobat cap missatge",
+  "no_messages_yet": "Encara no hi ha missatges",
+  "start_the_conversation": "Inicia la conversa",
+  "unknown": "Desconegut",
+  "bitrate_extreme_high_2000": "Extremadament alta (2000 kbps)",
+  "bitrate_ultra_high_1900": "Ultra alta (1900 kbps)",
+  "bitrate_ultra_high_1800": "Ultra alta (1800 kbps)",
+  "bitrate_ultra_high_1700": "Ultra alta (1700 kbps)",
+  "bitrate_ultra_high_1600": "Ultra alta (1600 kbps)",
+  "bitrate_ultra_high_1500": "Ultra alta (1500 kbps)",
+  "bitrate_very_high_1400": "Molt alta (1400 kbps)",
+  "bitrate_very_high_1300": "Molt alta (1300 kbps)",
+  "bitrate_very_high_1200": "Molt alta (1200 kbps)",
+  "bitrate_very_high_1100": "Molt alta (1100 kbps)",
+  "bitrate_high_1000": "Alta (1000 kbps)",
+  "bitrate_high_900": "Alta (900 kbps)",
+  "bitrate_high_800": "Alta (800 kbps)",
+  "bitrate_medium_high_700": "Mitjana-alta (700 kbps)",
+  "bitrate_medium_high_600": "Mitjana-alta (600 kbps)",
+  "bitrate_medium_high_500": "Mitjana-alta (500 kbps)",
+  "bitrate_medium_400": "Mitjana (400 kbps)",
+  "bitrate_medium_low_300": "Mitjana-baixa (300 kbps)",
+  "bitrate_low_200": "Baixa (200 kbps)",
+  "bitrate_very_low_100": "Molt baixa (100 kbps)",
+  "resolution_360p": "360p",
+  "resolution_720p": "720p",
+  "resolution_1080p": "1080p",
+  "resolution_4k": "4K",
+  "join_meeting": "Parleu confidencialment",
+  "app_description": "Les nostres reunions amb xifratge d'extrem a extrem protegeixen la privacitat i potencien una expressió realment lliure.",
+  "meeting_link": "Enllaç de la reunió",
+  "meeting_detail": "Detall de la reunió",
+  "display_name": "El vostre nom",
+  "enter_display_name": "Introduïu el vostre nom",
+  "display_name_required": "El nom és obligatori",
+  "remember_display_name_on_device": "Recorda el meu nom en aquest dispositiu per a futures reunions",
+  "join_meeting_button": "Unir-se a la reunió",
+  "create_meeting_button": "Crea una reunió",
+  "import_meeting_button": "Importa la reunió",
+  "import_meeting_title": "Importeu la reunió",
+  "import_meeting_hint_text": "Introduïu l'enllaç de la reunió",
+  "open_home": "Obre l'inici",
+  "start_simulation": "Inicia la simulació",
+  "change_layout": "Canviar la disposició",
+  "layout_spaced_grid": "Quadrícula espaiada",
+  "layout_compact_grid": "Quadrícula compacta",
+  "layout_speaker_view": "Vista de l'orador",
+  "layout_multi_speaker_view": "Vista de diversos oradors",
+  "no_active_speaker": "No hi ha cap orador actiu",
+  "camera_view": "Vista de la càmera",
+  "is_presenting": "està presentant",
+  "stop_presenting": "Deixar de presentar",
+  "tap_to_stop_sharing": "Toqueu per deixar de compartir",
+  "notification_permission_settings_title": "Habiliteu l'accés a les notificacions",
+  "@notification_permission_settings_title": {
+    "description": "Title when notification permission was denied and screen sharing requires it"
+  },
+  "notification_permission_settings_message": "Compartir la pantalla requereix permís de notificació per tal que la reunió pugui romandre activa en segon pla.\n\nAnteriorment heu denegat l'accés. Per compartir la pantalla, habiliteu les notificacions a la configuració del vostre sistema:\n• Obriu les Preferències \n• Cerqueu aquesta aplicació\n• Permeteu les notificacions",
+  "@notification_permission_settings_message": {
+    "description": "Body for notification permission inform sheet shown before screen sharing"
+  },
+  "participant_joined": "S'ha unit un participant🎉",
+  "participant_left": "Un participant ha marxat👋",
+  "participant_name_prefix": "Nom: ",
+  "participant_identity_prefix": "Identitat: ",
+  "setting_updated": "S'han actualitzat les preferències",
+  "changes_effect_next_screen_sharing": "Els canvis s'aplicaran la pròxima vegada que compartiu la pantalla.",
+  "video_stats_copied": "S'han copiat les estadístiques de vídeo al porta-retalls",
+  "anonymous_user": "Usuari anònim",
+  "loading": "S'està carregant...",
+  "@loading": {
+    "description": "Loading text"
+  },
+  "video": "Vídeo",
+  "audio": "Àudio",
+  "turn_off_camera": "Apaga la càmera",
+  "turn_on_camera": "Activa la càmera",
+  "video_settings": "Preferències del vídeo",
+  "select_camera_device": "Seleccioneu un dispositiu de càmera",
+  "turn_off_microphone": "Apaga el micròfon",
+  "turn_on_microphone": "Activa el micròfon",
+  "audio_settings": "Preferències de l'àudio",
+  "select_microphone": "Seleccioneu un micròfon",
+  "select_speaker": "Seleccioneu un altaveu",
+  "permission_not_given": "No s'han concedit els permisos",
+  "permission_camera": "Necessitem el permís de la càmera per a poder-la habilitar",
+  "permission_microphone": "Necessitem el permís de la càmera per a poder habilitar el micròfon",
+  "camera_is_off": "La càmera està desactivada",
+  "copied_to_clipboard": "S'ha copiat al porta-retalls",
+  "personal_meeting": "Reunió personal",
+  "@personal_meeting": {
+    "description": "Title for personal meeting dialog"
+  },
+  "personal_meeting_description": "La vostra sala de reunions sempre disponible",
+  "@personal_meeting_description": {
+    "description": "Description text for personal meeting room"
+  },
+  "personal_meeting_room": "Sala de reunió personal",
+  "@personal_meeting_room": {
+    "description": "Title for personal meeting room dialog"
+  },
+  "join_a_meeting": "Uniu-vos a una reunió",
+  "@join_a_meeting": {
+    "description": "Title for join meeting dialog"
+  },
+  "join_meeting_subtitle": "Enganxeu l'enllaç de Proton Meet per a unir-vos a una reunió segura",
+  "@join_meeting_subtitle": {
+    "description": "Subtitle text for join meeting dialog"
+  },
+  "please_enter_valid_meeting_link": "Introduïu un enllaç de reunió vàlid.",
+  "@please_enter_valid_meeting_link": {
+    "description": "Error message when meeting link is invalid"
+  },
+  "meeting_password_incorrect": "La contrasenya de la reunió no és vàlida",
+  "@meeting_password_incorrect": {
+    "description": "Error message when the meeting password embedded in the join link is invalid"
+  },
+  "meeting_password_invalid": "La contrasenya de la reunió no és vàlida",
+  "link_copied_to_clipboard": "S'ha copiat l'enllaç al porta-retalls",
+  "@link_copied_to_clipboard": {
+    "description": "Success message when meeting link is copied"
+  },
+  "meeting_link_label": "Enllaç de la reunió",
+  "@meeting_link_label": {
+    "description": "Label for meeting link input field"
+  },
+  "copy_link": "Copia l'enllaç",
+  "@copy_link": {
+    "description": "Button text to copy meeting link"
+  },
+  "copy_link_and_close": "Copia l'enllaç i tanca",
+  "@copy_link_and_close": {
+    "description": "Button text to copy link and close dialog"
+  },
+  "copy": "Copia",
+  "@copy": {
+    "description": "Copy action"
+  },
+  "delete": "Elimina",
+  "@delete": {
+    "description": "Delete action"
+  },
+  "delete_meeting": "Elimineu la reunió",
+  "@delete_meeting": {
+    "description": "Title for delete meeting dialog"
+  },
+  "delete_meeting_confirmation": "Esteu segurs que voleu eliminar aquesta reunió? Aquesta acció no es pot desfer.",
+  "@delete_meeting_confirmation": {
+    "description": "Confirmation message for deleting a meeting"
+  },
+  "creating_meeting": "S'està creant la reunió ...",
+  "@creating_meeting": {
+    "description": "Loading message shown while creating a meeting"
+  },
+  "deleting_meeting": "S'està eliminant la reunió...",
+  "@deleting_meeting": {
+    "description": "Loading message shown while deleting a meeting"
+  },
+  "updating_meeting": "S'està actualitzant la reunió ...",
+  "@updating_meeting": {
+    "description": "Loading message shown while updating a meeting"
+  },
+  "scheduling_meeting": "S'està planificant la reunió...",
+  "@scheduling_meeting": {
+    "description": "Loading message shown while scheduling a meeting"
+  },
+  "guest_user_description": "Com a usuari convidat, podeu iniciar reunions anònimes i gratuïtes des d'aquest taulell de control.",
+  "@guest_user_description": {
+    "description": "Description text explaining guest user capabilities"
+  },
+  "create_free_account": "Crea un compte gratuït",
+  "@create_free_account": {
+    "description": "Button text to create a free account"
+  },
+  "please_sign_in_to_access_feature": "Inicieu la sessió per a accedir a aquesta característica! ",
+  "@please_sign_in_to_access_feature": {
+    "description": "Message prompting user to sign in"
+  },
+  "already_have_account": "Ja teniu un compte? ",
+  "@already_have_account": {
+    "description": "Text before login link for existing users"
+  },
+  "we_hope_you_enjoyed_meeting": "Esperem que hagueu gaudit de la vostra reunió segura! ",
+  "@we_hope_you_enjoyed_meeting": {
+    "description": "Message shown after user leaves meeting"
+  },
+  "left_by_mistake": "Heu sortit per error? ",
+  "@left_by_mistake": {
+    "description": "Text before rejoin link"
+  },
+  "rejoin_meeting": "Torna-t'hi a unir",
+  "@rejoin_meeting": {
+    "description": "Button text to rejoin a meeting"
+  },
+  "left_meeting_title": "Heu sortit de la reunió",
+  "@left_meeting_title": {
+    "description": "Title shown in left meeting bottom sheet"
+  },
+  "left_meeting_subtitle_guest_free": "Organitzeu la vostra pròpia reunió segura. Inicieu una trucada a Proton Meet i compartiu l'enllaç per a convidar a qualsevol persona. Senzill, segur i gratuït.",
+  "@left_meeting_subtitle_guest_free": {
+    "description": "Subtitle shown for non-paid non-host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_guest_paid": "Gràcies per unir-vos-hi.",
+  "@left_meeting_subtitle_guest_paid": {
+    "description": "Subtitle shown for paid non-host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_host_free": "Gràcies per organitzar una reunió.",
+  "@left_meeting_subtitle_host_free": {
+    "description": "Subtitle shown for free host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_host_paid": "Gràcies per a organitzar una reunió prèmium.",
+  "@left_meeting_subtitle_host_paid": {
+    "description": "Subtitle shown for paid host users after leaving a meeting"
+  },
+  "start_meeting_now": "Inicia una reunió ara",
+  "@start_meeting_now": {
+    "description": "Button text to start a meeting immediately from left meeting bottom sheet"
+  },
+  "publish": "Publica",
+  "@publish": {
+    "description": "Dialog title for publishing camera and microphone"
+  },
+  "publish_camera_mic_question": "Voleu publicar la vostra càmera i el vostre micròfon?",
+  "@publish_camera_mic_question": {
+    "description": "Question asking user to publish camera and microphone"
+  },
+  "no": "NO",
+  "@no": {
+    "description": "Negative response button text"
+  },
+  "yes": "SÍ",
+  "@yes": {
+    "description": "Positive response button text"
+  },
+  "play_audio": "Reprodueix l'àudio",
+  "@play_audio": {
+    "description": "Dialog title and button text for playing audio"
+  },
+  "ios_safari_audio_activation": "Heu d'activar manualment la reproducció d'àudio per al Safari d'iOS!",
+  "@ios_safari_audio_activation": {
+    "description": "Message explaining iOS Safari audio activation requirement"
+  },
+  "ignore": "Ignora",
+  "@ignore": {
+    "description": "Button text to ignore an action"
+  },
+  "unpublish": "Despublica",
+  "@unpublish": {
+    "description": "Dialog title for unpublishing camera and microphone"
+  },
+  "unpublish_camera_mic_question": "Voleu deixar de publicar la vostra càmera i el vostre micròfon?",
+  "@unpublish_camera_mic_question": {
+    "description": "Question asking user to unpublish camera and microphone"
+  },
+  "error": "Error",
+  "@error": {
+    "description": "Generic error dialog title"
+  },
+  "disconnect": "Desconnecta",
+  "@disconnect": {
+    "description": "Dialog title and button text for disconnecting"
+  },
+  "are_you_sure_disconnect": "Segur que us voleu desconnectar?",
+  "@are_you_sure_disconnect": {
+    "description": "Confirmation question before disconnecting"
+  },
+  "reconnect": "Torna a connectar",
+  "@reconnect": {
+    "description": "Dialog title and button text for reconnecting"
+  },
+  "force_reconnection_message": "Això forçarà una reconexió",
+  "@force_reconnection_message": {
+    "description": "Message explaining that reconnection will be forced"
+  },
+  "reconnection_successful": "La reconnexió s'ha fet correctament.",
+  "@reconnection_successful": {
+    "description": "Success message after reconnection"
+  },
+  "no_connection": "Sense connexió",
+  "@no_connection": {
+    "description": "Message shown when there is no network connection"
+  },
+  "mls_not_synced": "El MLS no s'ha sincronitzat",
+  "@mls_not_synced": {
+    "description": "Message shown when MLS is not synced"
+  },
+  "reconnecting_warning": "S'està reconnectant",
+  "@reconnecting_warning": {
+    "description": "Message shown when MLS is not synced or websocket trying to reconnect"
+  },
+  "websocket_reconnecting": "S'està tornant a connectar el WebSocket",
+  "@websocket_reconnecting": {
+    "description": "Message shown when WebSocket is reconnecting"
+  },
+  "received_data": "Dades rebudes",
+  "@received_data": {
+    "description": "Dialog title for received data"
+  },
+  "room_recording_reminder": "Recordatori d'enregistrament de la sala",
+  "@room_recording_reminder": {
+    "description": "Dialog title for room recording status"
+  },
+  "room_recording_active": "L'enregistrament de la sala està actiu.",
+  "@room_recording_active": {
+    "description": "Message when room recording is active"
+  },
+  "room_recording_stopped": "S'ha aturat l'enregistrament de la sala.",
+  "@room_recording_stopped": {
+    "description": "Message when room recording is stopped"
+  },
+  "meeting_being_recorded": "Aquesta reunió s'està enregistrant",
+  "@meeting_being_recorded": {
+    "description": "Title for recording in progress dialog"
+  },
+  "recording_consent_message": "En continuar a la reunió, reconeixeu i accepteu que se us registri.",
+  "@recording_consent_message": {
+    "description": "Message about recording consent"
+  },
+  "recording_in_progress": "Enregistrament en curs",
+  "@recording_in_progress": {
+    "description": "Top banner shown to all participants when the meeting is being recorded"
+  },
+  "recording_in_progress_with_name": "Enregistrament en curs · {name} està enregistrant",
+  "@recording_in_progress_with_name": {
+    "description": "Top banner when exactly one named participant is recording",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "recording_in_progress_with_name_and_others": "Enregistrament en curs · {name} i {count} més estan enregistrant",
+  "@recording_in_progress_with_name_and_others": {
+    "description": "Top banner when multiple participants are recording",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recording_label": "S'està enregistrant…",
+  "@recording_label": {
+    "description": "Chip shown next to participants currently recording the meeting"
+  },
+  "agree_and_continue": "Accepta i continua",
+  "@agree_and_continue": {
+    "description": "Button text to agree and continue in meeting"
+  },
+  "continue_button": "Continuar",
+  "@continue_button": {
+    "description": "Button text to continue in meeting"
+  },
+  "allow_subscription": "Permeteu la subscripció",
+  "@allow_subscription": {
+    "description": "Dialog title for allowing subscription"
+  },
+  "allow_subscription_question": "Voleu permetre que tots els participants se subscriguin a les pistes publicades pel participant local?",
+  "@allow_subscription_question": {
+    "description": "Question asking user to allow subscription"
+  },
+  "simulate_scenario": "Simula l'escenari",
+  "@simulate_scenario": {
+    "description": "Dialog title for simulating scenarios"
+  },
+  "leave_room": "Sortiu de la sala",
+  "@leave_room": {
+    "description": "Dialog title for leaving room"
+  },
+  "are_you_sure_leave_room": "Segur que voleu abandonar aquesta sala?",
+  "@are_you_sure_leave_room": {
+    "description": "Confirmation question before leaving room"
+  },
+  "no_response": "No",
+  "@no_response": {
+    "description": "Negative response in confirmation dialogs"
+  },
+  "yes_response": "Sí",
+  "@yes_response": {
+    "description": "Positive response in confirmation dialogs"
+  },
+  "personal_meeting_link": "Enllaç de reunió personal",
+  "@personal_meeting_link": {
+    "description": "Label for personal meeting link button"
+  },
+  "regenerate_link": "Regenera l'enllaç",
+  "@regenerate_link": {
+    "description": "Button text to regenerate a meeting link"
+  },
+  "regenerating": "S'està regenerant...",
+  "@regenerating": {
+    "description": "Loading message shown while regenerating a meeting link"
+  },
+  "start_secure_meeting": "Inicia una reunió segura",
+  "@start_secure_meeting": {
+    "description": "Button text to start a secure meeting"
+  },
+  "upcoming_meetings": "Pròximes reunions",
+  "@upcoming_meetings": {
+    "description": "Section title for upcoming meetings list"
+  },
+  "my_rooms_count": "Les meves sales",
+  "@my_rooms_count": {
+    "description": "Title showing the count of my rooms"
+  },
+  "my_meetings_count": "Les meves reunions",
+  "@my_meetings_count": {
+    "description": "Title showing the count of my meetings"
+  },
+  "schedule_meeting": "Planifica una reunió",
+  "@schedule_meeting": {
+    "description": "Button text to schedule a meeting"
+  },
+  "start_meeting": "Inicia la reunió",
+  "@start_meeting": {
+    "description": "Button text to start a meeting"
+  },
+  "recent_meetings": "Reunions recents",
+  "@recent_meetings": {
+    "description": "Section title for recent meetings list"
+  },
+  "start_instant_meeting": "Inicia una reunió instantània",
+  "@start_instant_meeting": {
+    "description": "Button text to start an instant meeting"
+  },
+  "copy_link_button": "Copia l'enllaç",
+  "@copy_link_button": {
+    "description": "Button text to copy a link"
+  },
+  "start_now": "Comença ara",
+  "@start_now": {
+    "description": "Button text to start immediately"
+  },
+  "leave_meeting": "Sortiu de la reunió",
+  "@leave_meeting": {
+    "description": "Dialog title for leaving a meeting"
+  },
+  "are_you_sure_leave_meeting": "Segur que voleu sortir d'aquesta reunió?",
+  "@are_you_sure_leave_meeting": {
+    "description": "Confirmation question before leaving meeting"
+  },
+  "user_is_presenting": "{name} (vós) esteu presentant",
+  "@user_is_presenting": {
+    "description": "String for local user presenting screen share",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "remote_user_is_presenting": "{name} està presentant",
+  "@remote_user_is_presenting": {
+    "description": "String for remote user presenting screen share",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "screen_share": "Compartició de pantalla",
+  "@screen_share": {
+    "description": "Tooltip and button text for screen sharing"
+  },
+  "disable_denoising": "deshabilita la reducció de soroll",
+  "@disable_denoising": {
+    "description": "Tooltip for disabling audio denoising"
+  },
+  "enable_denoising": "habilita la reducció de soroll",
+  "@enable_denoising": {
+    "description": "Tooltip for enabling audio denoising"
+  },
+  "exit_full_screen": "surt de la pantalla completa",
+  "@exit_full_screen": {
+    "description": "Tooltip for exiting full screen mode"
+  },
+  "enter_full_screen": "entra a la pantalla completa",
+  "@enter_full_screen": {
+    "description": "Tooltip for entering full screen mode"
+  },
+  "enter_pip": "Inicieu el mode picture-in-picture",
+  "@enter_pip": {
+    "description": "Tooltip for entering Picture-in-Picture mode"
+  },
+  "screen_sharing": "Compartició de pantalla",
+  "@screen_sharing": {
+    "description": "Notification title for screen sharing"
+  },
+  "sharing_your_screen": "S'està compartint la vostra pantalla",
+  "@sharing_your_screen": {
+    "description": "Notification text when sharing screen"
+  },
+  "screen_share_not_supported_mobile": "La compartició de pantalla no és compatible amb el web mòbil",
+  "@screen_share_not_supported_mobile": {
+    "description": "Error message when screen sharing is not supported on mobile"
+  },
+  "switch_speakerphone_on": "Utilitzeu l'altaveu del telèfon",
+  "@switch_speakerphone_on": {
+    "description": "Tooltip for switching audio output to the phone speaker"
+  },
+  "switch_speakerphone_off": "Utilitzeu la sortida d'àudio per defecte",
+  "@switch_speakerphone_off": {
+    "description": "Tooltip for switching audio output back to the default device"
+  },
+  "audio_output_default_device": "Dispositiu per defecte",
+  "@audio_output_default_device": {
+    "description": "Bottom sheet option: use default audio output routing (e.g. earpiece or headphones)"
+  },
+  "audio_output_earpiece": "Auricular",
+  "@audio_output_earpiece": {
+    "description": "Bottom sheet option: use Earpiece audio output routing"
+  },
+  "audio_output_bluetooth_device": "Dispositiu Bluetooth",
+  "@audio_output_bluetooth_device": {
+    "description": "Bottom sheet option: use Bluetooth device audio output routing"
+  },
+  "audio_output_headphones": "Auriculars",
+  "@audio_output_headphones": {
+    "description": "Bottom sheet option: use Headphones audio output routing"
+  },
+  "audio_output_phone_speakers": "Altaveus del telèfon",
+  "@audio_output_phone_speakers": {
+    "description": "Bottom sheet option: use the phone built-in loudspeaker"
+  },
+  "please_grant_camera_permission": "Concediu el permís de la càmera per a continuar",
+  "@please_grant_camera_permission": {
+    "description": "Message requesting camera permission"
+  },
+  "please_grant_microphone_permission": "Concediu el permís del micròfon per a continuar",
+  "@please_grant_microphone_permission": {
+    "description": "Message requesting microphone permission"
+  },
+  "your_meeting_is_ready": "La reunió està a punt",
+  "@your_meeting_is_ready": {
+    "description": "Title message when meeting is ready"
+  },
+  "share_link_invite_description": "Compartiu aquest enllaç per a convidar altres persones. També el podeu trobar en qualsevol moment fent clic a la icona d'informació de la barra d'eines.",
+  "@share_link_invite_description": {
+    "description": "Instructions for sharing meeting link"
+  },
+  "two_factor_authentication": "Autenticació de doble factor",
+  "@two_factor_authentication": {
+    "description": "Title for two-factor authentication"
+  },
+  "enter_2fa_code": "Introduïu el vostre codi 2FA per a continuar",
+  "@enter_2fa_code": {
+    "description": "Prompt for entering 2FA code"
+  },
+  "twofa_code": "Codi 2FA",
+  "@twofa_code": {
+    "description": "Label for 2FA code input field"
+  },
+  "verify": "Verifica",
+  "@verify": {
+    "description": "Button text to verify"
+  },
+  "switch_to": "Canvia a",
+  "@switch_to": {
+    "description": "Text before account name in account switcher"
+  },
+  "add_another_account": "Afegeix un altre compte",
+  "@add_another_account": {
+    "description": "Button text to add another account"
+  },
+  "delete_proton_account": "Elimina el compte de Proton",
+  "@delete_proton_account": {
+    "description": "Button text to delete Proton account"
+  },
+  "invalid_meeting_link": "L'enllaç de la reunió no és vàlid",
+  "@invalid_meeting_link": {
+    "description": "Error message for invalid meeting link"
+  },
+  "permission_required": "Es requereixen permisos",
+  "@permission_required": {
+    "description": "Label when permission is required"
+  },
+  "unsubscribe_audio": "Anul·leu la subscripció d'àudio",
+  "@unsubscribe_audio": {
+    "description": "Menu item to unsubscribe from audio"
+  },
+  "subscribe_audio": "Subscriviu-vos a l'àudio",
+  "@subscribe_audio": {
+    "description": "Menu item to subscribe to audio"
+  },
+  "unsubscribe_video": "Anul·leu la subscripció de vídeo",
+  "@unsubscribe_video": {
+    "description": "Menu item to unsubscribe from video"
+  },
+  "subscribe_video": "Subscriviu-vos al vídeo",
+  "@subscribe_video": {
+    "description": "Menu item to subscribe to video"
+  },
+  "remote_mute_video": "Silencieu el vídeo remotament",
+  "@remote_mute_video": {
+    "description": "Menu item to remotely mute video"
+  },
+  "remote_mute_audio": "Silencieu l'àudio remotament",
+  "@remote_mute_audio": {
+    "description": "Menu item to remotely mute audio"
+  },
+  "force_mute": "Silenciament forçat",
+  "@force_mute": {
+    "description": "Menu item to force mute a participant"
+  },
+  "force_mute_participant": "Silencieu forçadament a {name}",
+  "@force_mute_participant": {
+    "description": "Toast message when force muting a participant",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "force_disable_camera": "Desactiveu la càmera forçadament",
+  "@force_disable_camera": {
+    "description": "Menu item to force disable camera"
+  },
+  "force_disable_camera_participant": "Desactiveu forçadament la càmera de {name}",
+  "@force_disable_camera_participant": {
+    "description": "Toast message when force disabling camera",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "kick_out": "Expulseu",
+  "@kick_out": {
+    "description": "Menu item to kick out a participant"
+  },
+  "kick_out_participant": "Expulseu a {name}",
+  "@kick_out_participant": {
+    "description": "Toast message when kicking out a participant",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "subscribe_menu": "Menú de subscripció",
+  "@subscribe_menu": {
+    "description": "Tooltip for subscribe menu button"
+  },
+  "subscribe": "Subscriviu-vos",
+  "@subscribe": {
+    "description": "Menu item to subscribe"
+  },
+  "unsubscribe": "Cancel·leu la subscripció",
+  "@unsubscribe": {
+    "description": "Menu item to unsubscribe"
+  },
+  "preferred_fps": "FPS preferits",
+  "@preferred_fps": {
+    "description": "Tooltip for preferred FPS setting"
+  },
+  "preferred_quality": "Qualitat preferida",
+  "@preferred_quality": {
+    "description": "Tooltip for preferred quality setting"
+  },
+  "high": "ALTA",
+  "@high": {
+    "description": "High quality option"
+  },
+  "medium": "MITJANA",
+  "@medium": {
+    "description": "Medium quality option"
+  },
+  "low": "BAIXA",
+  "@low": {
+    "description": "Low quality option"
+  },
+  "unnamed_room": "Sala sense nom",
+  "@unnamed_room": {
+    "description": "Default name for rooms without a name"
+  },
+  "participants_count_text": "{count} participants",
+  "@participants_count_text": {
+    "description": "Text showing number of participants",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_privacy_message": "Aquest és un xat amb xifratge d'extrem a extrem amb missatges efímers, els quals desapareixen en acabar la trucada.",
+  "@chat_privacy_message": {
+    "description": "Privacy message displayed in chat when there are no messages."
+  },
+  "meeting_quality_feedback": "Comentaris sobre la qualitat de la reunió",
+  "@meeting_quality_feedback": {
+    "description": "Title for meeting quality feedback form"
+  },
+  "quality_feedback_email_message": "En enviar-ho, compartireu el registre de connexió amb nosaltres per correu electrònic.",
+  "@quality_feedback_email_message": {
+    "description": "Message explaining that connection log will be shared via email"
+  },
+  "call_quality_how_was": "Com ha estat la qualitat de la trucada?",
+  "@call_quality_how_was": {
+    "description": "Prompt above star rating on post-meeting feedback"
+  },
+  "call_quality_what_went_wrong": "Què ha anat malament?",
+  "@call_quality_what_went_wrong": {
+    "description": "Heading when user rated call quality below threshold"
+  },
+  "call_quality_problem_subtitle": "Quin problema heu tingut?",
+  "@call_quality_problem_subtitle": {
+    "description": "Subtitle under what went wrong on low-rating feedback"
+  },
+  "call_quality_add_optional_details": "Afegiu detalls opcionals",
+  "@call_quality_add_optional_details": {
+    "description": "Expand control for free-text feedback"
+  },
+  "call_quality_share_more_details": "Compartiu més detalls",
+  "@call_quality_share_more_details": {
+    "description": "Placeholder for optional feedback text"
+  },
+  "call_quality_help_text": "Els comentaris opcionals s'envien de manera segura per a ajudar a millorar la qualitat de la trucada.",
+  "@call_quality_help_text": {
+    "description": "Short privacy note under the rating on post-meeting feedback"
+  },
+  "call_quality_feedback_submitted": "S'han enviat els vostres comentaris",
+  "@call_quality_feedback_submitted": {
+    "description": "Toast after successful meeting feedback"
+  },
+  "call_quality_could_not_send": "No s'han pogut enviar els comentaris",
+  "@call_quality_could_not_send": {
+    "description": "Toast when meeting feedback API fails"
+  },
+  "call_quality_category_audio": "Àudio",
+  "@call_quality_category_audio": {
+    "description": "Section label for audio-related feedback options"
+  },
+  "call_quality_category_video": "Vídeo",
+  "@call_quality_category_video": {
+    "description": "Section label for video-related feedback options"
+  },
+  "call_quality_category_screen": "Compartició de pantalla",
+  "@call_quality_category_screen": {
+    "description": "Section label for screen-share feedback options"
+  },
+  "call_quality_audio_breaking": "L'àudio s'entretallava",
+  "@call_quality_audio_breaking": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_audio_couldnt_hear": "No podia sentir els altres",
+  "@call_quality_audio_couldnt_hear": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_audio_others_couldnt_hear": "Els altres no em podien sentir",
+  "@call_quality_audio_others_couldnt_hear": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_poor": "La qualitat del vídeo era pobre",
+  "@call_quality_video_poor": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_couldnt_see": "No podia veure el vídeo dels altres",
+  "@call_quality_video_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_others_couldnt_see": "Els altres no podien veure el meu vídeo",
+  "@call_quality_video_others_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_blurry": "La presentació es veia borrosa",
+  "@call_quality_screen_blurry": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_couldnt_see": "No podia veure la presentació",
+  "@call_quality_screen_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_couldnt_present": "No podia presentar",
+  "@call_quality_screen_couldnt_present": {
+    "description": "Low-rating feedback option"
+  },
+  "skip": "Omet",
+  "@skip": {
+    "description": "Button text to skip an action"
+  },
+  "feature_not_ready": "Aquesta característica encara no està a punt.",
+  "@feature_not_ready": {
+    "description": "Message when a feature is not ready"
+  },
+  "video_stats_all_participants": "Estadístiques de vídeo - Tots els participants",
+  "@video_stats_all_participants": {
+    "description": "Title for video statistics dialog"
+  },
+  "video_stats": "estadístiques de vídeo",
+  "@video_stats": {
+    "description": "Label for video statistics"
+  },
+  "page_not_found": "No s'ha trobat la pàgina",
+  "@page_not_found": {
+    "description": "Error message when page is not found"
+  },
+  "invalid_deeplink_format": "El format de l'enllaç profund no és vàlid: {name}",
+  "@invalid_deeplink_format": {
+    "description": "Error message for invalid deeplink format",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "open_settings": "Obre les preferències",
+  "@open_settings": {
+    "description": "Button text to open settings"
+  },
+  "schedule": "Planifica",
+  "@schedule": {
+    "description": "Button text to schedule"
+  },
+  "start": "Comença",
+  "@start": {
+    "description": "Button text to start"
+  },
+  "start_an_instant_meeting": "Inici una reunió instantània",
+  "@start_an_instant_meeting": {
+    "description": "Button text to start an instant meeting"
+  },
+  "more": "Més",
+  "@more": {
+    "description": "Tooltip for more options button"
+  },
+  "unlock_failed_too_many_times": "El desbloqueig ha fallat massa vegades",
+  "@unlock_failed_too_many_times": {
+    "description": "Error message when unlock fails too many times"
+  },
+  "show_all_stats_debug": "Mostra totes les estadístiques (mode de depuració)",
+  "@show_all_stats_debug": {
+    "description": "Button text to show all stats in debug mode"
+  },
+  "close_simulation": "Tanca la simulació",
+  "@close_simulation": {
+    "description": "Button text to close simulation"
+  },
+  "close_all_rooms_exit_simulation": "Segur que voleu tancar totes les sales i sortir del mode de simulació?",
+  "@close_all_rooms_exit_simulation": {
+    "description": "Confirmation question before closing simulation"
+  },
+  "yes_close_all": "Sí, tanca-ho tot",
+  "@yes_close_all": {
+    "description": "Button text to confirm closing all rooms"
+  },
+  "simulation_mode": "Mode de simulació",
+  "@simulation_mode": {
+    "description": "Title for simulation mode"
+  },
+  "simulation_mode_description": "Creeu i gestioneu sales simulades per a fer proves",
+  "@simulation_mode_description": {
+    "description": "Description text for simulation mode"
+  },
+  "simulated_rooms": "Sales simulades",
+  "@simulated_rooms": {
+    "description": "Title for simulated rooms section"
+  },
+  "room_with_users": "Sala {key} ({count} usuaris)",
+  "@room_with_users": {
+    "description": "Text showing room ID and user count",
+    "placeholders": {
+      "key": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "enable_video": "Habilita el vídeo",
+  "@enable_video": {
+    "description": "Button text to enable video"
+  },
+  "meeting_will_end_in": "La reunió finalitzarà en {time}",
+  "@meeting_will_end_in": {
+    "description": "Title for meeting will end dialog with countdown timer",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "0:30"
+      }
+    }
+  },
+  "meeting_expiry_banner_title_prefix": "La reunió finalitzarà en ",
+  "@meeting_expiry_banner_title_prefix": {
+    "description": "Title prefix for meeting expiry countdown banner; duration is appended"
+  },
+  "meeting_expiry_banner_description": "Les reunions gratuïtes estan limitades a 1 hora. Aquesta trucada es desconnectarà aviat.",
+  "@meeting_expiry_banner_description": {
+    "description": "Subtitle on meeting expiry warning banner for free meetings"
+  },
+  "host_close_meeting_description": "Voleu abandonar la reunió o finalitzar-la per a tothom?",
+  "@host_close_meeting_description": {
+    "description": "Description text when host want to leave meeting"
+  },
+  "close_meeting_description": "Segur que voleu sortir? La reunió continuarà sense vós.",
+  "@close_meeting_description": {
+    "description": "Description text when host want to leave meeting"
+  },
+  "meeting_will_end_description": "Com que sou l'únic participant en aquesta reunió, es tancarà automàticament. Voleu romandre a la reunió?",
+  "meeting_created": "S'ha creat la reunió",
+  "@meeting_created": {
+    "description": "Title for meeting created dialog"
+  },
+  "room_initialing_hint": "S'està subscrivint a les pistes de vídeo remotes…",
+  "@room_initialing_hint": {
+    "description": "Hint for room initialing process"
+  },
+  "add_to_calendar": "Afegeix al calendari",
+  "@add_to_calendar": {
+    "description": "Button label to add a meeting to calendar"
+  },
+  "meeting_details": "Detalls",
+  "@meeting_details": {
+    "description": "Button label to show meeting details"
+  },
+  "meeting_details_section": "Detalls de la reunió",
+  "@meeting_details_section": {
+    "description": "Section title for meeting details in info panel"
+  },
+  "title_label": "Títol",
+  "@title_label": {
+    "description": "Label for meeting title field"
+  },
+  "date_label": "Data",
+  "@date_label": {
+    "description": "Label for meeting date field"
+  },
+  "time_label": "Temps",
+  "@time_label": {
+    "description": "Label for meeting time field"
+  },
+  "invite_link_label": "Enllaç d'invitació",
+  "@invite_link_label": {
+    "description": "Label for invite link field"
+  },
+  "messaging_layer_security": "Messaging Layer Security (MLS)",
+  "@messaging_layer_security": {
+    "description": "Title for MLS section in meeting info panel"
+  },
+  "participants_label": "Participants",
+  "@participants_label": {
+    "description": "Label for participants count field"
+  },
+  "epoch_label": "Època",
+  "@epoch_label": {
+    "description": "Label for epoch field"
+  },
+  "security_code_label": "Codi de seguretat",
+  "@security_code_label": {
+    "description": "Label for security code field"
+  },
+  "recurrence_daily": "Diàriament",
+  "@recurrence_daily": {
+    "description": "Recurrence frequency label for daily meetings"
+  },
+  "recurrence_weekly": "Setmanalment",
+  "@recurrence_weekly": {
+    "description": "Recurrence frequency label for weekly meetings"
+  },
+  "recurrence_monthly": "Mensualment",
+  "@recurrence_monthly": {
+    "description": "Recurrence frequency label for monthly meetings"
+  },
+  "recurrence_yearly": "Anualment",
+  "@recurrence_yearly": {
+    "description": "Recurrence frequency label for yearly meetings"
+  },
+  "@meeting_will_end_description": {
+    "description": "Description text explaining why meeting will end"
+  },
+  "stay_in_meeting": "Romaneu a la reunió",
+  "@stay_in_meeting": {
+    "description": "Button text to stay in meeting"
+  },
+  "end_meeting_for_all": "Finalitza la reunió per a tothom",
+  "@end_meeting_for_all": {
+    "description": "Button text to end meeting for all"
+  },
+  "stay_in_the_meeting": "Romaneu a la reunió",
+  "@stay_in_the_meeting": {
+    "description": "Button text to stay in the meeting"
+  },
+  "connection_lost": "S'ha perdut la connexió",
+  "@connection_lost": {
+    "description": "Connection lost description"
+  },
+  "connection_lost_content": "S'ha perdut la connexió, torneu-vos a unir a la reunió",
+  "@connection_lost_content": {
+    "description": "Connection lost description"
+  },
+  "go_back_to_dashboard": "Torna al tauler de control",
+  "@go_back_to_dashboard": {
+    "description": "Description text for go back to the dashboard button"
+  },
+  "early_access_description": "Aquesta característica està disponible exclusivament per als usuaris Lifetime i Visionary durant l'accés anticipat.",
+  "@early_access_description": {
+    "description": "Description text explaining guest user capabilities"
+  },
+  "early_access_title": "Inicieu la sessió per a accedir a aquesta característica",
+  "@early_access_title": {
+    "description": "Message prompting user to sign in for this early access feature"
+  },
+  "early_access_title_for_login_user": "Característica d'accés anticipat",
+  "@early_access_title_for_login_user": {
+    "description": "Message to let user know this is early access feature available for Lifetime and Visionary users"
+  },
+  "schedule_a_meeting": "Programeu una reunió",
+  "@schedule_a_meeting": {
+    "description": "Menu item label to schedule a meeting in Proton Meet app"
+  },
+  "create_a_room": "Creeu una sala",
+  "@create_a_room": {
+    "description": "Menu item label to create a room"
+  },
+  "create_new_room": "Creeu una sala nova",
+  "@create_new_room": {
+    "description": "Menu item label to create a new room"
+  },
+  "emoji_reactions": "Reaccions amb emojis",
+  "@emoji_reactions": {
+    "description": "Emoji reactions tooltip"
+  },
+  "lower_participant_hand": "Abaixa la mà del participant",
+  "@lower_participant_hand": {
+    "description": "Tooltip text for lowering a participant's raised hand"
+  },
+  "edit_room": "Edita la sala",
+  "@edit_room": {
+    "description": "Menu item label to edit a room"
+  },
+  "edit_meeting": "Editeu la reunió",
+  "@edit_meeting": {
+    "description": "Menu item label to edit a meeting"
+  },
+  "join_with_a_link": "Uniu-vos amb un enllaç",
+  "@join_with_a_link": {
+    "description": "Menu item label to join a meeting with a link"
+  },
+  "room_name": "Nom",
+  "@room_name": {
+    "description": "Label for room name input field header"
+  },
+  "room_id": "ID de la sala",
+  "@room_id": {
+    "description": "Label for room ID display"
+  },
+  "room_deleted": "S'ha eliminat la sala",
+  "@room_deleted": {
+    "description": "Success message shown after a room is deleted"
+  },
+  "meeting_deleted": "S'ha eliminat la reunió",
+  "@meeting_deleted": {
+    "description": "Success message shown after a meeting is deleted"
+  },
+  "enter_room_name_hint": "per exemple, Equip de disseny, reunió de seguiment setmanal",
+  "@enter_room_name_hint": {
+    "description": "Hint text for room name input field"
+  },
+  "create_room_subtitle": "Les sales de reunions es poden utilitzar en qualsevol moment",
+  "@create_room_subtitle": {
+    "description": "Subtitle text for create room dialog"
+  },
+  "create_button": "Crea",
+  "@create_button": {
+    "description": "Button text to create"
+  },
+  "save": "Desa",
+  "@save": {
+    "description": "Button text to save"
+  },
+  "create_and_copy_link": "Crea i copia l'enllaç",
+  "@create_and_copy_link": {
+    "description": "Button text to create meeting and copy link"
+  },
+  "you_are_using_paid_meet_plan": "Esteu utilitzant un pla de pagament del Meet.",
+  "@you_are_using_paid_meet_plan": {
+    "description": "Message shown to host indicating they are using a paid plan"
+  },
+  "you_are_using_free_meet_plan": "Esteu utilitzant el pla gratuït del Meet.",
+  "@you_are_using_free_meet_plan": {
+    "description": "Message shown to host indicating they are using the free plan"
+  },
+  "call_supports_up_to": "Aquesta trucada admet fins a ",
+  "@call_supports_up_to": {
+    "description": "Message prefix showing the maximum number of participants allowed in the call"
+  },
+  "call_reached_limit": "Aquesta trucada ha arribat al ",
+  "@call_reached_limit": {
+    "description": "Message prefix showing the call has reached the limit"
+  },
+  "participants_suffix": " participants.",
+  "@participants_suffix": {
+    "description": "Message suffix after the participant count"
+  },
+  "participants_reached_limit_suffix": " límit de participants.",
+  "@participants_reached_limit_suffix": {
+    "description": "Message suffix after the call reached limit message"
+  },
+  "no_more_participants_can_join": "Esborreu a un participant o actualitzeu el vostre pla per a convidar més persones.",
+  "@no_more_participants_can_join": {
+    "description": "Message shown when the call has reached the maximum number of participants"
+  },
+  "connection_quality_poor": "Connexió pobre",
+  "@connection_quality_poor": {
+    "description": "Tooltip message shown when connection quality is poor"
+  },
+  "meeting_ended_by_host": "L'amfitrió ha finalitzat la reunió",
+  "@meeting_ended_by_host": {
+    "description": "Toast message shown when the host ends the meeting for everyone"
+  },
+  "client_kicked_out_by_host": "L'amfitrió us ha expulsat de la reunió",
+  "@client_kicked_out_by_host": {
+    "description": "Toast message shown when the host removes current user from the meeting"
+  },
+  "kicked_out_bottom_sheet_title": "Us han expulsat",
+  "@kicked_out_bottom_sheet_title": {
+    "description": "Title shown in left meeting bottom sheet when current user is removed by host"
+  },
+  "kicked_out_bottom_sheet_content": "L'amfitrió us ha expulsat de la reunió.",
+  "@kicked_out_bottom_sheet_content": {
+    "description": "Content shown in left meeting bottom sheet when current user is removed by host"
+  },
+  "add_title": "Afegeix un títol",
+  "@add_title": {
+    "description": "Placeholder text for meeting title input field"
+  },
+  "schedule_at": "a",
+  "@schedule_at": {
+    "description": "Label for schedule at, used in schedule dialog"
+  },
+  "schedule_duration_min": "min",
+  "@schedule_duration_min": {
+    "description": "Label for schedule duration in minutes"
+  },
+  "schedule_duration_hr": "h",
+  "@schedule_duration_hr": {
+    "description": "Label for schedule duration in hours"
+  },
+  "schedule_recurrence_none": "No es repeteix",
+  "@schedule_recurrence_none": {
+    "description": "Label for schedule recurrence none"
+  },
+  "schedule_recurrence_daily": "Diàriament",
+  "@schedule_recurrence_daily": {
+    "description": "Label for schedule recurrence daily"
+  },
+  "schedule_recurrence_weekly": "Setmanalment",
+  "@schedule_recurrence_weekly": {
+    "description": "Label for schedule recurrence weekly"
+  },
+  "schedule_recurrence_monthly": "Mensualment",
+  "@schedule_recurrence_monthly": {
+    "description": "Label for schedule recurrence monthly"
+  },
+  "schedule_recurrence_yearly": "Anualment",
+  "@schedule_recurrence_yearly": {
+    "description": "Label for schedule recurrence yearly"
+  },
+  "schedule_time_zone_search_hint": "Cerqueu la zona horària",
+  "@schedule_time_zone_search_hint": {
+    "description": "Label for schedule time zone search hint"
+  },
+  "schedule_time_zone_current": "Zona horària actual",
+  "@schedule_time_zone_current": {
+    "description": "Label for schedule time zone current"
+  },
+  "schedule_time_zone_selected": "Zona horària seleccionada",
+  "@schedule_time_zone_selected": {
+    "description": "Label for schedule time zone selected"
+  },
+  "month_jan": "Gener",
+  "@month_jan": {
+    "description": "Full month name for January"
+  },
+  "month_feb": "Febrer",
+  "@month_feb": {
+    "description": "Full month name for February"
+  },
+  "month_mar": "Març",
+  "@month_mar": {
+    "description": "Full month name for March"
+  },
+  "month_apr": "Abril",
+  "@month_apr": {
+    "description": "Full month name for April"
+  },
+  "month_may": "Maig",
+  "@month_may": {
+    "description": "Full month name for May"
+  },
+  "month_jun": "Juny",
+  "@month_jun": {
+    "description": "Full month name for June"
+  },
+  "month_jul": "Juliol",
+  "@month_jul": {
+    "description": "Full month name for July"
+  },
+  "month_aug": "Agost",
+  "@month_aug": {
+    "description": "Full month name for August"
+  },
+  "month_sep": "Setembre",
+  "@month_sep": {
+    "description": "Full month name for September"
+  },
+  "month_oct": "Octubre",
+  "@month_oct": {
+    "description": "Full month name for October"
+  },
+  "month_nov": "Novembre",
+  "@month_nov": {
+    "description": "Full month name for November"
+  },
+  "month_dec": "Desembre",
+  "@month_dec": {
+    "description": "Full month name for December"
+  },
+  "month_short_jan": "Gen",
+  "@month_short_jan": {
+    "description": "Abbreviated month name January (order Jan–Dec)"
+  },
+  "month_short_feb": "Feb",
+  "@month_short_feb": {
+    "description": "Abbreviated month name February"
+  },
+  "month_short_mar": "Mar",
+  "@month_short_mar": {
+    "description": "Abbreviated month name March"
+  },
+  "month_short_apr": "Abr",
+  "@month_short_apr": {
+    "description": "Abbreviated month name April"
+  },
+  "month_short_may": "Maig",
+  "@month_short_may": {
+    "description": "Abbreviated month name May"
+  },
+  "month_short_jun": "Juny",
+  "@month_short_jun": {
+    "description": "Abbreviated month name June"
+  },
+  "month_short_jul": "Jul",
+  "@month_short_jul": {
+    "description": "Abbreviated month name July"
+  },
+  "month_short_aug": "Ago",
+  "@month_short_aug": {
+    "description": "Abbreviated month name August"
+  },
+  "month_short_sep": "Set",
+  "@month_short_sep": {
+    "description": "Abbreviated month name September"
+  },
+  "month_short_oct": "Oct",
+  "@month_short_oct": {
+    "description": "Abbreviated month name October"
+  },
+  "month_short_nov": "Nov",
+  "@month_short_nov": {
+    "description": "Abbreviated month name November"
+  },
+  "month_short_dec": "Des",
+  "@month_short_dec": {
+    "description": "Abbreviated month name December"
+  },
+  "weekday_monday": "Dilluns",
+  "@weekday_monday": {
+    "description": "Weekday name for Monday"
+  },
+  "weekday_tuesday": "Dimarts",
+  "@weekday_tuesday": {
+    "description": "Weekday name for Tuesday"
+  },
+  "weekday_wednesday": "Dimecres",
+  "@weekday_wednesday": {
+    "description": "Weekday name for Wednesday"
+  },
+  "weekday_thursday": "Dijous",
+  "@weekday_thursday": {
+    "description": "Weekday name for Thursday"
+  },
+  "weekday_friday": "Divendres",
+  "@weekday_friday": {
+    "description": "Weekday name for Friday"
+  },
+  "weekday_saturday": "Dissabte",
+  "@weekday_saturday": {
+    "description": "Weekday name for Saturday"
+  },
+  "weekday_sunday": "Diumenge",
+  "@weekday_sunday": {
+    "description": "Weekday name for Sunday"
+  },
+  "weekday_short_monday": "Dl.",
+  "@weekday_short_monday": {
+    "description": "Short weekday label Monday (list order Mon–Sun)"
+  },
+  "weekday_short_tuesday": "Dt.",
+  "@weekday_short_tuesday": {
+    "description": "Short weekday label Tuesday"
+  },
+  "weekday_short_wednesday": "Dc.",
+  "@weekday_short_wednesday": {
+    "description": "Short weekday label Wednesday"
+  },
+  "weekday_short_thursday": "Dj.",
+  "@weekday_short_thursday": {
+    "description": "Short weekday label Thursday"
+  },
+  "weekday_short_friday": "Dv.",
+  "@weekday_short_friday": {
+    "description": "Short weekday label Friday"
+  },
+  "weekday_short_saturday": "Ds.",
+  "@weekday_short_saturday": {
+    "description": "Short weekday label Saturday"
+  },
+  "weekday_short_sunday": "Dg.",
+  "@weekday_short_sunday": {
+    "description": "Short weekday label Sunday"
+  },
+  "calendar_system": "Afegeix al calendari del telèfon",
+  "@calendar_system": {
+    "description": "Menu label for opening system calendar"
+  },
+  "calendar_google": "Afegeix al calendari de Google",
+  "@calendar_google": {
+    "description": "Menu label for opening Google Calendar"
+  },
+  "calendar_share_ics": "Compartiu el fitxer de l'esdeveniment",
+  "@calendar_share_ics": {
+    "description": "Menu label for sharing ICS file"
+  },
+  "calendar_outlook": "Afegeix al calendari de l'Outlook",
+  "@calendar_outlook": {
+    "description": "Menu label for opening Outlook Calendar"
+  },
+  "calendar_proton": "Afegeix al Proton Calendar",
+  "@calendar_proton": {
+    "description": "Menu label for opening Proton Calendar"
+  },
+  "scheduled_meeting_share": "Comparteix",
+  "@scheduled_meeting_share": {
+    "description": "Share button label in scheduled meeting summary"
+  },
+  "scheduled_meeting_done": "Fet",
+  "@scheduled_meeting_done": {
+    "description": "Done button label in scheduled meeting summary"
+  },
+  "scheduled_meeting_link": "Enllaç",
+  "@scheduled_meeting_link": {
+    "description": "Link label in scheduled meeting summary"
+  },
+  "upcoming_today": "AVUI",
+  "@upcoming_today": {
+    "description": "Upcoming meetings header label for today"
+  },
+  "upcoming_tomorrow": "DEMÀ",
+  "@upcoming_tomorrow": {
+    "description": "Upcoming meetings header label for tomorrow"
+  },
+  "on_yesterday": "AHIR",
+  "@on_yesterday": {
+    "description": "Meetings header label for yesterday"
+  },
+  "upcoming_prefix": "PRÒXIMES",
+  "@upcoming_prefix": {
+    "description": "Prefix for upcoming meetings header label"
+  },
+  "ended_prefix": "FINALITZADES",
+  "@ended_prefix": {
+    "description": "Prefix for ended/past meetings header label"
+  },
+  "ended_today": "Han finalitzat avui",
+  "@ended_today": {
+    "description": "Label for meetings ended today"
+  },
+  "ended_yesterday": "Finalitzades ahir",
+  "@ended_yesterday": {
+    "description": "Label for meetings ended yesterday"
+  },
+  "ended_on": "Finalitzada el",
+  "@ended_on": {
+    "description": "Label for meetings ended on a specific date"
+  },
+  "created_prefix": "CREADES",
+  "@created_prefix": {
+    "description": "Prefix for newly created meetings header label"
+  },
+  "created_today": "Creades avui",
+  "@created_today": {
+    "description": "Label for meetings created today"
+  },
+  "created_yesterday": "Creades ahir",
+  "@created_yesterday": {
+    "description": "Label for meetings created yesterday"
+  },
+  "created_last_week": "Creades la setmana passada",
+  "@created_last_week": {
+    "description": "Label for meetings created within the last week"
+  },
+  "created": "Creada el",
+  "@created": {
+    "description": "Label prefix for created time"
+  },
+  "last_used_today": "S'ha utilitzat avui per darrera vegada",
+  "@last_used_today": {
+    "description": "Label for meetings last used today"
+  },
+  "last_used_yesterday": "Es va utilitzar ahir per darrera vegada",
+  "@last_used_yesterday": {
+    "description": "Label for meetings last used yesterday"
+  },
+  "last_used": "Es va utilitzar per darrera vegada el",
+  "@last_used": {
+    "description": "Label prefix for last used time"
+  },
+  "created_on": "Creat el {day} de {month} de {year}",
+  "@created_on": {
+    "description": "Label for meetings created on a specific date",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      },
+      "day": {
+        "type": "int"
+      },
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "secure_meeting": "Reunió segura",
+  "@secure_meeting": {
+    "description": "Default meeting name when no title is set"
+  },
+  "premium_meeting": "Reunió prèmium",
+  "@premium_meeting": {
+    "description": "Default meeting name for paid meeting"
+  },
+  "free_meeting": "Reunió gratuïta",
+  "@free_meeting": {
+    "description": "Default meeting name for free meeting"
+  },
+  "share_with_people_you_trust": "Compartiu-ho amb persones de confiança",
+  "@share_with_people_you_trust": {
+    "description": "Personal meeting hint text"
+  },
+  "time_am": "AM",
+  "@time_am": {
+    "description": "AM suffix for 12-hour time format"
+  },
+  "time_pm": "PM",
+  "@time_pm": {
+    "description": "PM suffix for 12-hour time format"
+  },
+  "start_typing_to_search": "Comenceu a escriure per a cercar...",
+  "@start_typing_to_search": {
+    "description": "Placeholder text shown when search query is empty"
+  },
+  "no_results_found_for": "No s'han trobat resultats per a \\\"{searchQuery}\\\"",
+  "@no_results_found_for": {
+    "description": "Message shown when search returns no results",
+    "placeholders": {
+      "searchQuery": {
+        "type": "String",
+        "example": "meeting name"
+      }
+    }
+  },
+  "sort_newest": "Nous",
+  "@sort_newest": {
+    "description": "Sort option label for newest items"
+  },
+  "sort_last_used": "Utilitzats darrerament",
+  "@sort_last_used": {
+    "description": "Sort option label for last used items"
+  },
+  "sort_by": "Ordena per {option}",
+  "@sort_by": {
+    "description": "Toast notification message when sort option is selected",
+    "placeholders": {
+      "option": {
+        "type": "String"
+      }
+    }
+  },
+  "sort_upcoming": "Pròximes",
+  "@sort_upcoming": {
+    "description": "Sort option label for upcoming meetings"
+  },
+  "sort_new_created": "Creats recentment",
+  "@sort_new_created": {
+    "description": "Sort option label for newly created items"
+  },
+  "sort_past_meeting": "Passades",
+  "@sort_past_meeting": {
+    "description": "Sort option label for past meetings"
+  },
+  "version": "Versió {versionDisplay}",
+  "@version": {
+    "description": "Version text with version number",
+    "placeholders": {
+      "versionDisplay": {
+        "type": "String",
+        "example": "1.0.0-dev (00)"
+      }
+    }
+  },
+  "unable_to_reconnect": "No s'ha pogut tornar a connectar",
+  "@unable_to_reconnect": {
+    "description": "Title shown when reconnection fails"
+  },
+  "reconnection_failed_message": "No s'ha pogut restaurar la connexió. Intenteu tornar a la reunió",
+  "@reconnection_failed_message": {
+    "description": "Message shown when reconnection fails"
+  },
+  "connection": "Connexió",
+  "@connection": {
+    "description": "Section title for connection settings"
+  },
+  "reconnect_meeting": "Torneu a connectar la reunió",
+  "@reconnect_meeting": {
+    "description": "Button label to reconnect to meeting"
+  },
+  "always_show_status": "Mostra sempre l'estat",
+  "@always_show_status": {
+    "description": "Setting label to always show connection status banner"
+  },
+  "connection_check_mls_checking": "S'està comprovant la connexió\nS'està comprovant l'estat de l'MLS...",
+  "@connection_check_mls_checking": {
+    "description": "Message shown when checking MLS sync status"
+  },
+  "connection_issue_restoring": "Problema de connexió\nEstem treballant per restablir el servei complet...",
+  "@connection_issue_restoring": {
+    "description": "Message shown when connection issue is being resolved"
+  },
+  "connection_check_mls_failed": "La comprovació de l'estat de l'MLS ha fallat; s'està reintentant la unió...",
+  "@connection_check_mls_failed": {
+    "description": "Message shown when MLS sync check fails"
+  },
+  "connection_check_mls_passed": "Comprovació de la connexió\nS'ha superat la comprovació de l'estat de l'MLS",
+  "@connection_check_mls_passed": {
+    "description": "Message shown when MLS sync check passes"
+  },
+  "trying_to_reconnect": "S'està intentant tornar a connectar…",
+  "@trying_to_reconnect": {
+    "description": "Message shown when attempting to reconnect to meeting"
+  },
+  "sign_in_card_title": "Inicieu la sessió o creeu un compte",
+  "@sign_in_card_title": {
+    "description": "Title text for the sign-in card displayed on dashboard"
+  },
+  "sign_in_card_description": "Planifiqueu reunions, accediu a la vostra sala personal i creeu sales noves.",
+  "@sign_in_card_description": {
+    "description": "Description text for the sign-in card explaining benefits of signing in"
+  },
+  "almost_there_title": "Ja gairebé hi sou",
+  "@almost_there_title": {
+    "description": "Title for the almost there bottom sheet"
+  },
+  "almost_there_content_before": "Per a planificar una reunió, creeu un compte gratuït ",
+  "@almost_there_content_before": {
+    "description": "Content before Proton account in almost there bottom sheet (schedule meeting)"
+  },
+  "almost_there_content_before_create_room": "Per a crear una sala, creeu un compte gratuït ",
+  "@almost_there_content_before_create_room": {
+    "description": "Content before Proton account in almost there bottom sheet (create room)"
+  },
+  "almost_there_content_before_personal_room": "Per a utilitzar la sala de reunions personal, creeu un compte gratuït ",
+  "@almost_there_content_before_personal_room": {
+    "description": "Content before Proton account in almost there bottom sheet (personal meeting room)"
+  },
+  "almost_there_proton_account": "Compte de Proton",
+  "@almost_there_proton_account": {
+    "description": "Proton account text in almost there bottom sheet"
+  },
+  "almost_there_content_after": ". Tornareu a Proton Meet automàticament.",
+  "@almost_there_content_after": {
+    "description": "Content after Proton account in almost there bottom sheet"
+  },
+  "app_settings_title": "Preferències de l'aplicació",
+  "@app_settings_title": {
+    "description": "Title for the app settings bottom sheet"
+  },
+  "settings_section_general": "General",
+  "@settings_section_general": {
+    "description": "Section header in app settings"
+  },
+  "settings_section_support": "Suport",
+  "@settings_section_support": {
+    "description": "Section header for support links in app settings"
+  },
+  "settings_section_legal": "Legal",
+  "@settings_section_legal": {
+    "description": "Section header for legal links in app settings"
+  },
+  "languages": "Idiomes",
+  "@languages": {
+    "description": "Label for language selection in settings"
+  },
+  "privacy_policy": "Política de privacitat",
+  "@privacy_policy": {
+    "description": "Link to privacy policy"
+  },
+  "terms_and_conditions": "Termes i condicions",
+  "@terms_and_conditions": {
+    "description": "Link to terms and conditions"
+  },
+  "knowledge_base": "Base de coneixement",
+  "@knowledge_base": {
+    "description": "Link to help center / knowledge base"
+  },
+  "system_default_mode": "Per defecte del sistema",
+  "@system_default_mode": {
+    "description": "Use device language for app UI"
+  },
+  "pre_rating_sheet_title": "Us agrada Proton Meet?",
+  "@pre_rating_sheet_title": {
+    "description": "Title on the pre-rating bottom sheet before in-app review"
+  },
+  "pre_rating_sheet_subtitle": "Llegim i agraïm tots els comentaris.",
+  "@pre_rating_sheet_subtitle": {
+    "description": "Subtitle on the pre-rating bottom sheet"
+  },
+  "pre_rating_sheet_yes_enjoy_proton_meet": "Sí",
+  "@pre_rating_sheet_yes_enjoy_proton_meet": {
+    "description": "Primary button on the pre-rating sheet to open store review"
+  },
+  "pre_rating_sheet_not_really_enjoy_proton_meet": "No ben bé",
+  "@pre_rating_sheet_not_really_enjoy_proton_meet": {
+    "description": "Secondary button on the pre-rating sheet"
+  },
+  "store_review_thanks_toast": "Gràcies pels vostres comentaris",
+  "@store_review_thanks_toast": {
+    "description": "Toast shown before the OS in-app store review prompt"
+  },
+  "iap_native_test_title": "Plans (natius)",
+  "@iap_native_test_title": {
+    "description": "Title for dev sheet that invokes native IAP / plans"
+  },
+  "iap_native_test_body": "Utilitzeu la pila de pagaments nativa de Proton (el mateix canal que Proton Wallet). Caldrà que inicieu sessió.",
+  "@iap_native_test_body": {
+    "description": "Explains native channel test sheet"
+  },
+  "iap_native_test_current_plan": "Pla actual",
+  "@iap_native_test_current_plan": {
+    "description": "Button: native.navigation.plan.subscription"
+  },
+  "iap_native_test_upgrade": "Millora el pla",
+  "@iap_native_test_upgrade": {
+    "description": "Button: native.navigation.plan.upgrade"
+  },
+  "iap_native_test_sign_in_required": "Inicieu sessió amb un compte de Proton per obrir els pagaments natius.",
+  "@iap_native_test_sign_in_required": {
+    "description": "Message shown when sign in is required to open native payments"
+  }
+}
