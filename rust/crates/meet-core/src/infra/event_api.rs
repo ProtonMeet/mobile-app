@@ -11,21 +11,21 @@ use crate::infra::proton_response_ext::ProtonResponseExt;
 impl EventApi for ProtonHttpClient {
     async fn get_latest_event_id(&self) -> Result<String, HttpClientError> {
         let req = self.get("/meet/v1/events/latest");
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let latest_event_res = res.parse_response::<LatestEventIdResponse>()?;
         Ok(latest_event_res.event_id)
     }
 
     async fn get_events(&self, event_id: &str) -> Result<GetEventsResponse, HttpClientError> {
         let req = self.get(format!("/meet/v1/events/{event_id}"));
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let events_res = res.parse_response::<EventsResponse>()?;
         Ok(events_res.into())
     }
 
     async fn get_core_events(&self, event_id: &str) -> Result<GetEventsResponse, HttpClientError> {
         let req = self.get(format!("/core/v5/events/{event_id}"));
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let events_res = res.parse_response::<EventsResponse>()?;
         Ok(events_res.into())
     }

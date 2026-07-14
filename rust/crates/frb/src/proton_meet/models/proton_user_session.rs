@@ -39,7 +39,10 @@ impl ProtonUserSession {
             })?
             .to_string();
         let refresh_token = tokens.ref_tok().to_string();
-        let scopes = tokens.scopes().unwrap_or_default().to_vec();
+        let scopes = tokens
+            .scopes()
+            .map(|scopes| scopes.iter().cloned().collect())
+            .unwrap_or_default();
 
         // Extract user key information
         let user_key = user_data

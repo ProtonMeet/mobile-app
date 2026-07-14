@@ -131,6 +131,7 @@ impl App {
         // Build metrics request
         let metrics_request = ServiceMetricsRequest {
             user_join_time: Some(UserJoinTimeMetric {
+                is_waiting_room_enabled: Some(false),
                 room_join_time_ms: join_room_time_ms,
                 mls_join_time_ms: join_mls_time_ms,
                 join_type,
@@ -217,6 +218,7 @@ impl App {
         // Build metrics request with error
         let metrics_request = ServiceMetricsRequest {
             user_join_time: Some(UserJoinTimeMetric {
+                is_waiting_room_enabled: None,
                 room_join_time_ms: join_room_time_ms,
                 mls_join_time_ms: join_room_time_ms,
                 join_type: None,

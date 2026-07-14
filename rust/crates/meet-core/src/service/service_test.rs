@@ -10,7 +10,7 @@ pub(crate) mod tests {
 
     use esdicawt::spec::CwtAny;
     use mls_types::ExternalPskId;
-    use muon::Status;
+    use muon::http::Status;
     use tokio::sync::RwLock;
 
     use crate::{

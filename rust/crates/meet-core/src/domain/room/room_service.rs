@@ -196,10 +196,10 @@ impl RoomService {
                 );
                 cipher
             }
-            Err(e) => {
+            Err(_e) => {
                 #[cfg(debug_assertions)]
                 tracing::info!(
-                    "join_meeting: encrypt display name failed; sending empty ciphertext error={:?}", e,
+                    "join_meeting: encrypt display name failed; sending empty ciphertext error={:?}", _e,
                 );
                 String::new()
             }
@@ -258,6 +258,10 @@ impl RoomService {
     /// * `Ok((Meeting, String))` - Created meeting and combined password
     /// * `Err(anyhow::Error)` - Error during meeting creation
     #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(
+        target_family = "wasm",
+        allow(unreachable_code, unused_variables, unused_mut)
+    )]
     pub async fn create_meeting(
         &self,
         meeting_name: &str,
@@ -506,6 +510,7 @@ impl RoomService {
     /// * `meeting_id` - The meeting ID to update
     /// * `meeting_name` - The new meeting name
     /// * `meeting_password` - Existing combined meeting password
+    #[cfg_attr(target_family = "wasm", allow(unreachable_code, unused_variables))]
     pub async fn edit_meeting_name(
         &self,
         meeting_id: &str,
@@ -625,6 +630,10 @@ impl RoomService {
     /// # Returns
     /// * `Ok(Vec<UpcomingMeeting>)` - List of decrypted upcoming meetings
     /// * `Err(anyhow::Error)` - Error during decryption
+    #[cfg_attr(
+        target_family = "wasm",
+        allow(unreachable_code, unused_variables, unused_mut)
+    )]
     pub async fn get_upcoming_meetings(
         &self,
         user_private_keys: &[ProtonUserKey],

@@ -1,10 +1,9 @@
 use std::sync::Arc;
 
-use proton_meet_core::{
-    app::App,
-    infra::{auth_store::AuthStore, UserKeyProviderAdapter},
-    muon::Auth,
-};
+use muon::auth::Auth;
+use proton_meet_core::app::App;
+use proton_meet_core::infra::adapters::storage::UserKeyProviderAdapter;
+use proton_meet_core::infra::muon::AuthStore;
 use tokio::sync::Mutex;
 use tracing::{error, info};
 
@@ -30,7 +29,7 @@ impl AppRunner {
             "macos-meet@0.0.1".to_string(),
             "Mozilla/5.0".to_string(),
             "test/db_path".to_string(),
-            Box::new(AuthStore::from_custom_env_str(api_host.clone(), auth)),
+            AuthStore::from_custom_env_str(api_host.clone(), auth),
             http_host,
             ws_host,
             None,

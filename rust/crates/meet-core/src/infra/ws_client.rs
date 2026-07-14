@@ -59,6 +59,7 @@ const DEFAULT_PONG_TIMEOUT_SECONDS: u64 = 3;
 const HEARTBEAT_PING: u8 = 0x01;
 const HEARTBEAT_PONG: u8 = 0x02;
 const HEARTBEAT_MSG_SIZE: usize = 25; // 1 byte type + 16 bytes UUID + 8 bytes timestamp
+#[cfg(any(target_arch = "wasm32", test))]
 const COOKIE_CLEAR_EXPIRES_AT_EPOCH: &str = "Thu, 01 Jan 1970 00:00:00 GMT";
 
 #[cfg(target_family = "wasm")]
@@ -92,6 +93,7 @@ extern "C" {
     ) -> Result<wasm_bindgen::JsValue, wasm_bindgen::JsValue>;
 }
 
+#[cfg(any(target_arch = "wasm32", test))]
 fn build_ws_auth_cookie(url: &Url, base64_sd_kbt: &str, expires: Option<&str>) -> String {
     let mut cookie = format!("meet-token={base64_sd_kbt}");
 
@@ -120,6 +122,7 @@ fn build_ws_auth_cookie(url: &Url, base64_sd_kbt: &str, expires: Option<&str>) -
     cookie
 }
 
+#[cfg(any(target_arch = "wasm32", test))]
 fn build_ws_clear_cookie(url: &Url) -> String {
     build_ws_auth_cookie(url, "", Some(COOKIE_CLEAR_EXPIRES_AT_EPOCH))
 }
@@ -281,6 +284,7 @@ pub struct WsClient {
     max_ping_failures: Arc<Mutex<Option<u32>>>,
     pong_timeout_seconds: Arc<Mutex<Option<u64>>>,
     listener_generation: Arc<StdMutex<u64>>,
+    #[cfg_attr(target_family = "wasm", allow(dead_code))]
     enable_prod_tls_pinning: bool,
 }
 

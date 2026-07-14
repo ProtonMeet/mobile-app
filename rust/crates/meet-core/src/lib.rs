@@ -12,12 +12,17 @@ pub mod service;
 pub mod utils;
 pub mod version;
 
+#[cfg(test)]
+pub mod mocks;
+
 pub mod muon {
     pub use muon::{
-        client::{Auth, Tokens},
-        env::EnvId,
-        store::{Store, StoreError},
+        auth::{Auth, Tokens},
+        store::Store,
+        Environment,
     };
+    /// Backward-compatible alias for Dart/FRB callers.
+    pub type EnvId = Environment;
 }
 pub use proton_meet_common::models::{ProtonUser, ProtonUserKey};
 

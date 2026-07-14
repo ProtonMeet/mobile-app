@@ -9,8 +9,10 @@ use crate::domain::user::ports::{
     ArcWebSocketClient, EventApi, HttpClient, UnleashApi, UserService, WebSocketClient,
 };
 use crate::errors::core::MeetCoreError;
+use crate::infra::muon::is_prod_environment;
+#[cfg(not(target_arch = "wasm32"))]
+use crate::infra::muon::AuthStore;
 use crate::infra::{
-    auth_store::{AuthStore, MUON_DEFAULT_SESSION_KEY},
     crypto_client::MeetCryptoClient,
     http_client::{ApiConfig, ProtonHttpClient},
     ports::user_key_provider::UserKeyProvider,
@@ -18,9 +20,7 @@ use crate::infra::{
     ws_client::WsClient,
 };
 use crate::service::service::Service;
-use mls_trait::MlsClientConfig;
-use muon::{client::Auth, env::EnvId, store::Store};
-use proton_meet_mls::MlsStore;
+use proton_meet_mls::{MlsClientConfig, MlsStore};
 use std::{collections::HashMap, future::Future, sync::Arc};
 use tokio::sync::RwLock;
 use tracing::error;
@@ -119,108 +119,44 @@ pub struct App {
 }
 
 impl App {
+    #[cfg(not(target_family = "wasm"))]
     #[allow(clippy::too_many_arguments)]
     pub async fn new(
         env: String,
         app_version: String,
         user_agent: String,
         db_path: String,
-        auth_store: Box<dyn Store<()>>,
+        auth_store: AuthStore,
         http_host: String,
         ws_host: String,
         user_state: Option<UserState>,
         user_key_provider: Arc<dyn UserKeyProvider>,
     ) -> Result<Self, MeetCoreError> {
-        #[cfg(target_family = "wasm")]
-        Self::init_logging();
-
         let app_version_clone = app_version.clone();
         let user_agent_clone = user_agent.clone();
-        let is_prod_env = matches!(env.parse::<EnvId>(), Ok(EnvId::Prod));
+        let is_prod_env = is_prod_environment(&env);
         let config = ApiConfig {
             spec: (app_version, user_agent),
             auth: None,
             url_prefix: None,
             env: Some(env),
-            store: None,
-            // proxy: Some(ProxyConfig {
-            //     host: "192.168.1.140".into(),
-            //     port: 9090,
-            // }),
             proxy: None,
         };
         let http_client = Arc::new(ProtonHttpClient::new(config, auth_store, http_host).await?);
-        let persister = Persister::new(db_path).await?;
-        let ws_client = Arc::new(WsClient::new_with_prod_tls_pinning(ws_host, is_prod_env));
-        let mls_store = Arc::new(RwLock::new(MlsStore {
-            clients: HashMap::new(),
-            group_map: HashMap::new(),
-            config: MlsClientConfig::default(),
-        }));
-        let crypto_client = MeetCryptoClient::new();
-
-        let user_service = Arc::new(RwLock::new(Service::new(
-            http_client.clone(),
-            http_client.clone(),
-            Arc::new(persister),
-            ws_client.clone(),
-            mls_store.clone(),
-        )));
-
-        let room_service = Arc::new(RoomService::new(
-            http_client.clone(),
-            http_client.clone(),
-            Arc::new(crypto_client),
-        ));
-
-        let user_service_clone = user_service.clone();
-        ws_client
-            .set_message_handler(Arc::new(move |message| {
-                let user_service = user_service_clone.clone();
-                Box::pin(async move {
-                    match user_service
-                        .read()
-                        .await
-                        .handle_websocket_message(message)
-                        .await
-                    {
-                        Ok(_) => (),
-                        Err(e) => {
-                            error!("Error handling message: {:?}", e);
-                        }
-                    }
-                })
-            }))
-            .await;
-
-        Ok(Self {
-            state: Arc::new(RwLock::new(AppState {
-                active_user: user_state,
-                mls_store,
-                active_livekit_access_token: None,
-                active_livekit_websocket_url: None,
-                meeting_display_name_session_key: None,
-                active_user_info: None,
-                join_start_time: None,
-                join_mls_time: None,
-                total_join_start_time: None,
-                join_type: None,
-                app_version: Some(app_version_clone),
-                user_agent: Some(user_agent_clone),
-            })),
-            ws_client,
-            http_api: http_client.clone(),
-            proton_http: Some(http_client.clone()),
-            unleash_api: http_client.clone(),
-            meeting_api: http_client.clone(),
-            event_api: http_client,
+        Self::from_http_client(
+            http_client,
+            db_path,
+            ws_host,
+            is_prod_env,
+            user_state,
             user_key_provider,
-
-            room_service,
-            user_service,
-        })
+            app_version_clone,
+            user_agent_clone,
+        )
+        .await
     }
 
+    #[cfg(not(target_family = "wasm"))]
     pub fn http_client(&self) -> ProtonHttpClient {
         self.proton_http
             .as_ref()
@@ -229,6 +165,16 @@ impl App {
             .clone()
     }
 
+    /// Rebuild the muon client so its in-memory auth matches `auth_store`.
+    #[cfg(not(target_family = "wasm"))]
+    pub async fn sync_auth_store(&self, auth_store: AuthStore) -> Result<(), MeetCoreError> {
+        self.http_client()
+            .sync_auth_store(auth_store)
+            .await
+            .map_err(MeetCoreError::from)
+    }
+
+    #[cfg(target_family = "wasm")]
     pub async fn from_config(
         config: ApiConfig,
         db_path: String,
@@ -236,53 +182,39 @@ impl App {
         ws_host: String,
         user_key_provider: Arc<dyn UserKeyProvider>,
     ) -> Result<Self, MeetCoreError> {
-        #[cfg(target_family = "wasm")]
         Self::init_logging();
 
         let env: String = config.env.clone().unwrap_or("atlas".to_string());
-        let is_prod_env = matches!(env.parse::<EnvId>(), Ok(EnvId::Prod));
+        let is_prod_env = is_prod_environment(&env);
         let app_version = config.spec.0.clone();
         let user_agent = config.spec.1.clone();
-        let auth = config.auth.clone().unwrap_or(Auth::None);
-        let original_auth = auth.clone();
-        let mut auth_store = if config.proxy.is_none() {
-            Box::new(AuthStore::from_env_str(
-                env.clone(),
-                Arc::new(tokio::sync::Mutex::new(auth)),
-            ))
-        } else {
-            Box::new(AuthStore::from_custom_env_str(
-                env.clone(),
-                Arc::new(tokio::sync::Mutex::new(auth)),
-            ))
-        };
 
-        let _initialized_auth = auth_store
-            .get_auth(&MUON_DEFAULT_SESSION_KEY)
-            .await
-            .map_err(|e| MeetCoreError::AuthStoreError {
-                message: e.to_string(),
-            })?;
-        // Auth session details must not be logged (contains tokens).
-        // need to set the auth again or the auth_store will be empty
-        // todo: check and report to muon team if this is a bug
-        if matches!(original_auth, Auth::None) {
-            auth_store
-                .remove_auth(&MUON_DEFAULT_SESSION_KEY)
-                .await
-                .map_err(|e| MeetCoreError::AuthStoreError {
-                    message: e.to_string(),
-                })?;
-        } else {
-            auth_store
-                .set_auth(&MUON_DEFAULT_SESSION_KEY, original_auth)
-                .await
-                .map_err(|e| MeetCoreError::AuthStoreError {
-                    message: e.to_string(),
-                })?;
-        }
+        let http_client = Arc::new(ProtonHttpClient::new(config, http_host).await?);
 
-        let http_client = Arc::new(ProtonHttpClient::new(config, auth_store, http_host).await?);
+        Self::from_http_client(
+            http_client,
+            db_path,
+            ws_host,
+            is_prod_env,
+            None,
+            user_key_provider,
+            app_version,
+            user_agent,
+        )
+        .await
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    async fn from_http_client(
+        http_client: Arc<ProtonHttpClient>,
+        db_path: String,
+        ws_host: String,
+        is_prod_env: bool,
+        user_state: Option<UserState>,
+        user_key_provider: Arc<dyn UserKeyProvider>,
+        app_version: String,
+        user_agent: String,
+    ) -> Result<Self, MeetCoreError> {
         let persister = Persister::new(db_path).await?;
 
         let ws_client = Arc::new(WsClient::new_with_prod_tls_pinning(ws_host, is_prod_env));
@@ -332,7 +264,7 @@ impl App {
             room_service,
 
             state: Arc::new(RwLock::new(AppState {
-                active_user: None,
+                active_user: user_state,
                 mls_store,
                 active_livekit_access_token: None,
                 active_livekit_websocket_url: None,
@@ -621,7 +553,7 @@ impl App {
     }
 }
 
-// #[cfg(all(test, not(target_family = "wasm")))]
+#[cfg(all(test, not(target_family = "wasm")))]
 impl App {
     pub(crate) fn from_test_parts(
         state: Arc<RwLock<AppState>>,
