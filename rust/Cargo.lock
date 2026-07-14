@@ -5408,6 +5408,7 @@ dependencies = [
  "anyhow",
  "assert_matches",
  "async-trait",
+ "cc",
  "chrono",
  "console_error_panic_hook",
  "crossbeam-channel",
