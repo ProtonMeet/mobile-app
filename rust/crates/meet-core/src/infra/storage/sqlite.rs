@@ -48,7 +48,7 @@ impl Db {
         Self(conn)
     }
 
-    pub fn get_transaction(&mut self) -> Result<Transaction, StorageError> {
+    pub fn get_transaction(&mut self) -> Result<Transaction<'_>, StorageError> {
         self.0
             .transaction()
             .map_err(|error| StorageError::Db { source: error })

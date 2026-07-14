@@ -2,16 +2,11 @@ use meet_type::fanout::GroupInfoSummaryData;
 use mls_spec::drafts::ratchet_tree_options::RatchetTreeOption;
 use mls_spec::messages::MlsMessage;
 use mls_spec::{Parsable, Serializable};
+use muon::auth::Auth;
+use muon::common::sdk::Sdk;
 #[cfg(not(target_family = "wasm"))]
-use muon::common::{ConstProxy, Endpoint, Scheme};
-use muon::store::Store;
-use muon::{
-    client::Auth,
-    common::Host,
-    store::DynStore,
-    tls::{TlsCert, Verifier, VerifyRes},
-    App, Client, Session,
-};
+use muon::common::Scheme;
+use muon::{App, ProtonRequest, ProtonResponse};
 
 use proton_meet_macro::async_trait;
 use serde::{Deserialize, Serialize};
@@ -25,7 +20,6 @@ use crate::domain::user::models::participant_track_settings::ParticipantTrackSet
 use crate::domain::user::models::user_settings::UserSettings;
 use crate::domain::user::ports::HttpClient;
 use crate::errors::http_client::HttpClientError;
-use crate::infra::auth_store::{BoxedStore, MUON_DEFAULT_SESSION_KEY};
 use crate::infra::dto::access_token::{
     AccessTokenRequest, AccessTokenResponse, GetSdCwtRequest, GetSdCwtResponse,
 };
@@ -46,6 +40,15 @@ use crate::infra::dto::remove_participant::{RemoveParticipantRequest, RemovePart
 use crate::infra::dto::user_settings::UserSettingsResponse;
 use crate::infra::http_client_util::HttpClientUtil;
 use crate::infra::mls_response_ext::MlsResponseExt;
+#[cfg(target_arch = "wasm32")]
+use crate::infra::muon::environment_from_str;
+#[cfg(all(not(target_family = "wasm"), not(feature = "insecure-tls")))]
+use crate::infra::muon::is_prod_environment;
+use crate::infra::muon::{
+    build_meet_client, meet_sdk_from_app, MeetClient, MeetClientExt, MeetSession,
+};
+#[cfg(not(target_arch = "wasm32"))]
+use crate::infra::muon::{AuthStore, SharedAuth};
 use crate::infra::proton_response_ext::ProtonResponseExt;
 use reqwest;
 use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
@@ -71,8 +74,6 @@ pub struct ApiConfig {
     /// The env for the api client
     /// could be [altas, prod, or rul link]
     pub env: Option<String>,
-    /// The muon auth store. web doesn't need but flutter side needs
-    pub store: Option<DynStore<()>>,
     /// The proxy address. Enable `allow-dangerous-env`` feature to use this
     pub proxy: Option<ProxyConfig>,
 }
@@ -85,12 +86,15 @@ pub struct ProxyConfig {
 
 #[derive(Debug, Clone)]
 pub struct ProtonHttpClient {
-    client: Arc<Mutex<Client<()>>>,
-    session: Arc<Mutex<Session<()>>>,
+    client: Arc<Mutex<MeetClient>>,
+    session: Arc<Mutex<MeetSession>>,
     http_host: String,
     mls_session: reqwest::Client,
+    #[cfg_attr(target_arch = "wasm32", allow(dead_code))]
     app_version: String,
+    #[cfg_attr(target_arch = "wasm32", allow(dead_code))]
     user_agent: String,
+    meet_sdk: Option<Sdk>,
     cks_cache: Arc<RwLock<Option<Vec<u8>>>>,
     external_sender_cache: Arc<RwLock<Option<Vec<u8>>>>,
 }
@@ -115,47 +119,76 @@ impl ProtonHttpClient {
         Ok(url)
     }
 
-    pub fn get_session(&self) -> Session<()> {
+    pub fn get_session(&self) -> MeetSession {
         self.session
             .lock()
             .expect("ProtonHttpClient session lock poisoned")
             .clone()
     }
 
-    pub fn muon_client(&self) -> Client<()> {
+    pub fn muon_client(&self) -> MeetClient {
         self.client
             .lock()
             .expect("ProtonHttpClient client lock poisoned")
             .clone()
     }
 
-    /// Build a muon client with the given auth store (loads auth into the local store).
-    #[cfg(not(target_arch = "wasm32"))]
-    pub(crate) async fn build_client(
+    pub(crate) async fn send_session_request(
         &self,
-        store: crate::infra::auth_store::AuthStore,
-    ) -> Result<Client<()>, HttpClientError> {
+        req: ProtonRequest,
+    ) -> Result<ProtonResponse, HttpClientError> {
+        self.send_on_session(&self.get_session(), req).await
+    }
+
+    pub(crate) async fn send_on_session(
+        &self,
+        session: &MeetSession,
+        req: ProtonRequest,
+    ) -> Result<ProtonResponse, HttpClientError> {
+        let res = if let Some(sdk) = &self.meet_sdk {
+            session.send_with_sdk(req, sdk).await
+        } else {
+            // this is fallback in case meet_sdk is not set remove when muon stop supporting
+            #[allow(deprecated)]
+            session.send(req).await
+        };
+        res.map_err(HttpClientError::from)
+    }
+
+    /// Rebuild the muon client from `auth_store` and swap in a fresh session.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub(crate) async fn sync_auth_store(
+        &self,
+        auth_store: AuthStore,
+    ) -> Result<(), HttpClientError> {
         let app = App::new(self.app_version.clone())
             .map_err(|e| HttpClientError::MlsHttpError {
                 message: format!("invalid app version: {e}"),
             })?
             .with_user_agent(self.user_agent.clone());
-        Client::builder(app, BoxedStore(Box::new(store)))
-            .await
-            .build()
+        let client = build_meet_client(app, auth_store.environment.clone(), auth_store, None)?;
+        self.replace_session(client).await
+    }
+
+    /// Build a muon client with the given auth store (loads auth into the local store).
+    #[cfg(not(target_arch = "wasm32"))]
+    pub(crate) fn build_client(&self, store: AuthStore) -> Result<MeetClient, HttpClientError> {
+        let app = App::new(self.app_version.clone())
+            .map_err(|e| HttpClientError::MlsHttpError {
+                message: format!("invalid app version: {e}"),
+            })?
+            .with_user_agent(self.user_agent.clone());
+        build_meet_client(app, store.environment.clone(), store, None)
             .map_err(HttpClientError::from)
     }
 
     /// Replace the active muon session (e.g. after promoting desktop web login auth).
-    #[cfg(not(target_arch = "wasm32"))]
-    pub(crate) async fn replace_session(&self, client: Client<()>) -> Result<(), HttpClientError> {
-        let session = match client.get_session(MUON_DEFAULT_SESSION_KEY).await {
-            Some(session) => session,
-            None => client
-                .new_session_without_credentials(MUON_DEFAULT_SESSION_KEY)
-                .await
-                .map_err(HttpClientError::from)?,
-        };
+    #[cfg_attr(target_arch = "wasm32", allow(dead_code))]
+    pub(crate) async fn replace_session(&self, client: MeetClient) -> Result<(), HttpClientError> {
+        let session = client
+            .default_session()
+            .await
+            .map_err(HttpClientError::from)?;
         const SESSION_UPDATE_FAILED: &str = "Unable to complete sign-in. Please try again.";
         let mut client_guard = self
             .client
@@ -178,23 +211,18 @@ impl ProtonHttpClient {
     #[cfg(not(target_arch = "wasm32"))]
     pub async fn new_isolated_login_client(
         &self,
-    ) -> Result<(Session<()>, Arc<tokio::sync::Mutex<Auth>>), HttpClientError> {
-        use crate::infra::auth_store::AuthStore;
-
-        let env = self.get_session().env().clone();
+    ) -> Result<(MeetSession, SharedAuth), HttpClientError> {
+        let environment = self.get_session().env().clone();
         let login_auth = Arc::new(tokio::sync::Mutex::new(Auth::None));
         let login_store = AuthStore {
-            env,
+            environment,
             auth: login_auth.clone(),
         };
-        let client = self.build_client(login_store).await?;
-        let session = match client.get_session(MUON_DEFAULT_SESSION_KEY).await {
-            Some(session) => session,
-            None => client
-                .new_session_without_credentials(MUON_DEFAULT_SESSION_KEY)
-                .await
-                .map_err(HttpClientError::from)?,
-        };
+        let client = self.build_client(login_store)?;
+        let session = client
+            .default_session()
+            .await
+            .map_err(HttpClientError::from)?;
         Ok((session, login_auth))
     }
 
@@ -218,42 +246,76 @@ impl ProtonHttpClient {
         Ok(headers)
     }
 
+    /// Build a proton HTTP client with muon persistence (native only).
+    #[cfg(not(target_arch = "wasm32"))]
     pub async fn new(
         config: ApiConfig,
-        auth_store: Box<dyn Store<()>>,
+        auth_store: AuthStore,
         http_host: String,
     ) -> Result<Self, anyhow::Error> {
-        let (app_version, user_agent) = config.spec;
+        let app_version = config.spec.0.clone();
+        let user_agent = config.spec.1.clone();
         let mls_default_headers =
             Self::mls_default_headers(&app_version, &user_agent).map_err(anyhow::Error::from)?;
         let app = App::new(app_version.clone())?.with_user_agent(user_agent.clone());
+        let meet_sdk = meet_sdk_from_app(&app);
+        let environment = auth_store.environment.clone();
+        let client = build_meet_client(app, environment, auth_store, config.proxy.as_ref())?;
+        let session = client.default_session().await?;
+        Self::from_parts(
+            config,
+            client,
+            session,
+            http_host,
+            app_version,
+            user_agent,
+            meet_sdk,
+            mls_default_headers,
+        )
+        .await
+    }
 
-        #[cfg(not(target_family = "wasm"))]
-        let mut builder = Client::builder(app, BoxedStore(auth_store)).await;
-        #[cfg(target_family = "wasm")]
-        let builder = Client::builder(app, BoxedStore(auth_store)).await;
-
-        #[cfg(not(target_family = "wasm"))]
-        if let Some(proxy) = &config.proxy {
-            if let Ok(host) = Host::direct(proxy.host.clone()) {
-                builder = builder.verifier(UnSafeVerifier);
-                builder = builder.proxy(ConstProxy::new(Endpoint::new(
-                    Scheme::Http,
-                    host,
-                    proxy.port,
-                )));
-            }
+    /// Build a proton HTTP client without muon persistence (WASM).
+    #[cfg(target_arch = "wasm32")]
+    pub async fn new(config: ApiConfig, http_host: String) -> Result<Self, anyhow::Error> {
+        let app_version = config.spec.0.clone();
+        let user_agent = config.spec.1.clone();
+        let mls_default_headers =
+            Self::mls_default_headers(&app_version, &user_agent).map_err(anyhow::Error::from)?;
+        let app = App::new(app_version.clone())?.with_user_agent(user_agent.clone());
+        let meet_sdk = meet_sdk_from_app(&app);
+        let environment = environment_from_str(config.env.as_deref().unwrap_or("atlas"));
+        let client = build_meet_client(app, environment, config.proxy.as_ref())?;
+        let initial_auth = config.auth.clone().unwrap_or(Auth::None);
+        let mut session = client.default_session().await?;
+        if let (Some(user_id), Some(uid)) = (initial_auth.user_id(), initial_auth.uid()) {
+            session = session.auth().from_uid(user_id, uid).await;
         }
-        let client = builder.build()?;
-        let session = match client.get_session(MUON_DEFAULT_SESSION_KEY).await {
-            Some(session) => session,
-            None => {
-                client
-                    .new_session_without_credentials(MUON_DEFAULT_SESSION_KEY)
-                    .await?
-            }
-        };
+        Self::from_parts(
+            config,
+            client,
+            session,
+            http_host,
+            app_version,
+            user_agent,
+            meet_sdk,
+            mls_default_headers,
+        )
+        .await
+    }
 
+    #[allow(clippy::too_many_arguments)]
+    #[cfg_attr(target_arch = "wasm32", allow(unused_variables))]
+    async fn from_parts(
+        config: ApiConfig,
+        client: MeetClient,
+        session: MeetSession,
+        http_host: String,
+        app_version: String,
+        user_agent: String,
+        meet_sdk: Option<Sdk>,
+        mls_default_headers: HeaderMap,
+    ) -> Result<Self, anyhow::Error> {
         #[cfg(not(target_family = "wasm"))]
         let mls_session = {
             #[cfg(feature = "insecure-tls")]
@@ -265,11 +327,10 @@ impl ProtonHttpClient {
             #[cfg(not(feature = "insecure-tls"))]
             let mut mls_builder = {
                 use crate::infra::tls_pinning::build_prod_tls_config;
-                use muon::env::EnvId;
 
                 let is_prod = match config.env.as_deref() {
                     None => true,
-                    Some(s) => matches!(s.parse::<EnvId>(), Ok(EnvId::Prod)),
+                    Some(s) => is_prod_environment(s),
                 };
 
                 if is_prod {
@@ -310,6 +371,7 @@ impl ProtonHttpClient {
             mls_session,
             app_version,
             user_agent,
+            meet_sdk,
             cks_cache: Arc::new(RwLock::new(None)),
             external_sender_cache: Arc::new(RwLock::new(None)),
         })
@@ -318,7 +380,7 @@ impl ProtonHttpClient {
 
 #[async_trait]
 impl HttpClient for ProtonHttpClient {
-    fn get_session(&self) -> Session<()> {
+    fn get_session(&self) -> MeetSession {
         ProtonHttpClient::get_session(self)
     }
 
@@ -433,7 +495,7 @@ impl HttpClient for ProtonHttpClient {
                 message: format!("Failed to serialize request: {e}"),
             }
         })?;
-        let uncompressed_size = data.len();
+        let _uncompressed_size = data.len();
 
         // Compress the JSON body with zstd
         let compressed_data =
@@ -441,18 +503,20 @@ impl HttpClient for ProtonHttpClient {
                 message: format!("Failed to compress request: {e}"),
             })?;
 
-        let compression_ratio = if uncompressed_size > 0 {
-            (compressed_data.len() as f64 / uncompressed_size as f64) * 100.0
-        } else {
-            0.0
-        };
         #[cfg(debug_assertions)]
-        tracing::info!(
-            "update_group_info_request size: {} (compressed: {}, ratio: {:.1}%)",
-            uncompressed_size,
-            compressed_data.len(),
-            compression_ratio
-        );
+        {
+            let compression_ratio = if _uncompressed_size > 0 {
+                (compressed_data.len() as f64 / _uncompressed_size as f64) * 100.0
+            } else {
+                0.0
+            };
+            tracing::info!(
+                "update_group_info_request size: {} (compressed: {}, ratio: {:.1}%)",
+                _uncompressed_size,
+                compressed_data.len(),
+                compression_ratio
+            );
+        }
 
         let response = self
             .mls_session
@@ -508,7 +572,7 @@ impl HttpClient for ProtonHttpClient {
         meet_link_name: &str,
     ) -> Result<MeetLinkInfo, HttpClientError> {
         let req = self.get(format!("/meet/v1/meetings/links/{meet_link_name}/info"));
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let meet_link_info_res = res.parse_response::<MeetLinkInfoResponse>()?;
         Ok(meet_link_info_res.into())
     }
@@ -520,7 +584,7 @@ impl HttpClient for ProtonHttpClient {
         let req = self.get(format!(
             "/meet/v1/meetings/links/{meet_link_name}/participants"
         ));
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let participants_res = res.parse_response::<MeetParticipantsResponse>()?;
         Ok(participants_res.into())
     }
@@ -529,7 +593,7 @@ impl HttpClient for ProtonHttpClient {
         let req = self.get(format!(
             "/meet/v1/meetings/links/{meet_link_name}/participants/count"
         ));
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let count_res = res.parse_response::<MeetParticipantsCountResponse>()?;
         Ok(count_res.current)
     }
@@ -548,7 +612,7 @@ impl HttpClient for ProtonHttpClient {
                 client_proof: client_proof.to_string(),
                 srp_session: srp_session.to_string(),
             })?;
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let auth_meet_link_res = match res.parse_response::<AuthMeetLinkResponse>() {
             Ok(response) => response,
             Err(HttpClientError::ErrorCode(_, ref error))
@@ -575,7 +639,7 @@ impl HttpClient for ProtonHttpClient {
                 audio: audio_enabled,
                 video: video_enabled,
             })?;
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
 
         #[cfg(debug_assertions)]
         tracing::info!(
@@ -604,7 +668,7 @@ impl HttpClient for ProtonHttpClient {
             .body_json(RemoveParticipantRequest {
                 access_token: access_token.to_string(),
             })?;
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         #[cfg(debug_assertions)]
         tracing::debug!(
             "Remove participant response code: {}, body: {:?}",
@@ -619,7 +683,7 @@ impl HttpClient for ProtonHttpClient {
 
     async fn get_meet_info(&self, meet_link_name: &str) -> Result<MeetingInfo, HttpClientError> {
         let req = self.get(format!("/meet/v1/meetings/links/{meet_link_name}"));
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let meet_link_info_res = res.parse_response::<MeetInfoResponse>()?;
         Ok(meet_link_info_res.into())
     }
@@ -638,7 +702,7 @@ impl HttpClient for ProtonHttpClient {
                 display_name: display_name.to_string(),
                 encrypted_display_name: encrypted_display_name.to_string(),
             })?;
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let access_token_res = match res.parse_response::<AccessTokenResponse>() {
             Ok(response) => response,
             Err(HttpClientError::ErrorCode(_, ref error))
@@ -656,7 +720,7 @@ impl HttpClient for ProtonHttpClient {
 
     async fn get_active_meetings(&self) -> Result<Vec<Meeting>, HttpClientError> {
         let req = self.get("/meet/v1/meetings/active");
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let active_meetings_res = res.parse_response::<ActiveMeetingsResponse>()?;
         Ok(active_meetings_res
             .meetings
@@ -667,7 +731,7 @@ impl HttpClient for ProtonHttpClient {
 
     async fn get_user_settings(&self) -> Result<UserSettings, HttpClientError> {
         let req = self.get("/meet/v1/user-settings");
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let user_settings_res = res.parse_response::<UserSettingsResponse>()?;
         Ok(user_settings_res.into())
     }
@@ -746,7 +810,7 @@ impl HttpClient for ProtonHttpClient {
 
     async fn get_modulus(&self) -> Result<Modulus, HttpClientError> {
         let req = self.get("/core/v4/auth/modulus");
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let modulus_res = res.parse_response::<GetModulusResponse>()?;
         Ok(modulus_res.into())
     }
@@ -775,7 +839,7 @@ impl HttpClient for ProtonHttpClient {
 
         let start = crate::utils::instant::now();
         let req = self.get("/tests/ping");
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
 
         let status = res.status();
         let body = res.body().to_vec();
@@ -785,20 +849,6 @@ impl HttpClient for ProtonHttpClient {
         }
         let rtt_ms = start.elapsed().as_millis() as u64;
         Ok(rtt_ms)
-    }
-}
-
-/// An unsafe verifier that always makes Accept decisions.
-#[derive(Debug)]
-pub struct UnSafeVerifier;
-
-impl Verifier for UnSafeVerifier {
-    fn verify(&self, _: &Host, _: &TlsCert, _: &[TlsCert]) -> Result<VerifyRes, muon::Error> {
-        if cfg!(feature = "allow-dangerous-env") {
-            Ok(VerifyRes::Accept)
-        } else {
-            Ok(VerifyRes::Delegate)
-        }
     }
 }
 
@@ -819,48 +869,10 @@ pub struct GroupInfoResponse {
     pub version: Option<u32>,
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(target_arch = "wasm32")))]
 mod tests {
     use super::*;
-    use async_trait::async_trait;
-    use muon::{env::EnvId, store::StoreError};
     use proton_meet_macro::unified_test;
-
-    use std::collections::HashMap;
-
-    #[derive(Debug)]
-    struct MockStore;
-
-    #[async_trait]
-    impl Store<()> for MockStore {
-        fn env(&self) -> EnvId {
-            EnvId::Prod
-        }
-
-        async fn get_auth(&self, _key: &()) -> Result<Auth, StoreError> {
-            Ok(Auth::None)
-        }
-
-        async fn set_auth(&mut self, _key: &(), _auth: Auth) -> Result<(), StoreError> {
-            Ok(())
-        }
-
-        async fn remove_auth(&mut self, _key: &()) -> Result<Option<Auth>, StoreError> {
-            Ok(None)
-        }
-
-        async fn get_all_auth(&self) -> Result<HashMap<(), Auth>, StoreError> {
-            Ok(HashMap::new())
-        }
-
-        async fn set_all_auth(&mut self, _auth: HashMap<(), Auth>) -> Result<(), StoreError> {
-            Ok(())
-        }
-
-        async fn remove_all_auth(&mut self) -> Result<(), StoreError> {
-            Ok(())
-        }
-    }
 
     async fn create_test_client(http_host: &str) -> ProtonHttpClient {
         let config = ApiConfig {
@@ -868,11 +880,10 @@ mod tests {
             auth: None,
             url_prefix: None,
             env: None,
-            store: None,
             proxy: None,
         };
 
-        ProtonHttpClient::new(config, Box::new(MockStore), http_host.to_string())
+        ProtonHttpClient::new(config, AuthStore::prod(), http_host.to_string())
             .await
             .unwrap()
     }
@@ -941,12 +952,11 @@ mod tests {
             auth: None,
             url_prefix: None,
             env: None,
-            store: None,
             proxy: None,
         };
         let client = ProtonHttpClient::new(
             config,
-            Box::new(MockStore),
+            AuthStore::prod(),
             "meet.proton.me/meet/api".to_string(),
         )
         .await
@@ -962,12 +972,11 @@ mod tests {
             auth: None,
             url_prefix: None,
             env: None,
-            store: None,
             proxy: None,
         };
         let client = ProtonHttpClient::new(
             config,
-            Box::new(MockStore),
+            AuthStore::prod(),
             "meet.proton.me/meet/api".to_string(),
         )
         .await;
@@ -985,12 +994,11 @@ mod tests {
             auth: None,
             url_prefix: None,
             env: Some("prod".to_string()),
-            store: None,
             proxy: None,
         };
         let client = ProtonHttpClient::new(
             config,
-            Box::new(MockStore),
+            AuthStore::prod(),
             "meet.proton.me/meet/api".to_string(),
         )
         .await;
@@ -1008,12 +1016,11 @@ mod tests {
             auth: None,
             url_prefix: None,
             env: Some("atlas".to_string()),
-            store: None,
             proxy: None,
         };
         let client = ProtonHttpClient::new(
             config,
-            Box::new(MockStore),
+            AuthStore::atlas(None),
             "meet-mls.proton.black".to_string(),
         )
         .await;
@@ -1027,11 +1034,17 @@ mod tests {
             auth: None,
             url_prefix: None,
             env: Some("https://localhost:8080".to_string()),
-            store: None,
             proxy: None,
         };
-        let client =
-            ProtonHttpClient::new(config, Box::new(MockStore), "localhost:8080".to_string()).await;
+        let client = ProtonHttpClient::new(
+            config,
+            AuthStore::from_custom_env_str(
+                "https://localhost:8080".to_string(),
+                Arc::new(tokio::sync::Mutex::new(Auth::None)),
+            ),
+            "localhost:8080".to_string(),
+        )
+        .await;
         assert!(
             client.is_ok(),
             "custom URL env should build: {:?}",

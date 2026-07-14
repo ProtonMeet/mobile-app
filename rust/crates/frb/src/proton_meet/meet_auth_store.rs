@@ -1,12 +1,11 @@
 use std::sync::Arc;
 
 use crate::errors::BridgeError;
-use async_trait::async_trait;
 use flutter_rust_bridge::{frb, DartFnFuture};
 use proton_meet_core::muon::Auth;
 use proton_meet_core::{
-    infra::auth_store::{AuthStore, MUON_DEFAULT_SESSION_KEY},
-    muon::{EnvId, Store, StoreError, Tokens},
+    infra::auth_store::{AuthStore, SharedAuth},
+    muon::{EnvId, Tokens},
 };
 
 pub type DartCallback = dyn Fn(ChildAuthSession) -> DartFnFuture<String> + Send + Sync;
@@ -31,10 +30,7 @@ impl ProtonMeetAuthStore {
     }
 
     #[frb(ignore)]
-    pub(crate) fn from_auth(
-        env: &str,
-        auth: Arc<tokio::sync::Mutex<Auth>>,
-    ) -> Result<Self, BridgeError> {
+    pub(crate) fn from_auth(env: &str, auth: SharedAuth) -> Result<Self, BridgeError> {
         let store = AuthStore::from_env_str(env.to_string(), auth);
         Ok(Self { inner: store })
     }
@@ -61,16 +57,21 @@ impl ProtonMeetAuthStore {
         scopes: Vec<String>,
     ) -> Result<(), BridgeError> {
         let auth = Auth::internal(user_id, uid, Tokens::access(access, refresh, scopes));
-        let _ = self.inner.set_auth(&MUON_DEFAULT_SESSION_KEY, auth).await;
+        let mut store = self.inner.clone();
+        store.set_session_auth(auth.clone());
+        self.inner = store;
+        self.refresh_auth_credential(auth).await;
         Ok(())
     }
 
     #[frb(ignore)]
     pub async fn get_auth(&self) -> Auth {
-        self.inner
-            .get_auth(&MUON_DEFAULT_SESSION_KEY)
-            .await
-            .unwrap_or(Auth::None)
+        self.inner.get_auth_async().await
+    }
+
+    #[frb(ignore)]
+    pub fn environment(&self) -> EnvId {
+        self.inner.environment.clone()
     }
 
     pub async fn set_auth_dart_callback(
@@ -92,8 +93,7 @@ impl ProtonMeetAuthStore {
     pub async fn logout(&mut self) -> Result<(), BridgeError> {
         let mut cb = MEET_AUTH_STORE_DART_CALLBACK.lock().await;
         *cb = None;
-        let mut old_auth = self.inner.auth.lock().await;
-        *old_auth = Auth::None;
+        *self.inner.auth.lock().await = Auth::None;
         Ok(())
     }
 
@@ -107,7 +107,10 @@ impl ProtonMeetAuthStore {
         flutter_rust_bridge::spawn(async move {
             if let Some(callback) = callback_option {
                 let session = ChildAuthSession {
-                    scopes: auth.scopes().unwrap_or_default().to_vec(),
+                    scopes: auth
+                        .scopes()
+                        .map(|scopes| scopes.iter().cloned().collect())
+                        .unwrap_or_default(),
                     session_id: auth.uid().unwrap_or_default().to_string(),
                     access_token: auth.acc_tok().unwrap_or_default().to_string(),
                     refresh_token: auth.ref_tok().unwrap_or_default().to_string(),
@@ -116,44 +119,6 @@ impl ProtonMeetAuthStore {
                 let _msg = callback(session).await;
             }
         });
-    }
-}
-
-#[async_trait]
-impl Store<()> for ProtonMeetAuthStore {
-    fn env(&self) -> EnvId {
-        self.inner.env()
-    }
-
-    async fn get_auth(&self, key: &()) -> std::result::Result<Auth, StoreError> {
-        self.inner.get_auth(key).await
-    }
-
-    async fn set_auth(&mut self, key: &(), auth: Auth) -> std::result::Result<(), StoreError> {
-        self.inner.set_auth(key, auth.clone()).await?;
-        self.refresh_auth_credential(auth).await;
-        Ok(())
-    }
-
-    async fn remove_auth(&mut self, key: &()) -> std::result::Result<Option<Auth>, StoreError> {
-        self.inner.remove_auth(key).await
-    }
-
-    async fn get_all_auth(
-        &self,
-    ) -> std::result::Result<std::collections::HashMap<(), Auth>, StoreError> {
-        self.inner.get_all_auth().await
-    }
-
-    async fn set_all_auth(
-        &mut self,
-        auth: std::collections::HashMap<(), Auth>,
-    ) -> std::result::Result<(), StoreError> {
-        self.inner.set_all_auth(auth).await
-    }
-
-    async fn remove_all_auth(&mut self) -> std::result::Result<(), StoreError> {
-        self.inner.remove_all_auth().await
     }
 }
 

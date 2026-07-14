@@ -234,10 +234,10 @@ pub async fn openpgp_decrypt_message(
 }
 
 async fn try_decrypt_with_key(
-    crypto_bridge: &CryptoBridge,
-    encrypted_message: &str,
-    private_key: &str,
-    passphrase: &str,
+    _crypto_bridge: &CryptoBridge,
+    _encrypted_message: &str,
+    _private_key: &str,
+    _passphrase: &str,
 ) -> Result<String> {
     // This would need to be implemented in the JavaScript bridge
     // For now, return an error indicating it's not implemented

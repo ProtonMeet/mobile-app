@@ -622,7 +622,7 @@ impl From<MeetCoreError> for MeetCoreErrorEnum {
             MeetCoreError::RatchetTreeNotFound => Self::MlsProtocolError,
             MeetCoreError::MlsServiceError(_) => Self::InternalError,
             MeetCoreError::ChatError(_) => Self::ChatError,
-            MeetCoreError::MlsStatusCode(status) => Self::MlsStatusCode,
+            MeetCoreError::MlsStatusCode(_status) => Self::MlsStatusCode,
         }
     }
 }

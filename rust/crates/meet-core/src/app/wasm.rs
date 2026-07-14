@@ -13,13 +13,11 @@ use crate::infra::{
     dto::realtime::{JoinType, RejoinReason},
     http_client::ApiConfig,
 };
-use muon::client::Auth;
+use muon::auth::Auth;
 use std::sync::Arc;
 
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsValue;
-
-use crate::infra::UserKeyProviderAdapter;
 
 #[cfg_attr(target_family = "wasm", wasm_bindgen(getter_with_clone))]
 pub struct GroupKeyInfo {
@@ -233,7 +231,6 @@ impl App {
             auth: Some(auth),
             url_prefix: None,
             env: Some(env),
-            store: None,
             proxy: None,
         };
         let user_key_provider = Arc::new(UserKeyProviderAdapter::new());

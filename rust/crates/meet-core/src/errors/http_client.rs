@@ -1,8 +1,9 @@
 use std::fmt;
 
 use muon::{
-    client::middleware::AuthErr,
+    common::AuthErr,
     error::{Error as MuonError, ErrorKind as MuonErrorKind},
+    http::{Status, StatusErr},
 };
 
 use crate::infra::dto::realtime::GroupInfoVersionError;
@@ -22,7 +23,7 @@ pub enum HttpClientError {
     MuonError(#[source] muon::Error),
 
     #[error("API Response error: {1}")]
-    ErrorCode(muon::Status, ResponseError),
+    ErrorCode(Status, ResponseError),
     #[error("Response parser error: {0}")]
     Deserialize(String),
     #[error("Parse error: {0}")]
@@ -113,15 +114,15 @@ impl From<MuonError> for HttpClientError {
         // `AuthLayerErr::StatusErr`). Walk the full source chain so we still parse the body.
         let mut cur: Option<&(dyn std::error::Error + 'static)> = Some(&err);
         while let Some(e) = cur {
-            if let Some(se) = e.downcast_ref::<muon::StatusErr>() {
+            if let Some(se) = e.downcast_ref::<StatusErr>() {
                 let status = se.0;
                 let parsed = response_error_from_api_failure_body(se.1.body(), status.as_u16());
                 return HttpClientError::ErrorCode(status, parsed);
             }
-            if let Some(AuthErr::Refresh) = e.downcast_ref() {
+            if let Some(AuthErr::Refresh(_)) = e.downcast_ref() {
                 return HttpClientError::AuthRefresh(err.kind());
             }
-            if let Some(AuthErr::Session) = e.downcast_ref() {
+            if let Some(AuthErr::Session(_)) = e.downcast_ref() {
                 return HttpClientError::AuthSession(err.kind());
             }
             cur = e.source();

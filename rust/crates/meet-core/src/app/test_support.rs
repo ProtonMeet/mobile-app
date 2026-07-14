@@ -3,7 +3,7 @@
 use std::{collections::HashMap, future::ready, str::FromStr, sync::Arc};
 
 use mls_trait::MlsClientConfig;
-use muon::client::Auth;
+use muon::auth::Auth;
 use proton_meet_common::models::{ProtonUser, ProtonUserKey};
 use proton_meet_mls::MlsStore;
 use tokio::sync::{Mutex, RwLock};
@@ -18,9 +18,9 @@ use crate::domain::user::ports::{
     ConnectionState, MockUserRepository, MockWebSocketClient, UserService,
 };
 use crate::infra::{
-    auth_store::AuthStore,
     crypto_client::MeetCryptoClient,
     http_client::{ApiConfig, ProtonHttpClient},
+    muon::AuthStore,
     ports::user_key_provider::{MockUserKeyProvider, UserKeyProvider},
 };
 use crate::service::service::create_mock_http_client_for_mls;
@@ -104,16 +104,11 @@ async fn test_http_client_with_host(http_host: &str) -> ProtonHttpClient {
         auth: None,
         url_prefix: None,
         env: Some("atlas".to_string()),
-        store: None,
         proxy: None,
     };
-    ProtonHttpClient::new(
-        config,
-        Box::new(AuthStore::atlas(None)),
-        http_host.to_string(),
-    )
-    .await
-    .expect("failed to build test http client")
+    ProtonHttpClient::new(config, AuthStore::atlas(None), http_host.to_string())
+        .await
+        .expect("failed to build test http client")
 }
 
 /// Real atlas host — may succeed when CI has network access.
@@ -133,16 +128,15 @@ pub async fn unreachable_test_proton_http_client() -> Arc<ProtonHttpClient> {
         auth: None,
         url_prefix: None,
         env: Some(UNREACHABLE_MUON_SERVER.to_string()),
-        store: None,
         proxy: None,
     };
     Arc::new(
         ProtonHttpClient::new(
             config,
-            Box::new(AuthStore::from_custom_env_str(
+            AuthStore::from_custom_env_str(
                 UNREACHABLE_MUON_SERVER.to_string(),
                 Arc::new(Mutex::new(Auth::None)),
-            )),
+            ),
             "127.0.0.1:1".to_string(),
         )
         .await
@@ -646,9 +640,9 @@ pub mod manual {
     use super::App;
     use crate::errors::core::MeetCoreError;
     use crate::infra::adapters::storage::UserKeyProviderAdapter;
-    use crate::infra::auth_store::AuthStore;
+    use crate::infra::muon::AuthStore;
     use crate::infra::ports::user_key_provider::UserKeyProvider;
-    use muon::client::Auth;
+    use muon::auth::Auth;
     use std::sync::Arc;
     use tokio::sync::Mutex;
 
@@ -669,7 +663,7 @@ pub mod manual {
             app_version.to_string(),
             "Mac OS X 10.15.7".to_string(),
             db_path.into(),
-            Box::new(AuthStore::atlas(Some(atlas.to_string()))),
+            AuthStore::atlas(Some(atlas.to_string())),
             http_host,
             ws_host.into(),
             None,
@@ -690,10 +684,7 @@ pub mod manual {
             app_version.to_string(),
             "Mac OS X 10.15.7".to_string(),
             db_path.into(),
-            Box::new(AuthStore::from_custom_env_str(
-                api_url.to_string(),
-                Arc::new(Mutex::new(Auth::None)),
-            )),
+            AuthStore::from_custom_env_str(api_url.to_string(), Arc::new(Mutex::new(Auth::None))),
             http_host.to_string(),
             ws_host.into(),
             None,

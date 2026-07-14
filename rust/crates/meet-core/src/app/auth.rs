@@ -4,7 +4,9 @@ use crate::domain::user::models::UserId;
 use crate::domain::user::ports::user_api::UserApi;
 use crate::domain::user::ports::UserService;
 use crate::errors::core::MeetCoreError;
+#[cfg(not(target_arch = "wasm32"))]
 use crate::infra::dto::proton_user::UserData;
+use muon::auth::ForkFlowResult;
 use proton_meet_common::models::ProtonUser;
 use tracing::error;
 
@@ -17,7 +19,7 @@ impl App {
             .send()
             .await
         {
-            muon::client::flow::ForkFlowResult::Success(_session, selector) => Ok(selector),
+            ForkFlowResult::Success(_session, selector) => Ok(selector),
             other => {
                 error!("Fork session failed: {:?}", other);
                 Err(MeetCoreError::HttpClientError {
@@ -76,6 +78,8 @@ impl App {
         self.fetch_user_state(user_id, true).await
     }
 
+    /// Username/password login (native mobile/desktop only; not used on WASM).
+    #[cfg(not(target_arch = "wasm32"))]
     pub async fn login(
         &self,
         username: String,
@@ -120,6 +124,7 @@ impl App {
     }
 
     #[tracing::instrument(err, skip_all)]
+    #[cfg(not(target_arch = "wasm32"))]
     pub async fn login_with_two_factor(
         &self,
         two_factor_code: String,

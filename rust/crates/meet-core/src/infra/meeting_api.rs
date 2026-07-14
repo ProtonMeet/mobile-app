@@ -20,7 +20,7 @@ use crate::infra::proton_response_ext::ProtonResponseExt;
 impl MeetingApi for ProtonHttpClient {
     async fn get_upcoming_meetings(&self) -> Result<Vec<Meeting>, HttpClientError> {
         let req = self.get("/meet/v1/meetings/upcoming");
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let upcoming_meetings_res = res.parse_response::<UpcomingMeetingsResponse>()?;
         Ok(upcoming_meetings_res
             .meetings
@@ -35,7 +35,7 @@ impl MeetingApi for ProtonHttpClient {
     ) -> Result<Meeting, HttpClientError> {
         let body: CreateMeetingRequest = meeting.into();
         let req = self.post("/meet/v1/meetings").body_json(body)?;
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let meeting_res = res.parse_response::<CreateMeetingResponse>()?;
         Ok(meeting_res.meeting.try_into()?)
     }
@@ -51,7 +51,7 @@ impl MeetingApi for ProtonHttpClient {
         let req = self
             .put(format!("/meet/v1/meetings/{meeting_id}/name"))
             .body_json(body)?;
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let meeting_res = res.parse_response::<UpdateMeetingResponse>()?;
         Ok(meeting_res.meeting.try_into()?)
     }
@@ -65,7 +65,7 @@ impl MeetingApi for ProtonHttpClient {
         let req = self
             .put(format!("/meet/v1/meetings/{meeting_id}/schedule"))
             .body_json(body)?;
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let meeting_res = res.parse_response::<UpdateMeetingResponse>()?;
         Ok(meeting_res.meeting.try_into()?)
     }
@@ -78,7 +78,7 @@ impl MeetingApi for ProtonHttpClient {
         let req = self
             .post("/meet/v1/meetings/personal/rotate")
             .body_json(body)?;
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let meeting_res = res.parse_response::<CreateMeetingResponse>()?;
         Ok(meeting_res.meeting.try_into()?)
     }
@@ -93,40 +93,40 @@ impl MeetingApi for ProtonHttpClient {
             .body_json(EndMeetingRequest {
                 access_token: access_token.to_string(),
             })?;
-        self.get_session().send(req).await?;
+        self.send_session_request(req).await?;
         Ok(())
     }
 
     async fn delete_meeting(&self, meeting_id: &str) -> Result<(), HttpClientError> {
         let req = self.delete(format!("/meet/v1/meetings/{meeting_id}"));
-        self.get_session().send(req).await?;
+        self.send_session_request(req).await?;
         Ok(())
     }
 
     async fn get_meeting_info(&self, meeting_name: &str) -> Result<MeetingInfo, HttpClientError> {
         let req = self.get(format!("/meet/v1/meetings/links/{meeting_name}"));
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let meeting_info_res = res.parse_response::<MeetingInfoResponse>()?;
         Ok(meeting_info_res.meeting_info.try_into()?)
     }
 
     async fn fetch_meeting(&self, meeting_id: &str) -> Result<Meeting, HttpClientError> {
         let req = self.get(format!("/meet/v1/meetings/{meeting_id}"));
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let meeting_res = res.parse_response::<FetchMeetingResponse>()?;
         Ok(meeting_res.meeting.try_into()?)
     }
 
     async fn lock_meeting(&self, meet_link_name: &str) -> Result<(), HttpClientError> {
         let req = self.post(format!("/meet/v1/meetings/links/{meet_link_name}/lock"));
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let _ = res.parse_response::<ProtonEmptyResponse>()?;
         Ok(())
     }
 
     async fn unlock_meeting(&self, meet_link_name: &str) -> Result<(), HttpClientError> {
         let req = self.post(format!("/meet/v1/meetings/links/{meet_link_name}/unlock"));
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let _ = res.parse_response::<ProtonEmptyResponse>()?;
         Ok(())
     }
@@ -146,7 +146,7 @@ impl MeetingApi for ProtonHttpClient {
                 "/meet/v1/meetings/links/{meeting_link_name}/feedback"
             ))
             .body_json(body)?;
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let _ = res.parse_response::<ProtonEmptyResponse>()?;
         Ok(())
     }

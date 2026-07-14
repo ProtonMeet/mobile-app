@@ -128,7 +128,7 @@ fn log_create_meeting_failure(err: &MeetCoreError, ctx: &CreateMeetingErrorConte
 mod tests {
     use super::*;
     use crate::errors::http_client::{HttpClientError, ResponseError};
-    use muon::Status;
+    use muon::http::Status;
 
     fn sample_ctx() -> CreateMeetingErrorContext {
         CreateMeetingErrorContext {

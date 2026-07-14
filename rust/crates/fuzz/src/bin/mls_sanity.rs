@@ -58,6 +58,6 @@ fn main() {
     println!("join grew the group:   {}", env.active.len() > 1);
     println!(
         "remove shrank the group: {}",
-        !env.active.contains(&1) && env.active.len() >= 1
+        !env.active.contains(&1) && !env.active.is_empty()
     );
 }

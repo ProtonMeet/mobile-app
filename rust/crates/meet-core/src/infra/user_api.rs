@@ -1,8 +1,10 @@
+//! HTTP user API. Password/2FA login is native-only (mobile + desktop); WASM uses
+//! pre-imported session auth instead.
+
 use std::time::Duration;
 
+#[cfg(not(target_arch = "wasm32"))]
 use anyhow::Context;
-use muon::client::flow::{LoginExtraInfo, LoginFlow};
-use muon::Session;
 use proton_meet_common::models::ProtonUser;
 use proton_meet_macro::async_trait;
 
@@ -15,19 +17,20 @@ use crate::infra::dto::proton_settings::ProtonSettingsResponse;
 use crate::infra::dto::proton_user::{ApiProtonUserResponse, UserData};
 use crate::infra::http_client::ProtonHttpClient;
 use crate::infra::http_client_util::HttpClientUtil;
+#[cfg(not(target_arch = "wasm32"))]
+use crate::infra::muon::MeetSession;
 use crate::infra::proton_response_ext::ProtonResponseExt;
+#[cfg(not(target_arch = "wasm32"))]
 use muon::rest::core as CoreAPI;
+
+#[cfg(not(target_arch = "wasm32"))]
+use muon::auth::LoginFlow;
 
 #[async_trait]
 impl UserApi for ProtonHttpClient {
+    #[cfg(not(target_arch = "wasm32"))]
     async fn login(&self, username: &str, password: &str) -> Result<UserData, LoginError> {
-        let extra_info = LoginExtraInfo::builder().build();
-        let session = match self
-            .get_session()
-            .auth()
-            .login_with_extra(username, password, extra_info)
-            .await
-        {
+        let session = match self.get_session().auth().login(username, password).await {
             LoginFlow::Ok(session, ..) => Ok(session),
             LoginFlow::TwoFactor(..) => Err(LoginError::MissingTwoFactor),
             LoginFlow::Failed {
@@ -38,9 +41,24 @@ impl UserApi for ProtonHttpClient {
         self.get_user_data(&session).await
     }
 
+    #[cfg(target_arch = "wasm32")]
+    async fn login(&self, _username: &str, _password: &str) -> Result<UserData, LoginError> {
+        Err(LoginError::LoginFailed(
+            "password login is not available on web".into(),
+        ))
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
     async fn login_with_two_factor(&self, two_factor_code: &str) -> Result<UserData, LoginError> {
         let session = self.get_session().auth().from_totp(two_factor_code).await?;
         self.get_user_data(&session).await
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    async fn login_with_two_factor(&self, _two_factor_code: &str) -> Result<UserData, LoginError> {
+        Err(LoginError::LoginFailed(
+            "password login is not available on web".into(),
+        ))
     }
 
     async fn logout(&self) {
@@ -48,11 +66,10 @@ impl UserApi for ProtonHttpClient {
     }
 
     async fn get_user_info(&self) -> Result<ProtonUser, LoginError> {
-        let client = self.get_session();
         let req = self
             .get("/core/v4/users")
             .allowed_time(Duration::from_secs(15));
-        let res = client.send(req).await?;
+        let res = self.send_session_request(req).await?;
         let user_res = res.parse_response::<ApiProtonUserResponse>()?;
         Ok(user_res.user)
     }
@@ -61,7 +78,7 @@ impl UserApi for ProtonHttpClient {
         let req = self
             .get("/core/v4/addresses")
             .allowed_time(Duration::from_secs(15));
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let addresses_res = res.parse_response::<ApiAddressesResponse>()?;
         Ok(addresses_res
             .addresses()
@@ -75,22 +92,23 @@ impl UserApi for ProtonHttpClient {
         let req = self
             .get("/core/v4/settings")
             .allowed_time(Duration::from_secs(15));
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let settings = res.parse_response::<ProtonSettingsResponse>()?;
         Ok(settings.user_settings.telemetry != 0)
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl ProtonHttpClient {
     pub(crate) async fn get_user_data(
         &self,
-        session: &Session<()>,
+        session: &MeetSession,
     ) -> Result<UserData, LoginError> {
         let req = self
             .get("/core/v4/users")
             .allowed_time(Duration::from_secs(15));
-        let res = session
-            .send(req)
+        let res = self
+            .send_on_session(session, req)
             .await
             .context("failed to send user request")?;
         let user_res = res.parse_response::<ApiProtonUserResponse>()?;
@@ -98,8 +116,8 @@ impl ProtonHttpClient {
         let keysalt_req = self
             .get("/core/v4/keys/salts")
             .allowed_time(Duration::from_secs(15));
-        let keysalt_res: CoreAPI::v4::keys::salts::GetRes = session
-            .send(keysalt_req)
+        let keysalt_res: CoreAPI::v4::keys::salts::GetRes = self
+            .send_on_session(session, keysalt_req)
             .await
             .context("failed to send keysalts request")?
             .into_body_json()

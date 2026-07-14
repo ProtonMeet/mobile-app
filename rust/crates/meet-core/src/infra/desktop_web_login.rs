@@ -7,18 +7,18 @@ use aes_gcm::aead::generic_array::GenericArray;
 use aes_gcm::aead::{Aead, KeyInit, Payload};
 use aes_gcm::AesGcm;
 use base64::Engine;
-use muon::client::flow::{WithCodeFlow, WithCodePollFlow};
-use muon::client::Auth;
-use muon::env::EnvId;
-use muon::Session;
+use muon::app::AppVersion;
+use muon::auth::{Auth, WithCodeFlow, WithCodePollFlow};
+use muon::env::Env;
+use muon::Environment;
 use rand::RngCore;
 use serde::Deserialize;
-use std::sync::Arc;
-use tokio::sync::Mutex;
 
 use crate::errors::core::MeetCoreError;
 use crate::infra::dto::proton_user::UserData;
 use crate::infra::http_client::ProtonHttpClient;
+use crate::infra::muon::SharedAuth;
+use crate::infra::muon::{MeetContext, MeetSession};
 
 const CHILD_CLIENT_ID_MAX_LEN: usize = 64;
 
@@ -38,9 +38,9 @@ pub enum DesktopWebLoginPoll {
 }
 
 pub struct PendingState {
-    poll_flow: WithCodePollFlow<()>,
+    poll_flow: WithCodePollFlow<MeetContext>,
     encryption_key: [u8; 32],
-    login_auth: Arc<Mutex<Auth>>,
+    login_auth: SharedAuth,
 }
 
 #[derive(Debug, Deserialize)]
@@ -57,19 +57,35 @@ fn generate_encryption_key() -> [u8; 32] {
     key
 }
 
-fn account_url_for_env(env: &EnvId) -> Result<String, MeetCoreError> {
+fn account_url_for_env(env: &Environment) -> Result<String, MeetCoreError> {
     match env {
-        EnvId::Prod => Ok("https://account.proton.me".to_string()),
-        EnvId::Atlas(None) => Ok("https://account.proton.black".to_string()),
-        EnvId::Atlas(Some(atlas_env)) => Ok(format!("https://account.{atlas_env}.proton.black")),
-        EnvId::Custom(_) => Err(MeetCoreError::AuthenticationFailed {
+        Environment::Prod(_) => Ok("https://account.proton.me".to_string()),
+        Environment::Atlas(_) => Ok("https://account.proton.black".to_string()),
+        Environment::Scientist(_) => {
+            let app_version: AppVersion =
+                "macos-meet@0.0.1"
+                    .parse()
+                    .map_err(|_| MeetCoreError::AuthenticationFailed {
+                        message: "Failed to resolve atlas scientist environment".to_string(),
+                    })?;
+            let servers = env.servers(&app_version);
+            let scientist = servers
+                .first()
+                .and_then(|server| server.host().strip_suffix(".proton.black"))
+                .and_then(|prefix| prefix.rsplit('.').next())
+                .ok_or_else(|| MeetCoreError::AuthenticationFailed {
+                    message: "Failed to resolve atlas scientist environment".to_string(),
+                })?;
+            Ok(format!("https://account.{scientist}.proton.black"))
+        }
+        Environment::Custom(_) => Err(MeetCoreError::AuthenticationFailed {
             message: "Desktop web login is not supported for custom environments".to_string(),
         }),
     }
 }
 
 fn build_login_url(
-    env: &EnvId,
+    env: &Environment,
     user_code: &str,
     encryption_key: &[u8],
     child_client_id: &str,
@@ -189,7 +205,7 @@ pub async fn poll(
 
 async fn fetch_user_data(
     http_client: &ProtonHttpClient,
-    session: &Session<()>,
+    session: &MeetSession,
 ) -> Result<UserData, MeetCoreError> {
     http_client
         .get_user_data(session)

@@ -2,11 +2,11 @@
 mod tests {
     use std::sync::Arc;
 
-    use crate::domain::room::RoomService;
+    #[cfg(not(target_arch = "wasm32"))]
+    use crate::domain::user::models::{meet_link_info::AccessTokenInfo, meeting::MeetingInfo};
     use crate::domain::user::{
         models::{
-            meet_link_info::{AccessTokenInfo, MeetLinkAuthInfo, MeetLinkInfo},
-            meeting::{Meeting, MeetingInfo},
+            meet_link_info::MeetLinkAuthInfo, meeting::Meeting,
             participant_track_settings::ParticipantTrackSettings,
         },
         ports::{
@@ -14,9 +14,12 @@ mod tests {
             meeting_api::MockMeetingApi,
         },
     };
+    use crate::domain::{room::RoomService, user::models::MeetLinkInfo};
     use crate::errors::http_client::HttpClientError;
     use mockall::predicate::eq;
-    use proton_meet_crypto::{CryptoError, SRPProof, MEET_DISPLAY_NAME_AAD, MEET_METADATA_AAD};
+    use proton_meet_crypto::{CryptoError, SRPProof};
+    #[cfg(not(target_arch = "wasm32"))]
+    use proton_meet_crypto::{MEET_DISPLAY_NAME_AAD, MEET_METADATA_AAD};
     use proton_meet_macro::unified_test;
     use std::future::ready;
 
@@ -26,6 +29,7 @@ mod tests {
     const TEST_DISPLAY_NAME: &str = "John Doe";
     const TEST_MEETING_NAME: &str = "Team Standup";
     const TEST_ACCESS_TOKEN: &str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
+    #[cfg(not(target_family = "wasm"))]
     const TEST_WEBSOCKET_URL: &str = "wss://meet.proton.me/ws";
     const TEST_PARTICIPANT_UUID: &str = "test_participant_uuid";
 
@@ -55,6 +59,7 @@ mod tests {
         }
     }
 
+    #[cfg(not(target_family = "wasm"))]
     fn create_test_meeting_info() -> MeetingInfo {
         MeetingInfo {
             meeting_name: "encrypted_name_data".to_string(),

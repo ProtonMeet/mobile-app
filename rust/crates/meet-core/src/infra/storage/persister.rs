@@ -2,9 +2,10 @@ use super::entities::user::UserEntity;
 use cfg_if::cfg_if;
 use proton_meet_common::models::{ProtonUser, ProtonUserKey};
 use proton_meet_macro::async_trait;
+#[cfg(not(target_family = "wasm"))]
+use std::io::ErrorKind;
 use std::{
     collections::HashMap,
-    io::ErrorKind,
     sync::{Arc, Mutex, RwLock},
 };
 

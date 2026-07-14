@@ -142,7 +142,7 @@ impl AppCore {
             app_version,
             user_agent,
             db_path,
-            Box::new(auth_store.clone()),
+            auth_store.inner.clone(),
             ws_host,
             http_host,
             user_state,
@@ -175,8 +175,20 @@ impl AppCore {
         scopes: Vec<String>,
     ) -> Result<(), BridgeError> {
         let auth = Auth::internal(user_id, uid, Tokens::access(access, refresh, scopes));
-        let mut old_auth = self.auth_store.inner.auth.lock().await;
-        *old_auth = auth.clone();
+        let mut store = self.auth_store.inner.clone();
+        store.set_session_auth(auth);
+        self.auth_store = Arc::new(ProtonMeetAuthStore {
+            inner: store.clone(),
+        });
+        self.inner.sync_auth_store(store).await?;
+        Ok(())
+    }
+
+    /// Rebuild the muon session from the current auth store (e.g. after `ProtonMeetAuthStore::set_auth`).
+    pub async fn sync_auth_store(&self) -> Result<(), BridgeError> {
+        self.inner
+            .sync_auth_store(self.auth_store.inner.clone())
+            .await?;
         Ok(())
     }
 

@@ -9,7 +9,8 @@
 //!
 //! ## Macros Provided
 //!
-//! - `#[unified_test]`: Platform-aware test macro
+//! - `#[unified_test]`: Platform-aware async test macro
+//! - `#[unified_sync_test]`: Platform-aware sync test macro
 //! - `#[async_trait]`: Platform-aware async trait implementation
 //! - `#[async_trait_with_mock]`: Async trait + mocking for unit tests
 //!
@@ -45,6 +46,27 @@ pub fn unified_test(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let result = quote! {
         #[cfg_attr(not(target_family = "wasm"), tokio::test)]
+        #[cfg_attr(target_family = "wasm", wasm_bindgen_test::wasm_bindgen_test)]
+        #(#fn_attrs)*
+        #fn_sig #fn_body
+    };
+
+    result.into()
+}
+
+/// Platform-unified test macro for synchronous tests.
+///
+/// Applies `#[test]` on native targets and `#[wasm_bindgen_test]` on WebAssembly.
+#[proc_macro_attribute]
+pub fn unified_sync_test(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(item as ItemFn);
+
+    let fn_attrs = &input.attrs;
+    let fn_sig = &input.sig;
+    let fn_body = &input.block;
+
+    let result = quote! {
+        #[cfg_attr(not(target_family = "wasm"), test)]
         #[cfg_attr(target_family = "wasm", wasm_bindgen_test::wasm_bindgen_test)]
         #(#fn_attrs)*
         #fn_sig #fn_body

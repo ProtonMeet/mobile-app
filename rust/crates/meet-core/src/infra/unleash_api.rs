@@ -10,7 +10,7 @@ use crate::infra::http_client_util::HttpClientUtil;
 impl UnleashApi for ProtonHttpClient {
     async fn fetch_toggles(&self) -> Result<UnleashResponse, HttpClientError> {
         let req = self.get("feature/v2/frontend");
-        let res = self.get_session().send(req).await?;
+        let res = self.send_session_request(req).await?;
         let status_code = res.status();
         let body = res.body().to_vec();
         if status_code.is_success() {

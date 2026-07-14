@@ -35,11 +35,11 @@ impl ProtonResponseExt for ProtonResponse {
                     // We either return details about the parsing error with the body as string
                     // Only include body in debug builds to prevent leaking sensitive data in production
                     let error_details = match String::from_utf8(body) {
-                        Ok(text) => {
+                        Ok(_text) => {
                             #[cfg(debug_assertions)]
                             {
                                 format!(
-                                    "Failed to parse response as {type_name}: Error: {parsing_error}, Body: {text}"
+                                    "Failed to parse response as {type_name}: Error: {parsing_error}, Body: {_text}"
                                 )
                             }
                             #[cfg(not(debug_assertions))]

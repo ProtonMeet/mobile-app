@@ -242,7 +242,7 @@ fn restore_proposals_to_queue(
     }
 
     let reason = reason.to_string();
-    spawn({
+    let _ = spawn({
         let queue = proposal_queue.clone();
         async move {
             let mut queue_lock = queue.lock().await;
@@ -397,11 +397,11 @@ impl Service {
                     tracing::warn!("Received duplicate proposal in batched processing");
                     false
                 }
-                Ok((msg, _)) => {
+                Ok((_received, _)) => {
                     #[cfg(debug_assertions)]
                     tracing::error!(
                         "Unexpected message type in batched proposal processing: {:?}",
-                        msg
+                        _received
                     );
                     false
                 }
@@ -756,12 +756,12 @@ impl Service {
                         return;
                     }
                 }
-                Err(e) => {
+                Err(_e) => {
                     #[cfg(debug_assertions)]
                     tracing::warn!(
                         "Proposal timer for room {}: failed to get current epoch: {:?}, skipping",
                         room_id_clone,
-                        e
+                        _e
                     );
                     return;
                 }
@@ -840,7 +840,7 @@ impl Service {
         epoch_at: u64,
         roster: Vec<Member>,
     ) -> Result<u64, anyhow::Error> {
-        let own_leaf = roster
+        let _own_leaf = roster
             .iter()
             .find(|m| *m.leaf_index() == own_leaf_index)
             .ok_or_else(|| {
@@ -1207,6 +1207,7 @@ impl Service {
 
 #[async_trait]
 impl UserService for Service {
+    #[cfg(not(target_arch = "wasm32"))]
     async fn login(
         &self,
         username: &str,
@@ -1232,12 +1233,31 @@ impl UserService for Service {
         Ok((login_response, user, user_keys, user_addresses))
     }
 
+    #[cfg(target_arch = "wasm32")]
+    async fn login(
+        &self,
+        _username: &str,
+        _password: &str,
+    ) -> Result<(UserData, ProtonUser, Vec<ProtonUserKey>, Vec<Address>), LoginError> {
+        Err(LoginError::LoginFailed(
+            "password login is not available on web".into(),
+        ))
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
     async fn login_with_two_factor(&self, two_factor_code: &str) -> Result<UserData, LoginError> {
         let user_data = self.user_api.login_with_two_factor(two_factor_code).await?;
         self.user_repository.init_tables(&user_data.user.id).await?;
         let user = user_data.user.clone();
         self.user_repository.save_user(&user).await?;
         Ok(user_data)
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    async fn login_with_two_factor(&self, _two_factor_code: &str) -> Result<UserData, LoginError> {
+        Err(LoginError::LoginFailed(
+            "password login is not available on web".into(),
+        ))
     }
 
     async fn get_user_with_policy(
@@ -2754,6 +2774,7 @@ impl UserService for Service {
                             )
                             .await?;
 
+                        #[allow(unused_variables)]
                         let (epoch, roster, leaf_node_index) = {
                             let mls_group = mls_group.read().await;
                             let lead_node_index = mls_group.own_leaf_index()?;

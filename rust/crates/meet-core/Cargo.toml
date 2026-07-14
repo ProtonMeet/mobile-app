@@ -62,6 +62,11 @@ indexmap = "2"
 aes = "0.8"
 aes-gcm = "0.10.3"
 urlencoding = "2.1.3"
+rand_v09 = { package = "rand", version = "0.9", default-features = false, features = [
+    "std",
+    "std_rng",
+    "thread_rng",
+] }
 
 [target.'cfg(target_os = "ios")'.dependencies]
 # rustls = "0.23.31"
@@ -80,47 +85,33 @@ rustls = { version = "0.23.31", default-features = false, features = [
     "std",
 ] }
 rustls-platform-verifier = "0.7.0"
+async-compat = "0.2.4"
 muon = { workspace = true, features = [
     "other-product",
-    "tls-tokio-native",
-    "util",
-    "http-proxy",
-    "rt-async",
-    "dns",
-    "lenient",
+    "full-native",
+    "login",
 ] }
 openssl = { version = "*", features = ["vendored"] }
 
-
-[target.'cfg(not(target_os = "android"))'.dependencies]
+# Native (non-Android): Proton account login via muon SRP (`login` → proton-srp).
+[target.'cfg(all(not(target_os = "android"), not(target_arch = "wasm32")))'.dependencies]
+async-compat = "0.2.4"
 muon = { workspace = true, features = [
     "other-product",
-    "tls",
-    "util",
-    "http-proxy",
-    "rt-async",
-    "dns",
-    "lenient",
+    "full-native",
+    "login",
 ] }
 
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-rusqlite = { version = "=0.39.0", features = ["bundled", "serde_json"] }
-tokio = { workspace = true }
-tempfile = "3"
-tokio-tungstenite-wasm = { git = "git+ssh://git@gitlab.protontech.ch/meet/tokio-tungstenite-wasm.git", features = [
-    "rustls-tls-native-roots",
-    "native-tls",
-], branch = "feat/connect_with_auth" }
-
-uuid = { version = "1.17.0", features = ["v4", "serde"] }
-rustls = { version = "0.23", default-features = false, features = [
-    "ring",
-    "std",
-] }
-webpki-roots = "0.26"
-x509-parser = "0.18.1"
-
+# WASM: pre-authenticated / forked sessions only — omit `login` to drop proton-srp/pgp.
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+muon = { workspace = true, features = [
+    "other-product",
+    "lenient",
+    "http2",
+    "alternative-routing",
+    "common-multipart",
+    "transport-reqwest-wasm",
+] }
 gloo-timers = { version = "0.3", features = ["futures"] }
 ## bindgen dependencies
 wasm-bindgen = { workspace = true }
@@ -144,6 +135,23 @@ log = "0.4.21"
 uuid = { version = "1.17.0", features = ["v4", "js", "serde"] }
 wasmtimer = "0.4.2"
 console_error_panic_hook = "0.1.7"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rusqlite = { version = "=0.39.0", features = ["bundled", "serde_json"] }
+tokio = { workspace = true }
+tempfile = "3"
+tokio-tungstenite-wasm = { git = "git+ssh://git@gitlab.protontech.ch/meet/tokio-tungstenite-wasm.git", features = [
+    "rustls-tls-native-roots",
+    "native-tls",
+], branch = "feat/connect_with_auth" }
+
+uuid = { version = "1.17.0", features = ["v4", "serde"] }
+rustls = { version = "0.23", default-features = false, features = [
+    "ring",
+    "std",
+] }
+webpki-roots = "0.26"
+x509-parser = "0.18.1"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 rcgen = "0.14.8"

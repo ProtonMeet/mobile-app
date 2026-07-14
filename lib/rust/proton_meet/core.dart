@@ -271,6 +271,9 @@ abstract class AppCore implements RustOpaqueInterface {
 
   Stream<AppEvent> subscribeEvents();
 
+  /// Rebuild the muon session from the current auth store (e.g. after `ProtonMeetAuthStore::set_auth`).
+  Future<void> syncAuthStore();
+
   /// Manually trigger WebSocket reconnection.
   /// Call this when network connectivity changes (e.g., WiFi → cellular, airplane mode off).
   Future<void> triggerWebsocketReconnect();

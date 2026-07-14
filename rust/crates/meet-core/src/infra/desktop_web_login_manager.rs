@@ -1,26 +1,23 @@
 //! Ephemeral desktop web login session — isolated from the main app muon client.
 //! Drop or cancel when login finishes or is abandoned.
 
-use std::sync::Arc;
-
-use muon::client::Auth;
-use muon::env::EnvId;
-use tokio::sync::Mutex;
+use muon::auth::Auth;
+use muon::Environment;
 
 use crate::errors::core::MeetCoreError;
 use crate::errors::http_client::HttpClientError;
-use crate::infra::auth_store::AuthStore;
 use crate::infra::desktop_web_login::{
     self, DesktopWebLoginPoll, DesktopWebLoginStart, PendingState,
 };
 use crate::infra::http_client::{ApiConfig, ProtonHttpClient};
+use crate::infra::muon::{AuthStore, SharedAuth};
 
 /// Standalone manager for one desktop web login attempt.
 #[cfg(not(target_arch = "wasm32"))]
 pub struct DesktopWebLoginManager {
     login_http: ProtonHttpClient,
     main_http: ProtonHttpClient,
-    session_auth: Arc<Mutex<Auth>>,
+    session_auth: SharedAuth,
     pending: Option<PendingState>,
 }
 
@@ -32,22 +29,21 @@ impl DesktopWebLoginManager {
         user_agent: String,
         http_host: String,
         main_http: ProtonHttpClient,
-        session_auth: Arc<Mutex<Auth>>,
+        session_auth: SharedAuth,
     ) -> Result<Self, MeetCoreError> {
-        let env_id: EnvId = env
-            .parse()
-            .map_err(|_| MeetCoreError::AuthenticationFailed {
-                message: format!("Invalid environment for desktop web login: {env}"),
-            })?;
+        let environment: Environment =
+            env.parse()
+                .map_err(|_| MeetCoreError::AuthenticationFailed {
+                    message: format!("Invalid environment for desktop web login: {env}"),
+                })?;
         let config = ApiConfig {
             spec: (app_version, user_agent),
             auth: None,
             url_prefix: None,
             env: Some(env),
-            store: None,
             proxy: None,
         };
-        let login_http = ProtonHttpClient::new(config, Box::new(AuthStore::new(env_id)), http_host)
+        let login_http = ProtonHttpClient::new(config, AuthStore::new(environment), http_host)
             .await
             .map_err(|e| MeetCoreError::AuthenticationFailed {
                 message: format!("Failed to create desktop login HTTP client: {e}"),
@@ -99,30 +95,22 @@ impl DesktopWebLoginManager {
 /// Apply forked auth to the main muon session (persistent store + in-memory client).
 pub async fn promote_auth_to_main_session(
     main_http: &ProtonHttpClient,
-    session_auth: &Arc<Mutex<Auth>>,
+    session_auth: &SharedAuth,
     auth: Auth,
 ) -> Result<(), MeetCoreError> {
     *session_auth.lock().await = auth;
-    let env = main_http.get_session().env().clone();
+    let environment = main_http.get_session().env().clone();
     let store = AuthStore {
-        env,
+        environment,
         auth: session_auth.clone(),
     };
-    let client =
-        main_http
-            .build_client(store)
-            .await
-            .map_err(|e| MeetCoreError::AuthenticationFailed {
-                message: format!("Failed to apply desktop login session: {e}"),
-            })?;
     main_http
-        .replace_session(client)
+        .sync_auth_store(store)
         .await
         .map_err(|e| MeetCoreError::AuthenticationFailed {
             message: match e {
                 HttpClientError::MlsHttpError { message } => message,
                 other => format!("Unable to complete sign-in. Please try again. ({other})"),
             },
-        })?;
-    Ok(())
+        })
 }

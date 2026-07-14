@@ -77,7 +77,7 @@ impl IcsEvent {
                     out.push_str("\r\n");
                     first = false;
                 } else {
-                    out.push_str(" ");
+                    out.push(' ');
                     out.push_str(std::str::from_utf8(&bytes[start..end]).unwrap_or(""));
                     out.push_str("\r\n");
                 }
