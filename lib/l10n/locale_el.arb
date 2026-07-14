@@ -1,0 +1,1798 @@
+{
+  "@@locale": "el",
+  "@@last_modified": "2024-02-12T00:10:57.227125",
+  "app_name": "Proton Meet",
+  "@app_name": {
+    "description": "The name of the application"
+  },
+  "logout": "Αποσυνδέση",
+  "login": "Σύνδεση",
+  "sign_in": "Σύνδεση",
+  "sign_out": "Αποσύνδεση",
+  "learn_more": "Μάθετε περισσότερα",
+  "no_data": "Δεν υπάρχουν δεδομένα",
+  "submit": "Υποβολή",
+  "cancel": "Ακύρωση",
+  "close": "Κλείσιμο",
+  "ok": "Οκ",
+  "unlock_app": "Ξεκλείδωμα Εφαρμογής",
+  "search": "Αναζήτηση",
+  "placeholder": "Χώρος κράτησης θέσης",
+  "something_went_wrong": "Κάτι πήγε στραβά",
+  "retry": "Επανάληψη",
+  "@retry": {
+    "description": "Retry loading dashboard after an error"
+  },
+  "report_a_problem": "Αναφορά προβλήματος",
+  "sign_in_to_proton_title": "Συνδεθείτε στο Proton",
+  "sign_in_to_proton_subtitle": "Εισαγάγετε τα στοιχεία του λογαριασμού Proton σας.",
+  "options": "Επιλογές",
+  "@options": {
+    "description": "Title for options dialog"
+  },
+  "manage_accounts": "Διαχείριση λογαριασμών",
+  "@manage_accounts": {
+    "description": "Title for manage accounts dialog"
+  },
+  "delete_account": "Διαγραφή λογαριασμού",
+  "@delete_account": {
+    "description": "Title for delete account dialog"
+  },
+  "signin_intro_title": "Καλώς ορίσατε στο Proton Meet",
+  "@signin_intro_title": {
+    "description": "Title in the sign-in intro sheet"
+  },
+  "signin_intro_subtitle": "Συνδεθείτε ή δημιουργήστε έναν λογαριασμό για να συνεχίσετε",
+  "@signin_intro_subtitle": {
+    "description": "Subtitle in the sign-in intro sheet"
+  },
+  "signin_intro_create_account": "Δημιουργήστε έναν λογαριασμό",
+  "@signin_intro_create_account": {
+    "description": "Primary button label in the sign-in intro sheet"
+  },
+  "signin_intro_sign_in": "Σύνδεση",
+  "@signin_intro_sign_in": {
+    "description": "Secondary button label in the sign-in intro sheet"
+  },
+  "sign_in_username_or_email": "Ονομα χρήστη ή διεύθυνση ηλεκτρονικού ταχυδρομίου",
+  "email": "Email",
+  "user_name": "Όνομα χρήση",
+  "account": "Λογαριασμός",
+  "password": "Κωδικόs πρόσβασης",
+  "session_expired_content": "Για την ασφάλειά σας, η περίοδος λειτουργίας έληξε. Συνδεθείτε ξανά για να συνεχίσετε τη διαχείριση των συσκέψεών σας.",
+  "session_expired_title": "Η συνεδρία έληξε!",
+  "session_expired_continue_without_signing_in": "Συνεχίστε χωρίς να συνδεθείτε",
+  "@session_expired_continue_without_signing_in": {
+    "description": "Secondary button label for session expired bottom sheet"
+  },
+  "force_upgrade": "Εξαναγκασμένη Αναβάθμιση",
+  "upgrade": "Αναβάθμιση",
+  "search_participants": "Αναζήτηση συμμετεχόντων...",
+  "participants_count": "Συμμετέχοντες ({count})",
+  "no_participants_found": "Δεν βρέθηκαν συμμετέχοντες",
+  "try_different_search_term": "Δοκιμάστε έναν διαφορετικό όρο αναζήτησης.",
+  "you": "(Εσείς)",
+  "invite_participant": "Πρόσκληση συμμετέχοντος",
+  "leave": "Αποχώρηση",
+  "emoji_reaction": "Αντίδραση με emoji",
+  "unshare_screen": "Κατάργηση κοινής χρήσης οθόνης",
+  "share_screen": "Κοινή χρήση οθόνης",
+  "show_chatroom": "Συνομιλία",
+  "show_participants_list": "Συμμετέχοντες",
+  "show_settings": "Ρυθμίσεις",
+  "show_meeting_stats": "εμφάνιση στατιστικών σύσκεψης",
+  "meeting_info": "Πληροφορίες",
+  "meeting_settings": "Ρυθμίσεις",
+  "host": "Οικοδεσπότης",
+  "lock_meeting": "Κλείδωμα σύσκεψης",
+  "meeting_locked": "Η σύσκεψη κλειδώθηκε",
+  "@meeting_locked": {
+    "description": "Title when meeting is locked"
+  },
+  "meeting_locked_description": "Αυτή η σύσκεψη είναι κλειδωμένη. Επικοινωνήστε με τον οικοδεσπότη για να συμμετάσχετε.",
+  "@meeting_locked_description": {
+    "description": "Description when meeting is locked"
+  },
+  "meeting_locked_notification": "Η σύσκεψη κλειδώθηκε. Κανένας νέος συμμετέχων δεν μπορεί να συμμετάσχει.",
+  "@meeting_locked_notification": {
+    "description": "Toast notification when meeting is locked by host"
+  },
+  "meet_server_version_not_supported_title": "Απαιτείται ενημέρωση",
+  "@meet_server_version_not_supported_title": {
+    "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
+  },
+  "meet_server_version_not_supported_description": "Η έκδοση της εφαρμογής σας δεν μπορεί να συνδεθεί σε αυτήν τη σύσκεψη. Παρακαλούμε ενημερώστε το Proton Meet για να συνεχίσετε.",
+  "@meet_server_version_not_supported_description": {
+    "description": "Description when the client must be updated to join a meeting"
+  },
+  "meeting_unlocked_notification": "Η σύσκεψη ξεκλειδώθηκε. Οι συμμετέχοντες μπορούν να συμμετάσχουν ξανά.",
+  "@meeting_unlocked_notification": {
+    "description": "Toast notification when meeting is unlocked by host"
+  },
+  "hide_profile_pictures": "Απόκρυψη φωτογραφιών προφίλ",
+  "picture_in_picture_mode": "Λειτουργία Picture-in-Picture",
+  "security": "Ασφάλεια",
+  "enable_waiting_room": "Ενεργοποίηση αίθουσας αναμονής",
+  "hide_self_view": "Απόκρυψη αυτοπροβολής",
+  "allow_all_participants_to": "Επιτρέψτε σε όλους τους συμμετέχοντες να:",
+  "chat": "Συνομιλία",
+  "rename_themselves": "Μετονομάζουν τον εαυτό τους",
+  "unmute_themselves": "Αποσιωπούν τον εαυτό τους",
+  "meeting": "Σύσκεψη",
+  "show_meeting_timer": "Εμφάνιση χρονομέτρου σύσκεψης",
+  "unsubscribe_video_by_default": "Απενεργοποιήστε το εισερχόμενο βίντεο",
+  "camera_background_blur": "Θολό παρασκήνιο",
+  "audio_noise_cancellation": "Εξουδετέρωση θορύβου",
+  "dark_mode": "Σκοτεινή λειτουργία",
+  "show_connection_indicator": "Εμφάνιση ένδειξης σύνδεσης",
+  "desktop_notifications": "Ειδοποίησεις επιφάνειας εργασίας",
+  "meeting_quality": "Ποιότητα Συσκέψεων",
+  "camera_resolution": "Ανάλυση Κάμερας",
+  "camera_max_bitrate": "Μέγιστος Ρυθμός μετάδοσης δεδομένων Κάμερας",
+  "screen_sharing_resolution": "Ανάλυση Κοινής Χρήσης Οθόνης",
+  "screen_sharing_max_bitrate": "Μέγιστος Ρυθμός μετάδοσης δεδομένων Κοινής χρήσης οθόνης",
+  "export_debug_log": "Εξαγωγή Αρχείου Καταγραφής Σφαλμάτων",
+  "type_a_message": "Πληκτρολογήστε μήνυμα...",
+  "search_messages": "Αναζήτηση μηνυμάτων...",
+  "meeting_chat": "Συνομιλία Σύσκεψης",
+  "no_messages_found": "Δεν βρέθηκαν μηνύματα",
+  "no_messages_yet": "Δεν υπάρχουν μηνύματα ακόμα",
+  "start_the_conversation": "Ξεκίνα τη συνομιλία",
+  "unknown": "Άγνωστο",
+  "bitrate_extreme_high_2000": "Ακραία Υψηλό (2000 kbps)",
+  "bitrate_ultra_high_1900": "Υπερυψηλό (1900 kbps)",
+  "bitrate_ultra_high_1800": "Υπερυψηλό (1800 kbps)",
+  "bitrate_ultra_high_1700": "Υπερυψηλό (1700 kbps)",
+  "bitrate_ultra_high_1600": "Υπερυψηλό (1600 kbps)",
+  "bitrate_ultra_high_1500": "Υπερυψηλό (1500 kbps)",
+  "bitrate_very_high_1400": "Πολύ υψηλό (1400 kbps)",
+  "bitrate_very_high_1300": "Πολύ υψηλό (1300 kbps)",
+  "bitrate_very_high_1200": "Πολύ υψηλό (1200 kbps)",
+  "bitrate_very_high_1100": "Πολύ υψηλό (1100 kbps)",
+  "bitrate_high_1000": "Υψηλό (1000 kbps)",
+  "bitrate_high_900": "Υψηλό (900 kbps)",
+  "bitrate_high_800": "Υψηλό (800 kbps)",
+  "bitrate_medium_high_700": "Μέτριο υψηλό (700 kbps)",
+  "bitrate_medium_high_600": "Μέτριο υψηλό (600 kbps)",
+  "bitrate_medium_high_500": "Μέτριο υψηλό (500 kbps)",
+  "bitrate_medium_400": "Μέτριο (400 kbps)",
+  "bitrate_medium_low_300": "Μέτριο χαμηλό (300 kbps)",
+  "bitrate_low_200": "Χαμηλό (200 kbps)",
+  "bitrate_very_low_100": "Πολύ χαμηλό (100 kbps)",
+  "resolution_360p": "360π",
+  "resolution_720p": "720p",
+  "resolution_1080p": "1080p",
+  "resolution_4k": "4K",
+  "join_meeting": "Μιλήστε εμπιστευτικά",
+  "app_description": "Οι συσκέψεις μας με διατερματική κρυπτογράφηση προστατεύουν την ιδιωτικότητα και ενθαρρύνουν την πραγματικά ελεύθερη έκφραση.",
+  "meeting_link": "Σύνδεσμος σύσκεψης",
+  "meeting_detail": "Λεπτομέρεια σύσκεψης",
+  "display_name": "Το όνομά σας",
+  "enter_display_name": "Πληκτρολογήστε το όνομά σας",
+  "display_name_required": "Το όνομά σας απαιτείται",
+  "remember_display_name_on_device": "Θυμήσου το όνομά μου σε αυτή τη συσκευή για μελλοντικές συσκέψεις",
+  "join_meeting_button": "Συμμετοχή στη σύσκεψη",
+  "create_meeting_button": "Δημιουργία σύσκεψης",
+  "import_meeting_button": "Εισαγωγή σύσκεψης",
+  "import_meeting_title": "Εισαγωγή σύσκεψης",
+  "import_meeting_hint_text": "Εισαγάγετε τον σύνδεσμο της σύσκεψης",
+  "open_home": "Άνοιγμα Αρχικής",
+  "start_simulation": "Ξεκινήστε την Προσομοίωση",
+  "change_layout": "Αλλαγή διάταξης",
+  "layout_spaced_grid": "Διαχωρισμένο πλέγμα",
+  "layout_compact_grid": "Συμπαγές Πλέγμα",
+  "layout_speaker_view": "Προβολή Ομιλητή",
+  "layout_multi_speaker_view": "Προβολή Πολλαπλών-Ομιλητών",
+  "no_active_speaker": "Δεν υπάρχει ενεργός ομιλητής",
+  "camera_view": "Προβολή κάμερας",
+  "is_presenting": "παρουσιάζει",
+  "stop_presenting": "Διακοπή παρουσίασης",
+  "tap_to_stop_sharing": "Πατήστε για να διακόψετε την κοινοποίηση",
+  "notification_permission_settings_title": "Ενεργοποίηση πρόσβασης στις ειδοποιήσεις",
+  "@notification_permission_settings_title": {
+    "description": "Title when notification permission was denied and screen sharing requires it"
+  },
+  "notification_permission_settings_message": "Η κοινή χρήση οθόνης απαιτεί άδεια ειδοποιήσεων, ώστε η σύσκεψη να μπορεί να παραμείνει ενεργή στο παρασκήνιο.\n\nΠροηγουμένως έχετε απορρίψει την πρόσβαση. Για να μοιραστείτε την οθόνη σας, ενεργοποιήστε τις Ειδοποιήσεις στις ρυθμίσεις του συστήματός σας:\n• Ανοίξτε τις Ρυθμίσεις\n• Βρείτε αυτήν την εφαρμογή\n• Επιτρέψτε τις Ειδοποιήσεις",
+  "@notification_permission_settings_message": {
+    "description": "Body for notification permission inform sheet shown before screen sharing"
+  },
+  "participant_joined": "Συμμετέχων εντάχθηκε🎉",
+  "participant_left": "Ο συμμετέχων αποχώρησε👋",
+  "participant_name_prefix": "Ονομα: ",
+  "participant_identity_prefix": "Ταυτότητα: ",
+  "setting_updated": "Η ρύθμιση ενημερώθηκε",
+  "changes_effect_next_screen_sharing": "Οι αλλαγές θα τεθούν σε ισχύ την επόμενη κοινή χρήση οθόνης.",
+  "video_stats_copied": "Τα στατιστικά βίντεο αντιγράφηκαν στο πρόχειρο",
+  "anonymous_user": "Ανώνυμος χρήστης",
+  "loading": "Φόρτωση ...",
+  "@loading": {
+    "description": "Loading text"
+  },
+  "video": "Βίντεο",
+  "audio": "Ήχος",
+  "turn_off_camera": "Απενεργοποίηση κάμερας",
+  "turn_on_camera": "Ενεργοποίηση κάμερας",
+  "video_settings": "Ρυθμίσεις Βίντεο",
+  "select_camera_device": "Επιλέξτε μια συσκευή κάμερας",
+  "turn_off_microphone": "Απενεργοποίηση μικροφώνου",
+  "turn_on_microphone": "Ενεργοποίηση μικροφώνου",
+  "audio_settings": "Ρυθμίσεις Ήχου",
+  "select_microphone": "Επιλέξτε ένα μικρόφωνο",
+  "select_speaker": "Επιλέξτε ένα ηχείο",
+  "permission_not_given": "Δε δόθηκαν δικαιώματα",
+  "permission_camera": "Απαιτήσαμε άδεια κάμερας για να ενεργοποιήσουμε την κάμερά σας",
+  "permission_microphone": "Απαιτήσαμε άδεια κάμερας για να ενεργοποιήσουμε το μικρόφωνό σας",
+  "camera_is_off": "Η κάμερα είναι απενεργοποιημένη",
+  "copied_to_clipboard": "Αντιγράφηκε στο πρόχειρο",
+  "personal_meeting": "Προσωπική σύσκεψη",
+  "@personal_meeting": {
+    "description": "Title for personal meeting dialog"
+  },
+  "personal_meeting_description": "Η πάντα διαθέσιμη αίθουσα συσκέψεων σας",
+  "@personal_meeting_description": {
+    "description": "Description text for personal meeting room"
+  },
+  "personal_meeting_room": "Προσωπική αίθουσα συσκέψεων",
+  "@personal_meeting_room": {
+    "description": "Title for personal meeting room dialog"
+  },
+  "join_a_meeting": "Συμμετοχή σε σύσκεψη",
+  "@join_a_meeting": {
+    "description": "Title for join meeting dialog"
+  },
+  "join_meeting_subtitle": "Επικολλήστε τον σύνδεσμο Proton Meet για να συμμετάσχετε σε μια ασφαλή σύσκεψη",
+  "@join_meeting_subtitle": {
+    "description": "Subtitle text for join meeting dialog"
+  },
+  "please_enter_valid_meeting_link": "Παρακαλούμε εισάγετε έναν έγκυρο σύνδεσμο σύσκεψης.",
+  "@please_enter_valid_meeting_link": {
+    "description": "Error message when meeting link is invalid"
+  },
+  "meeting_password_incorrect": "Ο κωδικός πρόσβασης της σύσκεψης είναι εσφαλμένος",
+  "@meeting_password_incorrect": {
+    "description": "Error message when the meeting password embedded in the join link is invalid"
+  },
+  "meeting_password_invalid": "Ο κωδικός πρόσβασης της σύσκεψης δεν είναι έγκυρος",
+  "link_copied_to_clipboard": "Ο σύνδεσμος αντιγράφηκε στο πρόχειρο",
+  "@link_copied_to_clipboard": {
+    "description": "Success message when meeting link is copied"
+  },
+  "meeting_link_label": "Σύνδεσμος σύσκεψης",
+  "@meeting_link_label": {
+    "description": "Label for meeting link input field"
+  },
+  "copy_link": "Αντιγραφή συνδέσμου",
+  "@copy_link": {
+    "description": "Button text to copy meeting link"
+  },
+  "copy_link_and_close": "Αντιγραφή συνδέσμου και κλείσιμο",
+  "@copy_link_and_close": {
+    "description": "Button text to copy link and close dialog"
+  },
+  "copy": "Αντιγραφή",
+  "@copy": {
+    "description": "Copy action"
+  },
+  "delete": "Διαγραφή",
+  "@delete": {
+    "description": "Delete action"
+  },
+  "delete_meeting": "Διαγραφή σύσκεψης",
+  "@delete_meeting": {
+    "description": "Title for delete meeting dialog"
+  },
+  "delete_meeting_confirmation": "Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτήν τη σύσκεψης; Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.",
+  "@delete_meeting_confirmation": {
+    "description": "Confirmation message for deleting a meeting"
+  },
+  "creating_meeting": "Δημιουργία σύσκεψης ...",
+  "@creating_meeting": {
+    "description": "Loading message shown while creating a meeting"
+  },
+  "deleting_meeting": "Διαγραφή σύσκεψης ...",
+  "@deleting_meeting": {
+    "description": "Loading message shown while deleting a meeting"
+  },
+  "updating_meeting": "Ενημέρωση σύσκεψης ...",
+  "@updating_meeting": {
+    "description": "Loading message shown while updating a meeting"
+  },
+  "scheduling_meeting": "Προγραμματισμός σύσκεψης ...",
+  "@scheduling_meeting": {
+    "description": "Loading message shown while scheduling a meeting"
+  },
+  "guest_user_description": "Ως επισκέπτης χρήστης, μπορείτε να ξεκινήσετε ανώνυμες και δωρεάν συσκέψεις από αυτόν τον πίνακα ελέγχου.",
+  "@guest_user_description": {
+    "description": "Description text explaining guest user capabilities"
+  },
+  "create_free_account": "Δημιουργία δωρεάν λογαριασμού",
+  "@create_free_account": {
+    "description": "Button text to create a free account"
+  },
+  "please_sign_in_to_access_feature": "Παρακαλούμε συνδεθείτε για να αποκτήσετε πρόσβαση σε αυτήν τη λειτουργία! ",
+  "@please_sign_in_to_access_feature": {
+    "description": "Message prompting user to sign in"
+  },
+  "already_have_account": "Έχετε ήδη λογαριασμό; ",
+  "@already_have_account": {
+    "description": "Text before login link for existing users"
+  },
+  "we_hope_you_enjoyed_meeting": "Ελπίζουμε να απολαύσατε την ασφαλή σας σύσκεψη! ",
+  "@we_hope_you_enjoyed_meeting": {
+    "description": "Message shown after user leaves meeting"
+  },
+  "left_by_mistake": "Φύγατε κατά λάθος; ",
+  "@left_by_mistake": {
+    "description": "Text before rejoin link"
+  },
+  "rejoin_meeting": "Επανασυμμετοχή στη σύσκεψη",
+  "@rejoin_meeting": {
+    "description": "Button text to rejoin a meeting"
+  },
+  "left_meeting_title": "Αποχωρήσατε από τη σύσκεψη",
+  "@left_meeting_title": {
+    "description": "Title shown in left meeting bottom sheet"
+  },
+  "left_meeting_subtitle_guest_free": "Διοργανώστε τη δική σας ασφαλή σύσκεψη. Ξεκινήστε μια κλήση στο Proton Meet και κοινοποιήστε τον σύνδεσμο για να προσκαλέσετε οποιονδήποτε να συμμετάσχει. Απλό, ασφαλές και δωρεάν.",
+  "@left_meeting_subtitle_guest_free": {
+    "description": "Subtitle shown for non-paid non-host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_guest_paid": "Σας ευχαριστούμε για τη συμμετοχή σας.",
+  "@left_meeting_subtitle_guest_paid": {
+    "description": "Subtitle shown for paid non-host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_host_free": "Σας ευχαριστούμε που διοργανώσατε μια σύσκεψη.",
+  "@left_meeting_subtitle_host_free": {
+    "description": "Subtitle shown for free host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_host_paid": "Σας ευχαριστούμε που διοργανώσατε μια premium σύσκεψη.",
+  "@left_meeting_subtitle_host_paid": {
+    "description": "Subtitle shown for paid host users after leaving a meeting"
+  },
+  "start_meeting_now": "Ξεκινήστε μια σύσκεψη τώρα",
+  "@start_meeting_now": {
+    "description": "Button text to start a meeting immediately from left meeting bottom sheet"
+  },
+  "publish": "Δημοσίευση",
+  "@publish": {
+    "description": "Dialog title for publishing camera and microphone"
+  },
+  "publish_camera_mic_question": "Θα θέλατε να δημοσιεύσετε την Κάμερα & το Μικρόφωνό σας;",
+  "@publish_camera_mic_question": {
+    "description": "Question asking user to publish camera and microphone"
+  },
+  "no": "ΟΧΙ",
+  "@no": {
+    "description": "Negative response button text"
+  },
+  "yes": "ΝΑΙ",
+  "@yes": {
+    "description": "Positive response button text"
+  },
+  "play_audio": "Αναπαραγωγή Ήχου",
+  "@play_audio": {
+    "description": "Dialog title and button text for playing audio"
+  },
+  "ios_safari_audio_activation": "Πρέπει να ενεργοποιήσετε χειροκίνητα την αναπαραγωγή ήχου για το iOS Safari!",
+  "@ios_safari_audio_activation": {
+    "description": "Message explaining iOS Safari audio activation requirement"
+  },
+  "ignore": "Αγνόηση",
+  "@ignore": {
+    "description": "Button text to ignore an action"
+  },
+  "unpublish": "Κατάργηση δημοσίευσης",
+  "@unpublish": {
+    "description": "Dialog title for unpublishing camera and microphone"
+  },
+  "unpublish_camera_mic_question": "Θα θέλατε να καταργήσετε τη δημοσίευση της Κάμερα & του Μικροφώνου σας;",
+  "@unpublish_camera_mic_question": {
+    "description": "Question asking user to unpublish camera and microphone"
+  },
+  "error": "Σφάλμα",
+  "@error": {
+    "description": "Generic error dialog title"
+  },
+  "disconnect": "Αποσύνδεση",
+  "@disconnect": {
+    "description": "Dialog title and button text for disconnecting"
+  },
+  "are_you_sure_disconnect": "Είστε σίγουροι ότι θέλετε να αποσυνδεθείτε;",
+  "@are_you_sure_disconnect": {
+    "description": "Confirmation question before disconnecting"
+  },
+  "reconnect": "Επανασύνδεση",
+  "@reconnect": {
+    "description": "Dialog title and button text for reconnecting"
+  },
+  "force_reconnection_message": "Αυτό θα επιβάλει επανασύνδεση",
+  "@force_reconnection_message": {
+    "description": "Message explaining that reconnection will be forced"
+  },
+  "reconnection_successful": "Η επανασύνδεση ήταν επιτυχής.",
+  "@reconnection_successful": {
+    "description": "Success message after reconnection"
+  },
+  "no_connection": "Δεν υπάρχει σύνδεση",
+  "@no_connection": {
+    "description": "Message shown when there is no network connection"
+  },
+  "mls_not_synced": "Το MLS δεν είναι συγχρονισμένο",
+  "@mls_not_synced": {
+    "description": "Message shown when MLS is not synced"
+  },
+  "reconnecting_warning": "Επανασύνδεση",
+  "@reconnecting_warning": {
+    "description": "Message shown when MLS is not synced or websocket trying to reconnect"
+  },
+  "websocket_reconnecting": "Επανασύνδεση WebSocket",
+  "@websocket_reconnecting": {
+    "description": "Message shown when WebSocket is reconnecting"
+  },
+  "received_data": "Ληφθέντα δεδομένα",
+  "@received_data": {
+    "description": "Dialog title for received data"
+  },
+  "room_recording_reminder": "Υπενθύμιση εγγραφής αίθουσας",
+  "@room_recording_reminder": {
+    "description": "Dialog title for room recording status"
+  },
+  "room_recording_active": "Η εγγραφή αίθουσας είναι ενεργή.",
+  "@room_recording_active": {
+    "description": "Message when room recording is active"
+  },
+  "room_recording_stopped": "Η εγγραφή αίθουσας διακόπηκε.",
+  "@room_recording_stopped": {
+    "description": "Message when room recording is stopped"
+  },
+  "meeting_being_recorded": "Αυτή η σύσκεψη καταγράφεται",
+  "@meeting_being_recorded": {
+    "description": "Title for recording in progress dialog"
+  },
+  "recording_consent_message": "Συνεχίζοντας στη σύσκεψη, αποδέχεστε και συναινείτε στην ηχογράφηση.",
+  "@recording_consent_message": {
+    "description": "Message about recording consent"
+  },
+  "recording_in_progress": "Καταγραφή σε εξέλιξη",
+  "@recording_in_progress": {
+    "description": "Top banner shown to all participants when the meeting is being recorded"
+  },
+  "recording_in_progress_with_name": "Ηχογράφηση σε εξέλιξη · Ο χρήστης {name} ηχογραφεί",
+  "@recording_in_progress_with_name": {
+    "description": "Top banner when exactly one named participant is recording",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "recording_in_progress_with_name_and_others": "Ηχογράφηση σε εξέλιξη · Ο χρήστης {name} και {count} άλλοι χρήστες ηχογραφούν",
+  "@recording_in_progress_with_name_and_others": {
+    "description": "Top banner when multiple participants are recording",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recording_label": "Ηχογράφηση",
+  "@recording_label": {
+    "description": "Chip shown next to participants currently recording the meeting"
+  },
+  "agree_and_continue": "Αποδοχή και συνέχεια",
+  "@agree_and_continue": {
+    "description": "Button text to agree and continue in meeting"
+  },
+  "continue_button": "Συνέχεια",
+  "@continue_button": {
+    "description": "Button text to continue in meeting"
+  },
+  "allow_subscription": "Επέτρεψε τη συνδρομή",
+  "@allow_subscription": {
+    "description": "Dialog title for allowing subscription"
+  },
+  "allow_subscription_question": "Να επιτρέπεται σε όλους τους συμμετέχοντες να εγγραφούν σε κομμάτια που έχουν δημοσιευτεί από τοπικούς συμμετέχοντες;",
+  "@allow_subscription_question": {
+    "description": "Question asking user to allow subscription"
+  },
+  "simulate_scenario": "Προσομοίωση Σεναρίου",
+  "@simulate_scenario": {
+    "description": "Dialog title for simulating scenarios"
+  },
+  "leave_room": "Αποχώρηση από την αίθουσα",
+  "@leave_room": {
+    "description": "Dialog title for leaving room"
+  },
+  "are_you_sure_leave_room": "Είστε σίγουροι ότι θέλετε να αποχωρήσετε από την αίθουσα;",
+  "@are_you_sure_leave_room": {
+    "description": "Confirmation question before leaving room"
+  },
+  "no_response": "Όχι",
+  "@no_response": {
+    "description": "Negative response in confirmation dialogs"
+  },
+  "yes_response": "Ναι",
+  "@yes_response": {
+    "description": "Positive response in confirmation dialogs"
+  },
+  "personal_meeting_link": "Σύνδεσμος προσωπικής σύσκεψης",
+  "@personal_meeting_link": {
+    "description": "Label for personal meeting link button"
+  },
+  "regenerate_link": "Αναδημιουργία συνδέσμου",
+  "@regenerate_link": {
+    "description": "Button text to regenerate a meeting link"
+  },
+  "regenerating": "Εκ νέου δημιουργία ...",
+  "@regenerating": {
+    "description": "Loading message shown while regenerating a meeting link"
+  },
+  "start_secure_meeting": "Έναρξη ασφαλούς σύσκεψης",
+  "@start_secure_meeting": {
+    "description": "Button text to start a secure meeting"
+  },
+  "upcoming_meetings": "Προσεχείς συσκέψεις",
+  "@upcoming_meetings": {
+    "description": "Section title for upcoming meetings list"
+  },
+  "my_rooms_count": "Οι αίθουσές μου",
+  "@my_rooms_count": {
+    "description": "Title showing the count of my rooms"
+  },
+  "my_meetings_count": "Οι συσκέψεις μου",
+  "@my_meetings_count": {
+    "description": "Title showing the count of my meetings"
+  },
+  "schedule_meeting": "Προγραμματισμός σύσκεψης",
+  "@schedule_meeting": {
+    "description": "Button text to schedule a meeting"
+  },
+  "start_meeting": "Έναρξη σύσκεψης",
+  "@start_meeting": {
+    "description": "Button text to start a meeting"
+  },
+  "recent_meetings": "Πρόσφατες Συσκέψεις",
+  "@recent_meetings": {
+    "description": "Section title for recent meetings list"
+  },
+  "start_instant_meeting": "Έναρξη Άμεσης Σύσκεψης",
+  "@start_instant_meeting": {
+    "description": "Button text to start an instant meeting"
+  },
+  "copy_link_button": "Αντιγραφή συνδέσμου",
+  "@copy_link_button": {
+    "description": "Button text to copy a link"
+  },
+  "start_now": "Ξεκινήστε τώρα",
+  "@start_now": {
+    "description": "Button text to start immediately"
+  },
+  "leave_meeting": "Αποχώρηση από τη σύσκεψη",
+  "@leave_meeting": {
+    "description": "Dialog title for leaving a meeting"
+  },
+  "are_you_sure_leave_meeting": "Είστε σίγουροι ότι θέλετε να αποχωρήσετε από τη σύσκεψη;",
+  "@are_you_sure_leave_meeting": {
+    "description": "Confirmation question before leaving meeting"
+  },
+  "user_is_presenting": "{name} (εσείς) παρουσιάζει",
+  "@user_is_presenting": {
+    "description": "String for local user presenting screen share",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "remote_user_is_presenting": "{name} παρουσιάζει",
+  "@remote_user_is_presenting": {
+    "description": "String for remote user presenting screen share",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "screen_share": "Κοινή χρήση οθόνης",
+  "@screen_share": {
+    "description": "Tooltip and button text for screen sharing"
+  },
+  "disable_denoising": "απενεργοποίηση αποθορυβοποίησης",
+  "@disable_denoising": {
+    "description": "Tooltip for disabling audio denoising"
+  },
+  "enable_denoising": "ενεργοποίηση αποθορυβοποίησης",
+  "@enable_denoising": {
+    "description": "Tooltip for enabling audio denoising"
+  },
+  "exit_full_screen": "έξοδος από πλήρη οθόνη",
+  "@exit_full_screen": {
+    "description": "Tooltip for exiting full screen mode"
+  },
+  "enter_full_screen": "μετάβαση σε πλήρη οθόνη",
+  "@enter_full_screen": {
+    "description": "Tooltip for entering full screen mode"
+  },
+  "enter_pip": "Μετάβαση σε Εικόνα-σε-Εικόνα",
+  "@enter_pip": {
+    "description": "Tooltip for entering Picture-in-Picture mode"
+  },
+  "screen_sharing": "Κοινή χρήση Οθόνης",
+  "@screen_sharing": {
+    "description": "Notification title for screen sharing"
+  },
+  "sharing_your_screen": "Γίνεται κοινή χρήση της οθόνης σας",
+  "@sharing_your_screen": {
+    "description": "Notification text when sharing screen"
+  },
+  "screen_share_not_supported_mobile": "Η κοινή χρήση οθόνης δεν υποστηρίζεται στον ιστό για κινητά",
+  "@screen_share_not_supported_mobile": {
+    "description": "Error message when screen sharing is not supported on mobile"
+  },
+  "switch_speakerphone_on": "Χρησιμοποιήστε το Ηχείο του Τηλεφώνου",
+  "@switch_speakerphone_on": {
+    "description": "Tooltip for switching audio output to the phone speaker"
+  },
+  "switch_speakerphone_off": "Χρησιμοποιήστε την Προεπιλεγμένης Εξόδου Ήχου",
+  "@switch_speakerphone_off": {
+    "description": "Tooltip for switching audio output back to the default device"
+  },
+  "audio_output_default_device": "Προεπιλεγμένη συσκευή",
+  "@audio_output_default_device": {
+    "description": "Bottom sheet option: use default audio output routing (e.g. earpiece or headphones)"
+  },
+  "audio_output_earpiece": "Ακουστικό",
+  "@audio_output_earpiece": {
+    "description": "Bottom sheet option: use Earpiece audio output routing"
+  },
+  "audio_output_bluetooth_device": "Συσκευή Bluetooth",
+  "@audio_output_bluetooth_device": {
+    "description": "Bottom sheet option: use Bluetooth device audio output routing"
+  },
+  "audio_output_headphones": "Ακουστικά",
+  "@audio_output_headphones": {
+    "description": "Bottom sheet option: use Headphones audio output routing"
+  },
+  "audio_output_phone_speakers": "Ηχεία τηλεφώνου",
+  "@audio_output_phone_speakers": {
+    "description": "Bottom sheet option: use the phone built-in loudspeaker"
+  },
+  "please_grant_camera_permission": "Παρακαλώ δώστε δικαιώματα στην κάμερα για να συνεχίσετε",
+  "@please_grant_camera_permission": {
+    "description": "Message requesting camera permission"
+  },
+  "please_grant_microphone_permission": "Παρακαλώ δώστε δικαιώματα στο μικρόφωνο για να συνεχίσετε",
+  "@please_grant_microphone_permission": {
+    "description": "Message requesting microphone permission"
+  },
+  "your_meeting_is_ready": "Η σύσκεψή σας είναι έτοιμη",
+  "@your_meeting_is_ready": {
+    "description": "Title message when meeting is ready"
+  },
+  "share_link_invite_description": "Μοιραστείτε αυτόν τον σύνδεσμο για να προσκαλέσετε άλλους. Μπορείτε επίσης να το βρείτε ανά πάσα στιγμή κάνοντας κλικ στο εικονίδιο πληροφοριών στη γραμμή εργαλείων.",
+  "@share_link_invite_description": {
+    "description": "Instructions for sharing meeting link"
+  },
+  "two_factor_authentication": "Έλεγχος Ταυτότητας δυο παραγόντων",
+  "@two_factor_authentication": {
+    "description": "Title for two-factor authentication"
+  },
+  "enter_2fa_code": "Εισαγάγετε τον κωδικό 2FA για να συνεχίσετε",
+  "@enter_2fa_code": {
+    "description": "Prompt for entering 2FA code"
+  },
+  "twofa_code": "Κωδικός 2FA",
+  "@twofa_code": {
+    "description": "Label for 2FA code input field"
+  },
+  "verify": "Επαλήθευση",
+  "@verify": {
+    "description": "Button text to verify"
+  },
+  "switch_to": "Αλλαγή σε",
+  "@switch_to": {
+    "description": "Text before account name in account switcher"
+  },
+  "add_another_account": "Προσθήκη άλλου λογαριασμού",
+  "@add_another_account": {
+    "description": "Button text to add another account"
+  },
+  "delete_proton_account": "Διαγραφή λογαριασμού Proton",
+  "@delete_proton_account": {
+    "description": "Button text to delete Proton account"
+  },
+  "invalid_meeting_link": "Μη έγκυρος σύνδεσμος σύσκεψης",
+  "@invalid_meeting_link": {
+    "description": "Error message for invalid meeting link"
+  },
+  "permission_required": "Απαιτείται δικαίωμα",
+  "@permission_required": {
+    "description": "Label when permission is required"
+  },
+  "unsubscribe_audio": "Κατάργηση εγγραφής ήχου",
+  "@unsubscribe_audio": {
+    "description": "Menu item to unsubscribe from audio"
+  },
+  "subscribe_audio": "Εγγραφή ήχου",
+  "@subscribe_audio": {
+    "description": "Menu item to subscribe to audio"
+  },
+  "unsubscribe_video": "Κατάργηση εγγραφής βίντεο",
+  "@unsubscribe_video": {
+    "description": "Menu item to unsubscribe from video"
+  },
+  "subscribe_video": "Εγγραφή βίντεο",
+  "@subscribe_video": {
+    "description": "Menu item to subscribe to video"
+  },
+  "remote_mute_video": "Απομακρυσμένη Σίγαση βίντεο",
+  "@remote_mute_video": {
+    "description": "Menu item to remotely mute video"
+  },
+  "remote_mute_audio": "Απομακρυσμένη Σίγαση ήχου",
+  "@remote_mute_audio": {
+    "description": "Menu item to remotely mute audio"
+  },
+  "force_mute": "Επιβολή σίγασης",
+  "@force_mute": {
+    "description": "Menu item to force mute a participant"
+  },
+  "force_mute_participant": "Επιβολή σίγασης {name}",
+  "@force_mute_participant": {
+    "description": "Toast message when force muting a participant",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "force_disable_camera": "Επιβολή απενεργοποίησης κάμερας",
+  "@force_disable_camera": {
+    "description": "Menu item to force disable camera"
+  },
+  "force_disable_camera_participant": "Επιβολή απενεργοποίησης κάμερας {name}",
+  "@force_disable_camera_participant": {
+    "description": "Toast message when force disabling camera",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "kick_out": "Διώξιμο",
+  "@kick_out": {
+    "description": "Menu item to kick out a participant"
+  },
+  "kick_out_participant": "Διώξιμο {name}",
+  "@kick_out_participant": {
+    "description": "Toast message when kicking out a participant",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "subscribe_menu": "Μενού εγγραφής",
+  "@subscribe_menu": {
+    "description": "Tooltip for subscribe menu button"
+  },
+  "subscribe": "Εγγραφή",
+  "@subscribe": {
+    "description": "Menu item to subscribe"
+  },
+  "unsubscribe": "Παύση εγγραφής",
+  "@unsubscribe": {
+    "description": "Menu item to unsubscribe"
+  },
+  "preferred_fps": "Προτιμώμενο FPS",
+  "@preferred_fps": {
+    "description": "Tooltip for preferred FPS setting"
+  },
+  "preferred_quality": "Προτιμώμενη Ποιότητα",
+  "@preferred_quality": {
+    "description": "Tooltip for preferred quality setting"
+  },
+  "high": "ΥΨΗΛΉ",
+  "@high": {
+    "description": "High quality option"
+  },
+  "medium": "ΜΕΤΡΙΑ",
+  "@medium": {
+    "description": "Medium quality option"
+  },
+  "low": "ΧΑΜΗΛΗ",
+  "@low": {
+    "description": "Low quality option"
+  },
+  "unnamed_room": "Αίθουσα χωρίς όνομα",
+  "@unnamed_room": {
+    "description": "Default name for rooms without a name"
+  },
+  "participants_count_text": "{count} συμμετέχοντες",
+  "@participants_count_text": {
+    "description": "Text showing number of participants",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_privacy_message": "Αυτή είναι μια διατερματικά κρυπτογραφημένη συνομιλία με εφήμερα μηνύματα, τα οποία εξαφανίζονται στο τέλος της κλήσης.",
+  "@chat_privacy_message": {
+    "description": "Privacy message displayed in chat when there are no messages."
+  },
+  "meeting_quality_feedback": "Σχόλια για την Ποιότητα των Συσκέψεων",
+  "@meeting_quality_feedback": {
+    "description": "Title for meeting quality feedback form"
+  },
+  "quality_feedback_email_message": "Με την υποβολή, θα κοινοποιήσετε το αρχείο καταγραφής σύνδεσης μαζί μας μέσω μηνύματος ηλεκτρονικού ταχυδρομείου.",
+  "@quality_feedback_email_message": {
+    "description": "Message explaining that connection log will be shared via email"
+  },
+  "call_quality_how_was": "Πώς ήταν η ποιότητα της κλήσης;",
+  "@call_quality_how_was": {
+    "description": "Prompt above star rating on post-meeting feedback"
+  },
+  "call_quality_what_went_wrong": "Τι πήγε στραβά;",
+  "@call_quality_what_went_wrong": {
+    "description": "Heading when user rated call quality below threshold"
+  },
+  "call_quality_problem_subtitle": "Τι πρόβλημα αντιμετωπίσατε;",
+  "@call_quality_problem_subtitle": {
+    "description": "Subtitle under what went wrong on low-rating feedback"
+  },
+  "call_quality_add_optional_details": "Προσθέστε προαιρετικές λεπτομέρειες",
+  "@call_quality_add_optional_details": {
+    "description": "Expand control for free-text feedback"
+  },
+  "call_quality_share_more_details": "Μοιραστείτε περισσότερες λεπτομέρειες",
+  "@call_quality_share_more_details": {
+    "description": "Placeholder for optional feedback text"
+  },
+  "call_quality_help_text": "Τα προαιρετικά σχόλια αποστέλλονται με ασφάλεια για να βοηθήσουν στη βελτίωση της ποιότητας των κλήσεων.",
+  "@call_quality_help_text": {
+    "description": "Short privacy note under the rating on post-meeting feedback"
+  },
+  "call_quality_feedback_submitted": "Τα σχόλιά σας έχουν υποβληθεί",
+  "@call_quality_feedback_submitted": {
+    "description": "Toast after successful meeting feedback"
+  },
+  "call_quality_could_not_send": "Δεν ήταν δυνατή η αποστολή σχολίων",
+  "@call_quality_could_not_send": {
+    "description": "Toast when meeting feedback API fails"
+  },
+  "call_quality_category_audio": "Ήχος",
+  "@call_quality_category_audio": {
+    "description": "Section label for audio-related feedback options"
+  },
+  "call_quality_category_video": "Βίντεο",
+  "@call_quality_category_video": {
+    "description": "Section label for video-related feedback options"
+  },
+  "call_quality_category_screen": "Κοινή χρήση οθόνης",
+  "@call_quality_category_screen": {
+    "description": "Section label for screen-share feedback options"
+  },
+  "call_quality_audio_breaking": "Ο ήχος διακόπτονταν",
+  "@call_quality_audio_breaking": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_audio_couldnt_hear": "Δεν μπορούσα να ακούσω τους άλλους",
+  "@call_quality_audio_couldnt_hear": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_audio_others_couldnt_hear": "Οι άλλοι δεν μπορούσαν να με ακούσουν",
+  "@call_quality_audio_others_couldnt_hear": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_poor": "Η ποιότητα του βίντεο ήταν κακή",
+  "@call_quality_video_poor": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_couldnt_see": "Δεν μπόρεσα να δω το βίντεο των άλλων",
+  "@call_quality_video_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_others_couldnt_see": "Άλλοι δεν μπορούσαν να δουν το βίντεό μου",
+  "@call_quality_video_others_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_blurry": "Η παρουσίαση ήταν θολή",
+  "@call_quality_screen_blurry": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_couldnt_see": "Δεν μπορούσα να δω την παρουσίαση",
+  "@call_quality_screen_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_couldnt_present": "Δεν μπορούσα να παρουσιάσω",
+  "@call_quality_screen_couldnt_present": {
+    "description": "Low-rating feedback option"
+  },
+  "skip": "Παράλειψη",
+  "@skip": {
+    "description": "Button text to skip an action"
+  },
+  "feature_not_ready": "Αυτή η λειτουργία δεν είναι ακόμη έτοιμη.",
+  "@feature_not_ready": {
+    "description": "Message when a feature is not ready"
+  },
+  "video_stats_all_participants": "Στατιστικά βίντεο - Όλοι οι συμμετέχοντες",
+  "@video_stats_all_participants": {
+    "description": "Title for video statistics dialog"
+  },
+  "video_stats": "στατιστικά βίντεο",
+  "@video_stats": {
+    "description": "Label for video statistics"
+  },
+  "page_not_found": "Η σελίδα δεν βρέθηκε",
+  "@page_not_found": {
+    "description": "Error message when page is not found"
+  },
+  "invalid_deeplink_format": "μη έγκυρη μορφή συνδέσμου σε βάθος: {name}",
+  "@invalid_deeplink_format": {
+    "description": "Error message for invalid deeplink format",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "open_settings": "Άνοιγμα Ρυθμίσεων",
+  "@open_settings": {
+    "description": "Button text to open settings"
+  },
+  "schedule": "Πρόγραμμα",
+  "@schedule": {
+    "description": "Button text to schedule"
+  },
+  "start": "Έναρξη",
+  "@start": {
+    "description": "Button text to start"
+  },
+  "start_an_instant_meeting": "Έναρξη άμεσης σύσκεψης",
+  "@start_an_instant_meeting": {
+    "description": "Button text to start an instant meeting"
+  },
+  "more": "Περισσότερα",
+  "@more": {
+    "description": "Tooltip for more options button"
+  },
+  "unlock_failed_too_many_times": "Το ξεκλείδωμα απέτυχε πάρα πολλές φορές.",
+  "@unlock_failed_too_many_times": {
+    "description": "Error message when unlock fails too many times"
+  },
+  "show_all_stats_debug": "Εμφάνιση όλων των στατιστικών (λειτουργία εντοπισμού σφαλμάτων)",
+  "@show_all_stats_debug": {
+    "description": "Button text to show all stats in debug mode"
+  },
+  "close_simulation": "Κλείσιμο Προσομοίωσης",
+  "@close_simulation": {
+    "description": "Button text to close simulation"
+  },
+  "close_all_rooms_exit_simulation": "Είστε σίγουροι ότι θέλετε να κλείσετε όλες τις αίθουσες και να τερματίσετε τη λειτουργία προσομοίωσης;",
+  "@close_all_rooms_exit_simulation": {
+    "description": "Confirmation question before closing simulation"
+  },
+  "yes_close_all": "Ναι, κλείσιμο όλων",
+  "@yes_close_all": {
+    "description": "Button text to confirm closing all rooms"
+  },
+  "simulation_mode": "Λειτουργία Προσομοίωσης",
+  "@simulation_mode": {
+    "description": "Title for simulation mode"
+  },
+  "simulation_mode_description": "Δημιουργήστε και διαχειριστείτε προσομοιωμένες αίθουσες για δοκιμές",
+  "@simulation_mode_description": {
+    "description": "Description text for simulation mode"
+  },
+  "simulated_rooms": "Προσομοιωμένες Αίθουσες",
+  "@simulated_rooms": {
+    "description": "Title for simulated rooms section"
+  },
+  "room_with_users": "Αίθουσα {key} ({count} χρήστες)",
+  "@room_with_users": {
+    "description": "Text showing room ID and user count",
+    "placeholders": {
+      "key": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "enable_video": "Ενεργοποίηση βίντεο",
+  "@enable_video": {
+    "description": "Button text to enable video"
+  },
+  "meeting_will_end_in": "Η σύσκεψη θα λήξει σε {time}",
+  "@meeting_will_end_in": {
+    "description": "Title for meeting will end dialog with countdown timer",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "0:30"
+      }
+    }
+  },
+  "meeting_expiry_banner_title_prefix": "Η σύσκεψη θα λήξει σε ",
+  "@meeting_expiry_banner_title_prefix": {
+    "description": "Title prefix for meeting expiry countdown banner; duration is appended"
+  },
+  "meeting_expiry_banner_description": "Οι δωρεάν συναντήσεις περιορίζονται σε 1 ώρα. Αυτή η κλήση θα αποσυνδεθεί σύντομα.",
+  "@meeting_expiry_banner_description": {
+    "description": "Subtitle on meeting expiry warning banner for free meetings"
+  },
+  "host_close_meeting_description": "Θέλετε να αποχωρήσετε από τη σύσκεψη ή να την τερματίσετε για όλους;",
+  "@host_close_meeting_description": {
+    "description": "Description text when host want to leave meeting"
+  },
+  "close_meeting_description": "Είστε σίγουροι ότι θέλετε να φύγετε; Η σύσκεψη θα συνεχιστεί χωρίς εσάς.",
+  "@close_meeting_description": {
+    "description": "Description text when host want to leave meeting"
+  },
+  "meeting_will_end_description": "Δεδομένου ότι είστε ο μόνος συμμετέχων σε αυτήν τη σύσκεψη, η σύσκεψη θα κλείσει αυτόματα. Θέλετε να παραμείνετε σε αυτήν τη σύσκεψη;",
+  "meeting_created": "Η σύσκεψη δημιουργήθηκε",
+  "@meeting_created": {
+    "description": "Title for meeting created dialog"
+  },
+  "room_initialing_hint": "Εγγραφή σε απομακρυσμένα κομμάτια βίντεο…",
+  "@room_initialing_hint": {
+    "description": "Hint for room initialing process"
+  },
+  "add_to_calendar": "Προσθήκη στο ημερολόγιο",
+  "@add_to_calendar": {
+    "description": "Button label to add a meeting to calendar"
+  },
+  "meeting_details": "Λεπτομέρειες",
+  "@meeting_details": {
+    "description": "Button label to show meeting details"
+  },
+  "meeting_details_section": "Λεπτομέρειες σύσκεψης",
+  "@meeting_details_section": {
+    "description": "Section title for meeting details in info panel"
+  },
+  "title_label": "Τίτλος",
+  "@title_label": {
+    "description": "Label for meeting title field"
+  },
+  "date_label": "Ημερομηνία",
+  "@date_label": {
+    "description": "Label for meeting date field"
+  },
+  "time_label": "Ώρα",
+  "@time_label": {
+    "description": "Label for meeting time field"
+  },
+  "invite_link_label": "Σύνδεσμος πρόσκλησης",
+  "@invite_link_label": {
+    "description": "Label for invite link field"
+  },
+  "messaging_layer_security": "Ασφάλεια Επιπέδου Μηνυμάτων (MLS)",
+  "@messaging_layer_security": {
+    "description": "Title for MLS section in meeting info panel"
+  },
+  "participants_label": "Συμμετέχοντες",
+  "@participants_label": {
+    "description": "Label for participants count field"
+  },
+  "epoch_label": "Εποχή",
+  "@epoch_label": {
+    "description": "Label for epoch field"
+  },
+  "security_code_label": "Κωδικός ασφαλείας",
+  "@security_code_label": {
+    "description": "Label for security code field"
+  },
+  "recurrence_daily": "Καθημερινά",
+  "@recurrence_daily": {
+    "description": "Recurrence frequency label for daily meetings"
+  },
+  "recurrence_weekly": "Εβδομαδιαία",
+  "@recurrence_weekly": {
+    "description": "Recurrence frequency label for weekly meetings"
+  },
+  "recurrence_monthly": "Μηνιαία",
+  "@recurrence_monthly": {
+    "description": "Recurrence frequency label for monthly meetings"
+  },
+  "recurrence_yearly": "Ετήσια",
+  "@recurrence_yearly": {
+    "description": "Recurrence frequency label for yearly meetings"
+  },
+  "@meeting_will_end_description": {
+    "description": "Description text explaining why meeting will end"
+  },
+  "stay_in_meeting": "Παραμείνετε στη σύσκεψη",
+  "@stay_in_meeting": {
+    "description": "Button text to stay in meeting"
+  },
+  "end_meeting_for_all": "Λήξη σύσκεψης για όλους",
+  "@end_meeting_for_all": {
+    "description": "Button text to end meeting for all"
+  },
+  "stay_in_the_meeting": "Παραμείνετε στη σύσκεψη",
+  "@stay_in_the_meeting": {
+    "description": "Button text to stay in the meeting"
+  },
+  "connection_lost": "Απώλεια σύνδεσης",
+  "@connection_lost": {
+    "description": "Connection lost description"
+  },
+  "connection_lost_content": "Η σύνδεση χάθηκε, παρακαλούμε να συμμετάσχετε ξανά στη σύσκεψη.",
+  "@connection_lost_content": {
+    "description": "Connection lost description"
+  },
+  "go_back_to_dashboard": "Επιστροφή στον πίνακα ελέγχου",
+  "@go_back_to_dashboard": {
+    "description": "Description text for go back to the dashboard button"
+  },
+  "early_access_description": "Αυτή η λειτουργία είναι διαθέσιμη αποκλειστικά σε χρήστες Lifetime και Visionary κατά την πρώιμη πρόσβαση.",
+  "@early_access_description": {
+    "description": "Description text explaining guest user capabilities"
+  },
+  "early_access_title": "Συνδεθείτε για να αποκτήσετε πρόσβαση σε αυτήν τη λειτουργία",
+  "@early_access_title": {
+    "description": "Message prompting user to sign in for this early access feature"
+  },
+  "early_access_title_for_login_user": "Δυνατότητα πρώιμης πρόσβασης",
+  "@early_access_title_for_login_user": {
+    "description": "Message to let user know this is early access feature available for Lifetime and Visionary users"
+  },
+  "schedule_a_meeting": "Προγραμματίστε μια σύσκεψη",
+  "@schedule_a_meeting": {
+    "description": "Menu item label to schedule a meeting in Proton Meet app"
+  },
+  "create_a_room": "Δημιουργήστε μια αίθουσα",
+  "@create_a_room": {
+    "description": "Menu item label to create a room"
+  },
+  "create_new_room": "Δημιουργήστε νέας αίθουσας",
+  "@create_new_room": {
+    "description": "Menu item label to create a new room"
+  },
+  "emoji_reactions": "Αντιδράσεις emoji",
+  "@emoji_reactions": {
+    "description": "Emoji reactions tooltip"
+  },
+  "lower_participant_hand": "Χαμηλώστε το χέρι του συμμετέχοντα",
+  "@lower_participant_hand": {
+    "description": "Tooltip text for lowering a participant's raised hand"
+  },
+  "edit_room": "Επεξεργασία αίθουσας",
+  "@edit_room": {
+    "description": "Menu item label to edit a room"
+  },
+  "edit_meeting": "Επεξεργασία σύσκεψης",
+  "@edit_meeting": {
+    "description": "Menu item label to edit a meeting"
+  },
+  "join_with_a_link": "Συμμετοχή με σύνδεσμο",
+  "@join_with_a_link": {
+    "description": "Menu item label to join a meeting with a link"
+  },
+  "room_name": "Ονομα",
+  "@room_name": {
+    "description": "Label for room name input field header"
+  },
+  "room_id": "Αναγνωριστικό αίθουσας",
+  "@room_id": {
+    "description": "Label for room ID display"
+  },
+  "room_deleted": "Η αίθουσα διαγράφηκε",
+  "@room_deleted": {
+    "description": "Success message shown after a room is deleted"
+  },
+  "meeting_deleted": "Η σύσκεψη διεγράφη",
+  "@meeting_deleted": {
+    "description": "Success message shown after a meeting is deleted"
+  },
+  "enter_room_name_hint": "π.χ., Ομάδα Σχεδίασης, Εβδομαδιαία Standup",
+  "@enter_room_name_hint": {
+    "description": "Hint text for room name input field"
+  },
+  "create_room_subtitle": "Οι αίθουσες συσκέψεων μπορούν να χρησιμοποιηθούν ανά πάσα στιγμή",
+  "@create_room_subtitle": {
+    "description": "Subtitle text for create room dialog"
+  },
+  "create_button": "Δημιουργία",
+  "@create_button": {
+    "description": "Button text to create"
+  },
+  "save": "Αποθήκευση",
+  "@save": {
+    "description": "Button text to save"
+  },
+  "create_and_copy_link": "Δημιουργία και αντιγραφή συνδέσμου",
+  "@create_and_copy_link": {
+    "description": "Button text to create meeting and copy link"
+  },
+  "you_are_using_paid_meet_plan": "Χρησιμοποιείτε ένα πλάνο Meet επί πληρωμή.",
+  "@you_are_using_paid_meet_plan": {
+    "description": "Message shown to host indicating they are using a paid plan"
+  },
+  "you_are_using_free_meet_plan": "Χρησιμοποιείτε το πλάνο Free Meet.",
+  "@you_are_using_free_meet_plan": {
+    "description": "Message shown to host indicating they are using the free plan"
+  },
+  "call_supports_up_to": "Αυτή η κλήση υποστηρίζει έως και ",
+  "@call_supports_up_to": {
+    "description": "Message prefix showing the maximum number of participants allowed in the call"
+  },
+  "call_reached_limit": "Αυτή η κλήση έφτασε στο ",
+  "@call_reached_limit": {
+    "description": "Message prefix showing the call has reached the limit"
+  },
+  "participants_suffix": " συμμετέχοντες.",
+  "@participants_suffix": {
+    "description": "Message suffix after the participant count"
+  },
+  "participants_reached_limit_suffix": " όριο συμμετεχόντων.",
+  "@participants_reached_limit_suffix": {
+    "description": "Message suffix after the call reached limit message"
+  },
+  "no_more_participants_can_join": "Αφαιρέστε έναν συμμετέχοντα ή αναβαθμίστε το πλάνο σας για να προσκαλέσετε περισσότερα άτομα.",
+  "@no_more_participants_can_join": {
+    "description": "Message shown when the call has reached the maximum number of participants"
+  },
+  "connection_quality_poor": "Κακή σύνδεση",
+  "@connection_quality_poor": {
+    "description": "Tooltip message shown when connection quality is poor"
+  },
+  "meeting_ended_by_host": "Ο οικοδεσπότης τελείωσε τη σύσκεψη",
+  "@meeting_ended_by_host": {
+    "description": "Toast message shown when the host ends the meeting for everyone"
+  },
+  "client_kicked_out_by_host": "Ο οικοδεσπότης σας έχει αφαιρέσει από τη σύσκεψη",
+  "@client_kicked_out_by_host": {
+    "description": "Toast message shown when the host removes current user from the meeting"
+  },
+  "kicked_out_bottom_sheet_title": "Έχετε αφαιρεθεί",
+  "@kicked_out_bottom_sheet_title": {
+    "description": "Title shown in left meeting bottom sheet when current user is removed by host"
+  },
+  "kicked_out_bottom_sheet_content": "Ο οικοδεσπότης σας έχει αφαιρέσει από τη σύσκεψη.",
+  "@kicked_out_bottom_sheet_content": {
+    "description": "Content shown in left meeting bottom sheet when current user is removed by host"
+  },
+  "add_title": "Προσθέστε τίτλο",
+  "@add_title": {
+    "description": "Placeholder text for meeting title input field"
+  },
+  "schedule_at": "σε",
+  "@schedule_at": {
+    "description": "Label for schedule at, used in schedule dialog"
+  },
+  "schedule_duration_min": "λεπτό",
+  "@schedule_duration_min": {
+    "description": "Label for schedule duration in minutes"
+  },
+  "schedule_duration_hr": "ώρα",
+  "@schedule_duration_hr": {
+    "description": "Label for schedule duration in hours"
+  },
+  "schedule_recurrence_none": "Χωρίς επανάληψη",
+  "@schedule_recurrence_none": {
+    "description": "Label for schedule recurrence none"
+  },
+  "schedule_recurrence_daily": "Καθημερινά",
+  "@schedule_recurrence_daily": {
+    "description": "Label for schedule recurrence daily"
+  },
+  "schedule_recurrence_weekly": "Εβδομαδιαία",
+  "@schedule_recurrence_weekly": {
+    "description": "Label for schedule recurrence weekly"
+  },
+  "schedule_recurrence_monthly": "Μηνιαία",
+  "@schedule_recurrence_monthly": {
+    "description": "Label for schedule recurrence monthly"
+  },
+  "schedule_recurrence_yearly": "Ετήσια",
+  "@schedule_recurrence_yearly": {
+    "description": "Label for schedule recurrence yearly"
+  },
+  "schedule_time_zone_search_hint": "Αναζήτηση ζώνης ώρας",
+  "@schedule_time_zone_search_hint": {
+    "description": "Label for schedule time zone search hint"
+  },
+  "schedule_time_zone_current": "Τρέχουσα ζώνη ώρας",
+  "@schedule_time_zone_current": {
+    "description": "Label for schedule time zone current"
+  },
+  "schedule_time_zone_selected": "Επιλεγμένη ζώνη ώρας",
+  "@schedule_time_zone_selected": {
+    "description": "Label for schedule time zone selected"
+  },
+  "month_jan": "Ιανουάριος",
+  "@month_jan": {
+    "description": "Full month name for January"
+  },
+  "month_feb": "Φεβρουάριος",
+  "@month_feb": {
+    "description": "Full month name for February"
+  },
+  "month_mar": "Μάρτιος",
+  "@month_mar": {
+    "description": "Full month name for March"
+  },
+  "month_apr": "Απρίλιος",
+  "@month_apr": {
+    "description": "Full month name for April"
+  },
+  "month_may": "Μάιος",
+  "@month_may": {
+    "description": "Full month name for May"
+  },
+  "month_jun": "Ιούνιος",
+  "@month_jun": {
+    "description": "Full month name for June"
+  },
+  "month_jul": "Ιούλιος",
+  "@month_jul": {
+    "description": "Full month name for July"
+  },
+  "month_aug": "Αύγουστος",
+  "@month_aug": {
+    "description": "Full month name for August"
+  },
+  "month_sep": "Σεπτέμβριος",
+  "@month_sep": {
+    "description": "Full month name for September"
+  },
+  "month_oct": "Οκτώβριος",
+  "@month_oct": {
+    "description": "Full month name for October"
+  },
+  "month_nov": "Νοέμβριος",
+  "@month_nov": {
+    "description": "Full month name for November"
+  },
+  "month_dec": "Δεκέμβριος",
+  "@month_dec": {
+    "description": "Full month name for December"
+  },
+  "month_short_jan": "Ιαν",
+  "@month_short_jan": {
+    "description": "Abbreviated month name January (order Jan–Dec)"
+  },
+  "month_short_feb": "Φεβ",
+  "@month_short_feb": {
+    "description": "Abbreviated month name February"
+  },
+  "month_short_mar": "Μαρ",
+  "@month_short_mar": {
+    "description": "Abbreviated month name March"
+  },
+  "month_short_apr": "Απρ",
+  "@month_short_apr": {
+    "description": "Abbreviated month name April"
+  },
+  "month_short_may": "Μάιος",
+  "@month_short_may": {
+    "description": "Abbreviated month name May"
+  },
+  "month_short_jun": "Ιουν",
+  "@month_short_jun": {
+    "description": "Abbreviated month name June"
+  },
+  "month_short_jul": "Ιουλ",
+  "@month_short_jul": {
+    "description": "Abbreviated month name July"
+  },
+  "month_short_aug": "Αυγ",
+  "@month_short_aug": {
+    "description": "Abbreviated month name August"
+  },
+  "month_short_sep": "Σεπ",
+  "@month_short_sep": {
+    "description": "Abbreviated month name September"
+  },
+  "month_short_oct": "Οκτ",
+  "@month_short_oct": {
+    "description": "Abbreviated month name October"
+  },
+  "month_short_nov": "Νοε",
+  "@month_short_nov": {
+    "description": "Abbreviated month name November"
+  },
+  "month_short_dec": "Δεκ",
+  "@month_short_dec": {
+    "description": "Abbreviated month name December"
+  },
+  "weekday_monday": "Δευτέρα",
+  "@weekday_monday": {
+    "description": "Weekday name for Monday"
+  },
+  "weekday_tuesday": "Τρίτη",
+  "@weekday_tuesday": {
+    "description": "Weekday name for Tuesday"
+  },
+  "weekday_wednesday": "Τετάρτη",
+  "@weekday_wednesday": {
+    "description": "Weekday name for Wednesday"
+  },
+  "weekday_thursday": "Πέμπτη",
+  "@weekday_thursday": {
+    "description": "Weekday name for Thursday"
+  },
+  "weekday_friday": "Παρασκευή",
+  "@weekday_friday": {
+    "description": "Weekday name for Friday"
+  },
+  "weekday_saturday": "Σάββατο",
+  "@weekday_saturday": {
+    "description": "Weekday name for Saturday"
+  },
+  "weekday_sunday": "Κυριακή",
+  "@weekday_sunday": {
+    "description": "Weekday name for Sunday"
+  },
+  "weekday_short_monday": "Δευ",
+  "@weekday_short_monday": {
+    "description": "Short weekday label Monday (list order Mon–Sun)"
+  },
+  "weekday_short_tuesday": "Τρί",
+  "@weekday_short_tuesday": {
+    "description": "Short weekday label Tuesday"
+  },
+  "weekday_short_wednesday": "Τετ",
+  "@weekday_short_wednesday": {
+    "description": "Short weekday label Wednesday"
+  },
+  "weekday_short_thursday": "Πέμ",
+  "@weekday_short_thursday": {
+    "description": "Short weekday label Thursday"
+  },
+  "weekday_short_friday": "Παρ",
+  "@weekday_short_friday": {
+    "description": "Short weekday label Friday"
+  },
+  "weekday_short_saturday": "Σάβ",
+  "@weekday_short_saturday": {
+    "description": "Short weekday label Saturday"
+  },
+  "weekday_short_sunday": "Κυρ",
+  "@weekday_short_sunday": {
+    "description": "Short weekday label Sunday"
+  },
+  "calendar_system": "Προσθήκη στο Ημερολόγιο Τηλεφώνου",
+  "@calendar_system": {
+    "description": "Menu label for opening system calendar"
+  },
+  "calendar_google": "Προσθήκη στο Ημερολόγιο Google",
+  "@calendar_google": {
+    "description": "Menu label for opening Google Calendar"
+  },
+  "calendar_share_ics": "Κοινή χρήση αρχείου συμβάντος",
+  "@calendar_share_ics": {
+    "description": "Menu label for sharing ICS file"
+  },
+  "calendar_outlook": "Προσθήκη στο Ημερολόγιο Outlook",
+  "@calendar_outlook": {
+    "description": "Menu label for opening Outlook Calendar"
+  },
+  "calendar_proton": "Προσθήκη στο Ημερολόγιο Proton",
+  "@calendar_proton": {
+    "description": "Menu label for opening Proton Calendar"
+  },
+  "scheduled_meeting_share": "Κοινοποίηση",
+  "@scheduled_meeting_share": {
+    "description": "Share button label in scheduled meeting summary"
+  },
+  "scheduled_meeting_done": "Ολοκληρώθηκε",
+  "@scheduled_meeting_done": {
+    "description": "Done button label in scheduled meeting summary"
+  },
+  "scheduled_meeting_link": "Σύνδεσμος",
+  "@scheduled_meeting_link": {
+    "description": "Link label in scheduled meeting summary"
+  },
+  "upcoming_today": "ΣΗΜΕΡΑ",
+  "@upcoming_today": {
+    "description": "Upcoming meetings header label for today"
+  },
+  "upcoming_tomorrow": "ΑΥΡΙΟ",
+  "@upcoming_tomorrow": {
+    "description": "Upcoming meetings header label for tomorrow"
+  },
+  "on_yesterday": "ΧΘΕΣ",
+  "@on_yesterday": {
+    "description": "Meetings header label for yesterday"
+  },
+  "upcoming_prefix": "ΑΝΕΡΧΟΜΕΝΕΣ",
+  "@upcoming_prefix": {
+    "description": "Prefix for upcoming meetings header label"
+  },
+  "ended_prefix": "ΛΗΓΜΕΝΕΣ",
+  "@ended_prefix": {
+    "description": "Prefix for ended/past meetings header label"
+  },
+  "ended_today": "Έληξαν σήμερα",
+  "@ended_today": {
+    "description": "Label for meetings ended today"
+  },
+  "ended_yesterday": "Έληξαν εχθές",
+  "@ended_yesterday": {
+    "description": "Label for meetings ended yesterday"
+  },
+  "ended_on": "Έληξε στις",
+  "@ended_on": {
+    "description": "Label for meetings ended on a specific date"
+  },
+  "created_prefix": "ΔΗΜΙΟΥΡΓΗΜΕΝΕΣ",
+  "@created_prefix": {
+    "description": "Prefix for newly created meetings header label"
+  },
+  "created_today": "Δημιουργήθηκαν σήμερα",
+  "@created_today": {
+    "description": "Label for meetings created today"
+  },
+  "created_yesterday": "Δημιουργήθηκαν χθές",
+  "@created_yesterday": {
+    "description": "Label for meetings created yesterday"
+  },
+  "created_last_week": "Δημιουργήθηκαν την προηγούμενη εβδομάδα",
+  "@created_last_week": {
+    "description": "Label for meetings created within the last week"
+  },
+  "created": "Δημιουργήθηκε στις",
+  "@created": {
+    "description": "Label prefix for created time"
+  },
+  "last_used_today": "Τελευταία χρήση σήμερα",
+  "@last_used_today": {
+    "description": "Label for meetings last used today"
+  },
+  "last_used_yesterday": "Τελευταία χρήση χθες",
+  "@last_used_yesterday": {
+    "description": "Label for meetings last used yesterday"
+  },
+  "last_used": "Τελευταία χρήση στις",
+  "@last_used": {
+    "description": "Label prefix for last used time"
+  },
+  "created_on": "Δημιουργήθηκε στις {day} {month} {year}",
+  "@created_on": {
+    "description": "Label for meetings created on a specific date",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      },
+      "day": {
+        "type": "int"
+      },
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "secure_meeting": "Ασφαλής σύσκεψη",
+  "@secure_meeting": {
+    "description": "Default meeting name when no title is set"
+  },
+  "premium_meeting": "Premium σύσκεψη",
+  "@premium_meeting": {
+    "description": "Default meeting name for paid meeting"
+  },
+  "free_meeting": "Δωρεάν σύσκεψη",
+  "@free_meeting": {
+    "description": "Default meeting name for free meeting"
+  },
+  "share_with_people_you_trust": "Μοιραστείτε με ανθρώπους που εμπιστεύεστε",
+  "@share_with_people_you_trust": {
+    "description": "Personal meeting hint text"
+  },
+  "time_am": "Π.Μ.",
+  "@time_am": {
+    "description": "AM suffix for 12-hour time format"
+  },
+  "time_pm": "Μ.Μ.",
+  "@time_pm": {
+    "description": "PM suffix for 12-hour time format"
+  },
+  "start_typing_to_search": "Ξεκινήστε να πληκτρολογείτε για αναζήτηση...",
+  "@start_typing_to_search": {
+    "description": "Placeholder text shown when search query is empty"
+  },
+  "no_results_found_for": "Δε βρέθηκαν αποτελέσματα για \\\"{searchQuery}\\\"",
+  "@no_results_found_for": {
+    "description": "Message shown when search returns no results",
+    "placeholders": {
+      "searchQuery": {
+        "type": "String",
+        "example": "meeting name"
+      }
+    }
+  },
+  "sort_newest": "Νεότερα",
+  "@sort_newest": {
+    "description": "Sort option label for newest items"
+  },
+  "sort_last_used": "Τελευταία χρήση",
+  "@sort_last_used": {
+    "description": "Sort option label for last used items"
+  },
+  "sort_by": "Ταξινόμηση κατά {option}",
+  "@sort_by": {
+    "description": "Toast notification message when sort option is selected",
+    "placeholders": {
+      "option": {
+        "type": "String"
+      }
+    }
+  },
+  "sort_upcoming": "Προσεχείς",
+  "@sort_upcoming": {
+    "description": "Sort option label for upcoming meetings"
+  },
+  "sort_new_created": "Νεοδημιουργημένα",
+  "@sort_new_created": {
+    "description": "Sort option label for newly created items"
+  },
+  "sort_past_meeting": "Παρελθούσες",
+  "@sort_past_meeting": {
+    "description": "Sort option label for past meetings"
+  },
+  "version": "Έκδοση {versionDisplay}",
+  "@version": {
+    "description": "Version text with version number",
+    "placeholders": {
+      "versionDisplay": {
+        "type": "String",
+        "example": "1.0.0-dev (00)"
+      }
+    }
+  },
+  "unable_to_reconnect": "Αδυναμία επανασύνδεσης",
+  "@unable_to_reconnect": {
+    "description": "Title shown when reconnection fails"
+  },
+  "reconnection_failed_message": "Δεν μπορέσαμε να επαναφέρουμε τη σύνδεση. Δοκιμάστε να συμμετάσχετε ξανά στη σύσκεψη",
+  "@reconnection_failed_message": {
+    "description": "Message shown when reconnection fails"
+  },
+  "connection": "Σύνδεση",
+  "@connection": {
+    "description": "Section title for connection settings"
+  },
+  "reconnect_meeting": "Επανασύνδεση Σύσκεψης",
+  "@reconnect_meeting": {
+    "description": "Button label to reconnect to meeting"
+  },
+  "always_show_status": "Να εμφανίζεται πάντα η κατάσταση",
+  "@always_show_status": {
+    "description": "Setting label to always show connection status banner"
+  },
+  "connection_check_mls_checking": "Έλεγχος σύνδεσης\nΈλεγχος κατάστασης MLS...",
+  "@connection_check_mls_checking": {
+    "description": "Message shown when checking MLS sync status"
+  },
+  "connection_issue_restoring": "Ζήτημα σύνδεσης\nΕργαζόμαστε για την αποκατάσταση της πλήρους λειτουργικότητας...",
+  "@connection_issue_restoring": {
+    "description": "Message shown when connection issue is being resolved"
+  },
+  "connection_check_mls_failed": "Έλεγχος σύνδεσης\nΟ έλεγχος κατάστασης MLS απέτυχε, ενεργοποίηση επανένταξης...",
+  "@connection_check_mls_failed": {
+    "description": "Message shown when MLS sync check fails"
+  },
+  "connection_check_mls_passed": "Έλεγχος σύνδεσης\nΟ έλεγχος κατάστασης MLS πέρασε",
+  "@connection_check_mls_passed": {
+    "description": "Message shown when MLS sync check passes"
+  },
+  "trying_to_reconnect": "Προσπάθεια επανασύνδεσης…",
+  "@trying_to_reconnect": {
+    "description": "Message shown when attempting to reconnect to meeting"
+  },
+  "sign_in_card_title": "Συνδεθείτε ή δημιουργήστε λογαριασμό",
+  "@sign_in_card_title": {
+    "description": "Title text for the sign-in card displayed on dashboard"
+  },
+  "sign_in_card_description": "Προγραμματίστε συσκέψεις, αποκτήστε πρόσβαση στο προσωπική σας αίθουσα και δημιουργήστε νέες αίθουσες.",
+  "@sign_in_card_description": {
+    "description": "Description text for the sign-in card explaining benefits of signing in"
+  },
+  "almost_there_title": "Σχεδόν τελειώσατε",
+  "@almost_there_title": {
+    "description": "Title for the almost there bottom sheet"
+  },
+  "almost_there_content_before": "Για να προγραμματίσετε μια σύσκεψη, δημιουργήστε ένα δωρεάν ",
+  "@almost_there_content_before": {
+    "description": "Content before Proton account in almost there bottom sheet (schedule meeting)"
+  },
+  "almost_there_content_before_create_room": "Για να δημιουργήσετε μια αίθουσα, δημιουργήστε ένα δωρεάν ",
+  "@almost_there_content_before_create_room": {
+    "description": "Content before Proton account in almost there bottom sheet (create room)"
+  },
+  "almost_there_content_before_personal_room": "Για να δημιουργήσετε την προσωπική σας αίθουσα συσκέψεων, δημιουργήστε ένα δωρεάν ",
+  "@almost_there_content_before_personal_room": {
+    "description": "Content before Proton account in almost there bottom sheet (personal meeting room)"
+  },
+  "almost_there_proton_account": "Λογαριασμός Proton",
+  "@almost_there_proton_account": {
+    "description": "Proton account text in almost there bottom sheet"
+  },
+  "almost_there_content_after": ". Θα επιστρέψετε αυτόματα στο Proton Meet.",
+  "@almost_there_content_after": {
+    "description": "Content after Proton account in almost there bottom sheet"
+  },
+  "app_settings_title": "Ρυθμίσεις εφαρμογής",
+  "@app_settings_title": {
+    "description": "Title for the app settings bottom sheet"
+  },
+  "settings_section_general": "Γενικά",
+  "@settings_section_general": {
+    "description": "Section header in app settings"
+  },
+  "settings_section_support": "Υποστήριξη",
+  "@settings_section_support": {
+    "description": "Section header for support links in app settings"
+  },
+  "settings_section_legal": "Νομικά",
+  "@settings_section_legal": {
+    "description": "Section header for legal links in app settings"
+  },
+  "languages": "Γλώσσες",
+  "@languages": {
+    "description": "Label for language selection in settings"
+  },
+  "privacy_policy": "Πολιτική απορρήτου",
+  "@privacy_policy": {
+    "description": "Link to privacy policy"
+  },
+  "terms_and_conditions": "Όροι και προϋποθέσεις",
+  "@terms_and_conditions": {
+    "description": "Link to terms and conditions"
+  },
+  "knowledge_base": "Βάση γνώσεων",
+  "@knowledge_base": {
+    "description": "Link to help center / knowledge base"
+  },
+  "system_default_mode": "Προεπιλογή συστήματος",
+  "@system_default_mode": {
+    "description": "Use device language for app UI"
+  },
+  "pre_rating_sheet_title": "Σας αρέσει το Proton Meet;",
+  "@pre_rating_sheet_title": {
+    "description": "Title on the pre-rating bottom sheet before in-app review"
+  },
+  "pre_rating_sheet_subtitle": "Διαβάζουμε και εκτιμούμε όλα τα σχόλια.",
+  "@pre_rating_sheet_subtitle": {
+    "description": "Subtitle on the pre-rating bottom sheet"
+  },
+  "pre_rating_sheet_yes_enjoy_proton_meet": "Ναι",
+  "@pre_rating_sheet_yes_enjoy_proton_meet": {
+    "description": "Primary button on the pre-rating sheet to open store review"
+  },
+  "pre_rating_sheet_not_really_enjoy_proton_meet": "Όχι ιδιαίτερα",
+  "@pre_rating_sheet_not_really_enjoy_proton_meet": {
+    "description": "Secondary button on the pre-rating sheet"
+  },
+  "store_review_thanks_toast": "Ευχαριστούμε για τα σχόλιά σας",
+  "@store_review_thanks_toast": {
+    "description": "Toast shown before the OS in-app store review prompt"
+  },
+  "iap_native_test_title": "Πλάνα (εγγενή)",
+  "@iap_native_test_title": {
+    "description": "Title for dev sheet that invokes native IAP / plans"
+  },
+  "iap_native_test_body": "Χρησιμοποιεί την εγγενή στοίβα πληρωμών Proton (ίδιο κανάλι με το Proton Wallet). Απαιτείται σύνδεση.",
+  "@iap_native_test_body": {
+    "description": "Explains native channel test sheet"
+  },
+  "iap_native_test_current_plan": "Τρέχον πλάνο",
+  "@iap_native_test_current_plan": {
+    "description": "Button: native.navigation.plan.subscription"
+  },
+  "iap_native_test_upgrade": "Αναβάθμιση",
+  "@iap_native_test_upgrade": {
+    "description": "Button: native.navigation.plan.upgrade"
+  },
+  "iap_native_test_sign_in_required": "Συνδεθείτε με έναν λογαριασμό Proton για να ανοίξετε εγγενείς πληρωμές.",
+  "@iap_native_test_sign_in_required": {
+    "description": "Message shown when sign in is required to open native payments"
+  }
+}

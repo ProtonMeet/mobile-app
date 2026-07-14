@@ -1,0 +1,1798 @@
+{
+  "@@locale": "be",
+  "@@last_modified": "2024-02-12T00:10:57.227125",
+  "app_name": "Proton Meet",
+  "@app_name": {
+    "description": "The name of the application"
+  },
+  "logout": "Выйсці",
+  "login": "Увайсці",
+  "sign_in": "Увайсці",
+  "sign_out": "Выйсці",
+  "learn_more": "Даведацца больш",
+  "no_data": "Няма даных",
+  "submit": "Адправіць",
+  "cancel": "Скасаваць",
+  "close": "Закрыць",
+  "ok": "OK",
+  "unlock_app": "Разблакіраваць праграму",
+  "search": "Пошук",
+  "placeholder": "Запаўняльнік",
+  "something_went_wrong": "Нешта пайшло не так",
+  "retry": "Паўтарыць",
+  "@retry": {
+    "description": "Retry loading dashboard after an error"
+  },
+  "report_a_problem": "Паведаміць аб праблеме",
+  "sign_in_to_proton_title": "Увайсці ў Proton",
+  "sign_in_to_proton_subtitle": "Увядзіце падрабязнасці свайго ўліковага запісу Proton",
+  "options": "Параметры",
+  "@options": {
+    "description": "Title for options dialog"
+  },
+  "manage_accounts": "Кіраванне ўліковымі запісамі",
+  "@manage_accounts": {
+    "description": "Title for manage accounts dialog"
+  },
+  "delete_account": "Выдаліць уліковы запіс",
+  "@delete_account": {
+    "description": "Title for delete account dialog"
+  },
+  "signin_intro_title": "Вітаем у Proton Meet",
+  "@signin_intro_title": {
+    "description": "Title in the sign-in intro sheet"
+  },
+  "signin_intro_subtitle": "Увядзіце або стварыце ўліковы запіс, каб працягнуць",
+  "@signin_intro_subtitle": {
+    "description": "Subtitle in the sign-in intro sheet"
+  },
+  "signin_intro_create_account": "Стварыць уліковы запіс",
+  "@signin_intro_create_account": {
+    "description": "Primary button label in the sign-in intro sheet"
+  },
+  "signin_intro_sign_in": "Увайсці",
+  "@signin_intro_sign_in": {
+    "description": "Secondary button label in the sign-in intro sheet"
+  },
+  "sign_in_username_or_email": "Імя карыстальніка або электронная пошта",
+  "email": "Электронная пошта",
+  "user_name": "Імя карыстальніка",
+  "account": "Уліковы запіс",
+  "password": "Пароль",
+  "session_expired_content": "Ваш сеанс завершаны ў мэтах бяспекі. Увайдзіце паўторна, каб кіраваць сваімі сустрэчамі.",
+  "session_expired_title": "Сеанс завершаны!",
+  "session_expired_continue_without_signing_in": "Працягнуць без уваходу",
+  "@session_expired_continue_without_signing_in": {
+    "description": "Secondary button label for session expired bottom sheet"
+  },
+  "force_upgrade": "Прымусовае паляпшэнне",
+  "upgrade": "Палепшыць",
+  "search_participants": "Пошук удзельнікаў...",
+  "participants_count": "Удзельнікаў ({count})",
+  "no_participants_found": "Удзельнікі не знойдзены",
+  "try_different_search_term": "Паспрабуйце іншы тэрмін для пошуку",
+  "you": "(Вы)",
+  "invite_participant": "Запрасіць удзельніка",
+  "leave": "Выйсці",
+  "emoji_reaction": "Рэакцыі эмодзі",
+  "unshare_screen": "Скасаваць абагульванне экрана",
+  "share_screen": "Абагуліць экран",
+  "show_chatroom": "Чат",
+  "show_participants_list": "Удзельнікі",
+  "show_settings": "Налады",
+  "show_meeting_stats": "паказаць статыстыку сустрэч",
+  "meeting_info": "Інфармацыя",
+  "meeting_settings": "Налады",
+  "host": "Арганізатар",
+  "lock_meeting": "Заблакіраваць сустрэчу",
+  "meeting_locked": "Сустрэча заблакіравана",
+  "@meeting_locked": {
+    "description": "Title when meeting is locked"
+  },
+  "meeting_locked_description": "Гэта сустрэча заблакіравана. Звяжыцеся з арганізатарам, каб далучыцца.",
+  "@meeting_locked_description": {
+    "description": "Description when meeting is locked"
+  },
+  "meeting_locked_notification": "Сустрэча заблакіравана. Новыя ўдзельнікі не могуць далучыцца да яе.",
+  "@meeting_locked_notification": {
+    "description": "Toast notification when meeting is locked by host"
+  },
+  "meet_server_version_not_supported_title": "Update required",
+  "@meet_server_version_not_supported_title": {
+    "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
+  },
+  "meet_server_version_not_supported_description": "Your app version can't connect to this meeting. Please update Proton Meet to continue.",
+  "@meet_server_version_not_supported_description": {
+    "description": "Description when the client must be updated to join a meeting"
+  },
+  "meeting_unlocked_notification": "Сустрэча разблакіравана. Удзельнікі зноў могуць далучыцца да яе.",
+  "@meeting_unlocked_notification": {
+    "description": "Toast notification when meeting is unlocked by host"
+  },
+  "hide_profile_pictures": "Схаваць профіль відарыса",
+  "picture_in_picture_mode": "Рэжым «відарыс у відарысе»",
+  "security": "Бяспека",
+  "enable_waiting_room": "Уключыць пакой чакання",
+  "hide_self_view": "Схаваць відэа ад сябе",
+  "allow_all_participants_to": "Дазволіць усім удзельнікам:",
+  "chat": "Чат",
+  "rename_themselves": "Пераймяноўваць сябе",
+  "unmute_themselves": "Уключаць свой мікрафон",
+  "meeting": "Сустрэча",
+  "show_meeting_timer": "Паказаць таймер сустрэчы",
+  "unsubscribe_video_by_default": "Выключыць уваходнае відэа",
+  "camera_background_blur": "Размыццё фону",
+  "audio_noise_cancellation": "Падаўленне шуму",
+  "dark_mode": "Цёмны рэжым",
+  "show_connection_indicator": "Паказаць індыкатар падключэння",
+  "desktop_notifications": "Апавяшчэнні на працоўным стале",
+  "meeting_quality": "Якасць сувязі",
+  "camera_resolution": "Раздзяляльнасць камеры",
+  "camera_max_bitrate": "Максімальны бітрэйт камеры",
+  "screen_sharing_resolution": "Максімальны бітрэйт пры абагульванні экрана",
+  "screen_sharing_max_bitrate": "Максімальны бітрэйт абагульвання экрана",
+  "export_debug_log": "Экспартаваць журнал адладкі",
+  "type_a_message": "Увядзіце паведамленне...",
+  "search_messages": "Пошук паведамленняў...",
+  "meeting_chat": "Чат сустрэчы",
+  "no_messages_found": "Паведамленні не знойдзены",
+  "no_messages_yet": "Паведамленняў пакуль няма",
+  "start_the_conversation": "Пачаць размову",
+  "unknown": "Невядома",
+  "bitrate_extreme_high_2000": "Экстрымальна высокі (2000 кбіт/с)",
+  "bitrate_ultra_high_1900": "Ультра высокі (1900 кбіт/с)",
+  "bitrate_ultra_high_1800": "Ультра высокі (1800 кбіт/с)",
+  "bitrate_ultra_high_1700": "Ультра высокі (1700 кбіт/с)",
+  "bitrate_ultra_high_1600": "Ультра высокі (1600 кбіт/с)",
+  "bitrate_ultra_high_1500": "Ультра высокі (1500 кбіт/с)",
+  "bitrate_very_high_1400": "Вельмі высокі (1400 кбіт/с)",
+  "bitrate_very_high_1300": "Вельмі высокі (1300 кбіт/с)",
+  "bitrate_very_high_1200": "Вельмі высокі (1200 кбіт/с)",
+  "bitrate_very_high_1100": "Вельмі высокі (1100 кбіт/с)",
+  "bitrate_high_1000": "Высокі (1000 кбіт/с)",
+  "bitrate_high_900": "Высокі (900 кбіт/с)",
+  "bitrate_high_800": "Высокі (800 кбіт/с)",
+  "bitrate_medium_high_700": "Сярэдне высокі (700 кбіт/с)",
+  "bitrate_medium_high_600": "Сярэдне высокі (600 кбіт/с)",
+  "bitrate_medium_high_500": "Сярэдне высокі (500 кбіт/с)",
+  "bitrate_medium_400": "Сярэдні (400 кбіт/с)",
+  "bitrate_medium_low_300": "Сярэдне нізкі (300 кбіт/с)",
+  "bitrate_low_200": "Нізкі (200 кбіт/с)",
+  "bitrate_very_low_100": "Вельмі нізкі (100 кбіт/с)",
+  "resolution_360p": "360p",
+  "resolution_720p": "720p",
+  "resolution_1080p": "1080p",
+  "resolution_4k": "4K",
+  "join_meeting": "Размаўляйце канфідэнцыяльна",
+  "app_description": "Наша скразное шыфраванне сустрэч абараняе прыватнасць і пашырае магчымасці для сапраўды свабоднага самавыяўлення.",
+  "meeting_link": "Спасылка сустрэчы",
+  "meeting_detail": "Падрабязнасці сустрэчы",
+  "display_name": "Ваша імя",
+  "enter_display_name": "Увядзіце сваё імя",
+  "display_name_required": "Імя з'яўляецца абавязковым радком",
+  "remember_display_name_on_device": "Запомніць маё імя на гэтай прыладзе для будучых сустрэч",
+  "join_meeting_button": "Далучыцца да сустрэчы",
+  "create_meeting_button": "Стварыць сустрэчу",
+  "import_meeting_button": "Імпартаваць сустрэчу",
+  "import_meeting_title": "Імпартаванне сустрэчы",
+  "import_meeting_hint_text": "Увядзіце спасылку сустрэчы",
+  "open_home": "Адкрыць галоўную",
+  "start_simulation": "Пачаць сімуляцыю",
+  "change_layout": "Змяніць макет",
+  "layout_spaced_grid": "Інтэрвальная сетка",
+  "layout_compact_grid": "Кампактная сетка",
+  "layout_speaker_view": "Выгляд дакладчыка",
+  "layout_multi_speaker_view": "Выгляд некалькі дакладчыкаў",
+  "no_active_speaker": "Актыўныя дакладчыкі адсутнічаюць",
+  "camera_view": "Выгляд камеры",
+  "is_presenting": "прадстаўленне",
+  "stop_presenting": "Спыніць прадстаўленне",
+  "tap_to_stop_sharing": "Націсніце, каб спыніць абагульванне",
+  "notification_permission_settings_title": "Уключыце доступ да апавяшчэнняў",
+  "@notification_permission_settings_title": {
+    "description": "Title when notification permission was denied and screen sharing requires it"
+  },
+  "notification_permission_settings_message": "Абагульванне экрана патрабуе дазвол на апавяшчэнне. Такім чынам, сустрэча зможа заставацца актыўнай у фоне.\n\nМінулы раз вы забаранілі адпаведны доступ. Уключыце апавяшчэнні ў сваіх сістэмных наладах, каб абагуліць свой экран. Для гэтага:\n• Адкрыйце Налады\n• Знайдзіце гэту праграму\n• Дазвольце апавяшчэнні",
+  "@notification_permission_settings_message": {
+    "description": "Body for notification permission inform sheet shown before screen sharing"
+  },
+  "participant_joined": "Удзельнік далучаны",
+  "participant_left": "Удзельнік выйшаў",
+  "participant_name_prefix": "Імя: ",
+  "participant_identity_prefix": "Ідэнтычнасць: ",
+  "setting_updated": "Налады абноўлены",
+  "changes_effect_next_screen_sharing": "Змяненні будуць прыменены падчас наступнага абагульвання экрана.",
+  "video_stats_copied": "Статыстыка відэа скапіявана ў буфер абмену",
+  "anonymous_user": "Ананімны карыстальнік",
+  "loading": "Загрузка...",
+  "@loading": {
+    "description": "Loading text"
+  },
+  "video": "Відэа",
+  "audio": "Аўдыя",
+  "turn_off_camera": "Выключыць камеру",
+  "turn_on_camera": "Уключыць камеру",
+  "video_settings": "Налады відэа",
+  "select_camera_device": "Выберыце прыладу камеры",
+  "turn_off_microphone": "Выключыць мікрафон",
+  "turn_on_microphone": "Уключыць мікрафон",
+  "audio_settings": "Налады аўдыя",
+  "select_microphone": "Выберыце мікрафон",
+  "select_speaker": "Выберыце дынамік",
+  "permission_not_given": "Дазволы не атрыманы",
+  "permission_camera": "Неабходны дазвол, каб уключыць камеру",
+  "permission_microphone": "Неабходны дазвол, каб уключыць мікрафон",
+  "camera_is_off": "Камера выключана",
+  "copied_to_clipboard": "Скапіявана ў буфер абмену",
+  "personal_meeting": "Асабістая сустрэча",
+  "@personal_meeting": {
+    "description": "Title for personal meeting dialog"
+  },
+  "personal_meeting_description": "Пакой для перамоў, які заўсёды даступны вам",
+  "@personal_meeting_description": {
+    "description": "Description text for personal meeting room"
+  },
+  "personal_meeting_room": "Асабісты пакой для перамоў",
+  "@personal_meeting_room": {
+    "description": "Title for personal meeting room dialog"
+  },
+  "join_a_meeting": "Далучыцца да сустрэчы",
+  "@join_a_meeting": {
+    "description": "Title for join meeting dialog"
+  },
+  "join_meeting_subtitle": "Устаўце спасылку Proton Meet, каб далучыцца да бяспечнай сустрэчы",
+  "@join_meeting_subtitle": {
+    "description": "Subtitle text for join meeting dialog"
+  },
+  "please_enter_valid_meeting_link": "Увядзіце сапраўдную спасылку на сустрэчу.",
+  "@please_enter_valid_meeting_link": {
+    "description": "Error message when meeting link is invalid"
+  },
+  "meeting_password_incorrect": "Няправільны пароль сустрэчы",
+  "@meeting_password_incorrect": {
+    "description": "Error message when the meeting password embedded in the join link is invalid"
+  },
+  "meeting_password_invalid": "Памылковы пароль сустрэчы",
+  "link_copied_to_clipboard": "Спасылка скапіявана ў буфер абмену",
+  "@link_copied_to_clipboard": {
+    "description": "Success message when meeting link is copied"
+  },
+  "meeting_link_label": "Спасылка сустрэчы",
+  "@meeting_link_label": {
+    "description": "Label for meeting link input field"
+  },
+  "copy_link": "Скапіяваць спасылку",
+  "@copy_link": {
+    "description": "Button text to copy meeting link"
+  },
+  "copy_link_and_close": "Скапіяваць спасылку і закрыць",
+  "@copy_link_and_close": {
+    "description": "Button text to copy link and close dialog"
+  },
+  "copy": "Скапіяваць",
+  "@copy": {
+    "description": "Copy action"
+  },
+  "delete": "Выдаліць",
+  "@delete": {
+    "description": "Delete action"
+  },
+  "delete_meeting": "Выдаліць сустрэчу",
+  "@delete_meeting": {
+    "description": "Title for delete meeting dialog"
+  },
+  "delete_meeting_confirmation": "Вы сапраўды хочаце выдаліць гэту сустрэчу? Гэта дзеянне немагчыма будзе адрабіць.",
+  "@delete_meeting_confirmation": {
+    "description": "Confirmation message for deleting a meeting"
+  },
+  "creating_meeting": "Стварэнне сустрэчы...",
+  "@creating_meeting": {
+    "description": "Loading message shown while creating a meeting"
+  },
+  "deleting_meeting": "Выдаленне сустрэчы...",
+  "@deleting_meeting": {
+    "description": "Loading message shown while deleting a meeting"
+  },
+  "updating_meeting": "Абнаўленне сустрэчы...",
+  "@updating_meeting": {
+    "description": "Loading message shown while updating a meeting"
+  },
+  "scheduling_meeting": "Планаванне сустрэчы...",
+  "@scheduling_meeting": {
+    "description": "Loading message shown while scheduling a meeting"
+  },
+  "guest_user_description": "Як карыстальнік у статусе госця, вы можаце пачаць ананімную і бясплатную сустрэчу з гэтай панэлі кіравання.",
+  "@guest_user_description": {
+    "description": "Description text explaining guest user capabilities"
+  },
+  "create_free_account": "Стварыць бясплатны ўліковы запіс",
+  "@create_free_account": {
+    "description": "Button text to create a free account"
+  },
+  "please_sign_in_to_access_feature": "Увайдзіце, каб атрымаць доступ да гэтай функцыі! ",
+  "@please_sign_in_to_access_feature": {
+    "description": "Message prompting user to sign in"
+  },
+  "already_have_account": "У вас ужо ёсць уліковы запіс? ",
+  "@already_have_account": {
+    "description": "Text before login link for existing users"
+  },
+  "we_hope_you_enjoyed_meeting": "Спадзяёмся, што вам спадабалася бяспечная сустрэча! ",
+  "@we_hope_you_enjoyed_meeting": {
+    "description": "Message shown after user leaves meeting"
+  },
+  "left_by_mistake": "Выйшлі памылкова? ",
+  "@left_by_mistake": {
+    "description": "Text before rejoin link"
+  },
+  "rejoin_meeting": "Далучыцца яшчэ раз",
+  "@rejoin_meeting": {
+    "description": "Button text to rejoin a meeting"
+  },
+  "left_meeting_title": "Вы выйшлі з сустрэчы",
+  "@left_meeting_title": {
+    "description": "Title shown in left meeting bottom sheet"
+  },
+  "left_meeting_subtitle_guest_free": "Арганізатар сваёй уласнай бяспечнай сустрэчы. Пачніце званок у Proton Meet і абагуліце спасылку, каб запрасіць каго-небудзь далучыцца. Проста, бяспечна і бясплатна.",
+  "@left_meeting_subtitle_guest_free": {
+    "description": "Subtitle shown for non-paid non-host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_guest_paid": "Дзякуй, што далучыліся.",
+  "@left_meeting_subtitle_guest_paid": {
+    "description": "Subtitle shown for paid non-host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_host_free": "Дзякуй за арганізацыю сустрэчы.",
+  "@left_meeting_subtitle_host_free": {
+    "description": "Subtitle shown for free host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_host_paid": "Дзякуй за арганізацыю прэміяльнай сустрэчы.",
+  "@left_meeting_subtitle_host_paid": {
+    "description": "Subtitle shown for paid host users after leaving a meeting"
+  },
+  "start_meeting_now": "Пачніце сустрэчу",
+  "@start_meeting_now": {
+    "description": "Button text to start a meeting immediately from left meeting bottom sheet"
+  },
+  "publish": "Апублікаваць",
+  "@publish": {
+    "description": "Dialog title for publishing camera and microphone"
+  },
+  "publish_camera_mic_question": "Вы сапраўды хочаце даць доступ да камеры і мікрафона?",
+  "@publish_camera_mic_question": {
+    "description": "Question asking user to publish camera and microphone"
+  },
+  "no": "НЕ",
+  "@no": {
+    "description": "Negative response button text"
+  },
+  "yes": "ТАК",
+  "@yes": {
+    "description": "Positive response button text"
+  },
+  "play_audio": "Прайграць аўдыя",
+  "@play_audio": {
+    "description": "Dialog title and button text for playing audio"
+  },
+  "ios_safari_audio_activation": "Для iOS Safari вам неабходна ўручную актываваць прайграванне аўдыя!",
+  "@ios_safari_audio_activation": {
+    "description": "Message explaining iOS Safari audio activation requirement"
+  },
+  "ignore": "Iгнараваць",
+  "@ignore": {
+    "description": "Button text to ignore an action"
+  },
+  "unpublish": "Адклікаць доступ",
+  "@unpublish": {
+    "description": "Dialog title for unpublishing camera and microphone"
+  },
+  "unpublish_camera_mic_question": "Вы сапраўды хочаце адклікаць доступ камеры і мікрафона?",
+  "@unpublish_camera_mic_question": {
+    "description": "Question asking user to unpublish camera and microphone"
+  },
+  "error": "Памылка",
+  "@error": {
+    "description": "Generic error dialog title"
+  },
+  "disconnect": "Адключыць",
+  "@disconnect": {
+    "description": "Dialog title and button text for disconnecting"
+  },
+  "are_you_sure_disconnect": "Вы сапраўды хочаце адключыцца?",
+  "@are_you_sure_disconnect": {
+    "description": "Confirmation question before disconnecting"
+  },
+  "reconnect": "Перападключыцца",
+  "@reconnect": {
+    "description": "Dialog title and button text for reconnecting"
+  },
+  "force_reconnection_message": "Гэта дзеянне прывядзе да прымусовага перападключэння",
+  "@force_reconnection_message": {
+    "description": "Message explaining that reconnection will be forced"
+  },
+  "reconnection_successful": "Паспяхова перападключана.",
+  "@reconnection_successful": {
+    "description": "Success message after reconnection"
+  },
+  "no_connection": "Няма падключэння",
+  "@no_connection": {
+    "description": "Message shown when there is no network connection"
+  },
+  "mls_not_synced": "MLS не сінхранізаваны",
+  "@mls_not_synced": {
+    "description": "Message shown when MLS is not synced"
+  },
+  "reconnecting_warning": "Перападключэнне",
+  "@reconnecting_warning": {
+    "description": "Message shown when MLS is not synced or websocket trying to reconnect"
+  },
+  "websocket_reconnecting": "Перападключэнне WebSocket",
+  "@websocket_reconnecting": {
+    "description": "Message shown when WebSocket is reconnecting"
+  },
+  "received_data": "Атрыманыя даныя",
+  "@received_data": {
+    "description": "Dialog title for received data"
+  },
+  "room_recording_reminder": "Напамін аб запісе ў пакоі",
+  "@room_recording_reminder": {
+    "description": "Dialog title for room recording status"
+  },
+  "room_recording_active": "Запіс у пакоі актыўны",
+  "@room_recording_active": {
+    "description": "Message when room recording is active"
+  },
+  "room_recording_stopped": "Запіс у пакоі спынены",
+  "@room_recording_stopped": {
+    "description": "Message when room recording is stopped"
+  },
+  "meeting_being_recorded": "Адбываецца запіс гэтай сустрэчы",
+  "@meeting_being_recorded": {
+    "description": "Title for recording in progress dialog"
+  },
+  "recording_consent_message": "Працягваючы сустрэчу, вы пацвярджаеце і згаджаецеся з тым, што яна запісваецца.",
+  "@recording_consent_message": {
+    "description": "Message about recording consent"
+  },
+  "recording_in_progress": "Адбываецца запіс",
+  "@recording_in_progress": {
+    "description": "Top banner shown to all participants when the meeting is being recorded"
+  },
+  "recording_in_progress_with_name": "Адбываецца запіс · {name} запісвае сустрэчу",
+  "@recording_in_progress_with_name": {
+    "description": "Top banner when exactly one named participant is recording",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "recording_in_progress_with_name_and_others": "Адбываецца запіс · {name} і яшчэ {count} іншы ўдзельнік(і) запісваюць сустрэчу",
+  "@recording_in_progress_with_name_and_others": {
+    "description": "Top banner when multiple participants are recording",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recording_label": "Запіс",
+  "@recording_label": {
+    "description": "Chip shown next to participants currently recording the meeting"
+  },
+  "agree_and_continue": "Згадзіцца і працягнуць",
+  "@agree_and_continue": {
+    "description": "Button text to agree and continue in meeting"
+  },
+  "continue_button": "Працягнуць",
+  "@continue_button": {
+    "description": "Button text to continue in meeting"
+  },
+  "allow_subscription": "Дазволіць падпіску",
+  "@allow_subscription": {
+    "description": "Dialog title for allowing subscription"
+  },
+  "allow_subscription_question": "Дазволіць усім удзельнікам падпісвацца на трэкі, якія апублікаваў лакальны ўдзельнік?",
+  "@allow_subscription_question": {
+    "description": "Question asking user to allow subscription"
+  },
+  "simulate_scenario": "Сімуляцыя сцэнарыя",
+  "@simulate_scenario": {
+    "description": "Dialog title for simulating scenarios"
+  },
+  "leave_room": "Выйсці з пакою",
+  "@leave_room": {
+    "description": "Dialog title for leaving room"
+  },
+  "are_you_sure_leave_room": "Вы сапраўды хочаце выйсці з гэтага пакою?",
+  "@are_you_sure_leave_room": {
+    "description": "Confirmation question before leaving room"
+  },
+  "no_response": "Не",
+  "@no_response": {
+    "description": "Negative response in confirmation dialogs"
+  },
+  "yes_response": "Так",
+  "@yes_response": {
+    "description": "Positive response in confirmation dialogs"
+  },
+  "personal_meeting_link": "Асабістая спасылка сустрэчы",
+  "@personal_meeting_link": {
+    "description": "Label for personal meeting link button"
+  },
+  "regenerate_link": "Згенерыраваць новую спасылку",
+  "@regenerate_link": {
+    "description": "Button text to regenerate a meeting link"
+  },
+  "regenerating": "Паўторная генерацыя...",
+  "@regenerating": {
+    "description": "Loading message shown while regenerating a meeting link"
+  },
+  "start_secure_meeting": "Пачаць бяспечную сустрэчу",
+  "@start_secure_meeting": {
+    "description": "Button text to start a secure meeting"
+  },
+  "upcoming_meetings": "Надыходзячыя сустрэчы",
+  "@upcoming_meetings": {
+    "description": "Section title for upcoming meetings list"
+  },
+  "my_rooms_count": "Мае пакоі",
+  "@my_rooms_count": {
+    "description": "Title showing the count of my rooms"
+  },
+  "my_meetings_count": "Мае сустрэчы",
+  "@my_meetings_count": {
+    "description": "Title showing the count of my meetings"
+  },
+  "schedule_meeting": "Запланаваць сустрэчу",
+  "@schedule_meeting": {
+    "description": "Button text to schedule a meeting"
+  },
+  "start_meeting": "Пачаць сустрэчу",
+  "@start_meeting": {
+    "description": "Button text to start a meeting"
+  },
+  "recent_meetings": "Нядаўнія сустрэчы",
+  "@recent_meetings": {
+    "description": "Section title for recent meetings list"
+  },
+  "start_instant_meeting": "Пачаць імгненную сустрэчу",
+  "@start_instant_meeting": {
+    "description": "Button text to start an instant meeting"
+  },
+  "copy_link_button": "Скапіяваць спасылку",
+  "@copy_link_button": {
+    "description": "Button text to copy a link"
+  },
+  "start_now": "Пачаць",
+  "@start_now": {
+    "description": "Button text to start immediately"
+  },
+  "leave_meeting": "Выйсці з сустрэчы",
+  "@leave_meeting": {
+    "description": "Dialog title for leaving a meeting"
+  },
+  "are_you_sure_leave_meeting": "Вы сапраўды хочаце выйсці з гэтай сустрэчы?",
+  "@are_you_sure_leave_meeting": {
+    "description": "Confirmation question before leaving meeting"
+  },
+  "user_is_presenting": "{name} (вы) абагульваеце экран",
+  "@user_is_presenting": {
+    "description": "String for local user presenting screen share",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "remote_user_is_presenting": "{name} абагульваеце экран",
+  "@remote_user_is_presenting": {
+    "description": "String for remote user presenting screen share",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "screen_share": "Абагуліць экран",
+  "@screen_share": {
+    "description": "Tooltip and button text for screen sharing"
+  },
+  "disable_denoising": "адключыць падаўленне шуму",
+  "@disable_denoising": {
+    "description": "Tooltip for disabling audio denoising"
+  },
+  "enable_denoising": "уключыць падаўленне шуму",
+  "@enable_denoising": {
+    "description": "Tooltip for enabling audio denoising"
+  },
+  "exit_full_screen": "выйсці з поўнаэкраннага рэжыму",
+  "@exit_full_screen": {
+    "description": "Tooltip for exiting full screen mode"
+  },
+  "enter_full_screen": "перайсці ў поўнаэкранны рэжым",
+  "@enter_full_screen": {
+    "description": "Tooltip for entering full screen mode"
+  },
+  "enter_pip": "увайсці ў рэжым \\\"відарыс у відарысе\\\"",
+  "@enter_pip": {
+    "description": "Tooltip for entering Picture-in-Picture mode"
+  },
+  "screen_sharing": "Абагульванне экрана",
+  "@screen_sharing": {
+    "description": "Notification title for screen sharing"
+  },
+  "sharing_your_screen": "Вы абагульваеце свой экран",
+  "@sharing_your_screen": {
+    "description": "Notification text when sharing screen"
+  },
+  "screen_share_not_supported_mobile": "Абагульванне экрана не падтрымліваецца ў мабільнай вэб-праграме",
+  "@screen_share_not_supported_mobile": {
+    "description": "Error message when screen sharing is not supported on mobile"
+  },
+  "switch_speakerphone_on": "Выкарыстоўваць дынамік тэлефона",
+  "@switch_speakerphone_on": {
+    "description": "Tooltip for switching audio output to the phone speaker"
+  },
+  "switch_speakerphone_off": "Выкарыстоўваць прадвызначаны аўдыявыхад",
+  "@switch_speakerphone_off": {
+    "description": "Tooltip for switching audio output back to the default device"
+  },
+  "audio_output_default_device": "Прадвызначаная прылада",
+  "@audio_output_default_device": {
+    "description": "Bottom sheet option: use default audio output routing (e.g. earpiece or headphones)"
+  },
+  "audio_output_earpiece": "Дынамік",
+  "@audio_output_earpiece": {
+    "description": "Bottom sheet option: use Earpiece audio output routing"
+  },
+  "audio_output_bluetooth_device": "Прылада Bluetooth",
+  "@audio_output_bluetooth_device": {
+    "description": "Bottom sheet option: use Bluetooth device audio output routing"
+  },
+  "audio_output_headphones": "Навушнікі",
+  "@audio_output_headphones": {
+    "description": "Bottom sheet option: use Headphones audio output routing"
+  },
+  "audio_output_phone_speakers": "Дынамікі тэлефона",
+  "@audio_output_phone_speakers": {
+    "description": "Bottom sheet option: use the phone built-in loudspeaker"
+  },
+  "please_grant_camera_permission": "Дайце дазвол камеры, каб працягнуць",
+  "@please_grant_camera_permission": {
+    "description": "Message requesting camera permission"
+  },
+  "please_grant_microphone_permission": "Дайце дазвол мікрафону, каб працягнуць",
+  "@please_grant_microphone_permission": {
+    "description": "Message requesting microphone permission"
+  },
+  "your_meeting_is_ready": "Ваша сустрэча гатова",
+  "@your_meeting_is_ready": {
+    "description": "Title message when meeting is ready"
+  },
+  "share_link_invite_description": "Абагуліце гэту спасылку, каб запрасіць іншых. Вы таксама можаце знайсці яе ў любы момант, калі націсніце значок інфармацыі на панэлі інструментаў.",
+  "@share_link_invite_description": {
+    "description": "Instructions for sharing meeting link"
+  },
+  "two_factor_authentication": "Двухфактарная аўтэнтыфікацыя",
+  "@two_factor_authentication": {
+    "description": "Title for two-factor authentication"
+  },
+  "enter_2fa_code": "Увядзіце свой код 2ФА, каб працягнуць",
+  "@enter_2fa_code": {
+    "description": "Prompt for entering 2FA code"
+  },
+  "twofa_code": "Код 2ФА",
+  "@twofa_code": {
+    "description": "Label for 2FA code input field"
+  },
+  "verify": "Спраўдзіць",
+  "@verify": {
+    "description": "Button text to verify"
+  },
+  "switch_to": "Пераключыцца на",
+  "@switch_to": {
+    "description": "Text before account name in account switcher"
+  },
+  "add_another_account": "Дадаць іншы ўліковы запіс",
+  "@add_another_account": {
+    "description": "Button text to add another account"
+  },
+  "delete_proton_account": "Выдаліць уліковы запіс Proton",
+  "@delete_proton_account": {
+    "description": "Button text to delete Proton account"
+  },
+  "invalid_meeting_link": "Памылковая спасылка на сустрэчу",
+  "@invalid_meeting_link": {
+    "description": "Error message for invalid meeting link"
+  },
+  "permission_required": "Патрабуецца дазвол",
+  "@permission_required": {
+    "description": "Label when permission is required"
+  },
+  "unsubscribe_audio": "Скасаваць падпіску на аўдыя",
+  "@unsubscribe_audio": {
+    "description": "Menu item to unsubscribe from audio"
+  },
+  "subscribe_audio": "Падпісацца на аўдыя",
+  "@subscribe_audio": {
+    "description": "Menu item to subscribe to audio"
+  },
+  "unsubscribe_video": "Скасаваць падпіску на відэа",
+  "@unsubscribe_video": {
+    "description": "Menu item to unsubscribe from video"
+  },
+  "subscribe_video": "Падпісацца на відэа",
+  "@subscribe_video": {
+    "description": "Menu item to subscribe to video"
+  },
+  "remote_mute_video": "Аддалена адключыць відэа",
+  "@remote_mute_video": {
+    "description": "Menu item to remotely mute video"
+  },
+  "remote_mute_audio": "Аддалена адключыць аўдыя",
+  "@remote_mute_audio": {
+    "description": "Menu item to remotely mute audio"
+  },
+  "force_mute": "Прымусова заглушыць",
+  "@force_mute": {
+    "description": "Menu item to force mute a participant"
+  },
+  "force_mute_participant": "Прымусова заглушыць {name}",
+  "@force_mute_participant": {
+    "description": "Toast message when force muting a participant",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "force_disable_camera": "Прымусова адключыць камеру",
+  "@force_disable_camera": {
+    "description": "Menu item to force disable camera"
+  },
+  "force_disable_camera_participant": "Прымусова адключыць камеру {name}",
+  "@force_disable_camera_participant": {
+    "description": "Toast message when force disabling camera",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "kick_out": "Выгнаць",
+  "@kick_out": {
+    "description": "Menu item to kick out a participant"
+  },
+  "kick_out_participant": "Выгнаць {name}",
+  "@kick_out_participant": {
+    "description": "Toast message when kicking out a participant",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "subscribe_menu": "Меню падпіскі",
+  "@subscribe_menu": {
+    "description": "Tooltip for subscribe menu button"
+  },
+  "subscribe": "Падпісацца",
+  "@subscribe": {
+    "description": "Menu item to subscribe"
+  },
+  "unsubscribe": "Адпісацца",
+  "@unsubscribe": {
+    "description": "Menu item to unsubscribe"
+  },
+  "preferred_fps": "Пажаданая FPS",
+  "@preferred_fps": {
+    "description": "Tooltip for preferred FPS setting"
+  },
+  "preferred_quality": "Пажаданая якасць",
+  "@preferred_quality": {
+    "description": "Tooltip for preferred quality setting"
+  },
+  "high": "ВЫСОКАЯ",
+  "@high": {
+    "description": "High quality option"
+  },
+  "medium": "СЯРЭДНЯЯ",
+  "@medium": {
+    "description": "Medium quality option"
+  },
+  "low": "НІЗКАЯ",
+  "@low": {
+    "description": "Low quality option"
+  },
+  "unnamed_room": "Пакой без назвы",
+  "@unnamed_room": {
+    "description": "Default name for rooms without a name"
+  },
+  "participants_count_text": "Удзельнікаў: {count}",
+  "@participants_count_text": {
+    "description": "Text showing number of participants",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_privacy_message": "Гэты час са скразным шыфраваннем з эфемернымі паведамленнямі, якія знікаюць у канцы званка.",
+  "@chat_privacy_message": {
+    "description": "Privacy message displayed in chat when there are no messages."
+  },
+  "meeting_quality_feedback": "Водгук аб якасці сустрэчы",
+  "@meeting_quality_feedback": {
+    "description": "Title for meeting quality feedback form"
+  },
+  "quality_feedback_email_message": "Адправіўшы водгук, вы абагуліце з намі журнал падключэння праз электронную пошту.",
+  "@quality_feedback_email_message": {
+    "description": "Message explaining that connection log will be shared via email"
+  },
+  "call_quality_how_was": "Як вы ацэньваеце якасць званка?",
+  "@call_quality_how_was": {
+    "description": "Prompt above star rating on post-meeting feedback"
+  },
+  "call_quality_what_went_wrong": "Што пайшло не так?",
+  "@call_quality_what_went_wrong": {
+    "description": "Heading when user rated call quality below threshold"
+  },
+  "call_quality_problem_subtitle": "З якімі праблемамі вы сутыкнуліся?",
+  "@call_quality_problem_subtitle": {
+    "description": "Subtitle under what went wrong on low-rating feedback"
+  },
+  "call_quality_add_optional_details": "Дадайце неабавязковыя падрабязнасці",
+  "@call_quality_add_optional_details": {
+    "description": "Expand control for free-text feedback"
+  },
+  "call_quality_share_more_details": "Абагуліць больш падрабязнасцей",
+  "@call_quality_share_more_details": {
+    "description": "Placeholder for optional feedback text"
+  },
+  "call_quality_help_text": "Неабавязковыя водгукі бяспечна адпраўляюцца, каб палепшыць якасць званка.",
+  "@call_quality_help_text": {
+    "description": "Short privacy note under the rating on post-meeting feedback"
+  },
+  "call_quality_feedback_submitted": "Ваш водгук адпраўлены",
+  "@call_quality_feedback_submitted": {
+    "description": "Toast after successful meeting feedback"
+  },
+  "call_quality_could_not_send": "Немагчыма адправіць водгук",
+  "@call_quality_could_not_send": {
+    "description": "Toast when meeting feedback API fails"
+  },
+  "call_quality_category_audio": "Аўдыя",
+  "@call_quality_category_audio": {
+    "description": "Section label for audio-related feedback options"
+  },
+  "call_quality_category_video": "Відэа",
+  "@call_quality_category_video": {
+    "description": "Section label for video-related feedback options"
+  },
+  "call_quality_category_screen": "Абагуленне экрана",
+  "@call_quality_category_screen": {
+    "description": "Section label for screen-share feedback options"
+  },
+  "call_quality_audio_breaking": "Аўдыя перарывалася",
+  "@call_quality_audio_breaking": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_audio_couldnt_hear": "Я не чуў іншых",
+  "@call_quality_audio_couldnt_hear": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_audio_others_couldnt_hear": "Іншыя не чулі мяне",
+  "@call_quality_audio_others_couldnt_hear": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_poor": "Якасць відэа была нізкая",
+  "@call_quality_video_poor": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_couldnt_see": "Я не бачыў відэа ад іншых",
+  "@call_quality_video_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_others_couldnt_see": "Іншыя не бачылі маё відэа",
+  "@call_quality_video_others_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_blurry": "Прэзентацыя была размытая",
+  "@call_quality_screen_blurry": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_couldnt_see": "Я не бачыў прэзентацыю",
+  "@call_quality_screen_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_couldnt_present": "Я не змог запусціць прэзентацыю",
+  "@call_quality_screen_couldnt_present": {
+    "description": "Low-rating feedback option"
+  },
+  "skip": "Прапусціць",
+  "@skip": {
+    "description": "Button text to skip an action"
+  },
+  "feature_not_ready": "Гэта функцыя пакуль не гатова.",
+  "@feature_not_ready": {
+    "description": "Message when a feature is not ready"
+  },
+  "video_stats_all_participants": "Статыска відэа - Усе ўдзельнікі",
+  "@video_stats_all_participants": {
+    "description": "Title for video statistics dialog"
+  },
+  "video_stats": "статыстыка відэа",
+  "@video_stats": {
+    "description": "Label for video statistics"
+  },
+  "page_not_found": "Старонка не знойдзена",
+  "@page_not_found": {
+    "description": "Error message when page is not found"
+  },
+  "invalid_deeplink_format": "Памылковы фармат Deep Link: {name}",
+  "@invalid_deeplink_format": {
+    "description": "Error message for invalid deeplink format",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "open_settings": "Адкрыць налады",
+  "@open_settings": {
+    "description": "Button text to open settings"
+  },
+  "schedule": "Расклад",
+  "@schedule": {
+    "description": "Button text to schedule"
+  },
+  "start": "Пачаць",
+  "@start": {
+    "description": "Button text to start"
+  },
+  "start_an_instant_meeting": "Пачаць імгненную сустрэчу",
+  "@start_an_instant_meeting": {
+    "description": "Button text to start an instant meeting"
+  },
+  "more": "Больш",
+  "@more": {
+    "description": "Tooltip for more options button"
+  },
+  "unlock_failed_too_many_times": "Збой разблакіроўкі (занадта шмат спроб)",
+  "@unlock_failed_too_many_times": {
+    "description": "Error message when unlock fails too many times"
+  },
+  "show_all_stats_debug": "Паказаць усю статыстыку (рэжым адладкі)",
+  "@show_all_stats_debug": {
+    "description": "Button text to show all stats in debug mode"
+  },
+  "close_simulation": "Закрыць сімуляцыю",
+  "@close_simulation": {
+    "description": "Button text to close simulation"
+  },
+  "close_all_rooms_exit_simulation": "Вы сапраўды хочаце закрыць усе пакоі і выйсці з рэжыму сімуляцыі?",
+  "@close_all_rooms_exit_simulation": {
+    "description": "Confirmation question before closing simulation"
+  },
+  "yes_close_all": "Так, закрыць усе",
+  "@yes_close_all": {
+    "description": "Button text to confirm closing all rooms"
+  },
+  "simulation_mode": "Рэжым сімуляцыі",
+  "@simulation_mode": {
+    "description": "Title for simulation mode"
+  },
+  "simulation_mode_description": "Стварыце і кіруйце пакоямі сімуляцыі для тэсціравання",
+  "@simulation_mode_description": {
+    "description": "Description text for simulation mode"
+  },
+  "simulated_rooms": "Сімуляваныя пакоі",
+  "@simulated_rooms": {
+    "description": "Title for simulated rooms section"
+  },
+  "room_with_users": "Пакой {key} (карыстальнікаў: {count})",
+  "@room_with_users": {
+    "description": "Text showing room ID and user count",
+    "placeholders": {
+      "key": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "enable_video": "Уключыць відэа",
+  "@enable_video": {
+    "description": "Button text to enable video"
+  },
+  "meeting_will_end_in": "Сустрэча завершыцца ў {time}",
+  "@meeting_will_end_in": {
+    "description": "Title for meeting will end dialog with countdown timer",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "0:30"
+      }
+    }
+  },
+  "meeting_expiry_banner_title_prefix": "Сустрэча завершыцца ў ",
+  "@meeting_expiry_banner_title_prefix": {
+    "description": "Title prefix for meeting expiry countdown banner; duration is appended"
+  },
+  "meeting_expiry_banner_description": "Бясплатная сустрэча абмежавана працягласцю ў 1 гадзіну. Гэты званок будзе неўзабаве адключаны.",
+  "@meeting_expiry_banner_description": {
+    "description": "Subtitle on meeting expiry warning banner for free meetings"
+  },
+  "host_close_meeting_description": "Вы хочаце выйсці з сустрэчы або скончыць яе для кожнага ўдзельніка?",
+  "@host_close_meeting_description": {
+    "description": "Description text when host want to leave meeting"
+  },
+  "close_meeting_description": "Вы сапраўды хочаце выйсці? Сустрэча працягнецца без вас.",
+  "@close_meeting_description": {
+    "description": "Description text when host want to leave meeting"
+  },
+  "meeting_will_end_description": "З прычыны таго, што вы з'яўляецеся адзіным удзельнікам сустрэчы, яна аўтаматычна закрыецца. Хочаце застацца ў ёй?",
+  "meeting_created": "Сустрэча створана",
+  "@meeting_created": {
+    "description": "Title for meeting created dialog"
+  },
+  "room_initialing_hint": "Падпіска на аддаленыя трэкі з відэа…",
+  "@room_initialing_hint": {
+    "description": "Hint for room initialing process"
+  },
+  "add_to_calendar": "Дадаць у каляндар",
+  "@add_to_calendar": {
+    "description": "Button label to add a meeting to calendar"
+  },
+  "meeting_details": "Падрабязнасці",
+  "@meeting_details": {
+    "description": "Button label to show meeting details"
+  },
+  "meeting_details_section": "Падрабязнасці сустрэчы",
+  "@meeting_details_section": {
+    "description": "Section title for meeting details in info panel"
+  },
+  "title_label": "Назва",
+  "@title_label": {
+    "description": "Label for meeting title field"
+  },
+  "date_label": "Дата",
+  "@date_label": {
+    "description": "Label for meeting date field"
+  },
+  "time_label": "Час",
+  "@time_label": {
+    "description": "Label for meeting time field"
+  },
+  "invite_link_label": "Запрашальная спасылка",
+  "@invite_link_label": {
+    "description": "Label for invite link field"
+  },
+  "messaging_layer_security": "Messaging Layer Security (MLS)",
+  "@messaging_layer_security": {
+    "description": "Title for MLS section in meeting info panel"
+  },
+  "participants_label": "Удзельнікі",
+  "@participants_label": {
+    "description": "Label for participants count field"
+  },
+  "epoch_label": "Epoch",
+  "@epoch_label": {
+    "description": "Label for epoch field"
+  },
+  "security_code_label": "Код бяспекі",
+  "@security_code_label": {
+    "description": "Label for security code field"
+  },
+  "recurrence_daily": "Штодзённа",
+  "@recurrence_daily": {
+    "description": "Recurrence frequency label for daily meetings"
+  },
+  "recurrence_weekly": "Штотыдзень",
+  "@recurrence_weekly": {
+    "description": "Recurrence frequency label for weekly meetings"
+  },
+  "recurrence_monthly": "Штомесяц",
+  "@recurrence_monthly": {
+    "description": "Recurrence frequency label for monthly meetings"
+  },
+  "recurrence_yearly": "Штогод",
+  "@recurrence_yearly": {
+    "description": "Recurrence frequency label for yearly meetings"
+  },
+  "@meeting_will_end_description": {
+    "description": "Description text explaining why meeting will end"
+  },
+  "stay_in_meeting": "Застацца ў сустрэчы",
+  "@stay_in_meeting": {
+    "description": "Button text to stay in meeting"
+  },
+  "end_meeting_for_all": "Скончыць сустрэчу для ўсіх",
+  "@end_meeting_for_all": {
+    "description": "Button text to end meeting for all"
+  },
+  "stay_in_the_meeting": "Застацца ў сустрэчы",
+  "@stay_in_the_meeting": {
+    "description": "Button text to stay in the meeting"
+  },
+  "connection_lost": "Падключэнне страчана",
+  "@connection_lost": {
+    "description": "Connection lost description"
+  },
+  "connection_lost_content": "Падключэнне страчана. Далучыцеся да сустрэчы паўторна",
+  "@connection_lost_content": {
+    "description": "Connection lost description"
+  },
+  "go_back_to_dashboard": "Вярнуцца ў панэль кіравання",
+  "@go_back_to_dashboard": {
+    "description": "Description text for go back to the dashboard button"
+  },
+  "early_access_description": "Гэта функцыя з'яўляецца эксклюзіўнай і даступна карыстальнікам з тарыфнымі планамі Lifetime і Visionary падчас ранняга доступу.",
+  "@early_access_description": {
+    "description": "Description text explaining guest user capabilities"
+  },
+  "early_access_title": "Увайдзіце, каб атрымаць доступ да гэтай функцыі",
+  "@early_access_title": {
+    "description": "Message prompting user to sign in for this early access feature"
+  },
+  "early_access_title_for_login_user": "Функцыя ранняга доступу",
+  "@early_access_title_for_login_user": {
+    "description": "Message to let user know this is early access feature available for Lifetime and Visionary users"
+  },
+  "schedule_a_meeting": "Запланаваць сустрэчу",
+  "@schedule_a_meeting": {
+    "description": "Menu item label to schedule a meeting in Proton Meet app"
+  },
+  "create_a_room": "Стварыць пакой",
+  "@create_a_room": {
+    "description": "Menu item label to create a room"
+  },
+  "create_new_room": "Стварыць новы пакой",
+  "@create_new_room": {
+    "description": "Menu item label to create a new room"
+  },
+  "emoji_reactions": "Рэакцыі эмодзі",
+  "@emoji_reactions": {
+    "description": "Emoji reactions tooltip"
+  },
+  "lower_participant_hand": "Lower participant's hand",
+  "@lower_participant_hand": {
+    "description": "Tooltip text for lowering a participant's raised hand"
+  },
+  "edit_room": "Рэдагаваць пакой",
+  "@edit_room": {
+    "description": "Menu item label to edit a room"
+  },
+  "edit_meeting": "Рэдагаваць сустрэчу",
+  "@edit_meeting": {
+    "description": "Menu item label to edit a meeting"
+  },
+  "join_with_a_link": "Далучыцца са спасылкай",
+  "@join_with_a_link": {
+    "description": "Menu item label to join a meeting with a link"
+  },
+  "room_name": "Назва",
+  "@room_name": {
+    "description": "Label for room name input field header"
+  },
+  "room_id": "Ідэнт. пакою",
+  "@room_id": {
+    "description": "Label for room ID display"
+  },
+  "room_deleted": "Пакой выдалены",
+  "@room_deleted": {
+    "description": "Success message shown after a room is deleted"
+  },
+  "meeting_deleted": "Сустрэча выдалены",
+  "@meeting_deleted": {
+    "description": "Success message shown after a meeting is deleted"
+  },
+  "enter_room_name_hint": "напрыклад, каманда дызайнераў або штодзённае выступленне",
+  "@enter_room_name_hint": {
+    "description": "Hint text for room name input field"
+  },
+  "create_room_subtitle": "Пакоі для сустрэч могуць быць выкарыстаны ў любы час",
+  "@create_room_subtitle": {
+    "description": "Subtitle text for create room dialog"
+  },
+  "create_button": "Стварыць",
+  "@create_button": {
+    "description": "Button text to create"
+  },
+  "save": "Захаваць",
+  "@save": {
+    "description": "Button text to save"
+  },
+  "create_and_copy_link": "Стварыць і скапіяваць спасылку",
+  "@create_and_copy_link": {
+    "description": "Button text to create meeting and copy link"
+  },
+  "you_are_using_paid_meet_plan": "Вы выкарыстоўваеце платны тарыфны план Meet.",
+  "@you_are_using_paid_meet_plan": {
+    "description": "Message shown to host indicating they are using a paid plan"
+  },
+  "you_are_using_free_meet_plan": "Вы выкарыстоўваеце бясплатны тарыфны план Meet.",
+  "@you_are_using_free_meet_plan": {
+    "description": "Message shown to host indicating they are using the free plan"
+  },
+  "call_supports_up_to": "Гэты званок падтрымлівае да ",
+  "@call_supports_up_to": {
+    "description": "Message prefix showing the maximum number of participants allowed in the call"
+  },
+  "call_reached_limit": "Званок дасягнуў ",
+  "@call_reached_limit": {
+    "description": "Message prefix showing the call has reached the limit"
+  },
+  "participants_suffix": " удзельнікі.",
+  "@participants_suffix": {
+    "description": "Message suffix after the participant count"
+  },
+  "participants_reached_limit_suffix": " абмежавання па ўдзільніках.",
+  "@participants_reached_limit_suffix": {
+    "description": "Message suffix after the call reached limit message"
+  },
+  "no_more_participants_can_join": "Выдаліце ўдзельніка або палепшыце свой тарыфны план, каб запрасіць больш людзей.",
+  "@no_more_participants_can_join": {
+    "description": "Message shown when the call has reached the maximum number of participants"
+  },
+  "connection_quality_poor": "Дрэннае падключэнне",
+  "@connection_quality_poor": {
+    "description": "Tooltip message shown when connection quality is poor"
+  },
+  "meeting_ended_by_host": "Арганізатар завяршыў сустрэчу",
+  "@meeting_ended_by_host": {
+    "description": "Toast message shown when the host ends the meeting for everyone"
+  },
+  "client_kicked_out_by_host": "Арганізатар выдаліў вас з сустрэчы",
+  "@client_kicked_out_by_host": {
+    "description": "Toast message shown when the host removes current user from the meeting"
+  },
+  "kicked_out_bottom_sheet_title": "Вы былі выдалены",
+  "@kicked_out_bottom_sheet_title": {
+    "description": "Title shown in left meeting bottom sheet when current user is removed by host"
+  },
+  "kicked_out_bottom_sheet_content": "Арганізатар выдаліў вас з сустрэчы.",
+  "@kicked_out_bottom_sheet_content": {
+    "description": "Content shown in left meeting bottom sheet when current user is removed by host"
+  },
+  "add_title": "Дадаць назву",
+  "@add_title": {
+    "description": "Placeholder text for meeting title input field"
+  },
+  "schedule_at": "у",
+  "@schedule_at": {
+    "description": "Label for schedule at, used in schedule dialog"
+  },
+  "schedule_duration_min": "хв",
+  "@schedule_duration_min": {
+    "description": "Label for schedule duration in minutes"
+  },
+  "schedule_duration_hr": "г",
+  "@schedule_duration_hr": {
+    "description": "Label for schedule duration in hours"
+  },
+  "schedule_recurrence_none": "Не паўтараецца",
+  "@schedule_recurrence_none": {
+    "description": "Label for schedule recurrence none"
+  },
+  "schedule_recurrence_daily": "Штодзённа",
+  "@schedule_recurrence_daily": {
+    "description": "Label for schedule recurrence daily"
+  },
+  "schedule_recurrence_weekly": "Штотыдзень",
+  "@schedule_recurrence_weekly": {
+    "description": "Label for schedule recurrence weekly"
+  },
+  "schedule_recurrence_monthly": "Штомесяц",
+  "@schedule_recurrence_monthly": {
+    "description": "Label for schedule recurrence monthly"
+  },
+  "schedule_recurrence_yearly": "Штогод",
+  "@schedule_recurrence_yearly": {
+    "description": "Label for schedule recurrence yearly"
+  },
+  "schedule_time_zone_search_hint": "Шукаць часавы пояс",
+  "@schedule_time_zone_search_hint": {
+    "description": "Label for schedule time zone search hint"
+  },
+  "schedule_time_zone_current": "Бягучы часавы пояс",
+  "@schedule_time_zone_current": {
+    "description": "Label for schedule time zone current"
+  },
+  "schedule_time_zone_selected": "Выбраны часавы пояс",
+  "@schedule_time_zone_selected": {
+    "description": "Label for schedule time zone selected"
+  },
+  "month_jan": "Студзень",
+  "@month_jan": {
+    "description": "Full month name for January"
+  },
+  "month_feb": "Люты",
+  "@month_feb": {
+    "description": "Full month name for February"
+  },
+  "month_mar": "Сакавік",
+  "@month_mar": {
+    "description": "Full month name for March"
+  },
+  "month_apr": "Красавік",
+  "@month_apr": {
+    "description": "Full month name for April"
+  },
+  "month_may": "Травень",
+  "@month_may": {
+    "description": "Full month name for May"
+  },
+  "month_jun": "Чэрвень",
+  "@month_jun": {
+    "description": "Full month name for June"
+  },
+  "month_jul": "Ліпень",
+  "@month_jul": {
+    "description": "Full month name for July"
+  },
+  "month_aug": "Жнівень",
+  "@month_aug": {
+    "description": "Full month name for August"
+  },
+  "month_sep": "Верасень",
+  "@month_sep": {
+    "description": "Full month name for September"
+  },
+  "month_oct": "Кастрычнік",
+  "@month_oct": {
+    "description": "Full month name for October"
+  },
+  "month_nov": "Лістапад",
+  "@month_nov": {
+    "description": "Full month name for November"
+  },
+  "month_dec": "Снежань",
+  "@month_dec": {
+    "description": "Full month name for December"
+  },
+  "month_short_jan": "Сту",
+  "@month_short_jan": {
+    "description": "Abbreviated month name January (order Jan–Dec)"
+  },
+  "month_short_feb": "Лют",
+  "@month_short_feb": {
+    "description": "Abbreviated month name February"
+  },
+  "month_short_mar": "Сак",
+  "@month_short_mar": {
+    "description": "Abbreviated month name March"
+  },
+  "month_short_apr": "Кра",
+  "@month_short_apr": {
+    "description": "Abbreviated month name April"
+  },
+  "month_short_may": "Тра",
+  "@month_short_may": {
+    "description": "Abbreviated month name May"
+  },
+  "month_short_jun": "Чэр",
+  "@month_short_jun": {
+    "description": "Abbreviated month name June"
+  },
+  "month_short_jul": "Ліп",
+  "@month_short_jul": {
+    "description": "Abbreviated month name July"
+  },
+  "month_short_aug": "Жні",
+  "@month_short_aug": {
+    "description": "Abbreviated month name August"
+  },
+  "month_short_sep": "Вер",
+  "@month_short_sep": {
+    "description": "Abbreviated month name September"
+  },
+  "month_short_oct": "Кас",
+  "@month_short_oct": {
+    "description": "Abbreviated month name October"
+  },
+  "month_short_nov": "Ліс",
+  "@month_short_nov": {
+    "description": "Abbreviated month name November"
+  },
+  "month_short_dec": "Сне",
+  "@month_short_dec": {
+    "description": "Abbreviated month name December"
+  },
+  "weekday_monday": "Панядзелак",
+  "@weekday_monday": {
+    "description": "Weekday name for Monday"
+  },
+  "weekday_tuesday": "Аўторак",
+  "@weekday_tuesday": {
+    "description": "Weekday name for Tuesday"
+  },
+  "weekday_wednesday": "Серада",
+  "@weekday_wednesday": {
+    "description": "Weekday name for Wednesday"
+  },
+  "weekday_thursday": "Чацвер",
+  "@weekday_thursday": {
+    "description": "Weekday name for Thursday"
+  },
+  "weekday_friday": "Пятніца",
+  "@weekday_friday": {
+    "description": "Weekday name for Friday"
+  },
+  "weekday_saturday": "Субота",
+  "@weekday_saturday": {
+    "description": "Weekday name for Saturday"
+  },
+  "weekday_sunday": "Нядзеля",
+  "@weekday_sunday": {
+    "description": "Weekday name for Sunday"
+  },
+  "weekday_short_monday": "Пан",
+  "@weekday_short_monday": {
+    "description": "Short weekday label Monday (list order Mon–Sun)"
+  },
+  "weekday_short_tuesday": "Аўт",
+  "@weekday_short_tuesday": {
+    "description": "Short weekday label Tuesday"
+  },
+  "weekday_short_wednesday": "Сер",
+  "@weekday_short_wednesday": {
+    "description": "Short weekday label Wednesday"
+  },
+  "weekday_short_thursday": "Чцв",
+  "@weekday_short_thursday": {
+    "description": "Short weekday label Thursday"
+  },
+  "weekday_short_friday": "Птн",
+  "@weekday_short_friday": {
+    "description": "Short weekday label Friday"
+  },
+  "weekday_short_saturday": "Суб",
+  "@weekday_short_saturday": {
+    "description": "Short weekday label Saturday"
+  },
+  "weekday_short_sunday": "Ндз",
+  "@weekday_short_sunday": {
+    "description": "Short weekday label Sunday"
+  },
+  "calendar_system": "Дадаць у тэлефонны каляндар",
+  "@calendar_system": {
+    "description": "Menu label for opening system calendar"
+  },
+  "calendar_google": "Дадаць у каляндар Google",
+  "@calendar_google": {
+    "description": "Menu label for opening Google Calendar"
+  },
+  "calendar_share_ics": "Абагуліць файл падзеі",
+  "@calendar_share_ics": {
+    "description": "Menu label for sharing ICS file"
+  },
+  "calendar_outlook": "Дадаць у каляндар Outlook",
+  "@calendar_outlook": {
+    "description": "Menu label for opening Outlook Calendar"
+  },
+  "calendar_proton": "Дадаць у Proton Calendar",
+  "@calendar_proton": {
+    "description": "Menu label for opening Proton Calendar"
+  },
+  "scheduled_meeting_share": "Абагуліць",
+  "@scheduled_meeting_share": {
+    "description": "Share button label in scheduled meeting summary"
+  },
+  "scheduled_meeting_done": "Гатова",
+  "@scheduled_meeting_done": {
+    "description": "Done button label in scheduled meeting summary"
+  },
+  "scheduled_meeting_link": "Спасылка",
+  "@scheduled_meeting_link": {
+    "description": "Link label in scheduled meeting summary"
+  },
+  "upcoming_today": "СЁННЯ",
+  "@upcoming_today": {
+    "description": "Upcoming meetings header label for today"
+  },
+  "upcoming_tomorrow": "ЗАЎТРА",
+  "@upcoming_tomorrow": {
+    "description": "Upcoming meetings header label for tomorrow"
+  },
+  "on_yesterday": "УЧОРА",
+  "@on_yesterday": {
+    "description": "Meetings header label for yesterday"
+  },
+  "upcoming_prefix": "НАДЫХОДЗЯЧЫЯ",
+  "@upcoming_prefix": {
+    "description": "Prefix for upcoming meetings header label"
+  },
+  "ended_prefix": "ЗАВЕРШАНЫЯ",
+  "@ended_prefix": {
+    "description": "Prefix for ended/past meetings header label"
+  },
+  "ended_today": "Завершаныя сёння",
+  "@ended_today": {
+    "description": "Label for meetings ended today"
+  },
+  "ended_yesterday": "Завершаныя ўчора",
+  "@ended_yesterday": {
+    "description": "Label for meetings ended yesterday"
+  },
+  "ended_on": "Завершана",
+  "@ended_on": {
+    "description": "Label for meetings ended on a specific date"
+  },
+  "created_prefix": "СТВОРАНА",
+  "@created_prefix": {
+    "description": "Prefix for newly created meetings header label"
+  },
+  "created_today": "Створана сёння",
+  "@created_today": {
+    "description": "Label for meetings created today"
+  },
+  "created_yesterday": "Створана ўчора",
+  "@created_yesterday": {
+    "description": "Label for meetings created yesterday"
+  },
+  "created_last_week": "Створана на мінулым тыдні",
+  "@created_last_week": {
+    "description": "Label for meetings created within the last week"
+  },
+  "created": "Створана",
+  "@created": {
+    "description": "Label prefix for created time"
+  },
+  "last_used_today": "Апошні раз выкарыстоўвалася сёння",
+  "@last_used_today": {
+    "description": "Label for meetings last used today"
+  },
+  "last_used_yesterday": "Апошні раз выкарыстоўвалася ўчора",
+  "@last_used_yesterday": {
+    "description": "Label for meetings last used yesterday"
+  },
+  "last_used": "Апошні раз выкарыстоўвалася",
+  "@last_used": {
+    "description": "Label prefix for last used time"
+  },
+  "created_on": "Створана {month} {day}, {year}",
+  "@created_on": {
+    "description": "Label for meetings created on a specific date",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      },
+      "day": {
+        "type": "int"
+      },
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "secure_meeting": "Бяспечная сустрэча",
+  "@secure_meeting": {
+    "description": "Default meeting name when no title is set"
+  },
+  "premium_meeting": "Прэміяльная сустрэча",
+  "@premium_meeting": {
+    "description": "Default meeting name for paid meeting"
+  },
+  "free_meeting": "Бясплатная сустрэча",
+  "@free_meeting": {
+    "description": "Default meeting name for free meeting"
+  },
+  "share_with_people_you_trust": "Абагуліце з людзьмі якім вы давяраеце",
+  "@share_with_people_you_trust": {
+    "description": "Personal meeting hint text"
+  },
+  "time_am": "AM",
+  "@time_am": {
+    "description": "AM suffix for 12-hour time format"
+  },
+  "time_pm": "PM",
+  "@time_pm": {
+    "description": "PM suffix for 12-hour time format"
+  },
+  "start_typing_to_search": "Пачніце ўводзіць тэкст, каб знайсці...",
+  "@start_typing_to_search": {
+    "description": "Placeholder text shown when search query is empty"
+  },
+  "no_results_found_for": "Нічога не знойдзена для \\\"{searchQuery}\\\"",
+  "@no_results_found_for": {
+    "description": "Message shown when search returns no results",
+    "placeholders": {
+      "searchQuery": {
+        "type": "String",
+        "example": "meeting name"
+      }
+    }
+  },
+  "sort_newest": "Спачатку новыя",
+  "@sort_newest": {
+    "description": "Sort option label for newest items"
+  },
+  "sort_last_used": "Апошняе выкарыстанне",
+  "@sort_last_used": {
+    "description": "Sort option label for last used items"
+  },
+  "sort_by": "Сартаваць па: {option}",
+  "@sort_by": {
+    "description": "Toast notification message when sort option is selected",
+    "placeholders": {
+      "option": {
+        "type": "String"
+      }
+    }
+  },
+  "sort_upcoming": "Надыходзячыя",
+  "@sort_upcoming": {
+    "description": "Sort option label for upcoming meetings"
+  },
+  "sort_new_created": "Нядаўна створаныя",
+  "@sort_new_created": {
+    "description": "Sort option label for newly created items"
+  },
+  "sort_past_meeting": "Мінулыя",
+  "@sort_past_meeting": {
+    "description": "Sort option label for past meetings"
+  },
+  "version": "Версія {versionDisplay}",
+  "@version": {
+    "description": "Version text with version number",
+    "placeholders": {
+      "versionDisplay": {
+        "type": "String",
+        "example": "1.0.0-dev (00)"
+      }
+    }
+  },
+  "unable_to_reconnect": "Немагчыма перападключыцца",
+  "@unable_to_reconnect": {
+    "description": "Title shown when reconnection fails"
+  },
+  "reconnection_failed_message": "Немагчыма аднавіць падключэнне. Далучыцеся да сустрэчы паўторна",
+  "@reconnection_failed_message": {
+    "description": "Message shown when reconnection fails"
+  },
+  "connection": "Падключэнне",
+  "@connection": {
+    "description": "Section title for connection settings"
+  },
+  "reconnect_meeting": "Перападключыць сустрэчу",
+  "@reconnect_meeting": {
+    "description": "Button label to reconnect to meeting"
+  },
+  "always_show_status": "Заўсёды паказваць статус",
+  "@always_show_status": {
+    "description": "Setting label to always show connection status banner"
+  },
+  "connection_check_mls_checking": "Праверка падключэння\nПраверка статусу MLS...",
+  "@connection_check_mls_checking": {
+    "description": "Message shown when checking MLS sync status"
+  },
+  "connection_issue_restoring": "Праблемы падключэння\nАдбываецца спроба аднавіць поўную функцыянальнасць...",
+  "@connection_issue_restoring": {
+    "description": "Message shown when connection issue is being resolved"
+  },
+  "connection_check_mls_failed": "Праверка падключэння\nЗбой праверкі статусу MLS. Запуск паўторнага далучэння...",
+  "@connection_check_mls_failed": {
+    "description": "Message shown when MLS sync check fails"
+  },
+  "connection_check_mls_passed": "Праверка падключэння\nПраверка статусу MLS пройдзена...",
+  "@connection_check_mls_passed": {
+    "description": "Message shown when MLS sync check passes"
+  },
+  "trying_to_reconnect": "Спроба перападключэння...",
+  "@trying_to_reconnect": {
+    "description": "Message shown when attempting to reconnect to meeting"
+  },
+  "sign_in_card_title": "Увайдзіце або стварыце ўліковы запіс",
+  "@sign_in_card_title": {
+    "description": "Title text for the sign-in card displayed on dashboard"
+  },
+  "sign_in_card_description": "Плануйце сустрэчы. Атрымайце доступ да асабістага пакою і стварайце новыя пакоі.",
+  "@sign_in_card_description": {
+    "description": "Description text for the sign-in card explaining benefits of signing in"
+  },
+  "almost_there_title": "Амаль гатова",
+  "@almost_there_title": {
+    "description": "Title for the almost there bottom sheet"
+  },
+  "almost_there_content_before": "Стварыце бясплатную сустрэчу, каб запланаваць яе ",
+  "@almost_there_content_before": {
+    "description": "Content before Proton account in almost there bottom sheet (schedule meeting)"
+  },
+  "almost_there_content_before_create_room": "Стварыце бясплатны пакой, каб задаць яго ",
+  "@almost_there_content_before_create_room": {
+    "description": "Content before Proton account in almost there bottom sheet (create room)"
+  },
+  "almost_there_content_before_personal_room": "Стварыце бясплатны пакой, каб выкарыстоўваць свой асабісты пакой для сустрэч ",
+  "@almost_there_content_before_personal_room": {
+    "description": "Content before Proton account in almost there bottom sheet (personal meeting room)"
+  },
+  "almost_there_proton_account": "Уліковы запіс Proton",
+  "@almost_there_proton_account": {
+    "description": "Proton account text in almost there bottom sheet"
+  },
+  "almost_there_content_after": ". Вы аўтаматычна вернецеся ў Proton Meet.",
+  "@almost_there_content_after": {
+    "description": "Content after Proton account in almost there bottom sheet"
+  },
+  "app_settings_title": "Налады праграмы",
+  "@app_settings_title": {
+    "description": "Title for the app settings bottom sheet"
+  },
+  "settings_section_general": "Агульныя",
+  "@settings_section_general": {
+    "description": "Section header in app settings"
+  },
+  "settings_section_support": "Падтрымка",
+  "@settings_section_support": {
+    "description": "Section header for support links in app settings"
+  },
+  "settings_section_legal": "Юрыдычная інфармацыя",
+  "@settings_section_legal": {
+    "description": "Section header for legal links in app settings"
+  },
+  "languages": "Мовы",
+  "@languages": {
+    "description": "Label for language selection in settings"
+  },
+  "privacy_policy": "Палітыка прыватнасці",
+  "@privacy_policy": {
+    "description": "Link to privacy policy"
+  },
+  "terms_and_conditions": "Умовы выкарыстання",
+  "@terms_and_conditions": {
+    "description": "Link to terms and conditions"
+  },
+  "knowledge_base": "База ведаў",
+  "@knowledge_base": {
+    "description": "Link to help center / knowledge base"
+  },
+  "system_default_mode": "Прадвызначаны сістэмай",
+  "@system_default_mode": {
+    "description": "Use device language for app UI"
+  },
+  "pre_rating_sheet_title": "Падабаецца Proton Meet?",
+  "@pre_rating_sheet_title": {
+    "description": "Title on the pre-rating bottom sheet before in-app review"
+  },
+  "pre_rating_sheet_subtitle": "Наша каманда чытае і вельмі цэніць усе водгукі.",
+  "@pre_rating_sheet_subtitle": {
+    "description": "Subtitle on the pre-rating bottom sheet"
+  },
+  "pre_rating_sheet_yes_enjoy_proton_meet": "Так",
+  "@pre_rating_sheet_yes_enjoy_proton_meet": {
+    "description": "Primary button on the pre-rating sheet to open store review"
+  },
+  "pre_rating_sheet_not_really_enjoy_proton_meet": "Не вельмі",
+  "@pre_rating_sheet_not_really_enjoy_proton_meet": {
+    "description": "Secondary button on the pre-rating sheet"
+  },
+  "store_review_thanks_toast": "Дзякуй за ваш водгук!",
+  "@store_review_thanks_toast": {
+    "description": "Toast shown before the OS in-app store review prompt"
+  },
+  "iap_native_test_title": "Тарыфныя планы (уласныя)",
+  "@iap_native_test_title": {
+    "description": "Title for dev sheet that invokes native IAP / plans"
+  },
+  "iap_native_test_body": "Выкарыстанне стэку ўласных плацяжоў Proton (аналагічна каналу Proton Wallet). Спатрэбіцца ўвайсці ў сістэму.",
+  "@iap_native_test_body": {
+    "description": "Explains native channel test sheet"
+  },
+  "iap_native_test_current_plan": "Бягучы тарыфны план",
+  "@iap_native_test_current_plan": {
+    "description": "Button: native.navigation.plan.subscription"
+  },
+  "iap_native_test_upgrade": "Палепшыць",
+  "@iap_native_test_upgrade": {
+    "description": "Button: native.navigation.plan.upgrade"
+  },
+  "iap_native_test_sign_in_required": "Увайдзіце з уліковым запісам Proton, каб адкрыць уласныя плацяжы.",
+  "@iap_native_test_sign_in_required": {
+    "description": "Message shown when sign in is required to open native payments"
+  }
+}
