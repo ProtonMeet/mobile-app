@@ -4,8 +4,13 @@ rustflags = ["--cfg", "mls_build_async"]
 [target.wasm32-unknown-unknown]
 rustflags = ["--cfg", "mls_build_async", "--cfg", 'getrandom_backend="wasm_js"']
 
+# `-C target-feature=-outline-atomics`: drop compiler-rt's aarch64 LSE
+# outline-atomics runtime, whose `init_have_lse_atomics`/`__init_cpu_features`
+# constructors call `getauxval` at `dlopen` load time and crash on Android 7/8
+# (API 24-27). The remaining getauxval-based constructor (OpenSSL) is handled by
+# the getauxval shim in crates/frb (getauxval_fix.c).
 [target.aarch64-linux-android]
-rustflags = ["--cfg", "mls_build_async", "-C", "link-arg=-Wl,-z,max-page-size=16384"]
+rustflags = ["--cfg", "mls_build_async", "-C", "link-arg=-Wl,-z,max-page-size=16384", "-C", "target-feature=-outline-atomics"]
 
 [target.armv7-linux-androideabi]
 rustflags = ["--cfg", "mls_build_async", "-C", "link-arg=-Wl,-z,max-page-size=16384"]
