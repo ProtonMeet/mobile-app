@@ -172,7 +172,7 @@
   "display_name_required": "Vous devez indiquer un nom.",
   "remember_display_name_on_device": "Se souvenir de mon nom sur cet appareil pour les prochaines réunions",
   "join_meeting_button": "Participer à la réunion",
-  "create_meeting_button": "Créer une réunion",
+  "create_meeting_button": "Créer",
   "import_meeting_button": "Importer une réunion",
   "import_meeting_title": "Importer une réunion",
   "import_meeting_hint_text": "Saisir le lien de la réunion",

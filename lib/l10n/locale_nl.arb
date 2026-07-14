@@ -172,7 +172,7 @@
   "display_name_required": "Uw naam is verplicht",
   "remember_display_name_on_device": "Onthoud mijn naam op dit apparaat voor toekomstige vergaderingen",
   "join_meeting_button": "Aan vergadering deelnemen",
-  "create_meeting_button": "Vergadering aanmaken",
+  "create_meeting_button": "Aanmaken",
   "import_meeting_button": "Vergadering importeren",
   "import_meeting_title": "Vergadering importeren",
   "import_meeting_hint_text": "De link voor de vergadering invoeren",

@@ -172,7 +172,7 @@
   "display_name_required": "Dein Name ist erforderlich",
   "remember_display_name_on_device": "Meinen Namen auf diesem Gerät für zukünftige Meetings merken",
   "join_meeting_button": "Meeting beitreten",
-  "create_meeting_button": "Meeting erstellen",
+  "create_meeting_button": "Erstellen",
   "import_meeting_button": "Meeting importieren",
   "import_meeting_title": "Meeting importieren",
   "import_meeting_hint_text": "Gib den Meeting-Link ein",

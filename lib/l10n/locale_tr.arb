@@ -172,7 +172,7 @@
   "display_name_required": "Adınızı yazmanız zorunludur",
   "remember_display_name_on_device": "Gelecekteki görüşmeler için bu aygıtta adımı hatırla",
   "join_meeting_button": "Görüşmeye katıl",
-  "create_meeting_button": "Görüşme oluştur",
+  "create_meeting_button": "Oluştur",
   "import_meeting_button": "Görüşmeyi içe aktar",
   "import_meeting_title": "Görüşmeyi içe aktar",
   "import_meeting_hint_text": "Görüşme bağlantısını yazın",
