@@ -49,6 +49,7 @@ pub struct MeetInfo {
     // participants count when join the meeting, used for display in loading page
     pub participants_count: u32,
     pub is_locked: bool,
+    pub has_waiting_room: bool,
     pub max_duration: u32,
     pub max_participants: u32,
     /// Unix timestamp in seconds (Option<i64>)

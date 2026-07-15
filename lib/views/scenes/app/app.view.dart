@@ -7,6 +7,7 @@ import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/l10n/generated/locale.dart';
 import 'package:meet/provider/locale.provider.dart';
 import 'package:meet/provider/theme.provider.dart';
+import 'package:meet/views/components/global.notification.host.dart';
 import 'package:meet/views/scenes/app/app.viewmodel.dart';
 import 'package:meet/views/scenes/core/coordinator.dart';
 import 'package:meet/views/scenes/core/view.dart';
@@ -83,7 +84,11 @@ class AppView extends ViewBase<AppViewModel> {
                 // routes: <String, WidgetBuilder>{
                 //   '/': (BuildContext context) => rootView,
                 // },
-                builder: EasyLoading.init(builder: FToastBuilder()),
+                builder: EasyLoading.init(
+                  builder: (context, child) => GlobalNotificationHost(
+                    child: FToastBuilder()(context, child),
+                  ),
+                ),
                 navigatorKey: Coordinator.rootNavigatorKey,
                 onGenerateRoute: viewModel.router.onGenerateRoute,
               );

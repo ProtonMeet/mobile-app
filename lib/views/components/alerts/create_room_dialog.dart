@@ -8,15 +8,20 @@ import 'package:meet/managers/app.state.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/views/components/alerts/base_bottom_sheet.dart';
 import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart';
+import 'package:meet/views/scenes/dashboard/schedule/waiting_room_sheet.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 
-typedef OnRoomValue = void Function(String roomName);
+typedef OnCreateRoomValue =
+    void Function(String roomName, {required bool waitingRoom});
+typedef OnEditRoomValue = void Function(String roomName);
 
 Future<void> showCreateRoomDialog(
   BuildContext context, {
-  required OnRoomValue onCreateRoom,
+  required OnCreateRoomValue onCreateRoom,
   String? initialRoomName,
   bool autofocus = true,
+  bool isPaidUser = false,
+  bool showWaitingRoom = false,
 }) {
   // Block dialog when in force upgrade state
   final appStateManager = ManagerFactory().get<AppStateManager>();
@@ -34,13 +39,15 @@ Future<void> showCreateRoomDialog(
       onCreateRoom: onCreateRoom,
       initialRoomName: initialRoomName,
       autofocus: autofocus,
+      isPaidUser: isPaidUser,
+      showWaitingRoom: showWaitingRoom,
     ),
   );
 }
 
 Future<void> showEditRoomDialog(
   BuildContext context, {
-  required OnRoomValue onEditRoom,
+  required OnEditRoomValue onEditRoom,
   String? initialRoomName,
   bool autofocus = true,
   ParticipantDisplayColors? displayColors,
@@ -58,7 +65,7 @@ Future<void> showEditRoomDialog(
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.2),
     builder: (_) => CreateRoomDialog(
-      onCreateRoom: onEditRoom,
+      onEditRoom: onEditRoom,
       initialRoomName: initialRoomName,
       autofocus: autofocus,
       selectAllOnFocus: true,
@@ -69,19 +76,30 @@ Future<void> showEditRoomDialog(
 
 class CreateRoomDialog extends StatefulWidget {
   const CreateRoomDialog({
-    required this.onCreateRoom,
     super.key,
+    this.onCreateRoom,
+    this.onEditRoom,
     this.initialRoomName,
     this.autofocus = true,
     this.selectAllOnFocus = false,
     this.displayColors,
-  });
+    this.isPaidUser = false,
+    this.showWaitingRoom = false,
+  }) : assert(
+         (onCreateRoom != null) ^ (onEditRoom != null),
+         'Provide exactly one of onCreateRoom or onEditRoom',
+       );
 
-  final OnRoomValue onCreateRoom;
+  final OnCreateRoomValue? onCreateRoom;
+  final OnEditRoomValue? onEditRoom;
   final String? initialRoomName;
   final bool autofocus;
   final bool selectAllOnFocus;
   final ParticipantDisplayColors? displayColors;
+  final bool isPaidUser;
+
+  /// Gates the waiting-room option (MeetWaitingRoom flag, resolved by the caller's bloc).
+  final bool showWaitingRoom;
 
   @override
   State<CreateRoomDialog> createState() => _CreateRoomDialogState();
@@ -96,6 +114,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
 
   bool _hasInitialized = false;
   bool _isButtonEnabled = false;
+  bool _waitingRoomEnabled = false;
 
   @override
   void initState() {
@@ -159,7 +178,54 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
       return;
     }
     Navigator.of(context).pop();
-    widget.onCreateRoom(roomName);
+    final onEditRoom = widget.onEditRoom;
+    if (onEditRoom != null) {
+      onEditRoom(roomName);
+      return;
+    }
+    widget.onCreateRoom!(
+      roomName,
+      waitingRoom:
+          _waitingRoomEnabled, // To-do: check if it's a paid feature; widget.isPaidUser && _waitingRoomEnabled
+    );
+  }
+
+  String _formatWaitingRoomLabel(BuildContext context) {
+    return _waitingRoomEnabled
+        ? context.local.schedule_waiting_room_on
+        : context.local.schedule_waiting_room_off;
+  }
+
+  Widget _buildWaitingRoomOption(BuildContext context) {
+    final waitingRoomLabel = _formatWaitingRoomLabel(context);
+
+    return GestureDetector(
+      onTap: () {
+        showWaitingRoomSheet(
+          context,
+          selected: _waitingRoomEnabled,
+          isOnOptionEnabled: true, // To-do: check if it's a paid feature
+          onSelect: (enabled) {
+            setState(() {
+              _waitingRoomEnabled = enabled;
+            });
+          },
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 10,
+        ).copyWith(right: 32),
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            waitingRoomLabel,
+            style: ProtonStyles.body1Medium(color: context.colors.protonBlue),
+          ),
+        ),
+      ),
+    );
   }
 
   void _scrollToBottom() {
@@ -296,6 +362,11 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
                     ),
                   ),
                 ),
+
+                if (!widget.selectAllOnFocus && widget.showWaitingRoom) ...[
+                  const SizedBox(height: 10),
+                  RepaintBoundary(child: _buildWaitingRoomOption(context)),
+                ],
 
                 /// Create button
                 RepaintBoundary(

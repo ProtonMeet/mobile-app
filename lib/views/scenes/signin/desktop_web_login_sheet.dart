@@ -40,13 +40,14 @@ class DesktopWebLoginSheet extends StatefulWidget {
 }
 
 class _DesktopWebLoginSheetState extends State<DesktopWebLoginSheet> {
-  static const _pollInterval = Duration(seconds: 10);
+  static const _pollInterval = Duration(seconds: 3);
 
   WebViewController? _controller;
   Timer? _pollTimer;
   String? _error;
   bool _isStarting = true;
   bool _useExternalBrowser = false;
+  bool _pollInFlight = false;
   DesktopWebLoginManager? _loginManager;
 
   AppCoreManager get _appCoreManager => ManagerFactory().get<AppCoreManager>();
@@ -74,7 +75,9 @@ class _DesktopWebLoginSheetState extends State<DesktopWebLoginSheet> {
       if (!mounted) return;
 
       if (DesktopLoginBrowser.canUseInAppWebView) {
-        _initializeWebView(start.loginUrl);
+        await DesktopLoginBrowser.clearAccountWebViewData();
+        if (!mounted) return;
+        await _initializeWebView(start.loginUrl);
       } else {
         _useExternalBrowser = true;
         await DesktopLoginBrowser.openExternal(start.loginUrl);
@@ -94,18 +97,20 @@ class _DesktopWebLoginSheetState extends State<DesktopWebLoginSheet> {
     }
   }
 
-  void _initializeWebView(String loginUrl) {
+  Future<void> _initializeWebView(String loginUrl) async {
     late final PlatformWebViewControllerCreationParams params;
     if (WebViewPlatform.instance is WebKitWebViewPlatform) {
       params = WebKitWebViewControllerCreationParams(
-        allowsInlineMediaPlayback: true,
         mediaTypesRequiringUserAction: const <PlaybackMediaTypes>{},
       );
     } else {
       params = const PlatformWebViewControllerCreationParams();
     }
 
-    _controller = WebViewController.fromPlatformCreationParams(params)
+    final controller = WebViewController.fromPlatformCreationParams(params);
+    await controller.clearCache();
+    await controller.clearLocalStorage();
+    controller
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
@@ -125,13 +130,21 @@ class _DesktopWebLoginSheetState extends State<DesktopWebLoginSheet> {
             await DesktopLoginBrowser.openExternal(loginUrl);
           },
         ),
-      )
-      ..loadRequest(Uri.parse(loginUrl));
+      );
+    await controller.loadRequest(Uri.parse(loginUrl));
+    _controller = controller;
+  }
+
+  bool _isBenignPollRace(Object error) {
+    final message = error.toString();
+    return message.contains('Desktop web login was not started');
   }
 
   Future<void> _poll() async {
+    if (_pollInFlight || _loginManager == null) return;
+    _pollInFlight = true;
     try {
-      final session = await _loginManager?.poll();
+      final session = await _loginManager!.poll();
       if (!mounted || session == null) return;
 
       logger.d(
@@ -145,7 +158,7 @@ class _DesktopWebLoginSheetState extends State<DesktopWebLoginSheet> {
       _pollTimer?.cancel();
       await _appCoreManager.appCore.fetchUserState(
         userId: session.userId,
-        forceRemote: false,
+        forceRemote: true,
       );
 
       final userInfo = UserInfo.fromProtonUserSession(session);
@@ -177,10 +190,17 @@ class _DesktopWebLoginSheetState extends State<DesktopWebLoginSheet> {
         ),
       );
     } catch (e, st) {
+      if (_isBenignPollRace(e)) {
+        logger.d('Desktop web login poll skipped: overlapping poll');
+        return;
+      }
       logger.e('Desktop web login poll failed: $e', stackTrace: st);
       if (!mounted) return;
       setState(() => _error = e.toString());
-      _pollTimer?.cancel();
+      // Keep polling — a transient network/API error must not stop detection
+      // after the user has already signed in via the account WebView.
+    } finally {
+      _pollInFlight = false;
     }
   }
 

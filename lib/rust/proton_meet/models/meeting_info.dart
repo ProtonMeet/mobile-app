@@ -24,6 +24,9 @@ class FrbMeetingInfo {
   /// 1 if meeting is locked
   final int locked;
 
+  /// 1 if meeting has waiting room enabled
+  final int waitingRoom;
+
   /// Maximum duration of this meeting in seconds
   final int maxDuration;
 
@@ -39,6 +42,7 @@ class FrbMeetingInfo {
     required this.salt,
     required this.sessionKey,
     required this.locked,
+    required this.waitingRoom,
     required this.maxDuration,
     required this.maxParticipants,
     this.expirationTime,
@@ -51,6 +55,7 @@ class FrbMeetingInfo {
       salt.hashCode ^
       sessionKey.hashCode ^
       locked.hashCode ^
+      waitingRoom.hashCode ^
       maxDuration.hashCode ^
       maxParticipants.hashCode ^
       expirationTime.hashCode;
@@ -65,6 +70,7 @@ class FrbMeetingInfo {
           salt == other.salt &&
           sessionKey == other.sessionKey &&
           locked == other.locked &&
+          waitingRoom == other.waitingRoom &&
           maxDuration == other.maxDuration &&
           maxParticipants == other.maxParticipants &&
           expirationTime == other.expirationTime;

@@ -11,17 +11,22 @@ use mls_spec::{
     messages::{MlsMessage, MlsMessageContent},
     Parsable, Serializable,
 };
-use mls_trait::{MlsClientTrait, MlsGroupConfig, MlsGroupTrait, ProposalArg};
+use mls_trait::{
+    meet_policy::RoomKind, MlsClientTrait, MlsGroupConfig, MlsGroupTrait, ProposalArg,
+};
 use mls_types::{ExternalPskId, PublicRatchetTree};
+use proton_meet_macro::async_trait;
 use proton_meet_mls::{MlsStore, MlsStoreError};
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
+use crate::domain::mls::ports::{KeyPackageError, KeyPackagePort};
 use crate::domain::user::{
     models::{meeting_link_name::MeetingLinkName, UserId},
     ports::HttpClient,
 };
 
+#[derive(Clone)]
 pub struct MlsService {
     #[allow(dead_code)]
     http_client: Arc<dyn HttpClient>,
@@ -40,6 +45,7 @@ impl MlsService {
         &self,
         meeting_link_name: &MeetingLinkName,
         user_id: &UserId,
+        room_kind: Option<RoomKind>,
     ) -> Result<(MlsMessage, RatchetTreeOption), MlsServiceError> {
         let mut mls_store = self.mls_store.write().await;
         let cs = mls_store.config.ciphersuite;
@@ -60,7 +66,18 @@ impl MlsService {
             .as_ref()
             .ok_or(MlsServiceError::NoExtraPayload)?
             .is_host;
-        let group_config = MlsGroupConfig::default(user_id.clone(), is_host);
+        let group_config = match room_kind {
+            Some(room_kind) => MlsGroupConfig::new(user_id.clone(), room_kind, is_host),
+            // None => MlsGroupConfig::new(
+            //     user_id.clone(),
+            //     // todo: remove this test code and replace with basic default room kind (no waiting room)
+            //     RoomKind::BasicRoomWithWaiting {
+            //         other_users: vec![],
+            //     },
+            //     is_host,
+            // ),
+            None => MlsGroupConfig::default(user_id.clone(), is_host),
+        };
         // TODO: Enable it later
         // let external_sender_bytes = self.http_client.fetch_external_sender().await?;
         // if external_sender_bytes.is_empty() {
@@ -234,6 +251,25 @@ impl MlsService {
     }
 }
 
+#[async_trait]
+impl KeyPackagePort for MlsService {
+    async fn new_key_package(&self, user_id: &UserId) -> Result<Vec<u8>, KeyPackageError> {
+        let mls_store = self.mls_store.read().await;
+        let cs = mls_store.config.ciphersuite;
+        let client = mls_store
+            .find_client(&user_id.to_string(), &cs)
+            .map_err(|e| match e {
+                MlsStoreError::MlsClientNotFound => KeyPackageError::MlsClientNotFound,
+            })?;
+
+        let (key_packages, _expiration) = client.new_key_packages(1, Disclosure::Full).await?;
+        let key_package = key_packages
+            .first()
+            .ok_or(KeyPackageError::FailedToGenerateKeyPackage)?;
+        Ok(key_package.mls_encode_to_vec()?)
+    }
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum MlsServiceError {
     #[error("Mls store not found")]
@@ -264,6 +300,8 @@ pub enum MlsServiceError {
     FailedToJoinGroupViaExternalCommit(mls_trait::MlsError),
     #[error("Failed to convert welcome message")]
     FailedToConvertWelcomeMessage(std::convert::Infallible),
+    #[error("Mls group not found")]
+    MlsGroupNotFound,
 }
 
 #[cfg(not(target_family = "wasm"))]
@@ -355,7 +393,7 @@ mod tests {
         let service = MlsService::new(Arc::new(MockHttpClient::new()), mls_store);
 
         let (group_info_spec, _) = service
-            .create_mls_group(&meeting_link_name, &user_id)
+            .create_mls_group(&meeting_link_name, &user_id, None)
             .await
             .expect("group creation should succeed");
 
@@ -428,7 +466,7 @@ mod tests {
         let service = MlsService::new(Arc::new(MockHttpClient::new()), mls_store.clone());
 
         let (group_info_msg, ratchet_tree_option) = service
-            .create_mls_group(&meeting_link_name, &host_user_id)
+            .create_mls_group(&meeting_link_name, &host_user_id, None)
             .await
             .expect("host should create group");
 
@@ -541,7 +579,7 @@ mod tests {
         let service = MlsService::new(Arc::new(MockHttpClient::new()), mls_store);
 
         let (group_info_msg, ratchet_tree_option) = service
-            .create_mls_group(&meeting_link_name, &host_user_id)
+            .create_mls_group(&meeting_link_name, &host_user_id, None)
             .await
             .expect("host should create group");
 
@@ -624,7 +662,7 @@ mod tests {
         let service = MlsService::new(Arc::new(MockHttpClient::new()), mls_store.clone());
 
         let (group_info_msg, ratchet_tree_option_initial) = service
-            .create_mls_group(&meeting_link_name, &host_user_id)
+            .create_mls_group(&meeting_link_name, &host_user_id, None)
             .await
             .expect("host should create group");
 
@@ -754,7 +792,7 @@ mod tests {
         let service = MlsService::new(Arc::new(MockHttpClient::new()), mls_store.clone());
 
         let _ = service
-            .create_mls_group(&meeting_link_name, &user_id)
+            .create_mls_group(&meeting_link_name, &user_id, None)
             .await
             .expect("group creation should succeed");
 

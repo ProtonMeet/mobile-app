@@ -56,7 +56,12 @@ class ResetDashboardStateEvent extends DashboardBlocEvent {
 
 class CreateMeetingEvent extends DashboardBlocEvent {
   final String roomName;
-  CreateMeetingEvent({required this.roomName});
+  final bool waitingRoom;
+
+  CreateMeetingEvent({
+    required this.roomName,
+    this.waitingRoom = false,
+  });
 }
 
 class DeleteMeetingEvent extends DashboardBlocEvent {

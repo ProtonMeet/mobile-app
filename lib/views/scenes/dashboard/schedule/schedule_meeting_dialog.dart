@@ -18,6 +18,7 @@ import 'duration_sheet.dart';
 import 'recurrence_sheet.dart';
 import 'schedule_meeting_content.dart';
 import 'schedule_time_zone_sheet.dart';
+import 'waiting_room_sheet.dart';
 
 enum RecurrenceFrequency {
   none('Does not repeat'),
@@ -40,6 +41,7 @@ class ScheduleMeetingData {
   final String? timeZone;
   final RecurrenceFrequency recurrence;
   final bool showTimeZones;
+  final bool waitingRoomEnabled;
 
   ScheduleMeetingData({
     required this.title,
@@ -51,6 +53,7 @@ class ScheduleMeetingData {
     this.timeZone,
     this.recurrence = RecurrenceFrequency.none,
     this.showTimeZones = false,
+    this.waitingRoomEnabled = false,
   });
 }
 
@@ -59,9 +62,11 @@ typedef OnScheduleMeeting = void Function(ScheduleMeetingData data);
 Future<void> showScheduleMeetingDialog(
   BuildContext context, {
   required OnScheduleMeeting onSchedule,
+  required bool isPaidUser,
   String? initialTitle,
   ScheduleMeetingData? initialData,
   ParticipantDisplayColors? displayColors,
+  bool showWaitingRoom = false,
 }) {
   // Block dialog when in force upgrade state
   final appStateManager = ManagerFactory().get<AppStateManager>();
@@ -77,9 +82,11 @@ Future<void> showScheduleMeetingDialog(
     barrierColor: Colors.black.withValues(alpha: 0.2),
     builder: (_) => ScheduleMeetingDialog(
       onSchedule: onSchedule,
+      isPaidUser: isPaidUser,
       initialTitle: initialTitle,
       initialData: initialData,
       displayColors: displayColors,
+      showWaitingRoom: showWaitingRoom,
     ),
   );
 }
@@ -88,7 +95,9 @@ Future<void> showEditScheduleMeetingDialog(
   BuildContext context, {
   required OnScheduleMeeting onEdit,
   required ScheduleMeetingData initialData,
+  required bool isPaidUser,
   ParticipantDisplayColors? displayColors,
+  bool showWaitingRoom = false,
 }) {
   // Block dialog when in force upgrade state
   final appStateManager = ManagerFactory().get<AppStateManager>();
@@ -104,9 +113,11 @@ Future<void> showEditScheduleMeetingDialog(
     barrierColor: Colors.black.withValues(alpha: 0.2),
     builder: (_) => ScheduleMeetingDialog(
       onSchedule: onEdit,
+      isPaidUser: isPaidUser,
       initialTitle: initialData.title,
       initialData: initialData,
       displayColors: displayColors,
+      showWaitingRoom: showWaitingRoom,
     ),
   );
 }
@@ -114,16 +125,22 @@ Future<void> showEditScheduleMeetingDialog(
 class ScheduleMeetingDialog extends StatefulWidget {
   const ScheduleMeetingDialog({
     required this.onSchedule,
+    required this.isPaidUser,
     super.key,
     this.initialTitle,
     this.initialData,
     this.displayColors,
+    this.showWaitingRoom = false,
   });
 
   final OnScheduleMeeting onSchedule;
+  final bool isPaidUser;
   final String? initialTitle;
   final ScheduleMeetingData? initialData;
   final ParticipantDisplayColors? displayColors;
+
+  /// Gates the waiting-room field (MeetWaitingRoom flag, resolved by the dashboard bloc).
+  final bool showWaitingRoom;
 
   @override
   State<ScheduleMeetingDialog> createState() => _ScheduleMeetingDialogState();
@@ -137,6 +154,8 @@ class ScheduleMeetingDialogMobile extends StatefulWidget {
     required this.startTimeLabel,
     required this.durationLabel,
     required this.timeZoneLabel,
+    required this.waitingRoomLabel,
+    required this.showWaitingRoom,
     required this.recurrenceLabel,
     required this.showTimeZones,
     required this.isSaveEnabled,
@@ -145,6 +164,7 @@ class ScheduleMeetingDialogMobile extends StatefulWidget {
     required this.onSelectStartTime,
     required this.onSelectDuration,
     required this.onSelectTimeZone,
+    required this.onSelectWaitingRoom,
     required this.onSelectRecurrence,
     required this.onSave,
     required this.onCancel,
@@ -159,6 +179,8 @@ class ScheduleMeetingDialogMobile extends StatefulWidget {
   final String startTimeLabel;
   final String durationLabel;
   final String timeZoneLabel;
+  final String waitingRoomLabel;
+  final bool showWaitingRoom;
   final String recurrenceLabel;
   final bool showTimeZones;
   final bool isSaveEnabled;
@@ -167,6 +189,7 @@ class ScheduleMeetingDialogMobile extends StatefulWidget {
   final VoidCallback onSelectStartTime;
   final VoidCallback onSelectDuration;
   final VoidCallback onSelectTimeZone;
+  final VoidCallback onSelectWaitingRoom;
   final VoidCallback onSelectRecurrence;
   final VoidCallback onSave;
   final VoidCallback onCancel;
@@ -208,6 +231,8 @@ class _ScheduleMeetingDialogMobileState
             startTimeLabel: widget.startTimeLabel,
             durationLabel: widget.durationLabel,
             timeZoneLabel: widget.timeZoneLabel,
+            waitingRoomLabel: widget.waitingRoomLabel,
+            showWaitingRoom: widget.showWaitingRoom,
             recurrenceLabel: widget.recurrenceLabel,
             isSaveEnabled: widget.isSaveEnabled,
             onTapTitle: widget.onTapTitle,
@@ -215,6 +240,7 @@ class _ScheduleMeetingDialogMobileState
             onSelectStartTime: widget.onSelectStartTime,
             onSelectDuration: widget.onSelectDuration,
             onSelectTimeZone: widget.onSelectTimeZone,
+            onSelectWaitingRoom: widget.onSelectWaitingRoom,
             onSelectRecurrence: widget.onSelectRecurrence,
             onSave: widget.onSave,
             onCancel: widget.onCancel,
@@ -260,6 +286,7 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
   int _durationMinutes = 30;
   RecurrenceFrequency _recurrence = RecurrenceFrequency.none;
   bool _showTimeZones = true;
+  bool _waitingRoomEnabled = false;
   late String _selectedTimeZone;
   String? _deviceTimeZone;
   bool _hasInitialTimeZone = false;
@@ -646,6 +673,25 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
     );
   }
 
+  void _selectWaitingRoom() {
+    showWaitingRoomSheet(
+      context,
+      selected: _waitingRoomEnabled,
+      isOnOptionEnabled: true, // To-do: check if it's a paid feature; widget.isPaidUser && _waitingRoomEnabled
+      onSelect: (enabled) {
+        setState(() {
+          _waitingRoomEnabled = enabled;
+        });
+      },
+    );
+  }
+
+  String _formatWaitingRoomLabel(BuildContext context) {
+    return _waitingRoomEnabled
+        ? context.local.schedule_waiting_room_on
+        : context.local.schedule_waiting_room_off;
+  }
+
   Future<void> _loadDeviceTimeZone() async {
     try {
       final resolved = await getDefaultTimeZone();
@@ -697,6 +743,7 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
     _durationMinutes = data.durationMinutes;
     _recurrence = data.recurrence;
     _showTimeZones = data.showTimeZones;
+    _waitingRoomEnabled = data.waitingRoomEnabled;
     final timeZone = data.timeZone?.trim();
     if (timeZone != null && timeZone.isNotEmpty) {
       _selectedTimeZone = timeZone;
@@ -772,6 +819,7 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
         timeZone: _selectedTimeZone,
         recurrence: _recurrence,
         showTimeZones: _showTimeZones,
+        waitingRoomEnabled: _waitingRoomEnabled, // To-do: check if it's a paid feature; widget.isPaidUser && _waitingRoomEnabled
       ),
     );
   }
@@ -845,6 +893,7 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
     final timeZoneLabel = _showTimeZones
         ? _formatTimeZoneLabel(_selectedTimeZone)
         : '';
+    final waitingRoomLabel = _formatWaitingRoomLabel(context);
     return ScheduleMeetingDialogMobile(
       titleController: _titleCtrl,
       titleHint: context.local.add_title,
@@ -852,6 +901,8 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
       startTimeLabel: startTime,
       durationLabel: durationLabel,
       timeZoneLabel: timeZoneLabel,
+      waitingRoomLabel: waitingRoomLabel,
+      showWaitingRoom: widget.showWaitingRoom,
       recurrenceLabel: _recurrence.label,
       showTimeZones: _showTimeZones,
       isSaveEnabled: _titleCtrl.text.trim().isNotEmpty && _isEndAfterStart(),
@@ -860,6 +911,7 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
       onSelectStartTime: _selectStartTime,
       onSelectDuration: _selectDuration,
       onSelectTimeZone: _selectTimeZone,
+      onSelectWaitingRoom: _selectWaitingRoom,
       onSelectRecurrence: _selectRecurrence,
       onSave: _submit,
       onCancel: () => Navigator.of(context).maybePop(),

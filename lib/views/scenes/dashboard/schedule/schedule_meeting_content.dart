@@ -16,6 +16,8 @@ class ScheduleMeetingContent extends StatelessWidget {
     required this.startTimeLabel,
     required this.durationLabel,
     required this.timeZoneLabel,
+    required this.waitingRoomLabel,
+    required this.showWaitingRoom,
     required this.recurrenceLabel,
     required this.isSaveEnabled,
     required this.onTapTitle,
@@ -23,6 +25,7 @@ class ScheduleMeetingContent extends StatelessWidget {
     required this.onSelectStartTime,
     required this.onSelectDuration,
     required this.onSelectTimeZone,
+    required this.onSelectWaitingRoom,
     required this.onSelectRecurrence,
     required this.onSave,
     required this.onCancel,
@@ -39,6 +42,10 @@ class ScheduleMeetingContent extends StatelessWidget {
   final String startTimeLabel;
   final String durationLabel;
   final String timeZoneLabel;
+  final String waitingRoomLabel;
+
+  /// Gates the waiting-room field (MeetWaitingRoom flag, resolved by the dashboard bloc).
+  final bool showWaitingRoom;
   final String recurrenceLabel;
   final bool isSaveEnabled;
   final VoidCallback onTapTitle;
@@ -46,6 +53,7 @@ class ScheduleMeetingContent extends StatelessWidget {
   final VoidCallback onSelectStartTime;
   final VoidCallback onSelectDuration;
   final VoidCallback onSelectTimeZone;
+  final VoidCallback onSelectWaitingRoom;
   final VoidCallback onSelectRecurrence;
   final VoidCallback onSave;
   final VoidCallback onCancel;
@@ -186,6 +194,15 @@ class ScheduleMeetingContent extends StatelessWidget {
           label: timeZoneLabel,
           onTap: onSelectTimeZone,
         ),
+
+        /// waiting room field (hidden when the MeetWaitingRoom flag is off)
+        if (showWaitingRoom)
+          ScheduleMeetingFieldRow(
+            topBorder: false,
+            icon: context.images.iconScheduleWaitingRoom.svg20(),
+            label: waitingRoomLabel,
+            onTap: onSelectWaitingRoom,
+          ),
 
         /// recurrence field
         ScheduleMeetingFieldRow(

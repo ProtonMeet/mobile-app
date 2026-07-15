@@ -8,11 +8,13 @@
    since the application needs to work in both native and WebAssembly environments.
 */
 
+mod key_package_port;
 mod message_cache_port;
 mod mls_store_port;
 mod state_repository_port;
 
 // Re-export all traits for convenient access
+pub use key_package_port::*;
 pub use message_cache_port::*;
 pub use mls_store_port::*;
 pub use state_repository_port::*;

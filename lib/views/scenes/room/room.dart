@@ -17,6 +17,7 @@ import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
+import 'package:meet/helper/global_notification.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/helper/local_toast.dart';
 import 'package:meet/helper/logger.dart' as l;
@@ -39,6 +40,7 @@ import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/platform/html.window.dart';
 import 'package:meet/rust/errors.dart';
 import 'package:meet/rust/proton_meet/models/meet_info.dart';
+import 'package:meet/rust/proton_meet/models/meeting_info.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/rust/proton_meet/user_config.dart';
@@ -108,6 +110,12 @@ class RoomPage extends StatefulWidget {
   /// the native processor onto the already-published video track.
   final bool cameraBackgroundBlurEnabled;
 
+  /// Meeting limits resolved during pre-join; skips getMeetingInfo in room.
+  final FrbMeetingInfo? prefetchedMeetingInfo;
+
+  /// Host-only: when non-null, room bloc syncs waiting-room policy on enter.
+  final bool? pendingHostWaitingRoomSyncEnabled;
+
   const RoomPage(
     this.room,
     this.listener,
@@ -119,6 +127,8 @@ class RoomPage extends StatefulWidget {
     this.preJoinType, {
     this.authBloc,
     this.cameraBackgroundBlurEnabled = false,
+    this.prefetchedMeetingInfo,
+    this.pendingHostWaitingRoomSyncEnabled,
     super.key,
   });
 
@@ -144,6 +154,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   bool _hideSelfCamera = false;
   bool _unsubscribeVideoByDefault = false;
   bool _lockMeeting = false;
+  bool _waitingRoomEnabled = false;
   final bool _pictureInPictureMode = false;
   final CameraLayout _layout = CameraLayout.grid;
   final bool _showRotationButton = false;
@@ -206,6 +217,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           preJoinType: widget.preJoinType,
           meetingLink: widget.meetLink,
           cameraBackgroundBlurEnabled: widget.cameraBackgroundBlurEnabled,
+          prefetchedMeetingInfo: widget.prefetchedMeetingInfo,
+          pendingHostWaitingRoomSyncEnabled:
+              widget.pendingHostWaitingRoomSyncEnabled,
         ),
       );
 
@@ -213,6 +227,13 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       setState(() {
         _lockMeeting = widget.meetInfo.isLocked;
       });
+    }
+
+    final pendingHostWaitingRoomSync = widget.pendingHostWaitingRoomSyncEnabled;
+    if (pendingHostWaitingRoomSync != null) {
+      _waitingRoomEnabled = pendingHostWaitingRoomSync;
+    } else {
+      _waitingRoomEnabled = widget.meetInfo.hasWaitingRoom;
     }
 
     // Initialize call activity action channel for Dynamic Island actions
@@ -2011,6 +2032,39 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     return success;
   }
 
+  Future<bool> _toggleWaitingRoomSetting(bool value) async {
+    bool success = false;
+    Exception? caughtException;
+
+    try {
+      await _bloc.toggleWaitingRoomSetting(
+        value: value,
+        meetLinkName: widget.meetInfo.meetLinkName,
+      );
+      success = true;
+    } catch (e) {
+      caughtException = e as Exception;
+      success = false;
+    }
+
+    if (!mounted) return success;
+
+    if (caughtException != null) {
+      if (caughtException is BridgeError_ApiResponse) {
+        LocalToast.showErrorToast(context, caughtException.field0.error);
+      } else {
+        LocalToast.showErrorToast(context, caughtException.toString());
+      }
+    }
+
+    if (success) {
+      setState(() {
+        _waitingRoomEnabled = value;
+      });
+    }
+    return success;
+  }
+
   Future<void> leaveRoomDialog({
     bool isHost = false,
     bool isAlone = false,
@@ -2055,6 +2109,41 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                   onClosed: () {},
                 );
               }
+            },
+          ),
+          BlocListener<RoomBloc, RoomState>(
+            listenWhen: (prev, curr) =>
+                !prev.shouldShowWaitingRoomJoinRequestNotFoundError &&
+                curr.shouldShowWaitingRoomJoinRequestNotFoundError,
+            listener: (context, state) {
+              LocalToast.showErrorToast(
+                context,
+                context.local.waiting_room_join_request_not_found,
+              );
+              _bloc.add(const WaitingRoomJoinRequestNotFoundErrorConsumed());
+            },
+          ),
+          BlocListener<RoomBloc, RoomState>(
+            listenWhen: (prev, curr) =>
+                curr.waitingRoomParticipants.length >
+                prev.waitingRoomParticipants.length,
+            listener: (context, state) {
+              context.showGlobalNotification(
+                context.local.waiting_room_host_join_request_notification,
+                duration: const Duration(seconds: 10),
+                onTap: () {
+                  GlobalNotification.dismiss();
+                  if (!mounted) {
+                    return;
+                  }
+                  setState(() {
+                    _showParticipantList = true;
+                    _showChatBubble = false;
+                    _showSettings = false;
+                    _showMeetingInfo = false;
+                  });
+                },
+              );
             },
           ),
           BlocListener<RoomBloc, RoomState>(
@@ -3223,7 +3312,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           userIdentity: room.localParticipant?.identity ?? '',
           userName: room.localParticipant?.name ?? '',
           onSendPressed: (types.PartialText text) async {
-            await broadcastE2EEMessage(text.text);
+            try {
+              await broadcastE2EEMessage(text.text);
+              print('Message sent successfully');
+            } catch (e) {
+              print(e);
+            }
           },
           messages: data.$1,
           participantTracks: data.$2,
@@ -3287,6 +3381,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               unsubscribeVideoByDefault: _unsubscribeVideoByDefault,
               pictureInPictureMode: _pictureInPictureMode,
               lockMeeting: _lockMeeting,
+              waitingRoomEnabled: _waitingRoomEnabled,
+              showWaitingRoom: _bloc.isMeetWaitingRoomEnabled(),
               isHost: isHost,
               isRejoining: isRejoining,
               forceShowConnectionStatusBanner: forceShowConnectionStatusBanner,
@@ -3323,6 +3419,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               onLockMeetingChanged: isHost
                   ? ({required bool value}) async {
                       return _toggleLockMeeting(value);
+                    }
+                  : null,
+              onWaitingRoomChanged: isHost
+                  ? ({required bool value}) async {
+                      return _toggleWaitingRoomSetting(value);
                     }
                   : null,
               onUnsubscribeVideoByDefaultChanged: ({required bool value}) {
@@ -3442,6 +3543,10 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             buffer.write('${p.videoTrackPublications.firstOrNull?.muted}_');
             buffer.write('${raisedHandsByIdentity[p.identity]}_');
           }
+          // Rebuild when the waiting-room join requests change (host view).
+          for (final w in state.waitingRoomParticipants) {
+            buffer.write('wr:${w.requestId}_');
+          }
           return buffer.toString();
         },
         builder: (context, _) {
@@ -3525,8 +3630,22 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               .map((e) => e.value)
               .toList(growable: false);
 
+          final waitingParticipants = blocState.waitingRoomParticipants
+              .where((w) => w.isActive)
+              .map(
+                (w) => WaitingRoomParticipantDetail(
+                  id: w.requestId,
+                  participantUid: w.participantUid,
+                  name: w.resolvedDisplayName,
+                  joinedAt: w.receivedAt,
+                ),
+              )
+              .toList(growable: false);
+
           return ParticipantList(
             participants: sortedParticipants,
+            waitingParticipants: waitingParticipants,
+            isHost: blocState.isHost,
             onTapParticipantVideoRemoteAction: (participant) async {
               if (participant != null) {
                 final isMuted =

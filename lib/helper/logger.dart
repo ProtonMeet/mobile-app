@@ -92,7 +92,8 @@ class DebugLogger {
 final _baseLogger = Logger(
   printer: PrettyPrinter(
     methodCount: 1,
-    dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
+    noBoxingByDefault: true,
+    dateTimeFormat: DateTimeFormat.dateAndTime,
   ),
   output: MultiOutput([ConsoleOutput()]),
 );
@@ -102,8 +103,8 @@ var logger = DebugLogger(_baseLogger);
 var rustLogger = Logger(
   printer: PrettyPrinter(
     methodCount: 1,
-    // Don't set printTime when using dateTimeFormat
-    dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
+    noBoxingByDefault: true,
+    dateTimeFormat: DateTimeFormat.dateAndTime,
   ),
   output: MultiOutput([ConsoleOutput()]),
 );

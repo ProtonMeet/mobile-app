@@ -33,6 +33,14 @@ impl App {
         {
             let mut state = self.state.write().await;
             state.meeting_display_name_session_key = session_key;
+            state.active_livekit_access_token = Some(meet_info.access_token.clone());
+            state.active_livekit_websocket_url = Some(meet_info.websocket_url.clone());
+            state.prejoin_srp_auth = Some(crate::app_state::PrejoinSrpAuth {
+                meet_link_name: meet_link_name.clone(),
+                meet_link_password: meet_link_password.clone(),
+                display_name: display_name.clone(),
+                meet_info: meet_info.clone(),
+            });
         }
 
         Ok(meet_info)
@@ -49,6 +57,7 @@ impl App {
         end_time: Option<i64>,
         time_zone: Option<String>,
         r_rule: Option<String>,
+        waiting_room: bool,
     ) -> Result<UpcomingMeeting, MeetCoreError> {
         let start_time = start_time.and_then(Self::to_utc_datetime);
         let end_time = end_time.and_then(Self::to_utc_datetime);
@@ -85,6 +94,7 @@ impl App {
                     end_time,
                     time_zone,
                     r_rule,
+                    waiting_room,
                 )
                 .await
                 .map_err(|e| map_create_meeting_service_error(e, &create_ctx))?
@@ -110,6 +120,7 @@ impl App {
                     None,
                     None,
                     None,
+                    waiting_room,
                 )
                 .await
                 .map_err(|e| map_create_meeting_service_error(e, &create_ctx))?
@@ -209,6 +220,7 @@ impl App {
         meeting_name: String,
         custom_password: Option<String>,
         is_rotate: bool,
+        waiting_room: bool,
     ) -> Result<UpcomingMeeting, MeetCoreError> {
         let auth_info = self.get_user_state_info().await?;
 
@@ -243,6 +255,7 @@ impl App {
                 None,
                 None,
                 None,
+                waiting_room,
             )
             .await
             .map_err(|e| map_create_meeting_service_error(e, &create_ctx))?;
@@ -259,11 +272,56 @@ impl App {
         &self,
         meeting_link_name: &str,
     ) -> Result<MeetingInfo, MeetCoreError> {
-        let meeting_info = self
+        let mut meeting_info = self
             .room_service
             .get_meeting_info(meeting_link_name)
             .await?;
+        meeting_info.meeting_name = self
+            .resolve_meeting_display_name(meeting_link_name, &meeting_info.meeting_name)
+            .await?;
         Ok(meeting_info)
+    }
+
+    /// Resolves a human-readable meeting title from pre-join cache or session key.
+    ///
+    /// Meet-server returns encrypted metadata; callers with a cached SRP session (pre-join,
+    /// waiting room, rejoin) can recover the plaintext without re-authenticating.
+    pub(crate) async fn resolve_meeting_display_name(
+        &self,
+        meet_link_name: &str,
+        encrypted_meeting_name: &str,
+    ) -> Result<String, MeetCoreError> {
+        {
+            let state = self.state.read().await;
+            if let Some(cached) = &state.prejoin_srp_auth {
+                if cached.meet_link_name == meet_link_name {
+                    return Ok(cached.meet_info.meet_name.clone());
+                }
+            }
+        }
+
+        let session_key = self
+            .state
+            .read()
+            .await
+            .meeting_display_name_session_key
+            .clone();
+
+        if let Some(session_key) = session_key {
+            return self
+                .room_service
+                .decrypt_meeting_metadata_name(encrypted_meeting_name, &session_key)
+                .await
+                .map_err(|e| MeetCoreError::CryptographicError {
+                    operation: format!("Failed to decrypt meeting name: {e}"),
+                });
+        }
+
+        tracing::warn!(
+            meet_link_name,
+            "resolve_meeting_display_name: no pre-join cache or session key; returning encrypted name"
+        );
+        Ok(encrypted_meeting_name.to_string())
     }
 
     /// Submits call-quality feedback for the given meeting link (same contract as the web app).

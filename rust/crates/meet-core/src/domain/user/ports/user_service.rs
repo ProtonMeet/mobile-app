@@ -194,4 +194,12 @@ pub trait UserService {
         ratchet_tree_option: RatchetTreeOption,
         external_psks: Vec<ExternalPskId>,
     ) -> Result<(Arc<RwLock<MlsGroup<MemKv>>>, CommitBundle), anyhow::Error>;
+
+    /// Build MLS waiting-room policy commit, POST/DELETE to PHP, merge on success.
+    async fn update_waiting_room_setting_policy(
+        &self,
+        user_identifier: &UserId,
+        meet_link_name: &str,
+        enable: bool,
+    ) -> Result<(), MeetCoreError>;
 }

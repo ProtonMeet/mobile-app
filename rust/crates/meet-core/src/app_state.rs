@@ -1,3 +1,4 @@
+use crate::domain::user::models::meet_link_info::MeetInfo;
 use crate::domain::user::models::meeting_session_key::MeetingSessionKey;
 use crate::domain::user::models::{Address, UserTokenInfo};
 use crate::infra::dto::realtime::JoinType;
@@ -21,6 +22,21 @@ pub struct AppState {
     pub join_mls_time: Option<PlatformInstant>,
     pub total_join_start_time: Option<PlatformInstant>,
     pub join_type: Option<JoinType>,
+    /// SRP auth result from pre-join join-time auth; consumed by the first matching join.
+    pub prejoin_srp_auth: Option<PrejoinSrpAuth>,
+    /// Join request id submitted during pre-join waiting-room admission.
+    pub pending_waiting_room_join_request_id: Option<String>,
+    /// Whether this join attempt used the waiting-room flow (`Some(true)` / `Some(false)`).
+    pub used_waiting_room_for_join: Option<bool>,
+}
+
+/// Cached SRP authentication from [App::authenticate_meeting_link] for reuse at join time.
+#[derive(Clone, Debug)]
+pub struct PrejoinSrpAuth {
+    pub meet_link_name: String,
+    pub meet_link_password: String,
+    pub display_name: String,
+    pub meet_info: MeetInfo,
 }
 
 #[derive(Debug)]

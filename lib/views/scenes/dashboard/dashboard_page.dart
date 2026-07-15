@@ -18,6 +18,7 @@ import 'package:meet/managers/channels/platform_info_channel.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
+import 'package:meet/rust/proton_meet/user_subscription.dart' as user_sub;
 import 'package:meet/views/components/alerts/account_switcher_sheet.dart';
 import 'package:meet/views/components/alerts/create_room_dialog.dart';
 import 'package:meet/views/components/alerts/dashboard_error.dart';
@@ -265,8 +266,12 @@ class _DashboardPageState extends State<DashboardPage> {
     }
     showCreateRoomDialog(
       context,
-      onCreateRoom: (roomName) {
-        widget.dashboardBloc.add(CreateMeetingEvent(roomName: roomName));
+      isPaidUser: _isPaidUser(authState),
+      showWaitingRoom: widget.dashboardBloc.isMeetWaitingRoomEnabled(),
+      onCreateRoom: (roomName, {required bool waitingRoom}) {
+        widget.dashboardBloc.add(
+          CreateMeetingEvent(roomName: roomName, waitingRoom: waitingRoom),
+        );
       },
     );
   }
@@ -287,11 +292,18 @@ class _DashboardPageState extends State<DashboardPage> {
     }
     showScheduleMeetingDialog(
       context,
+      isPaidUser: _isPaidUser(authState),
+      showWaitingRoom: widget.dashboardBloc.isMeetWaitingRoomEnabled(),
       displayColors: getParticipantDisplayColors(context, 0),
       onSchedule: (data) {
         widget.dashboardBloc.add(ScheduleMeetingEvent(data: data));
       },
     );
+  }
+
+  bool _isPaidUser(AuthState authState) {
+    final user = authState.user;
+    return user != null && user_sub.isPaid(user: user);
   }
 
   Future<void> _saveIcsFile(String icsContent, String title) async {

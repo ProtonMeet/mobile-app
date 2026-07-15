@@ -13,6 +13,7 @@ mod mocks;
 #[cfg(not(target_family = "wasm"))]
 pub mod private_key;
 pub mod room_key;
+mod session_message;
 mod types;
 
 pub use types::*;
@@ -21,6 +22,8 @@ pub use types::*;
 pub const MEET_METADATA_AAD: &str = "metadata.meet.proton";
 /// Associated data for AES-GCM payloads derived from the meet link session key (participant display names).
 pub const MEET_DISPLAY_NAME_AAD: &str = "displayname.meet.proton";
+/// Associated data for AES-GCM payloads derived from the meet link session key (MLS key packages).
+pub const MEET_KEY_PACKAGE_AAD: &str = "keypackage.mls.meet.proton";
 
 #[cfg(not(target_family = "wasm"))]
 mod native;
@@ -248,11 +251,11 @@ impl MeetCrypto {
 
     #[cfg(target_family = "wasm")]
     pub async fn decrypt_message(
-        base64_key_packets: &str,
-        session_key_passphrase: &str,
-        _aad: &str,
+        base64_message: &str,
+        base64_session_key: &str,
+        aad: &str,
     ) -> Result<String> {
-        crate::web::decrypt_message(base64_key_packets, session_key_passphrase, _aad).await
+        crate::web::decrypt_message(base64_message, base64_session_key, aad).await
     }
 
     #[cfg(target_family = "wasm")]

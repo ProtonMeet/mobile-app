@@ -8,6 +8,7 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:logger/logger.dart';
 import 'package:meet/constants/constants.dart';
+import 'package:meet/helper/audio_output_probe.dart';
 import 'package:meet/helper/background_blur/camera_background_blur_sync.dart';
 import 'package:meet/helper/denoise/denoise_audio_sync.dart';
 import 'package:meet/helper/extension/bridge_error.extension.dart';
@@ -44,6 +45,7 @@ import 'room_bloc_reconnection_listeners.dart';
 import 'room_bloc_rejoin.dart';
 import 'room_bloc_settings.dart';
 import 'room_bloc_tracks.dart';
+import 'room_bloc_waiting_room.dart';
 import 'room_event.dart';
 import 'room_event_bridge.dart';
 import 'room_event_livekit.dart';
@@ -60,6 +62,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
         RoomPipHandlers,
         RoomEventsBinding,
         RoomParticipantsHandlers,
+        RoomWaitingRoomHandlers,
         RoomTracksHandlers,
         RoomDataHandlers,
         RoomAloneMeetingHandlers,
@@ -172,6 +175,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
   Future<void> close() async {
     _watchDogTimer?.cancel();
     _roomHealthSampleTimer?.cancel();
+    cancelWaitingRoomExpirationTimer();
     _cancelFullScreenTimer();
     _deviceChangeSub?.cancel();
     _audioSessionDevicesSub?.cancel();
@@ -179,6 +183,9 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     stopAloneCheckTimer();
     stopConnectionHealthCheck();
     stopLivekitActiveUuidRefresh();
+    cancelPendingCameraVideoTrackCheckTimer();
+
+    await clearWaitingRoomCallbacks();
 
     await CallActivityChannel.end();
 
@@ -292,6 +299,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
 
     on<ParticipantRecordingStarted>(_onParticipantRecordingStarted);
     on<ParticipantRecordingStopped>(_onParticipantRecordingStopped);
+    registerWaitingRoomHandlers();
 
     on<AddSystemMessage>(_onAddSystemMessageReceived);
 
@@ -446,6 +454,9 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     // Setup MLS sync state listener
     setupMlsSyncStateListener();
 
+    // Register waiting-room join request callbacks (host receives live updates)
+    await registerWaitingRoomCallbacks();
+
     // Setup LiveKit listeners (bridge) See: room_event_bridge.dart
     setUpListeners();
 
@@ -526,21 +537,8 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     // check if there is any external audio output (label heuristic and/or audio session)
     final devices = await Hardware.instance.enumerateDevices();
     final speakerDevices = devices.where((d) => d.kind == 'audiooutput');
-    final hasLabelSuggestingExternalAudioOutput =
-        speakerDevices.hasLabelSuggestingExternalAudioOutput;
-
-    bool hasExternalAudioOutputFromAudioSession = false;
-    bool hasBluetoothAudioOutputFromAudioSession = false;
     try {
       final audioSession = await AudioSession.instance;
-      final sessionDevices = await audioSession.getDevices();
-      hasExternalAudioOutputFromAudioSession = sessionDevices.any(
-        (device) => device.type.isExternalAudioOutput,
-      );
-      hasBluetoothAudioOutputFromAudioSession = sessionDevices.any(
-        (device) => device.type.isBluetoothAudioOutput,
-      );
-
       // listen to audio session devices changed event as well, or device change event from hardware may triggered faster than audio session devices changed event
       await _audioSessionDevicesSub?.cancel();
       _audioSessionDevicesSub = audioSession.devicesChangedEventStream.listen((
@@ -549,27 +547,16 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
         if (state.isRejoining) {
           return;
         }
-        final sessionDevices = await audioSession.getDevices();
-        final audioSessionHasExternal = sessionDevices.any(
-          (device) => device.type.isExternalAudioOutput,
-        );
-        final audioSessionHasBluetooth = sessionDevices.any(
-          (device) => device.type.isBluetoothAudioOutput,
-        );
         final hardwareDevices = await Hardware.instance.enumerateDevices();
-        final labelSuggestingExternalAudioOutput = hardwareDevices
-            .where((d) => d.kind == 'audiooutput')
-            .hasLabelSuggestingExternalAudioOutput;
-
-        final hasExternalAudioOutput =
-            labelSuggestingExternalAudioOutput || audioSessionHasExternal;
-        final hasBluetoothAudioOutput = audioSessionHasBluetooth;
-        if (hasExternalAudioOutput != state.hasExternalAudioOutput ||
-            hasBluetoothAudioOutput != state.hasBluetoothAudioOutput) {
+        final capabilities = await AudioOutputProbe.detectFromSpeakerDevices(
+          hardwareDevices.where((d) => d.kind == 'audiooutput'),
+        );
+        if (capabilities.hasExternal != state.hasExternalAudioOutput ||
+            capabilities.hasBluetooth != state.hasBluetoothAudioOutput) {
           add(
             AudioOutputDevicesChanged(
-              hasExternalAudioOutput: hasExternalAudioOutput,
-              hasBluetoothAudioOutput: hasBluetoothAudioOutput,
+              hasExternalAudioOutput: capabilities.hasExternal,
+              hasBluetoothAudioOutput: capabilities.hasBluetooth,
             ),
           );
         }
@@ -578,15 +565,12 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       l.logger.w('[RoomBloc] Error checking audio session: $e');
     }
 
-    // Identify if there is any external audio output devic based on label or audio session
-    final hasExternalAudioOutput =
-        hasLabelSuggestingExternalAudioOutput ||
-        hasExternalAudioOutputFromAudioSession;
-    final hasBluetoothAudioOutput = hasBluetoothAudioOutputFromAudioSession;
+    final audioOutputCapabilities =
+        await AudioOutputProbe.detectFromSpeakerDevices(speakerDevices);
     emit(
       state.copyWith(
-        hasExternalAudioOutput: hasExternalAudioOutput,
-        hasBluetoothAudioOutput: hasBluetoothAudioOutput,
+        hasExternalAudioOutput: audioOutputCapabilities.hasExternal,
+        hasBluetoothAudioOutput: audioOutputCapabilities.hasBluetooth,
       ),
     );
 
@@ -609,32 +593,15 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       final nextHasExternal = value
           .where((d) => d.kind == 'audiooutput')
           .hasLabelSuggestingExternalAudioOutput;
-
-      bool hasExternalAudioOutputFromAudioSession = false;
-      bool hasBluetoothAudioOutputFromAudioSession = false;
-      try {
-        final audioSession = await AudioSession.instance;
-        final sessionDevices = await audioSession.getDevices();
-        hasExternalAudioOutputFromAudioSession = sessionDevices.any(
-          (device) => device.type.isExternalAudioOutput,
-        );
-        hasBluetoothAudioOutputFromAudioSession = sessionDevices.any(
-          (device) => device.type.isBluetoothAudioOutput,
-        );
-      } catch (e) {
-        l.logger.w('[RoomBloc] Error checking audio session: $e');
-      }
-
-      // Identify if there is any external audio output devic based on label or audio session
-      final hasExternalAudioOutput =
-          nextHasExternal || hasExternalAudioOutputFromAudioSession;
-      final hasBluetoothAudioOutput = hasBluetoothAudioOutputFromAudioSession;
+      final capabilities = await AudioOutputProbe.detect(
+        labelSuggestsExternal: nextHasExternal,
+      );
 
       add(
         AudioOutputDevicesChanged(
           audioDeviceCount: currentAudioDeviceCount,
-          hasExternalAudioOutput: hasExternalAudioOutput,
-          hasBluetoothAudioOutput: hasBluetoothAudioOutput,
+          hasExternalAudioOutput: capabilities.hasExternal,
+          hasBluetoothAudioOutput: capabilities.hasBluetooth,
         ),
       );
     });
@@ -704,15 +671,28 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     }
 
     // Fetch meeting info from appCore to show maximum participant limits to user
-    try {
-      final meetingInfo = await appCoreManager.appCore.getMeetingInfo(
-        meetingLinkName: event.meetLinkName,
+    if (event.prefetchedMeetingInfo != null) {
+      emit(state.copyWith(meetingInfo: event.prefetchedMeetingInfo));
+      l.logger.d(
+        'Meeting info prefetched from pre-join: '
+        '${event.prefetchedMeetingInfo!.meetingLinkName}',
       );
-      emit(state.copyWith(meetingInfo: meetingInfo));
-      l.logger.d('Meeting info fetched: ${meetingInfo.meetingLinkName}');
-    } catch (e) {
-      l.logger.e('Error fetching meeting info: $e');
+    } else {
+      try {
+        final meetingInfo = await appCoreManager.appCore.getMeetingInfo(
+          meetingLinkName: event.meetLinkName,
+        );
+        emit(state.copyWith(meetingInfo: meetingInfo));
+        l.logger.d('Meeting info fetched: ${meetingInfo.meetingLinkName}');
+      } catch (e) {
+        l.logger.e('Error fetching meeting info: $e');
+      }
     }
+
+    await syncPendingHostWaitingRoomOnEnter(
+      pendingEnabled: event.pendingHostWaitingRoomSyncEnabled,
+      meetLinkName: event.meetLinkName,
+    );
   }
 
   /// Handles the event when the user dismisses the notification permission inform sheet.
@@ -1639,6 +1619,8 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     RoomDisposed event,
     Emitter<RoomState> emit,
   ) async {
+    cancelPendingCameraVideoTrackCheckTimer();
+
     final room = state.room;
     final listener = state.listener;
 

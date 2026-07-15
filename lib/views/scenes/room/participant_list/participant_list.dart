@@ -4,45 +4,24 @@ import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/constants/constants.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
+import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/local_toast.dart';
 
 import 'package:meet/rust/proton_meet/models/meeting_info.dart';
 import 'package:meet/views/components/alerts/base_bottom_sheet_v2.dart';
 import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
+import 'package:meet/views/scenes/room/participant_list/waiting_room_host_participant_list.dart';
 import 'package:meet/views/scenes/room/room_bloc.dart';
 import 'package:meet/views/scenes/room/room_state.dart';
 import 'package:meet/views/scenes/utils.dart';
 import 'package:meet/views/scenes/widgets/icon.button.with.actions.dart';
 
-class ParticipantList extends StatefulWidget {
-  final List<ParticipantDetail> participants;
-  final void Function(Participant<TrackPublication<Track>>? participant)
-  onTapParticipantVideoLocalAction;
-  final void Function(Participant<TrackPublication<Track>>? participant)?
-  onTapParticipantAudioLocalAction;
-  final void Function(Participant<TrackPublication<Track>>? participant)?
-  onTapParticipantVideoRemoteAction;
-  final void Function(Participant<TrackPublication<Track>>? participant)?
-  onTapParticipantAudioRemoteAction;
-  final bool isHost;
+enum ParticipantListPresentation { sheet, embeddedScrollView }
 
-  const ParticipantList({
-    required this.participants,
-    required this.onTapParticipantVideoLocalAction,
-    this.onTapParticipantAudioLocalAction,
-    this.onTapParticipantVideoRemoteAction,
-    this.onTapParticipantAudioRemoteAction,
-    this.isHost = false,
-    super.key,
-  });
-
-  @override
-  State<ParticipantList> createState() => _ParticipantListState();
-}
-
-class _ParticipantListConstants {
+class ParticipantListLayoutConstants {
   static const double headerHeight = 52.0;
+  static const double tabBarHeight = 52.0;
   static const double handleHeight = 36.0;
   static const double avatarSize = 40.0;
   static const double actionButtonSize = 32.0;
@@ -57,16 +36,102 @@ class _ParticipantListConstants {
   static const double borderRadiusAvatar = 20002.0;
 }
 
-class _ParticipantListState extends State<ParticipantList> {
+class ParticipantList extends StatelessWidget {
+  const ParticipantList({
+    required this.participants,
+    required this.onTapParticipantVideoLocalAction,
+    this.onTapParticipantAudioLocalAction,
+    this.onTapParticipantVideoRemoteAction,
+    this.onTapParticipantAudioRemoteAction,
+    this.waitingParticipants = const [],
+    this.isHost = false,
+    super.key,
+  });
+
+  final List<ParticipantDetail> participants;
+  final List<WaitingRoomParticipantDetail> waitingParticipants;
+  final void Function(Participant<TrackPublication<Track>>? participant)
+      onTapParticipantVideoLocalAction;
+  final void Function(Participant<TrackPublication<Track>>? participant)?
+      onTapParticipantAudioLocalAction;
+  final void Function(Participant<TrackPublication<Track>>? participant)?
+      onTapParticipantVideoRemoteAction;
+  final void Function(Participant<TrackPublication<Track>>? participant)?
+      onTapParticipantAudioRemoteAction;
+  final bool isHost;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocSelector<RoomBloc, RoomState, bool>(
+      selector: (state) {
+        final hasWaitingRoom =
+            state.meetingInfo?.waitingRoom.isWaitingRoomEnabled ?? false;
+        return isHost && hasWaitingRoom;
+      },
+      builder: (context, showWaitingRoomHostList) {
+        if (showWaitingRoomHostList) {
+          return WaitingRoomHostParticipantList(
+            participants: participants,
+            waitingParticipants: waitingParticipants,
+            onTapParticipantVideoLocalAction: onTapParticipantVideoLocalAction,
+            onTapParticipantAudioLocalAction: onTapParticipantAudioLocalAction,
+            onTapParticipantVideoRemoteAction: onTapParticipantVideoRemoteAction,
+            onTapParticipantAudioRemoteAction: onTapParticipantAudioRemoteAction,
+            isHost: isHost,
+          );
+        }
+
+        return ParticipantListBody(
+          participants: participants,
+          onTapParticipantVideoLocalAction: onTapParticipantVideoLocalAction,
+          onTapParticipantAudioLocalAction: onTapParticipantAudioLocalAction,
+          onTapParticipantVideoRemoteAction: onTapParticipantVideoRemoteAction,
+          onTapParticipantAudioRemoteAction: onTapParticipantAudioRemoteAction,
+          isHost: isHost,
+        );
+      },
+    );
+  }
+}
+
+class ParticipantListBody extends StatefulWidget {
+  const ParticipantListBody({
+    required this.participants,
+    required this.onTapParticipantVideoLocalAction,
+    this.onTapParticipantAudioLocalAction,
+    this.onTapParticipantVideoRemoteAction,
+    this.onTapParticipantAudioRemoteAction,
+    this.isHost = false,
+    this.presentation = ParticipantListPresentation.sheet,
+    super.key,
+  });
+
+  final List<ParticipantDetail> participants;
+  final void Function(Participant<TrackPublication<Track>>? participant)
+      onTapParticipantVideoLocalAction;
+  final void Function(Participant<TrackPublication<Track>>? participant)?
+      onTapParticipantAudioLocalAction;
+  final void Function(Participant<TrackPublication<Track>>? participant)?
+      onTapParticipantVideoRemoteAction;
+  final void Function(Participant<TrackPublication<Track>>? participant)?
+      onTapParticipantAudioRemoteAction;
+  final bool isHost;
+  final ParticipantListPresentation presentation;
+
+  @override
+  State<ParticipantListBody> createState() => _ParticipantListBodyState();
+}
+
+class _ParticipantListBodyState extends State<ParticipantListBody> {
   final Map<String, bool> _showMoreButton = {};
   final Map<String, ({Color backgroundColor, Color profileTextColor})>
-  _colorCache = {};
+      _colorCache = {};
   final Map<String, String> _initialsCache = {};
 
   List<ParticipantDetail> get _filteredParticipants => widget.participants;
 
   @override
-  void didUpdateWidget(ParticipantList oldWidget) {
+  void didUpdateWidget(ParticipantListBody oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.participants.length != oldWidget.participants.length) {
       _colorCache.clear();
@@ -76,23 +141,37 @@ class _ParticipantListState extends State<ParticipantList> {
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final screenWidth = mediaQuery.size.width;
-    final screenHeight = mediaQuery.size.height;
-    final isLandscape = screenWidth > screenHeight;
+    if (widget.presentation == ParticipantListPresentation.embeddedScrollView) {
+      final participants = _filteredParticipants;
+      if (participants.isEmpty) {
+        return _buildEmptyState(context);
+      }
+
+      return ListView.builder(
+        padding: EdgeInsets.zero,
+        itemCount: participants.length,
+        itemBuilder: (context, index) {
+          return _buildParticipantItem(context, participants[index]);
+        },
+      );
+    }
+
+    final slivers = _buildSlivers(context);
+
+    final isLandscape = context.isLandscape;
 
     final navBarHeight =
-        _ParticipantListConstants.headerHeight +
+        ParticipantListLayoutConstants.headerHeight +
         (isLandscape
-            ? _ParticipantListConstants.spacingMedium
-            : _ParticipantListConstants.handleHeight);
+            ? ParticipantListLayoutConstants.spacingMedium
+            : ParticipantListLayoutConstants.handleHeight);
 
     return BaseBottomSheetV2.withPinnedSliverScroll(
       isLandscape: isLandscape,
       blurSigma: 14,
       toolbarHeight: navBarHeight,
       flexibleSpaceChild: _buildPinnedHeader(context, isLandscape),
-      slivers: _buildSlivers(context),
+      slivers: slivers,
     );
   }
 
@@ -104,7 +183,7 @@ class _ParticipantListState extends State<ParticipantList> {
         if (!isLandscape)
           const BottomSheetHandleBar()
         else
-          const SizedBox(height: _ParticipantListConstants.spacingMedium),
+          const SizedBox(height: ParticipantListLayoutConstants.spacingMedium),
         _buildHeader(context),
       ],
     );
@@ -208,7 +287,6 @@ class _ParticipantListState extends State<ParticipantList> {
             addRepaintBoundaries: false,
           ),
         ),
-      // Add padding to avoid last item being cut off
       SliverPadding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewPadding.bottom,
@@ -226,21 +304,21 @@ class _ParticipantListState extends State<ParticipantList> {
     return RepaintBoundary(
       child: Container(
         width: double.infinity,
-        height: _ParticipantListConstants.headerHeight,
+        height: ParticipantListLayoutConstants.headerHeight,
         padding: const EdgeInsets.only(
           top: 12.0,
           bottom: 4.0,
-          left: _ParticipantListConstants.horizontalPadding,
-          right: _ParticipantListConstants.horizontalPadding,
+          left: ParticipantListLayoutConstants.horizontalPadding,
+          right: ParticipantListLayoutConstants.horizontalPadding,
         ),
         decoration: const ShapeDecoration(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(
-                _ParticipantListConstants.borderRadiusMedium,
+                ParticipantListLayoutConstants.borderRadiusMedium,
               ),
               topRight: Radius.circular(
-                _ParticipantListConstants.borderRadiusMedium,
+                ParticipantListLayoutConstants.borderRadiusMedium,
               ),
             ),
           ),
@@ -255,12 +333,11 @@ class _ParticipantListState extends State<ParticipantList> {
                 color: context.colors.textNorm,
               ),
             ),
-            const SizedBox(width: _ParticipantListConstants.spacingSmall),
+            const SizedBox(width: ParticipantListLayoutConstants.spacingSmall),
             BlocSelector<RoomBloc, RoomState, (FrbMeetingInfo?, bool)>(
               selector: (state) => (state.meetingInfo, state.isHost),
               builder: (context, data) {
                 final meetingInfo = data.$1;
-                // From design, we only show the max participants count if the user is the host
                 final isHost = data.$2;
                 final participantCount = widget.participants.length;
                 final isGuestMeetingRoom = _isGuestMeetingRoom(meetingInfo);
@@ -296,12 +373,12 @@ class _ParticipantListState extends State<ParticipantList> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.search_off, size: 48, color: context.colors.textHint),
-          const SizedBox(height: _ParticipantListConstants.spacingLarge),
+          const SizedBox(height: ParticipantListLayoutConstants.spacingLarge),
           Text(
             context.local.no_participants_found,
             style: ProtonStyles.body1Medium(color: context.colors.textHint),
           ),
-          const SizedBox(height: _ParticipantListConstants.spacingMedium),
+          const SizedBox(height: ParticipantListLayoutConstants.spacingMedium),
           Text(
             context.local.try_different_search_term,
             style: ProtonStyles.body2Regular(color: context.colors.textWeak),
@@ -312,7 +389,6 @@ class _ParticipantListState extends State<ParticipantList> {
   }
 
   Widget _buildParticipantItem(BuildContext context, ParticipantDetail p) {
-    // Cache colors and initials to avoid recalculating on every build
     final participantId = p.participant?.identity ?? p.name;
     final colors = _colorCache.putIfAbsent(participantId, () {
       final c = getParticipantDisplayColors(context, participantId.hashCode);
@@ -335,12 +411,12 @@ class _ParticipantListState extends State<ParticipantList> {
       },
       child: Container(
         width: double.infinity,
-        height: _ParticipantListConstants.participantItemHeight,
+        height: ParticipantListLayoutConstants.participantItemHeight,
         padding: const EdgeInsets.only(
-          top: _ParticipantListConstants.verticalPadding,
-          left: _ParticipantListConstants.horizontalPadding,
-          right: _ParticipantListConstants.spacingSmall,
-          bottom: _ParticipantListConstants.verticalPadding,
+          top: ParticipantListLayoutConstants.verticalPadding,
+          left: ParticipantListLayoutConstants.horizontalPadding,
+          right: ParticipantListLayoutConstants.spacingSmall,
+          bottom: ParticipantListLayoutConstants.verticalPadding,
         ),
         child: Row(
           children: [
@@ -349,15 +425,15 @@ class _ParticipantListState extends State<ParticipantList> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   SizedBox(
-                    width: _ParticipantListConstants.avatarSize,
-                    height: _ParticipantListConstants.avatarSize,
+                    width: ParticipantListLayoutConstants.avatarSize,
+                    height: ParticipantListLayoutConstants.avatarSize,
                     child: Container(
                       clipBehavior: Clip.antiAlias,
                       decoration: ShapeDecoration(
                         color: colors.backgroundColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(
-                            _ParticipantListConstants.borderRadiusAvatar,
+                            ParticipantListLayoutConstants.borderRadiusAvatar,
                           ),
                         ),
                       ),
@@ -375,7 +451,7 @@ class _ParticipantListState extends State<ParticipantList> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: _ParticipantListConstants.spacingLarge),
+                  const SizedBox(width: ParticipantListLayoutConstants.spacingLarge),
                   Expanded(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -425,59 +501,59 @@ class _ParticipantListState extends State<ParticipantList> {
                 ],
               ),
             ),
-            const SizedBox(width: _ParticipantListConstants.spacingMedium),
+            const SizedBox(width: ParticipantListLayoutConstants.spacingMedium),
             _buildActionButton(
               context,
               child: p.hasAudio
                   ? context.images.iconAudioOnWave.svg(
-                      width: _ParticipantListConstants.actionIconSize,
-                      height: _ParticipantListConstants.actionIconSize,
+                      width: ParticipantListLayoutConstants.actionIconSize,
+                      height: ParticipantListLayoutConstants.actionIconSize,
                       colorFilter: ColorFilter.mode(
                         context.colors.notificationSuccess,
                         BlendMode.srcIn,
                       ),
                     )
                   : context.images.iconAudioOff.svg(
-                      width: _ParticipantListConstants.actionIconSize,
-                      height: _ParticipantListConstants.actionIconSize,
+                      width: ParticipantListLayoutConstants.actionIconSize,
+                      height: ParticipantListLayoutConstants.actionIconSize,
                       colorFilter: ColorFilter.mode(
                         context.colors.signalDanger,
                         BlendMode.srcIn,
                       ),
                     ),
             ),
-            const SizedBox(width: _ParticipantListConstants.spacingMedium),
+            const SizedBox(width: ParticipantListLayoutConstants.spacingMedium),
             _buildActionButton(
               context,
               child: p.hasVideo
                   ? context.images.iconVideoOn.svg(
-                      width: _ParticipantListConstants.actionIconSize,
-                      height: _ParticipantListConstants.actionIconSize,
+                      width: ParticipantListLayoutConstants.actionIconSize,
+                      height: ParticipantListLayoutConstants.actionIconSize,
                       colorFilter: ColorFilter.mode(
                         context.colors.notificationSuccess,
                         BlendMode.srcIn,
                       ),
                     )
                   : context.images.iconVideoOff.svg(
-                      width: _ParticipantListConstants.actionIconSize,
-                      height: _ParticipantListConstants.actionIconSize,
+                      width: ParticipantListLayoutConstants.actionIconSize,
+                      height: ParticipantListLayoutConstants.actionIconSize,
                       colorFilter: ColorFilter.mode(
                         context.colors.signalDanger,
                         BlendMode.srcIn,
                       ),
                     ),
             ),
-            const SizedBox(width: _ParticipantListConstants.spacingMedium),
+            const SizedBox(width: ParticipantListLayoutConstants.spacingMedium),
             if (_showMoreButton[p.name] == true)
               _buildActionButton(
                 context,
                 child: IconButtonWithActions(
                   padding: EdgeInsets.zero,
-                  iconSize: _ParticipantListConstants.actionIconSize,
+                  iconSize: ParticipantListLayoutConstants.actionIconSize,
                   icon: Icon(
                     Icons.more_vert_outlined,
                     color: context.colors.textNorm,
-                    size: _ParticipantListConstants.actionIconSize,
+                    size: ParticipantListLayoutConstants.actionIconSize,
                   ),
                   offset: const Offset(-220, 0),
                   actions: p.participant is LocalParticipant
@@ -621,15 +697,15 @@ class _ParticipantListState extends State<ParticipantList> {
 
   Widget _buildActionButton(BuildContext context, {required Widget child}) {
     return Container(
-      width: _ParticipantListConstants.actionButtonSize,
-      height: _ParticipantListConstants.actionButtonSize,
+      width: ParticipantListLayoutConstants.actionButtonSize,
+      height: ParticipantListLayoutConstants.actionButtonSize,
       padding: const EdgeInsets.all(3),
       clipBehavior: Clip.antiAlias,
       decoration: ShapeDecoration(
         color: Colors.white.withValues(alpha: 0.04),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(
-            _ParticipantListConstants.spacingLarge,
+            ParticipantListLayoutConstants.spacingLarge,
           ),
         ),
       ),
@@ -648,6 +724,24 @@ String _composeStatusLine({
 }) {
   final parts = <String>[if (isHost) 'Host', if (isRecording) recordingLabel];
   return parts.join(' · ');
+}
+
+class WaitingRoomParticipantDetail {
+  const WaitingRoomParticipantDetail({
+    required this.id,
+    required this.participantUid,
+    required this.name,
+    this.joinedAt,
+  });
+
+  /// Join request id from the server.
+  final String id;
+
+  /// Participant uid from the join request (used for reject API).
+  final String participantUid;
+
+  final String name;
+  final DateTime? joinedAt;
 }
 
 class ParticipantDetail {

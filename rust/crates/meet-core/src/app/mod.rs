@@ -1,9 +1,11 @@
 use crate::app_state::{AppState, UserState};
-use crate::domain::room::RoomService;
+use crate::domain::mls::ports::KeyPackagePort;
+use crate::domain::room::{RoomService, WaitingRoomService};
 use crate::domain::user::models::{
     participant_track_settings::ParticipantTrackSettings, user_settings::UserSettings,
     UnleashResponse,
 };
+use crate::domain::user::ports::crypto_client::CryptoClient;
 use crate::domain::user::ports::meeting_api::MeetingApi;
 use crate::domain::user::ports::{
     ArcWebSocketClient, EventApi, HttpClient, UnleashApi, UserService, WebSocketClient,
@@ -19,6 +21,7 @@ use crate::infra::{
     storage::persister::Persister,
     ws_client::WsClient,
 };
+use crate::service::mls_service::MlsService;
 use crate::service::service::Service;
 use proton_meet_mls::{MlsClientConfig, MlsStore};
 use std::{collections::HashMap, future::Future, sync::Arc};
@@ -30,11 +33,14 @@ use {wasm_bindgen::prelude::wasm_bindgen, wasm_bindgen::JsValue};
 
 mod auth;
 mod chat;
+#[cfg(not(target_arch = "wasm32"))]
 mod event;
 mod join;
 mod meetings;
 mod metrics;
+mod prejoin;
 mod user_state;
+mod waiting_room;
 mod websocket;
 
 #[cfg(all(test, not(target_family = "wasm")))]
@@ -66,9 +72,10 @@ mod wasm_test;
 
 #[cfg(target_family = "wasm")]
 pub use wasm::{
-    ConnectionStateInfo, GroupDisplayCode, GroupKeyInfo, GroupKeyUpdateReasonInfo, JoinTypeInfo,
-    MeetingInfo, MeetingInfoWithPassword, MlsSyncStateInfo, ParticipantTrackSettingsInfo,
-    RejoinReasonInfo, UserSettingsInfo,
+    ConnectionStateInfo, GroupDisplayCode, GroupKeyInfo, GroupKeyUpdateReasonInfo,
+    JoinRequestChangeInfo, JoinTypeInfo, MeetingInfo, MeetingInfoWithPassword, MlsSyncStateInfo,
+    ParticipantTrackSettingsInfo, RejoinReasonInfo, SubmitJoinRequestResponseInfo,
+    UserSettingsInfo,
 };
 
 #[cfg(all(target_family = "wasm", test))]
@@ -116,6 +123,7 @@ pub struct App {
     /// services
     pub(crate) user_service: Arc<RwLock<Service>>,
     pub(crate) room_service: Arc<RoomService>,
+    pub(crate) waiting_room_service: Arc<WaitingRoomService>,
 }
 
 impl App {
@@ -223,9 +231,12 @@ impl App {
             group_map: HashMap::new(),
             config: MlsClientConfig::default(),
         }));
-        let crypto_client = MeetCryptoClient::new();
+        let crypto_client = Arc::new(MeetCryptoClient::new()) as Arc<dyn CryptoClient>;
+        let mls_service: Arc<dyn KeyPackagePort> =
+            Arc::new(MlsService::new(http_client.clone(), mls_store.clone()));
 
         let user_service = Arc::new(RwLock::new(Service::new(
+            http_client.clone(),
             http_client.clone(),
             http_client.clone(),
             Arc::new(persister),
@@ -236,8 +247,9 @@ impl App {
         let room_service = Arc::new(RoomService::new(
             http_client.clone(),
             http_client.clone(),
-            Arc::new(crypto_client),
+            crypto_client.clone(),
         ));
+        let waiting_room_service = Arc::new(WaitingRoomService::new(crypto_client, mls_service));
 
         let user_service_clone = user_service.clone();
         ws_client
@@ -262,6 +274,7 @@ impl App {
         Ok(Self {
             user_service,
             room_service,
+            waiting_room_service,
 
             state: Arc::new(RwLock::new(AppState {
                 active_user: user_state,
@@ -274,6 +287,9 @@ impl App {
                 join_mls_time: None,
                 total_join_start_time: None,
                 join_type: None,
+                prejoin_srp_auth: None,
+                pending_waiting_room_join_request_id: None,
+                used_waiting_room_for_join: None,
                 app_version: Some(app_version),
                 user_agent: Some(user_agent),
             })),
@@ -565,6 +581,7 @@ impl App {
         user_key_provider: Arc<dyn UserKeyProvider>,
         user_service: Arc<RwLock<Service>>,
         room_service: Arc<RoomService>,
+        waiting_room_service: Arc<WaitingRoomService>,
     ) -> Self {
         Self {
             state,
@@ -577,6 +594,7 @@ impl App {
             user_key_provider,
             user_service,
             room_service,
+            waiting_room_service,
         }
     }
 }

@@ -38,6 +38,9 @@ use crate::infra::dto::realtime::{
 };
 use crate::infra::dto::remove_participant::{RemoveParticipantRequest, RemoveParticipantResponse};
 use crate::infra::dto::user_settings::UserSettingsResponse;
+use crate::infra::group_info_payload::{
+    compress_group_info_json, serialize_update_group_info_request, UpdateGroupInfoRequest,
+};
 use crate::infra::http_client_util::HttpClientUtil;
 use crate::infra::mls_response_ext::MlsResponseExt;
 #[cfg(target_arch = "wasm32")]
@@ -447,14 +450,6 @@ impl HttpClient for ProtonHttpClient {
         // Create a properly formatted URL
         let url = self.build_http_url("v1/groupInfo")?;
 
-        #[derive(Debug, Serialize)]
-        #[serde(rename_all = "PascalCase")]
-        struct UpdateGroupInfoRequest {
-            data: Vec<u8>,
-            commit_data: Option<Vec<u8>>,
-            proposals: Option<Vec<Vec<u8>>>,
-        }
-
         let commit_data = {
             if let Some(mls_commit_info) = mls_commit_info {
                 let rtc_message_in = RTCMessageIn {
@@ -490,29 +485,29 @@ impl HttpClient for ProtonHttpClient {
             proposals: proposal_messages,
         };
 
-        let data = serde_json::to_vec(&update_group_info_request).map_err(|e| {
-            HttpClientError::MlsHttpError {
-                message: format!("Failed to serialize request: {e}"),
-            }
-        })?;
-        let _uncompressed_size = data.len();
+        let data =
+            serialize_update_group_info_request(&update_group_info_request).map_err(|e| {
+                HttpClientError::MlsHttpError {
+                    message: e.to_string(),
+                }
+            })?;
+        let uncompressed_size = data.len();
 
-        // Compress the JSON body with zstd
         let compressed_data =
-            zstd::bulk::compress(&data, 3).map_err(|e| HttpClientError::MlsHttpError {
-                message: format!("Failed to compress request: {e}"),
+            compress_group_info_json(&data).map_err(|e| HttpClientError::MlsHttpError {
+                message: e.to_string(),
             })?;
 
         #[cfg(debug_assertions)]
         {
-            let compression_ratio = if _uncompressed_size > 0 {
-                (compressed_data.len() as f64 / _uncompressed_size as f64) * 100.0
+            let compression_ratio = if uncompressed_size > 0 {
+                (compressed_data.len() as f64 / uncompressed_size as f64) * 100.0
             } else {
                 0.0
             };
             tracing::info!(
                 "update_group_info_request size: {} (compressed: {}, ratio: {:.1}%)",
-                _uncompressed_size,
+                uncompressed_size,
                 compressed_data.len(),
                 compression_ratio
             );
@@ -564,6 +559,129 @@ impl HttpClient for ProtonHttpClient {
             })?;
         response.error_for_status()?;
 
+        Ok(())
+    }
+
+    async fn submit_join_request(
+        &self,
+        base64_sd_kbt: &str,
+        meeting_link_name: &str,
+        encrypted_key_package: &[u8],
+    ) -> Result<String, HttpClientError> {
+        let url = self.build_http_url(&format!("v1/joinRequest/{meeting_link_name}"))?;
+
+        #[derive(Debug, Deserialize)]
+        struct SubmitJoinRequestData {
+            request_id: String,
+        }
+
+        let response = self
+            .mls_session
+            .post(url)
+            .header("Content-Type", "application/octet-stream")
+            .header("Authorization", format!("Bearer {base64_sd_kbt}"))
+            .body(encrypted_key_package.to_vec())
+            .send()
+            .await?;
+
+        let status = response.status();
+        if status == reqwest::StatusCode::ACCEPTED {
+            let data = response.parse_response::<SubmitJoinRequestData>().await?;
+            return Ok(data.request_id);
+        }
+
+        use crate::errors::http_client::response_error_from_api_failure_body;
+
+        let body_bytes =
+            response
+                .bytes()
+                .await
+                .map_err(|err| HttpClientError::MlsDeserializeError {
+                    status,
+                    details: None,
+                    message: err.to_string(),
+                })?;
+
+        if let Ok(api_response) =
+            serde_json::from_slice::<ApiResponse<SubmitJoinRequestData>>(&body_bytes)
+        {
+            if !api_response.success {
+                return Err(HttpClientError::MlsResponseError {
+                    status,
+                    details: None,
+                    message: api_response
+                        .error
+                        .unwrap_or_else(|| "Join request rejected".into()),
+                });
+            }
+        }
+
+        let parsed = response_error_from_api_failure_body(&body_bytes, status.as_u16());
+        Err(HttpClientError::MlsResponseError {
+            status,
+            message: parsed.error,
+            details: Some(parsed.details.to_string()),
+        })
+    }
+
+    async fn reject_join_request(
+        &self,
+        base64_sd_kbt: &str,
+        meeting_link_name: &str,
+        request_id: &str,
+        participant_uid: &str,
+    ) -> Result<(), HttpClientError> {
+        let url = self.build_http_url(&format!("v1/joinRequest/{meeting_link_name}/reject"))?;
+
+        #[derive(Serialize)]
+        struct RejectJoinRequestBody<'a> {
+            request_id: &'a str,
+            participant_uid: &'a str,
+        }
+
+        let body = RejectJoinRequestBody {
+            request_id,
+            participant_uid,
+        };
+
+        let response = self
+            .mls_session
+            .post(url)
+            .header("Content-Type", "application/json")
+            .header("Authorization", format!("Bearer {base64_sd_kbt}"))
+            .body(
+                serde_json::to_vec(&body).map_err(|e| HttpClientError::MlsDeserializeError {
+                    status: reqwest::StatusCode::INTERNAL_SERVER_ERROR,
+                    details: None,
+                    message: e.to_string(),
+                })?,
+            )
+            .send()
+            .await?;
+
+        response.error_for_status()?;
+        Ok(())
+    }
+
+    async fn cancel_join_request(
+        &self,
+        base64_sd_kbt: &str,
+        meeting_link_name: &str,
+    ) -> Result<(), HttpClientError> {
+        let url = self.build_http_url(&format!("v1/joinRequest/{meeting_link_name}"))?;
+
+        let response = self
+            .mls_session
+            .delete(url)
+            .header("Authorization", format!("Bearer {base64_sd_kbt}"))
+            .send()
+            .await?;
+
+        if response.status() == reqwest::StatusCode::NOT_FOUND {
+            return Ok(());
+        }
+
+        response.error_for_status()?;
         Ok(())
     }
 

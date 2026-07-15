@@ -87,7 +87,6 @@ impl CryptoClient for MeetCryptoClient {
         MeetCrypto::decrypt_session_key(key_packets, session_key_passphrase).await
     }
 
-    #[cfg(not(target_family = "wasm"))]
     async fn decrypt_message(
         &self,
         base64_message: &str,
@@ -95,16 +94,6 @@ impl CryptoClient for MeetCryptoClient {
         aad: &str,
     ) -> Result<String, CryptoError> {
         MeetCrypto::decrypt_message(base64_message, base64_session_key, aad).await
-    }
-
-    #[cfg(target_family = "wasm")]
-    async fn decrypt_message(
-        &self,
-        base64_key_packets: &str,
-        session_key_passphrase: &str,
-        aad: &str,
-    ) -> Result<String, CryptoError> {
-        MeetCrypto::decrypt_message(base64_key_packets, session_key_passphrase, aad).await
     }
 
     async fn generate_random_meeting_password(&self) -> Result<String, CryptoError> {

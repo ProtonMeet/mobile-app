@@ -55,6 +55,15 @@ pub trait MeetingApi: Send + Sync {
         score: u8,
         feedback: &str,
     ) -> Result<(), HttpClientError>;
+
+    /// Enable or disable waiting room for a meeting (host/co-host SD-KBT auth).
+    async fn update_waiting_room_setting(
+        &self,
+        meeting_id: &str,
+        base64_sd_kbt: &str,
+        request_body_json: &str,
+        enable: bool,
+    ) -> Result<(), HttpClientError>;
 }
 
 #[cfg(test)]
@@ -80,6 +89,7 @@ mod tests {
             time_zone: None,
             custom_password: CustomPasswordSetting::NoPassword as u8,
             meeting_type: MeetingType::Instant as u8,
+            waiting_room: 0,
         }
     }
 
@@ -106,6 +116,7 @@ mod tests {
             salt: "salt".to_string(),
             session_key: "session-key".to_string(),
             locked: 0,
+            waiting_room: 0,
             max_duration: 3600,
             max_participants: 25,
             expiration_time: None,
@@ -264,6 +275,44 @@ mod tests {
             .returning(|_, _, _| Box::pin(async { Ok(()) }));
 
         let result = mock.send_meeting_feedback("my-link", 4, "a, b").await;
+        assert!(result.is_ok());
+    }
+
+    #[unified_test]
+    async fn test_update_waiting_room_setting_enable_success() {
+        let mut mock = MockMeetingApi::new();
+
+        mock.expect_update_waiting_room_setting()
+            .withf(|meeting_id, kbt, body, enable| {
+                meeting_id == "meeting-1"
+                    && kbt == "sd-kbt"
+                    && body == r#"{"Data":"abc"}"#
+                    && *enable
+            })
+            .returning(|_, _, _, _| Box::pin(async { Ok(()) }));
+
+        let result = mock
+            .update_waiting_room_setting("meeting-1", "sd-kbt", r#"{"Data":"abc"}"#, true)
+            .await;
+        assert!(result.is_ok());
+    }
+
+    #[unified_test]
+    async fn test_update_waiting_room_setting_disable_success() {
+        let mut mock = MockMeetingApi::new();
+
+        mock.expect_update_waiting_room_setting()
+            .withf(|meeting_id, kbt, body, enable| {
+                meeting_id == "meeting-1"
+                    && kbt == "sd-kbt"
+                    && body == r#"{"Data":"abc"}"#
+                    && !*enable
+            })
+            .returning(|_, _, _, _| Box::pin(async { Ok(()) }));
+
+        let result = mock
+            .update_waiting_room_setting("meeting-1", "sd-kbt", r#"{"Data":"abc"}"#, false)
+            .await;
         assert!(result.is_ok());
     }
 }

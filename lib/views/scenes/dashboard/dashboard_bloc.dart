@@ -23,6 +23,7 @@ import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/managers/services/force_upgrade.dart';
 import 'package:meet/managers/user_activity.manager.dart';
 import 'package:meet/rust/errors.dart';
+import 'package:meet/rust/proton_meet/core.dart';
 import 'package:meet/rust/proton_meet/models/meeting_type.dart';
 import 'package:meet/rust/proton_meet/models/recurrence_frequency.dart'
     as frb_recurrence_frequency;
@@ -98,6 +99,18 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       }
       add(JoinMeetingWithLinkEvent(joinMeetingWithLinkUrl: uri.toString()));
     });
+  }
+
+  /// Whether waiting-room switch UI should be shown (schedule / create dialogs).
+  /// The server-driven waiting-room join flow is unaffected by this flag.
+  bool isMeetWaitingRoomEnabled() {
+    try {
+      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
+      return dataProviderManager.unleashDataProvider.isMeetWaitingRoom();
+    } catch (e) {
+      l.logger.w('[DashboardBloc] Error checking MeetWaitingRoom flag: $e');
+      return false;
+    }
   }
 
   void _connectToMeetingEventLoop() {
@@ -425,6 +438,7 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
             .createPersonalMeeting(
               meetingName: personalMeetingName,
               isRotate: true,
+              waitingRoom: false,
             );
         emit(
           state.copyWith(
@@ -547,6 +561,7 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
     int? endTime,
     String? timeZone,
     String? rRule,
+    bool waitingRoom = false,
   }) async {
     Future<FrbUpcomingMeeting> create() => appCoreManager.appCore.createMeeting(
       meetingName: meetingName,
@@ -557,6 +572,7 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       endTime: endTime,
       timeZone: timeZone,
       rRule: rRule,
+      waitingRoom: waitingRoom,
     );
 
     try {
@@ -677,6 +693,7 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
           .createPersonalMeeting(
             meetingName: personalMeetingName,
             isRotate: true,
+            waitingRoom: false,
           );
       emit(
         state.copyWith(
@@ -760,6 +777,7 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
           .createPersonalMeeting(
             meetingName: personalMeetingName,
             isRotate: true,
+            waitingRoom: false,
           );
       emit(
         state.copyWith(
@@ -971,6 +989,7 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         meetingName: event.roomName,
         hasSession: true,
         meetingType: MeetingType.permanent,
+        waitingRoom: event.waitingRoom,
       );
       operationCompleted = true;
       timeoutTimer.cancel();
@@ -1461,6 +1480,7 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         endTime: endTimestamp,
         timeZone: normalizedTimeZone,
         rRule: rRule,
+        waitingRoom: event.data.waitingRoomEnabled,
       );
 
       operationCompleted = true;

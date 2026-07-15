@@ -11,6 +11,8 @@ pub struct FrbMeetingInfo {
     pub session_key: String,
     /// 1 if meeting is locked
     pub locked: u8,
+    /// 1 if meeting has waiting room enabled
+    pub waiting_room: u8,
     /// Maximum duration of this meeting in seconds
     pub max_duration: u32,
     /// Maximum number of participants allowed in this meeting
@@ -27,6 +29,7 @@ impl From<MeetingInfo> for FrbMeetingInfo {
             salt: meeting_info.salt,
             session_key: meeting_info.session_key,
             locked: meeting_info.locked,
+            waiting_room: meeting_info.waiting_room,
             max_duration: meeting_info.max_duration,
             max_participants: meeting_info.max_participants,
             expiration_time: meeting_info.expiration_time.map(|t| t.timestamp()),

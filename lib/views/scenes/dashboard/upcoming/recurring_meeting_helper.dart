@@ -228,6 +228,7 @@ class RecurringMeetingHelper {
       createTime: meeting.createTime,
       lastUsedTime: meeting.lastUsedTime,
       calendarEventId: meeting.calendarEventId,
+      waitingRoom: meeting.waitingRoom,
     );
   }
 
@@ -369,6 +370,7 @@ class RecurringMeetingHelper {
       createTime: meeting.createTime,
       lastUsedTime: meeting.lastUsedTime,
       calendarEventId: meeting.calendarEventId,
+      waitingRoom: meeting.waitingRoom,
     );
   }
 }

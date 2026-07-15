@@ -1,8 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
+import 'package:meet/helper/extension/svg_gen_image_extension.dart';
+import 'package:meet/helper/local_toast.dart';
 import 'package:meet/views/components/alerts/media_permission_dialog.dart';
 import 'package:meet/views/components/close_button_v1.dart';
+import 'package:meet/views/components/custom.loading.dart';
 import 'package:meet/views/scenes/signin/auth_bloc.dart';
 import 'package:meet/views/scenes/signin/auth_state.dart';
 
@@ -77,11 +84,21 @@ class _PreJoinPageState extends State<PreJoinPage> {
 
   @override
   void dispose() {
+    unawaited(widget.bloc.close());
     _displayNameController.dispose();
     _roomNameController.dispose();
     _displayNameFocusNode.dispose();
     _meetingLinkFocusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _handlePreJoinClose(BuildContext context) async {
+    if (widget.bloc.state.isInWaitingRoomAdmission) {
+      await widget.bloc.leaveWaitingRoomAdmission();
+    }
+    if (context.mounted) {
+      Navigator.of(context).maybePop();
+    }
   }
 
   @override
@@ -144,6 +161,41 @@ class _PreJoinPageState extends State<PreJoinPage> {
           ),
           BlocListener<PreJoinBloc, PreJoinState>(
             listenWhen: (prev, curr) =>
+                prev.error != curr.error &&
+                curr.error != null &&
+                curr.error!.isNotEmpty,
+            listener: (context, state) {
+              LocalToast.showToast(context, state.error!);
+            },
+          ),
+          BlocListener<PreJoinBloc, PreJoinState>(
+            listenWhen: (prev, curr) =>
+                !prev.shouldShowJoinRequestRejectedNotification &&
+                curr.shouldShowJoinRequestRejectedNotification,
+            listener: (context, state) {
+              context.showGlobalNotification(
+                context.local.waiting_room_join_request_rejected,
+                backgroundColor: context.colors.notificationError,
+              );
+              widget.bloc.add(PreJoinJoinRequestRejectedNotificationConsumed());
+            },
+          ),
+          BlocListener<PreJoinBloc, PreJoinState>(
+            listenWhen: (prev, curr) =>
+                !prev.shouldShowWaitingRoomAdmissionTimedOutNotification &&
+                curr.shouldShowWaitingRoomAdmissionTimedOutNotification,
+            listener: (context, state) {
+              context.showGlobalNotification(
+                context.local.waiting_room_admission_timed_out,
+                backgroundColor: context.colors.notificationError,
+              );
+              widget.bloc.add(
+                PreJoinWaitingRoomAdmissionTimedOutNotificationConsumed(),
+              );
+            },
+          ),
+          BlocListener<PreJoinBloc, PreJoinState>(
+            listenWhen: (prev, curr) =>
                 prev.shouldShowCameraPermissionSettings !=
                     curr.shouldShowCameraPermissionSettings &&
                 curr.shouldShowCameraPermissionSettings,
@@ -177,46 +229,198 @@ class _PreJoinPageState extends State<PreJoinPage> {
             },
           ),
         ],
-        child: BlocSelector<AuthBloc, AuthState, AuthState>(
-          selector: (s) => s,
-          builder: (context, state) {
-            return Scaffold(
-              backgroundColor: context.colors.backgroundNorm,
-              resizeToAvoidBottomInset: true,
-              body: SafeArea(
-                child: Stack(
-                  children: [
-                    ColoredBox(
-                      color: context.colors.clear,
-                      child: PreJoinScreen(
-                        bloc: widget.bloc,
-                        authBloc: widget.authBloc,
-                        displayNameController: _displayNameController,
-                        roomNameController: _roomNameController,
-                        displayNameFocusNode: _displayNameFocusNode,
-                        meetingLinkFocusNode: _meetingLinkFocusNode,
+        child: BlocSelector<PreJoinBloc, PreJoinState, bool>(
+          selector: (state) => state.isInWaitingRoomAdmission,
+          builder: (context, isInWaitingRoomAdmission) {
+            return PopScope(
+              canPop: !isInWaitingRoomAdmission,
+              onPopInvokedWithResult: (didPop, _) async {
+                if (didPop) {
+                  return;
+                }
+                await _handlePreJoinClose(context);
+              },
+              child: BlocSelector<AuthBloc, AuthState, AuthState>(
+                selector: (s) => s,
+                builder: (context, state) {
+                  return Scaffold(
+                    backgroundColor: context.colors.backgroundNorm,
+                    resizeToAvoidBottomInset: true,
+                    body: SafeArea(
+                      child: Stack(
+                        children: [
+                          ColoredBox(
+                            color: context.colors.clear,
+                            child: PreJoinScreen(
+                              bloc: widget.bloc,
+                              authBloc: widget.authBloc,
+                              displayNameController: _displayNameController,
+                              roomNameController: _roomNameController,
+                              displayNameFocusNode: _displayNameFocusNode,
+                              meetingLinkFocusNode: _meetingLinkFocusNode,
+                            ),
+                          ),
+                          Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            child: _PreJoinTopBar(
+                              onClose: () => _handlePreJoinClose(context),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    // Close button in top left
-                    Positioned(
-                      top: 0,
-                      left: 16,
-                      child: CloseButtonV1(
-                        onPressed: () => Navigator.of(context).maybePop(),
-                        backgroundColor: Colors.transparent,
-                        iconSize: 24,
-                        iconColor: context.colors.textNorm.withValues(
-                          alpha: 0.6,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
             );
           },
         ),
       ),
+    );
+  }
+}
+
+class _PreJoinTopBar extends StatelessWidget {
+  const _PreJoinTopBar({required this.onClose});
+
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocSelector<
+      PreJoinBloc,
+      PreJoinState,
+      ({
+        bool isLoading,
+        String roomName,
+        String meetingLinkName,
+        String? meetingLinkUrl,
+        PreJoinType type,
+        WaitingRoomAdmissionPhase admissionPhase,
+      })
+    >(
+      selector: (state) => (
+        isLoading:
+            state.isJoinAuthenticating ||
+            (state.waitingRoomAdmissionPhase ==
+                    WaitingRoomAdmissionPhase.hostNotStarted &&
+                state.roomName.trim().isEmpty),
+        roomName: state.roomName.trim(),
+        meetingLinkName: state.meetingLink?.meetingLinkName.trim() ?? '',
+        meetingLinkUrl: state.meetingLinkUrl,
+        type: state.preJoinType,
+        admissionPhase: state.waitingRoomAdmissionPhase,
+      ),
+      builder: (context, data) {
+        final meetingCode = data.meetingLinkName;
+        final copyText = (data.meetingLinkUrl?.trim().isNotEmpty ?? false)
+            ? data.meetingLinkUrl!.trim()
+            : meetingCode;
+
+        return Padding(
+          padding: const EdgeInsets.only(left: 8, right: 16),
+          child: SizedBox(
+            height: 56,
+            child: Row(
+              children: [
+                if (data.type == PreJoinType.join) ...[
+                  Expanded(
+                    child: data.isLoading
+                        ? _PreJoinLoadingTitle(
+                            label: context.local.loading.trim(),
+                          )
+                        : data.roomName.isNotEmpty
+                        ? Text(
+                            data.roomName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: ProtonStyles.body2Semibold(
+                              color: context.colors.protonBlue,
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                  if (meetingCode.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      meetingCode,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ProtonStyles.body2Medium(
+                        color: context.colors.textWeak,
+                      ),
+                    ),
+                    if (!data.isLoading)
+                      IconButton(
+                      onPressed: copyText.isEmpty
+                          ? null
+                          : () {
+                              Clipboard.setData(ClipboardData(text: copyText))
+                                  .then((_) {
+                                if (context.mounted) {
+                                  LocalToast.showToast(
+                                    context,
+                                    context.local.copied_to_clipboard,
+                                  );
+                                }
+                              });
+                            },
+                      icon: context.images.iconCopy.svg20(
+                        color: context.colors.interActionNorm,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
+                    ),
+                  ],
+                ] else
+                  const Spacer(),
+                CloseButtonV1(
+                  onPressed: onClose,
+                  backgroundColor: Colors.transparent,
+                  iconSize: 24,
+                  iconColor: context.colors.textNorm.withValues(alpha: 0.6),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PreJoinLoadingTitle extends StatelessWidget {
+  const _PreJoinLoadingTitle({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: ProtonStyles.body2Semibold(
+              color: context.colors.protonBlue,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        CustomLoading(
+          size: 16,
+          strokeWidth: 2,
+          color: context.colors.protonBlue,
+        ),
+      ],
     );
   }
 }

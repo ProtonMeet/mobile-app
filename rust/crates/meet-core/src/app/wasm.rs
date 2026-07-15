@@ -3,9 +3,10 @@ use super::{App, DecryptedMessageInfo};
 use crate::chat::{
     ChatComposeRequest, ChatComposeResult, ChatIncomingEventInfo, MessageId, ReplyTarget,
 };
+use crate::domain::room::{JoinRequestChange, SubmitJoinRequestResponse};
 use crate::domain::user::models::{
     access_token::AccessToken, meeting_link_name::MeetingLinkName,
-    meeting_password::MeetingPassword,
+    meeting_password::MeetingPassword, meeting_session_key::MeetingSessionKey,
 };
 use crate::domain::user::ports::ConnectionState;
 use crate::errors::core::MeetCoreError;
@@ -18,6 +19,9 @@ use std::sync::Arc;
 
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsValue;
+
+use crate::domain::user::models::MeetInfo;
+use crate::infra::UserKeyProviderAdapter;
 
 #[cfg_attr(target_family = "wasm", wasm_bindgen(getter_with_clone))]
 pub struct GroupKeyInfo {
@@ -90,6 +94,38 @@ impl From<JoinType> for JoinTypeInfo {
         match join_type {
             JoinType::ExternalCommit => JoinTypeInfo::ExternalCommit,
             JoinType::ExternalProposal => JoinTypeInfo::ExternalProposal,
+        }
+    }
+}
+
+#[cfg_attr(target_family = "wasm", wasm_bindgen)]
+#[repr(u8)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum JoinRequestChangeInfo {
+    Added = 0,
+    Removed = 1,
+}
+
+#[cfg(target_family = "wasm")]
+impl From<JoinRequestChange> for JoinRequestChangeInfo {
+    fn from(change: JoinRequestChange) -> Self {
+        match change {
+            JoinRequestChange::Added => JoinRequestChangeInfo::Added,
+            JoinRequestChange::Removed => JoinRequestChangeInfo::Removed,
+        }
+    }
+}
+
+#[cfg_attr(target_family = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct SubmitJoinRequestResponseInfo {
+    pub request_id: String,
+}
+
+#[cfg(target_family = "wasm")]
+impl From<SubmitJoinRequestResponse> for SubmitJoinRequestResponseInfo {
+    fn from(response: SubmitJoinRequestResponse) -> Self {
+        Self {
+            request_id: response.request_id,
         }
     }
 }
@@ -265,6 +301,7 @@ impl App {
         meeting_password: String,
         session_id: Option<String>,
         switch_join_type: bool,
+        is_waiting_room: bool,
     ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
         self.join_meeting(
             AccessToken::new(access_token),
@@ -272,6 +309,7 @@ impl App {
             MeetingPassword::new(meeting_password),
             session_id,
             switch_join_type,
+            is_waiting_room,
         )
         .await
         .map_err(|e| e.into())
@@ -715,6 +753,196 @@ impl App {
     ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
         self.log_start_to_join_room().await.map_err(|e| e.into())
     }
+
+    #[wasm_bindgen(js_name = authenticateMeetingLink)]
+    pub async fn authenticate_meeting_link_wasm(
+        &self,
+        meet_link_name: String,
+        meet_link_password: String,
+        display_name: String,
+    ) -> Result<MeetInfo, crate::errors::core::MeetCoreErrorEnum> {
+        self.authenticate_meeting_link(meet_link_name, meet_link_password, display_name)
+            .await
+            .map_err(|e| e.into())
+    }
+
+    #[wasm_bindgen(js_name = prepareMlsSessionForWaitingRoom)]
+    pub async fn prepare_mls_session_for_waiting_room_wasm(
+        &self,
+        access_token: String,
+        meet_link_name: String,
+        meet_link_password: String,
+        session_id: Option<String>,
+    ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
+        self.prepare_mls_session_for_waiting_room_with_access_token(
+            access_token,
+            meet_link_name,
+            meet_link_password,
+            session_id,
+        )
+        .await
+        .map_err(|e| e.into())
+    }
+
+    #[wasm_bindgen(js_name = hasMlsGroupInfo)]
+    pub async fn has_mls_group_info_wasm(
+        &self,
+        access_token: Option<String>,
+        meet_link_name: Option<String>,
+        meet_link_password: Option<String>,
+        session_id: Option<String>,
+    ) -> Result<bool, crate::errors::core::MeetCoreErrorEnum> {
+        self.ensure_mls_session_for_group_info(
+            access_token,
+            meet_link_name,
+            meet_link_password,
+            session_id.as_deref(),
+        )
+        .await?;
+        self.has_mls_group_info_after_session()
+            .await
+            .map_err(|e| e.into())
+    }
+
+    #[wasm_bindgen(js_name = createJoinRequest)]
+    pub async fn create_join_request_wasm(
+        &self,
+        meet_link_name: String,
+        meeting_session_key: String,
+    ) -> Result<SubmitJoinRequestResponseInfo, crate::errors::core::MeetCoreErrorEnum> {
+        self.create_join_request(meet_link_name, MeetingSessionKey::from(meeting_session_key))
+            .await
+            .map(|response| response.into())
+            .map_err(|e| e.into())
+    }
+
+    #[wasm_bindgen(js_name = waitForWaitingRoomWelcome)]
+    pub async fn wait_for_waiting_room_welcome_wasm(
+        &self,
+        meet_link_name: String,
+    ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
+        self.wait_for_waiting_room_welcome(meet_link_name)
+            .await
+            .map_err(|e| e.into())
+    }
+
+    #[wasm_bindgen(js_name = clearWaitingRoomJoinRequest)]
+    pub async fn clear_waiting_room_join_request_wasm(&self) {
+        self.clear_waiting_room_join_request().await;
+    }
+
+    #[wasm_bindgen(js_name = cancelWaitingRoomJoinRequest)]
+    pub async fn cancel_waiting_room_join_request_wasm(
+        &self,
+        meet_link_name: String,
+    ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
+        self.cancel_waiting_room_join_request(meet_link_name)
+            .await
+            .map_err(|e| e.into())
+    }
+
+    #[wasm_bindgen(js_name = rejectWaitingRoomJoinRequest)]
+    pub async fn reject_waiting_room_join_request_wasm(
+        &self,
+        meet_link_name: String,
+        request_id: String,
+        participant_uid: String,
+    ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
+        self.reject_waiting_room_join_request(meet_link_name, request_id, participant_uid)
+            .await
+            .map_err(|e| e.into())
+    }
+
+    #[wasm_bindgen(js_name = admitWaitingRoomJoinRequest)]
+    pub async fn admit_waiting_room_join_request_wasm(
+        &self,
+        meet_link_name: String,
+        request_id: String,
+        session_key_base64: String,
+    ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
+        let session_key = meeting_session_key_from_base64(&session_key_base64)?;
+        self.admit_waiting_room_join_requests_internal(
+            meet_link_name,
+            Some(vec![request_id]),
+            Some(session_key),
+        )
+        .await
+        .map_err(|e| e.into())
+    }
+
+    #[wasm_bindgen(js_name = admitAllWaitingRoomJoinRequests)]
+    pub async fn admit_all_waiting_room_join_requests_wasm(
+        &self,
+        meet_link_name: String,
+        session_key_base64: String,
+    ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
+        let session_key = meeting_session_key_from_base64(&session_key_base64)?;
+        self.admit_all_waiting_room_join_requests(meet_link_name, Some(session_key))
+            .await
+            .map_err(|e| e.into())
+    }
+
+    #[wasm_bindgen(js_name = updateWaitingRoomSetting)]
+    pub async fn update_waiting_room_setting_wasm(
+        &self,
+        meet_link_name: String,
+        enable: bool,
+        session_key_base64: String,
+    ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
+        let session_key = meeting_session_key_from_base64(&session_key_base64)?;
+        self.update_waiting_room_setting(meet_link_name, enable, Some(session_key))
+            .await
+            .map_err(Into::into)
+    }
+
+    #[cfg(all(target_family = "wasm", not(test)))]
+    #[wasm_bindgen(js_name = setJoinDecisionHandler)]
+    pub async fn set_join_decision_handler_wasm(&self) -> Result<(), JsValue> {
+        self.set_join_decision_handler(|request_id, admitted| {
+            Box::pin(async move {
+                on_join_decision(request_id, admitted);
+            })
+        })
+        .await;
+        Ok(())
+    }
+
+    #[wasm_bindgen(js_name = clearJoinDecisionHandler)]
+    pub async fn clear_join_decision_handler_wasm(&self) {
+        self.clear_join_decision_handler().await;
+    }
+
+    #[cfg(all(target_family = "wasm", not(test)))]
+    #[wasm_bindgen(js_name = setJoinRequestHandler)]
+    pub async fn set_join_request_handler_wasm(&self) -> Result<(), JsValue> {
+        self.set_join_request_handler(|change, request_id, participant_uid, expires_at| {
+            Box::pin(async move {
+                on_join_request(change.into(), request_id, participant_uid, expires_at);
+            })
+        })
+        .await;
+        Ok(())
+    }
+
+    #[wasm_bindgen(js_name = clearJoinRequestHandler)]
+    pub async fn clear_join_request_handler_wasm(&self) {
+        self.clear_join_request_handler().await;
+    }
+}
+
+#[cfg(target_family = "wasm")]
+fn meeting_session_key_from_base64(
+    session_key_base64: &str,
+) -> Result<MeetingSessionKey, MeetCoreError> {
+    let trimmed = session_key_base64.trim();
+    if trimmed.is_empty() {
+        return Err(MeetCoreError::InvalidInput {
+            field: "session_key_base64".to_string(),
+            reason: "Session key is empty".to_string(),
+        });
+    }
+
+    Ok(MeetingSessionKey::from(trimmed.to_string()))
 }
 
 #[cfg(all(target_family = "wasm", not(test)))]
@@ -735,6 +963,17 @@ extern "C" {
 
     #[wasm_bindgen(js_namespace = mlsSyncStateChangeEvent)]
     pub fn on_mls_sync_state_changed(state: MlsSyncStateInfo, reason: Option<RejoinReasonInfo>);
+
+    #[wasm_bindgen(js_namespace = joinDecisionEvent)]
+    pub fn on_join_decision(request_id: String, admitted: bool);
+
+    #[wasm_bindgen(js_namespace = joinRequestEvent)]
+    pub fn on_join_request(
+        change: JoinRequestChangeInfo,
+        request_id: String,
+        participant_uid: String,
+        expires_at: u64,
+    );
 }
 
 // Provide a stub for tests
@@ -742,4 +981,16 @@ extern "C" {
 pub fn disconnection_handler() {
     // Stub implementation for tests
     log::debug!("disconnection_handler called in test");
+}
+
+#[cfg(all(target_family = "wasm", test))]
+pub fn on_join_decision(_request_id: String, _admitted: bool) {}
+
+#[cfg(all(target_family = "wasm", test))]
+pub fn on_join_request(
+    _change: JoinRequestChangeInfo,
+    _request_id: String,
+    _participant_uid: String,
+    _expires_at: u64,
+) {
 }

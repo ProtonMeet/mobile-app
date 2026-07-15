@@ -67,6 +67,7 @@ mod tests {
             session_key: "session_key_encrypted".to_string(),
             meeting_link_name: TEST_MEET_LINK_NAME.to_string(),
             locked: 0,
+            waiting_room: 0,
             max_duration: 3600,
             max_participants: 100,
             expiration_time: None,

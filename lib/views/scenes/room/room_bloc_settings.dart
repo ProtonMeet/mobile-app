@@ -4,9 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/helper/background_blur/camera_background_blur_sync.dart';
 import 'package:meet/helper/denoise/denoise_audio_sync.dart';
 import 'package:meet/helper/logger.dart' as l;
+import 'package:meet/helper/sentry_waiting_room.dart';
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/services/denoise_audio.service.dart';
+import 'package:meet/rust/proton_meet/models/meeting_info.dart';
 import 'package:proton_denoise/proton_denoise.dart';
 
 import 'room_bloc_feature_flags.dart';
@@ -27,9 +29,13 @@ mixin RoomSettingsHandlers
   /// Lock to prevent concurrent lock/unlock operations
   bool _isTogglingLockMeeting = false;
 
+  /// Lock to prevent concurrent waiting-room setting updates
+  bool _isTogglingWaitingRoom = false;
+
   /// Registers settings-related event handlers.
   void registerSettingsHandlers() {
     on<SetUnsubscribeVideoByDefault>(_onSetUnsubscribeVideoByDefault);
+    on<MeetingInfoWaitingRoomUpdated>(_onMeetingInfoWaitingRoomUpdated);
     on<SetCameraBackgroundBlurEnabled>(_onSetCameraBackgroundBlurEnabled);
     on<SetAudioDenoiseEnabled>(_onSetAudioDenoiseEnabled);
     on<SetAudioDenoiseType>(_onSetAudioDenoiseType);
@@ -75,6 +81,70 @@ mixin RoomSettingsHandlers
     }
   }
 
+  /// Toggles waiting-room policy for the meeting.
+  ///
+  /// Only hosts/co-hosts with admin permission can change this setting.
+  Future<void> toggleWaitingRoomSetting({
+    required bool value,
+    required String meetLinkName,
+  }) async {
+    if (_isTogglingWaitingRoom) {
+      l.logger.w(
+        'Waiting room setting toggle already in progress, ignoring request',
+      );
+      return;
+    }
+
+    _isTogglingWaitingRoom = true;
+    try {
+      final appCoreManager = ManagerFactory().get<AppCoreManager>();
+      await appCoreManager.appCore.updateWaitingRoomSetting(
+        meetLinkName: meetLinkName,
+        enable: value,
+      );
+      add(MeetingInfoWaitingRoomUpdated(enabled: value));
+      l.logger.d('Waiting room ${value ? "enabled" : "disabled"}');
+    } catch (e, stackTrace) {
+      l.logger.e('Error toggling waiting room setting: $e');
+      captureWaitingRoomFailureToSentry(
+        flow: 'host_policy_toggle',
+        error: e,
+        stackTrace: stackTrace,
+        meetLinkName: meetLinkName,
+        phase: value ? 'enable' : 'disable',
+      );
+      rethrow;
+    } finally {
+      _isTogglingWaitingRoom = false;
+    }
+  }
+
+  /// Applies a host's pre-join waiting-room preference once the room is ready.
+  Future<void> syncPendingHostWaitingRoomOnEnter({
+    required bool? pendingEnabled,
+    required String meetLinkName,
+  }) async {
+    if (pendingEnabled == null) {
+      return;
+    }
+
+    try {
+      await toggleWaitingRoomSetting(
+        value: pendingEnabled,
+        meetLinkName: meetLinkName,
+      );
+    } catch (e, stackTrace) {
+      l.logger.e('Error syncing host waiting room on enter: $e');
+      captureWaitingRoomFailureToSentry(
+        flow: 'host_sync_policy_on_enter',
+        error: e,
+        stackTrace: stackTrace,
+        meetLinkName: meetLinkName,
+        phase: pendingEnabled ? 'enable' : 'disable',
+      );
+    }
+  }
+
   /// Sets the unsubscribe video by default state.
   ///
   /// When enabled, new video tracks will be automatically unsubscribed.
@@ -89,6 +159,32 @@ mixin RoomSettingsHandlers
   ) {
     emit(state.copyWith(unsubscribeVideoByDefault: event.value));
     l.logger.d('Unsubscribe video by default: ${event.value}');
+  }
+
+  void _onMeetingInfoWaitingRoomUpdated(
+    MeetingInfoWaitingRoomUpdated event,
+    Emitter<RoomState> emit,
+  ) {
+    final info = state.meetingInfo;
+    if (info == null) {
+      return;
+    }
+    emit(
+      state.copyWith(
+        meetingInfo: FrbMeetingInfo(
+          meetingLinkName: info.meetingLinkName,
+          meetingName: info.meetingName,
+          salt: info.salt,
+          sessionKey: info.sessionKey,
+          locked: info.locked,
+          waitingRoom: event.enabled ? 1 : 0,
+          maxDuration: info.maxDuration,
+          maxParticipants: info.maxParticipants,
+          expirationTime: info.expirationTime,
+        ),
+      ),
+    );
+    l.logger.d('Meeting info waiting room: ${event.enabled}');
   }
 
   Future<void> _onSetCameraBackgroundBlurEnabled(

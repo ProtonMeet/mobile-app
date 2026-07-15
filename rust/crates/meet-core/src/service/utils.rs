@@ -1,11 +1,23 @@
 use mls_rs::CryptoProvider;
 use mls_rs_codec::MlsEncode;
 use mls_spec::{Parsable, Serializable};
+use mls_trait::meet_policy::UserRole;
 use mls_types::{Credential, Member, Proposal};
+use proton_meet_mls::{kv::MemKv, MlsGroup, MlsGroupTrait};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use uuid::Uuid;
+
+use crate::errors::core::MeetCoreError;
+
+pub(crate) fn ensure_room_admin(mls_group: &MlsGroup<MemKv>) -> Result<(), MeetCoreError> {
+    let role = mls_group.own_role_for_current_epoch()?;
+    if role.role_index != UserRole::RoomAdmin.builder().role_index {
+        return Err(MeetCoreError::NotRoomAdmin);
+    }
+    Ok(())
+}
 
 pub fn get_uuid_from_member(member: &mut Member) -> Result<Uuid, anyhow::Error> {
     match &mut member.credential {

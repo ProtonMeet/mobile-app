@@ -98,3 +98,60 @@ class ToggleKeepDisplayName extends PreJoinEvent {
   final bool keep;
   ToggleKeepDisplayName({required this.keep});
 }
+
+class PreJoinPaidUserResolved extends PreJoinEvent {
+  final bool isPaidUser;
+  PreJoinPaidUserResolved({required this.isPaidUser});
+}
+
+/// Authenticates the meeting link when the user presses Join.
+class PreJoinAttemptJoin extends PreJoinEvent {
+  final String displayName;
+
+  PreJoinAttemptJoin(this.displayName);
+}
+
+class PreJoinHostMeetingContextResolved extends PreJoinEvent {
+  final bool waitingRoomEnabled;
+  final String? roomName;
+
+  PreJoinHostMeetingContextResolved({
+    required this.waitingRoomEnabled,
+    this.roomName,
+  });
+}
+
+class PreJoinNavigateToWaitingRoomConsumed extends PreJoinEvent {}
+
+class PreJoinStartWaitingRoomAdmission extends PreJoinEvent {
+  final String displayName;
+  PreJoinStartWaitingRoomAdmission(this.displayName);
+}
+
+class PreJoinPollGroupInfo extends PreJoinEvent {}
+
+class PreJoinWaitingRoomCountdownTick extends PreJoinEvent {}
+
+/// Waits for host Welcome after [PreJoinStartWaitingRoomAdmission] submitted a join request.
+class PreJoinWaitForWaitingRoomWelcome extends PreJoinEvent {}
+
+class PreJoinLeaveWaitingRoomAdmission extends PreJoinEvent {}
+
+class PreJoinWaitingRoomAdmissionTimedOut extends PreJoinEvent {}
+
+class PreJoinHostAcceptProceedConsumed extends PreJoinEvent {}
+
+class PreJoinJoinRequestRejectedNotificationConsumed extends PreJoinEvent {}
+
+class PreJoinWaitingRoomAdmissionTimedOutNotificationConsumed
+    extends PreJoinEvent {}
+
+class PreJoinJoinDecisionReceived extends PreJoinEvent {
+  final String requestId;
+  final bool admitted;
+
+  PreJoinJoinDecisionReceived({
+    required this.requestId,
+    required this.admitted,
+  });
+}

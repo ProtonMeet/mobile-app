@@ -5,6 +5,7 @@ use crate::app::test_support::{
     build_app, build_app_with_http, build_app_with_service, default_app_state,
     state_with_participant_only, test_mls_store, unreachable_test_proton_http_client,
 };
+use crate::domain::user::ports::meeting_api::MockMeetingApi;
 use crate::domain::user::ports::MockHttpClient;
 use crate::errors::{core::MeetCoreError, http_client::HttpClientError};
 use crate::service::service::Service;
@@ -124,6 +125,7 @@ async fn get_user_settings_propagates_service_error() {
 
     let service = Service::new(
         Arc::new(http),
+        Arc::new(MockMeetingApi::new()),
         Arc::new(MockUserApi::new()),
         Arc::new(MockUserRepository::new()),
         Arc::new(crate::app::test_support::minimal_ws_mock()),

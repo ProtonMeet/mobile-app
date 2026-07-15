@@ -48,6 +48,13 @@ const int guestMeetingRoomSize = 4;
 /// delay subscription update
 const Duration delaySubscriptionUpdate = Duration(milliseconds: 5000);
 
+/// Remote participant count below which we poll for late camera track attachment.
+const int smallMeetingRemoteParticipantThreshold = 20;
+
+/// Interval for re-running [SortParticipants] while a remote user has camera
+/// enabled but the video track is not attached yet (small meetings only).
+const Duration pendingCameraVideoTrackCheckInterval = Duration(seconds: 5);
+
 /// Initial delay before retrying a failed visible-camera bind.
 const Duration videoSubscriptionBindRetryDelay = Duration(seconds: 2);
 
@@ -67,6 +74,15 @@ const Duration delayUnsubscribeTrack = Duration(milliseconds: 2000);
 
 /// Room auto fullscreen
 const Duration autoFullScreenDelay = Duration(seconds: 10);
+
+/// How often the host room polls for expired waiting-room join requests.
+const Duration waitingRoomJoinRequestExpirationPollInterval = Duration(
+  seconds: 1,
+);
+
+/// Expired waiting-room join requests received in one host session before
+/// reporting to Sentry (report when count exceeds this value).
+const int waitingRoomExpiredJoinRequestSentryThreshold = 3;
 
 /// Simulation
 const int defaultSimulationParticipantCount = 1;

@@ -25,6 +25,7 @@ mixin RoomParticipantsHandlers on Bloc<RoomBlocEvent, RoomState> {
   );
 
   Timer? _livekitActiveUuidTimer;
+
   void registerParticipantHandlers() {
     /// livekit events
     on<BridgeParticipantConnected>(_onParticipantConnected);
@@ -92,9 +93,8 @@ mixin RoomParticipantsHandlers on Bloc<RoomBlocEvent, RoomState> {
         }
       }
     }
-
-    add(SortParticipants());
     _updateLivekitActiveUuids();
+    add(SortParticipants());
   }
 
   /// Handles the event when a participant disconnects from the room.
@@ -223,6 +223,35 @@ mixin RoomParticipantsHandlers on Bloc<RoomBlocEvent, RoomState> {
   ///
   /// Returns:
   /// A map of participant UUIDs to [MeetParticipant] objects
+  /// Resolves a participant display name by UUID via meet-server `getParticipants`
+  /// (decrypted in Rust using the cached meeting session key).
+  ///
+  /// Waiting-room join requests only carry `participant_uid`; names come from this API.
+  Future<({Map<String, MeetParticipant> participants, String? displayName})>
+  resolveParticipantDisplayNameByUuid(String participantUuid) async {
+    try {
+      final updated = await loadFrbParticipants();
+      final displayName = updated[participantUuid]?.displayName?.trim();
+      return (
+        participants: updated,
+        displayName: displayName != null && displayName.isNotEmpty
+            ? displayName
+            : null,
+      );
+    } catch (e, stackTrace) {
+      l.logger.w(
+        '[RoomParticipantsHandlers] resolveParticipantDisplayNameByUuid failed: $e',
+        stackTrace: stackTrace,
+      );
+      final cached = state.frbParticipantsMap[participantUuid]?.displayName
+          ?.trim();
+      return (
+        participants: state.frbParticipantsMap,
+        displayName: cached != null && cached.isNotEmpty ? cached : null,
+      );
+    }
+  }
+
   Future<Map<String, MeetParticipant>> loadFrbParticipants() async {
     final meetInfo = state.meetInfo;
     final appCoreManager = ManagerFactory().get<AppCoreManager>();

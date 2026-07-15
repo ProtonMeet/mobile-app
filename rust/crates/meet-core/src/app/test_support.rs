@@ -10,7 +10,7 @@ use tokio::sync::{Mutex, RwLock};
 
 use crate::app::App;
 use crate::app_state::{AppState, UserState};
-use crate::domain::room::RoomService;
+use crate::domain::room::{RoomService, WaitingRoomService};
 use crate::domain::user::models::meeting::{MeetingType, UpcomingMeeting};
 use crate::domain::user::models::{meet_link_info::MeetInfo, Address, UserTokenInfo};
 use crate::domain::user::ports::{
@@ -92,6 +92,9 @@ pub fn default_app_state() -> AppState {
         join_mls_time: None,
         total_join_start_time: None,
         join_type: None,
+        prejoin_srp_auth: None,
+        pending_waiting_room_join_request_id: None,
+        used_waiting_room_for_join: None,
     }
 }
 
@@ -158,6 +161,7 @@ pub fn minimal_user_key_provider() -> Arc<dyn UserKeyProvider> {
 pub async fn minimal_service() -> Service {
     Service::new(
         Arc::new(MockHttpClient::new()),
+        Arc::new(MockMeetingApi::new()),
         Arc::new(MockUserApi::new()),
         Arc::new(MockUserRepository::new()),
         Arc::new(minimal_ws_mock()),
@@ -171,6 +175,16 @@ pub fn minimal_room_service() -> Arc<RoomService> {
         Arc::new(MockMeetingApi::new()),
         Arc::new(MeetCryptoClient::new()),
     ))
+}
+
+pub fn minimal_waiting_room_service() -> Arc<WaitingRoomService> {
+    let crypto_client = Arc::new(MeetCryptoClient::new());
+    let mls_service: Arc<dyn crate::domain::mls::ports::KeyPackagePort> =
+        Arc::new(crate::service::mls_service::MlsService::new(
+            Arc::new(MockHttpClient::new()),
+            test_mls_store(),
+        ));
+    Arc::new(WaitingRoomService::new(crypto_client, mls_service))
 }
 
 pub async fn build_app(state: AppState) -> App {
@@ -188,6 +202,7 @@ pub async fn build_app_with_http(state: AppState, http_client: Arc<ProtonHttpCli
         minimal_user_key_provider(),
         Arc::new(RwLock::new(minimal_service().await)),
         minimal_room_service(),
+        minimal_waiting_room_service(),
     )
 }
 
@@ -206,6 +221,7 @@ pub async fn build_app_with_test_http(
         minimal_user_key_provider(),
         Arc::new(RwLock::new(minimal_service().await)),
         minimal_room_service(),
+        minimal_waiting_room_service(),
     )
 }
 
@@ -221,12 +237,14 @@ pub async fn build_app_with_service(state: AppState, service: Service) -> App {
         minimal_user_key_provider(),
         Arc::new(RwLock::new(service)),
         minimal_room_service(),
+        minimal_waiting_room_service(),
     )
 }
 
 pub fn auth_service(user_api: MockUserApi, user_repository: MockUserRepository) -> Service {
     Service::new(
         Arc::new(MockHttpClient::new()),
+        Arc::new(MockMeetingApi::new()),
         Arc::new(user_api),
         Arc::new(user_repository),
         Arc::new(minimal_ws_mock()),
@@ -260,6 +278,7 @@ pub fn test_upcoming_meeting(id: &str) -> UpcomingMeeting {
         create_time: None,
         last_used_time: None,
         calendar_event_id: None,
+        waiting_room: None,
     }
 }
 
@@ -274,6 +293,7 @@ pub fn test_meet_info() -> MeetInfo {
         max_duration: 3600,
         max_participants: 100,
         expiration_time: None,
+        has_waiting_room: false,
     }
 }
 
@@ -367,6 +387,7 @@ pub async fn build_app_with_room(state: AppState, room_service: Arc<RoomService>
         minimal_user_key_provider(),
         Arc::new(RwLock::new(minimal_service().await)),
         room_service,
+        minimal_waiting_room_service(),
     )
 }
 
@@ -386,6 +407,7 @@ pub async fn build_app_with_room_and_ws(
         minimal_user_key_provider(),
         Arc::new(RwLock::new(minimal_service().await)),
         room_service,
+        minimal_waiting_room_service(),
     )
 }
 
@@ -405,6 +427,7 @@ pub async fn build_app_with_room_and_service(
         minimal_user_key_provider(),
         Arc::new(RwLock::new(service)),
         room_service,
+        minimal_waiting_room_service(),
     )
 }
 
@@ -424,6 +447,7 @@ pub async fn build_app_with_ws_and_service(
         minimal_user_key_provider(),
         Arc::new(RwLock::new(service)),
         minimal_room_service(),
+        minimal_waiting_room_service(),
     )
 }
 
@@ -442,6 +466,7 @@ pub async fn build_app_with_user_key_provider(
         user_key_provider,
         Arc::new(RwLock::new(minimal_service().await)),
         minimal_room_service(),
+        minimal_waiting_room_service(),
     )
 }
 
@@ -461,6 +486,7 @@ pub async fn build_app_with_room_and_user_key_provider(
         user_key_provider,
         Arc::new(RwLock::new(minimal_service().await)),
         room_service,
+        minimal_waiting_room_service(),
     )
 }
 
@@ -476,6 +502,7 @@ pub async fn build_app_with_ws(ws: MockWebSocketClient, state: AppState) -> App 
         minimal_user_key_provider(),
         Arc::new(RwLock::new(minimal_service().await)),
         minimal_room_service(),
+        minimal_waiting_room_service(),
     )
 }
 
@@ -488,6 +515,7 @@ pub async fn join_test_service_with_mls_client(
     let mls_store = test_mls_store();
     let service = Service::new(
         Arc::new(http),
+        Arc::new(MockMeetingApi::new()),
         Arc::new(MockUserApi::new()),
         Arc::new(MockUserRepository::new()),
         Arc::new(minimal_ws_mock()),
@@ -520,6 +548,7 @@ async fn mls_test_service(user_id: &str, meet_link: &str) -> (Service, Arc<RwLoc
     let http = create_mock_http_client_for_mls(user_id, meet_link, false);
     let service = Service::new(
         Arc::new(http),
+        Arc::new(MockMeetingApi::new()),
         Arc::new(MockUserApi::new()),
         Arc::new(MockUserRepository::new()),
         Arc::new(minimal_ws_mock()),
@@ -630,6 +659,7 @@ pub async fn build_app_with_service_room_and_ws(
         minimal_user_key_provider(),
         Arc::new(RwLock::new(service)),
         room_service,
+        minimal_waiting_room_service(),
     )
 }
 

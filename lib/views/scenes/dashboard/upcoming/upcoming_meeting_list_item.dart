@@ -353,10 +353,15 @@ class UpcomingMeetingListItem extends StatelessWidget {
       final initialData = meeting.toScheduleMeetingData(
         useLocalTimezone: false,
       );
+      final authState = context.read<AuthBloc>().state;
+      final user = authState.user;
+      final isPaidUser = user != null && user_sub.isPaid(user: user);
       showEditScheduleMeetingDialog(
         context,
         initialData: initialData,
+        isPaidUser: isPaidUser,
         displayColors: displayColors,
+        showWaitingRoom: context.read<DashboardBloc>().isMeetWaitingRoomEnabled(),
         onEdit: (data) {
           context.read<DashboardBloc>().add(
             UpdateScheduledMeetingEvent(meeting: meeting, data: data),

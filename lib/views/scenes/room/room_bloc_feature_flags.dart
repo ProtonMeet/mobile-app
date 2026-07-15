@@ -117,6 +117,18 @@ mixin RoomFeatureFlagsHandlers on Bloc<RoomBlocEvent, RoomState> {
     }
   }
 
+  /// Whether waiting-room switch UI should be shown (server-driven join flow is unaffected).
+  bool isMeetWaitingRoomEnabled() {
+    try {
+      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
+      return dataProviderManager.unleashDataProvider.isMeetWaitingRoom();
+    } catch (e) {
+      // If there's an error accessing the feature flag, default to false (hide switch).
+      l.logger.w('[RoomBloc] Error checking MeetWaitingRoom flag: $e');
+      return false;
+    }
+  }
+
   /// Check if users can lower their own raised hand.
   bool isMeetAdminLowerHandEnabled() {
     try {

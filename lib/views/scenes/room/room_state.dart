@@ -57,6 +57,52 @@ enum RejoinStatus {
   }
 }
 
+/// A pending waiting-room join request surfaced to the host from the Rust
+/// `join_request` websocket event.
+class WaitingRoomJoinRequest extends Equatable {
+  const WaitingRoomJoinRequest({
+    required this.requestId,
+    required this.participantUid,
+    required this.receivedAt,
+    this.displayName,
+    this.expiresAt,
+  });
+
+  final String requestId;
+  final String participantUid;
+
+  /// Decrypted display name from meet-server participants API, when available.
+  final String? displayName;
+
+  /// When the host received the request (used for the "Joined at" label).
+  final DateTime receivedAt;
+
+  /// Server-provided expiry, if any.
+  final DateTime? expiresAt;
+
+  /// UI label: resolved name or participant uid fallback.
+  String get resolvedDisplayName {
+    final name = displayName?.trim();
+    if (name != null && name.isNotEmpty) {
+      return name;
+    }
+    return participantUid;
+  }
+
+  /// Whether the server-side join request window has elapsed.
+  bool get isExpired {
+    final expiry = expiresAt;
+    return expiry != null && !expiry.isAfter(DateTime.now());
+  }
+
+  /// Join request still within the server admission window.
+  bool get isActive => !isExpired;
+
+  @override
+  List<Object?> get props =>
+      [requestId, participantUid, displayName, receivedAt, expiresAt];
+}
+
 class RoomState extends Equatable {
   /// livekit room instance, it will be passed in from the waitting room
   final Room room;
@@ -76,6 +122,18 @@ class RoomState extends Equatable {
   /// joined participants
   final List<ParticipantDetail> joinedParticipants;
   final List<ParticipantDetail> leftParticipants;
+
+  /// Pending waiting-room join requests (host only).
+  final List<WaitingRoomJoinRequest> waitingRoomParticipants;
+
+  /// Join request ids currently being admitted by the host.
+  final Set<String> admittingWaitingRoomRequestIds;
+
+  /// Join request ids currently being rejected by the host.
+  final Set<String> rejectingWaitingRoomRequestIds;
+
+  /// True while admit-all waiting-room join requests is in flight.
+  final bool isAdmitAllWaitingRoomInProgress;
 
   /// messages
   final List<types.Message> messages;
@@ -134,6 +192,9 @@ class RoomState extends Equatable {
 
   /// Android: show notification permission inform sheet (e.g. before screen share).
   final bool shouldShowNotificationPermissionSettings;
+
+  /// Toast when host admits a join request that is no longer pending locally.
+  final bool shouldShowWaitingRoomJoinRequestNotFoundError;
 
   final DateTime? aloneSince;
 
@@ -303,6 +364,10 @@ class RoomState extends Equatable {
     this.messages = const [],
     this.joinedParticipants = const [],
     this.leftParticipants = const [],
+    this.waitingRoomParticipants = const [],
+    this.admittingWaitingRoomRequestIds = const {},
+    this.rejectingWaitingRoomRequestIds = const {},
+    this.isAdmitAllWaitingRoomInProgress = false,
     this.showChatBubble = false,
     this.showParticipantList = false,
     this.isFullScreen = false,
@@ -325,6 +390,7 @@ class RoomState extends Equatable {
     this.isSpeakerMuted,
     this.shouldShowMeetingWillEndDialog = false,
     this.shouldShowNotificationPermissionSettings = false,
+    this.shouldShowWaitingRoomJoinRequestNotFoundError = false,
     this.aloneSince,
     this.isPictureInPictureActive = false,
     this.pipVideoTrackSid,
@@ -376,6 +442,10 @@ class RoomState extends Equatable {
     List<types.Message>? messages,
     List<ParticipantDetail>? joinedParticipants,
     List<ParticipantDetail>? leftParticipants,
+    List<WaitingRoomJoinRequest>? waitingRoomParticipants,
+    Set<String>? admittingWaitingRoomRequestIds,
+    Set<String>? rejectingWaitingRoomRequestIds,
+    bool? isAdmitAllWaitingRoomInProgress,
     bool? showChatBubble,
     bool? showParticipantList,
     bool? isFullScreen,
@@ -396,6 +466,7 @@ class RoomState extends Equatable {
     bool? isSpeakerMuted,
     bool? shouldShowMeetingWillEndDialog,
     bool? shouldShowNotificationPermissionSettings,
+    bool? shouldShowWaitingRoomJoinRequestNotFoundError,
     DateTime? aloneSince,
     bool resetAloneStatus = false,
     bool? isPictureInPictureActive,
@@ -452,6 +523,14 @@ class RoomState extends Equatable {
       messages: messages ?? this.messages,
       joinedParticipants: joinedParticipants ?? this.joinedParticipants,
       leftParticipants: leftParticipants ?? this.leftParticipants,
+      waitingRoomParticipants:
+          waitingRoomParticipants ?? this.waitingRoomParticipants,
+      admittingWaitingRoomRequestIds:
+          admittingWaitingRoomRequestIds ?? this.admittingWaitingRoomRequestIds,
+      rejectingWaitingRoomRequestIds:
+          rejectingWaitingRoomRequestIds ?? this.rejectingWaitingRoomRequestIds,
+      isAdmitAllWaitingRoomInProgress: isAdmitAllWaitingRoomInProgress ??
+          this.isAdmitAllWaitingRoomInProgress,
       showChatBubble: showChatBubble ?? this.showChatBubble,
       showParticipantList: showParticipantList ?? this.showParticipantList,
       isFullScreen: isFullScreen ?? this.isFullScreen,
@@ -477,6 +556,9 @@ class RoomState extends Equatable {
       shouldShowNotificationPermissionSettings:
           shouldShowNotificationPermissionSettings ??
           this.shouldShowNotificationPermissionSettings,
+      shouldShowWaitingRoomJoinRequestNotFoundError:
+          shouldShowWaitingRoomJoinRequestNotFoundError ??
+          this.shouldShowWaitingRoomJoinRequestNotFoundError,
       aloneSince: resetAloneStatus ? null : aloneSince ?? this.aloneSince,
       isPictureInPictureActive:
           isPictureInPictureActive ?? this.isPictureInPictureActive,
@@ -552,6 +634,10 @@ class RoomState extends Equatable {
 
     joinedParticipants,
     leftParticipants,
+    waitingRoomParticipants,
+    admittingWaitingRoomRequestIds,
+    rejectingWaitingRoomRequestIds,
+    isAdmitAllWaitingRoomInProgress,
 
     showChatBubble,
     showParticipantList,
@@ -574,6 +660,7 @@ class RoomState extends Equatable {
     isSpeakerMuted,
     shouldShowMeetingWillEndDialog,
     shouldShowNotificationPermissionSettings,
+    shouldShowWaitingRoomJoinRequestNotFoundError,
     aloneSince,
 
     ///

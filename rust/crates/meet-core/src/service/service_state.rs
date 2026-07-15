@@ -25,6 +25,15 @@ pub struct LivekitUUIDInfo {
     pub last_seen: u64, // timestamp in milliseconds
 }
 
+/// A waiting-room join request received over the MLS websocket (host only).
+#[derive(Debug, Clone)]
+pub struct PendingWaitingRoomJoinRequest {
+    pub request_id: String,
+    pub participant_uid: String,
+    pub encrypted_key_package: Vec<u8>,
+    pub expires_at: u64,
+}
+
 #[derive(Debug, Clone)]
 pub struct MlsSyncMetrics {
     pub local_epoch: u32,
@@ -57,6 +66,9 @@ pub struct ServiceState {
     pub mls_designated_committer_metrics: HashMap<u32, MLSDesignatedCommitterMetrics>,
     pub last_offline_members_handled_epoch: Option<u64>,
     pub last_host_role_update_proposal_epoch: Option<u64>,
+    pub pending_waiting_room_join_requests: HashMap<String, PendingWaitingRoomJoinRequest>,
+    /// Guest's outstanding waiting-room join request id (for filtering stale reject WS events).
+    pub guest_pending_join_request_id: Option<String>,
 }
 
 impl Default for ServiceState {
@@ -78,6 +90,8 @@ impl ServiceState {
             mls_designated_committer_metrics: HashMap::new(),
             last_offline_members_handled_epoch: None,
             last_host_role_update_proposal_epoch: None,
+            pending_waiting_room_join_requests: HashMap::new(),
+            guest_pending_join_request_id: None,
         }
     }
 
@@ -101,6 +115,17 @@ impl ServiceState {
     }
     pub fn clear_welcome_info(&mut self) {
         self.welcome_info = None;
+    }
+
+    /// Resets guest waiting-room join state so a new request can be submitted.
+    /// Does nothing if the MLS group is already joined.
+    pub fn reset_waiting_room_guest_join_state(&mut self) {
+        if self.mls_group_state == MlsGroupState::Success {
+            return;
+        }
+        self.mls_group_state = MlsGroupState::Pending;
+        self.welcome_info = None;
+        self.guest_pending_join_request_id = None;
     }
 
     pub fn set_livekit_active_uuids(&mut self, livekit_active_uuid_list: Vec<String>) {
@@ -193,5 +218,6 @@ impl ServiceState {
         self.mls_designated_committer_metrics.clear();
         self.last_offline_members_handled_epoch = None;
         self.last_host_role_update_proposal_epoch = None;
+        self.pending_waiting_room_join_requests.clear();
     }
 }

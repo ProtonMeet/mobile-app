@@ -16,6 +16,7 @@ class FrbMeetInfo {
   final String websocketUrl;
   final int participantsCount;
   final bool isLocked;
+  final bool hasWaitingRoom;
   final int maxDuration;
   final int maxParticipants;
 
@@ -29,6 +30,7 @@ class FrbMeetInfo {
     required this.websocketUrl,
     required this.participantsCount,
     required this.isLocked,
+    required this.hasWaitingRoom,
     required this.maxDuration,
     required this.maxParticipants,
     this.expirationTime,
@@ -42,6 +44,7 @@ class FrbMeetInfo {
       websocketUrl.hashCode ^
       participantsCount.hashCode ^
       isLocked.hashCode ^
+      hasWaitingRoom.hashCode ^
       maxDuration.hashCode ^
       maxParticipants.hashCode ^
       expirationTime.hashCode;
@@ -57,6 +60,7 @@ class FrbMeetInfo {
           websocketUrl == other.websocketUrl &&
           participantsCount == other.participantsCount &&
           isLocked == other.isLocked &&
+          hasWaitingRoom == other.hasWaitingRoom &&
           maxDuration == other.maxDuration &&
           maxParticipants == other.maxParticipants &&
           expirationTime == other.expirationTime;

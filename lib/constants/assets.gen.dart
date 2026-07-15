@@ -244,6 +244,10 @@ class $AssetsImagesIconGen {
   SvgGenImage get icReload =>
       const SvgGenImage('assets/images/icon/ic-reload.svg');
 
+  /// File path: assets/images/icon/ic-schedule-waiting-room.svg
+  SvgGenImage get icScheduleWaitingRoom =>
+      const SvgGenImage('assets/images/icon/ic-schedule-waiting-room.svg');
+
   /// File path: assets/images/icon/ic-security-indicator.svg
   SvgGenImage get icSecurityIndicator =>
       const SvgGenImage('assets/images/icon/ic-security-indicator.svg');
@@ -384,6 +388,7 @@ class $AssetsImagesIconGen {
     icRecordingFilled,
     icRecurring,
     icReload,
+    icScheduleWaitingRoom,
     icSecurityIndicator,
     icSessionExpired,
     icShareScreen,

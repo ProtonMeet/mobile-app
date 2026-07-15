@@ -9,6 +9,7 @@ import 'meet_auth_store.dart';
 import 'models/app_event.dart';
 import 'models/connection_state.dart';
 import 'models/event.dart';
+import 'models/join_request.dart';
 import 'models/join_type.dart';
 import 'models/meet_chat_message.dart';
 import 'models/meet_info.dart';
@@ -32,18 +33,59 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'storage/user_key_provider.dart';
 import 'user_config.dart';
 
-// These functions are ignored because they are not marked as `pub`: `compute_mailbox_password`, `get_app_core_runtime_handle`, `spawn_on_background`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `MEET_LIVEKIT_ADMIN_CHANGE_DART_CALLBACK`, `MEET_MLS_GROUP_UPDATE_DART_CALLBACK`, `MEET_MLS_SYNC_STATE_UPDATE_DART_CALLBACK`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `deref`, `deref`, `deref`, `initialize`, `initialize`, `initialize`
+// These functions are ignored because they are not marked as `pub`: `compute_mailbox_password`, `get_app_core_runtime_handle`, `join_meeting_reuse_token`, `spawn_authenticate_meeting_link`, `spawn_on_background`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `MEET_JOIN_DECISION_DART_CALLBACK`, `MEET_JOIN_REQUEST_DART_CALLBACK`, `MEET_LIVEKIT_ADMIN_CHANGE_DART_CALLBACK`, `MEET_MLS_GROUP_UPDATE_DART_CALLBACK`, `MEET_MLS_SYNC_STATE_UPDATE_DART_CALLBACK`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `deref`, `deref`, `deref`, `deref`, `deref`, `initialize`, `initialize`, `initialize`, `initialize`, `initialize`
 // These functions have error during generation (see debug logs or enable `stop_on_error: true` for more details): `update_display_name`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>>
 abstract class AppCore implements RustOpaqueInterface {
+  /// Admits all pending waiting-room join requests (host only).
+  Future<void> admitAllWaitingRoomJoinRequests({required String meetLinkName});
+
+  /// Admits a single waiting-room join request (host only).
+  Future<void> admitWaitingRoomJoinRequest({
+    required String meetLinkName,
+    required String requestId,
+  });
+
+  /// SRP-authenticate a meeting link and return decrypted metadata (name, limits).
+  /// Caches the auth result for reuse when [`Self::join_meeting`] is called with
+  /// `reuse_prejoin_auth: true`.
+  Future<FrbMeetInfo> authenticateMeetingLink({
+    required String meetLinkName,
+    required String meetLinkPassword,
+    required String displayName,
+  });
+
+  /// Cancels the guest's outstanding waiting-room join request (DELETE when submitted),
+  /// resets local MLS guest admission state, and disconnects the MLS websocket.
+  Future<void> cancelWaitingRoomJoinRequest({required String meetLinkName});
+
+  Future<void> clearJoinDecisionCallback();
+
+  Future<void> clearJoinRequestCallback();
+
   Future<void> clearLivekitAdminChangeCallback();
 
   Future<void> clearMlsGroupUpdateCallback();
 
   Future<void> clearMlsSyncStateUpdateCallback();
+
+  Future<void> clearPrejoinSrpAuth();
+
+  Future<void> clearWaitingRoomJoinRequest();
+
+  Future<void> connectWebsocketForWaitingRoom();
+
+  /// Submits an encrypted MLS join request to meet-server for waiting-room admission.
+  ///
+  /// Requires an active MLS session (see [`Self::prepare_mls_session_for_waiting_room`]).
+  /// After a successful response, call [`Self::wait_for_waiting_room_welcome`] to wait for host admit.
+  Future<FrbSubmitJoinRequestResponse> createJoinRequest({
+    required String meetLinkName,
+    required String meetingSessionKey,
+  });
 
   Future<FrbUpcomingMeeting> createMeeting({
     required String meetingName,
@@ -54,12 +96,14 @@ abstract class AppCore implements RustOpaqueInterface {
     PlatformInt64? endTime,
     String? timeZone,
     String? rRule,
+    required bool waitingRoom,
   });
 
   Future<FrbUpcomingMeeting> createPersonalMeeting({
     required String meetingName,
     String? customPassword,
     required bool isRotate,
+    required bool waitingRoom,
   });
 
   Future<(String, String)> decryptMessage({required List<int> data});
@@ -113,6 +157,8 @@ abstract class AppCore implements RustOpaqueInterface {
   /// Get the latest event ID from the server
   Future<String> getLatestEventId();
 
+  Future<String> getMeetingDisplayNameSessionKey();
+
   Future<FrbMeetingInfo> getMeetingInfo({required String meetingLinkName});
 
   Future<List<MeetParticipant>> getParticipants({required String meetLinkName});
@@ -129,6 +175,9 @@ abstract class AppCore implements RustOpaqueInterface {
 
   Future<ConnectionState> getWsState();
 
+  /// Whether MLS group info exists on the server (host has started the meeting).
+  Future<bool> hasMlsGroupInfo();
+
   Future<bool> isMlsUpToDate();
 
   Future<bool> isWebsocketHasReconnected();
@@ -142,6 +191,8 @@ abstract class AppCore implements RustOpaqueInterface {
     required bool isMeetSwitchJoinType,
     required bool isMeetNewSwitchJoinType,
     required bool reuseToken,
+    required bool reusePrejoinAuth,
+    required bool isWaitingRoom,
   });
 
   Future<void> joinMeetingWithAccessToken({
@@ -235,7 +286,20 @@ abstract class AppCore implements RustOpaqueInterface {
   /// Lightweight server reachability check (e.g. when logged out). Surfaces API errors such as force upgrade.
   Future<BigInt> ping();
 
+  /// Prepare MLS session from cached pre-join auth for waiting-room group-info polling.
+  Future<void> prepareMlsSessionForWaitingRoom({
+    required String meetLinkName,
+    required String meetLinkPassword,
+  });
+
   Future<UserState> refreshUserStateFromApi({required String userId});
+
+  /// Rejects a waiting-room join request (host only).
+  Future<void> rejectWaitingRoomJoinRequest({
+    required String meetLinkName,
+    required String requestId,
+    required String participantUid,
+  });
 
   Future<void> removeParticipant({required String participantUuid});
 
@@ -243,6 +307,19 @@ abstract class AppCore implements RustOpaqueInterface {
     required String meetingLinkName,
     required int score,
     required List<String> feedbackParts,
+  });
+
+  Future<void> setJoinDecisionCallback({
+    required FutureOr<void> Function(String, bool) callback,
+  });
+
+  /// Registers a Dart callback fired when a waiting-room join request is added or removed.
+  /// Args: `(change, request_id, participant_uid, expires_at)`.
+  /// For removals, `expires_at` is 0. `request_id` is set when known (host reject);
+  /// WS fanout may omit it — the UI ignores removals without `request_id`.
+  Future<void> setJoinRequestCallback({
+    required FutureOr<void> Function(JoinRequestChange, String, String, BigInt)
+    callback,
   });
 
   Future<void> setLivekitActiveUuids({required List<String> activeUuids});
@@ -332,6 +409,14 @@ abstract class AppCore implements RustOpaqueInterface {
   });
 
   Future<void> updateShowSelfTile({required bool showSelfTile});
+
+  Future<void> updateWaitingRoomSetting({
+    required String meetLinkName,
+    required bool enable,
+  });
+
+  /// Waits up to 5 minutes for the host to admit via Welcome, then joins the MLS group.
+  Future<void> waitForWaitingRoomWelcome({required String meetLinkName});
 }
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<MeetCoreError>>

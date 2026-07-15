@@ -73,6 +73,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
   final SvgGenImage iconScheduleTime;
   final SvgGenImage iconScheduleTimeZone;
   final SvgGenImage iconScheduleRepeat;
+  final SvgGenImage iconScheduleWaitingRoom;
   final SvgGenImage iconCalendarModalHeader;
   final SvgGenImage iconDoorModalHeader;
   final SvgGenImage iconPeopleModalHeader;
@@ -189,6 +190,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
     required this.iconScheduleTime,
     required this.iconScheduleTimeZone,
     required this.iconScheduleRepeat,
+    required this.iconScheduleWaitingRoom,
     required this.iconCalendarModalHeader,
     required this.iconDoorModalHeader,
     required this.iconPeopleModalHeader,
@@ -277,6 +279,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
     SvgGenImage? iconScheduleTime,
     SvgGenImage? iconScheduleTimeZone,
     SvgGenImage? iconScheduleRepeat,
+    SvgGenImage? iconScheduleWaitingRoom,
     SvgGenImage? iconCalendarModalHeader,
     SvgGenImage? iconDoorModalHeader,
     SvgGenImage? iconPeopleModalHeader,
@@ -368,6 +371,8 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
       iconScheduleTime: iconScheduleTime ?? this.iconScheduleTime,
       iconScheduleTimeZone: iconScheduleTimeZone ?? this.iconScheduleTimeZone,
       iconScheduleRepeat: iconScheduleRepeat ?? this.iconScheduleRepeat,
+      iconScheduleWaitingRoom:
+          iconScheduleWaitingRoom ?? this.iconScheduleWaitingRoom,
       iconCalendarModalHeader:
           iconCalendarModalHeader ?? this.iconCalendarModalHeader,
       iconDoorModalHeader: iconDoorModalHeader ?? this.iconDoorModalHeader,
@@ -464,6 +469,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
       iconScheduleTime: other.iconScheduleTime,
       iconScheduleTimeZone: other.iconScheduleTimeZone,
       iconScheduleRepeat: other.iconScheduleRepeat,
+      iconScheduleWaitingRoom: other.iconScheduleWaitingRoom,
       iconCalendarModalHeader: other.iconCalendarModalHeader,
       iconDoorModalHeader: other.iconDoorModalHeader,
       iconPeopleModalHeader: other.iconPeopleModalHeader,
@@ -553,6 +559,7 @@ final lightImageExtension = ProtonImages(
   iconScheduleTime: Assets.images.icon.icClock,
   iconScheduleTimeZone: Assets.images.icon.icEarth,
   iconScheduleRepeat: Assets.images.icon.icRecurring,
+  iconScheduleWaitingRoom: Assets.images.icon.icScheduleWaitingRoom,
   iconCalendarModalHeader: Assets.images.icon.icCalendarModalHeader,
   iconDoorModalHeader: Assets.images.icon.icDoorModalHeader,
   iconPeopleModalHeader: Assets.images.icon.icPeopleModalHeader,
@@ -640,6 +647,7 @@ final darkImageExtension = ProtonImages(
   iconScheduleTime: Assets.images.icon.icClock,
   iconScheduleTimeZone: Assets.images.icon.icEarth,
   iconScheduleRepeat: Assets.images.icon.icRecurring,
+  iconScheduleWaitingRoom: Assets.images.icon.icScheduleWaitingRoom,
   iconCalendarModalHeader: Assets.images.icon.icCalendarModalHeader,
   iconDoorModalHeader: Assets.images.icon.icDoorModalHeader,
   iconPeopleModalHeader: Assets.images.icon.icPeopleModalHeader,

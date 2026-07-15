@@ -6,6 +6,7 @@ pub mod desktop_web_login;
 pub mod desktop_web_login_manager;
 pub mod dto;
 pub mod event_api;
+pub mod group_info_payload;
 pub mod http_client;
 pub mod http_client_util;
 pub mod meeting_api;

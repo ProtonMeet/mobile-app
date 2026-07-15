@@ -21,6 +21,7 @@ import 'proton_meet/models/app_event.dart';
 import 'proton_meet/models/connection_state.dart';
 import 'proton_meet/models/desktop_web_login.dart';
 import 'proton_meet/models/event.dart';
+import 'proton_meet/models/join_request.dart';
 import 'proton_meet/models/join_type.dart';
 import 'proton_meet/models/meet_chat_message.dart';
 import 'proton_meet/models/meet_info.dart';
@@ -100,7 +101,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => -649675214;
+  int get rustContentHash => -1277715639;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -112,6 +113,37 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Future<void> crateProtonMeetCoreAppCoreAdmitAllWaitingRoomJoinRequests({
+    required AppCore that,
+    required String meetLinkName,
+  });
+
+  Future<void> crateProtonMeetCoreAppCoreAdmitWaitingRoomJoinRequest({
+    required AppCore that,
+    required String meetLinkName,
+    required String requestId,
+  });
+
+  Future<FrbMeetInfo> crateProtonMeetCoreAppCoreAuthenticateMeetingLink({
+    required AppCore that,
+    required String meetLinkName,
+    required String meetLinkPassword,
+    required String displayName,
+  });
+
+  Future<void> crateProtonMeetCoreAppCoreCancelWaitingRoomJoinRequest({
+    required AppCore that,
+    required String meetLinkName,
+  });
+
+  Future<void> crateProtonMeetCoreAppCoreClearJoinDecisionCallback({
+    required AppCore that,
+  });
+
+  Future<void> crateProtonMeetCoreAppCoreClearJoinRequestCallback({
+    required AppCore that,
+  });
+
   Future<void> crateProtonMeetCoreAppCoreClearLivekitAdminChangeCallback({
     required AppCore that,
   });
@@ -124,6 +156,25 @@ abstract class RustLibApi extends BaseApi {
     required AppCore that,
   });
 
+  Future<void> crateProtonMeetCoreAppCoreClearPrejoinSrpAuth({
+    required AppCore that,
+  });
+
+  Future<void> crateProtonMeetCoreAppCoreClearWaitingRoomJoinRequest({
+    required AppCore that,
+  });
+
+  Future<void> crateProtonMeetCoreAppCoreConnectWebsocketForWaitingRoom({
+    required AppCore that,
+  });
+
+  Future<FrbSubmitJoinRequestResponse>
+  crateProtonMeetCoreAppCoreCreateJoinRequest({
+    required AppCore that,
+    required String meetLinkName,
+    required String meetingSessionKey,
+  });
+
   Future<FrbUpcomingMeeting> crateProtonMeetCoreAppCoreCreateMeeting({
     required AppCore that,
     required String meetingName,
@@ -134,6 +185,7 @@ abstract class RustLibApi extends BaseApi {
     PlatformInt64? endTime,
     String? timeZone,
     String? rRule,
+    required bool waitingRoom,
   });
 
   Future<FrbUpcomingMeeting> crateProtonMeetCoreAppCoreCreatePersonalMeeting({
@@ -141,6 +193,7 @@ abstract class RustLibApi extends BaseApi {
     required String meetingName,
     String? customPassword,
     required bool isRotate,
+    required bool waitingRoom,
   });
 
   Future<(String, String)> crateProtonMeetCoreAppCoreDecryptMessage({
@@ -218,6 +271,10 @@ abstract class RustLibApi extends BaseApi {
     required AppCore that,
   });
 
+  Future<String> crateProtonMeetCoreAppCoreGetMeetingDisplayNameSessionKey({
+    required AppCore that,
+  });
+
   Future<FrbMeetingInfo> crateProtonMeetCoreAppCoreGetMeetingInfo({
     required AppCore that,
     required String meetingLinkName,
@@ -253,6 +310,10 @@ abstract class RustLibApi extends BaseApi {
     required AppCore that,
   });
 
+  Future<bool> crateProtonMeetCoreAppCoreHasMlsGroupInfo({
+    required AppCore that,
+  });
+
   Future<bool> crateProtonMeetCoreAppCoreIsMlsUpToDate({required AppCore that});
 
   Future<bool> crateProtonMeetCoreAppCoreIsWebsocketHasReconnected({
@@ -269,6 +330,8 @@ abstract class RustLibApi extends BaseApi {
     required bool isMeetSwitchJoinType,
     required bool isMeetNewSwitchJoinType,
     required bool reuseToken,
+    required bool reusePrejoinAuth,
+    required bool isWaitingRoom,
   });
 
   Future<void> crateProtonMeetCoreAppCoreJoinMeetingWithAccessToken({
@@ -368,9 +431,22 @@ abstract class RustLibApi extends BaseApi {
 
   Future<BigInt> crateProtonMeetCoreAppCorePing({required AppCore that});
 
+  Future<void> crateProtonMeetCoreAppCorePrepareMlsSessionForWaitingRoom({
+    required AppCore that,
+    required String meetLinkName,
+    required String meetLinkPassword,
+  });
+
   Future<UserState> crateProtonMeetCoreAppCoreRefreshUserStateFromApi({
     required AppCore that,
     required String userId,
+  });
+
+  Future<void> crateProtonMeetCoreAppCoreRejectWaitingRoomJoinRequest({
+    required AppCore that,
+    required String meetLinkName,
+    required String requestId,
+    required String participantUid,
   });
 
   Future<void> crateProtonMeetCoreAppCoreRemoveParticipant({
@@ -383,6 +459,17 @@ abstract class RustLibApi extends BaseApi {
     required String meetingLinkName,
     required int score,
     required List<String> feedbackParts,
+  });
+
+  Future<void> crateProtonMeetCoreAppCoreSetJoinDecisionCallback({
+    required AppCore that,
+    required FutureOr<void> Function(String, bool) callback,
+  });
+
+  Future<void> crateProtonMeetCoreAppCoreSetJoinRequestCallback({
+    required AppCore that,
+    required FutureOr<void> Function(JoinRequestChange, String, String, BigInt)
+    callback,
   });
 
   Future<void> crateProtonMeetCoreAppCoreSetLivekitActiveUuids({
@@ -508,6 +595,17 @@ abstract class RustLibApi extends BaseApi {
   Future<void> crateProtonMeetCoreAppCoreUpdateShowSelfTile({
     required AppCore that,
     required bool showSelfTile,
+  });
+
+  Future<void> crateProtonMeetCoreAppCoreUpdateWaitingRoomSetting({
+    required AppCore that,
+    required String meetLinkName,
+    required bool enable,
+  });
+
+  Future<void> crateProtonMeetCoreAppCoreWaitForWaitingRoomWelcome({
+    required AppCore that,
+    required String meetLinkName,
   });
 
   Future<void> crateProtonMeetDesktopWebLoginDesktopWebLoginCancel({
@@ -737,6 +835,246 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Future<void> crateProtonMeetCoreAppCoreAdmitAllWaitingRoomJoinRequests({
+    required AppCore that,
+    required String meetLinkName,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            that,
+            serializer,
+          );
+          sse_encode_String(meetLinkName, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 1,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta:
+            kCrateProtonMeetCoreAppCoreAdmitAllWaitingRoomJoinRequestsConstMeta,
+        argValues: [that, meetLinkName],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetCoreAppCoreAdmitAllWaitingRoomJoinRequestsConstMeta =>
+      const TaskConstMeta(
+        debugName: "AppCore_admit_all_waiting_room_join_requests",
+        argNames: ["that", "meetLinkName"],
+      );
+
+  @override
+  Future<void> crateProtonMeetCoreAppCoreAdmitWaitingRoomJoinRequest({
+    required AppCore that,
+    required String meetLinkName,
+    required String requestId,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            that,
+            serializer,
+          );
+          sse_encode_String(meetLinkName, serializer);
+          sse_encode_String(requestId, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 2,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta:
+            kCrateProtonMeetCoreAppCoreAdmitWaitingRoomJoinRequestConstMeta,
+        argValues: [that, meetLinkName, requestId],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetCoreAppCoreAdmitWaitingRoomJoinRequestConstMeta =>
+      const TaskConstMeta(
+        debugName: "AppCore_admit_waiting_room_join_request",
+        argNames: ["that", "meetLinkName", "requestId"],
+      );
+
+  @override
+  Future<FrbMeetInfo> crateProtonMeetCoreAppCoreAuthenticateMeetingLink({
+    required AppCore that,
+    required String meetLinkName,
+    required String meetLinkPassword,
+    required String displayName,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            that,
+            serializer,
+          );
+          sse_encode_String(meetLinkName, serializer);
+          sse_encode_String(meetLinkPassword, serializer);
+          sse_encode_String(displayName, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 3,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_frb_meet_info,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta: kCrateProtonMeetCoreAppCoreAuthenticateMeetingLinkConstMeta,
+        argValues: [that, meetLinkName, meetLinkPassword, displayName],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetCoreAppCoreAuthenticateMeetingLinkConstMeta =>
+      const TaskConstMeta(
+        debugName: "AppCore_authenticate_meeting_link",
+        argNames: ["that", "meetLinkName", "meetLinkPassword", "displayName"],
+      );
+
+  @override
+  Future<void> crateProtonMeetCoreAppCoreCancelWaitingRoomJoinRequest({
+    required AppCore that,
+    required String meetLinkName,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            that,
+            serializer,
+          );
+          sse_encode_String(meetLinkName, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 4,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta:
+            kCrateProtonMeetCoreAppCoreCancelWaitingRoomJoinRequestConstMeta,
+        argValues: [that, meetLinkName],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetCoreAppCoreCancelWaitingRoomJoinRequestConstMeta =>
+      const TaskConstMeta(
+        debugName: "AppCore_cancel_waiting_room_join_request",
+        argNames: ["that", "meetLinkName"],
+      );
+
+  @override
+  Future<void> crateProtonMeetCoreAppCoreClearJoinDecisionCallback({
+    required AppCore that,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            that,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 5,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta:
+            kCrateProtonMeetCoreAppCoreClearJoinDecisionCallbackConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetCoreAppCoreClearJoinDecisionCallbackConstMeta =>
+      const TaskConstMeta(
+        debugName: "AppCore_clear_join_decision_callback",
+        argNames: ["that"],
+      );
+
+  @override
+  Future<void> crateProtonMeetCoreAppCoreClearJoinRequestCallback({
+    required AppCore that,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            that,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 6,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta: kCrateProtonMeetCoreAppCoreClearJoinRequestCallbackConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetCoreAppCoreClearJoinRequestCallbackConstMeta =>
+      const TaskConstMeta(
+        debugName: "AppCore_clear_join_request_callback",
+        argNames: ["that"],
+      );
+
+  @override
   Future<void> crateProtonMeetCoreAppCoreClearLivekitAdminChangeCallback({
     required AppCore that,
   }) {
@@ -751,7 +1089,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 1,
+            funcId: 7,
             port: port_,
           );
         },
@@ -789,7 +1127,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 2,
+            funcId: 8,
             port: port_,
           );
         },
@@ -827,7 +1165,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 3,
+            funcId: 9,
             port: port_,
           );
         },
@@ -851,6 +1189,159 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<void> crateProtonMeetCoreAppCoreClearPrejoinSrpAuth({
+    required AppCore that,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            that,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 10,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta: kCrateProtonMeetCoreAppCoreClearPrejoinSrpAuthConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateProtonMeetCoreAppCoreClearPrejoinSrpAuthConstMeta =>
+      const TaskConstMeta(
+        debugName: "AppCore_clear_prejoin_srp_auth",
+        argNames: ["that"],
+      );
+
+  @override
+  Future<void> crateProtonMeetCoreAppCoreClearWaitingRoomJoinRequest({
+    required AppCore that,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            that,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 11,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta:
+            kCrateProtonMeetCoreAppCoreClearWaitingRoomJoinRequestConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetCoreAppCoreClearWaitingRoomJoinRequestConstMeta =>
+      const TaskConstMeta(
+        debugName: "AppCore_clear_waiting_room_join_request",
+        argNames: ["that"],
+      );
+
+  @override
+  Future<void> crateProtonMeetCoreAppCoreConnectWebsocketForWaitingRoom({
+    required AppCore that,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            that,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 12,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta:
+            kCrateProtonMeetCoreAppCoreConnectWebsocketForWaitingRoomConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetCoreAppCoreConnectWebsocketForWaitingRoomConstMeta =>
+      const TaskConstMeta(
+        debugName: "AppCore_connect_websocket_for_waiting_room",
+        argNames: ["that"],
+      );
+
+  @override
+  Future<FrbSubmitJoinRequestResponse>
+  crateProtonMeetCoreAppCoreCreateJoinRequest({
+    required AppCore that,
+    required String meetLinkName,
+    required String meetingSessionKey,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            that,
+            serializer,
+          );
+          sse_encode_String(meetLinkName, serializer);
+          sse_encode_String(meetingSessionKey, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 13,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_frb_submit_join_request_response,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta: kCrateProtonMeetCoreAppCoreCreateJoinRequestConstMeta,
+        argValues: [that, meetLinkName, meetingSessionKey],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateProtonMeetCoreAppCoreCreateJoinRequestConstMeta =>
+      const TaskConstMeta(
+        debugName: "AppCore_create_join_request",
+        argNames: ["that", "meetLinkName", "meetingSessionKey"],
+      );
+
+  @override
   Future<FrbUpcomingMeeting> crateProtonMeetCoreAppCoreCreateMeeting({
     required AppCore that,
     required String meetingName,
@@ -861,6 +1352,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     PlatformInt64? endTime,
     String? timeZone,
     String? rRule,
+    required bool waitingRoom,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -878,10 +1370,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_opt_box_autoadd_i_64(endTime, serializer);
           sse_encode_opt_String(timeZone, serializer);
           sse_encode_opt_String(rRule, serializer);
+          sse_encode_bool(waitingRoom, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 4,
+            funcId: 14,
             port: port_,
           );
         },
@@ -900,6 +1393,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           endTime,
           timeZone,
           rRule,
+          waitingRoom,
         ],
         apiImpl: this,
       ),
@@ -919,6 +1413,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           "endTime",
           "timeZone",
           "rRule",
+          "waitingRoom",
         ],
       );
 
@@ -928,6 +1423,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required String meetingName,
     String? customPassword,
     required bool isRotate,
+    required bool waitingRoom,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -940,10 +1436,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(meetingName, serializer);
           sse_encode_opt_String(customPassword, serializer);
           sse_encode_bool(isRotate, serializer);
+          sse_encode_bool(waitingRoom, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 5,
+            funcId: 15,
             port: port_,
           );
         },
@@ -952,7 +1449,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_bridge_error,
         ),
         constMeta: kCrateProtonMeetCoreAppCoreCreatePersonalMeetingConstMeta,
-        argValues: [that, meetingName, customPassword, isRotate],
+        argValues: [that, meetingName, customPassword, isRotate, waitingRoom],
         apiImpl: this,
       ),
     );
@@ -961,7 +1458,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateProtonMeetCoreAppCoreCreatePersonalMeetingConstMeta =>
       const TaskConstMeta(
         debugName: "AppCore_create_personal_meeting",
-        argNames: ["that", "meetingName", "customPassword", "isRotate"],
+        argNames: [
+          "that",
+          "meetingName",
+          "customPassword",
+          "isRotate",
+          "waitingRoom",
+        ],
       );
 
   @override
@@ -981,7 +1484,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 6,
+            funcId: 16,
             port: port_,
           );
         },
@@ -1019,7 +1522,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 17,
             port: port_,
           );
         },
@@ -1061,7 +1564,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 8,
+            funcId: 18,
             port: port_,
           );
         },
@@ -1099,7 +1602,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 9,
+            funcId: 19,
             port: port_,
           );
         },
@@ -1133,7 +1636,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 10,
+            funcId: 20,
             port: port_,
           );
         },
@@ -1168,7 +1671,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 11,
+            funcId: 21,
             port: port_,
           );
         },
@@ -1206,7 +1709,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 12,
+            funcId: 22,
             port: port_,
           );
         },
@@ -1246,7 +1749,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 13,
+            funcId: 23,
             port: port_,
           );
         },
@@ -1284,7 +1787,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 14,
+            funcId: 24,
             port: port_,
           );
         },
@@ -1322,7 +1825,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 15,
+            funcId: 25,
             port: port_,
           );
         },
@@ -1360,7 +1863,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 16,
+            funcId: 26,
             port: port_,
           );
         },
@@ -1396,7 +1899,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 17,
+            funcId: 27,
             port: port_,
           );
         },
@@ -1432,7 +1935,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 18,
+            funcId: 28,
             port: port_,
           );
         },
@@ -1466,7 +1969,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 19,
+            funcId: 29,
             port: port_,
           );
         },
@@ -1508,7 +2011,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 20,
+            funcId: 30,
             port: port_,
           );
         },
@@ -1554,7 +2057,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 21,
+            funcId: 31,
             port: port_,
           );
         },
@@ -1576,6 +2079,44 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<String> crateProtonMeetCoreAppCoreGetMeetingDisplayNameSessionKey({
+    required AppCore that,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            that,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 32,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta:
+            kCrateProtonMeetCoreAppCoreGetMeetingDisplayNameSessionKeyConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetCoreAppCoreGetMeetingDisplayNameSessionKeyConstMeta =>
+      const TaskConstMeta(
+        debugName: "AppCore_get_meeting_display_name_session_key",
+        argNames: ["that"],
+      );
+
+  @override
   Future<FrbMeetingInfo> crateProtonMeetCoreAppCoreGetMeetingInfo({
     required AppCore that,
     required String meetingLinkName,
@@ -1592,7 +2133,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 22,
+            funcId: 33,
             port: port_,
           );
         },
@@ -1630,7 +2171,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 23,
+            funcId: 34,
             port: port_,
           );
         },
@@ -1668,7 +2209,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 24,
+            funcId: 35,
             port: port_,
           );
         },
@@ -1704,7 +2245,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 25,
+            funcId: 36,
             port: port_,
           );
         },
@@ -1741,7 +2282,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 26,
+            funcId: 37,
             port: port_,
           );
         },
@@ -1779,7 +2320,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 27,
+            funcId: 38,
             port: port_,
           );
         },
@@ -1815,7 +2356,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 28,
+            funcId: 39,
             port: port_,
           );
         },
@@ -1851,7 +2392,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 29,
+            funcId: 40,
             port: port_,
           );
         },
@@ -1873,6 +2414,42 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<bool> crateProtonMeetCoreAppCoreHasMlsGroupInfo({
+    required AppCore that,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            that,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 41,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta: kCrateProtonMeetCoreAppCoreHasMlsGroupInfoConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateProtonMeetCoreAppCoreHasMlsGroupInfoConstMeta =>
+      const TaskConstMeta(
+        debugName: "AppCore_has_mls_group_info",
+        argNames: ["that"],
+      );
+
+  @override
   Future<bool> crateProtonMeetCoreAppCoreIsMlsUpToDate({
     required AppCore that,
   }) {
@@ -1887,7 +2464,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 30,
+            funcId: 42,
             port: port_,
           );
         },
@@ -1923,7 +2500,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 31,
+            funcId: 43,
             port: port_,
           );
         },
@@ -1957,6 +2534,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required bool isMeetSwitchJoinType,
     required bool isMeetNewSwitchJoinType,
     required bool reuseToken,
+    required bool reusePrejoinAuth,
+    required bool isWaitingRoom,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -1974,10 +2553,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_bool(isMeetSwitchJoinType, serializer);
           sse_encode_bool(isMeetNewSwitchJoinType, serializer);
           sse_encode_bool(reuseToken, serializer);
+          sse_encode_bool(reusePrejoinAuth, serializer);
+          sse_encode_bool(isWaitingRoom, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 32,
+            funcId: 44,
             port: port_,
           );
         },
@@ -1996,6 +2577,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           isMeetSwitchJoinType,
           isMeetNewSwitchJoinType,
           reuseToken,
+          reusePrejoinAuth,
+          isWaitingRoom,
         ],
         apiImpl: this,
       ),
@@ -2015,6 +2598,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           "isMeetSwitchJoinType",
           "isMeetNewSwitchJoinType",
           "reuseToken",
+          "reusePrejoinAuth",
+          "isWaitingRoom",
         ],
       );
 
@@ -2041,7 +2626,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 33,
+            funcId: 45,
             port: port_,
           );
         },
@@ -2100,7 +2685,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 34,
+            funcId: 46,
             port: port_,
           );
         },
@@ -2148,7 +2733,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 35,
+            funcId: 47,
             port: port_,
           );
         },
@@ -2183,7 +2768,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 36,
+            funcId: 48,
             port: port_,
           );
         },
@@ -2219,7 +2804,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 37,
+            funcId: 49,
             port: port_,
           );
         },
@@ -2259,7 +2844,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 38,
+            funcId: 50,
             port: port_,
           );
         },
@@ -2297,7 +2882,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 39,
+            funcId: 51,
             port: port_,
           );
         },
@@ -2333,7 +2918,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 40,
+            funcId: 52,
             port: port_,
           );
         },
@@ -2373,7 +2958,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 41,
+            funcId: 53,
             port: port_,
           );
         },
@@ -2417,7 +3002,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 42,
+            funcId: 54,
             port: port_,
           );
         },
@@ -2463,7 +3048,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 43,
+            funcId: 55,
             port: port_,
           );
         },
@@ -2503,7 +3088,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 44,
+            funcId: 56,
             port: port_,
           );
         },
@@ -2541,7 +3126,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 45,
+            funcId: 57,
             port: port_,
           );
         },
@@ -2596,7 +3181,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 46,
+            funcId: 58,
             port: port_,
           );
         },
@@ -2655,7 +3240,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 47,
+            funcId: 59,
             port: port_,
           );
         },
@@ -2688,7 +3273,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 48,
+            funcId: 60,
             port: port_,
           );
         },
@@ -2722,7 +3307,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 49,
+            funcId: 61,
             port: port_,
           );
         },
@@ -2741,6 +3326,48 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "AppCore_ping", argNames: ["that"]);
 
   @override
+  Future<void> crateProtonMeetCoreAppCorePrepareMlsSessionForWaitingRoom({
+    required AppCore that,
+    required String meetLinkName,
+    required String meetLinkPassword,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            that,
+            serializer,
+          );
+          sse_encode_String(meetLinkName, serializer);
+          sse_encode_String(meetLinkPassword, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 62,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta:
+            kCrateProtonMeetCoreAppCorePrepareMlsSessionForWaitingRoomConstMeta,
+        argValues: [that, meetLinkName, meetLinkPassword],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetCoreAppCorePrepareMlsSessionForWaitingRoomConstMeta =>
+      const TaskConstMeta(
+        debugName: "AppCore_prepare_mls_session_for_waiting_room",
+        argNames: ["that", "meetLinkName", "meetLinkPassword"],
+      );
+
+  @override
   Future<UserState> crateProtonMeetCoreAppCoreRefreshUserStateFromApi({
     required AppCore that,
     required String userId,
@@ -2757,7 +3384,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 50,
+            funcId: 63,
             port: port_,
           );
         },
@@ -2780,6 +3407,50 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<void> crateProtonMeetCoreAppCoreRejectWaitingRoomJoinRequest({
+    required AppCore that,
+    required String meetLinkName,
+    required String requestId,
+    required String participantUid,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            that,
+            serializer,
+          );
+          sse_encode_String(meetLinkName, serializer);
+          sse_encode_String(requestId, serializer);
+          sse_encode_String(participantUid, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 64,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta:
+            kCrateProtonMeetCoreAppCoreRejectWaitingRoomJoinRequestConstMeta,
+        argValues: [that, meetLinkName, requestId, participantUid],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetCoreAppCoreRejectWaitingRoomJoinRequestConstMeta =>
+      const TaskConstMeta(
+        debugName: "AppCore_reject_waiting_room_join_request",
+        argNames: ["that", "meetLinkName", "requestId", "participantUid"],
+      );
+
+  @override
   Future<void> crateProtonMeetCoreAppCoreRemoveParticipant({
     required AppCore that,
     required String participantUuid,
@@ -2796,7 +3467,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 51,
+            funcId: 65,
             port: port_,
           );
         },
@@ -2838,7 +3509,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 52,
+            funcId: 66,
             port: port_,
           );
         },
@@ -2860,6 +3531,91 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<void> crateProtonMeetCoreAppCoreSetJoinDecisionCallback({
+    required AppCore that,
+    required FutureOr<void> Function(String, bool) callback,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            that,
+            serializer,
+          );
+          sse_encode_DartFn_Inputs_String_bool_Output_unit_AnyhowException(
+            callback,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 67,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta: kCrateProtonMeetCoreAppCoreSetJoinDecisionCallbackConstMeta,
+        argValues: [that, callback],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetCoreAppCoreSetJoinDecisionCallbackConstMeta =>
+      const TaskConstMeta(
+        debugName: "AppCore_set_join_decision_callback",
+        argNames: ["that", "callback"],
+      );
+
+  @override
+  Future<void> crateProtonMeetCoreAppCoreSetJoinRequestCallback({
+    required AppCore that,
+    required FutureOr<void> Function(JoinRequestChange, String, String, BigInt)
+    callback,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            that,
+            serializer,
+          );
+          sse_encode_DartFn_Inputs_join_request_change_String_String_u_64_Output_unit_AnyhowException(
+            callback,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 68,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta: kCrateProtonMeetCoreAppCoreSetJoinRequestCallbackConstMeta,
+        argValues: [that, callback],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetCoreAppCoreSetJoinRequestCallbackConstMeta =>
+      const TaskConstMeta(
+        debugName: "AppCore_set_join_request_callback",
+        argNames: ["that", "callback"],
+      );
+
+  @override
   Future<void> crateProtonMeetCoreAppCoreSetLivekitActiveUuids({
     required AppCore that,
     required List<String> activeUuids,
@@ -2876,7 +3632,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 53,
+            funcId: 69,
             port: port_,
           );
         },
@@ -2917,7 +3673,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 54,
+            funcId: 70,
             port: port_,
           );
         },
@@ -2960,7 +3716,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 55,
+            funcId: 71,
             port: port_,
           );
         },
@@ -3003,7 +3759,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 56,
+            funcId: 72,
             port: port_,
           );
         },
@@ -3043,7 +3799,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 57,
+            funcId: 73,
             port: port_,
           );
         },
@@ -3083,7 +3839,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 58,
+            funcId: 74,
             port: port_,
           );
         },
@@ -3122,7 +3878,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 59,
+            funcId: 75,
             port: port_,
           );
         },
@@ -3158,7 +3914,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             serializer,
           );
           sse_encode_StreamSink_app_event_Sse(sink, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 60)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 76)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_unit,
@@ -3193,7 +3949,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 61,
+            funcId: 77,
             port: port_,
           );
         },
@@ -3229,7 +3985,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 62,
+            funcId: 78,
             port: port_,
           );
         },
@@ -3269,7 +4025,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 63,
+            funcId: 79,
             port: port_,
           );
         },
@@ -3309,7 +4065,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 64,
+            funcId: 80,
             port: port_,
           );
         },
@@ -3355,7 +4111,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 65,
+            funcId: 81,
             port: port_,
           );
         },
@@ -3393,7 +4149,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 66,
+            funcId: 82,
             port: port_,
           );
         },
@@ -3432,7 +4188,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 67,
+            funcId: 83,
             port: port_,
           );
         },
@@ -3471,7 +4227,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 68,
+            funcId: 84,
             port: port_,
           );
         },
@@ -3509,7 +4265,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 69,
+            funcId: 85,
             port: port_,
           );
         },
@@ -3551,7 +4307,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 70,
+            funcId: 86,
             port: port_,
           );
         },
@@ -3603,7 +4359,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 71,
+            funcId: 87,
             port: port_,
           );
         },
@@ -3664,7 +4420,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 72,
+            funcId: 88,
             port: port_,
           );
         },
@@ -3705,7 +4461,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 73,
+            funcId: 89,
             port: port_,
           );
         },
@@ -3745,7 +4501,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 74,
+            funcId: 90,
             port: port_,
           );
         },
@@ -3785,7 +4541,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 75,
+            funcId: 91,
             port: port_,
           );
         },
@@ -3807,6 +4563,87 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<void> crateProtonMeetCoreAppCoreUpdateWaitingRoomSetting({
+    required AppCore that,
+    required String meetLinkName,
+    required bool enable,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            that,
+            serializer,
+          );
+          sse_encode_String(meetLinkName, serializer);
+          sse_encode_bool(enable, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 92,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta: kCrateProtonMeetCoreAppCoreUpdateWaitingRoomSettingConstMeta,
+        argValues: [that, meetLinkName, enable],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetCoreAppCoreUpdateWaitingRoomSettingConstMeta =>
+      const TaskConstMeta(
+        debugName: "AppCore_update_waiting_room_setting",
+        argNames: ["that", "meetLinkName", "enable"],
+      );
+
+  @override
+  Future<void> crateProtonMeetCoreAppCoreWaitForWaitingRoomWelcome({
+    required AppCore that,
+    required String meetLinkName,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerAppCore(
+            that,
+            serializer,
+          );
+          sse_encode_String(meetLinkName, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 93,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_bridge_error,
+        ),
+        constMeta:
+            kCrateProtonMeetCoreAppCoreWaitForWaitingRoomWelcomeConstMeta,
+        argValues: [that, meetLinkName],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateProtonMeetCoreAppCoreWaitForWaitingRoomWelcomeConstMeta =>
+      const TaskConstMeta(
+        debugName: "AppCore_wait_for_waiting_room_welcome",
+        argNames: ["that", "meetLinkName"],
+      );
+
+  @override
   Future<void> crateProtonMeetDesktopWebLoginDesktopWebLoginCancel({
     required DesktopWebLogin that,
   }) {
@@ -3821,7 +4658,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 76,
+            funcId: 94,
             port: port_,
           );
         },
@@ -3867,7 +4704,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 77,
+            funcId: 95,
             port: port_,
           );
         },
@@ -3905,7 +4742,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 78,
+            funcId: 96,
             port: port_,
           );
         },
@@ -3945,7 +4782,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 79,
+            funcId: 97,
             port: port_,
           );
         },
@@ -3983,7 +4820,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 80,
+            funcId: 98,
             port: port_,
           );
         },
@@ -4013,7 +4850,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 81)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 99)!;
         },
         codec: SseCodec(
           decodeSuccessData:
@@ -4053,7 +4890,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 82,
+            funcId: 100,
             port: port_,
           );
         },
@@ -4092,7 +4929,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 83,
+            funcId: 101,
             port: port_,
           );
         },
@@ -4135,7 +4972,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(access, serializer);
           sse_encode_String(refresh, serializer);
           sse_encode_list_String(scopes, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 84)!;
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 102,
+          )!;
         },
         codec: SseCodec(
           decodeSuccessData:
@@ -4166,7 +5007,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(env, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 85)!;
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 103,
+          )!;
         },
         codec: SseCodec(
           decodeSuccessData:
@@ -4212,7 +5057,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 86,
+            funcId: 104,
             port: port_,
           );
         },
@@ -4256,7 +5101,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 87,
+            funcId: 105,
             port: port_,
           );
         },
@@ -4293,7 +5138,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 88,
+            funcId: 106,
             port: port_,
           );
         },
@@ -4322,7 +5167,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 89)!;
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 107,
+          )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -4355,7 +5204,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(identity, serializer);
           sse_encode_String(name, serializer);
           sse_encode_String(room, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 90)!;
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 108,
+          )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -4383,7 +5236,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 91,
+            funcId: 109,
             port: port_,
           );
         },
@@ -4408,7 +5261,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 92)!;
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 110,
+          )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_frb_upcoming_meeting,
@@ -4441,7 +5298,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(meetingLinkName, serializer);
           sse_encode_String(meetingPassword, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 93)!;
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 111,
+          )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_frb_upcoming_meeting,
@@ -4469,7 +5330,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 94)!;
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 112,
+          )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_opt_box_autoadd_u_8,
@@ -4492,7 +5357,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 95)!;
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 113,
+          )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -4515,7 +5384,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 96)!;
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 114,
+          )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -4538,7 +5411,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 97)!;
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 115,
+          )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -4561,7 +5438,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 98)!;
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 116,
+          )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -4584,7 +5465,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_proton_user(user, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 99)!;
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 117,
+          )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -4610,7 +5495,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 100,
+            funcId: 118,
           )!;
         },
         codec: SseCodec(
@@ -4639,7 +5524,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 101,
+            funcId: 119,
           )!;
         },
         codec: SseCodec(
@@ -4668,7 +5553,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 102,
+            funcId: 120,
           )!;
         },
         codec: SseCodec(
@@ -4697,7 +5582,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 103,
+            funcId: 121,
           )!;
         },
         codec: SseCodec(
@@ -4731,7 +5616,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 104,
+            funcId: 122,
           )!;
         },
         codec: SseCodec(
@@ -4762,7 +5647,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 105,
+            funcId: 123,
             port: port_,
           );
         },
@@ -4796,7 +5681,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 106,
+            funcId: 124,
           )!;
         },
         codec: SseCodec(
@@ -4826,7 +5711,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 107,
+            funcId: 125,
           )!;
         },
         codec: SseCodec(
@@ -4857,7 +5742,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 108,
+            funcId: 126,
           )!;
         },
         codec: SseCodec(
@@ -4884,7 +5769,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 109,
+            funcId: 127,
           )!;
         },
         codec: SseCodec(
@@ -4911,7 +5796,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 110,
+            funcId: 128,
           )!;
         },
         codec: SseCodec(
@@ -4938,7 +5823,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 111,
+            funcId: 129,
           )!;
         },
         codec: SseCodec(
@@ -4965,7 +5850,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 112,
+            funcId: 130,
           )!;
         },
         codec: SseCodec(
@@ -4992,7 +5877,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 113,
+            funcId: 131,
           )!;
         },
         codec: SseCodec(
@@ -5019,7 +5904,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 114,
+            funcId: 132,
           )!;
         },
         codec: SseCodec(
@@ -5046,7 +5931,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 115,
+            funcId: 133,
           )!;
         },
         codec: SseCodec(
@@ -5075,7 +5960,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 116,
+            funcId: 134,
             port: port_,
           );
         },
@@ -5105,7 +5990,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 117,
+            funcId: 135,
             port: port_,
           );
         },
@@ -5136,7 +6021,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 118,
+            funcId: 136,
             port: port_,
           );
         },
@@ -5166,7 +6051,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 119,
+            funcId: 137,
             port: port_,
           );
         },
@@ -5199,7 +6084,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 120,
+            funcId: 138,
             port: port_,
           );
         },
@@ -5327,6 +6212,42 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     };
   }
 
+  Future<void> Function(int, dynamic, dynamic)
+  encode_DartFn_Inputs_String_bool_Output_unit_AnyhowException(
+    FutureOr<void> Function(String, bool) raw,
+  ) {
+    return (callId, rawArg0, rawArg1) async {
+      final arg0 = dco_decode_String(rawArg0);
+      final arg1 = dco_decode_bool(rawArg1);
+
+      Box<void>? rawOutput;
+      Box<AnyhowException>? rawError;
+      try {
+        rawOutput = Box(await raw(arg0, arg1));
+      } catch (e, s) {
+        rawError = Box(AnyhowException("$e\n\n$s"));
+      }
+
+      final serializer = SseSerializer(generalizedFrbRustBinding);
+      assert((rawOutput != null) ^ (rawError != null));
+      if (rawOutput != null) {
+        serializer.buffer.putUint8(0);
+        sse_encode_unit(rawOutput.value, serializer);
+      } else {
+        serializer.buffer.putUint8(1);
+        sse_encode_AnyhowException(rawError!.value, serializer);
+      }
+      final output = serializer.intoRaw();
+
+      generalizedFrbRustBinding.dartFnDeliverOutput(
+        callId: callId,
+        ptr: output.ptr,
+        rustVecLen: output.rustVecLen,
+        dataLen: output.dataLen,
+      );
+    };
+  }
+
   Future<void> Function(int, dynamic)
   encode_DartFn_Inputs_child_auth_session_Output_String_AnyhowException(
     FutureOr<String> Function(ChildAuthSession) raw,
@@ -5347,6 +6268,44 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       if (rawOutput != null) {
         serializer.buffer.putUint8(0);
         sse_encode_String(rawOutput.value, serializer);
+      } else {
+        serializer.buffer.putUint8(1);
+        sse_encode_AnyhowException(rawError!.value, serializer);
+      }
+      final output = serializer.intoRaw();
+
+      generalizedFrbRustBinding.dartFnDeliverOutput(
+        callId: callId,
+        ptr: output.ptr,
+        rustVecLen: output.rustVecLen,
+        dataLen: output.dataLen,
+      );
+    };
+  }
+
+  Future<void> Function(int, dynamic, dynamic, dynamic, dynamic)
+  encode_DartFn_Inputs_join_request_change_String_String_u_64_Output_unit_AnyhowException(
+    FutureOr<void> Function(JoinRequestChange, String, String, BigInt) raw,
+  ) {
+    return (callId, rawArg0, rawArg1, rawArg2, rawArg3) async {
+      final arg0 = dco_decode_join_request_change(rawArg0);
+      final arg1 = dco_decode_String(rawArg1);
+      final arg2 = dco_decode_String(rawArg2);
+      final arg3 = dco_decode_u_64(rawArg3);
+
+      Box<void>? rawOutput;
+      Box<AnyhowException>? rawError;
+      try {
+        rawOutput = Box(await raw(arg0, arg1, arg2, arg3));
+      } catch (e, s) {
+        rawError = Box(AnyhowException("$e\n\n$s"));
+      }
+
+      final serializer = SseSerializer(generalizedFrbRustBinding);
+      assert((rawOutput != null) ^ (rawError != null));
+      if (rawOutput != null) {
+        serializer.buffer.putUint8(0);
+        sse_encode_unit(rawOutput.value, serializer);
       } else {
         serializer.buffer.putUint8(1);
         sse_encode_AnyhowException(rawError!.value, serializer);
@@ -5629,8 +6588,26 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  FutureOr<void> Function(String, bool)
+  dco_decode_DartFn_Inputs_String_bool_Output_unit_AnyhowException(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    throw UnimplementedError('');
+  }
+
+  @protected
   FutureOr<String> Function(ChildAuthSession)
   dco_decode_DartFn_Inputs_child_auth_session_Output_String_AnyhowException(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    throw UnimplementedError('');
+  }
+
+  @protected
+  FutureOr<void> Function(JoinRequestChange, String, String, BigInt)
+  dco_decode_DartFn_Inputs_join_request_change_String_String_u_64_Output_unit_AnyhowException(
     dynamic raw,
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -5936,6 +6913,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return BridgeError_IncorrectPassword();
       case 22:
         return BridgeError_MlsServerVersionNotSupported();
+      case 23:
+        return BridgeError_WaitingRoomJoinRequestNotFound();
+      case 24:
+        return BridgeError_WaitingRoomJoinCancelled();
       default:
         throw Exception("unreachable");
     }
@@ -6018,8 +6999,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   FrbMeetInfo dco_decode_frb_meet_info(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 9)
-      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
     return FrbMeetInfo(
       meetName: dco_decode_String(arr[0]),
       meetLinkName: dco_decode_String(arr[1]),
@@ -6027,9 +7008,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       websocketUrl: dco_decode_String(arr[3]),
       participantsCount: dco_decode_u_32(arr[4]),
       isLocked: dco_decode_bool(arr[5]),
-      maxDuration: dco_decode_u_32(arr[6]),
-      maxParticipants: dco_decode_u_32(arr[7]),
-      expirationTime: dco_decode_opt_box_autoadd_i_64(arr[8]),
+      hasWaitingRoom: dco_decode_bool(arr[6]),
+      maxDuration: dco_decode_u_32(arr[7]),
+      maxParticipants: dco_decode_u_32(arr[8]),
+      expirationTime: dco_decode_opt_box_autoadd_i_64(arr[9]),
     );
   }
 
@@ -6037,17 +7019,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   FrbMeetingInfo dco_decode_frb_meeting_info(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 8)
-      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    if (arr.length != 9)
+      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
     return FrbMeetingInfo(
       meetingLinkName: dco_decode_String(arr[0]),
       meetingName: dco_decode_String(arr[1]),
       salt: dco_decode_String(arr[2]),
       sessionKey: dco_decode_String(arr[3]),
       locked: dco_decode_u_8(arr[4]),
-      maxDuration: dco_decode_u_32(arr[5]),
-      maxParticipants: dco_decode_u_32(arr[6]),
-      expirationTime: dco_decode_opt_box_autoadd_i_64(arr[7]),
+      waitingRoom: dco_decode_u_8(arr[5]),
+      maxDuration: dco_decode_u_32(arr[6]),
+      maxParticipants: dco_decode_u_32(arr[7]),
+      expirationTime: dco_decode_opt_box_autoadd_i_64(arr[8]),
     );
   }
 
@@ -6066,11 +7049,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  FrbSubmitJoinRequestResponse dco_decode_frb_submit_join_request_response(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1)
+      throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return FrbSubmitJoinRequestResponse(requestId: dco_decode_String(arr[0]));
+  }
+
+  @protected
   FrbUpcomingMeeting dco_decode_frb_upcoming_meeting(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 15)
-      throw Exception('unexpected arr length: expect 15 but see ${arr.length}');
+    if (arr.length != 16)
+      throw Exception('unexpected arr length: expect 16 but see ${arr.length}');
     return FrbUpcomingMeeting(
       id: dco_decode_String(arr[0]),
       addressId: dco_decode_opt_String(arr[1]),
@@ -6087,6 +7081,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       createTime: dco_decode_opt_box_autoadd_i_64(arr[12]),
       lastUsedTime: dco_decode_opt_box_autoadd_i_64(arr[13]),
       calendarEventId: dco_decode_opt_String(arr[14]),
+      waitingRoom: dco_decode_opt_box_autoadd_u_8(arr[15]),
     );
   }
 
@@ -6115,6 +7110,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   PlatformInt64 dco_decode_isize(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dcoDecodeI64(raw);
+  }
+
+  @protected
+  JoinRequestChange dco_decode_join_request_change(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return JoinRequestChange.values[raw as int];
   }
 
   @protected
@@ -7074,6 +8075,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return BridgeError_IncorrectPassword();
       case 22:
         return BridgeError_MlsServerVersionNotSupported();
+      case 23:
+        return BridgeError_WaitingRoomJoinRequestNotFound();
+      case 24:
+        return BridgeError_WaitingRoomJoinCancelled();
       default:
         throw UnimplementedError('');
     }
@@ -7163,6 +8168,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_websocketUrl = sse_decode_String(deserializer);
     var var_participantsCount = sse_decode_u_32(deserializer);
     var var_isLocked = sse_decode_bool(deserializer);
+    var var_hasWaitingRoom = sse_decode_bool(deserializer);
     var var_maxDuration = sse_decode_u_32(deserializer);
     var var_maxParticipants = sse_decode_u_32(deserializer);
     var var_expirationTime = sse_decode_opt_box_autoadd_i_64(deserializer);
@@ -7173,6 +8179,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       websocketUrl: var_websocketUrl,
       participantsCount: var_participantsCount,
       isLocked: var_isLocked,
+      hasWaitingRoom: var_hasWaitingRoom,
       maxDuration: var_maxDuration,
       maxParticipants: var_maxParticipants,
       expirationTime: var_expirationTime,
@@ -7187,6 +8194,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_salt = sse_decode_String(deserializer);
     var var_sessionKey = sse_decode_String(deserializer);
     var var_locked = sse_decode_u_8(deserializer);
+    var var_waitingRoom = sse_decode_u_8(deserializer);
     var var_maxDuration = sse_decode_u_32(deserializer);
     var var_maxParticipants = sse_decode_u_32(deserializer);
     var var_expirationTime = sse_decode_opt_box_autoadd_i_64(deserializer);
@@ -7196,6 +8204,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       salt: var_salt,
       sessionKey: var_sessionKey,
       locked: var_locked,
+      waitingRoom: var_waitingRoom,
       maxDuration: var_maxDuration,
       maxParticipants: var_maxParticipants,
       expirationTime: var_expirationTime,
@@ -7210,6 +8219,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_audio = sse_decode_u_8(deserializer);
     var var_video = sse_decode_u_8(deserializer);
     return FrbParticipantTrackSettings(audio: var_audio, video: var_video);
+  }
+
+  @protected
+  FrbSubmitJoinRequestResponse sse_decode_frb_submit_join_request_response(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_requestId = sse_decode_String(deserializer);
+    return FrbSubmitJoinRequestResponse(requestId: var_requestId);
   }
 
   @protected
@@ -7232,6 +8250,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_createTime = sse_decode_opt_box_autoadd_i_64(deserializer);
     var var_lastUsedTime = sse_decode_opt_box_autoadd_i_64(deserializer);
     var var_calendarEventId = sse_decode_opt_String(deserializer);
+    var var_waitingRoom = sse_decode_opt_box_autoadd_u_8(deserializer);
     return FrbUpcomingMeeting(
       id: var_id,
       addressId: var_addressId,
@@ -7248,6 +8267,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       createTime: var_createTime,
       lastUsedTime: var_lastUsedTime,
       calendarEventId: var_calendarEventId,
+      waitingRoom: var_waitingRoom,
     );
   }
 
@@ -7274,6 +8294,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   PlatformInt64 sse_decode_isize(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getPlatformInt64();
+  }
+
+  @protected
+  JoinRequestChange sse_decode_join_request_change(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return JoinRequestChange.values[inner];
   }
 
   @protected
@@ -8136,6 +9165,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_DartFn_Inputs_String_bool_Output_unit_AnyhowException(
+    FutureOr<void> Function(String, bool) self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_DartOpaque(
+      encode_DartFn_Inputs_String_bool_Output_unit_AnyhowException(self),
+      serializer,
+    );
+  }
+
+  @protected
   void
   sse_encode_DartFn_Inputs_child_auth_session_Output_String_AnyhowException(
     FutureOr<String> Function(ChildAuthSession) self,
@@ -8144,6 +9185,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_DartOpaque(
       encode_DartFn_Inputs_child_auth_session_Output_String_AnyhowException(
+        self,
+      ),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_DartFn_Inputs_join_request_change_String_String_u_64_Output_unit_AnyhowException(
+    FutureOr<void> Function(JoinRequestChange, String, String, BigInt) self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_DartOpaque(
+      encode_DartFn_Inputs_join_request_change_String_String_u_64_Output_unit_AnyhowException(
         self,
       ),
       serializer,
@@ -8566,6 +9622,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_i_32(21, serializer);
       case BridgeError_MlsServerVersionNotSupported():
         sse_encode_i_32(22, serializer);
+      case BridgeError_WaitingRoomJoinRequestNotFound():
+        sse_encode_i_32(23, serializer);
+      case BridgeError_WaitingRoomJoinCancelled():
+        sse_encode_i_32(24, serializer);
     }
   }
 
@@ -8644,6 +9704,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.websocketUrl, serializer);
     sse_encode_u_32(self.participantsCount, serializer);
     sse_encode_bool(self.isLocked, serializer);
+    sse_encode_bool(self.hasWaitingRoom, serializer);
     sse_encode_u_32(self.maxDuration, serializer);
     sse_encode_u_32(self.maxParticipants, serializer);
     sse_encode_opt_box_autoadd_i_64(self.expirationTime, serializer);
@@ -8660,6 +9721,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.salt, serializer);
     sse_encode_String(self.sessionKey, serializer);
     sse_encode_u_8(self.locked, serializer);
+    sse_encode_u_8(self.waitingRoom, serializer);
     sse_encode_u_32(self.maxDuration, serializer);
     sse_encode_u_32(self.maxParticipants, serializer);
     sse_encode_opt_box_autoadd_i_64(self.expirationTime, serializer);
@@ -8673,6 +9735,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_u_8(self.audio, serializer);
     sse_encode_u_8(self.video, serializer);
+  }
+
+  @protected
+  void sse_encode_frb_submit_join_request_response(
+    FrbSubmitJoinRequestResponse self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.requestId, serializer);
   }
 
   @protected
@@ -8696,6 +9767,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_box_autoadd_i_64(self.createTime, serializer);
     sse_encode_opt_box_autoadd_i_64(self.lastUsedTime, serializer);
     sse_encode_opt_String(self.calendarEventId, serializer);
+    sse_encode_opt_box_autoadd_u_8(self.waitingRoom, serializer);
   }
 
   @protected
@@ -8723,6 +9795,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_isize(PlatformInt64 self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putPlatformInt64(self);
+  }
+
+  @protected
+  void sse_encode_join_request_change(
+    JoinRequestChange self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 
   @protected
@@ -9302,6 +10383,55 @@ class AppCoreImpl extends RustOpaque implements AppCore {
         RustLib.instance.api.rust_arc_decrement_strong_count_AppCorePtr,
   );
 
+  /// Admits all pending waiting-room join requests (host only).
+  Future<void> admitAllWaitingRoomJoinRequests({
+    required String meetLinkName,
+  }) => RustLib.instance.api
+      .crateProtonMeetCoreAppCoreAdmitAllWaitingRoomJoinRequests(
+        that: this,
+        meetLinkName: meetLinkName,
+      );
+
+  /// Admits a single waiting-room join request (host only).
+  Future<void> admitWaitingRoomJoinRequest({
+    required String meetLinkName,
+    required String requestId,
+  }) => RustLib.instance.api
+      .crateProtonMeetCoreAppCoreAdmitWaitingRoomJoinRequest(
+        that: this,
+        meetLinkName: meetLinkName,
+        requestId: requestId,
+      );
+
+  /// SRP-authenticate a meeting link and return decrypted metadata (name, limits).
+  /// Caches the auth result for reuse when [`Self::join_meeting`] is called with
+  /// `reuse_prejoin_auth: true`.
+  Future<FrbMeetInfo> authenticateMeetingLink({
+    required String meetLinkName,
+    required String meetLinkPassword,
+    required String displayName,
+  }) => RustLib.instance.api.crateProtonMeetCoreAppCoreAuthenticateMeetingLink(
+    that: this,
+    meetLinkName: meetLinkName,
+    meetLinkPassword: meetLinkPassword,
+    displayName: displayName,
+  );
+
+  /// Cancels the guest's outstanding waiting-room join request (DELETE when submitted),
+  /// resets local MLS guest admission state, and disconnects the MLS websocket.
+  Future<void> cancelWaitingRoomJoinRequest({required String meetLinkName}) =>
+      RustLib.instance.api
+          .crateProtonMeetCoreAppCoreCancelWaitingRoomJoinRequest(
+            that: this,
+            meetLinkName: meetLinkName,
+          );
+
+  Future<void> clearJoinDecisionCallback() => RustLib.instance.api
+      .crateProtonMeetCoreAppCoreClearJoinDecisionCallback(that: this);
+
+  Future<void> clearJoinRequestCallback() => RustLib.instance.api
+      .crateProtonMeetCoreAppCoreClearJoinRequestCallback(that: this);
+
   Future<void> clearLivekitAdminChangeCallback() => RustLib.instance.api
       .crateProtonMeetCoreAppCoreClearLivekitAdminChangeCallback(that: this);
 
@@ -9310,6 +10440,28 @@ class AppCoreImpl extends RustOpaque implements AppCore {
 
   Future<void> clearMlsSyncStateUpdateCallback() => RustLib.instance.api
       .crateProtonMeetCoreAppCoreClearMlsSyncStateUpdateCallback(that: this);
+
+  Future<void> clearPrejoinSrpAuth() => RustLib.instance.api
+      .crateProtonMeetCoreAppCoreClearPrejoinSrpAuth(that: this);
+
+  Future<void> clearWaitingRoomJoinRequest() => RustLib.instance.api
+      .crateProtonMeetCoreAppCoreClearWaitingRoomJoinRequest(that: this);
+
+  Future<void> connectWebsocketForWaitingRoom() => RustLib.instance.api
+      .crateProtonMeetCoreAppCoreConnectWebsocketForWaitingRoom(that: this);
+
+  /// Submits an encrypted MLS join request to meet-server for waiting-room admission.
+  ///
+  /// Requires an active MLS session (see [`Self::prepare_mls_session_for_waiting_room`]).
+  /// After a successful response, call [`Self::wait_for_waiting_room_welcome`] to wait for host admit.
+  Future<FrbSubmitJoinRequestResponse> createJoinRequest({
+    required String meetLinkName,
+    required String meetingSessionKey,
+  }) => RustLib.instance.api.crateProtonMeetCoreAppCoreCreateJoinRequest(
+    that: this,
+    meetLinkName: meetLinkName,
+    meetingSessionKey: meetingSessionKey,
+  );
 
   Future<FrbUpcomingMeeting> createMeeting({
     required String meetingName,
@@ -9320,6 +10472,7 @@ class AppCoreImpl extends RustOpaque implements AppCore {
     PlatformInt64? endTime,
     String? timeZone,
     String? rRule,
+    required bool waitingRoom,
   }) => RustLib.instance.api.crateProtonMeetCoreAppCoreCreateMeeting(
     that: this,
     meetingName: meetingName,
@@ -9330,17 +10483,20 @@ class AppCoreImpl extends RustOpaque implements AppCore {
     endTime: endTime,
     timeZone: timeZone,
     rRule: rRule,
+    waitingRoom: waitingRoom,
   );
 
   Future<FrbUpcomingMeeting> createPersonalMeeting({
     required String meetingName,
     String? customPassword,
     required bool isRotate,
+    required bool waitingRoom,
   }) => RustLib.instance.api.crateProtonMeetCoreAppCoreCreatePersonalMeeting(
     that: this,
     meetingName: meetingName,
     customPassword: customPassword,
     isRotate: isRotate,
+    waitingRoom: waitingRoom,
   );
 
   Future<(String, String)> decryptMessage({required List<int> data}) => RustLib
@@ -9439,6 +10595,9 @@ class AppCoreImpl extends RustOpaque implements AppCore {
   Future<String> getLatestEventId() => RustLib.instance.api
       .crateProtonMeetCoreAppCoreGetLatestEventId(that: this);
 
+  Future<String> getMeetingDisplayNameSessionKey() => RustLib.instance.api
+      .crateProtonMeetCoreAppCoreGetMeetingDisplayNameSessionKey(that: this);
+
   Future<FrbMeetingInfo> getMeetingInfo({required String meetingLinkName}) =>
       RustLib.instance.api.crateProtonMeetCoreAppCoreGetMeetingInfo(
         that: this,
@@ -9473,6 +10632,10 @@ class AppCoreImpl extends RustOpaque implements AppCore {
   Future<ConnectionState> getWsState() =>
       RustLib.instance.api.crateProtonMeetCoreAppCoreGetWsState(that: this);
 
+  /// Whether MLS group info exists on the server (host has started the meeting).
+  Future<bool> hasMlsGroupInfo() => RustLib.instance.api
+      .crateProtonMeetCoreAppCoreHasMlsGroupInfo(that: this);
+
   Future<bool> isMlsUpToDate() =>
       RustLib.instance.api.crateProtonMeetCoreAppCoreIsMlsUpToDate(that: this);
 
@@ -9488,6 +10651,8 @@ class AppCoreImpl extends RustOpaque implements AppCore {
     required bool isMeetSwitchJoinType,
     required bool isMeetNewSwitchJoinType,
     required bool reuseToken,
+    required bool reusePrejoinAuth,
+    required bool isWaitingRoom,
   }) => RustLib.instance.api.crateProtonMeetCoreAppCoreJoinMeeting(
     that: this,
     meetLinkName: meetLinkName,
@@ -9498,6 +10663,8 @@ class AppCoreImpl extends RustOpaque implements AppCore {
     isMeetSwitchJoinType: isMeetSwitchJoinType,
     isMeetNewSwitchJoinType: isMeetNewSwitchJoinType,
     reuseToken: reuseToken,
+    reusePrejoinAuth: reusePrejoinAuth,
+    isWaitingRoom: isWaitingRoom,
   );
 
   Future<void> joinMeetingWithAccessToken({
@@ -9616,10 +10783,34 @@ class AppCoreImpl extends RustOpaque implements AppCore {
   Future<BigInt> ping() =>
       RustLib.instance.api.crateProtonMeetCoreAppCorePing(that: this);
 
+  /// Prepare MLS session from cached pre-join auth for waiting-room group-info polling.
+  Future<void> prepareMlsSessionForWaitingRoom({
+    required String meetLinkName,
+    required String meetLinkPassword,
+  }) => RustLib.instance.api
+      .crateProtonMeetCoreAppCorePrepareMlsSessionForWaitingRoom(
+        that: this,
+        meetLinkName: meetLinkName,
+        meetLinkPassword: meetLinkPassword,
+      );
+
   Future<UserState> refreshUserStateFromApi({required String userId}) =>
       RustLib.instance.api.crateProtonMeetCoreAppCoreRefreshUserStateFromApi(
         that: this,
         userId: userId,
+      );
+
+  /// Rejects a waiting-room join request (host only).
+  Future<void> rejectWaitingRoomJoinRequest({
+    required String meetLinkName,
+    required String requestId,
+    required String participantUid,
+  }) => RustLib.instance.api
+      .crateProtonMeetCoreAppCoreRejectWaitingRoomJoinRequest(
+        that: this,
+        meetLinkName: meetLinkName,
+        requestId: requestId,
+        participantUid: participantUid,
       );
 
   Future<void> removeParticipant({required String participantUuid}) =>
@@ -9637,6 +10828,25 @@ class AppCoreImpl extends RustOpaque implements AppCore {
     meetingLinkName: meetingLinkName,
     score: score,
     feedbackParts: feedbackParts,
+  );
+
+  Future<void> setJoinDecisionCallback({
+    required FutureOr<void> Function(String, bool) callback,
+  }) => RustLib.instance.api.crateProtonMeetCoreAppCoreSetJoinDecisionCallback(
+    that: this,
+    callback: callback,
+  );
+
+  /// Registers a Dart callback fired when a waiting-room join request is added or removed.
+  /// Args: `(change, request_id, participant_uid, expires_at)`.
+  /// For removals, `expires_at` is 0. `request_id` is set when known (host reject);
+  /// WS fanout may omit it — the UI ignores removals without `request_id`.
+  Future<void> setJoinRequestCallback({
+    required FutureOr<void> Function(JoinRequestChange, String, String, BigInt)
+    callback,
+  }) => RustLib.instance.api.crateProtonMeetCoreAppCoreSetJoinRequestCallback(
+    that: this,
+    callback: callback,
   );
 
   Future<void> setLivekitActiveUuids({required List<String> activeUuids}) =>
@@ -9816,6 +11026,22 @@ class AppCoreImpl extends RustOpaque implements AppCore {
       RustLib.instance.api.crateProtonMeetCoreAppCoreUpdateShowSelfTile(
         that: this,
         showSelfTile: showSelfTile,
+      );
+
+  Future<void> updateWaitingRoomSetting({
+    required String meetLinkName,
+    required bool enable,
+  }) => RustLib.instance.api.crateProtonMeetCoreAppCoreUpdateWaitingRoomSetting(
+    that: this,
+    meetLinkName: meetLinkName,
+    enable: enable,
+  );
+
+  /// Waits up to 5 minutes for the host to admit via Welcome, then joins the MLS group.
+  Future<void> waitForWaitingRoomWelcome({required String meetLinkName}) =>
+      RustLib.instance.api.crateProtonMeetCoreAppCoreWaitForWaitingRoomWelcome(
+        that: this,
+        meetLinkName: meetLinkName,
       );
 }
 

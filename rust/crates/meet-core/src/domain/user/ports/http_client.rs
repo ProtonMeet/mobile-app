@@ -43,6 +43,29 @@ pub trait HttpClient: Send + Sync {
         mls_message: &MlsMessage,
     ) -> Result<(), HttpClientError>;
 
+    async fn submit_join_request(
+        &self,
+        base64_sd_kbt: &str,
+        meeting_link_name: &str,
+        encrypted_key_package: &[u8],
+    ) -> Result<String, HttpClientError>;
+
+    async fn reject_join_request(
+        &self,
+        base64_sd_kbt: &str,
+        meeting_link_name: &str,
+        request_id: &str,
+        participant_uid: &str,
+    ) -> Result<(), HttpClientError>;
+
+    /// Guest cancels their outstanding waiting-room join request.
+    /// Server derives `participant_uid` from the SD-CWT; no body.
+    async fn cancel_join_request(
+        &self,
+        base64_sd_kbt: &str,
+        meeting_link_name: &str,
+    ) -> Result<(), HttpClientError>;
+
     async fn auth_meet_link(
         &self,
         meet_link_name: &str,
@@ -182,6 +205,7 @@ mod tests {
             max_duration: 3600,
             max_participants: 25,
             expiration_time: None,
+            waiting_room: 0,
         }
     }
 

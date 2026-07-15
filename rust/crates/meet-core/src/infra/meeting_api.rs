@@ -1,3 +1,4 @@
+use muon::common::ContentType;
 use proton_meet_macro::async_trait;
 
 use crate::domain::user::models::meeting::Meeting;
@@ -147,6 +148,28 @@ impl MeetingApi for ProtonHttpClient {
             ))
             .body_json(body)?;
         let res = self.send_session_request(req).await?;
+        let _ = res.parse_response::<ProtonEmptyResponse>()?;
+        Ok(())
+    }
+
+    async fn update_waiting_room_setting(
+        &self,
+        meeting_id: &str,
+        base64_sd_kbt: &str,
+        request_body_json: &str,
+        enable: bool,
+    ) -> Result<(), HttpClientError> {
+        let path = format!("/meet/v1/meetings/links/{meeting_id}/waiting-room");
+        let req = if enable {
+            self.post(path)
+        } else {
+            self.delete(path)
+        };
+        let req = req
+            .header(("X-PM-MEET-MLS-SD-KBT", format!("Bearer {base64_sd_kbt}")))
+            .body(request_body_json.as_bytes())
+            .header(ContentType::JSON);
+        let res = self.get_session().send(req).await?;
         let _ = res.parse_response::<ProtonEmptyResponse>()?;
         Ok(())
     }

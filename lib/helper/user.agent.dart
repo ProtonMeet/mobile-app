@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:meta/meta.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class UserAgent {
@@ -15,6 +16,15 @@ class UserAgent {
   }
 
   UserAgent._internal();
+
+  @visibleForTesting
+  static void resetCacheForTesting() {
+    _instance._cachedUA = null;
+    _instance._cachedAppVersion = null;
+    _instance._cachedDisplay = null;
+    _instance._cachedDisplayWithoutName = null;
+    _instance._cachedSentryRelease = null;
+  }
 
   late DeviceInfoPlugin deviceInfo;
   late Future<PackageInfo> packageInfo;

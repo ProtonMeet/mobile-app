@@ -1,7 +1,8 @@
 // Re-export types from meet-type crate
 pub use meet_type::{
     fanout::{
-        GroupInfoSummaryData, GroupInfoVersion, GroupInfoVersionError, LiveKitAdminChangeInfo,
+        GroupInfoSummaryData, GroupInfoVersion, GroupInfoVersionError, JoinDecisionInfo,
+        JoinDecisionStatus, JoinRequestInfo, JoinRequestRemovedInfo, LiveKitAdminChangeInfo,
         MlsCommitInfo, MlsProposalAndCommitInfo, MlsProposalInfo, MlsRemoveLeafNodeInfo,
         MlsWelcomeInfo, RTCMessageIn, RTCMessageInContent, RatchetTreeAndGroupInfo,
         VersionedGroupInfoData,

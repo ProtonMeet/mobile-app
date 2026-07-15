@@ -53,6 +53,13 @@ class AppCoreManager implements Manager {
 
   bool get isAuthenticated => userID != null && mailboxPassword != null;
 
+  /// Proton auth session UID for MLS `v1/session` ([SecureStorage] key `sessionId`).
+  /// Returns `null` for guests or when no session is stored.
+  Future<String?> getProtonSessionId() async {
+    final sessionId = await storage.get('sessionId');
+    return sessionId.isEmpty ? null : sessionId;
+  }
+
   @override
   Future<void> init() async {
     await loadSession();
@@ -220,7 +227,7 @@ class AppCoreManager implements Manager {
       callback: userKeyProviderCallback,
     );
     appCore = await AppCore.newInstance(
-      env: env.apiPath,
+      env: env.toString(),
       appVersion: await userAgent.appVersion,
       userAgent: await userAgent.ua,
       dbPath: await getDatabaseFolderPath(),

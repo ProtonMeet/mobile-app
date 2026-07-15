@@ -431,6 +431,11 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
         add(const RefreshParticipantDisplayNames());
       })
       ..on<ParticipantEvent>((event) {
+        // Join sorts via [BridgeParticipantConnected]; late camera tracks are
+        // covered by [_syncPendingCameraVideoTrackCheckTimer].
+        if (event is ParticipantConnectedEvent) {
+          return;
+        }
         // Use debounced sort for high-frequency participant events to reduce CPU load
         // with large participant counts
         add(DebouncedSortParticipants());

@@ -15,11 +15,19 @@ use crate::{
     errors::BridgeError,
     frb_generated::StreamSink,
     proton_meet::models::{
-        app_event::AppEvent, connection_state::ConnectionState, event::FrbGetEventsResponse,
-        join_type::JoinType, meet_info::FrbMeetInfo, meeting_info::FrbMeetingInfo,
-        mls_sync_state::MlsSyncState, participant_track_settings::FrbParticipantTrackSettings,
-        proton_user_session::ProtonUserSession, rejoin_reason::RejoinReason,
-        schedule_meeting::ScheduleMeetingRequest, upcoming_meeting::FrbUpcomingMeeting,
+        app_event::AppEvent,
+        connection_state::ConnectionState,
+        event::FrbGetEventsResponse,
+        join_request::{FrbSubmitJoinRequestResponse, JoinRequestChange},
+        join_type::JoinType,
+        meet_info::FrbMeetInfo,
+        meeting_info::FrbMeetingInfo,
+        mls_sync_state::MlsSyncState,
+        participant_track_settings::FrbParticipantTrackSettings,
+        proton_user_session::ProtonUserSession,
+        rejoin_reason::RejoinReason,
+        schedule_meeting::ScheduleMeetingRequest,
+        upcoming_meeting::FrbUpcomingMeeting,
     },
 };
 
@@ -52,6 +60,9 @@ pub type LiveKitAdminChangeCallback = dyn Fn(String, String, u32) -> DartFnFutur
 
 pub type MlsSyncStateUpdateCallback =
     dyn Fn(MlsSyncState, Option<RejoinReason>) -> DartFnFuture<()> + Send + Sync;
+pub type JoinDecisionCallback = dyn Fn(String, bool) -> DartFnFuture<()> + Send + Sync;
+pub type JoinRequestCallback =
+    dyn Fn(JoinRequestChange, String, String, u64) -> DartFnFuture<()> + Send + Sync;
 
 lazy_static::lazy_static! {
     static ref MEET_MLS_GROUP_UPDATE_DART_CALLBACK: Arc<Mutex<Option<Arc<MlsGroupUpdateCallback>>>> =
@@ -59,6 +70,10 @@ lazy_static::lazy_static! {
     static ref MEET_LIVEKIT_ADMIN_CHANGE_DART_CALLBACK: Arc<Mutex<Option<Arc<LiveKitAdminChangeCallback>>>> =
         Arc::new(Mutex::new(None));
     static ref MEET_MLS_SYNC_STATE_UPDATE_DART_CALLBACK: Arc<Mutex<Option<Arc<MlsSyncStateUpdateCallback>>>> =
+        Arc::new(Mutex::new(None));
+    static ref MEET_JOIN_DECISION_DART_CALLBACK: Arc<Mutex<Option<Arc<JoinDecisionCallback>>>> =
+        Arc::new(Mutex::new(None));
+    static ref MEET_JOIN_REQUEST_DART_CALLBACK: Arc<Mutex<Option<Arc<JoinRequestCallback>>>> =
         Arc::new(Mutex::new(None));
 }
 
@@ -397,6 +412,213 @@ impl AppCore {
         let _ = self.inner.set_livekit_active_uuids(active_uuids).await;
     }
 
+    /// SRP-authenticate a meeting link and return decrypted metadata (name, limits).
+    /// Caches the auth result for reuse when [`Self::join_meeting`] is called with
+    /// `reuse_prejoin_auth: true`.
+    pub async fn authenticate_meeting_link(
+        &self,
+        meet_link_name: String,
+        meet_link_password: String,
+        display_name: String,
+    ) -> Result<FrbMeetInfo, BridgeError> {
+        let inner_clone = self.inner.clone();
+        let meet_info = self
+            .spawn_on_background(async move {
+                inner_clone
+                    .authenticate_meeting_link(meet_link_name, meet_link_password, display_name)
+                    .await
+            })
+            .await??;
+        Ok(meet_info.into())
+    }
+
+    pub async fn clear_prejoin_srp_auth(&self) -> Result<(), BridgeError> {
+        self.inner.clear_prejoin_srp_auth().await;
+        Ok(())
+    }
+
+    /// Prepare MLS session from cached pre-join auth for waiting-room group-info polling.
+    pub async fn prepare_mls_session_for_waiting_room(
+        &self,
+        meet_link_name: String,
+        meet_link_password: String,
+    ) -> Result<(), BridgeError> {
+        self.inner
+            .prepare_mls_session_for_waiting_room(meet_link_name, meet_link_password)
+            .await?;
+        Ok(())
+    }
+
+    /// Whether MLS group info exists on the server (host has started the meeting).
+    pub async fn has_mls_group_info(&self) -> Result<bool, BridgeError> {
+        Ok(self.inner.has_mls_group_info().await?)
+    }
+
+    /// Submits an encrypted MLS join request to meet-server for waiting-room admission.
+    ///
+    /// Requires an active MLS session (see [`Self::prepare_mls_session_for_waiting_room`]).
+    /// After a successful response, call [`Self::wait_for_waiting_room_welcome`] to wait for host admit.
+    pub async fn create_join_request(
+        &self,
+        meet_link_name: String,
+        meeting_session_key: String,
+    ) -> Result<FrbSubmitJoinRequestResponse, BridgeError> {
+        let response = self
+            .inner
+            .create_join_request(meet_link_name, meeting_session_key.into())
+            .await?;
+        Ok(response.into())
+    }
+
+    /// Waits up to 5 minutes for the host to admit via Welcome, then joins the MLS group.
+    pub async fn wait_for_waiting_room_welcome(
+        &self,
+        meet_link_name: String,
+    ) -> Result<(), BridgeError> {
+        self.inner
+            .wait_for_waiting_room_welcome(meet_link_name)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn get_meeting_display_name_session_key(&self) -> Result<String, BridgeError> {
+        Ok(self.inner.get_meeting_display_name_session_key().await?)
+    }
+
+    pub async fn connect_websocket_for_waiting_room(&self) -> Result<(), BridgeError> {
+        self.inner.connect_websocket_for_waiting_room().await?;
+        Ok(())
+    }
+
+    pub async fn clear_waiting_room_join_request(&self) -> Result<(), BridgeError> {
+        self.inner.clear_waiting_room_join_request().await;
+        Ok(())
+    }
+
+    /// Cancels the guest's outstanding waiting-room join request (DELETE when submitted),
+    /// resets local MLS guest admission state, and disconnects the MLS websocket.
+    pub async fn cancel_waiting_room_join_request(
+        &self,
+        meet_link_name: String,
+    ) -> Result<(), BridgeError> {
+        self.inner
+            .cancel_waiting_room_join_request(meet_link_name)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn set_join_decision_callback(
+        &self,
+        callback: impl Fn(String, bool) -> DartFnFuture<()> + Send + Sync + 'static,
+    ) -> Result<(), BridgeError> {
+        let callback_guard = {
+            let mut guard = MEET_JOIN_DECISION_DART_CALLBACK.lock().await;
+            *guard = Some(Arc::new(callback));
+            MEET_JOIN_DECISION_DART_CALLBACK.clone()
+        };
+
+        self.inner
+            .set_join_decision_handler(move |request_id, admitted| {
+                let callback_lock = callback_guard.clone();
+                Box::pin(async move {
+                    let callback = {
+                        let guard = callback_lock.lock().await;
+                        guard.as_ref().cloned()
+                    };
+                    if let Some(callback) = callback {
+                        flutter_rust_bridge::spawn(async move {
+                            let _ = callback(request_id, admitted).await;
+                        });
+                    }
+                })
+            })
+            .await;
+        Ok(())
+    }
+
+    pub async fn clear_join_decision_callback(&self) -> Result<(), BridgeError> {
+        let mut guard = MEET_JOIN_DECISION_DART_CALLBACK.lock().await;
+        *guard = None;
+        Ok(())
+    }
+
+    /// Registers a Dart callback fired when a waiting-room join request is added or removed.
+    /// Args: `(change, request_id, participant_uid, expires_at)`.
+    /// For removals, `expires_at` is 0. `request_id` is set when known (host reject);
+    /// WS fanout may omit it — the UI ignores removals without `request_id`.
+    pub async fn set_join_request_callback(
+        &self,
+        callback: impl Fn(JoinRequestChange, String, String, u64) -> DartFnFuture<()>
+            + Send
+            + Sync
+            + 'static,
+    ) -> Result<(), BridgeError> {
+        let callback_guard = {
+            let mut guard = MEET_JOIN_REQUEST_DART_CALLBACK.lock().await;
+            *guard = Some(Arc::new(callback));
+            MEET_JOIN_REQUEST_DART_CALLBACK.clone()
+        };
+
+        self.inner
+            .set_join_request_handler(move |change, request_id, participant_uid, expires_at| {
+                let callback_lock = callback_guard.clone();
+                Box::pin(async move {
+                    if let Some(callback) = callback_lock.lock().await.as_ref().cloned() {
+                        flutter_rust_bridge::spawn(async move {
+                            let _ = callback(change, request_id, participant_uid, expires_at).await;
+                        });
+                    }
+                })
+            })
+            .await;
+        Ok(())
+    }
+
+    pub async fn clear_join_request_callback(&self) -> Result<(), BridgeError> {
+        {
+            let mut guard = MEET_JOIN_REQUEST_DART_CALLBACK.lock().await;
+            *guard = None;
+        }
+        self.inner.clear_join_request_handler().await;
+        Ok(())
+    }
+
+    /// Rejects a waiting-room join request (host only).
+    pub async fn reject_waiting_room_join_request(
+        &self,
+        meet_link_name: String,
+        request_id: String,
+        participant_uid: String,
+    ) -> Result<(), BridgeError> {
+        self.inner
+            .reject_waiting_room_join_request(meet_link_name, request_id, participant_uid)
+            .await?;
+        Ok(())
+    }
+
+    /// Admits a single waiting-room join request (host only).
+    pub async fn admit_waiting_room_join_request(
+        &self,
+        meet_link_name: String,
+        request_id: String,
+    ) -> Result<(), BridgeError> {
+        self.inner
+            .admit_waiting_room_join_request(meet_link_name, request_id)
+            .await?;
+        Ok(())
+    }
+
+    /// Admits all pending waiting-room join requests (host only).
+    pub async fn admit_all_waiting_room_join_requests(
+        &self,
+        meet_link_name: String,
+    ) -> Result<(), BridgeError> {
+        self.inner
+            .admit_all_waiting_room_join_requests(meet_link_name, None)
+            .await?;
+        Ok(())
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub async fn join_meeting(
         &mut self,
@@ -407,121 +629,157 @@ impl AppCore {
         is_meet_new_join_type: bool,
         is_meet_switch_join_type: bool,
         is_meet_new_switch_join_type: bool,
-        _reuse_token: bool,
+        reuse_token: bool,
+        reuse_prejoin_auth: bool,
+        is_waiting_room: bool,
     ) -> Result<FrbMeetInfo, BridgeError> {
-        // Spawn heavy authentication work on background runtime to offload main thread
-        // This includes MLS crypto operations and WebSocket connections that can block
+        if reuse_token {
+            return self
+                .join_meeting_reuse_token(
+                    meet_link_name,
+                    meet_link_password,
+                    session_id,
+                    is_meet_new_join_type,
+                    is_meet_switch_join_type,
+                )
+                .await;
+        }
 
-        // Force to fetch a new token for now
-        // Because we will get 422 failed when we try to update group info with same token since there is a same id in MLS so meet-server will reject it.
-        if true {
-            // 1. Authenticate and get the meet info
-            let mut meet_info = {
-                let inner_clone = self.inner.clone();
-                let meet_link_name_clone = meet_link_name.clone();
-                let meet_link_password_clone = meet_link_password.clone();
-                let display_name_clone = display_name.clone();
-
-                self.spawn_on_background(async move {
-                    inner_clone
-                        .authenticate_meeting_link(
-                            meet_link_name_clone,
-                            meet_link_password_clone,
-                            display_name_clone,
-                        )
-                        .await
-                })
-                .await??
-            };
-
-            if is_meet_new_switch_join_type {
-                self.inner
-                    .join_meeting(
-                        AccessToken::from(meet_info.access_token.clone()),
-                        MeetingLinkName::from(meet_link_name.clone()),
-                        MeetingPassword::from(meet_link_password.clone()),
-                        session_id,
-                        is_meet_new_join_type,
-                    )
-                    .await?;
-                tracing::info!("Successfully joined meeting with GroupInfo-based join switching");
-                return Ok(meet_info.into());
-            }
-
-            // 2. Get participant count to determine join type (required to authenticate first, or backend will throw error)
-            let participant_count = self
+        let mut meet_info = if reuse_prejoin_auth {
+            if let Some(cached) = self
                 .inner
-                .get_participants_count(meet_link_name.clone())
-                .await?;
-            meet_info.participants_count = participant_count;
-
-            // 3. Determine join type based on flags and participant count
-            let join_type = self.inner.get_join_type(
-                is_meet_new_join_type,
-                is_meet_switch_join_type,
-                participant_count,
-            );
-
-            let with_proposal = join_type == JoinType::ExternalProposal;
-            tracing::info!(
-                "join_meeting: with_proposal={}, participant_count={}, join_type={:?}",
-                with_proposal,
-                participant_count,
-                join_type
-            );
-
-            // 4. Try to join with the proposal if we are using proposal join type
-            let mut is_fallback = false;
-            if with_proposal {
-                match self
-                    .inner
-                    .join_meeting_with_access_token_with_proposal(
-                        meet_info.access_token.clone(),
-                        meet_link_name.clone(),
-                        meet_link_password.clone(),
-                        session_id.clone(),
-                    )
-                    .await
-                {
-                    Ok(_) => {
-                        tracing::info!("Successfully joined meeting with proposal");
-                        return Ok(meet_info.into()); // joined with proposal successfully, return the meet info immediately
-                    }
-                    Err(e) => {
-                        tracing::warn!(
-                            "Failed to join meeting with proposal: {:?}, falling back to commit method",
-                            e
-                        );
-                        is_fallback = true;
-                    }
-                }
+                .try_take_prejoin_srp_auth(&meet_link_name, &display_name)
+                .await
+            {
+                tracing::info!(
+                    "join_meeting: reusing pre-join SRP auth for {}",
+                    meet_link_name
+                );
+                cached
+            } else {
+                self.spawn_authenticate_meeting_link(
+                    meet_link_name.clone(),
+                    meet_link_password.clone(),
+                    display_name.clone(),
+                )
+                .await?
             }
+        } else {
+            self.spawn_authenticate_meeting_link(
+                meet_link_name.clone(),
+                meet_link_password.clone(),
+                display_name.clone(),
+            )
+            .await?
+        };
 
-            // 5. Join with commit method if join type is commit, or fallback to commit method
+        if is_meet_new_switch_join_type {
             self.inner
-                .join_meeting_with_access_token(
+                .join_meeting(
+                    AccessToken::from(meet_info.access_token.clone()),
+                    MeetingLinkName::from(meet_link_name.clone()),
+                    MeetingPassword::from(meet_link_password.clone()),
+                    session_id,
+                    is_meet_new_join_type,
+                    is_waiting_room,
+                )
+                .await?;
+            tracing::info!("Successfully joined meeting with GroupInfo-based join switching");
+            return Ok(meet_info.into());
+        }
+
+        let participant_count = self
+            .inner
+            .get_participants_count(meet_link_name.clone())
+            .await?;
+        meet_info.participants_count = participant_count;
+
+        let join_type = self.inner.get_join_type(
+            is_meet_new_join_type,
+            is_meet_switch_join_type,
+            participant_count,
+        );
+
+        let with_proposal = join_type == JoinType::ExternalProposal;
+        tracing::info!(
+            "join_meeting: with_proposal={}, participant_count={}, join_type={:?}",
+            with_proposal,
+            participant_count,
+            join_type
+        );
+
+        let mut is_fallback = false;
+        if with_proposal {
+            match self
+                .inner
+                .join_meeting_with_access_token_with_proposal(
                     meet_info.access_token.clone(),
                     meet_link_name.clone(),
                     meet_link_password.clone(),
-                    session_id,
+                    session_id.clone(),
                 )
-                .await?;
-            tracing::info!(
-                "Successfully joined meeting with commit (is_fallback={})",
-                is_fallback
-            );
+                .await
+            {
+                Ok(_) => {
+                    tracing::info!("Successfully joined meeting with proposal");
+                    return Ok(meet_info.into());
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        "Failed to join meeting with proposal: {:?}, falling back to commit method",
+                        e
+                    );
+                    is_fallback = true;
+                }
+            }
+        }
 
-            // join meeting without reusing token, return the meet info immediately
-            return Ok(meet_info.into());
-        };
+        self.inner
+            .join_meeting_with_access_token(
+                meet_info.access_token.clone(),
+                meet_link_name.clone(),
+                meet_link_password.clone(),
+                session_id,
+            )
+            .await?;
+        tracing::info!(
+            "Successfully joined meeting with commit (is_fallback={})",
+            is_fallback
+        );
 
-        // Reuse token path: Get participant count and determine join type
+        Ok(meet_info.into())
+    }
+
+    async fn spawn_authenticate_meeting_link(
+        &self,
+        meet_link_name: String,
+        meet_link_password: String,
+        display_name: String,
+    ) -> Result<proton_meet_core::domain::user::models::meet_link_info::MeetInfo, BridgeError> {
+        let inner_clone = self.inner.clone();
+        Ok(self
+            .spawn_on_background(async move {
+                inner_clone
+                    .authenticate_meeting_link(meet_link_name, meet_link_password, display_name)
+                    .await
+            })
+            .await??)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    async fn join_meeting_reuse_token(
+        &mut self,
+        meet_link_name: String,
+        meet_link_password: String,
+        session_id: Option<String>,
+        is_meet_new_join_type: bool,
+        is_meet_switch_join_type: bool,
+    ) -> Result<FrbMeetInfo, BridgeError> {
         let participant_count = self
             .inner
             .get_participants_count(meet_link_name.clone())
             .await?;
 
-        // Determine join type based on flags and participant count
         let join_type = self.inner.get_join_type(
             is_meet_new_join_type,
             is_meet_switch_join_type,
@@ -536,10 +794,27 @@ impl AppCore {
             join_type
         );
 
-        // Try to join with the proposal if we are using proposal join type
-        let mut is_fallback = false;
         let access_token = self.inner.get_active_livekit_access_token().await?;
         let websocket_url = self.inner.get_active_livekit_websocket_url().await?;
+        if self.inner.is_mls_group_joined().await {
+            tracing::info!("join_meeting (reuse_token): MLS already joined, skipping MLS join");
+            let meeting_info: FrbMeetingInfo =
+                self.inner.get_meeting_info(&meet_link_name).await?.into();
+            return Ok(FrbMeetInfo {
+                meet_name: meeting_info.meeting_name,
+                meet_link_name,
+                access_token,
+                websocket_url,
+                participants_count: participant_count,
+                is_locked: meeting_info.locked != 0,
+                has_waiting_room: meeting_info.waiting_room == 1,
+                max_duration: meeting_info.max_duration,
+                max_participants: meeting_info.max_participants,
+                expiration_time: meeting_info.expiration_time,
+            });
+        }
+
+        let mut is_fallback = false;
         if with_proposal {
             match self
                 .inner
@@ -553,7 +828,6 @@ impl AppCore {
             {
                 Ok(_) => {
                     tracing::info!("Successfully joined meeting with proposal (reuse_token)");
-                    // Get meeting info to construct FrbMeetInfo
                     let meeting_info: FrbMeetingInfo =
                         self.inner.get_meeting_info(&meet_link_name).await?.into();
                     return Ok(FrbMeetInfo {
@@ -563,6 +837,7 @@ impl AppCore {
                         websocket_url,
                         participants_count: participant_count,
                         is_locked: meeting_info.locked != 0,
+                        has_waiting_room: meeting_info.waiting_room == 1,
                         max_duration: meeting_info.max_duration,
                         max_participants: meeting_info.max_participants,
                         expiration_time: meeting_info.expiration_time,
@@ -577,10 +852,8 @@ impl AppCore {
                 }
             }
         }
-        // Need to disconnect the WebSocket intentionally to avoid 422 Unprocessable Entity error because we will reuse the sd-kbt
         self.inner.disconnect_wss_intentional().await?;
 
-        // Join with commit method if join type is commit, or fallback to commit method
         self.inner
             .join_meeting_with_access_token(
                 access_token.clone(),
@@ -594,7 +867,6 @@ impl AppCore {
             is_fallback
         );
 
-        // Get meeting info to construct FrbMeetInfo
         let meeting_info: FrbMeetingInfo =
             self.inner.get_meeting_info(&meet_link_name).await?.into();
         Ok(FrbMeetInfo {
@@ -604,6 +876,7 @@ impl AppCore {
             websocket_url,
             participants_count: participant_count,
             is_locked: meeting_info.locked != 0,
+            has_waiting_room: meeting_info.waiting_room == 1,
             max_duration: meeting_info.max_duration,
             max_participants: meeting_info.max_participants,
             expiration_time: meeting_info.expiration_time,
@@ -657,6 +930,7 @@ impl AppCore {
         end_time: Option<i64>,
         time_zone: Option<String>,
         r_rule: Option<String>,
+        waiting_room: bool,
     ) -> Result<FrbUpcomingMeeting, BridgeError> {
         let meeting = self
             .inner
@@ -669,6 +943,7 @@ impl AppCore {
                 end_time,
                 time_zone,
                 r_rule,
+                waiting_room,
             )
             .await?;
         Ok(meeting.into())
@@ -733,10 +1008,11 @@ impl AppCore {
         meeting_name: String,
         custom_password: Option<String>,
         is_rotate: bool,
+        waiting_room: bool,
     ) -> Result<FrbUpcomingMeeting, BridgeError> {
         let meeting = self
             .inner
-            .create_personal_meeting(meeting_name, custom_password, is_rotate)
+            .create_personal_meeting(meeting_name, custom_password, is_rotate, waiting_room)
             .await?;
         Ok(meeting.into())
     }
@@ -826,6 +1102,17 @@ impl AppCore {
             .update_participant_track_settings(participant_uuid, audio, video)
             .await?;
         Ok(participant_track_settings.into())
+    }
+
+    pub async fn update_waiting_room_setting(
+        &self,
+        meet_link_name: String,
+        enable: bool,
+    ) -> Result<(), BridgeError> {
+        self.inner
+            .update_waiting_room_setting(meet_link_name, enable, None)
+            .await?;
+        Ok(())
     }
 
     pub async fn remove_participant(&self, participant_uuid: String) -> Result<(), BridgeError> {

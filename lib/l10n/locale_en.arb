@@ -171,6 +171,80 @@
   "enter_display_name": "Enter your name",
   "display_name_required": "Your name is required",
   "remember_display_name_on_device": "Remember my name on this device for future meetings",
+  "use_this_name_next_time": "Use this name next time",
+  "@use_this_name_next_time": {
+    "description": "Toggle label on pre-join screen to remember display name"
+  },
+  "prejoin_meeting_has_waiting_room": "This meeting has a waiting room",
+  "@prejoin_meeting_has_waiting_room": {
+    "description": "Informational message on pre-join when waiting room is enabled"
+  },
+  "waiting_room_host_not_started_title": "Waiting for the host to start",
+  "@waiting_room_host_not_started_title": {
+    "description": "Title when guest waits for host to start a meeting with waiting room"
+  },
+  "waiting_room_host_not_started_description": "You'll join when the host starts the meeting and admits you.",
+  "@waiting_room_host_not_started_description": {
+    "description": "Description when guest waits for host to start"
+  },
+  "waiting_room_awaiting_admission_title": "Waiting for the host to admit you",
+  "@waiting_room_awaiting_admission_title": {
+    "description": "Title when guest waits for host admission"
+  },
+  "waiting_room_awaiting_admission_description": "The host has been notified that you're waiting.",
+  "@waiting_room_awaiting_admission_description": {
+    "description": "Description when guest waits for host admission"
+  },
+  "waiting_room_expires_in": "Expires in {time}",
+  "@waiting_room_expires_in": {
+    "description": "Countdown pill label while waiting for admission",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "waiting_room_join_request_rejected": "The host declined your request to join",
+  "@waiting_room_join_request_rejected": {
+    "description": "Global notification when the host rejects a waiting-room join request"
+  },
+  "waiting_room_admission_timed_out": "Your request to join timed out. Please try again.",
+  "@waiting_room_admission_timed_out": {
+    "description": "Global notification when the guest waiting room admission countdown reaches zero"
+  },
+  "waiting_room_host_join_request_notification": "Someone is waiting in the waiting room to join",
+  "@waiting_room_host_join_request_notification": {
+    "description": "Global notification shown to the host when a guest submits a waiting-room join request"
+  },
+  "waiting_room_join_request_not_found": "This join request is no longer available. It may have expired or already been handled.",
+  "@waiting_room_join_request_not_found": {
+    "description": "Toast shown when the host tries to admit a waiting-room request that is no longer pending"
+  },
+  "participant_list_waiting_room_tab": "Waiting Room",
+  "@participant_list_waiting_room_tab": {
+    "description": "Tab label for waiting room participants in host participant list"
+  },
+  "participant_list_all_participants_tab": "All participants",
+  "@participant_list_all_participants_tab": {
+    "description": "Tab label for in-meeting participants in host participant list"
+  },
+  "participant_list_admit_all": "Admit all",
+  "@participant_list_admit_all": {
+    "description": "Button label to admit all waiting room participants"
+  },
+  "participant_list_joined_at": "Joined at {time}",
+  "@participant_list_joined_at": {
+    "description": "Subtitle for a waiting room participant row",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "participant_list_no_waiting_participants": "No one is waiting to join",
+  "@participant_list_no_waiting_participants": {
+    "description": "Empty state when the waiting room participant list is empty"
+  },
   "join_meeting_button": "Join meeting",
   "create_meeting_button": "Create",
   "import_meeting_button": "Import meeting",
@@ -1309,6 +1383,34 @@
   "schedule_time_zone_selected": "Selected time zone",
   "@schedule_time_zone_selected": {
     "description": "Label for schedule time zone selected"
+  },
+  "schedule_waiting_room": "Waiting room",
+  "@schedule_waiting_room": {
+    "description": "Label for waiting room field in schedule meeting dialog"
+  },
+  "schedule_waiting_room_on": "Waiting room On",
+  "@schedule_waiting_room_on": {
+    "description": "Waiting room enabled option title"
+  },
+  "schedule_waiting_room_on_hint": "Use waiting room with a paid plan",
+  "@schedule_waiting_room_on_hint": {
+    "description": "Waiting room enabled option hint"
+  },
+  "schedule_waiting_room_off": "Waiting room Off",
+  "@schedule_waiting_room_off": {
+    "description": "Waiting room disabled option title"
+  },
+  "switch_on": "On",
+  "@switch_on": {
+    "description": "Label when switch on"
+  },
+  "switch_off": "Off",
+  "@switch_off": {
+    "description": "Label when switch off"
+  },
+  "schedule_waiting_room_off_hint": "Anyone with the link can join immediately",
+  "@schedule_waiting_room_off_hint": {
+    "description": "Waiting room disabled option hint"
   },
   "month_jan": "January",
   "@month_jan": {

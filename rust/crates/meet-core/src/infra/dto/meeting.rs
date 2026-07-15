@@ -45,6 +45,8 @@ pub struct CreateMeetingRequest {
     /// Meeting type enum value
     #[serde(rename = "Type")]
     pub meeting_type: u8,
+    /// 1 if meeting has waiting room enabled
+    pub waiting_room: u8,
 }
 
 impl From<CreateMeetingParams> for CreateMeetingRequest {
@@ -64,6 +66,7 @@ impl From<CreateMeetingParams> for CreateMeetingRequest {
             timezone: params.time_zone,
             custom_password: params.custom_password,
             meeting_type: params.meeting_type,
+            waiting_room: params.waiting_room,
         }
     }
 }
@@ -184,6 +187,8 @@ pub struct MeetingDto {
     /// Linked CalendarEventID
     #[serde(rename = "CalendarEventID")]
     pub calendar_event_id: Option<String>,
+    /// 1 if meeting has waiting room enabled
+    pub waiting_room: Option<u8>,
 }
 
 impl TryFrom<MeetingDto> for Meeting {
@@ -251,6 +256,7 @@ impl TryFrom<MeetingDto> for Meeting {
             create_time,
             last_used_time,
             calendar_event_id: dto.calendar_event_id,
+            waiting_room: dto.waiting_room,
         })
     }
 }
@@ -282,6 +288,8 @@ pub struct MeetingInfoDto {
     pub session_key: String,
     /// 1 if meeting is locked
     pub locked: u8,
+    /// 1 if meeting has waiting room enabled
+    pub waiting_room: u8,
     /// Maximum duration of this meeting in seconds
     pub max_duration: u32,
     /// Maximum number of participants allowed in this meeting
@@ -307,6 +315,7 @@ impl TryFrom<MeetingInfoDto> for MeetingInfo {
             salt: dto.salt,
             session_key: dto.session_key,
             locked: dto.locked,
+            waiting_room: dto.waiting_room,
             max_duration: dto.max_duration,
             max_participants: dto.max_participants,
             expiration_time,

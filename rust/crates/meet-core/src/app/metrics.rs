@@ -75,6 +75,7 @@ impl App {
             .unwrap_or(0);
 
         let join_type = state.join_type;
+        let is_waiting_room_enabled = state.used_waiting_room_for_join;
 
         drop(state);
 
@@ -186,6 +187,7 @@ impl App {
 
         let join_room_time_ms = join_start_time.elapsed().as_millis() as u64;
         let total_join_time_ms = total_join_start_time.elapsed().as_millis() as u64;
+        let is_waiting_room_enabled = state.used_waiting_room_for_join;
         drop(state);
 
         // Get MLS retry count from Service
