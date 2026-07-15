@@ -25,6 +25,10 @@ class RoomConnectionConfig {
   final Future<LocalAudioTrack?> Function(Room)?
   onCreateAudioTrack; // Called after prepareConnection and pre-connect E2EE keys
   final Function(Room)? onKeyRotationListenerSetup;
+  final bool reusePrejoinAuth;
+
+  /// Host-only: pass true when joining with waiting room enabled.
+  final bool isWaitingRoom;
 
   RoomConnectionConfig({
     required this.meetLinkName,
@@ -32,6 +36,8 @@ class RoomConnectionConfig {
     required this.displayName,
     required this.enableE2EE,
     required this.isAudioEnabled,
+    this.reusePrejoinAuth = false,
+    this.isWaitingRoom = false,
     this.audioTrack,
     this.roomOptions,
     this.onRoomCreated,
@@ -281,16 +287,21 @@ class RoomManager {
     final (isMeetNewJoinType, isMeetSwitchJoinType, isMeetNewSwitchJoinType) =
         await getJoinTypeFlags();
 
+    final sessionId = await appCoreManager.getProtonSessionId();
+
     FrbMeetInfo meetInfo;
     final joinMlsStopwatch = Stopwatch()..start();
     meetInfo = await appCoreManager.appCore.joinMeeting(
       meetLinkName: config.meetLinkName,
       meetLinkPassword: config.meetLinkPassword,
       displayName: config.displayName,
+      sessionId: sessionId,
       isMeetNewJoinType: isMeetNewJoinType,
       isMeetSwitchJoinType: isMeetSwitchJoinType,
       reuseToken: reuseToken,
       isMeetNewSwitchJoinType: isMeetNewSwitchJoinType,
+      reusePrejoinAuth: config.reusePrejoinAuth,
+      isWaitingRoom: config.isWaitingRoom,
     );
     joinMlsStopwatch.stop();
     l.logger.i(

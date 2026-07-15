@@ -5,6 +5,7 @@ pub(crate) mod tests {
     use std::{
         collections::HashMap,
         future::ready,
+        str::FromStr,
         sync::{Arc, Mutex as StdMutex},
     };
 
@@ -17,8 +18,8 @@ pub(crate) mod tests {
         domain::user::{
             models::{meeting_link_name::MeetingLinkName, UserId},
             ports::{
-                new_user_service::NewUserService, user_api::MockUserApi, MockHttpClient,
-                MockUserRepository, MockWebSocketClient,
+                meeting_api::MockMeetingApi, new_user_service::NewUserService,
+                user_api::MockUserApi, MockHttpClient, MockUserRepository, MockWebSocketClient,
             },
         },
         errors::{
@@ -40,6 +41,11 @@ pub(crate) mod tests {
         service::{
             service::{ProposalType, QueuedProposal, Service},
             service_state::MlsGroupState,
+            utils::convert_mls_spec_to_types,
+            waiting_room_setting::{
+                abort_waiting_room_policy_commit, build_waiting_room_policy_commit,
+                merge_waiting_room_policy_commit,
+            },
         },
     };
 
@@ -51,15 +57,17 @@ pub(crate) mod tests {
     use identity::{
         Disclosure, Ed25519Issuer, IdentityResult, PresentationContext, ProtonMeetIdentity, SdCwt,
     };
-    use meet_identifiers::{GroupId, LeafIndex};
+    use meet_identifiers::{Domain, GroupId, Id, LeafIndex};
+    use meet_mls::reexports::mimi_room_policy::spec::{preauth::PreAuthData, rbac::RoleData};
     use mls_rs::group::proposal::Proposal;
     use mls_spec::{
         drafts::ratchet_tree_options::RatchetTreeOption, messages::MlsMessageContent, Parsable,
         Serializable,
     };
     use mls_trait::{
-        meet_policy::UserRole, types::ProposalEffect, types::ReceivedMessage, MlsClientTrait,
-        ProposalArg,
+        meet_policy::{RoomKind, RoomPolicies, UserRole},
+        types::{ProposalEffect, ReceivedMessage},
+        MlsClientTrait, MlsGroupConfig, ProposalArg, ProtonMeetIdentityProvider,
     };
     use mockall::predicate::eq;
     use proton_claims::{
@@ -152,6 +160,7 @@ pub(crate) mod tests {
         }));
         let service = Service::new(
             Arc::new(http_client),
+            Arc::new(MockMeetingApi::new()),
             Arc::new(mock_user_api),
             Arc::new(user_repository),
             ws_client,
@@ -192,6 +201,7 @@ pub(crate) mod tests {
         }));
         let service = Service::new(
             Arc::new(http_client),
+            Arc::new(MockMeetingApi::new()),
             Arc::new(mock_user_api),
             Arc::new(user_repository),
             ws_client,
@@ -231,6 +241,7 @@ pub(crate) mod tests {
         }));
         let service = Service::new(
             Arc::new(http_client),
+            Arc::new(MockMeetingApi::new()),
             Arc::new(mock_user_api),
             Arc::new(user_repository),
             ws_client,
@@ -2598,6 +2609,1030 @@ pub(crate) mod tests {
             .expect("own leaf in roster")
     }
 
+    async fn create_mls_group_with_room_kind(
+        service: &Service,
+        user_identifier: &UserId,
+        group_id: &str,
+        meeting_link_name: &str,
+        room_kind: RoomKind,
+        is_host: bool,
+        cs: proton_meet_mls::CipherSuite,
+    ) -> (Arc<RwLock<MlsGroup<MemKv>>>, CommitBundle) {
+        let mut mls_store = service.mls_store.write().await;
+        let client = mls_store
+            .find_client(&user_identifier.to_string(), &cs)
+            .expect("test client should exist");
+        let creator = client.user_id().expect("client should expose user id");
+        let group_id = GroupId {
+            id: Id::from_str(group_id).expect("test group id should parse"),
+            domain: Domain::from_str("meet.proton.me").expect("test domain should parse"),
+        };
+        let group_config = MlsGroupConfig::new(creator, room_kind, is_host);
+
+        let mut group = client
+            .new_group(&group_id, Disclosure::Full, group_config)
+            .await
+            .expect("waiting-room group should be created")
+            .store()
+            .await
+            .expect("waiting-room group should be stored");
+
+        let (bundle, _) = group
+            .new_commit([ProposalArg::PskExternal {
+                id: ExternalPskId(meeting_link_name.as_bytes().to_vec()),
+            }])
+            .await
+            .expect("initial PSK commit should be created");
+        group
+            .merge_pending_commit()
+            .await
+            .expect("initial PSK commit should merge");
+
+        assert_eq!(group.roster().count(), 1);
+        assert!(bundle.group_info.is_some());
+        assert!(bundle.ratchet_tree.is_some());
+
+        let group_to_save = Arc::new(RwLock::new(group));
+        mls_store
+            .group_map
+            .insert(meeting_link_name.to_string(), group_to_save.clone());
+
+        (group_to_save, bundle)
+    }
+
+    fn group_info_and_ratchet_from_bundle(
+        bundle: &CommitBundle,
+    ) -> (mls_spec::group::group_info::GroupInfo, RatchetTreeOption) {
+        let group_info_message = mls_spec::messages::MlsMessage::from_tls_bytes(
+            &bundle
+                .group_info
+                .clone()
+                .expect("bundle should include GroupInfo")
+                .mls_encode_to_vec()
+                .expect("GroupInfo should encode"),
+        )
+        .expect("GroupInfo message should decode");
+        let group_info = match group_info_message.content {
+            MlsMessageContent::GroupInfo(group_info) => group_info,
+            _ => panic!("expected GroupInfo"),
+        };
+        let ratchet_tree = bundle
+            .ratchet_tree
+            .clone()
+            .expect("bundle should include ratchet tree")
+            .try_into()
+            .expect("ratchet tree should convert");
+        (group_info, ratchet_tree)
+    }
+
+    async fn group_info_and_ratchet_from_group(
+        group: &MlsGroup<MemKv>,
+    ) -> (mls_spec::group::group_info::GroupInfo, RatchetTreeOption) {
+        let group_info_mls_spec = group
+            .group_info_for_ext_commit()
+            .await
+            .expect("group should export GroupInfo for external join");
+        let group_info_message = mls_spec::messages::MlsMessage::from_tls_bytes(
+            &group_info_mls_spec
+                .mls_encode_to_vec()
+                .expect("GroupInfo should encode"),
+        )
+        .expect("GroupInfo message should decode");
+        let group_info = match group_info_message.content {
+            MlsMessageContent::GroupInfo(group_info) => group_info,
+            _ => panic!("expected GroupInfo"),
+        };
+        let exported_tree = group.ratchet_tree();
+        let tree_bytes = exported_tree
+            .mls_encode_to_vec()
+            .expect("ratchet tree should encode");
+        let ratchet_tree_mls_spec = mls_spec::tree::RatchetTree::from_tls_bytes(&tree_bytes)
+            .expect("ratchet tree should decode");
+        let ratchet_tree = RatchetTreeOption::Full {
+            ratchet_tree: ratchet_tree_mls_spec,
+        };
+        (group_info, ratchet_tree)
+    }
+
+    async fn key_package_for_external_join(
+        service: &Service,
+        user_identifier: &UserId,
+        ciphersuite: proton_meet_mls::CipherSuite,
+        group_info: mls_spec::group::group_info::GroupInfo,
+        ratchet_tree_option: RatchetTreeOption,
+    ) -> mls_types::KeyPackage {
+        let external_proposal = service
+            .create_external_proposal(
+                user_identifier,
+                ciphersuite,
+                group_info,
+                ratchet_tree_option,
+            )
+            .await
+            .expect("joiner should build external add proposal for key package");
+        match external_proposal.as_proposal() {
+            Some(Proposal::Add(add)) => add.key_package().clone().into(),
+            _ => panic!("expected Add proposal key package"),
+        }
+    }
+
+    async fn setup_solo_waiting_room_group(
+        host_service: &Service,
+        meet_link_name: &str,
+        ciphersuite: proton_meet_mls::CipherSuite,
+    ) -> (
+        meet_identifiers::UserId,
+        UserId,
+        Arc<RwLock<MlsGroup<MemKv>>>,
+        CommitBundle,
+    ) {
+        let host_token = host_service
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
+            .await
+            .expect("host MLS client should be created");
+        let host_user_identifier = host_token.user_id();
+
+        let host_meet_user_id = {
+            let host_store = host_service.mls_store.read().await;
+            let host_client = host_store
+                .find_client(&host_user_identifier.to_string(), &ciphersuite)
+                .expect("host client should exist");
+            host_client
+                .user_id()
+                .expect("host meet user id should resolve")
+        };
+
+        let (host_group, initial_bundle) = create_mls_group_with_room_kind(
+            host_service,
+            &host_user_identifier,
+            meet_link_name,
+            meet_link_name,
+            RoomKind::BasicRoomWithWaiting {
+                other_users: vec![],
+            },
+            true,
+            ciphersuite,
+        )
+        .await;
+
+        assert_eq!(host_group.read().await.roster().count(), 1);
+        assert_eq!(
+            host_group
+                .read()
+                .await
+                .own_user_role_for_current_epoch()
+                .expect("creator role should resolve"),
+            UserRole::RoomAdmin
+        );
+
+        (
+            host_meet_user_id,
+            host_user_identifier,
+            host_group,
+            initial_bundle,
+        )
+    }
+
+    async fn setup_two_user_waiting_room_group(
+        host_service: &Service,
+        non_host_service: &Service,
+        meet_link_name: &str,
+        ciphersuite: proton_meet_mls::CipherSuite,
+    ) -> (
+        meet_identifiers::UserId,
+        meet_identifiers::UserId,
+        Arc<RwLock<MlsGroup<MemKv>>>,
+        Arc<RwLock<MlsGroup<MemKv>>>,
+    ) {
+        let host_token = host_service
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
+            .await
+            .expect("host MLS client should be created");
+        let non_host_token = non_host_service
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
+            .await
+            .expect("non-host MLS client should be created");
+
+        let host_user_identifier = host_token.user_id();
+        let non_host_user_identifier = non_host_token.user_id();
+
+        let (host_meet_user_id, non_host_meet_user_id) = {
+            let host_store = host_service.mls_store.read().await;
+            let non_host_store = non_host_service.mls_store.read().await;
+            let host_client = host_store
+                .find_client(&host_user_identifier.to_string(), &ciphersuite)
+                .expect("host client should exist");
+            let non_host_client = non_host_store
+                .find_client(&non_host_user_identifier.to_string(), &ciphersuite)
+                .expect("non-host client should exist");
+            (
+                host_client
+                    .user_id()
+                    .expect("host meet user id should resolve"),
+                non_host_client
+                    .user_id()
+                    .expect("non-host meet user id should resolve"),
+            )
+        };
+
+        let (host_group, initial_bundle) = create_mls_group_with_room_kind(
+            host_service,
+            &host_user_identifier,
+            meet_link_name,
+            meet_link_name,
+            RoomKind::BasicRoomWithWaiting {
+                other_users: vec![non_host_meet_user_id.clone()],
+            },
+            true,
+            ciphersuite,
+        )
+        .await;
+
+        let (group_info, ratchet_tree) = group_info_and_ratchet_from_bundle(&initial_bundle);
+
+        let (_, non_host_commit_bundle) = non_host_service
+            .create_external_commit(
+                &non_host_user_identifier,
+                meet_link_name,
+                ciphersuite,
+                group_info,
+                ratchet_tree,
+            )
+            .await
+            .expect("preauthorized non-host should join waiting-room group");
+
+        host_group
+            .write()
+            .await
+            .decrypt_message(non_host_commit_bundle.commit.clone())
+            .await
+            .expect("host should process non-host external commit");
+
+        let non_host_group = {
+            let store = non_host_service.mls_store.read().await;
+            store
+                .group_map
+                .get(meet_link_name)
+                .expect("non-host group should be stored")
+                .clone()
+        };
+
+        assert_eq!(
+            host_group.read().await.epoch(),
+            non_host_group.read().await.epoch()
+        );
+        assert_eq!(host_group.read().await.roster().count(), 2);
+        assert_eq!(non_host_group.read().await.roster().count(), 2);
+        assert_eq!(
+            host_group
+                .read()
+                .await
+                .own_user_role_for_current_epoch()
+                .expect("host role should resolve"),
+            UserRole::RoomAdmin
+        );
+        assert_eq!(
+            non_host_group
+                .read()
+                .await
+                .own_user_role_for_current_epoch()
+                .expect("non-host role should resolve"),
+            UserRole::Member
+        );
+
+        (
+            host_meet_user_id,
+            non_host_meet_user_id,
+            host_group,
+            non_host_group,
+        )
+    }
+
+    fn policy_update_proposals(policies: &RoomPolicies) -> Result<[ProposalArg; 2], anyhow::Error> {
+        Ok([
+            ProposalArg::update_component(&policies.roles)?,
+            ProposalArg::update_component(&policies.pre_auth)?,
+        ])
+    }
+
+    async fn apply_room_policy_update_as_host(
+        host_group: &Arc<RwLock<MlsGroup<MemKv>>>,
+        non_host_group: &Arc<RwLock<MlsGroup<MemKv>>>,
+        policies: &RoomPolicies,
+        non_host_reject_message: &str,
+        host_commit_message: &str,
+    ) {
+        let non_host_result = non_host_group
+            .write()
+            .await
+            .new_commit(policy_update_proposals(policies).expect("test proposals should build"))
+            .await;
+        assert!(non_host_result.is_err(), "{non_host_reject_message}");
+
+        let host_commit = {
+            let mut host_group_write = host_group.write().await;
+            let (bundle, _) = host_group_write
+                .new_commit(policy_update_proposals(policies).expect("test proposals should build"))
+                .await
+                .expect(host_commit_message);
+            host_group_write
+                .merge_pending_commit()
+                .await
+                .expect("host policy update commit should merge");
+            bundle
+        };
+
+        non_host_group
+            .write()
+            .await
+            .decrypt_message(host_commit.commit.clone())
+            .await
+            .expect("non-host should process host policy update commit");
+    }
+
+    async fn promote_participant_to_room_admin(
+        admin_group: &Arc<RwLock<MlsGroup<MemKv>>>,
+        peer_groups: &[Arc<RwLock<MlsGroup<MemKv>>>],
+        target_user_id: &meet_identifiers::UserId,
+        meet_link_name: &str,
+    ) {
+        let commit_bytes = {
+            let mut admin = admin_group.write().await;
+            let identity = ProtonMeetIdentityProvider::user_identifier(target_user_id);
+            let epoch = *admin.epoch();
+            let authorizer = admin.authorizer().expect("authorizer should resolve");
+            let user_index = authorizer
+                .participant_list_index(epoch, &identity)
+                .expect("participant list index lookup should succeed")
+                .expect("target user should be in participant list");
+            let proposal_arg = admin
+                .update_participant_role(user_index, UserRole::RoomAdmin)
+                .expect("role update proposal should be built");
+            let (bundle, _) = admin
+                .new_commit([
+                    proposal_arg,
+                    ProposalArg::PskExternal {
+                        id: ExternalPskId(meet_link_name.as_bytes().to_vec()),
+                    },
+                ])
+                .await
+                .expect("role promotion commit should be created");
+            admin
+                .merge_pending_commit()
+                .await
+                .expect("role promotion commit should merge");
+            bundle.commit
+        };
+
+        for peer_group in peer_groups {
+            peer_group
+                .write()
+                .await
+                .decrypt_message(commit_bytes.clone())
+                .await
+                .expect("peer should process role promotion commit");
+        }
+    }
+
+    async fn assert_groups_match_room_policies(
+        host_group: &Arc<RwLock<MlsGroup<MemKv>>>,
+        peer_group: &Arc<RwLock<MlsGroup<MemKv>>>,
+        policies: &RoomPolicies,
+        expected_peer_role: UserRole,
+    ) {
+        let host_roles = host_group
+            .read()
+            .await
+            .extract_component::<RoleData>()
+            .expect("host should extract RoleData")
+            .expect("RoleData should exist");
+        let host_preauth = host_group
+            .read()
+            .await
+            .extract_component::<PreAuthData>()
+            .expect("host should extract PreAuthData")
+            .expect("PreAuthData should exist");
+        let peer_roles = peer_group
+            .read()
+            .await
+            .extract_component::<RoleData>()
+            .expect("peer should extract RoleData")
+            .expect("RoleData should exist");
+        let peer_preauth = peer_group
+            .read()
+            .await
+            .extract_component::<PreAuthData>()
+            .expect("peer should extract PreAuthData")
+            .expect("PreAuthData should exist");
+
+        assert_eq!(host_roles, policies.roles);
+        assert_eq!(host_preauth, policies.pre_auth);
+        assert_eq!(peer_roles, policies.roles);
+        assert_eq!(peer_preauth, policies.pre_auth);
+        assert_eq!(
+            host_group.read().await.epoch(),
+            peer_group.read().await.epoch()
+        );
+        assert_eq!(
+            host_group
+                .read()
+                .await
+                .own_user_role_for_current_epoch()
+                .expect("host role should still resolve"),
+            UserRole::RoomAdmin
+        );
+        assert_eq!(
+            peer_group
+                .read()
+                .await
+                .own_user_role_for_current_epoch()
+                .expect("peer role should still resolve"),
+            expected_peer_role
+        );
+    }
+
+    #[tokio::test]
+    async fn waiting_room_policy_update_allows_host_and_rejects_non_host() {
+        let meet_link_name = "waiting_room_policy_update";
+        let config = MlsClientConfig::default();
+        let host_service = create_test_service_with_host("host", meet_link_name, true).await;
+        let non_host_service = create_test_service_with_host("member", meet_link_name, false).await;
+
+        let (host_user_id, non_host_user_id, host_group, non_host_group) =
+            setup_two_user_waiting_room_group(
+                &host_service,
+                &non_host_service,
+                meet_link_name,
+                config.ciphersuite,
+            )
+            .await;
+
+        let open_room_policies = RoomPolicies::new(
+            &host_user_id,
+            &RoomKind::BasicHostedRoom {
+                is_open: true,
+                other_users: vec![non_host_user_id.clone()],
+            },
+            true,
+        )
+        .expect("open hosted-room policy should be built");
+
+        apply_room_policy_update_as_host(
+            &host_group,
+            &non_host_group,
+            &open_room_policies,
+            "non-host member must not be allowed to change waiting-room role definitions",
+            "meeting host should update waiting-room policy to open room",
+        )
+        .await;
+        assert_groups_match_room_policies(
+            &host_group,
+            &non_host_group,
+            &open_room_policies,
+            UserRole::Member,
+        )
+        .await;
+
+        let waiting_room_policies = RoomPolicies::new(
+            &host_user_id,
+            &RoomKind::BasicRoomWithWaiting {
+                other_users: vec![non_host_user_id.clone()],
+            },
+            true,
+        )
+        .expect("waiting-room policy should be built");
+
+        apply_room_policy_update_as_host(
+            &host_group,
+            &non_host_group,
+            &waiting_room_policies,
+            "non-host member must not be allowed to enable waiting-room role definitions",
+            "meeting host should update open-room policy to waiting room",
+        )
+        .await;
+        assert_groups_match_room_policies(
+            &host_group,
+            &non_host_group,
+            &waiting_room_policies,
+            UserRole::Member,
+        )
+        .await;
+    }
+
+    async fn apply_waiting_room_policy_commit_as_room_admin(
+        actor_group: &Arc<RwLock<MlsGroup<MemKv>>>,
+        peer_groups: &[Arc<RwLock<MlsGroup<MemKv>>>],
+        meet_link_name: &str,
+        enable: bool,
+        commit_message: &str,
+    ) {
+        let commit = {
+            let mut actor = actor_group.write().await;
+            build_waiting_room_policy_commit(&mut actor, meet_link_name, enable)
+                .await
+                .expect(commit_message)
+        };
+        assert!(
+            !commit.group_info_tls.is_empty() && !commit.commit_data.is_empty(),
+            "policy commit should include group info and commit payloads"
+        );
+
+        let rtc = RTCMessageIn::from_tls_bytes(&commit.commit_data)
+            .expect("commit payload should decode as RTC message");
+        let commit_bytes = match rtc.content {
+            RTCMessageInContent::SendCommit(info) => {
+                convert_mls_spec_to_types(&info.commit).expect("commit should convert to mls types")
+            }
+            _ => panic!("expected SendCommit in policy commit payload"),
+        };
+
+        {
+            let mut actor = actor_group.write().await;
+            merge_waiting_room_policy_commit(&mut actor)
+                .await
+                .expect("room admin should merge waiting-room policy commit");
+        }
+
+        for peer_group in peer_groups {
+            peer_group
+                .write()
+                .await
+                .decrypt_message(commit_bytes.clone())
+                .await
+                .expect("peer should process waiting-room policy commit");
+        }
+    }
+
+    #[tokio::test]
+    async fn waiting_room_policy_commit_builder_allows_host_and_rejects_non_host() {
+        let meet_link_name = "waiting_room_policy_commit_builder";
+        let config = MlsClientConfig::default();
+        let host_service = create_test_service_with_host("host", meet_link_name, true).await;
+        let non_host_service = create_test_service_with_host("member", meet_link_name, false).await;
+
+        let (host_user_id, non_host_user_id, host_group, non_host_group) =
+            setup_two_user_waiting_room_group(
+                &host_service,
+                &non_host_service,
+                meet_link_name,
+                config.ciphersuite,
+            )
+            .await;
+
+        let open_room_policies = RoomPolicies::new(
+            &host_user_id,
+            &RoomKind::BasicHostedRoom {
+                is_open: true,
+                other_users: vec![non_host_user_id.clone()],
+            },
+            true,
+        )
+        .expect("open hosted-room policy should be built");
+
+        apply_waiting_room_policy_commit_as_room_admin(
+            &host_group,
+            &[non_host_group.clone()],
+            meet_link_name,
+            false,
+            "meeting host should build open-lobby policy commit",
+        )
+        .await;
+        assert_groups_match_room_policies(
+            &host_group,
+            &non_host_group,
+            &open_room_policies,
+            UserRole::Member,
+        )
+        .await;
+
+        let non_host_result = non_host_group
+            .write()
+            .await
+            .own_role_for_current_epoch()
+            .map(|_| ());
+        assert!(non_host_result.is_ok());
+        let non_host_build = {
+            let mut non_host = non_host_group.write().await;
+            build_waiting_room_policy_commit(&mut non_host, meet_link_name, true).await
+        };
+        assert!(
+            matches!(non_host_build, Err(MeetCoreError::NotRoomAdmin)),
+            "non-host member must not build waiting-room policy commits"
+        );
+        abort_waiting_room_policy_commit(&mut *non_host_group.write().await);
+
+        let waiting_room_policies = RoomPolicies::new(
+            &host_user_id,
+            &RoomKind::BasicRoomWithWaiting {
+                other_users: vec![non_host_user_id.clone()],
+            },
+            true,
+        )
+        .expect("waiting-room policy should be built");
+
+        apply_waiting_room_policy_commit_as_room_admin(
+            &host_group,
+            &[non_host_group.clone()],
+            meet_link_name,
+            true,
+            "meeting host should build waiting-room policy commit",
+        )
+        .await;
+        assert_groups_match_room_policies(
+            &host_group,
+            &non_host_group,
+            &waiting_room_policies,
+            UserRole::Member,
+        )
+        .await;
+    }
+
+    #[tokio::test]
+    async fn waiting_room_policy_commit_builder_allows_co_host_room_admin() {
+        let meet_link_name = "waiting_room_policy_commit_co_host";
+        let config = MlsClientConfig::default();
+        let creator_service = create_test_service_with_host("creator", meet_link_name, true).await;
+        let co_host_service = create_test_service_with_host("co_host", meet_link_name, false).await;
+
+        let (creator_user_id, co_host_user_id, creator_group, co_host_group) =
+            setup_two_user_waiting_room_group(
+                &creator_service,
+                &co_host_service,
+                meet_link_name,
+                config.ciphersuite,
+            )
+            .await;
+
+        promote_participant_to_room_admin(
+            &creator_group,
+            &[co_host_group.clone()],
+            &co_host_user_id,
+            meet_link_name,
+        )
+        .await;
+
+        assert_eq!(
+            co_host_group
+                .read()
+                .await
+                .own_user_role_for_current_epoch()
+                .expect("co-host role should resolve"),
+            UserRole::RoomAdmin
+        );
+
+        let co_host_build = {
+            let mut co_host = co_host_group.write().await;
+            build_waiting_room_policy_commit(&mut co_host, meet_link_name, false).await
+        };
+        assert!(
+            co_host_build.is_ok(),
+            "co-host RoomAdmin should build waiting-room policy commit"
+        );
+        abort_waiting_room_policy_commit(&mut *co_host_group.write().await);
+
+        let open_room_policies = RoomPolicies::new(
+            &creator_user_id,
+            &RoomKind::BasicHostedRoom {
+                is_open: true,
+                other_users: vec![co_host_user_id.clone()],
+            },
+            false,
+        )
+        .expect(
+            "open lobby policy for co-host commit should use creator and committer is_host=false",
+        );
+
+        apply_waiting_room_policy_commit_as_room_admin(
+            &co_host_group,
+            &[creator_group.clone()],
+            meet_link_name,
+            false,
+            "co-host RoomAdmin should apply open-lobby policy commit",
+        )
+        .await;
+
+        assert_groups_match_room_policies(
+            &co_host_group,
+            &creator_group,
+            &open_room_policies,
+            UserRole::RoomAdmin,
+        )
+        .await;
+    }
+
+    #[tokio::test]
+    async fn waiting_room_setting_update_aborts_pending_commit_on_422() {
+        let meet_link_name = "waiting_room_setting_422_abort";
+        let config = MlsClientConfig::default();
+        let mut host_service = create_test_service_with_host("host", meet_link_name, true).await;
+
+        let (_host_meet_user_id, host_user_id, host_group, _initial_bundle) =
+            setup_solo_waiting_room_group(&host_service, meet_link_name, config.ciphersuite).await;
+
+        let mut meeting_api = MockMeetingApi::new();
+        meeting_api
+            .expect_update_waiting_room_setting()
+            .times(1)
+            .returning(|_, _, _, _| {
+                Box::pin(ready(Err(HttpClientError::ErrorCode(
+                    Status::from_u16(422).unwrap(),
+                    crate::errors::http_client::ResponseError {
+                        code: 422,
+                        ..Default::default()
+                    },
+                ))))
+            });
+        host_service.meeting_api = Arc::new(meeting_api);
+
+        let result = host_service
+            .update_waiting_room_setting_policy(&host_user_id, meet_link_name, false)
+            .await;
+
+        assert!(matches!(result, Err(MeetCoreError::MlsStatusCode(422))));
+        assert!(
+            !host_group.read().await.has_pending_commit(),
+            "422 should clear pending commit without merge"
+        );
+    }
+
+    #[tokio::test]
+    async fn waiting_room_admit_reject_allows_co_host_room_admin_rejects_member() {
+        let meet_link_name = "waiting_room_admit_reject_auth";
+        let config = MlsClientConfig::default();
+        let creator_service = create_test_service_with_host("creator", meet_link_name, true).await;
+        let mut co_host_service =
+            create_test_service_with_host("co_host", meet_link_name, false).await;
+        let guest_service = create_test_service_with_host("guest", meet_link_name, false).await;
+
+        let (_creator_user_id, co_host_user_id, creator_group, co_host_group) =
+            setup_two_user_waiting_room_group(
+                &creator_service,
+                &co_host_service,
+                meet_link_name,
+                config.ciphersuite,
+            )
+            .await;
+
+        let co_host_user_identifier = {
+            let store = co_host_service.mls_store.read().await;
+            UserId::new(
+                store
+                    .clients
+                    .keys()
+                    .next()
+                    .expect("co-host MLS client should exist")
+                    .clone(),
+            )
+        };
+
+        let guest_token = guest_service
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
+            .await
+            .expect("guest MLS client should be created");
+        let guest_user_identifier = guest_token.user_id();
+
+        let (group_info, ratchet_tree) = {
+            let host_read = creator_group.read().await;
+            group_info_and_ratchet_from_group(&host_read).await
+        };
+
+        let guest_key_package = key_package_for_external_join(
+            &guest_service,
+            &guest_user_identifier,
+            config.ciphersuite,
+            group_info.clone(),
+            ratchet_tree.clone(),
+        )
+        .await;
+
+        let member_admit = co_host_service
+            .admit_waiting_room_join_requests(
+                &co_host_user_identifier,
+                meet_link_name,
+                vec![guest_key_package],
+                vec!["req-1".to_string()],
+            )
+            .await;
+        assert!(
+            matches!(member_admit, Err(MeetCoreError::NotRoomAdmin)),
+            "plain Member must not admit waiting-room joiners"
+        );
+
+        let member_reject = co_host_service
+            .reject_waiting_room_join_request(
+                &co_host_user_identifier,
+                meet_link_name,
+                "req-1",
+                "participant-1",
+            )
+            .await;
+        assert!(
+            matches!(member_reject, Err(MeetCoreError::NotRoomAdmin)),
+            "plain Member must not reject waiting-room join requests"
+        );
+
+        promote_participant_to_room_admin(
+            &creator_group,
+            &[co_host_group.clone()],
+            &co_host_user_id,
+            meet_link_name,
+        )
+        .await;
+
+        let mut http_client = create_mock_http_client_for_mls("co_host", meet_link_name, false);
+        http_client
+            .expect_reject_join_request()
+            .returning(|_, _, _, _| Box::pin(ready(Ok(()))));
+        http_client
+            .expect_update_group_info()
+            .returning(|_, _, _, _, _| Box::pin(ready(Ok(()))));
+        co_host_service.http_client = Arc::new(http_client);
+
+        co_host_service
+            .reject_waiting_room_join_request(
+                &co_host_user_identifier,
+                meet_link_name,
+                "req-1",
+                "participant-1",
+            )
+            .await
+            .expect("co-host RoomAdmin should reject waiting-room join request");
+
+        let guest_key_package_for_admit = key_package_for_external_join(
+            &guest_service,
+            &guest_user_identifier,
+            config.ciphersuite,
+            group_info,
+            ratchet_tree,
+        )
+        .await;
+
+        co_host_service
+            .admit_waiting_room_join_requests(
+                &co_host_user_identifier,
+                meet_link_name,
+                vec![guest_key_package_for_admit],
+                vec!["req-2".to_string()],
+            )
+            .await
+            .expect("co-host RoomAdmin should admit waiting-room joiners");
+    }
+
+    #[tokio::test]
+    async fn waiting_room_external_commit_allows_host_preauth_rejects_guest() {
+        let meet_link_name = "waiting_room_external_commit";
+        let config = MlsClientConfig::default();
+        let creator_service = create_test_service_with_host("creator", meet_link_name, true).await;
+        let guest_service = create_test_service_with_host("guest", meet_link_name, false).await;
+        let host_joiner_service =
+            create_test_service_with_host("host_joiner", meet_link_name, true).await;
+
+        let (_creator_meet_user_id, _creator_user_identifier, host_group, initial_bundle) =
+            setup_solo_waiting_room_group(&creator_service, meet_link_name, config.ciphersuite)
+                .await;
+
+        let (group_info, ratchet_tree) = group_info_and_ratchet_from_bundle(&initial_bundle);
+
+        let guest_token = guest_service
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
+            .await
+            .expect("guest MLS client should be created");
+        let guest_user_identifier = guest_token.user_id();
+
+        let guest_result = guest_service
+            .create_external_commit(
+                &guest_user_identifier,
+                meet_link_name,
+                config.ciphersuite,
+                group_info.clone(),
+                ratchet_tree.clone(),
+            )
+            .await;
+        assert!(
+            guest_result.is_err(),
+            "non-host must not open-join a waiting-room group via external commit"
+        );
+
+        let host_joiner_token = host_joiner_service
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
+            .await
+            .expect("host joiner MLS client should be created");
+        let host_joiner_user_identifier = host_joiner_token.user_id();
+
+        let (_, host_joiner_commit_bundle) = host_joiner_service
+            .create_external_commit(
+                &host_joiner_user_identifier,
+                meet_link_name,
+                config.ciphersuite,
+                group_info,
+                ratchet_tree,
+            )
+            .await
+            .expect("meeting host should join waiting-room group via external commit");
+
+        let received = host_group
+            .write()
+            .await
+            .decrypt_message(host_joiner_commit_bundle.commit.clone())
+            .await
+            .expect("creator should process host joiner external commit");
+        assert!(
+            matches!(received.0, ReceivedMessage::Commit { .. }),
+            "creator should observe a Commit after host joiner external commit"
+        );
+
+        let host_joiner_group = {
+            let store = host_joiner_service.mls_store.read().await;
+            store
+                .group_map
+                .get(meet_link_name)
+                .expect("host joiner group should be stored")
+                .clone()
+        };
+
+        assert_eq!(host_group.read().await.roster().count(), 2);
+        assert_eq!(host_joiner_group.read().await.roster().count(), 2);
+        assert_eq!(
+            host_group.read().await.epoch(),
+            host_joiner_group.read().await.epoch()
+        );
+        assert_eq!(
+            host_joiner_group
+                .read()
+                .await
+                .own_user_role_for_current_epoch()
+                .expect("host joiner role should resolve"),
+            UserRole::RoomAdmin
+        );
+    }
+
+    #[tokio::test]
+    async fn waiting_room_add_proposal_rejects_non_host_allows_host() {
+        let meet_link_name = "waiting_room_add_proposal";
+        let config = MlsClientConfig::default();
+        let host_service = create_test_service_with_host("host", meet_link_name, true).await;
+        let non_host_service = create_test_service_with_host("member", meet_link_name, false).await;
+        let guest_service = create_test_service_with_host("guest", meet_link_name, false).await;
+
+        let (_host_user_id, _non_host_user_id, host_group, non_host_group) =
+            setup_two_user_waiting_room_group(
+                &host_service,
+                &non_host_service,
+                meet_link_name,
+                config.ciphersuite,
+            )
+            .await;
+
+        let guest_token = guest_service
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
+            .await
+            .expect("guest MLS client should be created");
+        let guest_user_identifier = guest_token.user_id();
+
+        let (group_info, ratchet_tree) = {
+            let host_read = host_group.read().await;
+            group_info_and_ratchet_from_group(&host_read).await
+        };
+
+        let guest_key_package = key_package_for_external_join(
+            &guest_service,
+            &guest_user_identifier,
+            config.ciphersuite,
+            group_info.clone(),
+            ratchet_tree.clone(),
+        )
+        .await;
+
+        let non_host_commit_result = non_host_group
+            .write()
+            .await
+            .new_commit([ProposalArg::Add(Box::new(guest_key_package.into()))])
+            .await;
+        assert!(
+            non_host_commit_result.is_err(),
+            "non-host member must not commit Add proposals in a waiting-room group"
+        );
+
+        let host_guest_key_package = key_package_for_external_join(
+            &guest_service,
+            &guest_user_identifier,
+            config.ciphersuite,
+            group_info,
+            ratchet_tree,
+        )
+        .await;
+
+        let host_commit_result = host_group
+            .write()
+            .await
+            .new_commit([ProposalArg::Add(Box::new(host_guest_key_package.into()))])
+            .await;
+        assert!(
+            host_commit_result.is_ok(),
+            "meeting host should commit Add proposals in a waiting-room group"
+        );
+    }
+
     async fn setup_two_user_group(
         service1: &Service,
         service2: &Service,
@@ -2895,6 +3930,7 @@ pub(crate) mod tests {
 
         Service::new(
             Arc::new(http_client),
+            Arc::new(MockMeetingApi::new()),
             Arc::new(MockUserApi::new()),
             user_repository,
             Arc::new(ws_client_mock),
@@ -4456,6 +5492,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         let service_with_mock = Service::new(
             Arc::new(http_client),
+            Arc::new(MockMeetingApi::new()),
             Arc::new(MockUserApi::new()),
             user_repository,
             Arc::new(MockWebSocketClient::new()),
@@ -4649,6 +5686,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         let service_with_mock = Service::new(
             Arc::new(http_client),
+            Arc::new(MockMeetingApi::new()),
             Arc::new(MockUserApi::new()),
             user_repository,
             Arc::new(ws_client_mock),
@@ -4760,6 +5798,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         let service_with_mock = Service::new(
             Arc::new(http_client),
+            Arc::new(MockMeetingApi::new()),
             Arc::new(MockUserApi::new()),
             user_repository,
             Arc::new(ws_client_mock),
@@ -5990,6 +7029,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         }));
         Service::new(
             Arc::new(http_client),
+            Arc::new(MockMeetingApi::new()),
             Arc::new(MockUserApi::new()),
             user_repository,
             Arc::new(join_switch_ws_client_mock()),
@@ -6040,7 +7080,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         let meeting_name = MeetingLinkName::from(meet_link_name);
         let res = join_service
-            .join_room_with_switch_join_type(&user_token3, &meeting_name, false)
+            .join_room_with_switch_join_type(&user_token3, &meeting_name, false, false)
             .await;
         assert!(res.is_ok(), "join_room_with_switch_join_type: {res:?}");
 
@@ -6101,7 +7141,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         let meeting_name = MeetingLinkName::from(meet_link_name);
         let res = join_service
-            .join_room_with_switch_join_type(&user_token3, &meeting_name, true)
+            .join_room_with_switch_join_type(&user_token3, &meeting_name, true, false)
             .await;
         assert!(
             res.is_ok(),
@@ -6173,7 +7213,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let join_handle = tokio::spawn(async move {
             let meeting_name = MeetingLinkName::from(meet_link_name);
             join_task_service
-                .join_room_with_switch_join_type(&join_task_token, &meeting_name, true)
+                .join_room_with_switch_join_type(&join_task_token, &meeting_name, true, false)
                 .await
         });
 
@@ -6278,6 +7318,48 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
     }
 
     #[tokio::test]
+    async fn has_mls_group_info_uses_group_info_summary() {
+        use crate::infra::dto::realtime::GroupInfoSummaryData;
+
+        let meet_link_name = "wr_has_group_info_summary";
+        let service = create_test_service("user1", meet_link_name).await;
+        let user_token = service
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
+            .await
+            .unwrap();
+
+        let summary = GroupInfoSummaryData {
+            epoch: 1,
+            group_id: vec![1, 2, 3],
+        };
+        let check_service =
+            join_switch_service_with_http(&service, "user1", meet_link_name, |http| {
+                http.expect_get_group_info_summary()
+                    .once()
+                    .returning(move |_| Box::pin(ready(Ok(summary.clone()))));
+            })
+            .await;
+
+        assert!(check_service
+            .has_mls_group_info(&user_token.user_id())
+            .await
+            .expect("summary present"));
+
+        let empty_service =
+            join_switch_service_with_http(&service, "user1", meet_link_name, |http| {
+                http.expect_get_group_info_summary()
+                    .once()
+                    .returning(|_| Box::pin(ready(Err(HttpClientError::GroupInfoSummaryEmpty))));
+            })
+            .await;
+
+        assert!(!empty_service
+            .has_mls_group_info(&user_token.user_id())
+            .await
+            .expect("summary empty"));
+    }
+
+    #[tokio::test]
     async fn join_room_with_switch_join_type_group_info_empty_creates_group() {
         let meet_link_name = "join_switch_empty_group";
         let service = create_test_service("user1", meet_link_name).await;
@@ -6297,7 +7379,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         let meeting_name = MeetingLinkName::from(meet_link_name);
         let res = join_service
-            .join_room_with_switch_join_type(&user_token, &meeting_name, false)
+            .join_room_with_switch_join_type(&user_token, &meeting_name, false, false)
             .await;
         assert!(res.is_ok(), "empty group path: {res:?}");
         assert_eq!(
@@ -6330,7 +7412,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         let meeting_name = MeetingLinkName::from(meet_link_name);
         let err = join_service
-            .join_room_with_switch_join_type(&user_token, &meeting_name, false)
+            .join_room_with_switch_join_type(&user_token, &meeting_name, false, false)
             .await
             .unwrap_err();
         assert!(matches!(err, MeetCoreError::TimeDriftError));
@@ -6376,7 +7458,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         let meeting_name = MeetingLinkName::from(meet_link_name);
         let err = join_service
-            .join_room_with_switch_join_type(&user_token3, &meeting_name, false)
+            .join_room_with_switch_join_type(&user_token3, &meeting_name, false, false)
             .await
             .unwrap_err();
         assert!(matches!(err, MeetCoreError::MlsServerVersionNotSupported));
@@ -6426,7 +7508,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         let meeting_name = MeetingLinkName::from(meet_link_name);
         let err = join_service
-            .join_room_with_switch_join_type(&user_token3, &meeting_name, false)
+            .join_room_with_switch_join_type(&user_token3, &meeting_name, false, false)
             .await
             .unwrap_err();
         assert!(matches!(err, MeetCoreError::RatchetTreeNotFound));
@@ -6754,6 +7836,74 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 );
             }
         }
+    }
+
+    #[tokio::test]
+    async fn cancel_join_request_calls_http_and_resets_guest_state() {
+        let meet_link_name = "cancel_join_request_ok";
+        let base = create_test_service("guest_cancel_ok", meet_link_name).await;
+        let user_token_info = base
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
+            .await
+            .unwrap();
+        let user_id = user_token_info.user_id();
+
+        let service =
+            join_switch_service_with_http(&base, &user_id.to_string(), meet_link_name, |http| {
+                http.expect_cancel_join_request()
+                    .times(1)
+                    .returning(|_, _| Box::pin(ready(Ok(()))));
+            })
+            .await;
+
+        {
+            let mut state = service.state.lock().await;
+            state.set_mls_group_state(MlsGroupState::WaitingForJoinProposalWelcome);
+        }
+
+        service
+            .cancel_join_request(&user_id, meet_link_name)
+            .await
+            .unwrap();
+
+        let state = service.state.lock().await;
+        assert_eq!(state.mls_group_state, MlsGroupState::Pending);
+    }
+
+    #[tokio::test]
+    async fn cancel_join_request_http_error_still_resets_guest_state() {
+        let meet_link_name = "cancel_join_request_http_err";
+        let base = create_test_service("guest_cancel_err", meet_link_name).await;
+        let user_token_info = base
+            .create_mls_client("access_token", meet_link_name, "meet_password", None)
+            .await
+            .unwrap();
+        let user_id = user_token_info.user_id();
+
+        let service =
+            join_switch_service_with_http(&base, &user_id.to_string(), meet_link_name, |http| {
+                http.expect_cancel_join_request()
+                    .times(1)
+                    .returning(|_, _| {
+                        Box::pin(ready(Err(HttpClientError::MlsHttpError {
+                            message: "server down".to_string(),
+                        })))
+                    });
+            })
+            .await;
+
+        {
+            let mut state = service.state.lock().await;
+            state.set_mls_group_state(MlsGroupState::WaitingForJoinProposalWelcome);
+        }
+
+        service
+            .cancel_join_request(&user_id, meet_link_name)
+            .await
+            .unwrap();
+
+        let state = service.state.lock().await;
+        assert_eq!(state.mls_group_state, MlsGroupState::Pending);
     }
 }
 

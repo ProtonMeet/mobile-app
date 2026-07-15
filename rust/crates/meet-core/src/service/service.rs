@@ -8,12 +8,13 @@ use std::{
 };
 
 use crate::{
+    domain::room::JoinRequestChange,
     domain::user::{
         models::meeting_link_name::MeetingLinkName,
         ports::{new_user_service::NewUserService, ArcWebSocketClient},
     },
     infra::crypto_client::derive_external_psk,
-    service::service_state::MlsSyncState,
+    service::service_state::{MlsSyncState, PendingWaitingRoomJoinRequest},
     utils::{instant, spawn, spawn_detached},
 };
 use crate::{infra::dto::realtime::VersionedGroupInfoData, utils::join};
@@ -25,7 +26,7 @@ use mls_rs::{
     framing::{Content, MlsMessagePayload},
     group::proposal::{Proposal, ProposalOrRef},
 };
-use mls_rs_codec::MlsEncode;
+use mls_rs_codec::{MlsDecode, MlsEncode};
 use mls_spec::{
     defs::ProtocolVersion,
     drafts::ratchet_tree_options::RatchetTreeOption,
@@ -33,7 +34,10 @@ use mls_spec::{
     messages::{ContentTypeInner, MlsMessage, MlsMessageContent},
     Parsable, Serializable,
 };
-use mls_trait::{types::ReceivedMessage, AuthorizerExt, ProposalArg, ProtonMeetIdentityProvider};
+use mls_trait::{
+    meet_policy::RoomKind, types::ReceivedMessage, AuthorizerExt, ProposalArg,
+    ProtonMeetIdentityProvider,
+};
 use mls_types::{ContentType, Credential, ExternalPskId, MediaType, Member};
 use proton_claims::reexports::{cose_key_set::CoseKeySet, CwtAny};
 use proton_meet_common::models::{ProtonUser, ProtonUserKey};
@@ -59,7 +63,10 @@ use crate::service::mls_service::MlsService;
 use crate::{
     domain::user::{
         models::{user_settings::UserSettings, Address, UserId, UserTokenInfo},
-        ports::{user_api::UserApi, ArcUserRepository, ConnectionState, HttpClient, UserService},
+        ports::{
+            meeting_api::MeetingApi, user_api::UserApi, ArcUserRepository, ConnectionState,
+            HttpClient, UserService,
+        },
     },
     errors::{
         core::MeetCoreError, http_client::HttpClientError, login::LoginError, service::ServiceError,
@@ -68,10 +75,15 @@ use crate::{
         dto::{
             proton_user::UserData,
             realtime::{
-                ConnectionLostType, GroupInfoVersion, JoinRoomResponse, LeaveRoomMessage,
+                ConnectionLostType, GroupInfoVersion, JoinDecisionInfo, JoinDecisionStatus,
+                JoinRequestInfo, JoinRequestRemovedInfo, JoinRoomResponse, LeaveRoomMessage,
                 MlsCommitInfo, MlsProposalInfo, RTCMessageIn, RTCMessageInContent,
             },
             websocket::{ClientAck, WebSocketTextRequestCommand},
+        },
+        group_info_payload::{
+            encode_php_waiting_room_data_field, serialize_update_group_info_request,
+            UpdateGroupInfoRequest,
         },
         message_cache::{CachedMessageType, MlsMessageCache},
         mimi_subject_parser::MimiSubject,
@@ -82,6 +94,10 @@ use crate::{
         utils::{
             convert_mls_spec_to_types, convert_mls_types_to_spec, describe_proposal_kind,
             get_uuid_from_member,
+        },
+        waiting_room_setting::{
+            abort_waiting_room_policy_commit, build_waiting_room_policy_commit,
+            merge_waiting_room_policy_commit,
         },
     },
 };
@@ -98,6 +114,18 @@ const LIVEKIT_OFFLINE_THRESHOLD_MS: u64 = 60_000;
 const KICK_MAX_ATTEMPTS: u32 = 4; // 1 initial + 3 retries
 const KICK_BASE_DELAY_MS: u64 = 500;
 const KICK_MAX_DELAY_MS: u64 = 10000;
+
+const WR_SETTING_MAX_ATTEMPTS: u32 = 3;
+
+// Supported group info versions for the client
+const SUPPORTED_GROUP_INFO_VERSIONS: [GroupInfoVersion; 2] =
+    [GroupInfoVersion::V1, GroupInfoVersion::V2];
+
+pub(crate) struct PreparedWaitingRoomSettingUpdate {
+    meeting_id: String,
+    base64_sd_kbt: String,
+    request_body_json: String,
+}
 
 /// Message wrapper received from server (must match server-side struct)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -176,14 +204,38 @@ pub type MlsSyncStateUpdateHandler = Box<
     dyn FnMut(MlsSyncState, Option<RejoinReason>) -> Box<dyn Future<Output = ()> + Unpin> + 'static,
 >;
 
+#[cfg(not(target_family = "wasm"))]
+pub type JoinDecisionHandler =
+    Box<dyn FnMut(String, bool) -> Box<dyn Future<Output = ()> + Unpin + Send> + Send + 'static>;
+
+#[cfg(target_family = "wasm")]
+pub type JoinDecisionHandler =
+    Box<dyn FnMut(String, bool) -> Box<dyn Future<Output = ()> + Unpin> + 'static>;
+
+#[cfg(not(target_family = "wasm"))]
+pub type JoinRequestHandler = Box<
+    dyn FnMut(JoinRequestChange, String, String, u64) -> Box<dyn Future<Output = ()> + Unpin + Send>
+        + Send
+        + 'static,
+>;
+
+#[cfg(target_family = "wasm")]
+pub type JoinRequestHandler = Box<
+    dyn FnMut(JoinRequestChange, String, String, u64) -> Box<dyn Future<Output = ()> + Unpin>
+        + 'static,
+>;
+
 #[derive(Clone)]
 pub struct Service {
     http_client: Arc<dyn HttpClient>,
+    meeting_api: Arc<dyn MeetingApi>,
     user_api: Arc<dyn UserApi>,
     user_repository: ArcUserRepository,
     mls_group_update_handler: Option<Arc<Mutex<MlsGroupUpdateHandler>>>,
     livekit_admin_change_handler: Option<Arc<Mutex<LiveKitAdminChangeHandler>>>,
     mls_sync_state_update_handler: Option<Arc<Mutex<MlsSyncStateUpdateHandler>>>,
+    join_decision_handler: Option<Arc<Mutex<JoinDecisionHandler>>>,
+    join_request_handler: Option<Arc<Mutex<JoinRequestHandler>>>,
     ws_client: ArcWebSocketClient,
     mls_store: Arc<RwLock<MlsStore>>,
     state: Arc<Mutex<ServiceState>>,
@@ -263,6 +315,7 @@ fn restore_proposals_to_queue(
 impl Service {
     pub fn new(
         http_client: Arc<dyn HttpClient>,
+        meeting_api: Arc<dyn MeetingApi>,
         user_api: Arc<dyn UserApi>,
         user_repository: ArcUserRepository,
         ws_client: ArcWebSocketClient,
@@ -300,11 +353,14 @@ impl Service {
 
         Self {
             http_client,
+            meeting_api,
             user_api,
             user_repository,
             mls_group_update_handler: None,
             livekit_admin_change_handler: None,
             mls_sync_state_update_handler: None,
+            join_decision_handler: None,
+            join_request_handler: None,
             ws_client,
             mls_store,
             state,
@@ -2247,6 +2303,7 @@ impl UserService for Service {
                 tracing::info!("Received text message from meet-server: {}", text);
             }
             WebSocketMessage::Binary(items) => {
+                let mut requires_ack = true;
                 let rtc_payload: Option<Vec<u8>>;
                 let mut msg_id: Option<Uuid> = None;
 
@@ -2262,173 +2319,199 @@ impl UserService for Service {
                     match RTCMessageIn::from_tls_bytes(&payload) {
                         Ok(rtc_message) => {
                             let msg_id_for_log = msg_id.as_ref().map(|id| id.to_string());
-                            // check if the mls group is ready before we process the message
-                            let mls_check_start = instant::now();
-
-                            let mut check_count = 0;
-                            // Clone Arc outside loop to avoid repeated cloning
-                            loop {
-                                check_count += 1;
-
-                                // Check connection state first - drop guard immediately after check
-                                let ws_connection_state =
-                                    { self.ws_client.get_connection_state().await };
-
-                                if ws_connection_state == ConnectionState::Disconnected {
-                                    tracing::error!("Websocket is disconnected, skipping binary message processing");
-                                    return Ok(());
-                                }
-
-                                // Check MLS group state
-                                let mls_state = {
-                                    let state = self.state.lock().await;
-                                    state.mls_group_state.clone()
-                                };
-
-                                if mls_state == MlsGroupState::Success {
-                                    if check_count > 1 {
-                                        let elapsed = mls_check_start.elapsed();
-                                        tracing::info!(
-                                            "MLS group ready after {} checks (elapsed: {:?})",
-                                            check_count,
-                                            elapsed
-                                        );
-                                    } else {
-                                        tracing::debug!("MLS group ready immediately");
-                                    }
-                                    break;
-                                }
-
-                                let elapsed = mls_check_start.elapsed();
-                                if elapsed > Duration::from_secs(MLS_STATE_CHECK_TIMEOUT) {
-                                    tracing::warn!(
-                                        "MLS group not ready after {}s (checked {} times, state: {:?}), skipping binary message processing",
-                                        MLS_STATE_CHECK_TIMEOUT,
-                                        check_count,
-                                        mls_state
-                                    );
-                                    return Ok(());
-                                }
-
-                                let state = self.state.lock().await;
-                                if state.mls_group_state == MlsGroupState::Success
-                                    || state.mls_group_state
-                                        == MlsGroupState::WaitingForJoinProposalWelcome
-                                {
-                                    break;
-                                }
-
-                                // Use shorter sleep interval for faster response (100ms instead of 1s)
-                                sleep(std::time::Duration::from_millis(100)).await;
-                            }
-
                             match rtc_message.content {
-                                RTCMessageInContent::Welcome(mls_welcome_info) => {
+                                RTCMessageInContent::JoinRequest(info) => {
+                                    requires_ack = false;
                                     tracing::info!(
                                         ws_msg_id = msg_id_for_log.as_deref().unwrap_or("n/a"),
-                                        "Received welcome message"
+                                        "Received join request notification"
                                     );
-                                    let mut state = self.state.lock().await;
-                                    // save the welcome info to the state
-                                    state.set_welcome_info(Some(mls_welcome_info));
-                                    drop(state);
-                                    self.join_proposal_welcome_notify.notify_waiters();
+                                    self.handle_join_request(info).await?;
                                 }
-                                RTCMessageInContent::CommitUpdate(mls_commit_info) => {
-                                    let room_id_str =
-                                        String::from_utf8_lossy(&mls_commit_info.room_id);
-                                    let commit_message = mls_types::MlsMessage::try_from(
-                                        mls_commit_info.commit.clone(),
-                                    )
-                                    .map_err(|e| {
-                                        tracing::error!(
-                                            ws_msg_id = msg_id_for_log
-                                                .as_deref()
-                                                .unwrap_or("n/a"),
-                                            room_id = %room_id_str,
-                                            error = %e,
-                                            "Failed to parse commit message"
-                                        );
-                                        e
-                                    })?;
-                                    let room_id =
-                                        String::from_utf8(mls_commit_info.room_id.clone())
+                                RTCMessageInContent::JoinRequestRemoved(info) => {
+                                    requires_ack = false;
+                                    tracing::info!(
+                                        ws_msg_id = msg_id_for_log.as_deref().unwrap_or("n/a"),
+                                        "Received join request removed notification"
+                                    );
+                                    self.handle_join_request_removed(info).await?;
+                                }
+                                other => {
+                                    // check if the mls group is ready before we process the message
+                                    let mls_check_start = instant::now();
+
+                                    let mut check_count = 0;
+                                    // Clone Arc outside loop to avoid repeated cloning
+                                    loop {
+                                        check_count += 1;
+
+                                        // Check connection state first - drop guard immediately after check
+                                        let ws_connection_state =
+                                            { self.ws_client.get_connection_state().await };
+
+                                        if ws_connection_state == ConnectionState::Disconnected {
+                                            tracing::error!("Websocket is disconnected, skipping binary message processing");
+                                            return Ok(());
+                                        }
+
+                                        // Check MLS group state
+                                        let mls_state = {
+                                            let state = self.state.lock().await;
+                                            state.mls_group_state.clone()
+                                        };
+
+                                        if mls_state == MlsGroupState::Success {
+                                            if check_count > 1 {
+                                                let elapsed = mls_check_start.elapsed();
+                                                tracing::info!(
+                                                    "MLS group ready after {} checks (elapsed: {:?})",
+                                                    check_count,
+                                                    elapsed
+                                                );
+                                            } else {
+                                                tracing::debug!("MLS group ready immediately");
+                                            }
+                                            break;
+                                        }
+
+                                        let elapsed = mls_check_start.elapsed();
+                                        if elapsed > Duration::from_secs(MLS_STATE_CHECK_TIMEOUT) {
+                                            tracing::warn!(
+                                                "MLS group not ready after {}s (checked {} times, state: {:?}), skipping binary message processing",
+                                                MLS_STATE_CHECK_TIMEOUT,
+                                                check_count,
+                                                mls_state
+                                            );
+                                            return Ok(());
+                                        }
+
+                                        let state = self.state.lock().await;
+                                        if state.mls_group_state == MlsGroupState::Success
+                                            || state.mls_group_state
+                                                == MlsGroupState::WaitingForJoinProposalWelcome
+                                        {
+                                            break;
+                                        }
+
+                                        // Use shorter sleep interval for faster response (100ms instead of 1s)
+                                        sleep(std::time::Duration::from_millis(100)).await;
+                                    }
+
+                                    match other {
+                                        RTCMessageInContent::Welcome(mls_welcome_info) => {
+                                            tracing::info!(
+                                                ws_msg_id =
+                                                    msg_id_for_log.as_deref().unwrap_or("n/a"),
+                                                "Received welcome message"
+                                            );
+                                            let mut state = self.state.lock().await;
+                                            // save the welcome info to the state
+                                            state.set_welcome_info(Some(mls_welcome_info));
+                                            drop(state);
+                                            self.join_proposal_welcome_notify.notify_waiters();
+                                        }
+                                        RTCMessageInContent::CommitUpdate(mls_commit_info) => {
+                                            let room_id_str =
+                                                String::from_utf8_lossy(&mls_commit_info.room_id);
+                                            let commit_message = mls_types::MlsMessage::try_from(
+                                                mls_commit_info.commit.clone(),
+                                            )
                                             .map_err(|e| {
                                                 tracing::error!(
                                                     ws_msg_id = msg_id_for_log
                                                         .as_deref()
                                                         .unwrap_or("n/a"),
+                                                    room_id = %room_id_str,
                                                     error = %e,
-                                                    "Failed to parse room_id as UTF-8"
+                                                    "Failed to parse commit message"
                                                 );
                                                 e
                                             })?;
-                                    let epoch = commit_message.epoch();
-                                    let has_welcome = mls_commit_info.welcome_message.is_some();
-                                    tracing::info!(
-                                        ws_msg_id = msg_id_for_log
-                                            .as_deref()
-                                            .unwrap_or("n/a"),
-                                        room_id = %room_id,
-                                        commit_epoch = ?epoch,
-                                        has_welcome = has_welcome,
-                                        "Received commit update"
-                                    );
-                                    let mut should_process_cached_messages = false;
-                                    match self
-                                        .process_commit_message(commit_message, &room_id)
-                                        .await
-                                    {
-                                        Ok(CommitProcessingOutcome::Applied) => {
-                                            should_process_cached_messages = true;
-                                        }
-                                        Ok(CommitProcessingOutcome::NoStateChange) => {
-                                            tracing::debug!(
+                                            let room_id =
+                                                String::from_utf8(mls_commit_info.room_id.clone())
+                                                    .map_err(|e| {
+                                                        tracing::error!(
+                                                            ws_msg_id = msg_id_for_log
+                                                                .as_deref()
+                                                                .unwrap_or("n/a"),
+                                                            error = %e,
+                                                            "Failed to parse room_id as UTF-8"
+                                                        );
+                                                        e
+                                                    })?;
+                                            let epoch = commit_message.epoch();
+                                            let has_welcome =
+                                                mls_commit_info.welcome_message.is_some();
+                                            tracing::info!(
+                                                ws_msg_id = msg_id_for_log
+                                                    .as_deref()
+                                                    .unwrap_or("n/a"),
+                                                room_id = %room_id,
+                                                commit_epoch = ?epoch,
+                                                has_welcome = has_welcome,
+                                                "Received commit update"
+                                            );
+                                            let mut should_process_cached_messages = false;
+                                            match self
+                                                .process_commit_message(commit_message, &room_id)
+                                                .await
+                                            {
+                                                Ok(CommitProcessingOutcome::Applied) => {
+                                                    should_process_cached_messages = true;
+                                                }
+                                                Ok(CommitProcessingOutcome::NoStateChange) => {
+                                                    tracing::debug!(
                                                 "Commit did not change state for room {}, skipping cached message processing",
                                                 room_id
                                             );
-                                        }
-                                        Ok(CommitProcessingOutcome::DeferredFutureEpoch) => {
-                                            tracing::debug!(
+                                                }
+                                                Ok(
+                                                    CommitProcessingOutcome::DeferredFutureEpoch,
+                                                ) => {
+                                                    tracing::debug!(
                                                 "Commit deferred for future epoch in room {}, skipping cached message processing",
                                                 room_id
                                             );
-                                        }
-                                        Err(e) => {
-                                            if let Some(ServiceError::ProposalNotFound) =
-                                                e.downcast_ref::<ServiceError>()
-                                            {
-                                                let commit_message =
-                                                    mls_types::MlsMessage::try_from(
-                                                        mls_commit_info.commit.clone(),
-                                                    )?;
-                                                let _ = self
-                                                    .cache_commit_message(&room_id, commit_message)
-                                                    .await;
-                                                tracing::info!(
+                                                }
+                                                Err(e) => {
+                                                    if let Some(ServiceError::ProposalNotFound) =
+                                                        e.downcast_ref::<ServiceError>()
+                                                    {
+                                                        let commit_message =
+                                                            mls_types::MlsMessage::try_from(
+                                                                mls_commit_info.commit.clone(),
+                                                            )?;
+                                                        let _ = self
+                                                            .cache_commit_message(
+                                                                &room_id,
+                                                                commit_message,
+                                                            )
+                                                            .await;
+                                                        tracing::info!(
                                                     "Cached commit message for later processing"
                                                 );
-                                            } else if let Some(ServiceError::PskProposalMissing) =
-                                                e.downcast_ref::<ServiceError>()
-                                            {
-                                                tracing::error!(
+                                                    } else if let Some(
+                                                        ServiceError::PskProposalMissing,
+                                                    ) = e.downcast_ref::<ServiceError>()
+                                                    {
+                                                        tracing::error!(
                                                     "Commit rejected: PSK proposal missing or has wrong ID for room {}",
                                                     room_id
                                                 );
-                                                return Err(e);
-                                            } else {
-                                                tracing::warn!(
+                                                        return Err(e);
+                                                    } else {
+                                                        tracing::warn!(
                                                     "Failed to process commit message for room {}: {}",
                                                     room_id,
                                                     e
                                                 );
+                                                    }
+                                                }
                                             }
-                                        }
-                                    }
 
-                                    if should_process_cached_messages {
-                                        // Process cached messages only after we actually advanced/applied commit state.
-                                        match self.process_cached_messages(&room_id).await {
+                                            if should_process_cached_messages {
+                                                // Process cached messages only after we actually advanced/applied commit state.
+                                                match self.process_cached_messages(&room_id).await {
                                             Ok(_) => tracing::debug!(
                                                 "Cached messages processed successfully for room {}",
                                                 room_id
@@ -2439,88 +2522,99 @@ impl UserService for Service {
                                                 e
                                             ),
                                         }
-                                    }
-                                }
-                                RTCMessageInContent::Proposal(proposal_info) => {
-                                    let room_id_str =
-                                        String::from_utf8_lossy(&proposal_info.room_id);
-                                    let proposal_message = mls_types::MlsMessage::try_from(
-                                        proposal_info.proposal.clone(),
-                                    )
-                                    .map_err(|e| {
-                                        tracing::error!(
-                                            ws_msg_id = msg_id_for_log
-                                                .as_deref()
-                                                .unwrap_or("n/a"),
-                                            room_id = %room_id_str,
-                                            error = %e,
-                                            "Failed to parse proposal message"
-                                        );
-                                        e
-                                    })?;
-                                    let room_id = String::from_utf8(proposal_info.room_id.clone())
-                                        .map_err(|e| {
-                                            tracing::error!(
+                                            }
+                                        }
+                                        RTCMessageInContent::Proposal(proposal_info) => {
+                                            let room_id_str =
+                                                String::from_utf8_lossy(&proposal_info.room_id);
+                                            let proposal_message = mls_types::MlsMessage::try_from(
+                                                proposal_info.proposal.clone(),
+                                            )
+                                            .map_err(|e| {
+                                                tracing::error!(
+                                                    ws_msg_id = msg_id_for_log
+                                                        .as_deref()
+                                                        .unwrap_or("n/a"),
+                                                    room_id = %room_id_str,
+                                                    error = %e,
+                                                    "Failed to parse proposal message"
+                                                );
+                                                e
+                                            })?;
+                                            let room_id =
+                                                String::from_utf8(proposal_info.room_id.clone())
+                                                    .map_err(|e| {
+                                                        tracing::error!(
+                                                            ws_msg_id = msg_id_for_log
+                                                                .as_deref()
+                                                                .unwrap_or("n/a"),
+                                                            error = %e,
+                                                            "Failed to parse room_id as UTF-8"
+                                                        );
+                                                        e
+                                                    })?;
+                                            let proposal_epoch = proposal_message.epoch();
+                                            let proposal_type =
+                                                describe_proposal_kind(&proposal_message)
+                                                    .unwrap_or("UNKNOWN");
+                                            tracing::info!(
                                                 ws_msg_id = msg_id_for_log
                                                     .as_deref()
                                                     .unwrap_or("n/a"),
-                                                error = %e,
-                                                "Failed to parse room_id as UTF-8"
+                                                room_id = %room_id,
+                                                proposal_epoch = ?proposal_epoch,
+                                                proposal_type = proposal_type,
+                                                "Received proposal message"
                                             );
-                                            e
-                                        })?;
-                                    let proposal_epoch = proposal_message.epoch();
-                                    let proposal_type = describe_proposal_kind(&proposal_message)
-                                        .unwrap_or("UNKNOWN");
-                                    tracing::info!(
-                                        ws_msg_id = msg_id_for_log
-                                            .as_deref()
-                                            .unwrap_or("n/a"),
-                                        room_id = %room_id,
-                                        proposal_epoch = ?proposal_epoch,
-                                        proposal_type = proposal_type,
-                                        "Received proposal message"
-                                    );
-                                    let mut should_process_cached_messages = false;
-                                    match self
-                                        .process_proposal_message(proposal_message, &room_id)
-                                        .await
-                                    {
-                                        Ok(ProposalProcessingOutcome::Applied) => {
-                                            should_process_cached_messages = true;
-                                        }
-                                        Ok(ProposalProcessingOutcome::NoStateChange) => {
-                                            tracing::debug!(
+                                            let mut should_process_cached_messages = false;
+                                            match self
+                                                .process_proposal_message(
+                                                    proposal_message,
+                                                    &room_id,
+                                                )
+                                                .await
+                                            {
+                                                Ok(ProposalProcessingOutcome::Applied) => {
+                                                    should_process_cached_messages = true;
+                                                }
+                                                Ok(ProposalProcessingOutcome::NoStateChange) => {
+                                                    tracing::debug!(
                                                 "Proposal did not change state for room {}, skipping cached message processing",
                                                 room_id
                                             );
-                                        }
-                                        Ok(ProposalProcessingOutcome::DeferredFutureEpoch) => {
-                                            tracing::debug!(
+                                                }
+                                                Ok(
+                                                    ProposalProcessingOutcome::DeferredFutureEpoch,
+                                                ) => {
+                                                    tracing::debug!(
                                                 "Proposal deferred for future epoch in room {}, skipping cached message processing",
                                                 room_id
                                             );
-                                        }
-                                        Err(e) => {
-                                            tracing::warn!(
-                                                "Failed to process proposal message: {}",
-                                                e
-                                            );
-                                            let proposal_message = mls_types::MlsMessage::try_from(
-                                                proposal_info.proposal.clone(),
-                                            )?;
-                                            let _ = self
-                                                .cache_proposal_message(&room_id, proposal_message)
-                                                .await;
-                                            tracing::info!(
+                                                }
+                                                Err(e) => {
+                                                    tracing::warn!(
+                                                        "Failed to process proposal message: {}",
+                                                        e
+                                                    );
+                                                    let proposal_message =
+                                                        mls_types::MlsMessage::try_from(
+                                                            proposal_info.proposal.clone(),
+                                                        )?;
+                                                    let _ = self
+                                                        .cache_proposal_message(
+                                                            &room_id,
+                                                            proposal_message,
+                                                        )
+                                                        .await;
+                                                    tracing::info!(
                                                 "Cached proposal message for later processing"
                                             );
-                                        }
-                                    }
+                                                }
+                                            }
 
-                                    if should_process_cached_messages {
-                                        // Process cached messages only after proposal was accepted into current epoch state.
-                                        match self.process_cached_messages(&room_id).await {
+                                            if should_process_cached_messages {
+                                                // Process cached messages only after proposal was accepted into current epoch state.
+                                                match self.process_cached_messages(&room_id).await {
                                             Ok(_) => tracing::debug!(
                                                 "Cached messages processed successfully for room {}",
                                                 room_id
@@ -2531,50 +2625,74 @@ impl UserService for Service {
                                                 e
                                             ),
                                         }
-                                    }
-                                }
+                                            }
+                                        }
 
-                                RTCMessageInContent::LiveKitAdminChange(
-                                    livekit_admin_change_info,
-                                ) => {
-                                    let room_id = String::from_utf8(
-                                        livekit_admin_change_info.room_id.clone(),
-                                    )?;
-                                    let participant_uid = String::from_utf8(
-                                        livekit_admin_change_info.participant_uid.clone(),
-                                    )?;
-                                    let participant_type =
-                                        livekit_admin_change_info.participant_type;
-                                    tracing::info!(
-                                        ws_msg_id = msg_id_for_log
-                                            .as_deref()
-                                            .unwrap_or("n/a"),
-                                        room_id = %room_id,
-                                        participant_uid = %participant_uid,
-                                        participant_type = participant_type,
-                                        "Received livekit admin change"
-                                    );
-                                    self.handle_livekit_admin_change(
-                                        &room_id,
-                                        participant_uid,
-                                        participant_type,
-                                    )
-                                    .await?;
-                                }
-                                RTCMessageInContent::RemoveLeafNode(_mls_remove_leaf_node_info) => {
-                                    tracing::debug!(
-                                        "Received RemoveLeafNode message (not being used)"
-                                    );
-                                }
-                                RTCMessageInContent::SendCommit(_mls_commit_info) => {
-                                    tracing::debug!("Received SendCommit message (not being used)");
-                                }
-                                RTCMessageInContent::SendProposalAndCommit(
-                                    _mls_proposal_and_commit_info,
-                                ) => {
-                                    tracing::debug!(
+                                        RTCMessageInContent::LiveKitAdminChange(
+                                            livekit_admin_change_info,
+                                        ) => {
+                                            let room_id = String::from_utf8(
+                                                livekit_admin_change_info.room_id.clone(),
+                                            )?;
+                                            let participant_uid = String::from_utf8(
+                                                livekit_admin_change_info.participant_uid.clone(),
+                                            )?;
+                                            let participant_type =
+                                                livekit_admin_change_info.participant_type;
+                                            tracing::info!(
+                                                ws_msg_id = msg_id_for_log
+                                                    .as_deref()
+                                                    .unwrap_or("n/a"),
+                                                room_id = %room_id,
+                                                participant_uid = %participant_uid,
+                                                participant_type = participant_type,
+                                                "Received livekit admin change"
+                                            );
+                                            self.handle_livekit_admin_change(
+                                                &room_id,
+                                                participant_uid,
+                                                participant_type,
+                                            )
+                                            .await?;
+                                        }
+                                        RTCMessageInContent::RemoveLeafNode(
+                                            _mls_remove_leaf_node_info,
+                                        ) => {
+                                            tracing::debug!(
+                                                "Received RemoveLeafNode message (not being used)"
+                                            );
+                                        }
+                                        RTCMessageInContent::SendCommit(_mls_commit_info) => {
+                                            tracing::debug!(
+                                                "Received SendCommit message (not being used)"
+                                            );
+                                        }
+                                        RTCMessageInContent::SendProposalAndCommit(
+                                            _mls_proposal_and_commit_info,
+                                        ) => {
+                                            tracing::debug!(
                                         "Received SendProposalAndCommit message (not being used)"
                                     );
+                                        }
+                                        RTCMessageInContent::JoinDecision(join_decision_info) => {
+                                            requires_ack = false;
+                                            tracing::info!(
+                                                ws_msg_id =
+                                                    msg_id_for_log.as_deref().unwrap_or("n/a"),
+                                                "Received join decision notification"
+                                            );
+                                            self.handle_join_decision(join_decision_info).await?;
+                                        }
+                                        RTCMessageInContent::JoinRequest(_)
+                                        | RTCMessageInContent::JoinRequestRemoved(_) => {
+                                            unreachable!("join request frames are handled before MLS processing")
+                                        }
+                                        RTCMessageInContent::AgentBundle(
+                                            _mls_agent_bundle_info,
+                                        ) => {
+                                            todo!()
+                                        }
+                                    }
                                 }
                                 RTCMessageInContent::JoinRequest(_) => {
                                     tracing::debug!(
@@ -2606,21 +2724,23 @@ impl UserService for Service {
                     tracing::warn!("No payload extracted from binary message");
                 }
 
-                if let Some(message_id) = msg_id {
-                    // Encode UUID back to CBOR for ack
-                    let mut ack_bytes = Vec::new();
-                    ciborium::into_writer(
-                        &ClientAck {
-                            msg_type: "ack".to_string(),
-                            id: message_id,
-                        },
-                        &mut ack_bytes,
-                    )?;
-                    self.ws_client
-                        .send_message(WebSocketMessage::Binary(ack_bytes))
-                        .await?;
-                    #[cfg(debug_assertions)]
-                    tracing::info!("Ack sent for message ID: {:?}", message_id);
+                if requires_ack {
+                    if let Some(message_id) = msg_id {
+                        // Encode UUID back to CBOR for ack
+                        let mut ack_bytes = Vec::new();
+                        ciborium::into_writer(
+                            &ClientAck {
+                                msg_type: "ack".to_string(),
+                                id: message_id,
+                            },
+                            &mut ack_bytes,
+                        )?;
+                        self.ws_client
+                            .send_message(WebSocketMessage::Binary(ack_bytes))
+                            .await?;
+                        #[cfg(debug_assertions)]
+                        tracing::info!("Ack sent for message ID: {:?}", message_id);
+                    }
                 }
 
                 #[cfg(debug_assertions)]
@@ -2752,7 +2872,8 @@ impl UserService for Service {
                 // join by external commit
                 Ok(ratchet_tree_and_group_info) => {
                     // check if the server version is supported
-                    if ratchet_tree_and_group_info.version != GroupInfoVersion::V1 {
+                    if !SUPPORTED_GROUP_INFO_VERSIONS.contains(&ratchet_tree_and_group_info.version)
+                    {
                         let mut state = self.state.lock().await;
                         state.set_mls_group_state(MlsGroupState::ServerVersionNotSupported);
                         return Err(MeetCoreError::MlsServerVersionNotSupported);
@@ -2982,7 +3103,8 @@ impl UserService for Service {
                     cached_group_info = Some(ratchet_tree_and_group_info.clone());
 
                     // check if the server version is supported
-                    if ratchet_tree_and_group_info.version != GroupInfoVersion::V1 {
+                    if !SUPPORTED_GROUP_INFO_VERSIONS.contains(&ratchet_tree_and_group_info.version)
+                    {
                         let mut state = self.state.lock().await;
                         state.set_mls_group_state(MlsGroupState::ServerVersionNotSupported);
                         return Err(MeetCoreError::MlsServerVersionNotSupported);
@@ -3433,11 +3555,786 @@ impl UserService for Service {
 
         Ok(())
     }
+
+    async fn update_waiting_room_setting_policy(
+        &self,
+        user_identifier: &UserId,
+        meet_link_name: &str,
+        enable: bool,
+    ) -> Result<(), MeetCoreError> {
+        Service::update_waiting_room_setting_policy(self, user_identifier, meet_link_name, enable)
+            .await
+    }
 }
 
 impl Service {
+    async fn handle_join_request(&self, info: JoinRequestInfo) -> Result<(), anyhow::Error> {
+        let request_id = String::from_utf8_lossy(&info.request_id).into_owned();
+        let participant_uid = String::from_utf8_lossy(&info.participant_uid).into_owned();
+        tracing::info!(
+            "handle_join_request request_id={} participant_uid={} expires_at={}",
+            request_id,
+            participant_uid,
+            info.expires_at
+        );
+
+        {
+            let mut state = self.state.lock().await;
+            state.pending_waiting_room_join_requests.insert(
+                request_id.clone(),
+                PendingWaitingRoomJoinRequest {
+                    request_id: request_id.clone(),
+                    participant_uid: participant_uid.clone(),
+                    encrypted_key_package: info.encrypted_key_package,
+                    expires_at: info.expires_at,
+                },
+            );
+        }
+
+        if let Some(handler) = self.join_request_handler.as_ref() {
+            // Dispatch off the WS path: handlers may call App APIs that take
+            // `user_service.write()`, which deadlocks while `read()` is held here.
+            let handler = Arc::clone(handler);
+            let request_id_for_cb = request_id.clone();
+            let participant_uid_for_cb = participant_uid.clone();
+            let expires_at = info.expires_at;
+            spawn_detached(async move {
+                let mut handler = handler.lock().await;
+                handler(
+                    JoinRequestChange::Added,
+                    request_id_for_cb,
+                    participant_uid_for_cb,
+                    expires_at,
+                )
+                .await;
+            });
+        }
+
+        Ok(())
+    }
+
+    /// Replays join requests that arrived before the host registered a handler.
+    pub async fn notify_pending_waiting_room_join_requests(&self) {
+        let Some(handler) = self.join_request_handler.as_ref() else {
+            return;
+        };
+
+        let pending: Vec<PendingWaitingRoomJoinRequest> = {
+            let state = self.state.lock().await;
+            state
+                .pending_waiting_room_join_requests
+                .values()
+                .cloned()
+                .collect()
+        };
+
+        if pending.is_empty() {
+            return;
+        }
+
+        let handler = Arc::clone(handler);
+        for request in pending {
+            tracing::info!(
+                request_id = %request.request_id,
+                participant_uid = %request.participant_uid,
+                "Replaying pending waiting-room join request"
+            );
+            let handler = Arc::clone(&handler);
+            let request_id = request.request_id.clone();
+            let participant_uid = request.participant_uid.clone();
+            let expires_at = request.expires_at;
+            spawn_detached(async move {
+                let mut handler = handler.lock().await;
+                handler(
+                    JoinRequestChange::Added,
+                    request_id,
+                    participant_uid,
+                    expires_at,
+                )
+                .await;
+            });
+        }
+    }
+
+    fn spawn_join_request_removed_notification(&self, request_id: String, participant_uid: String) {
+        let Some(handler) = self.join_request_handler.as_ref() else {
+            return;
+        };
+        let handler = Arc::clone(handler);
+        spawn_detached(async move {
+            let mut handler = handler.lock().await;
+            handler(JoinRequestChange::Removed, request_id, participant_uid, 0).await;
+        });
+    }
+
+    async fn handle_join_request_removed(
+        &self,
+        info: JoinRequestRemovedInfo,
+    ) -> Result<(), anyhow::Error> {
+        let participant_uid = String::from_utf8_lossy(&info.participant_uid).into_owned();
+        let request_id = String::from_utf8_lossy(&info.request_id).into_owned();
+
+        // Server fanout may omit request_id; removing by participant_uid only would
+        // drop a newer re-request from the same guest after a reject.
+        if request_id.is_empty() {
+            tracing::info!(
+                participant_uid = %participant_uid,
+                "Ignoring join request removal without request_id"
+            );
+            return Ok(());
+        }
+
+        tracing::info!(
+            participant_uid = %participant_uid,
+            request_id = %request_id,
+            "Processing waiting-room join request removal"
+        );
+
+        {
+            let mut state = self.state.lock().await;
+            state.pending_waiting_room_join_requests.remove(&request_id);
+        }
+
+        self.spawn_join_request_removed_notification(request_id, participant_uid);
+
+        Ok(())
+    }
+
+    async fn handle_join_decision(&self, info: JoinDecisionInfo) -> Result<(), anyhow::Error> {
+        let request_id = String::from_utf8_lossy(&info.request_id).into_owned();
+        let admitted = info.status == JoinDecisionStatus::Admitted;
+        tracing::info!(
+            request_id = %request_id,
+            admitted,
+            "Processing join decision"
+        );
+
+        if admitted {
+            if let Some(handler) = self.join_decision_handler.as_ref() {
+                let handler = Arc::clone(handler);
+                spawn_detached(async move {
+                    let mut handler = handler.lock().await;
+                    handler(request_id, admitted).await;
+                });
+            }
+            return Ok(());
+        }
+
+        let pending_id = {
+            let state = self.state.lock().await;
+            let Some(pending) = state.guest_pending_join_request_id.clone() else {
+                tracing::info!(
+                    request_id = %request_id,
+                    "Ignoring join decision reject with no pending guest request"
+                );
+                return Ok(());
+            };
+            if request_id.is_empty() {
+                tracing::info!(
+                    pending = %pending,
+                    "Ignoring join decision reject without request_id"
+                );
+                return Ok(());
+            }
+            if request_id != pending {
+                tracing::info!(
+                    request_id = %request_id,
+                    pending = %pending,
+                    "Ignoring stale join decision reject"
+                );
+                return Ok(());
+            }
+            pending
+        };
+
+        {
+            let mut state = self.state.lock().await;
+            if state.guest_pending_join_request_id.as_deref() == Some(pending_id.as_str()) {
+                state.guest_pending_join_request_id = None;
+            }
+        }
+
+        if let Some(handler) = self.join_decision_handler.as_ref() {
+            let handler = Arc::clone(handler);
+            spawn_detached(async move {
+                let mut handler = handler.lock().await;
+                handler(pending_id, false).await;
+            });
+        }
+
+        Ok(())
+    }
+
+    /// Returns whether MLS group info exists on the server (host has started the meeting).
+    ///
+    /// Uses the lightweight `?summary=true` endpoint (epoch + group_id only) so waiting-room
+    /// joiners do not download the full ratchet tree / group info blob on each poll.
+    pub async fn has_mls_group_info(
+        &self,
+        user_identifier: &UserId,
+    ) -> Result<bool, MeetCoreError> {
+        let base64_sd_kbt = self.get_sd_kbt(user_identifier).await?;
+        match self
+            .http_client
+            .get_group_info_summary(&base64_sd_kbt)
+            .await
+        {
+            Ok(_) => Ok(true),
+            Err(HttpClientError::GroupInfoSummaryEmpty) => Ok(false),
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    pub async fn reset_waiting_room_guest_join_state(&self) {
+        let mut state = self.state.lock().await;
+        state.reset_waiting_room_guest_join_state();
+        drop(state);
+        self.join_proposal_welcome_notify.notify_waiters();
+    }
+
+    /// Guest cancels an outstanding join request on the server (best-effort) and resets
+    /// local waiting-room admission state so welcome-wait loops exit.
+    pub async fn cancel_join_request(
+        &self,
+        user_identifier: &UserId,
+        meeting_link_name: &str,
+    ) -> Result<(), MeetCoreError> {
+        let base64_sd_kbt = self.get_sd_kbt(user_identifier).await?;
+
+        if let Err(e) = self
+            .http_client
+            .cancel_join_request(&base64_sd_kbt, meeting_link_name)
+            .await
+        {
+            tracing::warn!(
+                meeting_link_name,
+                error = %e,
+                "cancel_join_request HTTP failed; resetting local guest state anyway"
+            );
+        }
+
+        self.reset_waiting_room_guest_join_state().await;
+        Ok(())
+    }
+
+    pub async fn submit_join_request(
+        &self,
+        user_identifier: &UserId,
+        meeting_link_name: &str,
+        encrypted_key_package: &[u8],
+    ) -> Result<String, MeetCoreError> {
+        self.reset_waiting_room_guest_join_state().await;
+
+        let base64_sd_kbt = self.get_sd_kbt(user_identifier).await?;
+        let request_id = self
+            .http_client
+            .submit_join_request(&base64_sd_kbt, meeting_link_name, encrypted_key_package)
+            .await
+            .map_err(MeetCoreError::from)?;
+
+        {
+            let mut state = self.state.lock().await;
+            state.guest_pending_join_request_id = Some(request_id.clone());
+            if state.mls_group_state != MlsGroupState::Success {
+                state.set_mls_group_state(MlsGroupState::WaitingForJoinProposalWelcome);
+            }
+        }
+
+        Ok(request_id)
+    }
+
+    pub async fn is_mls_group_joined(&self) -> bool {
+        let state = self.state.lock().await;
+        state.mls_group_state == MlsGroupState::Success
+    }
+
+    /// Waits for a join-proposal Welcome over the MLS websocket, then joins the group.
+    /// Caller must set `MlsGroupState::WaitingForJoinProposalWelcome` before waiting unless
+    /// the group is already in `Success`.
+    ///
+    /// `timeout_secs`: max wait for Welcome; `None` uses [`JOIN_PROPOSAL_TIMEOUT`] (15s).
+    pub async fn wait_for_join_proposal_welcome_and_join(
+        &self,
+        participant_id: &UserId,
+        meeting_link_name: &str,
+        timeout_secs: Option<u64>,
+    ) -> Result<(), MeetCoreError> {
+        let meeting_link_name = MeetingLinkName::from(meeting_link_name);
+        let join_deadline = Duration::from_secs(timeout_secs.unwrap_or(JOIN_PROPOSAL_TIMEOUT));
+        let start_time = instant::now();
+
+        loop {
+            let welcome_notify = self.join_proposal_welcome_notify.notified();
+            {
+                let state = self.state.lock().await;
+                if state.mls_group_state == MlsGroupState::Success {
+                    break;
+                }
+                if state.mls_group_state == MlsGroupState::WaitingForJoinProposalWelcome {
+                    if let Some(welcome_info) = state.get_welcome_info() {
+                        drop(state);
+                        self.mls_service
+                            .join_group_via_welcome(
+                                participant_id,
+                                &meeting_link_name,
+                                welcome_info,
+                            )
+                            .await
+                            .map_err(|e| {
+                                tracing::warn!("Failed to join group with welcome info: {:?}", e);
+                                MeetCoreError::RoomJoinFailed {
+                                    room_id: meeting_link_name.as_str().to_string(),
+                                    reason: "Failed to join group with welcome info".to_string(),
+                                }
+                            })?;
+                        let mut state = self.state.lock().await;
+                        state.set_mls_group_state(MlsGroupState::Success);
+                        state.set_welcome_info(None);
+                        tracing::info!("Join group with welcome info successfully");
+                        break;
+                    }
+                } else if state.mls_group_state == MlsGroupState::Pending {
+                    tracing::info!("Waiting room welcome wait cancelled");
+                    return Err(MeetCoreError::WaitingRoomJoinCancelled);
+                } else {
+                    tracing::warn!(
+                        "Join proposal state is not valid: {:?}",
+                        state.mls_group_state
+                    );
+                    return Err(MeetCoreError::RoomJoinFailed {
+                        room_id: meeting_link_name.as_str().to_string(),
+                        reason: "Join proposal state is not valid".to_string(),
+                    });
+                }
+            }
+
+            let elapsed = start_time.elapsed();
+            if elapsed >= join_deadline {
+                return Err(MeetCoreError::RoomJoinFailed {
+                    room_id: meeting_link_name.as_str().to_string(),
+                    reason: "Join proposal timeout, didn't receive the welcome message from the server, please try again"
+                        .to_string(),
+                });
+            }
+            let remaining = join_deadline.saturating_sub(elapsed);
+            if timeout(remaining, welcome_notify).await.is_err() {
+                return Err(MeetCoreError::RoomJoinFailed {
+                    room_id: meeting_link_name.as_str().to_string(),
+                    reason: "Join proposal timeout, didn't receive the welcome message from the server, please try again"
+                        .to_string(),
+                });
+            }
+        }
+
+        Ok(())
+    }
+
+    pub async fn reject_waiting_room_join_request(
+        &self,
+        user_identifier: &UserId,
+        meeting_link_name: &str,
+        request_id: &str,
+        participant_uid: &str,
+    ) -> Result<(), MeetCoreError> {
+        tracing::info!(
+            "reject_waiting_room_join_request start meeting_link_name={} request_id={} participant_uid={}",
+            meeting_link_name, request_id, participant_uid
+        );
+        let group_arc = {
+            let store = self.mls_store.read().await;
+            store
+                .group_map
+                .get(meeting_link_name)
+                .ok_or_else(|| MeetCoreError::InternalError {
+                    message: format!("MLS group not found for room {meeting_link_name}"),
+                    details: None,
+                })?
+                .clone()
+        };
+
+        {
+            let mls_group = group_arc.read().await;
+            crate::service::utils::ensure_room_admin(&mls_group)?;
+        }
+
+        let base64_sd_kbt = self.get_sd_kbt(user_identifier).await?;
+        self.http_client
+            .reject_join_request(
+                &base64_sd_kbt,
+                meeting_link_name,
+                request_id,
+                participant_uid,
+            )
+            .await?;
+
+        let removed = {
+            let mut state = self.state.lock().await;
+            state.pending_waiting_room_join_requests.remove(request_id)
+        };
+
+        if removed.is_some() {
+            self.spawn_join_request_removed_notification(
+                request_id.to_string(),
+                participant_uid.to_string(),
+            );
+        }
+
+        Ok(())
+    }
+
+    /// Returns pending join requests to admit. When `request_ids` is `None`, returns all pending.
+    pub async fn pending_waiting_room_join_requests_for_admit(
+        &self,
+        request_ids: Option<Vec<String>>,
+    ) -> Vec<PendingWaitingRoomJoinRequest> {
+        let state = self.state.lock().await;
+        match request_ids {
+            Some(ids) => ids
+                .into_iter()
+                .filter_map(|id| state.pending_waiting_room_join_requests.get(&id).cloned())
+                .collect(),
+            None => state
+                .pending_waiting_room_join_requests
+                .values()
+                .cloned()
+                .collect(),
+        }
+    }
+
+    /// Host admits one or more waiting-room joiners by building Add proposals, a commit,
+    /// groupInfo, ratchet tree, and welcome, then POSTing to `/v1/groupInfo`.
+    pub async fn admit_waiting_room_join_requests(
+        &self,
+        user_identifier: &UserId,
+        meeting_link_name: &str,
+        key_packages: Vec<mls_types::KeyPackage>,
+        admitted_request_ids: Vec<String>,
+    ) -> Result<(), MeetCoreError> {
+        tracing::info!(
+            "admit_waiting_room_join_requests start meeting_link_name={} admit_count={} request_ids={:?}",
+            meeting_link_name, key_packages.len(), admitted_request_ids
+        );
+        if key_packages.is_empty() {
+            return Ok(());
+        }
+
+        let room_id = meeting_link_name;
+        let group_arc = {
+            let store = self.mls_store.read().await;
+            store
+                .group_map
+                .get(room_id)
+                .ok_or_else(|| MeetCoreError::InternalError {
+                    message: format!("MLS group not found for room {room_id}"),
+                    details: None,
+                })?
+                .clone()
+        };
+
+        let mut mls_group = group_arc.write().await;
+
+        crate::service::utils::ensure_room_admin(&mls_group)?;
+
+        let roster = mls_group.all_device_ids().collect::<HashSet<_>>();
+        let mut proposal_args: Vec<ProposalArg> = Vec::with_capacity(key_packages.len());
+        let mut added_user_identifiers = HashSet::new();
+
+        for key_package in key_packages {
+            let Ok(mut cred) = key_package.credential() else {
+                tracing::warn!("Failed to extract credential from waiting-room key package");
+                continue;
+            };
+            let Ok(device_id) = cred.device_id() else {
+                tracing::warn!("Failed to extract device_id from waiting-room key package");
+                continue;
+            };
+            if roster.contains(&device_id) {
+                tracing::info!(
+                    device_id = %device_id,
+                    "Skipping Add proposal: device already in roster"
+                );
+                continue;
+            }
+            added_user_identifiers.insert(device_id.owning_identity_id().as_owned());
+            proposal_args.push(ProposalArg::Add(Box::new(key_package.into())));
+        }
+
+        if proposal_args.is_empty() {
+            let mut state = self.state.lock().await;
+            for request_id in admitted_request_ids {
+                state.pending_waiting_room_join_requests.remove(&request_id);
+            }
+            return Ok(());
+        }
+
+        let participant_list: HashSet<_> = mls_group
+            .participant_list()?
+            .map(|l| l.participants.into_iter().map(|p| p.user).collect())
+            .unwrap_or_default();
+        let epoch = *mls_group.epoch();
+
+        for user_identifier in added_user_identifiers {
+            let identifier = ProtonMeetIdentityProvider::user_identifier(&user_identifier);
+            if participant_list.contains(&identifier) {
+                continue;
+            }
+            let Some(role_update) = mls_group
+                .authorizer()?
+                .role_proposal_for_added_user(epoch, identifier, UserRole::Member)?
+                .map(|component| ProposalArg::UpdateComponent {
+                    id: component.component_id,
+                    data: component.data,
+                })
+            else {
+                tracing::error!(
+                    "Failed to compute role for admitted user identifier: {:?}",
+                    user_identifier
+                );
+                continue;
+            };
+            proposal_args.push(role_update);
+        }
+
+        proposal_args.push(ProposalArg::PskExternal {
+            id: ExternalPskId(room_id.as_bytes().to_vec()),
+        });
+
+        let (commit_bundle, ..) = mls_group.new_commit(proposal_args).await?;
+
+        let group_info = commit_bundle
+            .group_info
+            .ok_or_else(|| anyhow::anyhow!("Expected commit to have a GroupInfo"))?;
+        let group_info_message = convert_mls_types_to_spec(&group_info)?;
+        let ratchet_tree_option = commit_bundle
+            .ratchet_tree
+            .ok_or_else(|| anyhow::anyhow!("Expected commit to have a RatchetTree"))?
+            .try_into()
+            .map_err(|e| anyhow::anyhow!("Failed to convert ratchet tree: {e}"))?;
+
+        let base64_sd_kbt = self.get_sd_kbt(user_identifier).await?;
+        let welcome = commit_bundle.welcome.map(TryInto::try_into).transpose()?;
+        let commit_info = MlsCommitInfo {
+            room_id: room_id.as_bytes().to_vec(),
+            welcome_message: welcome,
+            commit: convert_mls_types_to_spec(&commit_bundle.commit)?,
+        };
+
+        let result = self
+            .http_client
+            .update_group_info(
+                &base64_sd_kbt,
+                &group_info_message,
+                &ratchet_tree_option,
+                Some(&commit_info),
+                None,
+            )
+            .await;
+
+        match result {
+            Ok(_) => {
+                mls_group.merge_pending_commit().await?;
+                tracing::info!(
+                    room_id,
+                    admitted_count = admitted_request_ids.len(),
+                    "Admitted waiting-room joiners"
+                );
+            }
+            Err(e) => {
+                mls_group.clear_pending_commit();
+                mls_group.clear_pending_proposals();
+                mls_group.write_to_storage().await?;
+                return Err(e.into());
+            }
+        }
+
+        drop(mls_group);
+
+        {
+            let mut state = self.state.lock().await;
+            for request_id in &admitted_request_ids {
+                state.pending_waiting_room_join_requests.remove(request_id);
+            }
+        }
+
+        if let Some(handler) = self.mls_group_update_handler.as_ref() {
+            let mut handler = handler.lock().await;
+            handler(room_id.to_string(), GroupKeyUpdateReason::Join).await;
+        }
+
+        Ok(())
+    }
+
+    fn waiting_room_setting_request_body(
+        commit: &crate::service::waiting_room_setting::WaitingRoomPolicyCommit,
+    ) -> Result<String, MeetCoreError> {
+        let request = UpdateGroupInfoRequest {
+            data: commit.group_info_tls.clone(),
+            commit_data: Some(commit.commit_data.clone()),
+            proposals: None,
+        };
+        let inner_json = serialize_update_group_info_request(&request).map_err(|e| {
+            MeetCoreError::InternalError {
+                message: format!("Failed to serialize waiting-room group info request: {e}"),
+                details: None,
+            }
+        })?;
+        let php_field = encode_php_waiting_room_data_field(&inner_json).map_err(|e| {
+            MeetCoreError::InternalError {
+                message: format!("Failed to encode waiting-room PHP payload: {e}"),
+                details: None,
+            }
+        })?;
+        serde_json::to_string(&php_field).map_err(|e| MeetCoreError::InternalError {
+            message: format!("Failed to encode waiting-room request JSON: {e}"),
+            details: None,
+        })
+    }
+
+    async fn prepare_waiting_room_setting_update(
+        &self,
+        mls_group: &mut MlsGroup<MemKv>,
+        user_identifier: &UserId,
+        meet_link_name: &str,
+        enable: bool,
+    ) -> Result<PreparedWaitingRoomSettingUpdate, MeetCoreError> {
+        let commit = build_waiting_room_policy_commit(mls_group, meet_link_name, enable).await?;
+
+        let request_body_json = Self::waiting_room_setting_request_body(&commit)?;
+        let meeting_id = self.get_meeting_id(user_identifier).await?;
+        let base64_sd_kbt = self.get_sd_kbt(user_identifier).await?;
+
+        Ok(PreparedWaitingRoomSettingUpdate {
+            meeting_id,
+            base64_sd_kbt,
+            request_body_json,
+        })
+    }
+
+    /// Toggle waiting-room policy for an in-call host/co-host (`RoomAdmin`).
+    ///
+    /// Best-effort admit-all before disable is handled by [`crate::app::App::update_waiting_room_setting`].
+    async fn update_waiting_room_setting_policy(
+        &self,
+        user_identifier: &UserId,
+        meet_link_name: &str,
+        enable: bool,
+    ) -> Result<(), MeetCoreError> {
+        tracing::info!(
+            "update_waiting_room_setting start meet_link_name={} enable={}",
+            meet_link_name,
+            enable
+        );
+        let group_arc = {
+            let store = self.mls_store.read().await;
+            store
+                .group_map
+                .get(meet_link_name)
+                .ok_or_else(|| MeetCoreError::InternalError {
+                    message: format!(
+                        "MLS group not found for room {meet_link_name} (in-call only)"
+                    ),
+                    details: None,
+                })?
+                .clone()
+        };
+
+        for attempt in 0..WR_SETTING_MAX_ATTEMPTS {
+            let mut mls_group = group_arc.write().await;
+            let prepared = self
+                .prepare_waiting_room_setting_update(
+                    &mut mls_group,
+                    user_identifier,
+                    meet_link_name,
+                    enable,
+                )
+                .await?;
+
+            let result = self
+                .meeting_api
+                .update_waiting_room_setting(
+                    &prepared.meeting_id,
+                    &prepared.base64_sd_kbt,
+                    &prepared.request_body_json,
+                    enable,
+                )
+                .await;
+
+            match result {
+                Ok(()) => {
+                    merge_waiting_room_policy_commit(&mut mls_group).await?;
+                    mls_group.write_to_storage().await?;
+                    tracing::info!(
+                        meet_link_name,
+                        enable,
+                        attempt = attempt + 1,
+                        "Waiting-room policy setting updated"
+                    );
+                    return Ok(());
+                }
+                Err(HttpClientError::ErrorCode(status, _)) if status.as_u16() == 409 => {
+                    mls_group.clear_pending_commit();
+                    mls_group.write_to_storage().await?;
+                    if attempt >= WR_SETTING_MAX_ATTEMPTS - 1 {
+                        tracing::warn!(
+                            meet_link_name,
+                            enable,
+                            "Waiting-room policy update failed after {WR_SETTING_MAX_ATTEMPTS} attempts (409 conflict)"
+                        );
+                        return Err(MeetCoreError::HttpClientError {
+                            status: 409,
+                            message: "Waiting-room policy update conflict (max retries)".into(),
+                            details: None,
+                        });
+                    }
+                    tracing::info!(
+                        meet_link_name,
+                        attempt = attempt + 1,
+                        "Waiting-room policy update conflict (409), retrying"
+                    );
+                }
+                Err(HttpClientError::ErrorCode(status, _)) if status.as_u16() == 422 => {
+                    mls_group.clear_pending_commit();
+                    mls_group.write_to_storage().await?;
+                    tracing::warn!(
+                        meet_link_name,
+                        enable,
+                        "Waiting-room policy update rejected (422 invalid transition)"
+                    );
+                    return Err(MeetCoreError::MlsStatusCode(422));
+                }
+                Err(e) => {
+                    abort_waiting_room_policy_commit(&mut mls_group);
+                    mls_group.write_to_storage().await?;
+                    tracing::warn!(
+                        meet_link_name,
+                        enable,
+                        ?e,
+                        "Waiting-room policy update failed, aborted pending commit"
+                    );
+                    return Err(e.into());
+                }
+            }
+            drop(mls_group);
+        }
+
+        unreachable!("waiting-room policy update retry loop should return")
+    }
+
+    /// Parses serialized MLS key package bytes into a [`mls_types::KeyPackage`].
+    pub fn parse_key_package_bytes(
+        serialized: &[u8],
+    ) -> Result<mls_types::KeyPackage, MeetCoreError> {
+        mls_types::KeyPackage::mls_decode(&mut &serialized[..]).map_err(|e| {
+            MeetCoreError::MlsProtocolError {
+                message: format!("Failed to decode key package: {e}"),
+            }
+        })
+    }
+
     /// Check if the user is host from their credential in the MLS group
-    fn is_host_from_credential(mls_group: &MlsGroup<MemKv>) -> Result<bool, anyhow::Error> {
+    pub(crate) fn is_host_from_credential(
+        mls_group: &MlsGroup<MemKv>,
+    ) -> Result<bool, anyhow::Error> {
         let self_leaf_index = mls_group.own_leaf_index()?;
         let mut member = mls_group.find_member(self_leaf_index)?;
 
@@ -3453,6 +4350,71 @@ impl Service {
             }
             _ => Err(anyhow::anyhow!("Credential is not SdCwtDraft04")),
         }
+    }
+
+    #[cfg(not(target_family = "wasm"))]
+    pub fn set_join_decision_handler<F, Fut>(&mut self, callback: F)
+    where
+        F: Fn(String, bool) -> Fut + Send + 'static,
+        Fut: Future<Output = ()> + Unpin + Send + 'static,
+    {
+        tracing::info!("Service set join decision handler");
+        self.join_decision_handler = Some(Arc::new(Mutex::new(Box::new({
+            move |request_id, admitted| {
+                Box::new(callback(request_id, admitted))
+                    as Box<dyn Future<Output = ()> + Send + Unpin>
+            }
+        }))));
+    }
+
+    pub fn clear_join_decision_handler(&mut self) {
+        self.join_decision_handler = None;
+    }
+
+    #[cfg(target_family = "wasm")]
+    pub fn set_join_decision_handler<F, Fut>(&mut self, callback: F)
+    where
+        F: Fn(String, bool) -> Fut + 'static,
+        Fut: Future<Output = ()> + Unpin + 'static,
+    {
+        self.join_decision_handler = Some(Arc::new(Mutex::new(Box::new({
+            move |request_id, admitted| {
+                Box::new(callback(request_id, admitted)) as Box<dyn Future<Output = ()> + Unpin>
+            }
+        }))));
+    }
+
+    #[cfg(not(target_family = "wasm"))]
+    pub fn set_join_request_handler<F, Fut>(&mut self, callback: F)
+    where
+        F: Fn(JoinRequestChange, String, String, u64) -> Fut + Send + 'static,
+        Fut: Future<Output = ()> + Unpin + Send + 'static,
+    {
+        tracing::info!("Service set join request handler");
+        self.join_request_handler = Some(Arc::new(Mutex::new(Box::new({
+            move |change, request_id, participant_uid, expires_at| {
+                Box::new(callback(change, request_id, participant_uid, expires_at))
+                    as Box<dyn Future<Output = ()> + Send + Unpin>
+            }
+        }))));
+    }
+
+    #[cfg(target_family = "wasm")]
+    pub fn set_join_request_handler<F, Fut>(&mut self, callback: F)
+    where
+        F: Fn(JoinRequestChange, String, String, u64) -> Fut + 'static,
+        Fut: Future<Output = ()> + Unpin + 'static,
+    {
+        self.join_request_handler = Some(Arc::new(Mutex::new(Box::new({
+            move |change, request_id, participant_uid, expires_at| {
+                Box::new(callback(change, request_id, participant_uid, expires_at))
+                    as Box<dyn Future<Output = ()> + Unpin>
+            }
+        }))));
+    }
+
+    pub fn clear_join_request_handler(&mut self) {
+        self.join_request_handler = None;
     }
 
     #[cfg(not(target_family = "wasm"))]
@@ -4448,6 +5410,7 @@ impl Service {
 }
 
 const JOIN_PROPOSAL_TIMEOUT: u64 = 15;
+pub const WAITING_ROOM_WELCOME_TIMEOUT: u64 = 300;
 #[async_trait]
 impl NewUserService for Service {
     async fn join_room_with_switch_join_type(
@@ -4455,6 +5418,7 @@ impl NewUserService for Service {
         user_info_token: &UserTokenInfo,
         meeting_link_name: &MeetingLinkName,
         switch_join_type: bool,
+        is_waiting_room: bool,
     ) -> Result<(), MeetCoreError> {
         let base64_sd_kbt = self.get_sd_kbt(&user_info_token.user_id()).await?;
 
@@ -4467,9 +5431,16 @@ impl NewUserService for Service {
             Err(e) => {
                 if matches!(e, HttpClientError::GroupInfoEmpty) {
                     // create group and upload group info
+                    let room_kind: Option<RoomKind> = if is_waiting_room {
+                        Some(RoomKind::BasicRoomWithWaiting {
+                            other_users: vec![],
+                        })
+                    } else {
+                        None
+                    };
                     let (group_info_message, ratchet_tree_option) = self
                         .mls_service
-                        .create_mls_group(meeting_link_name, &user_info_token.user_id())
+                        .create_mls_group(meeting_link_name, &user_info_token.user_id(), room_kind)
                         .await?;
 
                     self.http_client
@@ -4505,7 +5476,7 @@ impl NewUserService for Service {
             }
         };
 
-        if ratchet_tree_and_group_info.version != GroupInfoVersion::V1 {
+        if !SUPPORTED_GROUP_INFO_VERSIONS.contains(&ratchet_tree_and_group_info.version) {
             let mut state = self.state.lock().await;
             state.set_mls_group_state(MlsGroupState::ServerVersionNotSupported);
             return Err(MeetCoreError::MlsServerVersionNotSupported);

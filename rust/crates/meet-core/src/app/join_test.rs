@@ -433,7 +433,7 @@ async fn join_room_with_switch_join_type_falls_back_to_false_on_retryable_error(
     state.active_user_info = Some(joiner_token);
     let app = build_app_with_service(state, join_service).await;
 
-    app.join_room_with_switch_join_type(true)
+    app.join_room_with_switch_join_type(true, false)
         .await
         .expect("should fall back to external commit after retryable proposal failures");
 

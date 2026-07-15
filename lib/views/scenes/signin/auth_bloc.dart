@@ -14,6 +14,7 @@ import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/rust/errors.dart';
 import 'package:meet/rust/proton_meet/models/user.dart';
+import 'package:meet/rust/proton_meet/user_config.dart';
 import 'package:meet/views/scenes/utils.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -156,7 +157,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
       return;
     }
-    final userConfig = await appCoreManager.appCore.getUserConfig();
+    UserConfig? userConfig;
+    try {
+      userConfig = await appCoreManager.appCore.getUserConfig();
+    } catch (e, st) {
+      l.logger.e('getUserConfig after login failed: $e', stackTrace: st);
+    }
     final displayName = _resolvedDisplayName(event.user);
     l.logger.i(
       'onLoggedInUser displayName: $displayName, user.name: ${event.user.name}, user.displayName: ${event.user.displayName}, user.email: ${event.user.email}',
@@ -165,12 +171,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(
       state.copyWith(
         isLoading: false,
-        userConfig: userConfig,
+        userConfig: userConfig ?? state.userConfig,
         displayName: displayName,
         email: event.user.email,
         user: event.user,
         initials: getInitials(displayName, defaultValue: ''),
         isLoggingIn: false,
+        shouldShowFlutterSignIn: false,
         error: '',
       ),
     );

@@ -45,6 +45,8 @@ pub struct MeetingInfo {
     pub session_key: String,
     /// 1 if meeting is locked
     pub locked: u8,
+    /// 1 if meeting has waiting room enabled
+    pub waiting_room: u8,
     /// Maximum duration of this meeting in seconds
     pub max_duration: u32,
     /// Maximum number of participants allowed in this meeting
@@ -98,6 +100,8 @@ pub struct Meeting {
     pub calendar_id: Option<String>,
     /// Linked CalendarEventID
     pub calendar_event_id: Option<String>,
+    /// 1 if meeting has waiting room enabled
+    pub waiting_room: Option<u8>,
 }
 
 #[derive(Debug, Clone)]
@@ -117,6 +121,8 @@ pub struct UpcomingMeeting {
     pub create_time: Option<DateTime<Utc>>,
     pub last_used_time: Option<DateTime<Utc>>,
     pub calendar_event_id: Option<String>,
+    /// 1 if meeting has waiting room enabled
+    pub waiting_room: Option<u8>,
 }
 
 /// Domain object for creating a new meeting
@@ -297,6 +303,7 @@ impl CreateMeeting {
             time_zone: self.time_zone.clone(),
             custom_password: self.custom_password as u8,
             meeting_type: self.meeting_type as u8,
+            waiting_room: 0,
         })
     }
 
@@ -348,6 +355,7 @@ impl CreateMeeting {
             time_zone: self.time_zone.clone(),
             custom_password: self.custom_password as u8,
             meeting_type: self.meeting_type as u8,
+            waiting_room: 0,
         })
     }
 }
@@ -382,6 +390,8 @@ pub struct CreateMeetingParams {
     pub custom_password: u8,
     /// Meeting type enum value
     pub meeting_type: u8,
+    /// 1 if meeting has waiting room enabled
+    pub waiting_room: u8,
 }
 
 #[derive(Debug, Clone)]

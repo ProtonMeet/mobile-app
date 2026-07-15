@@ -1,9 +1,6 @@
-use std::str::from_utf8;
-
 use crate::{key::Key, CryptoError, Result, SRPProof, SRPVerifier, SessionKeyAlgorithm};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
-use hkdf::Hkdf;
 use proton_crypto::{
     crypto::{
         DataEncoding, Decryptor, DecryptorSync, Encryptor, EncryptorSync, PGPMessage, PGPProvider,
@@ -13,10 +10,7 @@ use proton_crypto::{
     srp::{HashedPassword, SRPProvider},
 };
 use proton_crypto_account::salts::KeySecret;
-use proton_crypto_subtle::aead::{AesGcmCiphertext, AesGcmKey};
 use proton_srp::{SRPAuth, SrpHashVersion};
-use sha2::Sha256;
-use zeroize::Zeroizing;
 
 /// Generates an SRP proof based on the provided password, modulus, server ephemeral, and salt.
 pub async fn generate_srp_proof(
@@ -73,43 +67,13 @@ pub async fn decrypt_message(
     base64_session_key: &str,
     aad: &str,
 ) -> Result<String> {
-    let hk = Hkdf::<Sha256>::new(None, &BASE64_STANDARD.decode(base64_session_key)?);
-    let mut okm = Zeroizing::new([0_u8; proton_crypto_subtle::aead::AES_GCM_256_KEY_SIZE]);
-    let info = b"aeskey.link.meet.proton";
-    hk.expand(info, okm.as_mut_slice())
-        .map_err(|e| CryptoError::FailedToExpandSessionKey(e.to_string()))?;
-
-    let aes_key = AesGcmKey::from_bytes(&okm)
-        .map_err(|e| CryptoError::FailedToCreateAesKey(e.to_string()))?;
-
-    let message = BASE64_STANDARD.decode(base64_message)?;
-    let cipertext = AesGcmCiphertext::decode(&message)
-        .map_err(|e| CryptoError::FailedToDecodeEncryptedMessage(e.to_string()))?;
-
-    let decrypted_message = aes_key
-        .decrypt(cipertext, Some(aad))
-        .map_err(|e| CryptoError::FailedToDecryptMessage(e.to_string()))?;
-
-    Ok(from_utf8(&decrypted_message)?.to_string())
+    crate::session_message::decrypt_message(base64_message, base64_session_key, aad)
 }
 
 /// Encrypt a UTF-8 string with the meet link session key. Pass [`super::MEET_METADATA_AAD`] or
 /// [`super::MEET_DISPLAY_NAME_AAD`] as `aad` to match web clients.
 pub async fn encrypt_message(message: &str, base64_session_key: &str, aad: &str) -> Result<String> {
-    let hk = Hkdf::<Sha256>::new(None, &BASE64_STANDARD.decode(base64_session_key)?);
-    let mut okm = Zeroizing::new([0_u8; proton_crypto_subtle::aead::AES_GCM_256_KEY_SIZE]);
-    let info = b"aeskey.link.meet.proton";
-    hk.expand(info, okm.as_mut_slice())
-        .map_err(|e| CryptoError::FailedToExpandSessionKey(e.to_string()))?;
-
-    let aes_key = AesGcmKey::from_bytes(&okm)
-        .map_err(|e| CryptoError::FailedToCreateAesKey(e.to_string()))?;
-
-    let cipertext = aes_key
-        .encrypt(message.as_bytes(), Some(aad))
-        .map_err(|e| CryptoError::FailedToEncryptMessage(e.to_string()))?;
-
-    Ok(BASE64_STANDARD.encode(cipertext.encode()))
+    crate::session_message::encrypt_message(message, base64_session_key, aad)
 }
 
 const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";

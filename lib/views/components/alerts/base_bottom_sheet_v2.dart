@@ -186,11 +186,13 @@ class BaseBottomSheetV2 extends StatelessWidget {
             toolbarHeight < _kPinnedHeaderBackHitExtent
         ? _kPinnedHeaderBackHitExtent
         : toolbarHeight;
-    final Widget flexChild = _PinnedHandleHeader(
-      isLandscape: isLandscape,
-      onBack: onPinnedHeaderBack,
-      backEnabled: pinnedHeaderBackEnabled,
-    );
+    final Widget flexChild =
+        flexibleSpaceChild ??
+        _PinnedHandleHeader(
+          isLandscape: isLandscape,
+          onBack: onPinnedHeaderBack,
+          backEnabled: pinnedHeaderBackEnabled,
+        );
 
     return BaseBottomSheetV2(
       key: key,

@@ -85,6 +85,14 @@ pub enum BridgeError {
     /// MLS server version is newer than this client supports.
     #[error("MLS server version not supported. Please update the app.")]
     MlsServerVersionNotSupported,
+
+    /// Host tried to admit a waiting-room join request that is no longer pending.
+    #[error("Waiting-room join request not found")]
+    WaitingRoomJoinRequestNotFound,
+
+    /// Guest cancelled an outstanding waiting-room join request.
+    #[error("Waiting room join cancelled")]
+    WaitingRoomJoinCancelled,
 }
 
 #[derive(Debug)]
@@ -165,6 +173,10 @@ impl From<MeetCoreError> for BridgeError {
             MeetCoreError::MlsServerVersionNotSupported => {
                 BridgeError::MlsServerVersionNotSupported
             }
+            MeetCoreError::WaitingRoomJoinRequestNotFound => {
+                BridgeError::WaitingRoomJoinRequestNotFound
+            }
+            MeetCoreError::WaitingRoomJoinCancelled => BridgeError::WaitingRoomJoinCancelled,
             MeetCoreError::HttpClientError {
                 status,
                 message,

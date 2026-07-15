@@ -151,10 +151,20 @@ pub async fn start(
         })?;
 
     let env = login_client.env().clone();
-    let WithCodeFlow::Poll(poll_flow) = login_client.auth().from_fork().with_code().await else {
-        return Err(MeetCoreError::AuthenticationFailed {
-            message: "Unexpected desktop web login fork response".to_string(),
-        });
+
+    let poll_flow = match login_client.auth().from_fork().with_code().await {
+        WithCodeFlow::Poll(poll_flow) => poll_flow,
+        WithCodeFlow::Ok(_, _) => {
+            return Err(MeetCoreError::AuthenticationFailed {
+                message: "Unexpected desktop web login fork response".to_string(),
+            })
+        }
+        WithCodeFlow::Failed { reason, .. } => {
+            tracing::error!("Desktop web login failed: {reason}");
+            return Err(MeetCoreError::AuthenticationFailed {
+                message: "Unexpected desktop web login fork response".to_string(),
+            });
+        }
     };
 
     let encryption_key = generate_encryption_key();

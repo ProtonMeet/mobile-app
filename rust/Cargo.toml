@@ -70,7 +70,7 @@ openssl = { version = "*", features = ["vendored"] }
 ### js dependencies wasm
 js-sys = { version = "0.3.77" }
 web-sys = { version = "0.3.77", features = ["console", "Storage", "Window"] }
-wasm-bindgen = { version = "0.2.100", features = ["serde-serialize"] }
+wasm-bindgen = { version = "0.2.126", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4.50" }
 wasm-bindgen-test = { version = "0.3.50" }
 serde-wasm-bindgen = { version = "0.6.5" }

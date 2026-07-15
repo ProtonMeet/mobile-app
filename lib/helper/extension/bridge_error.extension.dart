@@ -77,6 +77,16 @@ String? parseMeetCoreServiceErrorDetails(String payload) {
   return payload.substring(i + marker.length).trim();
 }
 
+/// True when meet-core reports a missing waiting-room join request on admit.
+bool isWaitingRoomJoinRequestNotFoundError(Object error) {
+  return error is BridgeError_WaitingRoomJoinRequestNotFound;
+}
+
+/// True when the guest cancelled an outstanding waiting-room join request.
+bool isWaitingRoomJoinCancelledError(Object error) {
+  return error is BridgeError_WaitingRoomJoinCancelled;
+}
+
 /// Extracts a human-readable error message from any error object.
 ///
 /// If [error] is a [BridgeError_ApiResponse], returns the API error string.

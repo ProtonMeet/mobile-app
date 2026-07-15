@@ -115,22 +115,9 @@ where
             return;
         }
 
-        // Filter out verbose library logs at DEBUG and TRACE levels
-        // These logs are too verbose and don't provide useful information for debugging
         let target = metadata.target();
-        if level == Level::DEBUG || level == Level::TRACE {
-            // Skip verbose internal library logs that spam the console
-            // Connection pool logs are normal but too verbose for production
-            if target.starts_with("hyper")
-                || target.starts_with("hyper_util")
-                || target.starts_with("muon::store")
-                || target.starts_with("tower")
-                || target.starts_with("h2")
-                || target.starts_with("rustls")
-                || target.starts_with("want")
-            {
-                return;
-            }
+        if !target.starts_with("proton_meet_core") {
+            return;
         }
 
         // Get callback synchronously (on_event is called synchronously)

@@ -74,6 +74,12 @@ pub enum MeetCoreError {
     #[error("Failed to join room: {room_id}, reason: {reason}")]
     RoomJoinFailed { room_id: String, reason: String },
 
+    #[error("Waiting-room join request not found")]
+    WaitingRoomJoinRequestNotFound,
+
+    #[error("Waiting room join cancelled")]
+    WaitingRoomJoinCancelled,
+
     // Storage and Database errors
     #[error("Database operation failed: {operation}")]
     DatabaseError { operation: String },
@@ -477,6 +483,24 @@ impl From<mls_rs_codec::Error> for MeetCoreError {
     }
 }
 
+impl From<crate::domain::room::WaitingRoomError> for MeetCoreError {
+    fn from(error: crate::domain::room::WaitingRoomError) -> Self {
+        match error {
+            crate::domain::room::WaitingRoomError::EncryptionError(e) => Self::CryptographicError {
+                operation: e.to_string(),
+            },
+            crate::domain::room::WaitingRoomError::KeyPackageError(e) => Self::MlsProtocolError {
+                message: e.to_string(),
+            },
+            crate::domain::room::WaitingRoomError::InvalidEncryptedKeyPackage => {
+                Self::CryptographicError {
+                    operation: "Failed to decode encrypted key package".to_string(),
+                }
+            }
+        }
+    }
+}
+
 impl From<mls_types::MlsTypesError> for MeetCoreError {
     fn from(error: mls_types::MlsTypesError) -> Self {
         Self::MlsProtocolError {
@@ -554,6 +578,8 @@ pub enum MeetCoreErrorEnum {
     MlsSpecError,
     ParticipantNotFound,
     RoomJoinFailed,
+    WaitingRoomJoinRequestNotFound,
+    WaitingRoomJoinCancelled,
     DatabaseError,
     SerializationError,
     DataNotFound,
@@ -599,6 +625,8 @@ impl From<MeetCoreError> for MeetCoreErrorEnum {
             MeetCoreError::MlsSpecError { .. } => Self::MlsSpecError,
             MeetCoreError::ParticipantNotFound => Self::ParticipantNotFound,
             MeetCoreError::RoomJoinFailed { .. } => Self::RoomJoinFailed,
+            MeetCoreError::WaitingRoomJoinRequestNotFound => Self::WaitingRoomJoinRequestNotFound,
+            MeetCoreError::WaitingRoomJoinCancelled => Self::WaitingRoomJoinCancelled,
             MeetCoreError::DatabaseError { .. } => Self::DatabaseError,
             MeetCoreError::SerializationError { .. } => Self::SerializationError,
             MeetCoreError::DataNotFound { .. } => Self::DataNotFound,

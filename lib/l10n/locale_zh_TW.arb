@@ -52,5 +52,9 @@
   "trying_to_reconnect": "Trying to reconnect…",
   "@trying_to_reconnect": {
     "description": "Message shown when attempting to reconnect to meeting"
-  }
+  },
+  "waiting_room_join_request_rejected": "主持人已拒絕您的加入請求",
+  "waiting_room_admission_timed_out": "您的加入請求已逾時，請再試一次。",
+  "waiting_room_host_join_request_notification": "候客室有人等待加入",
+  "waiting_room_join_request_not_found": "找不到此加入請求，可能已過期或已被處理"
 }

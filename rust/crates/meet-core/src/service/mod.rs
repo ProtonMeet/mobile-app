@@ -8,3 +8,4 @@ pub mod mls_service;
 pub mod service;
 pub mod service_state;
 pub mod utils;
+pub mod waiting_room_setting;

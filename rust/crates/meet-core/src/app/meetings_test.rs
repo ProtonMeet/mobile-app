@@ -89,6 +89,7 @@ async fn create_meeting_with_session_requires_authenticated_user() {
             None,
             None,
             None,
+            false,
         )
         .await
         .unwrap_err();
@@ -99,7 +100,7 @@ async fn create_meeting_with_session_requires_authenticated_user() {
 async fn create_personal_meeting_requires_authenticated_user() {
     let app = build_app(default_app_state()).await;
     let err = app
-        .create_personal_meeting("personal".to_string(), None, false)
+        .create_personal_meeting("personal".to_string(), None, false, false)
         .await
         .unwrap_err();
     assert!(matches!(err, MeetCoreError::NoActiveUser));
@@ -204,6 +205,7 @@ async fn create_meeting_without_session_propagates_room_service_error() {
             None,
             None,
             None,
+            false,
         )
         .await
         .is_err());
@@ -277,6 +279,7 @@ async fn get_meeting_info_delegates_to_room_service() {
                 max_duration: 3600,
                 max_participants: 100,
                 expiration_time: None,
+                waiting_room: 0,
             })))
         });
 
@@ -288,6 +291,56 @@ async fn get_meeting_info_delegates_to_room_service() {
 
     let info = app.get_meeting_info("LINK123").await.unwrap();
     assert_eq!(info.meeting_link_name, "LINK123");
+    assert_eq!(info.meeting_name, "enc");
+}
+
+#[tokio::test]
+async fn get_meeting_info_decrypts_meeting_name_from_prejoin_cache() {
+    use crate::app_state::PrejoinSrpAuth;
+    use crate::domain::user::models::meet_link_info::MeetInfo;
+
+    let mut meeting_api = MockMeetingApi::new();
+    meeting_api
+        .expect_get_meeting_info()
+        .with(eq("LINK123"))
+        .once()
+        .returning(|_| {
+            Box::pin(ready(Ok(MeetingInfo {
+                meeting_link_name: "LINK123".to_string(),
+                meeting_name: "encrypted_blob".to_string(),
+                salt: "salt".to_string(),
+                session_key: "sk".to_string(),
+                locked: 0,
+                max_duration: 3600,
+                max_participants: 100,
+                expiration_time: None,
+                waiting_room: 0,
+            })))
+        });
+
+    let mut state = default_app_state();
+    state.prejoin_srp_auth = Some(PrejoinSrpAuth {
+        meet_link_name: "LINK123".to_string(),
+        meet_link_password: "pwd".to_string(),
+        display_name: "Guest".to_string(),
+        meet_info: MeetInfo {
+            meet_name: "Decrypted Title".to_string(),
+            meet_link_name: "LINK123".to_string(),
+            access_token: "token".to_string(),
+            websocket_url: "wss://example".to_string(),
+            participants_count: 1,
+            is_locked: false,
+            has_waiting_room: true,
+            max_duration: 3600,
+            max_participants: 100,
+            expiration_time: None,
+        },
+    });
+
+    let app = build_app_with_room(state, room_service_with_meeting_api(meeting_api)).await;
+
+    let info = app.get_meeting_info("LINK123").await.unwrap();
+    assert_eq!(info.meeting_name, "Decrypted Title");
 }
 
 #[tokio::test]
@@ -454,6 +507,7 @@ async fn authenticate_meeting_link_stores_session_key() {
         max_duration: 3600,
         max_participants: 100,
         expiration_time: None,
+        waiting_room: 0,
     };
 
     let mut http = MockHttpClient::new();
@@ -572,6 +626,7 @@ mod manual {
                 None,
                 None,
                 None,
+                false,
             )
             .await?;
 
@@ -593,4 +648,67 @@ mod manual {
 
         Ok(())
     }
+}
+
+#[tokio::test]
+async fn resolve_meeting_display_name_uses_prejoin_cache() {
+    use crate::app_state::PrejoinSrpAuth;
+    use crate::domain::user::models::meet_link_info::MeetInfo;
+
+    let mut state = default_app_state();
+    state.prejoin_srp_auth = Some(PrejoinSrpAuth {
+        meet_link_name: "LINK123".to_string(),
+        meet_link_password: "pwd".to_string(),
+        display_name: "Guest".to_string(),
+        meet_info: MeetInfo {
+            meet_name: "Decrypted Title".to_string(),
+            meet_link_name: "LINK123".to_string(),
+            access_token: "token".to_string(),
+            websocket_url: "wss://example".to_string(),
+            participants_count: 1,
+            is_locked: false,
+            has_waiting_room: true,
+            max_duration: 3600,
+            max_participants: 100,
+            expiration_time: None,
+        },
+    });
+
+    let app = build_app(state).await;
+    let name = app
+        .resolve_meeting_display_name("LINK123", "encrypted_blob")
+        .await
+        .unwrap();
+    assert_eq!(name, "Decrypted Title");
+}
+
+#[tokio::test]
+async fn resolve_meeting_display_name_decrypts_with_session_key() {
+    use crate::domain::user::models::meeting_session_key::MeetingSessionKey;
+
+    let mut crypto = MockCryptoClient::new();
+    crypto
+        .expect_decrypt_message()
+        .with(
+            eq("encrypted_blob"),
+            eq("session-key"),
+            eq(MEET_METADATA_AAD),
+        )
+        .once()
+        .returning(|_, _, _| Box::pin(ready(Ok("Plain Title".to_string()))));
+
+    let mut state = default_app_state();
+    state.meeting_display_name_session_key = Some(MeetingSessionKey::from("session-key"));
+
+    let app = build_app_with_room(
+        state,
+        room_service_with_http_and_crypto(MockHttpClient::new(), crypto),
+    )
+    .await;
+
+    let name = app
+        .resolve_meeting_display_name("LINK123", "encrypted_blob")
+        .await
+        .unwrap();
+    assert_eq!(name, "Plain Title");
 }

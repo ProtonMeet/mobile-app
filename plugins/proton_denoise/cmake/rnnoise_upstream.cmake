@@ -31,17 +31,48 @@ if(NOT EXISTS "${_rnnoise_data_c}")
     message(FATAL_ERROR
       "rnnoise_data.c missing and neither curl nor wget is available to download models")
   endif()
-  message(STATUS "Downloading RNNoise model weights into ${_rnnoise_src_dir}")
+
+  file(READ "${_rnnoise_src_dir}/model_version" _rnnoise_model_version)
+  string(STRIP "${_rnnoise_model_version}" _rnnoise_model_version)
+  set(_rnnoise_model_tar "rnnoise_data-${_rnnoise_model_version}.tar.gz")
+  set(_rnnoise_model_path "${_rnnoise_src_dir}/${_rnnoise_model_tar}")
+  set(_rnnoise_model_url "https://media.xiph.org/rnnoise/models/${_rnnoise_model_tar}")
+
+  if(NOT EXISTS "${_rnnoise_model_path}")
+    message(STATUS "Downloading RNNoise model weights into ${_rnnoise_src_dir}")
+    if(_RN_WGET)
+      execute_process(
+        COMMAND "${_RN_WGET}" "${_rnnoise_model_url}"
+        WORKING_DIRECTORY "${_rnnoise_src_dir}"
+        RESULT_VARIABLE _rnnoise_dl_result
+        OUTPUT_VARIABLE _rnnoise_dl_out
+        ERROR_VARIABLE _rnnoise_dl_err
+      )
+    else()
+      execute_process(
+        COMMAND "${_RN_CURL}" -fL -o "${_rnnoise_model_tar}" "${_rnnoise_model_url}"
+        WORKING_DIRECTORY "${_rnnoise_src_dir}"
+        RESULT_VARIABLE _rnnoise_dl_result
+        OUTPUT_VARIABLE _rnnoise_dl_out
+        ERROR_VARIABLE _rnnoise_dl_err
+      )
+    endif()
+    if(NOT _rnnoise_dl_result EQUAL 0 OR NOT EXISTS "${_rnnoise_model_path}")
+      message(FATAL_ERROR
+        "RNNoise model download failed (code ${_rnnoise_dl_result}):\n${_rnnoise_dl_out}\n${_rnnoise_dl_err}")
+    endif()
+  endif()
+
   execute_process(
-    COMMAND sh download_model.sh
+    COMMAND tar xvomf "${_rnnoise_model_tar}"
     WORKING_DIRECTORY "${_rnnoise_src_dir}"
-    RESULT_VARIABLE _rnnoise_dl_result
-    OUTPUT_VARIABLE _rnnoise_dl_out
-    ERROR_VARIABLE _rnnoise_dl_err
+    RESULT_VARIABLE _rnnoise_tar_result
+    OUTPUT_VARIABLE _rnnoise_tar_out
+    ERROR_VARIABLE _rnnoise_tar_err
   )
-  if(NOT _rnnoise_dl_result EQUAL 0 OR NOT EXISTS "${_rnnoise_data_c}")
+  if(NOT _rnnoise_tar_result EQUAL 0 OR NOT EXISTS "${_rnnoise_data_c}")
     message(FATAL_ERROR
-      "download_model.sh failed (code ${_rnnoise_dl_result}):\n${_rnnoise_dl_out}\n${_rnnoise_dl_err}")
+      "RNNoise model extract failed (code ${_rnnoise_tar_result}):\n${_rnnoise_tar_out}\n${_rnnoise_tar_err}")
   endif()
 endif()
 

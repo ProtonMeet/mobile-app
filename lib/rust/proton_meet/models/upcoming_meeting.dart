@@ -25,6 +25,7 @@ class FrbUpcomingMeeting {
   final PlatformInt64? createTime;
   final PlatformInt64? lastUsedTime;
   final String? calendarEventId;
+  final int? waitingRoom;
 
   const FrbUpcomingMeeting({
     required this.id,
@@ -42,6 +43,7 @@ class FrbUpcomingMeeting {
     this.createTime,
     this.lastUsedTime,
     this.calendarEventId,
+    this.waitingRoom,
   });
 
   static FrbUpcomingMeeting defaultValues() => RustLib.instance.api
@@ -72,7 +74,8 @@ class FrbUpcomingMeeting {
       protonCalendar.hashCode ^
       createTime.hashCode ^
       lastUsedTime.hashCode ^
-      calendarEventId.hashCode;
+      calendarEventId.hashCode ^
+      waitingRoom.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -93,5 +96,6 @@ class FrbUpcomingMeeting {
           protonCalendar == other.protonCalendar &&
           createTime == other.createTime &&
           lastUsedTime == other.lastUsedTime &&
-          calendarEventId == other.calendarEventId;
+          calendarEventId == other.calendarEventId &&
+          waitingRoom == other.waitingRoom;
 }

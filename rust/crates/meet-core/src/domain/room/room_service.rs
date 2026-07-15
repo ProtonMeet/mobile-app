@@ -134,24 +134,18 @@ impl RoomService {
             passphrase_start.elapsed().as_millis()
         );
 
-        #[cfg(not(target_family = "wasm"))]
         let dec_key_start = instant::now();
-        #[cfg(not(target_family = "wasm"))]
         let decrypted_session_key = self
             .crypto_client
             .decrypt_session_key(&meet_info.session_key, &session_key_passphrase)
             .await?;
-
-        #[cfg(not(target_family = "wasm"))]
         info!(
             "join_meeting step=decrypt_session_key ms={} session_key_len={}",
             dec_key_start.elapsed().as_millis(),
             meet_info.session_key.len()
         );
 
-        #[cfg(not(target_family = "wasm"))]
         let dec_name_start = instant::now();
-        #[cfg(not(target_family = "wasm"))]
         let decrypted_meet_name = self
             .crypto_client
             .decrypt_message(
@@ -160,30 +154,17 @@ impl RoomService {
                 MEET_METADATA_AAD,
             )
             .await?;
-        #[cfg(not(target_family = "wasm"))]
         info!(
             "join_meeting step=decrypt_meeting_name ms={} enc_name_len={}",
             dec_name_start.elapsed().as_millis(),
             meet_info.meeting_name.len()
         );
 
-        #[cfg(target_family = "wasm")]
-        let decrypted_meet_name = self
-            .crypto_client
-            .decrypt_message(
-                &meet_info.session_key,
-                &session_key_passphrase,
-                MEET_METADATA_AAD,
-            )
-            .await?;
-
         #[cfg(debug_assertions)]
         tracing::debug!("decrypted_meet_name: {:?}", &decrypted_meet_name);
 
-        #[cfg(not(target_family = "wasm"))]
         let display_name_session_key =
             Some(MeetingSessionKey::new(decrypted_session_key.clone().into()));
-        #[cfg(not(target_family = "wasm"))]
         let encrypted_display_name = match self
             .crypto_client
             .encrypt_message(display_name, &decrypted_session_key, MEET_DISPLAY_NAME_AAD)
@@ -204,11 +185,6 @@ impl RoomService {
                 String::new()
             }
         };
-
-        #[cfg(target_family = "wasm")]
-        let display_name_session_key: Option<MeetingSessionKey> = None;
-        #[cfg(target_family = "wasm")]
-        let encrypted_display_name = String::new();
 
         let token_start = instant::now();
         let access_token_info = self
@@ -235,6 +211,7 @@ impl RoomService {
                 websocket_url: access_token_info.websocket_url,
                 participants_count: 0, // Will be updated separately
                 is_locked: meet_info.locked != 0,
+                has_waiting_room: meet_info.waiting_room == 1,
                 max_duration: meet_info.max_duration,
                 max_participants: meet_info.max_participants,
                 expiration_time: meet_info.expiration_time.map(|dt| dt.timestamp()),
@@ -275,6 +252,7 @@ impl RoomService {
         end_time: Option<DateTime<Utc>>,
         time_zone: Option<String>,
         r_rule: Option<String>,
+        waiting_room: bool,
     ) -> Result<UpcomingMeeting, ServiceError> {
         let total_start = instant::now();
         let password_base = self
@@ -303,7 +281,7 @@ impl RoomService {
         );
 
         let params_start = instant::now();
-        let create_meeting_params = match meeting_type {
+        let mut create_meeting_params = match meeting_type {
             MeetingType::Personal => {
                 let user_private_key =
                     user_private_key.ok_or(ServiceError::UserPrivateKeysNotFound)?;
@@ -426,6 +404,7 @@ impl RoomService {
                 }
             },
         };
+        create_meeting_params.waiting_room = u8::from(waiting_room);
         info!(
             "create_meeting step=generate_params ms={} meeting_type={:?}",
             params_start.elapsed().as_millis(),
@@ -499,6 +478,7 @@ impl RoomService {
             create_time: meeting.create_time,
             last_used_time: meeting.last_used_time,
             calendar_event_id: meeting.calendar_event_id,
+            waiting_room: meeting.waiting_room,
         };
 
         Ok(upcoming_meeting)
@@ -562,6 +542,7 @@ impl RoomService {
             create_time: meeting.create_time,
             last_used_time: meeting.last_used_time,
             calendar_event_id: meeting.calendar_event_id,
+            waiting_room: meeting.waiting_room,
         };
 
         info!(
@@ -609,6 +590,7 @@ impl RoomService {
             create_time: meeting.create_time,
             last_used_time: meeting.last_used_time,
             calendar_event_id: meeting.calendar_event_id,
+            waiting_room: meeting.waiting_room,
         };
 
         info!(
@@ -705,6 +687,7 @@ impl RoomService {
                                                 create_time: meeting.create_time,
                                                 last_used_time: meeting.last_used_time,
                                                 calendar_event_id: meeting.calendar_event_id,
+                                                waiting_room: meeting.waiting_room,
                                             };
                                             decrypted_upcomming_meetings.push(decrypted);
                                         }
@@ -742,6 +725,7 @@ impl RoomService {
                                             create_time: meeting.create_time,
                                             last_used_time: meeting.last_used_time,
                                             calendar_event_id: meeting.calendar_event_id,
+                                            waiting_room: meeting.waiting_room,
                                         };
                                         decrypted_upcomming_meetings.push(decrypted);
                                     }
@@ -845,6 +829,22 @@ impl RoomService {
     ) -> Result<crate::domain::user::models::MeetingInfo, anyhow::Error> {
         let meeting_info = self.meeting_api.get_meeting_info(meeting_link_name).await?;
         Ok(meeting_info)
+    }
+
+    /// Decrypts an encrypted meeting metadata name using the meeting session key.
+    pub async fn decrypt_meeting_metadata_name(
+        &self,
+        encrypted_meeting_name: &str,
+        session_key: &MeetingSessionKey,
+    ) -> Result<String, anyhow::Error> {
+        self.crypto_client
+            .decrypt_message(
+                encrypted_meeting_name,
+                session_key.expose_secret(),
+                MEET_METADATA_AAD,
+            )
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to decrypt meeting name: {e}"))
     }
 
     /// Gets participants for a meeting

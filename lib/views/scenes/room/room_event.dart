@@ -3,6 +3,7 @@ import 'package:livekit_client/livekit_client.dart';
 import 'package:logger/logger.dart';
 import 'package:meet/helper/background_blur/camera_background_blur_sync.dart'
     show syncLocalCameraBackgroundBlur;
+import 'package:meet/rust/proton_meet/models/meeting_info.dart';
 import 'package:meet/rust/proton_meet/models/mls_sync_state.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
@@ -32,6 +33,12 @@ class RoomInitialized extends RoomBlocEvent {
   /// and the published track lookup in [syncLocalCameraBackgroundBlur].
   final bool cameraBackgroundBlurEnabled;
 
+  /// Populated during pre-join to skip a redundant getMeetingInfo call.
+  final FrbMeetingInfo? prefetchedMeetingInfo;
+
+  /// Host-only: when non-null, sync waiting-room policy to this value after room init.
+  final bool? pendingHostWaitingRoomSyncEnabled;
+
   const RoomInitialized({
     required this.room,
     required this.listener,
@@ -41,6 +48,8 @@ class RoomInitialized extends RoomBlocEvent {
     required this.preJoinType,
     required this.meetingLink,
     this.cameraBackgroundBlurEnabled = false,
+    this.prefetchedMeetingInfo,
+    this.pendingHostWaitingRoomSyncEnabled,
   });
 
   @override
@@ -53,6 +62,8 @@ class RoomInitialized extends RoomBlocEvent {
     preJoinType,
     meetingLink,
     cameraBackgroundBlurEnabled,
+    prefetchedMeetingInfo,
+    pendingHostWaitingRoomSyncEnabled,
   ];
 }
 
@@ -100,6 +111,75 @@ class ResetAutoFullScreenTimer extends RoomBlocEvent {}
 class ToggleChatBubble extends RoomBlocEvent {}
 
 class ToggleParticipantList extends RoomBlocEvent {}
+
+/// A new waiting-room join request arrived (host only). Forwarded from the
+/// Rust `join_request` websocket event via the AppCore callback.
+class WaitingRoomJoinRequestReceived extends RoomBlocEvent {
+  final String requestId;
+  final String participantUid;
+  final DateTime? expiresAt;
+
+  const WaitingRoomJoinRequestReceived({
+    required this.requestId,
+    required this.participantUid,
+    this.expiresAt,
+  });
+
+  @override
+  List<Object?> get props => [requestId, participantUid, expiresAt];
+}
+
+/// Periodic tick to drop waiting-room join requests past [WaitingRoomJoinRequest.expiresAt].
+class WaitingRoomJoinRequestsExpirationTick extends RoomBlocEvent {
+  const WaitingRoomJoinRequestsExpirationTick();
+}
+
+/// A waiting-room join request was removed (cancelled, rejected, or admitted).
+class WaitingRoomJoinRequestRemoved extends RoomBlocEvent {
+  final String requestId;
+  final String participantUid;
+
+  const WaitingRoomJoinRequestRemoved({
+    required this.requestId,
+    required this.participantUid,
+  });
+
+  @override
+  List<Object?> get props => [requestId, participantUid];
+}
+
+/// Host admits a single waiting-room join request.
+class AdmitWaitingRoomJoinRequest extends RoomBlocEvent {
+  final String requestId;
+
+  const AdmitWaitingRoomJoinRequest({required this.requestId});
+
+  @override
+  List<Object?> get props => [requestId];
+}
+
+/// Clears [RoomState.shouldShowWaitingRoomJoinRequestNotFoundError] after the
+/// user sees the toast.
+class WaitingRoomJoinRequestNotFoundErrorConsumed extends RoomBlocEvent {
+  const WaitingRoomJoinRequestNotFoundErrorConsumed();
+}
+
+/// Host rejects a single waiting-room join request.
+class RejectWaitingRoomJoinRequest extends RoomBlocEvent {
+  final String requestId;
+  final String participantUid;
+
+  const RejectWaitingRoomJoinRequest({
+    required this.requestId,
+    required this.participantUid,
+  });
+
+  @override
+  List<Object?> get props => [requestId, participantUid];
+}
+
+/// Host admits all pending waiting-room join requests.
+class AdmitAllWaitingRoomJoinRequests extends RoomBlocEvent {}
 
 class LeaveRoom extends RoomBlocEvent {}
 
@@ -298,6 +378,15 @@ class SetUnsubscribeVideoByDefault extends RoomBlocEvent {
 
   @override
   List<Object?> get props => [value];
+}
+
+class MeetingInfoWaitingRoomUpdated extends RoomBlocEvent {
+  final bool enabled;
+
+  const MeetingInfoWaitingRoomUpdated({required this.enabled});
+
+  @override
+  List<Object?> get props => [enabled];
 }
 
 class SetCameraBackgroundBlurEnabled extends RoomBlocEvent {

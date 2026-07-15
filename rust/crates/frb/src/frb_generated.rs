@@ -43,7 +43,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.12.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -649675214;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1277715639;
 
 // Section: executor
 
@@ -51,6 +51,338 @@ flutter_rust_bridge::frb_generated_default_handler!();
 
 // Section: wire_funcs
 
+fn wire__crate__proton_meet__core__AppCore_admit_all_waiting_room_join_requests_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec,_,_,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "AppCore_admit_all_waiting_room_join_requests", port: Some(port_), mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal }, move || { 
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>>>::sse_decode(&mut deserializer);
+let api_meet_link_name = <String>::sse_decode(&mut deserializer);deserializer.end(); move |context| async move {
+                    transform_result_sse::<_, crate::errors::BridgeError>((move || async move {
+                        let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = crate::proton_meet::core::AppCore::admit_all_waiting_room_join_requests(&*api_that_guard, api_meet_link_name).await?;   Ok(output_ok)
+                    })().await)
+                } })
+}
+fn wire__crate__proton_meet__core__AppCore_admit_waiting_room_join_request_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "AppCore_admit_waiting_room_join_request",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
+            >>::sse_decode(&mut deserializer);
+            let api_meet_link_name = <String>::sse_decode(&mut deserializer);
+            let api_request_id = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::errors::BridgeError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_that, 0, false,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => {
+                                    api_that_guard =
+                                        Some(api_that.lockable_decode_async_ref().await)
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok =
+                            crate::proton_meet::core::AppCore::admit_waiting_room_join_request(
+                                &*api_that_guard,
+                                api_meet_link_name,
+                                api_request_id,
+                            )
+                            .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__proton_meet__core__AppCore_authenticate_meeting_link_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "AppCore_authenticate_meeting_link",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
+            >>::sse_decode(&mut deserializer);
+            let api_meet_link_name = <String>::sse_decode(&mut deserializer);
+            let api_meet_link_password = <String>::sse_decode(&mut deserializer);
+            let api_display_name = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::errors::BridgeError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_that, 0, false,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => {
+                                    api_that_guard =
+                                        Some(api_that.lockable_decode_async_ref().await)
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok =
+                            crate::proton_meet::core::AppCore::authenticate_meeting_link(
+                                &*api_that_guard,
+                                api_meet_link_name,
+                                api_meet_link_password,
+                                api_display_name,
+                            )
+                            .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__proton_meet__core__AppCore_cancel_waiting_room_join_request_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "AppCore_cancel_waiting_room_join_request",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
+            >>::sse_decode(&mut deserializer);
+            let api_meet_link_name = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::errors::BridgeError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_that, 0, false,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => {
+                                    api_that_guard =
+                                        Some(api_that.lockable_decode_async_ref().await)
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok =
+                            crate::proton_meet::core::AppCore::cancel_waiting_room_join_request(
+                                &*api_that_guard,
+                                api_meet_link_name,
+                            )
+                            .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__proton_meet__core__AppCore_clear_join_decision_callback_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "AppCore_clear_join_decision_callback",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::errors::BridgeError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_that, 0, false,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => {
+                                    api_that_guard =
+                                        Some(api_that.lockable_decode_async_ref().await)
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok =
+                            crate::proton_meet::core::AppCore::clear_join_decision_callback(
+                                &*api_that_guard,
+                            )
+                            .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__proton_meet__core__AppCore_clear_join_request_callback_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "AppCore_clear_join_request_callback",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::errors::BridgeError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_that, 0, false,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => {
+                                    api_that_guard =
+                                        Some(api_that.lockable_decode_async_ref().await)
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok =
+                            crate::proton_meet::core::AppCore::clear_join_request_callback(
+                                &*api_that_guard,
+                            )
+                            .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
 fn wire__crate__proton_meet__core__AppCore_clear_livekit_admin_change_callback_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -193,6 +525,244 @@ let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decod
                     })().await)
                 } })
 }
+fn wire__crate__proton_meet__core__AppCore_clear_prejoin_srp_auth_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "AppCore_clear_prejoin_srp_auth",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::errors::BridgeError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_that, 0, false,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => {
+                                    api_that_guard =
+                                        Some(api_that.lockable_decode_async_ref().await)
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok = crate::proton_meet::core::AppCore::clear_prejoin_srp_auth(
+                            &*api_that_guard,
+                        )
+                        .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__proton_meet__core__AppCore_clear_waiting_room_join_request_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "AppCore_clear_waiting_room_join_request",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::errors::BridgeError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_that, 0, false,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => {
+                                    api_that_guard =
+                                        Some(api_that.lockable_decode_async_ref().await)
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok =
+                            crate::proton_meet::core::AppCore::clear_waiting_room_join_request(
+                                &*api_that_guard,
+                            )
+                            .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__proton_meet__core__AppCore_connect_websocket_for_waiting_room_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "AppCore_connect_websocket_for_waiting_room",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::errors::BridgeError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_that, 0, false,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => {
+                                    api_that_guard =
+                                        Some(api_that.lockable_decode_async_ref().await)
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok =
+                            crate::proton_meet::core::AppCore::connect_websocket_for_waiting_room(
+                                &*api_that_guard,
+                            )
+                            .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__proton_meet__core__AppCore_create_join_request_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "AppCore_create_join_request",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
+            >>::sse_decode(&mut deserializer);
+            let api_meet_link_name = <String>::sse_decode(&mut deserializer);
+            let api_meeting_session_key = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::errors::BridgeError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_that, 0, false,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => {
+                                    api_that_guard =
+                                        Some(api_that.lockable_decode_async_ref().await)
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok = crate::proton_meet::core::AppCore::create_join_request(
+                            &*api_that_guard,
+                            api_meet_link_name,
+                            api_meeting_session_key,
+                        )
+                        .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
 fn wire__crate__proton_meet__core__AppCore_create_meeting_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -229,6 +799,7 @@ fn wire__crate__proton_meet__core__AppCore_create_meeting_impl(
             let api_end_time = <Option<i64>>::sse_decode(&mut deserializer);
             let api_time_zone = <Option<String>>::sse_decode(&mut deserializer);
             let api_r_rule = <Option<String>>::sse_decode(&mut deserializer);
+            let api_waiting_room = <bool>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, crate::errors::BridgeError>(
@@ -260,6 +831,7 @@ fn wire__crate__proton_meet__core__AppCore_create_meeting_impl(
                             api_end_time,
                             api_time_zone,
                             api_r_rule,
+                            api_waiting_room,
                         )
                         .await?;
                         Ok(output_ok)
@@ -298,6 +870,7 @@ fn wire__crate__proton_meet__core__AppCore_create_personal_meeting_impl(
             let api_meeting_name = <String>::sse_decode(&mut deserializer);
             let api_custom_password = <Option<String>>::sse_decode(&mut deserializer);
             let api_is_rotate = <bool>::sse_decode(&mut deserializer);
+            let api_waiting_room = <bool>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, crate::errors::BridgeError>(
@@ -324,6 +897,7 @@ fn wire__crate__proton_meet__core__AppCore_create_personal_meeting_impl(
                             api_meeting_name,
                             api_custom_password,
                             api_is_rotate,
+                            api_waiting_room,
                         )
                         .await?;
                         Ok(output_ok)
@@ -1286,6 +1860,30 @@ fn wire__crate__proton_meet__core__AppCore_get_latest_event_id_impl(
         },
     )
 }
+fn wire__crate__proton_meet__core__AppCore_get_meeting_display_name_session_key_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec,_,_,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "AppCore_get_meeting_display_name_session_key", port: Some(port_), mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal }, move || { 
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>>>::sse_decode(&mut deserializer);deserializer.end(); move |context| async move {
+                    transform_result_sse::<_, crate::errors::BridgeError>((move || async move {
+                        let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = crate::proton_meet::core::AppCore::get_meeting_display_name_session_key(&*api_that_guard).await?;   Ok(output_ok)
+                    })().await)
+                } })
+}
 fn wire__crate__proton_meet__core__AppCore_get_meeting_info_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -1751,6 +2349,63 @@ fn wire__crate__proton_meet__core__AppCore_get_ws_state_impl(
         },
     )
 }
+fn wire__crate__proton_meet__core__AppCore_has_mls_group_info_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "AppCore_has_mls_group_info",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::errors::BridgeError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_that, 0, false,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => {
+                                    api_that_guard =
+                                        Some(api_that.lockable_decode_async_ref().await)
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok =
+                            crate::proton_meet::core::AppCore::has_mls_group_info(&*api_that_guard)
+                                .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
 fn wire__crate__proton_meet__core__AppCore_is_mls_up_to_date_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -1899,7 +2554,9 @@ fn wire__crate__proton_meet__core__AppCore_join_meeting_impl(
             let api_is_meet_new_join_type = <bool>::sse_decode(&mut deserializer);
             let api_is_meet_switch_join_type = <bool>::sse_decode(&mut deserializer);
             let api_is_meet_new_switch_join_type = <bool>::sse_decode(&mut deserializer);
-            let api__reuse_token = <bool>::sse_decode(&mut deserializer);
+            let api_reuse_token = <bool>::sse_decode(&mut deserializer);
+            let api_reuse_prejoin_auth = <bool>::sse_decode(&mut deserializer);
+            let api_is_waiting_room = <bool>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, crate::errors::BridgeError>(
@@ -1930,7 +2587,9 @@ fn wire__crate__proton_meet__core__AppCore_join_meeting_impl(
                             api_is_meet_new_join_type,
                             api_is_meet_switch_join_type,
                             api_is_meet_new_switch_join_type,
-                            api__reuse_token,
+                            api_reuse_token,
+                            api_reuse_prejoin_auth,
+                            api_is_waiting_room,
                         )
                         .await?;
                         Ok(output_ok)
@@ -2952,6 +3611,32 @@ fn wire__crate__proton_meet__core__AppCore_ping_impl(
         },
     )
 }
+fn wire__crate__proton_meet__core__AppCore_prepare_mls_session_for_waiting_room_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec,_,_,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "AppCore_prepare_mls_session_for_waiting_room", port: Some(port_), mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal }, move || { 
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>>>::sse_decode(&mut deserializer);
+let api_meet_link_name = <String>::sse_decode(&mut deserializer);
+let api_meet_link_password = <String>::sse_decode(&mut deserializer);deserializer.end(); move |context| async move {
+                    transform_result_sse::<_, crate::errors::BridgeError>((move || async move {
+                        let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = crate::proton_meet::core::AppCore::prepare_mls_session_for_waiting_room(&*api_that_guard, api_meet_link_name, api_meet_link_password).await?;   Ok(output_ok)
+                    })().await)
+                } })
+}
 fn wire__crate__proton_meet__core__AppCore_refresh_user_state_from_api_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -3003,6 +3688,71 @@ fn wire__crate__proton_meet__core__AppCore_refresh_user_state_from_api_impl(
                             crate::proton_meet::core::AppCore::refresh_user_state_from_api(
                                 &*api_that_guard,
                                 api_user_id,
+                            )
+                            .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__proton_meet__core__AppCore_reject_waiting_room_join_request_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "AppCore_reject_waiting_room_join_request",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
+            >>::sse_decode(&mut deserializer);
+            let api_meet_link_name = <String>::sse_decode(&mut deserializer);
+            let api_request_id = <String>::sse_decode(&mut deserializer);
+            let api_participant_uid = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::errors::BridgeError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_that, 0, false,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => {
+                                    api_that_guard =
+                                        Some(api_that.lockable_decode_async_ref().await)
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok =
+                            crate::proton_meet::core::AppCore::reject_waiting_room_join_request(
+                                &*api_that_guard,
+                                api_meet_link_name,
+                                api_request_id,
+                                api_participant_uid,
                             )
                             .await?;
                         Ok(output_ok)
@@ -3136,6 +3886,94 @@ fn wire__crate__proton_meet__core__AppCore_send_meeting_feedback_impl(
             }
         },
     )
+}
+fn wire__crate__proton_meet__core__AppCore_set_join_decision_callback_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "AppCore_set_join_decision_callback",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
+            >>::sse_decode(&mut deserializer);
+            let api_callback = decode_DartFn_Inputs_String_bool_Output_unit_AnyhowException(
+                <flutter_rust_bridge::DartOpaque>::sse_decode(&mut deserializer),
+            );
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::errors::BridgeError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_that, 0, false,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => {
+                                    api_that_guard =
+                                        Some(api_that.lockable_decode_async_ref().await)
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok =
+                            crate::proton_meet::core::AppCore::set_join_decision_callback(
+                                &*api_that_guard,
+                                api_callback,
+                            )
+                            .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__proton_meet__core__AppCore_set_join_request_callback_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec,_,_,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "AppCore_set_join_request_callback", port: Some(port_), mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal }, move || { 
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>>>::sse_decode(&mut deserializer);
+let api_callback = decode_DartFn_Inputs_join_request_change_String_String_u_64_Output_unit_AnyhowException(<flutter_rust_bridge::DartOpaque>::sse_decode(&mut deserializer));deserializer.end(); move |context| async move {
+                    transform_result_sse::<_, crate::errors::BridgeError>((move || async move {
+                        let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = crate::proton_meet::core::AppCore::set_join_request_callback(&*api_that_guard, api_callback).await?;   Ok(output_ok)
+                    })().await)
+                } })
 }
 fn wire__crate__proton_meet__core__AppCore_set_livekit_active_uuids_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
@@ -4445,6 +5283,130 @@ fn wire__crate__proton_meet__core__AppCore_update_show_self_tile_impl(
                     })?;
                     Ok(output_ok)
                 })())
+            }
+        },
+    )
+}
+fn wire__crate__proton_meet__core__AppCore_update_waiting_room_setting_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "AppCore_update_waiting_room_setting",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
+            >>::sse_decode(&mut deserializer);
+            let api_meet_link_name = <String>::sse_decode(&mut deserializer);
+            let api_enable = <bool>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::errors::BridgeError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_that, 0, false,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => {
+                                    api_that_guard =
+                                        Some(api_that.lockable_decode_async_ref().await)
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok =
+                            crate::proton_meet::core::AppCore::update_waiting_room_setting(
+                                &*api_that_guard,
+                                api_meet_link_name,
+                                api_enable,
+                            )
+                            .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__proton_meet__core__AppCore_wait_for_waiting_room_welcome_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "AppCore_wait_for_waiting_room_welcome",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
+            >>::sse_decode(&mut deserializer);
+            let api_meet_link_name = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::errors::BridgeError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_that, 0, false,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => {
+                                    api_that_guard =
+                                        Some(api_that.lockable_decode_async_ref().await)
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok =
+                            crate::proton_meet::core::AppCore::wait_for_waiting_room_welcome(
+                                &*api_that_guard,
+                                api_meet_link_name,
+                            )
+                            .await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
             }
         },
     )
@@ -6271,6 +7233,42 @@ fn decode_DartFn_Inputs_String_String_u_32_Output_unit_AnyhowException(
         ))
     }
 }
+fn decode_DartFn_Inputs_String_bool_Output_unit_AnyhowException(
+    dart_opaque: flutter_rust_bridge::DartOpaque,
+) -> impl Fn(String, bool) -> flutter_rust_bridge::DartFnFuture<()> {
+    use flutter_rust_bridge::IntoDart;
+
+    async fn body(dart_opaque: flutter_rust_bridge::DartOpaque, arg0: String, arg1: bool) -> () {
+        let args = vec![
+            arg0.into_into_dart().into_dart(),
+            arg1.into_into_dart().into_dart(),
+        ];
+        let message = FLUTTER_RUST_BRIDGE_HANDLER
+            .dart_fn_invoke(dart_opaque, args)
+            .await;
+
+        let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+        let action = deserializer.cursor.read_u8().unwrap();
+        let ans = match action {
+            0 => std::result::Result::Ok(<()>::sse_decode(&mut deserializer)),
+            1 => std::result::Result::Err(
+                <flutter_rust_bridge::for_generated::anyhow::Error>::sse_decode(&mut deserializer),
+            ),
+            _ => unreachable!(),
+        };
+        deserializer.end();
+        let ans = ans.expect("Dart throws exception but Rust side assume it is not failable");
+        ans
+    }
+
+    move |arg0: String, arg1: bool| {
+        flutter_rust_bridge::for_generated::convert_into_dart_fn_future(body(
+            dart_opaque.clone(),
+            arg0,
+            arg1,
+        ))
+    }
+}
 fn decode_DartFn_Inputs_child_auth_session_Output_String_AnyhowException(
     dart_opaque: flutter_rust_bridge::DartOpaque,
 ) -> impl Fn(
@@ -6305,6 +7303,60 @@ fn decode_DartFn_Inputs_child_auth_session_Output_String_AnyhowException(
         flutter_rust_bridge::for_generated::convert_into_dart_fn_future(body(
             dart_opaque.clone(),
             arg0,
+        ))
+    }
+}
+fn decode_DartFn_Inputs_join_request_change_String_String_u_64_Output_unit_AnyhowException(
+    dart_opaque: flutter_rust_bridge::DartOpaque,
+) -> impl Fn(
+    crate::proton_meet::models::join_request::JoinRequestChange,
+    String,
+    String,
+    u64,
+) -> flutter_rust_bridge::DartFnFuture<()> {
+    use flutter_rust_bridge::IntoDart;
+
+    async fn body(
+        dart_opaque: flutter_rust_bridge::DartOpaque,
+        arg0: crate::proton_meet::models::join_request::JoinRequestChange,
+        arg1: String,
+        arg2: String,
+        arg3: u64,
+    ) -> () {
+        let args = vec![
+            arg0.into_into_dart().into_dart(),
+            arg1.into_into_dart().into_dart(),
+            arg2.into_into_dart().into_dart(),
+            arg3.into_into_dart().into_dart(),
+        ];
+        let message = FLUTTER_RUST_BRIDGE_HANDLER
+            .dart_fn_invoke(dart_opaque, args)
+            .await;
+
+        let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+        let action = deserializer.cursor.read_u8().unwrap();
+        let ans = match action {
+            0 => std::result::Result::Ok(<()>::sse_decode(&mut deserializer)),
+            1 => std::result::Result::Err(
+                <flutter_rust_bridge::for_generated::anyhow::Error>::sse_decode(&mut deserializer),
+            ),
+            _ => unreachable!(),
+        };
+        deserializer.end();
+        let ans = ans.expect("Dart throws exception but Rust side assume it is not failable");
+        ans
+    }
+
+    move |arg0: crate::proton_meet::models::join_request::JoinRequestChange,
+          arg1: String,
+          arg2: String,
+          arg3: u64| {
+        flutter_rust_bridge::for_generated::convert_into_dart_fn_future(body(
+            dart_opaque.clone(),
+            arg0,
+            arg1,
+            arg2,
+            arg3,
         ))
     }
 }
@@ -6764,6 +7816,12 @@ impl SseDecode for crate::errors::BridgeError {
             22 => {
                 return crate::errors::BridgeError::MlsServerVersionNotSupported;
             }
+            23 => {
+                return crate::errors::BridgeError::WaitingRoomJoinRequestNotFound;
+            }
+            24 => {
+                return crate::errors::BridgeError::WaitingRoomJoinCancelled;
+            }
             _ => {
                 unimplemented!("");
             }
@@ -6883,6 +7941,7 @@ impl SseDecode for crate::proton_meet::models::meet_info::FrbMeetInfo {
         let mut var_websocketUrl = <String>::sse_decode(deserializer);
         let mut var_participantsCount = <u32>::sse_decode(deserializer);
         let mut var_isLocked = <bool>::sse_decode(deserializer);
+        let mut var_hasWaitingRoom = <bool>::sse_decode(deserializer);
         let mut var_maxDuration = <u32>::sse_decode(deserializer);
         let mut var_maxParticipants = <u32>::sse_decode(deserializer);
         let mut var_expirationTime = <Option<i64>>::sse_decode(deserializer);
@@ -6893,6 +7952,7 @@ impl SseDecode for crate::proton_meet::models::meet_info::FrbMeetInfo {
             websocket_url: var_websocketUrl,
             participants_count: var_participantsCount,
             is_locked: var_isLocked,
+            has_waiting_room: var_hasWaitingRoom,
             max_duration: var_maxDuration,
             max_participants: var_maxParticipants,
             expiration_time: var_expirationTime,
@@ -6908,6 +7968,7 @@ impl SseDecode for crate::proton_meet::models::meeting_info::FrbMeetingInfo {
         let mut var_salt = <String>::sse_decode(deserializer);
         let mut var_sessionKey = <String>::sse_decode(deserializer);
         let mut var_locked = <u8>::sse_decode(deserializer);
+        let mut var_waitingRoom = <u8>::sse_decode(deserializer);
         let mut var_maxDuration = <u32>::sse_decode(deserializer);
         let mut var_maxParticipants = <u32>::sse_decode(deserializer);
         let mut var_expirationTime = <Option<i64>>::sse_decode(deserializer);
@@ -6917,6 +7978,7 @@ impl SseDecode for crate::proton_meet::models::meeting_info::FrbMeetingInfo {
             salt: var_salt,
             session_key: var_sessionKey,
             locked: var_locked,
+            waiting_room: var_waitingRoom,
             max_duration: var_maxDuration,
             max_participants: var_maxParticipants,
             expiration_time: var_expirationTime,
@@ -6932,6 +7994,16 @@ impl SseDecode
         let mut var_audio = <u8>::sse_decode(deserializer);
         let mut var_video = <u8>::sse_decode(deserializer);
         return crate::proton_meet::models::participant_track_settings::FrbParticipantTrackSettings{audio: var_audio, video: var_video};
+    }
+}
+
+impl SseDecode for crate::proton_meet::models::join_request::FrbSubmitJoinRequestResponse {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_requestId = <String>::sse_decode(deserializer);
+        return crate::proton_meet::models::join_request::FrbSubmitJoinRequestResponse {
+            request_id: var_requestId,
+        };
     }
 }
 
@@ -6954,6 +8026,7 @@ impl SseDecode for crate::proton_meet::models::upcoming_meeting::FrbUpcomingMeet
         let mut var_createTime = <Option<i64>>::sse_decode(deserializer);
         let mut var_lastUsedTime = <Option<i64>>::sse_decode(deserializer);
         let mut var_calendarEventId = <Option<String>>::sse_decode(deserializer);
+        let mut var_waitingRoom = <Option<u8>>::sse_decode(deserializer);
         return crate::proton_meet::models::upcoming_meeting::FrbUpcomingMeeting {
             id: var_id,
             address_id: var_addressId,
@@ -6970,6 +8043,7 @@ impl SseDecode for crate::proton_meet::models::upcoming_meeting::FrbUpcomingMeet
             create_time: var_createTime,
             last_used_time: var_lastUsedTime,
             calendar_event_id: var_calendarEventId,
+            waiting_room: var_waitingRoom,
         };
     }
 }
@@ -7000,6 +8074,18 @@ impl SseDecode for isize {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         deserializer.cursor.read_i64::<NativeEndian>().unwrap() as _
+    }
+}
+
+impl SseDecode for crate::proton_meet::models::join_request::JoinRequestChange {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::proton_meet::models::join_request::JoinRequestChange::Added,
+            1 => crate::proton_meet::models::join_request::JoinRequestChange::Removed,
+            _ => unreachable!("Invalid variant for JoinRequestChange: {}", inner),
+        };
     }
 }
 
@@ -7767,97 +8853,115 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-                        1 => wire__crate__proton_meet__core__AppCore_clear_livekit_admin_change_callback_impl(port, ptr, rust_vec_len, data_len),
-2 => wire__crate__proton_meet__core__AppCore_clear_mls_group_update_callback_impl(port, ptr, rust_vec_len, data_len),
-3 => wire__crate__proton_meet__core__AppCore_clear_mls_sync_state_update_callback_impl(port, ptr, rust_vec_len, data_len),
-4 => wire__crate__proton_meet__core__AppCore_create_meeting_impl(port, ptr, rust_vec_len, data_len),
-5 => wire__crate__proton_meet__core__AppCore_create_personal_meeting_impl(port, ptr, rust_vec_len, data_len),
-6 => wire__crate__proton_meet__core__AppCore_decrypt_message_impl(port, ptr, rust_vec_len, data_len),
-7 => wire__crate__proton_meet__core__AppCore_delete_meeting_impl(port, ptr, rust_vec_len, data_len),
-8 => wire__crate__proton_meet__core__AppCore_edit_meeting_name_impl(port, ptr, rust_vec_len, data_len),
-9 => wire__crate__proton_meet__core__AppCore_encrypt_message_impl(port, ptr, rust_vec_len, data_len),
-10 => wire__crate__proton_meet__core__AppCore_end_meeting_impl(port, ptr, rust_vec_len, data_len),
-11 => wire__crate__proton_meet__core__AppCore_export_schedule_meeting_to_ics_impl(port, ptr, rust_vec_len, data_len),
-12 => wire__crate__proton_meet__core__AppCore_fetch_toggles_impl(port, ptr, rust_vec_len, data_len),
-13 => wire__crate__proton_meet__core__AppCore_fetch_user_state_impl(port, ptr, rust_vec_len, data_len),
-14 => wire__crate__proton_meet__core__AppCore_fork_selector_impl(port, ptr, rust_vec_len, data_len),
-15 => wire__crate__proton_meet__core__AppCore_get_core_events_impl(port, ptr, rust_vec_len, data_len),
-16 => wire__crate__proton_meet__core__AppCore_get_events_impl(port, ptr, rust_vec_len, data_len),
-17 => wire__crate__proton_meet__core__AppCore_get_group_display_code_impl(port, ptr, rust_vec_len, data_len),
-18 => wire__crate__proton_meet__core__AppCore_get_group_key_impl(port, ptr, rust_vec_len, data_len),
-19 => wire__crate__proton_meet__core__AppCore_get_group_len_impl(port, ptr, rust_vec_len, data_len),
-20 => wire__crate__proton_meet__core__AppCore_get_join_type_impl(port, ptr, rust_vec_len, data_len),
-21 => wire__crate__proton_meet__core__AppCore_get_latest_event_id_impl(port, ptr, rust_vec_len, data_len),
-22 => wire__crate__proton_meet__core__AppCore_get_meeting_info_impl(port, ptr, rust_vec_len, data_len),
-23 => wire__crate__proton_meet__core__AppCore_get_participants_impl(port, ptr, rust_vec_len, data_len),
-24 => wire__crate__proton_meet__core__AppCore_get_participants_count_impl(port, ptr, rust_vec_len, data_len),
-25 => wire__crate__proton_meet__core__AppCore_get_proton_telemetry_enabled_impl(port, ptr, rust_vec_len, data_len),
-26 => wire__crate__proton_meet__core__AppCore_get_upcoming_meetings_impl(port, ptr, rust_vec_len, data_len),
-27 => wire__crate__proton_meet__core__AppCore_get_user_impl(port, ptr, rust_vec_len, data_len),
-28 => wire__crate__proton_meet__core__AppCore_get_user_config_impl(port, ptr, rust_vec_len, data_len),
-29 => wire__crate__proton_meet__core__AppCore_get_ws_state_impl(port, ptr, rust_vec_len, data_len),
-30 => wire__crate__proton_meet__core__AppCore_is_mls_up_to_date_impl(port, ptr, rust_vec_len, data_len),
-31 => wire__crate__proton_meet__core__AppCore_is_websocket_has_reconnected_impl(port, ptr, rust_vec_len, data_len),
-32 => wire__crate__proton_meet__core__AppCore_join_meeting_impl(port, ptr, rust_vec_len, data_len),
-33 => wire__crate__proton_meet__core__AppCore_join_meeting_with_access_token_impl(port, ptr, rust_vec_len, data_len),
-34 => wire__crate__proton_meet__core__AppCore_join_meeting_with_access_token_with_proposal_impl(port, ptr, rust_vec_len, data_len),
-35 => wire__crate__proton_meet__core__AppCore_leave_room_impl(port, ptr, rust_vec_len, data_len),
-36 => wire__crate__proton_meet__core__AppCore_lock_meeting_impl(port, ptr, rust_vec_len, data_len),
-37 => wire__crate__proton_meet__core__AppCore_log_connection_lost_impl(port, ptr, rust_vec_len, data_len),
-38 => wire__crate__proton_meet__core__AppCore_log_joined_room_impl(port, ptr, rust_vec_len, data_len),
-39 => wire__crate__proton_meet__core__AppCore_log_joined_room_failed_impl(port, ptr, rust_vec_len, data_len),
-40 => wire__crate__proton_meet__core__AppCore_log_start_to_join_room_impl(port, ptr, rust_vec_len, data_len),
-41 => wire__crate__proton_meet__core__AppCore_log_user_epoch_health_impl(port, ptr, rust_vec_len, data_len),
-42 => wire__crate__proton_meet__core__AppCore_log_user_rejoin_impl(port, ptr, rust_vec_len, data_len),
-43 => wire__crate__proton_meet__core__AppCore_login_impl(port, ptr, rust_vec_len, data_len),
-44 => wire__crate__proton_meet__core__AppCore_login_with_two_factor_impl(port, ptr, rust_vec_len, data_len),
-45 => wire__crate__proton_meet__core__AppCore_logout_impl(port, ptr, rust_vec_len, data_len),
-46 => wire__crate__proton_meet__core__AppCore_new_impl(port, ptr, rust_vec_len, data_len),
-47 => wire__crate__proton_meet__core__AppCore_parse_chat_message_impl(port, ptr, rust_vec_len, data_len),
-48 => wire__crate__proton_meet__core__AppCore_parse_meeting_link_impl(port, ptr, rust_vec_len, data_len),
-49 => wire__crate__proton_meet__core__AppCore_ping_impl(port, ptr, rust_vec_len, data_len),
-50 => wire__crate__proton_meet__core__AppCore_refresh_user_state_from_api_impl(port, ptr, rust_vec_len, data_len),
-51 => wire__crate__proton_meet__core__AppCore_remove_participant_impl(port, ptr, rust_vec_len, data_len),
-52 => wire__crate__proton_meet__core__AppCore_send_meeting_feedback_impl(port, ptr, rust_vec_len, data_len),
-53 => wire__crate__proton_meet__core__AppCore_set_livekit_active_uuids_impl(port, ptr, rust_vec_len, data_len),
-54 => wire__crate__proton_meet__core__AppCore_set_livekit_admin_change_callback_impl(port, ptr, rust_vec_len, data_len),
-55 => wire__crate__proton_meet__core__AppCore_set_mls_group_update_callback_impl(port, ptr, rust_vec_len, data_len),
-56 => wire__crate__proton_meet__core__AppCore_set_mls_sync_state_update_callback_impl(port, ptr, rust_vec_len, data_len),
-57 => wire__crate__proton_meet__core__AppCore_set_websocket_max_ping_failures_impl(port, ptr, rust_vec_len, data_len),
-58 => wire__crate__proton_meet__core__AppCore_set_websocket_ping_interval_impl(port, ptr, rust_vec_len, data_len),
-59 => wire__crate__proton_meet__core__AppCore_set_websocket_pong_timeout_impl(port, ptr, rust_vec_len, data_len),
-61 => wire__crate__proton_meet__core__AppCore_sync_auth_store_impl(port, ptr, rust_vec_len, data_len),
-62 => wire__crate__proton_meet__core__AppCore_trigger_websocket_reconnect_impl(port, ptr, rust_vec_len, data_len),
-63 => wire__crate__proton_meet__core__AppCore_try_log_designated_committer_impl(port, ptr, rust_vec_len, data_len),
-64 => wire__crate__proton_meet__core__AppCore_unlock_meeting_impl(port, ptr, rust_vec_len, data_len),
-65 => wire__crate__proton_meet__core__AppCore_update_auth_impl(port, ptr, rust_vec_len, data_len),
-66 => wire__crate__proton_meet__core__AppCore_update_camera_max_bitrate_impl(port, ptr, rust_vec_len, data_len),
-67 => wire__crate__proton_meet__core__AppCore_update_camera_resolution_impl(port, ptr, rust_vec_len, data_len),
-68 => wire__crate__proton_meet__core__AppCore_update_dark_mode_impl(port, ptr, rust_vec_len, data_len),
-69 => wire__crate__proton_meet__core__AppCore_update_livekit_access_token_impl(port, ptr, rust_vec_len, data_len),
-70 => wire__crate__proton_meet__core__AppCore_update_livekit_access_token_and_websocket_url_impl(port, ptr, rust_vec_len, data_len),
-71 => wire__crate__proton_meet__core__AppCore_update_meeting_schedule_impl(port, ptr, rust_vec_len, data_len),
-72 => wire__crate__proton_meet__core__AppCore_update_participant_track_settings_impl(port, ptr, rust_vec_len, data_len),
-73 => wire__crate__proton_meet__core__AppCore_update_screensharing_max_bitrate_impl(port, ptr, rust_vec_len, data_len),
-74 => wire__crate__proton_meet__core__AppCore_update_screensharing_resolution_impl(port, ptr, rust_vec_len, data_len),
-75 => wire__crate__proton_meet__core__AppCore_update_show_self_tile_impl(port, ptr, rust_vec_len, data_len),
-76 => wire__crate__proton_meet__desktop_web_login__DesktopWebLogin_cancel_impl(port, ptr, rust_vec_len, data_len),
-77 => wire__crate__proton_meet__desktop_web_login__DesktopWebLogin_new_impl(port, ptr, rust_vec_len, data_len),
-78 => wire__crate__proton_meet__desktop_web_login__DesktopWebLogin_poll_impl(port, ptr, rust_vec_len, data_len),
-79 => wire__crate__proton_meet__desktop_web_login__DesktopWebLogin_start_impl(port, ptr, rust_vec_len, data_len),
-80 => wire__crate__proton_meet__storage__user_key_provider__FrbUserKeyProvider_clear_auth_dart_callback_impl(port, ptr, rust_vec_len, data_len),
-82 => wire__crate__proton_meet__storage__user_key_provider__FrbUserKeyProvider_set_get_passphrase_callback_impl(port, ptr, rust_vec_len, data_len),
-83 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_clear_auth_dart_callback_impl(port, ptr, rust_vec_len, data_len),
-86 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_set_auth_impl(port, ptr, rust_vec_len, data_len),
-87 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_set_auth_dart_callback_impl(port, ptr, rust_vec_len, data_len),
-88 => wire__crate__logger__RotatingFileWriter_new_impl(port, ptr, rust_vec_len, data_len),
-91 => wire__crate__flutter_logger__flutter_log_layer_default_impl(port, ptr, rust_vec_len, data_len),
-105 => wire__crate__init__init_app_impl(port, ptr, rust_vec_len, data_len),
-116 => wire__crate__proton_meet__user_config__load_config_impl(port, ptr, rust_vec_len, data_len),
-117 => wire__crate__flutter_logger__rust_level_from_string_ref_impl(port, ptr, rust_vec_len, data_len),
-118 => wire__crate__flutter_logger__rust_level_to_str_impl(port, ptr, rust_vec_len, data_len),
-119 => wire__crate__proton_meet__user_config__save_config_impl(port, ptr, rust_vec_len, data_len),
-120 => wire__crate__flutter_logger__set_flutter_log_callback_impl(port, ptr, rust_vec_len, data_len),
+                        1 => wire__crate__proton_meet__core__AppCore_admit_all_waiting_room_join_requests_impl(port, ptr, rust_vec_len, data_len),
+2 => wire__crate__proton_meet__core__AppCore_admit_waiting_room_join_request_impl(port, ptr, rust_vec_len, data_len),
+3 => wire__crate__proton_meet__core__AppCore_authenticate_meeting_link_impl(port, ptr, rust_vec_len, data_len),
+4 => wire__crate__proton_meet__core__AppCore_cancel_waiting_room_join_request_impl(port, ptr, rust_vec_len, data_len),
+5 => wire__crate__proton_meet__core__AppCore_clear_join_decision_callback_impl(port, ptr, rust_vec_len, data_len),
+6 => wire__crate__proton_meet__core__AppCore_clear_join_request_callback_impl(port, ptr, rust_vec_len, data_len),
+7 => wire__crate__proton_meet__core__AppCore_clear_livekit_admin_change_callback_impl(port, ptr, rust_vec_len, data_len),
+8 => wire__crate__proton_meet__core__AppCore_clear_mls_group_update_callback_impl(port, ptr, rust_vec_len, data_len),
+9 => wire__crate__proton_meet__core__AppCore_clear_mls_sync_state_update_callback_impl(port, ptr, rust_vec_len, data_len),
+10 => wire__crate__proton_meet__core__AppCore_clear_prejoin_srp_auth_impl(port, ptr, rust_vec_len, data_len),
+11 => wire__crate__proton_meet__core__AppCore_clear_waiting_room_join_request_impl(port, ptr, rust_vec_len, data_len),
+12 => wire__crate__proton_meet__core__AppCore_connect_websocket_for_waiting_room_impl(port, ptr, rust_vec_len, data_len),
+13 => wire__crate__proton_meet__core__AppCore_create_join_request_impl(port, ptr, rust_vec_len, data_len),
+14 => wire__crate__proton_meet__core__AppCore_create_meeting_impl(port, ptr, rust_vec_len, data_len),
+15 => wire__crate__proton_meet__core__AppCore_create_personal_meeting_impl(port, ptr, rust_vec_len, data_len),
+16 => wire__crate__proton_meet__core__AppCore_decrypt_message_impl(port, ptr, rust_vec_len, data_len),
+17 => wire__crate__proton_meet__core__AppCore_delete_meeting_impl(port, ptr, rust_vec_len, data_len),
+18 => wire__crate__proton_meet__core__AppCore_edit_meeting_name_impl(port, ptr, rust_vec_len, data_len),
+19 => wire__crate__proton_meet__core__AppCore_encrypt_message_impl(port, ptr, rust_vec_len, data_len),
+20 => wire__crate__proton_meet__core__AppCore_end_meeting_impl(port, ptr, rust_vec_len, data_len),
+21 => wire__crate__proton_meet__core__AppCore_export_schedule_meeting_to_ics_impl(port, ptr, rust_vec_len, data_len),
+22 => wire__crate__proton_meet__core__AppCore_fetch_toggles_impl(port, ptr, rust_vec_len, data_len),
+23 => wire__crate__proton_meet__core__AppCore_fetch_user_state_impl(port, ptr, rust_vec_len, data_len),
+24 => wire__crate__proton_meet__core__AppCore_fork_selector_impl(port, ptr, rust_vec_len, data_len),
+25 => wire__crate__proton_meet__core__AppCore_get_core_events_impl(port, ptr, rust_vec_len, data_len),
+26 => wire__crate__proton_meet__core__AppCore_get_events_impl(port, ptr, rust_vec_len, data_len),
+27 => wire__crate__proton_meet__core__AppCore_get_group_display_code_impl(port, ptr, rust_vec_len, data_len),
+28 => wire__crate__proton_meet__core__AppCore_get_group_key_impl(port, ptr, rust_vec_len, data_len),
+29 => wire__crate__proton_meet__core__AppCore_get_group_len_impl(port, ptr, rust_vec_len, data_len),
+30 => wire__crate__proton_meet__core__AppCore_get_join_type_impl(port, ptr, rust_vec_len, data_len),
+31 => wire__crate__proton_meet__core__AppCore_get_latest_event_id_impl(port, ptr, rust_vec_len, data_len),
+32 => wire__crate__proton_meet__core__AppCore_get_meeting_display_name_session_key_impl(port, ptr, rust_vec_len, data_len),
+33 => wire__crate__proton_meet__core__AppCore_get_meeting_info_impl(port, ptr, rust_vec_len, data_len),
+34 => wire__crate__proton_meet__core__AppCore_get_participants_impl(port, ptr, rust_vec_len, data_len),
+35 => wire__crate__proton_meet__core__AppCore_get_participants_count_impl(port, ptr, rust_vec_len, data_len),
+36 => wire__crate__proton_meet__core__AppCore_get_proton_telemetry_enabled_impl(port, ptr, rust_vec_len, data_len),
+37 => wire__crate__proton_meet__core__AppCore_get_upcoming_meetings_impl(port, ptr, rust_vec_len, data_len),
+38 => wire__crate__proton_meet__core__AppCore_get_user_impl(port, ptr, rust_vec_len, data_len),
+39 => wire__crate__proton_meet__core__AppCore_get_user_config_impl(port, ptr, rust_vec_len, data_len),
+40 => wire__crate__proton_meet__core__AppCore_get_ws_state_impl(port, ptr, rust_vec_len, data_len),
+41 => wire__crate__proton_meet__core__AppCore_has_mls_group_info_impl(port, ptr, rust_vec_len, data_len),
+42 => wire__crate__proton_meet__core__AppCore_is_mls_up_to_date_impl(port, ptr, rust_vec_len, data_len),
+43 => wire__crate__proton_meet__core__AppCore_is_websocket_has_reconnected_impl(port, ptr, rust_vec_len, data_len),
+44 => wire__crate__proton_meet__core__AppCore_join_meeting_impl(port, ptr, rust_vec_len, data_len),
+45 => wire__crate__proton_meet__core__AppCore_join_meeting_with_access_token_impl(port, ptr, rust_vec_len, data_len),
+46 => wire__crate__proton_meet__core__AppCore_join_meeting_with_access_token_with_proposal_impl(port, ptr, rust_vec_len, data_len),
+47 => wire__crate__proton_meet__core__AppCore_leave_room_impl(port, ptr, rust_vec_len, data_len),
+48 => wire__crate__proton_meet__core__AppCore_lock_meeting_impl(port, ptr, rust_vec_len, data_len),
+49 => wire__crate__proton_meet__core__AppCore_log_connection_lost_impl(port, ptr, rust_vec_len, data_len),
+50 => wire__crate__proton_meet__core__AppCore_log_joined_room_impl(port, ptr, rust_vec_len, data_len),
+51 => wire__crate__proton_meet__core__AppCore_log_joined_room_failed_impl(port, ptr, rust_vec_len, data_len),
+52 => wire__crate__proton_meet__core__AppCore_log_start_to_join_room_impl(port, ptr, rust_vec_len, data_len),
+53 => wire__crate__proton_meet__core__AppCore_log_user_epoch_health_impl(port, ptr, rust_vec_len, data_len),
+54 => wire__crate__proton_meet__core__AppCore_log_user_rejoin_impl(port, ptr, rust_vec_len, data_len),
+55 => wire__crate__proton_meet__core__AppCore_login_impl(port, ptr, rust_vec_len, data_len),
+56 => wire__crate__proton_meet__core__AppCore_login_with_two_factor_impl(port, ptr, rust_vec_len, data_len),
+57 => wire__crate__proton_meet__core__AppCore_logout_impl(port, ptr, rust_vec_len, data_len),
+58 => wire__crate__proton_meet__core__AppCore_new_impl(port, ptr, rust_vec_len, data_len),
+59 => wire__crate__proton_meet__core__AppCore_parse_chat_message_impl(port, ptr, rust_vec_len, data_len),
+60 => wire__crate__proton_meet__core__AppCore_parse_meeting_link_impl(port, ptr, rust_vec_len, data_len),
+61 => wire__crate__proton_meet__core__AppCore_ping_impl(port, ptr, rust_vec_len, data_len),
+62 => wire__crate__proton_meet__core__AppCore_prepare_mls_session_for_waiting_room_impl(port, ptr, rust_vec_len, data_len),
+63 => wire__crate__proton_meet__core__AppCore_refresh_user_state_from_api_impl(port, ptr, rust_vec_len, data_len),
+64 => wire__crate__proton_meet__core__AppCore_reject_waiting_room_join_request_impl(port, ptr, rust_vec_len, data_len),
+65 => wire__crate__proton_meet__core__AppCore_remove_participant_impl(port, ptr, rust_vec_len, data_len),
+66 => wire__crate__proton_meet__core__AppCore_send_meeting_feedback_impl(port, ptr, rust_vec_len, data_len),
+67 => wire__crate__proton_meet__core__AppCore_set_join_decision_callback_impl(port, ptr, rust_vec_len, data_len),
+68 => wire__crate__proton_meet__core__AppCore_set_join_request_callback_impl(port, ptr, rust_vec_len, data_len),
+69 => wire__crate__proton_meet__core__AppCore_set_livekit_active_uuids_impl(port, ptr, rust_vec_len, data_len),
+70 => wire__crate__proton_meet__core__AppCore_set_livekit_admin_change_callback_impl(port, ptr, rust_vec_len, data_len),
+71 => wire__crate__proton_meet__core__AppCore_set_mls_group_update_callback_impl(port, ptr, rust_vec_len, data_len),
+72 => wire__crate__proton_meet__core__AppCore_set_mls_sync_state_update_callback_impl(port, ptr, rust_vec_len, data_len),
+73 => wire__crate__proton_meet__core__AppCore_set_websocket_max_ping_failures_impl(port, ptr, rust_vec_len, data_len),
+74 => wire__crate__proton_meet__core__AppCore_set_websocket_ping_interval_impl(port, ptr, rust_vec_len, data_len),
+75 => wire__crate__proton_meet__core__AppCore_set_websocket_pong_timeout_impl(port, ptr, rust_vec_len, data_len),
+77 => wire__crate__proton_meet__core__AppCore_sync_auth_store_impl(port, ptr, rust_vec_len, data_len),
+78 => wire__crate__proton_meet__core__AppCore_trigger_websocket_reconnect_impl(port, ptr, rust_vec_len, data_len),
+79 => wire__crate__proton_meet__core__AppCore_try_log_designated_committer_impl(port, ptr, rust_vec_len, data_len),
+80 => wire__crate__proton_meet__core__AppCore_unlock_meeting_impl(port, ptr, rust_vec_len, data_len),
+81 => wire__crate__proton_meet__core__AppCore_update_auth_impl(port, ptr, rust_vec_len, data_len),
+82 => wire__crate__proton_meet__core__AppCore_update_camera_max_bitrate_impl(port, ptr, rust_vec_len, data_len),
+83 => wire__crate__proton_meet__core__AppCore_update_camera_resolution_impl(port, ptr, rust_vec_len, data_len),
+84 => wire__crate__proton_meet__core__AppCore_update_dark_mode_impl(port, ptr, rust_vec_len, data_len),
+85 => wire__crate__proton_meet__core__AppCore_update_livekit_access_token_impl(port, ptr, rust_vec_len, data_len),
+86 => wire__crate__proton_meet__core__AppCore_update_livekit_access_token_and_websocket_url_impl(port, ptr, rust_vec_len, data_len),
+87 => wire__crate__proton_meet__core__AppCore_update_meeting_schedule_impl(port, ptr, rust_vec_len, data_len),
+88 => wire__crate__proton_meet__core__AppCore_update_participant_track_settings_impl(port, ptr, rust_vec_len, data_len),
+89 => wire__crate__proton_meet__core__AppCore_update_screensharing_max_bitrate_impl(port, ptr, rust_vec_len, data_len),
+90 => wire__crate__proton_meet__core__AppCore_update_screensharing_resolution_impl(port, ptr, rust_vec_len, data_len),
+91 => wire__crate__proton_meet__core__AppCore_update_show_self_tile_impl(port, ptr, rust_vec_len, data_len),
+92 => wire__crate__proton_meet__core__AppCore_update_waiting_room_setting_impl(port, ptr, rust_vec_len, data_len),
+93 => wire__crate__proton_meet__core__AppCore_wait_for_waiting_room_welcome_impl(port, ptr, rust_vec_len, data_len),
+94 => wire__crate__proton_meet__desktop_web_login__DesktopWebLogin_cancel_impl(port, ptr, rust_vec_len, data_len),
+95 => wire__crate__proton_meet__desktop_web_login__DesktopWebLogin_new_impl(port, ptr, rust_vec_len, data_len),
+96 => wire__crate__proton_meet__desktop_web_login__DesktopWebLogin_poll_impl(port, ptr, rust_vec_len, data_len),
+97 => wire__crate__proton_meet__desktop_web_login__DesktopWebLogin_start_impl(port, ptr, rust_vec_len, data_len),
+98 => wire__crate__proton_meet__storage__user_key_provider__FrbUserKeyProvider_clear_auth_dart_callback_impl(port, ptr, rust_vec_len, data_len),
+100 => wire__crate__proton_meet__storage__user_key_provider__FrbUserKeyProvider_set_get_passphrase_callback_impl(port, ptr, rust_vec_len, data_len),
+101 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_clear_auth_dart_callback_impl(port, ptr, rust_vec_len, data_len),
+104 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_set_auth_impl(port, ptr, rust_vec_len, data_len),
+105 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_set_auth_dart_callback_impl(port, ptr, rust_vec_len, data_len),
+106 => wire__crate__logger__RotatingFileWriter_new_impl(port, ptr, rust_vec_len, data_len),
+109 => wire__crate__flutter_logger__flutter_log_layer_default_impl(port, ptr, rust_vec_len, data_len),
+123 => wire__crate__init__init_app_impl(port, ptr, rust_vec_len, data_len),
+134 => wire__crate__proton_meet__user_config__load_config_impl(port, ptr, rust_vec_len, data_len),
+135 => wire__crate__flutter_logger__rust_level_from_string_ref_impl(port, ptr, rust_vec_len, data_len),
+136 => wire__crate__flutter_logger__rust_level_to_str_impl(port, ptr, rust_vec_len, data_len),
+137 => wire__crate__proton_meet__user_config__save_config_impl(port, ptr, rust_vec_len, data_len),
+138 => wire__crate__flutter_logger__set_flutter_log_callback_impl(port, ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
 }
@@ -7870,35 +8974,35 @@ fn pde_ffi_dispatcher_sync_impl(
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-                        60 => wire__crate__proton_meet__core__AppCore_subscribe_events_impl(ptr, rust_vec_len, data_len),
-81 => wire__crate__proton_meet__storage__user_key_provider__FrbUserKeyProvider_new_impl(ptr, rust_vec_len, data_len),
-84 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_from_session_impl(ptr, rust_vec_len, data_len),
-85 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_new_impl(ptr, rust_vec_len, data_len),
-89 => wire__crate__proton_meet__user_subscription__can_pay_impl(ptr, rust_vec_len, data_len),
-90 => wire__crate__proton_meet__token__create_token_impl(ptr, rust_vec_len, data_len),
-92 => wire__crate__proton_meet__models__upcoming_meeting__frb_upcoming_meeting_default_values_impl(ptr, rust_vec_len, data_len),
-93 => wire__crate__proton_meet__models__upcoming_meeting__frb_upcoming_meeting_new_for_join_impl(ptr, rust_vec_len, data_len),
-94 => wire__crate__proton_meet__user_subscription__get_user_byte_impl(ptr, rust_vec_len, data_len),
-95 => wire__crate__proton_meet__user_subscription__has_paid_drive_impl(ptr, rust_vec_len, data_len),
-96 => wire__crate__proton_meet__user_subscription__has_paid_lumo_impl(ptr, rust_vec_len, data_len),
-97 => wire__crate__proton_meet__user_subscription__has_paid_mail_impl(ptr, rust_vec_len, data_len),
-98 => wire__crate__proton_meet__user_subscription__has_paid_meet_impl(ptr, rust_vec_len, data_len),
-99 => wire__crate__proton_meet__user_subscription__has_paid_pass_impl(ptr, rust_vec_len, data_len),
-100 => wire__crate__proton_meet__user_subscription__has_paid_vpn_impl(ptr, rust_vec_len, data_len),
-101 => wire__crate__proton_meet__user_subscription__has_paid_wallet_impl(ptr, rust_vec_len, data_len),
-102 => wire__crate__proton_meet__user_subscription__has_pass_lifetime_impl(ptr, rust_vec_len, data_len),
-103 => wire__crate__proton_meet__user_subscription__has_pass_lifetime_or_via_simple_login_impl(ptr, rust_vec_len, data_len),
-104 => wire__crate__proton_meet__user_subscription__has_pass_via_simple_login_impl(ptr, rust_vec_len, data_len),
-106 => wire__crate__logger__init_rust_logging_impl(ptr, rust_vec_len, data_len),
-107 => wire__crate__panic_hook__initialize_panic_hook_impl(ptr, rust_vec_len, data_len),
-108 => wire__crate__proton_meet__user_subscription__is_admin_impl(ptr, rust_vec_len, data_len),
-109 => wire__crate__proton_meet__user_subscription__is_delinquent_impl(ptr, rust_vec_len, data_len),
-110 => wire__crate__proton_meet__user_subscription__is_free_impl(ptr, rust_vec_len, data_len),
-111 => wire__crate__proton_meet__user_subscription__is_member_impl(ptr, rust_vec_len, data_len),
-112 => wire__crate__proton_meet__user_subscription__is_paid_impl(ptr, rust_vec_len, data_len),
-113 => wire__crate__proton_meet__user_subscription__is_private_impl(ptr, rust_vec_len, data_len),
-114 => wire__crate__proton_meet__user_subscription__is_self_impl(ptr, rust_vec_len, data_len),
-115 => wire__crate__proton_meet__meet_link__is_url_password_valid_impl(ptr, rust_vec_len, data_len),
+                        76 => wire__crate__proton_meet__core__AppCore_subscribe_events_impl(ptr, rust_vec_len, data_len),
+99 => wire__crate__proton_meet__storage__user_key_provider__FrbUserKeyProvider_new_impl(ptr, rust_vec_len, data_len),
+102 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_from_session_impl(ptr, rust_vec_len, data_len),
+103 => wire__crate__proton_meet__meet_auth_store__ProtonMeetAuthStore_new_impl(ptr, rust_vec_len, data_len),
+107 => wire__crate__proton_meet__user_subscription__can_pay_impl(ptr, rust_vec_len, data_len),
+108 => wire__crate__proton_meet__token__create_token_impl(ptr, rust_vec_len, data_len),
+110 => wire__crate__proton_meet__models__upcoming_meeting__frb_upcoming_meeting_default_values_impl(ptr, rust_vec_len, data_len),
+111 => wire__crate__proton_meet__models__upcoming_meeting__frb_upcoming_meeting_new_for_join_impl(ptr, rust_vec_len, data_len),
+112 => wire__crate__proton_meet__user_subscription__get_user_byte_impl(ptr, rust_vec_len, data_len),
+113 => wire__crate__proton_meet__user_subscription__has_paid_drive_impl(ptr, rust_vec_len, data_len),
+114 => wire__crate__proton_meet__user_subscription__has_paid_lumo_impl(ptr, rust_vec_len, data_len),
+115 => wire__crate__proton_meet__user_subscription__has_paid_mail_impl(ptr, rust_vec_len, data_len),
+116 => wire__crate__proton_meet__user_subscription__has_paid_meet_impl(ptr, rust_vec_len, data_len),
+117 => wire__crate__proton_meet__user_subscription__has_paid_pass_impl(ptr, rust_vec_len, data_len),
+118 => wire__crate__proton_meet__user_subscription__has_paid_vpn_impl(ptr, rust_vec_len, data_len),
+119 => wire__crate__proton_meet__user_subscription__has_paid_wallet_impl(ptr, rust_vec_len, data_len),
+120 => wire__crate__proton_meet__user_subscription__has_pass_lifetime_impl(ptr, rust_vec_len, data_len),
+121 => wire__crate__proton_meet__user_subscription__has_pass_lifetime_or_via_simple_login_impl(ptr, rust_vec_len, data_len),
+122 => wire__crate__proton_meet__user_subscription__has_pass_via_simple_login_impl(ptr, rust_vec_len, data_len),
+124 => wire__crate__logger__init_rust_logging_impl(ptr, rust_vec_len, data_len),
+125 => wire__crate__panic_hook__initialize_panic_hook_impl(ptr, rust_vec_len, data_len),
+126 => wire__crate__proton_meet__user_subscription__is_admin_impl(ptr, rust_vec_len, data_len),
+127 => wire__crate__proton_meet__user_subscription__is_delinquent_impl(ptr, rust_vec_len, data_len),
+128 => wire__crate__proton_meet__user_subscription__is_free_impl(ptr, rust_vec_len, data_len),
+129 => wire__crate__proton_meet__user_subscription__is_member_impl(ptr, rust_vec_len, data_len),
+130 => wire__crate__proton_meet__user_subscription__is_paid_impl(ptr, rust_vec_len, data_len),
+131 => wire__crate__proton_meet__user_subscription__is_private_impl(ptr, rust_vec_len, data_len),
+132 => wire__crate__proton_meet__user_subscription__is_self_impl(ptr, rust_vec_len, data_len),
+133 => wire__crate__proton_meet__meet_link__is_url_password_valid_impl(ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
 }
@@ -8146,6 +9250,10 @@ impl flutter_rust_bridge::IntoDart for crate::errors::BridgeError {
             crate::errors::BridgeError::MlsServerVersionNotSupported => {
                 [22.into_dart()].into_dart()
             }
+            crate::errors::BridgeError::WaitingRoomJoinRequestNotFound => {
+                [23.into_dart()].into_dart()
+            }
+            crate::errors::BridgeError::WaitingRoomJoinCancelled => [24.into_dart()].into_dart(),
             _ => {
                 unimplemented!("");
             }
@@ -8336,6 +9444,7 @@ impl flutter_rust_bridge::IntoDart for crate::proton_meet::models::meet_info::Fr
             self.websocket_url.into_into_dart().into_dart(),
             self.participants_count.into_into_dart().into_dart(),
             self.is_locked.into_into_dart().into_dart(),
+            self.has_waiting_room.into_into_dart().into_dart(),
             self.max_duration.into_into_dart().into_dart(),
             self.max_participants.into_into_dart().into_dart(),
             self.expiration_time.into_into_dart().into_dart(),
@@ -8363,6 +9472,7 @@ impl flutter_rust_bridge::IntoDart for crate::proton_meet::models::meeting_info:
             self.salt.into_into_dart().into_dart(),
             self.session_key.into_into_dart().into_dart(),
             self.locked.into_into_dart().into_dart(),
+            self.waiting_room.into_into_dart().into_dart(),
             self.max_duration.into_into_dart().into_dart(),
             self.max_participants.into_into_dart().into_dart(),
             self.expiration_time.into_into_dart().into_dart(),
@@ -8410,6 +9520,29 @@ impl
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart
+    for crate::proton_meet::models::join_request::FrbSubmitJoinRequestResponse
+{
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.request_id.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::proton_meet::models::join_request::FrbSubmitJoinRequestResponse
+{
+}
+impl
+    flutter_rust_bridge::IntoIntoDart<
+        crate::proton_meet::models::join_request::FrbSubmitJoinRequestResponse,
+    > for crate::proton_meet::models::join_request::FrbSubmitJoinRequestResponse
+{
+    fn into_into_dart(
+        self,
+    ) -> crate::proton_meet::models::join_request::FrbSubmitJoinRequestResponse {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart
     for crate::proton_meet::models::upcoming_meeting::FrbUpcomingMeeting
 {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
@@ -8429,6 +9562,7 @@ impl flutter_rust_bridge::IntoDart
             self.create_time.into_into_dart().into_dart(),
             self.last_used_time.into_into_dart().into_dart(),
             self.calendar_event_id.into_into_dart().into_dart(),
+            self.waiting_room.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -8461,6 +9595,33 @@ impl flutter_rust_bridge::IntoIntoDart<crate::proton_meet::models::event::FrbUse
 {
     fn into_into_dart(self) -> crate::proton_meet::models::event::FrbUserPayload {
         self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart
+    for FrbWrapper<crate::proton_meet::models::join_request::JoinRequestChange>
+{
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::proton_meet::models::join_request::JoinRequestChange::Added => 0.into_dart(),
+            crate::proton_meet::models::join_request::JoinRequestChange::Removed => 1.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<crate::proton_meet::models::join_request::JoinRequestChange>
+{
+}
+impl
+    flutter_rust_bridge::IntoIntoDart<
+        FrbWrapper<crate::proton_meet::models::join_request::JoinRequestChange>,
+    > for crate::proton_meet::models::join_request::JoinRequestChange
+{
+    fn into_into_dart(
+        self,
+    ) -> FrbWrapper<crate::proton_meet::models::join_request::JoinRequestChange> {
+        self.into()
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -9351,6 +10512,12 @@ impl SseEncode for crate::errors::BridgeError {
             crate::errors::BridgeError::MlsServerVersionNotSupported => {
                 <i32>::sse_encode(22, serializer);
             }
+            crate::errors::BridgeError::WaitingRoomJoinRequestNotFound => {
+                <i32>::sse_encode(23, serializer);
+            }
+            crate::errors::BridgeError::WaitingRoomJoinCancelled => {
+                <i32>::sse_encode(24, serializer);
+            }
             _ => {
                 unimplemented!("");
             }
@@ -9453,6 +10620,7 @@ impl SseEncode for crate::proton_meet::models::meet_info::FrbMeetInfo {
         <String>::sse_encode(self.websocket_url, serializer);
         <u32>::sse_encode(self.participants_count, serializer);
         <bool>::sse_encode(self.is_locked, serializer);
+        <bool>::sse_encode(self.has_waiting_room, serializer);
         <u32>::sse_encode(self.max_duration, serializer);
         <u32>::sse_encode(self.max_participants, serializer);
         <Option<i64>>::sse_encode(self.expiration_time, serializer);
@@ -9467,6 +10635,7 @@ impl SseEncode for crate::proton_meet::models::meeting_info::FrbMeetingInfo {
         <String>::sse_encode(self.salt, serializer);
         <String>::sse_encode(self.session_key, serializer);
         <u8>::sse_encode(self.locked, serializer);
+        <u8>::sse_encode(self.waiting_room, serializer);
         <u32>::sse_encode(self.max_duration, serializer);
         <u32>::sse_encode(self.max_participants, serializer);
         <Option<i64>>::sse_encode(self.expiration_time, serializer);
@@ -9480,6 +10649,13 @@ impl SseEncode
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <u8>::sse_encode(self.audio, serializer);
         <u8>::sse_encode(self.video, serializer);
+    }
+}
+
+impl SseEncode for crate::proton_meet::models::join_request::FrbSubmitJoinRequestResponse {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.request_id, serializer);
     }
 }
 
@@ -9504,6 +10680,7 @@ impl SseEncode for crate::proton_meet::models::upcoming_meeting::FrbUpcomingMeet
         <Option<i64>>::sse_encode(self.create_time, serializer);
         <Option<i64>>::sse_encode(self.last_used_time, serializer);
         <Option<String>>::sse_encode(self.calendar_event_id, serializer);
+        <Option<u8>>::sse_encode(self.waiting_room, serializer);
     }
 }
 
@@ -9535,6 +10712,22 @@ impl SseEncode for isize {
             .cursor
             .write_i64::<NativeEndian>(self as _)
             .unwrap();
+    }
+}
+
+impl SseEncode for crate::proton_meet::models::join_request::JoinRequestChange {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::proton_meet::models::join_request::JoinRequestChange::Added => 0,
+                crate::proton_meet::models::join_request::JoinRequestChange::Removed => 1,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
     }
 }
 

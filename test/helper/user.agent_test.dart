@@ -33,10 +33,17 @@ void main() {
     final mockAndroidBuildVersion = MockAndroidBuildVersion();
 
     setUp(() {
+      UserAgent.resetCacheForTesting();
+
       // Mock the package info as needed for the tests
       when(mockPackageInfo.appName).thenReturn('Proton Meet');
       when(mockPackageInfo.version).thenReturn('1.0.0');
       when(mockPackageInfo.buildNumber).thenReturn('33');
+    });
+
+    tearDown(() {
+      debugDefaultTargetPlatformOverride = null;
+      UserAgent.resetCacheForTesting();
     });
 
     test('User agent string on Linux', () async {

@@ -39,13 +39,6 @@ extern "C" {
         base64_key_packets: &str,
         session_key_passphrase: &str,
     ) -> Promise;
-
-    #[wasm_bindgen(method)]
-    fn decryptMessage(
-        this: &CryptoBridge,
-        base64_key_packets: &str,
-        session_key_passphrase: &str,
-    ) -> Promise;
 }
 
 pub async fn generate_srp_proof(
@@ -124,31 +117,15 @@ pub async fn decrypt_session_key_with_passphrase(
 }
 
 pub async fn decrypt_message(
-    base64_key_packets: &str,
-    session_key_passphrase: &str,
-    _aad: &str,
+    base64_message: &str,
+    base64_session_key: &str,
+    aad: &str,
 ) -> Result<String> {
-    let window = web_sys::window().ok_or_else(|| WebCryptoError::BridgeUnavailable)?;
-    let crypto_bridge = window
-        .dyn_ref::<Window>()
-        .ok_or_else(|| WebCryptoError::FailedToGetWindow)?
-        .crypto_bridge();
-
-    let promise = crypto_bridge.decryptMessage(base64_key_packets, session_key_passphrase);
-    let result = JsFuture::from(promise)
-        .await
-        .map_err(|_e| WebCryptoError::FailedToDecryptMessage)?;
-
-    Ok(result.as_string().ok_or(WebCryptoError::ResultNotString)?)
+    crate::session_message::decrypt_message(base64_message, base64_session_key, aad)
 }
 
-#[allow(unused_variables)]
-pub async fn encrypt_message(
-    message: &str,
-    base64_session_key: &str,
-    _aad: &str,
-) -> Result<String> {
-    unimplemented!();
+pub async fn encrypt_message(message: &str, base64_session_key: &str, aad: &str) -> Result<String> {
+    crate::session_message::encrypt_message(message, base64_session_key, aad)
 }
 
 pub async fn generate_random_password() -> Result<String> {

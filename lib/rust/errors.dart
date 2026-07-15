@@ -63,6 +63,14 @@ sealed class BridgeError with _$BridgeError implements FrbException {
   /// MLS server version is newer than this client supports.
   const factory BridgeError.mlsServerVersionNotSupported() =
       BridgeError_MlsServerVersionNotSupported;
+
+  /// Host tried to admit a waiting-room join request that is no longer pending.
+  const factory BridgeError.waitingRoomJoinRequestNotFound() =
+      BridgeError_WaitingRoomJoinRequestNotFound;
+
+  /// Guest cancelled an outstanding waiting-room join request.
+  const factory BridgeError.waitingRoomJoinCancelled() =
+      BridgeError_WaitingRoomJoinCancelled;
 }
 
 class ResponseError {

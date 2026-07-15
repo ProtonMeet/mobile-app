@@ -8,6 +8,8 @@ import 'package:meet/views/scenes/feedbacks/pre_rating_sheet.dart';
 import 'package:meet/views/scenes/settings/debug/background_blur_debug_screen.dart';
 import 'package:meet/views/scenes/settings/debug/denoise_debug_menu.dart';
 import 'package:meet/views/scenes/settings/debug/left_meeting_sheet_menu.dart';
+import 'package:meet/views/scenes/settings/debug/offline_file_denoise_debug_sheet.dart';
+import 'package:meet/views/scenes/settings/debug/schedule_meeting_debug.dart';
 import 'package:meet/views/scenes/settings/settings_action_item.dart';
 import 'package:meet/views/scenes/settings/settings_section_header.dart';
 import 'package:meet/views/scenes/signin/auth_bloc.dart';
@@ -66,6 +68,14 @@ final class AppSettingsDebugSection {
             );
           });
         },
+      ),
+      const SizedBox(height: 1),
+      SettingsActionItem(
+        title: 'Schedule meeting sheet debug',
+        onTap: () => ScheduleMeetingDebugMenu.openFromSettings(
+          context,
+          authBloc: authBloc,
+        ),
       ),
       const SizedBox(height: 1),
       SettingsActionItem(

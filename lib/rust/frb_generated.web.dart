@@ -22,6 +22,7 @@ import 'proton_meet/models/app_event.dart';
 import 'proton_meet/models/connection_state.dart';
 import 'proton_meet/models/desktop_web_login.dart';
 import 'proton_meet/models/event.dart';
+import 'proton_meet/models/join_request.dart';
 import 'proton_meet/models/join_type.dart';
 import 'proton_meet/models/meet_chat_message.dart';
 import 'proton_meet/models/meet_info.dart';
@@ -174,8 +175,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  FutureOr<void> Function(String, bool)
+  dco_decode_DartFn_Inputs_String_bool_Output_unit_AnyhowException(dynamic raw);
+
+  @protected
   FutureOr<String> Function(ChildAuthSession)
   dco_decode_DartFn_Inputs_child_auth_session_Output_String_AnyhowException(
+    dynamic raw,
+  );
+
+  @protected
+  FutureOr<void> Function(JoinRequestChange, String, String, BigInt)
+  dco_decode_DartFn_Inputs_join_request_change_String_String_u_64_Output_unit_AnyhowException(
     dynamic raw,
   );
 
@@ -337,6 +348,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  FrbSubmitJoinRequestResponse dco_decode_frb_submit_join_request_response(
+    dynamic raw,
+  );
+
+  @protected
   FrbUpcomingMeeting dco_decode_frb_upcoming_meeting(dynamic raw);
 
   @protected
@@ -350,6 +366,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   PlatformInt64 dco_decode_isize(dynamic raw);
+
+  @protected
+  JoinRequestChange dco_decode_join_request_change(dynamic raw);
 
   @protected
   JoinType dco_decode_join_type(dynamic raw);
@@ -758,6 +777,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  FrbSubmitJoinRequestResponse sse_decode_frb_submit_join_request_response(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   FrbUpcomingMeeting sse_decode_frb_upcoming_meeting(
     SseDeserializer deserializer,
   );
@@ -773,6 +797,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   PlatformInt64 sse_decode_isize(SseDeserializer deserializer);
+
+  @protected
+  JoinRequestChange sse_decode_join_request_change(
+    SseDeserializer deserializer,
+  );
 
   @protected
   JoinType sse_decode_join_type(SseDeserializer deserializer);
@@ -1080,9 +1109,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_DartFn_Inputs_String_bool_Output_unit_AnyhowException(
+    FutureOr<void> Function(String, bool) self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void
   sse_encode_DartFn_Inputs_child_auth_session_Output_String_AnyhowException(
     FutureOr<String> Function(ChildAuthSession) self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_DartFn_Inputs_join_request_change_String_String_u_64_Output_unit_AnyhowException(
+    FutureOr<void> Function(JoinRequestChange, String, String, BigInt) self,
     SseSerializer serializer,
   );
 
@@ -1310,6 +1352,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_frb_submit_join_request_response(
+    FrbSubmitJoinRequestResponse self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_frb_upcoming_meeting(
     FrbUpcomingMeeting self,
     SseSerializer serializer,
@@ -1329,6 +1377,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_isize(PlatformInt64 self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_join_request_change(
+    JoinRequestChange self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_join_type(JoinType self, SseSerializer serializer);

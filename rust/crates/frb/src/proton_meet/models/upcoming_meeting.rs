@@ -17,6 +17,7 @@ pub struct FrbUpcomingMeeting {
     pub create_time: Option<i64>,
     pub last_used_time: Option<i64>,
     pub calendar_event_id: Option<String>,
+    pub waiting_room: Option<u8>,
 }
 
 impl FrbUpcomingMeeting {
@@ -38,6 +39,7 @@ impl FrbUpcomingMeeting {
             create_time: None,
             last_used_time: None,
             calendar_event_id: None,
+            waiting_room: None,
         }
     }
     #[frb(sync)]
@@ -58,6 +60,7 @@ impl FrbUpcomingMeeting {
             create_time: None,
             last_used_time: None,
             calendar_event_id: None,
+            waiting_room: None,
         }
     }
 }
@@ -80,6 +83,7 @@ impl From<UpcomingMeeting> for FrbUpcomingMeeting {
             create_time: upcoming_meeting.create_time.map(|t| t.timestamp()),
             last_used_time: upcoming_meeting.last_used_time.map(|t| t.timestamp()),
             calendar_event_id: upcoming_meeting.calendar_event_id,
+            waiting_room: upcoming_meeting.waiting_room,
         }
     }
 }

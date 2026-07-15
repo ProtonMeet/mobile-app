@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.color.dart';
 import 'package:meet/constants/proton.image.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/helper/global_notification.dart';
 import 'package:meet/helper/local_toast.dart';
 import 'package:meet/l10n/generated/locale.dart';
 import 'package:meet/provider/theme.provider.dart';
@@ -55,6 +56,23 @@ extension BuildContextExtension on BuildContext {
 
   void showErrorToast(String message) {
     LocalToast.showToast(this, message, toastType: ToastType.error);
+  }
+
+  /// Show a global top notification that covers the status bar.
+  void showGlobalNotification(
+    String content, {
+    Color? backgroundColor,
+    Duration duration = const Duration(seconds: 5),
+    bool showCloseButton = true,
+    VoidCallback? onTap,
+  }) {
+    GlobalNotification.show(
+      content: content,
+      backgroundColor: backgroundColor,
+      duration: duration,
+      showCloseButton: showCloseButton,
+      onTap: onTap,
+    );
   }
 
   /// Theme provider

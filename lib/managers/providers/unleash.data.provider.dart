@@ -55,6 +55,10 @@ enum UnleashFeature {
 
   /// dtln-rs (DTLN) backend under [meetAudioDenoise].
   meetAudioDenoiseDtlnRs,
+
+  /// Controls visibility of waiting-room switch UI (schedule / create / prejoin / in-room).
+  /// The join flow is still driven by the server meeting info, independent of this flag.
+  meetWaitingRoom,
 }
 
 /// Function to retrieve all default toggles
@@ -121,6 +125,8 @@ extension UnleashFeatureExt on UnleashFeature {
         return "MeetAudioDenoiseDeepfilter";
       case UnleashFeature.meetAudioDenoiseDtlnRs:
         return "MeetAudioDenoiseDtlnRs";
+      case UnleashFeature.meetWaitingRoom:
+        return "MeetWaitingRoom";
     }
   }
 
@@ -396,4 +402,8 @@ class UnleashDataProvider extends DataProvider {
   bool isMeetAudioDenoiseDtlnRs() =>
       isMeetAudioDenoise() &&
       isFeatureEnabled(UnleashFeature.meetAudioDenoiseDtlnRs);
+
+  /// Controls whether waiting-room switch UI is shown. Does not affect the
+  /// server-driven waiting-room join flow.
+  bool isMeetWaitingRoom() => isFeatureEnabled(UnleashFeature.meetWaitingRoom);
 }

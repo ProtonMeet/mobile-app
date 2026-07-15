@@ -18,6 +18,7 @@ import 'package:meet/managers/room.manager.dart';
 import 'package:meet/managers/services/force_upgrade.dart';
 import 'package:meet/managers/user_activity.manager.dart';
 import 'package:meet/rust/errors.dart';
+import 'package:meet/rust/proton_meet/core.dart';
 import 'package:meet/rust/proton_meet/models/meeting_type.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/rust/proton_meet/user_subscription.dart';
@@ -127,6 +128,7 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
             meetingName: meetingName,
             hasSession: appCoreManager.isAuthenticated,
             meetingType: MeetingType.instant,
+            waitingRoom: false,
           );
           emit(state.copyWith(meetLink: meetLink));
           unawaited(() async {
@@ -214,6 +216,8 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
               displayName: event.args.displayName,
               enableE2EE: event.enableE2EE,
               isAudioEnabled: event.isAudioEnabled,
+              reusePrejoinAuth: event.args.reusePrejoinAuth,
+              isWaitingRoom: event.args.enableWaitingRoomForJoin,
               roomOptions: roomOptions,
               onCreateAudioTrack: (room) async {
                 // Create audio track after prepareConnection and pre-connect E2EE keys if needed
@@ -249,19 +253,11 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
                     });
               },
             ),
+            reuseToken: event.args.reuseMlsJoin,
           );
 
-          // Create video track after connection (as in original code)
-          if (event.selectedVideoDevice != null && event.isVideoEnabled) {
-            final track = await LocalVideoTrack.createCameraTrack(
-              CameraCaptureOptions(
-                deviceId: event.selectedVideoDevice!.deviceId,
-                params: event.selectedVideoParameters,
-              ),
-            );
-            await track.start();
-            videoTrack = track;
-          }
+          // Create video track after connection.
+          videoTrack = await _createLocalVideoTrack(event);
         } catch (e) {
           // Check if meeting is locked, which is an expected error
           if (e is BridgeError_MeetingLocked) {
@@ -369,14 +365,12 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
               participant: localParticipant,
               initialTrack: currentVideoTrack,
               createTrack: () async {
-                // Recreate track for fallback publish if needed
-                final track = await LocalVideoTrack.createCameraTrack(
-                  CameraCaptureOptions(
-                    deviceId: event.selectedVideoDevice!.deviceId,
-                    params: event.selectedVideoParameters,
-                  ),
-                );
-                await track.start();
+                final track = await _createLocalVideoTrack(event);
+                if (track == null) {
+                  throw StateError(
+                    'Cannot recreate video track for fallback publish',
+                  );
+                }
                 return track;
               },
               publishOptions: room.roomOptions.defaultVideoPublishOptions
@@ -573,55 +567,42 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
     await _setupWithRoomKey(emit);
   }
 
+  Future<LocalVideoTrack?> _createLocalVideoTrack(
+    WaitingRoomInitialized event,
+  ) async {
+    if (!event.isVideoEnabled) {
+      return null;
+    }
+
+    if (event.selectedVideoDevice != null) {
+      final track = await LocalVideoTrack.createCameraTrack(
+        CameraCaptureOptions(
+          deviceId: event.selectedVideoDevice!.deviceId,
+          params: event.selectedVideoParameters,
+        ),
+      );
+      await track.start();
+      return track;
+    }
+
+    if (event.selectedVideoPosition != null) {
+      final track = await LocalVideoTrackHelper.cameraTrack(
+        parameters: event.selectedVideoParameters,
+        position: event.selectedVideoPosition,
+      );
+      await track.start();
+      return track;
+    }
+
+    return null;
+  }
+
   Future<void> _setupWithRoomKey(Emitter<WaitingRoomState> emit) async {
     if (state.room == null || state.roomKey == null) return;
     try {
       state.room!.localParticipant?.setMicrophoneEnabled(
         state.args.isAudioEnabled,
       );
-      if (state.args.isVideoEnabled) {
-        // Manually publish video track with preferred codec (vp9 by default) first and fallback to vp8 if failed
-        final preferredCodec =
-            state.room!.roomOptions.defaultVideoPublishOptions.videoCodec;
-        final videoParameters = state
-            .room!
-            .roomOptions
-            .defaultCameraCaptureOptions
-            .params
-            .dimensions;
-
-        LocalVideoTrack? videoTrack;
-        try {
-          videoTrack = await LocalVideoTrackHelper.cameraTrack(
-            parameters: VideoParameters(dimensions: videoParameters),
-            position: state.selectedVideoPosition,
-          );
-          await videoTrack.start();
-          videoTrack = await publishVideoTrackWithFallback(
-            participant: state.room!.localParticipant!,
-            initialTrack: videoTrack,
-            createTrack: () async {
-              return LocalVideoTrackHelper.cameraTrack(
-                parameters: VideoParameters(dimensions: videoParameters),
-                position: state.selectedVideoPosition,
-              );
-            },
-            publishOptions: state.room!.roomOptions.defaultVideoPublishOptions
-                .copyWith(videoCodec: preferredCodec),
-          );
-          // Update state with the published track
-          emit(state.copyWith(videoTrack: videoTrack));
-        } catch (e) {
-          l.logger.e('[WaitingRoom] Failed to publish video track: $e');
-          // Clean up video track if publish fails
-          try {
-            await videoTrack?.stop();
-          } catch (stopError) {
-            l.logger.e('[WaitingRoom] Error stopping video track: $stopError');
-          }
-          // Don't rethrow - let user join without video
-        }
-      }
 
       emit(state.copyWith(shouldNavigateToRoom: true));
     } catch (error) {

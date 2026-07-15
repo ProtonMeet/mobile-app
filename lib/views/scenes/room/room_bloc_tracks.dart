@@ -1,8 +1,10 @@
 // room_tracks_handlers.dart
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
+import 'package:meet/constants/constants.dart';
 import 'package:meet/views/scenes/room/active_speaker_order.dart';
 import 'package:meet/views/scenes/room/camera_layout.dart';
 import 'package:meet/views/scenes/room/participant/participant_info.dart';
@@ -19,9 +21,83 @@ mixin RoomTracksHandlers
         RoomParticipantsHandlers,
         RoomPipHandlers,
         RoomEventsBinding {
+  /// Signature of the set of remote participants that currently expose a
+  /// camera (non-screen-share) video publication. Used to detect when a
+  /// participant starts/stops publishing camera video so the camera grid can
+  /// re-run its on-demand subscribe pass (see [_onSortParticipants]).
+  String? _lastVideoPublicationSignature;
+
+  /// Polls [SortParticipants] while remote users have camera enabled but no
+  /// track yet (small meetings only).
+  Timer? _pendingCameraVideoTrackTimer;
+
   void registerTracksHandlers() {
     on<SortParticipants>(_onSortParticipants);
     on<RefreshParticipantDisplayNames>(_onRefreshParticipantDisplayNames);
+  }
+
+  /// Whether any remote participant has a camera publication enabled but the
+  /// track is not attached yet (common between publish and subscribe settle).
+  bool _hasPendingCameraVideoTrackPublication() {
+    for (final participant in state.room.remoteParticipants.values) {
+      final hasPending = participant.videoTrackPublications.any(
+        (pub) => !pub.isScreenShare && pub.enabled && pub.track == null,
+      );
+      if (hasPending) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Build a stable signature of remote participants that have an enabled
+  /// camera (non-screen-share) video publication. Includes participants whose
+  /// track is not bound yet so the grid re-runs its on-demand subscribe pass
+  /// as soon as the publication appears, not only after TrackSubscribed.
+  String _computeVideoPublicationSignature() {
+    final identities = <String>[];
+    for (final participant in state.room.remoteParticipants.values) {
+      final hasEnabledCameraPublication = participant.videoTrackPublications
+          .any((pub) => !pub.isScreenShare && pub.enabled);
+
+      if (hasEnabledCameraPublication) {
+        identities.add(participant.identity);
+      }
+    }
+    identities.sort();
+    return identities.join(',');
+  }
+
+  /// Keeps a periodic sort alive while camera is enabled but track is missing.
+  void _syncPendingCameraVideoTrackCheckTimer() {
+    final remoteCount = state.room.remoteParticipants.length;
+    if (remoteCount >= smallMeetingRemoteParticipantThreshold ||
+        !_hasPendingCameraVideoTrackPublication()) {
+      cancelPendingCameraVideoTrackCheckTimer();
+      return;
+    }
+
+    _pendingCameraVideoTrackTimer ??= Timer.periodic(
+      pendingCameraVideoTrackCheckInterval,
+      (_) {
+        if (isClosed) {
+          cancelPendingCameraVideoTrackCheckTimer();
+          return;
+        }
+        final currentRemoteCount = state.room.remoteParticipants.length;
+        if (currentRemoteCount >= smallMeetingRemoteParticipantThreshold ||
+            !_hasPendingCameraVideoTrackPublication()) {
+          cancelPendingCameraVideoTrackCheckTimer();
+          return;
+        }
+        add(SortParticipants());
+      },
+    );
+  }
+
+  void cancelPendingCameraVideoTrackCheckTimer() {
+    _pendingCameraVideoTrackTimer?.cancel();
+    _pendingCameraVideoTrackTimer = null;
   }
 
   Future<void> _onRefreshParticipantDisplayNames(
@@ -254,15 +330,45 @@ mixin RoomTracksHandlers
         state.screenSharingIndex != screenSharingIndex;
     final cameraEnabledChanged = state.isCameraEnabled != isCameraEnabled;
 
+    // Detect when a remote participant starts/stops publishing camera video.
+    // With autoSubscribe:false the camera grid subscribes on demand from its
+    // build() -> _updateVideoSubscriptions() pass, which only re-runs when
+    // participantTracks changes identity/reference. A late camera publish
+    // (ParticipantConnected fires before the track is published) keeps the
+    // same identities/displayNames, so without this the grid never re-runs
+    // the subscribe pass and the tile stays on NoVideoWidget until an
+    // unrelated rebuild (e.g. window resize) happens.
+    // Only check video publication signature in small meetings to avoid
+    // unnecessary work in large rooms.
+    bool videoAvailabilityChanged = false;
+    if (room.remoteParticipants.length < smallMeetingRemoteParticipantThreshold) {
+      final videoPublicationSignature = _computeVideoPublicationSignature();
+      videoAvailabilityChanged =
+          videoPublicationSignature != _lastVideoPublicationSignature;
+      _lastVideoPublicationSignature = videoPublicationSignature;
+    }
+    // Emit a fresh participantTracks list when order or camera availability
+    // changed so the BlocSelector feeding ResponsiveCameraLayout rebuilds.
+    // Also refresh while a camera publication is enabled but track is not
+    // bound yet so the grid keeps retrying subscribe during the in-flight gap.
+    final isSmallMeeting =
+        room.remoteParticipants.length < smallMeetingRemoteParticipantThreshold;
+    final hasPendingCameraVideo =
+        isSmallMeeting && _hasPendingCameraVideoTrackPublication();
+    final shouldRefreshParticipantTracks =
+        hasOrderChanged ||
+        videoAvailabilityChanged ||
+        hasPendingCameraVideo;
+
     // Only emit if something actually changed to reduce unnecessary rebuilds
-    if (hasOrderChanged ||
+    if (shouldRefreshParticipantTracks ||
         screenTracksChanged ||
         speakerTracksChanged ||
         screenSharingChanged ||
         cameraEnabledChanged) {
       emit(
         state.copyWith(
-          participantTracks: hasOrderChanged
+          participantTracks: shouldRefreshParticipantTracks
               ? newParticipantTracks
               : state.participantTracks,
           screenSharingTracks: screenTracksChanged
@@ -279,6 +385,8 @@ mixin RoomTracksHandlers
         ),
       );
     }
+
+    _syncPendingCameraVideoTrackCheckTimer();
 
     // Active speaker / camera state can change without speaker list identity changing.
     scheduleIosPipSync();

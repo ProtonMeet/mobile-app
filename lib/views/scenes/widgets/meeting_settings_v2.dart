@@ -15,6 +15,7 @@ class MeetingSettingsV2 extends StatefulWidget {
   onUnsubscribeVideoByDefaultChanged;
   final void Function({required bool value})? onPictureInPictureModeChanged;
   final Future<bool> Function({required bool value})? onLockMeetingChanged;
+  final Future<bool> Function({required bool value})? onWaitingRoomChanged;
   final VoidCallback? onReconnectPressed;
   final void Function({required bool value})?
   onForceShowConnectionStatusBannerChanged;
@@ -22,6 +23,10 @@ class MeetingSettingsV2 extends StatefulWidget {
   final bool unsubscribeVideoByDefault;
   final bool pictureInPictureMode;
   final bool lockMeeting;
+  final bool waitingRoomEnabled;
+
+  /// When false, the waiting-room switch is hidden (gated by the MeetWaitingRoom flag).
+  final bool showWaitingRoom;
   final bool isHost;
   final bool isRejoining;
   final bool forceShowConnectionStatusBanner;
@@ -42,10 +47,13 @@ class MeetingSettingsV2 extends StatefulWidget {
     required this.onUnsubscribeVideoByDefaultChanged,
     required this.pictureInPictureMode,
     required this.lockMeeting,
+    required this.waitingRoomEnabled,
     required this.isHost,
+    this.showWaitingRoom = false,
     this.onHideSelfViewChanged,
     this.onPictureInPictureModeChanged,
     this.onLockMeetingChanged,
+    this.onWaitingRoomChanged,
     this.onReconnectPressed,
     this.onForceShowConnectionStatusBannerChanged,
     this.isRejoining = false,
@@ -93,12 +101,14 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
   bool unsubscribeVideoByDefault = false;
   bool pictureInPictureMode = false;
   bool lockMeeting = false;
+  bool waitingRoomEnabled = false;
   bool forceShowConnectionStatusBanner = false;
   bool cameraBackgroundBlurEnabled = false;
   bool audioDenoiseEnabled = false;
 
   // Loading states
   bool _isLockMeetingLoading = false;
+  bool _isWaitingRoomLoading = false;
 
   @override
   void initState() {
@@ -108,6 +118,7 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
     unsubscribeVideoByDefault = widget.unsubscribeVideoByDefault;
     pictureInPictureMode = widget.pictureInPictureMode;
     lockMeeting = widget.lockMeeting;
+    waitingRoomEnabled = widget.waitingRoomEnabled;
     forceShowConnectionStatusBanner = widget.forceShowConnectionStatusBanner;
     cameraBackgroundBlurEnabled = widget.cameraBackgroundBlurEnabled;
     audioDenoiseEnabled = widget.audioDenoiseEnabled;
@@ -359,6 +370,31 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
                       }
                     : null,
               ),
+              if (widget.showWaitingRoom)
+                _SettingSwitch(
+                  title: context.local.enable_waiting_room,
+                  value: waitingRoomEnabled,
+                  isLoading: _isWaitingRoomLoading,
+                  onChanged:
+                      widget.onWaitingRoomChanged != null &&
+                          !_isWaitingRoomLoading
+                      ? (value) async {
+                          setState(() {
+                            _isWaitingRoomLoading = true;
+                          });
+                          final success = await widget.onWaitingRoomChanged
+                              ?.call(value: value);
+                          if (mounted) {
+                            setState(() {
+                              _isWaitingRoomLoading = false;
+                              if (success == true) {
+                                waitingRoomEnabled = value;
+                              }
+                            });
+                          }
+                        }
+                      : null,
+                ),
             ],
           ),
         ],

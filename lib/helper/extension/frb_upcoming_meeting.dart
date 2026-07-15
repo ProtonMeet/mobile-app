@@ -7,6 +7,9 @@ import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/views/scenes/dashboard/schedule/schedule_meeting_dialog.dart';
 
 extension FrbUpcomingMeetingExtension on FrbUpcomingMeeting {
+  /// Returns true if this meeting has waiting room enabled.
+  bool get hasWaitingRoom => waitingRoom.isWaitingRoomEnabled;
+
   /// Returns true if this meeting is a personal meeting room.
   bool get isPersonalMeeting => meetingType == MeetingType.personal;
 
@@ -349,4 +352,9 @@ extension FrbUpcomingMeetingExtension on FrbUpcomingMeeting {
     }
     return RecurrenceFrequency.none;
   }
+}
+
+/// Backend waiting-room flag: `1` enabled, `null`/`0` disabled.
+extension WaitingRoomValue on int? {
+  bool get isWaitingRoomEnabled => this == 1;
 }

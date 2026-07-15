@@ -12,5 +12,6 @@ pub trait NewUserService {
         user_info_token: &UserTokenInfo,
         meeting_link_name: &MeetingLinkName,
         switch_join_type: bool,
+        is_waiting_room: bool,
     ) -> Result<(), MeetCoreError>;
 }

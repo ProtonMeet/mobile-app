@@ -1,7 +1,7 @@
 use super::App;
 use crate::domain::user::models::{
     access_token::AccessToken, meet_link_info::MeetParticipant, meeting_link_name::MeetingLinkName,
-    meeting_password::MeetingPassword,
+    meeting_password::MeetingPassword, UserId,
 };
 use crate::domain::user::ports::{new_user_service::NewUserService, UserService};
 use crate::errors::core::MeetCoreError;
@@ -17,6 +17,15 @@ use tokio::time::sleep;
 use wasmtimer::tokio::sleep;
 
 impl App {
+    pub(crate) async fn current_user_id(&self) -> Result<UserId, MeetCoreError> {
+        let state = self.state.read().await;
+        state
+            .active_user_info
+            .as_ref()
+            .map(|info| info.user_id())
+            .ok_or(MeetCoreError::NoActiveUser)
+    }
+
     pub async fn leave_meeting(&self) -> Result<(), MeetCoreError> {
         // Step 1: clone necessary data first
         let (participant_id, meeting_id) = {
@@ -87,12 +96,33 @@ impl App {
         meeting_password: MeetingPassword,
         session_id: Option<String>,
         switch_join_type: bool,
+        is_waiting_room: bool,
     ) -> Result<(), MeetCoreError> {
+        if is_waiting_room && self.is_mls_group_joined().await {
+            tracing::info!(
+                "join_meeting: waiting room flow with MLS already joined, skipping MLS join"
+            );
+            let now = crate::utils::instant::now();
+            {
+                let mut state = self.state.write().await;
+                state.join_start_time = state.join_start_time.or_else(|| Some(now));
+                state.join_mls_time = Some(now);
+                state.active_livekit_access_token = Some(access_token.expose_secret().to_string());
+                state.used_waiting_room_for_join = Some(true);
+            }
+            return Ok(());
+        }
+
         // Record join start time
         {
             let mut state = self.state.write().await;
             state.join_start_time = Some(crate::utils::instant::now());
             state.join_mls_time = None;
+            if is_waiting_room {
+                state.used_waiting_room_for_join = Some(true);
+            } else if state.used_waiting_room_for_join != Some(true) {
+                state.used_waiting_room_for_join = Some(false);
+            }
         }
         let mls_start = instant::now();
         let user_info = self
@@ -122,7 +152,6 @@ impl App {
             let mut state = self.state.write().await;
             state.active_user_info = Some(user_info.clone());
             state.active_livekit_access_token = Some(access_token.expose_secret().to_string());
-            debug!("Active user info: {:?}", state.active_user_info);
         }
         debug!(
             "join_meeting_with_access_token step=store_state ms={}",
@@ -132,7 +161,8 @@ impl App {
         let join_and_connect_start = instant::now();
 
         let connect_ws_fut = Box::pin(self.connect_to_ws());
-        let join_room_fut = Box::pin(self.join_room_with_switch_join_type(switch_join_type));
+        let join_room_fut =
+            Box::pin(self.join_room_with_switch_join_type(switch_join_type, is_waiting_room));
 
         let result = try_join(connect_ws_fut, join_room_fut).await;
 
@@ -224,7 +254,6 @@ impl App {
             let mut state = self.state.write().await;
             state.active_user_info = Some(user_info.clone());
             state.active_livekit_access_token = Some(access_token.clone());
-            debug!("Active user info: {:?}", state.active_user_info);
         }
         debug!(
             "join_meeting_with_access_token step=store_state ms={}",
@@ -293,7 +322,6 @@ impl App {
             let mut state = self.state.write().await;
             state.active_user_info = Some(user_info.clone());
             state.active_livekit_access_token = Some(access_token.clone());
-            debug!("Active user info: {:?}", state.active_user_info);
         } // lock released here
 
         let join_and_connect_start = instant::now();
@@ -386,7 +414,7 @@ impl App {
             })
     }
 
-    async fn connect_to_ws(&self) -> Result<(), MeetCoreError> {
+    pub(crate) async fn connect_to_ws(&self) -> Result<(), MeetCoreError> {
         let total_start = instant::now();
         let app_state = self.state.read().await;
 
@@ -473,7 +501,7 @@ impl App {
         }
     }
 
-    async fn disconnect_from_ws(&self) -> Result<(), MeetCoreError> {
+    pub(crate) async fn disconnect_from_ws(&self) -> Result<(), MeetCoreError> {
         Ok(self.ws_client.disconnect(Some(true)).await?)
     }
 
@@ -555,6 +583,7 @@ impl App {
     pub async fn join_room_with_switch_join_type(
         &self,
         switch_join_type: bool,
+        is_waiting_room: bool,
     ) -> Result<(), MeetCoreError> {
         let total_start = instant::now();
         let user_token_info = {
@@ -589,6 +618,7 @@ impl App {
                     &user_token_info,
                     &meeting_link_name,
                     switch_join_type,
+                    is_waiting_room,
                 )
                 .await
         })
@@ -610,7 +640,12 @@ impl App {
                 self.user_service
                     .read()
                     .await
-                    .join_room_with_switch_join_type(&user_token_info, &meeting_link_name, false)
+                    .join_room_with_switch_join_type(
+                        &user_token_info,
+                        &meeting_link_name,
+                        false,
+                        is_waiting_room,
+                    )
                     .await?;
             } else {
                 return Err(e);

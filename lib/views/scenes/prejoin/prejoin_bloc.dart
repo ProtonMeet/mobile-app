@@ -3,11 +3,16 @@ import 'dart:async';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
+import 'package:meet/helper/audio_output_probe.dart';
 import 'package:meet/helper/denoise/denoise_audio_capture_options.dart';
+import 'package:meet/helper/extension/bridge_error.extension.dart';
+import 'package:meet/helper/extension/bridge_session_check.extension.dart';
+import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/local_video_track_extension.dart';
 import 'package:meet/helper/extension/media_device_list_ext.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/logger.dart' as l;
+import 'package:meet/helper/sentry_waiting_room.dart';
 import 'package:meet/helper/user.agent.dart';
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
@@ -16,19 +21,31 @@ import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/managers/services/denoise_audio.service.dart';
 import 'package:meet/managers/services/force_upgrade.dart';
 import 'package:meet/permissions/permission_service.dart';
+import 'package:meet/rust/errors.dart';
 import 'package:meet/rust/proton_meet/user_config.dart';
+import 'package:meet/rust/proton_meet/user_subscription.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_event.dart';
+import 'package:meet/views/scenes/prejoin/prejoin_meeting_preview.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:proton_video_effects/proton_video_effects.dart'
     show ProtonVideoEffects;
 
+import 'prejoin_arguments.dart';
 import 'prejoin_state.dart';
+import 'prejoin_state_exts.dart';
 
 class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
+  static const _groupInfoPollInterval = Duration(seconds: 10);
+
   final UserAgent userAgent;
   final ManagerFactory serviceManager;
 
   StreamSubscription? _deviceChangeSub;
+  StreamSubscription? _audioSessionDevicesSub;
+  Timer? _groupInfoPollTimer;
+  Timer? _countdownTimer;
+  Completer<void>? _waitingRoomAdmissionCompleter;
+  Completer<void>? _leaveWaitingRoomAdmissionCompleter;
 
   PreJoinBloc(this.userAgent, this.serviceManager) : super(PreJoinState()) {
     on<PreJoinInitialized>(_onInitialized);
@@ -71,13 +88,541 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     );
     on<SwapVideo>(_onSwapVideo);
     on<ToggleKeepDisplayName>(_onToggleKeepDisplayName);
+    on<PreJoinPaidUserResolved>(
+      (event, emit) => emit(state.copyWith(isPaidUser: event.isPaidUser)),
+    );
+    on<PreJoinAttemptJoin>(_onAttemptJoin);
+    on<PreJoinHostMeetingContextResolved>(
+      (event, emit) => emit(
+        state.copyWith(
+          isMeetingHost: true,
+          role: PrejoinRole.host,
+          waitingRoomEnabled: event.waitingRoomEnabled,
+          roomName: event.roomName ?? state.roomName,
+        ),
+      ),
+    );
+    on<PreJoinNavigateToWaitingRoomConsumed>(
+      (_, emit) => emit(state.copyWith(shouldNavigateToWaitingRoom: false)),
+    );
     on<PreJoinToggleCameraBackgroundBlur>(_onToggleCameraBackgroundBlur);
+    on<PreJoinStartWaitingRoomAdmission>(_onStartWaitingRoomAdmission);
+    on<PreJoinPollGroupInfo>(_onPollGroupInfo);
+    on<PreJoinWaitingRoomCountdownTick>(
+      _onWaitingRoomCountdownTick,
+      // Process ticks one at a time so concurrent handlers do not read stale seconds.
+      transformer: (events, mapper) => events.asyncExpand(mapper),
+    );
+    on<PreJoinWaitForWaitingRoomWelcome>(_onWaitForWaitingRoomWelcome);
+    on<PreJoinLeaveWaitingRoomAdmission>(_onLeaveWaitingRoomAdmission);
+    on<PreJoinWaitingRoomAdmissionTimedOut>(_onWaitingRoomAdmissionTimedOut);
+    on<PreJoinJoinDecisionReceived>(_onJoinDecisionReceived);
+    on<PreJoinHostAcceptProceedConsumed>(
+      (_, emit) =>
+          emit(state.copyWith(shouldProceedToJoinAfterHostAccept: false)),
+    );
+    on<PreJoinJoinRequestRejectedNotificationConsumed>(
+      (_, emit) => emit(
+        state.copyWith(shouldShowJoinRequestRejectedNotification: false),
+      ),
+    );
+    on<PreJoinWaitingRoomAdmissionTimedOutNotificationConsumed>(
+      (_, emit) => emit(
+        state.copyWith(
+          shouldShowWaitingRoomAdmissionTimedOutNotification: false,
+        ),
+      ),
+    );
   }
 
   @override
   Future<void> close() async {
+    _cancelWaitingRoomAdmissionTimers();
+    if (state.waitingRoomAdmissionPhase != WaitingRoomAdmissionPhase.inactive) {
+      await _cancelWaitingRoomJoinRequestOnServer();
+    }
+    _finishWaitingRoomAdmission();
+    // Do not await: clear may be invoked reentrantly from the join-decision
+    // callback and would deadlock the FRB/Dart call stack.
+    _clearJoinDecisionCallback();
+    await state.audioTrack?.stop();
+    await state.videoTrack?.stop();
     await _deviceChangeSub?.cancel();
+    await _audioSessionDevicesSub?.cancel();
     return super.close();
+  }
+
+  /// Cancels an in-flight waiting-room admission on the server (when a join
+  /// request was submitted), resets local MLS guest state, and clears UI state.
+  /// No-op when the guest is not in an active waiting-room admission flow.
+  Future<void> leaveWaitingRoomAdmission() async {
+    if (!state.isInWaitingRoomAdmission) {
+      return;
+    }
+    if (_leaveWaitingRoomAdmissionCompleter != null) {
+      return _leaveWaitingRoomAdmissionCompleter!.future;
+    }
+    _leaveWaitingRoomAdmissionCompleter = Completer<void>();
+    add(PreJoinLeaveWaitingRoomAdmission());
+    return _leaveWaitingRoomAdmissionCompleter!.future;
+  }
+
+  Future<void> _cancelWaitingRoomJoinRequestOnServer() async {
+    final meetLink = state.meetingLink;
+    if (meetLink == null) {
+      return;
+    }
+
+    try {
+      await serviceManager
+          .get<AppCoreManager>()
+          .appCore
+          .cancelWaitingRoomJoinRequest(meetLinkName: meetLink.meetingLinkName);
+    } catch (e) {
+      l.logger.w(
+        '[PreJoinBloc] Failed to cancel waiting room join request: $e',
+      );
+    }
+  }
+
+  void _clearJoinDecisionCallback() {
+    unawaited(() async {
+      try {
+        await serviceManager
+            .get<AppCoreManager>()
+            .appCore
+            .clearJoinDecisionCallback();
+      } catch (e) {
+        l.logger.w('[PreJoinBloc] Failed to clear join decision callback: $e');
+      }
+    }());
+  }
+
+  Future<void> _registerJoinDecisionCallback() async {
+    try {
+      final appCore = serviceManager.get<AppCoreManager>().appCore;
+      await appCore.setJoinDecisionCallback(
+        callback: (requestId, admitted) async {
+          if (!isClosed) {
+            add(
+              PreJoinJoinDecisionReceived(
+                requestId: requestId,
+                admitted: admitted,
+              ),
+            );
+          }
+        },
+      );
+    } catch (e) {
+      l.logger.w('[PreJoinBloc] Failed to register join decision callback: $e');
+    }
+  }
+
+  Future<void> _trySubmitWaitingRoomJoinRequest(
+    Emitter<PreJoinState> emit,
+  ) async {
+    final meetLink = state.meetingLink;
+    if (meetLink == null || state.waitingRoomJoinRequestId.isNotEmpty) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        waitingRoomAdmissionPhase: WaitingRoomAdmissionPhase.awaitingAdmission,
+        waitingRoomCountdownSeconds:
+            PreJoinState.waitingRoomAdmissionCountdownSeconds,
+        isJoinAuthenticating: false,
+      ),
+    );
+    _startCountdownTimer();
+
+    try {
+      final appCore = serviceManager.get<AppCoreManager>().appCore;
+      final sessionKey = await appCore.getMeetingDisplayNameSessionKey();
+      final response = await appCore.createJoinRequest(
+        meetLinkName: meetLink.meetingLinkName,
+        meetingSessionKey: sessionKey,
+      );
+      if (isClosed) {
+        return;
+      }
+      if (state.waitingRoomAdmissionPhase ==
+          WaitingRoomAdmissionPhase.inactive) {
+        return;
+      }
+
+      emit(state.copyWith(waitingRoomJoinRequestId: response.requestId));
+
+      add(PreJoinWaitForWaitingRoomWelcome());
+    } catch (e, stackTrace) {
+      if (isClosed ||
+          state.waitingRoomAdmissionPhase ==
+              WaitingRoomAdmissionPhase.inactive) {
+        return;
+      }
+      _cancelWaitingRoomAdmissionTimers();
+      if (e is BridgeError && e.consumeBridgeSessionIfNeeded()) {
+        return;
+      }
+      if (isWaitingRoomJoinCancelledError(e)) {
+        l.logger.i('[PreJoinBloc] Waiting room join cancelled: $e');
+        return;
+      }
+      l.logger.e(
+        '[PreJoinBloc] Failed to submit waiting room join request: $e',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      captureWaitingRoomFailureToSentry(
+        flow: 'guest_create_join_request',
+        error: e,
+        stackTrace: stackTrace,
+        phase: state.waitingRoomAdmissionPhase.name,
+        meetLinkName: meetLink.meetingLinkName,
+      );
+      emit(
+        state.copyWith(
+          waitingRoomAdmissionPhase: WaitingRoomAdmissionPhase.inactive,
+          waitingRoomJoinRequestId: '',
+          isJoinAuthenticating: false,
+          error: extractErrorMessage(e),
+        ),
+      );
+    }
+  }
+
+  Future<void> startWaitingRoomAdmission(String displayName) {
+    if (_waitingRoomAdmissionCompleter != null) {
+      return _waitingRoomAdmissionCompleter!.future;
+    }
+    _waitingRoomAdmissionCompleter = Completer<void>();
+    add(PreJoinStartWaitingRoomAdmission(displayName));
+    return _waitingRoomAdmissionCompleter!.future;
+  }
+
+  void _finishWaitingRoomAdmission() {
+    final completer = _waitingRoomAdmissionCompleter;
+    _waitingRoomAdmissionCompleter = null;
+    if (completer == null || completer.isCompleted) {
+      return;
+    }
+    completer.complete();
+  }
+
+  void _cancelWaitingRoomAdmissionTimers() {
+    _groupInfoPollTimer?.cancel();
+    _groupInfoPollTimer = null;
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
+  }
+
+  bool _isGuestWaitingRoomJoin() {
+    if (state.preJoinType != PreJoinType.join || state.isMeetingHost) {
+      return false;
+    }
+    return state.hasWaitingRoom;
+  }
+
+  void _startGroupInfoPollTimer() {
+    _groupInfoPollTimer?.cancel();
+    _groupInfoPollTimer = Timer.periodic(_groupInfoPollInterval, (_) {
+      if (!isClosed) {
+        add(PreJoinPollGroupInfo());
+      }
+    });
+  }
+
+  void _startCountdownTimer() {
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!isClosed) {
+        add(PreJoinWaitingRoomCountdownTick());
+      }
+    });
+  }
+
+  Future<void> _onStartWaitingRoomAdmission(
+    PreJoinStartWaitingRoomAdmission event,
+    Emitter<PreJoinState> emit,
+  ) async {
+    final meetLink = state.meetingLink;
+    if (meetLink == null ||
+        !_isGuestWaitingRoomJoin() ||
+        state.isInWaitingRoomAdmission) {
+      if (!state.isInWaitingRoomAdmission) {
+        emit(state.copyWith(isJoinAuthenticating: false));
+      }
+      _finishWaitingRoomAdmission();
+      return;
+    }
+
+    final displayName = event.displayName.trim();
+    emit(
+      state.copyWith(
+        waitingRoomAdmissionDisplayName: displayName,
+        waitingRoomCountdownSeconds:
+            PreJoinState.waitingRoomAdmissionCountdownSeconds,
+      ),
+    );
+
+    try {
+      final appCore = serviceManager.get<AppCoreManager>().appCore;
+      await appCore.prepareMlsSessionForWaitingRoom(
+        meetLinkName: meetLink.meetingLinkName,
+        meetLinkPassword: meetLink.meetingPassword,
+      );
+      await _registerJoinDecisionCallback();
+
+      final hasGroupInfo = await appCore.hasMlsGroupInfo();
+      if (!hasGroupInfo) {
+        emit(
+          state.copyWith(
+            waitingRoomAdmissionPhase: WaitingRoomAdmissionPhase.hostNotStarted,
+            isJoinAuthenticating: false,
+          ),
+        );
+        _startGroupInfoPollTimer();
+        _finishWaitingRoomAdmission();
+        return;
+      }
+
+      await _trySubmitWaitingRoomJoinRequest(emit);
+      _finishWaitingRoomAdmission();
+    } catch (e, stackTrace) {
+      l.logger.e(
+        '[PreJoinBloc] Failed to start waiting room admission: $e',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      captureWaitingRoomFailureToSentry(
+        flow: 'guest_start_admission',
+        error: e,
+        stackTrace: stackTrace,
+        phase: state.waitingRoomAdmissionPhase.name,
+        meetLinkName: meetLink.meetingLinkName,
+      );
+      if (e is BridgeError && e.consumeBridgeSessionIfNeeded()) {
+        _clearJoinDecisionCallback();
+        emit(state.copyWith(isJoinAuthenticating: false));
+        _finishWaitingRoomAdmission();
+        return;
+      }
+      emit(
+        state.copyWith(
+          waitingRoomAdmissionPhase: WaitingRoomAdmissionPhase.inactive,
+          waitingRoomJoinRequestId: '',
+          isJoinAuthenticating: false,
+          error: e.toString(),
+        ),
+      );
+      _clearJoinDecisionCallback();
+      _finishWaitingRoomAdmission();
+    }
+  }
+
+  Future<void> _onPollGroupInfo(
+    PreJoinPollGroupInfo event,
+    Emitter<PreJoinState> emit,
+  ) async {
+    if (state.waitingRoomAdmissionPhase !=
+        WaitingRoomAdmissionPhase.hostNotStarted) {
+      return;
+    }
+
+    try {
+      final appCore = serviceManager.get<AppCoreManager>().appCore;
+      final hasGroupInfo = await appCore.hasMlsGroupInfo();
+      if (!hasGroupInfo) {
+        return;
+      }
+
+      _groupInfoPollTimer?.cancel();
+      _groupInfoPollTimer = null;
+      await _trySubmitWaitingRoomJoinRequest(emit);
+    } catch (e) {
+      l.logger.w('[PreJoinBloc] Group info poll failed: $e');
+    }
+  }
+
+  void _onWaitingRoomCountdownTick(
+    PreJoinWaitingRoomCountdownTick event,
+    Emitter<PreJoinState> emit,
+  ) {
+    if (!state.isAwaitingWaitingRoomAdmission) {
+      return;
+    }
+
+    if (state.waitingRoomCountdownSeconds <= 0) {
+      return;
+    }
+
+    final next = state.waitingRoomCountdownSeconds - 1;
+    if (next > 0) {
+      emit(state.copyWith(waitingRoomCountdownSeconds: next));
+      return;
+    }
+
+    emit(state.copyWith(waitingRoomCountdownSeconds: 0));
+    add(PreJoinWaitingRoomAdmissionTimedOut());
+  }
+
+  Future<void> _onWaitingRoomAdmissionTimedOut(
+    PreJoinWaitingRoomAdmissionTimedOut event,
+    Emitter<PreJoinState> emit,
+  ) async {
+    if (!state.isAwaitingWaitingRoomAdmission) {
+      return;
+    }
+
+    _cancelWaitingRoomAdmissionTimers();
+    _clearJoinDecisionCallback();
+    await _cancelWaitingRoomJoinRequestOnServer();
+    if (isClosed) {
+      return;
+    }
+
+    captureWaitingRoomTimeoutToSentry(
+      flow: 'guest_admission_timeout',
+      timeout: Duration(
+        seconds: PreJoinState.waitingRoomAdmissionCountdownSeconds,
+      ),
+      meetLinkName: state.meetingLink?.meetingLinkName,
+      requestId: state.waitingRoomJoinRequestId,
+    );
+
+    emit(
+      state.copyWith(
+        waitingRoomAdmissionPhase: WaitingRoomAdmissionPhase.inactive,
+        waitingRoomJoinRequestId: '',
+        waitingRoomCountdownSeconds:
+            PreJoinState.waitingRoomAdmissionCountdownSeconds,
+        shouldShowWaitingRoomAdmissionTimedOutNotification: true,
+      ),
+    );
+  }
+
+  Future<void> _onWaitForWaitingRoomWelcome(
+    PreJoinWaitForWaitingRoomWelcome event,
+    Emitter<PreJoinState> emit,
+  ) async {
+    final meetLink = state.meetingLinkForAwaitingAdmission;
+    if (meetLink == null) {
+      return;
+    }
+
+    try {
+      final appCore = serviceManager.get<AppCoreManager>().appCore;
+      await appCore.waitForWaitingRoomWelcome(
+        meetLinkName: meetLink.meetingLinkName,
+      );
+      if (isClosed) {
+        return;
+      }
+      if (state.waitingRoomAdmissionPhase ==
+          WaitingRoomAdmissionPhase.inactive) {
+        return;
+      }
+      _cancelWaitingRoomAdmissionTimers();
+      emit(
+        state.copyWith(
+          waitingRoomAdmissionPhase: WaitingRoomAdmissionPhase.inactive,
+          shouldProceedToJoinAfterHostAccept: true,
+        ),
+      );
+    } catch (e, stackTrace) {
+      if (isClosed ||
+          state.waitingRoomAdmissionPhase ==
+              WaitingRoomAdmissionPhase.inactive) {
+        return;
+      }
+      _cancelWaitingRoomAdmissionTimers();
+      if (e is BridgeError && e.consumeBridgeSessionIfNeeded()) {
+        return;
+      }
+      if (isWaitingRoomJoinCancelledError(e)) {
+        l.logger.i('[PreJoinBloc] Waiting room welcome wait cancelled: $e');
+        return;
+      }
+      l.logger.e(
+        '[PreJoinBloc] Failed waiting for waiting room welcome: $e',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      captureWaitingRoomFailureToSentry(
+        flow: 'guest_wait_welcome',
+        error: e,
+        stackTrace: stackTrace,
+        phase: state.waitingRoomAdmissionPhase.name,
+        meetLinkName: meetLink.meetingLinkName,
+        requestId: state.waitingRoomJoinRequestId,
+      );
+      emit(
+        state.copyWith(
+          waitingRoomAdmissionPhase: WaitingRoomAdmissionPhase.inactive,
+          waitingRoomJoinRequestId: '',
+          error: extractErrorMessage(e),
+        ),
+      );
+    }
+  }
+
+  Future<void> _onJoinDecisionReceived(
+    PreJoinJoinDecisionReceived event,
+    Emitter<PreJoinState> emit,
+  ) async {
+    // Server only sends join decision on reject; admit is signaled via Welcome.
+    if (event.admitted || event.requestId.isEmpty) {
+      return;
+    }
+
+    if (!state.isAwaitingWaitingRoomAdmission ||
+        state.waitingRoomJoinRequestId.isEmpty ||
+        event.requestId != state.waitingRoomJoinRequestId) {
+      return;
+    }
+
+    _cancelWaitingRoomAdmissionTimers();
+    _clearJoinDecisionCallback();
+    try {
+      await serviceManager
+          .get<AppCoreManager>()
+          .appCore
+          .clearWaitingRoomJoinRequest();
+    } catch (e) {
+      l.logger.w('[PreJoinBloc] Failed to clear waiting room join request: $e');
+    }
+
+    emit(
+      state.copyWith(
+        waitingRoomAdmissionPhase: WaitingRoomAdmissionPhase.inactive,
+        waitingRoomJoinRequestId: '',
+        shouldShowJoinRequestRejectedNotification: true,
+      ),
+    );
+  }
+
+  Future<void> _onLeaveWaitingRoomAdmission(
+    PreJoinLeaveWaitingRoomAdmission event,
+    Emitter<PreJoinState> emit,
+  ) async {
+    try {
+      _cancelWaitingRoomAdmissionTimers();
+      _clearJoinDecisionCallback();
+      await _cancelWaitingRoomJoinRequestOnServer();
+      if (!isClosed) {
+        emit(
+          state.copyWith(
+            waitingRoomAdmissionPhase: WaitingRoomAdmissionPhase.inactive,
+            waitingRoomJoinRequestId: '',
+            waitingRoomCountdownSeconds:
+                PreJoinState.waitingRoomAdmissionCountdownSeconds,
+          ),
+        );
+      }
+    } finally {
+      _leaveWaitingRoomAdmissionCompleter?.complete();
+      _leaveWaitingRoomAdmissionCompleter = null;
+    }
   }
 
   Future<void> _onResetLoadingState(
@@ -103,6 +648,19 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     UpdateDisplayName event,
     Emitter<PreJoinState> emit,
   ) async {
+    if (state.prejoinAuthDisplayName.isNotEmpty &&
+        event.displayName.trim() != state.prejoinAuthDisplayName) {
+      try {
+        await serviceManager
+            .get<AppCoreManager>()
+            .appCore
+            .clearPrejoinSrpAuth();
+      } catch (e) {
+        l.logger.w('[PreJoinBloc] Failed to clear prejoin SRP cache: $e');
+      }
+      emit(state.copyWith(prejoinAuthDisplayName: ''));
+    }
+
     emit(
       state.copyWith(
         displayName: event.displayName,
@@ -207,6 +765,8 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     final isCameraBackgroundBlurFeatureEnabled = dataProviderManager
         .unleashDataProvider
         .isMeetCameraBackgroundBlur();
+    final isWaitingRoomFeatureEnabled = dataProviderManager.unleashDataProvider
+        .isMeetWaitingRoom();
     emit(
       state.copyWith(
         isLoading: true,
@@ -222,8 +782,17 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         isSpeakerPhoneEnabled: savedSpeakerPhoneEnabled,
         isCameraBackgroundBlurFeatureEnabled:
             isCameraBackgroundBlurFeatureEnabled,
+        isWaitingRoomFeatureEnabled: isWaitingRoomFeatureEnabled,
       ),
     );
+    if (!isGuest && userId != null) {
+      unawaited(_loadPaidUserStatus(userId));
+    }
+    if (event.args.type == PreJoinType.join && event.args.meetingLink != null) {
+      unawaited(
+        _loadHostMeetingContext(event.args.meetingLink!.meetingLinkName),
+      );
+    }
 
     final permissionService = serviceManager.get<PermissionService>();
     final cameraStatus = await permissionService.cameraStatus();
@@ -300,56 +869,39 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       final speakerDevices = devices
           .where((d) => d.kind == 'audiooutput')
           .toList();
-      final hasLabelSuggestingExternalAudioOutput =
-          speakerDevices.hasLabelSuggestingExternalAudioOutput;
 
-      bool hasExternalAudioOutputFromAudioSession = false;
-      bool hasBluetoothAudioOutputFromAudioSession = false;
       try {
         final audioSession = await AudioSession.instance;
-        final devices = await audioSession.getDevices();
-        hasExternalAudioOutputFromAudioSession = devices.any(
-          (device) => device.type.isExternalAudioOutput,
+        await _audioSessionDevicesSub?.cancel();
+        _audioSessionDevicesSub = audioSession.devicesChangedEventStream.listen(
+          (_) async {
+            if (isClosed) {
+              return;
+            }
+            final hardwareDevices = await Hardware.instance.enumerateDevices();
+            final capabilities =
+                await AudioOutputProbe.detectFromSpeakerDevices(
+                  hardwareDevices.where((d) => d.kind == 'audiooutput'),
+                );
+            if (capabilities.hasExternal != state.hasExternalAudioOutput ||
+                capabilities.hasBluetooth != state.hasBluetoothAudioOutput) {
+              add(
+                PreJoinAudioOutputDevicesChanged(
+                  hasExternalAudioOutput: capabilities.hasExternal,
+                  hasBluetoothAudioOutput: capabilities.hasBluetooth,
+                ),
+              );
+            }
+          },
         );
-        hasBluetoothAudioOutputFromAudioSession = devices.any(
-          (device) => device.type.isBluetoothAudioOutput,
-        );
-        // listen to audio session devices changed event as well, or device change event from hardware may triggered faster than audio session devices changed event
-        audioSession.devicesChangedEventStream.listen((event) async {
-          final sessionDevices = await audioSession.getDevices();
-          final audioSessionHasExternal = sessionDevices.any(
-            (device) => device.type.isExternalAudioOutput,
-          );
-          final audioSessionHasBluetooth = sessionDevices.any(
-            (device) => device.type.isBluetoothAudioOutput,
-          );
-          final hardwareDevices = await Hardware.instance.enumerateDevices();
-          final labelSuggestingExternalAudioOutput = hardwareDevices
-              .where((d) => d.kind == 'audiooutput')
-              .hasLabelSuggestingExternalAudioOutput;
-
-          final hasExternalAudioOutput =
-              labelSuggestingExternalAudioOutput || audioSessionHasExternal;
-          final hasBluetoothAudioOutput = audioSessionHasBluetooth;
-          if (hasExternalAudioOutput != state.hasExternalAudioOutput ||
-              hasBluetoothAudioOutput != state.hasBluetoothAudioOutput) {
-            add(
-              PreJoinAudioOutputDevicesChanged(
-                hasExternalAudioOutput: hasExternalAudioOutput,
-                hasBluetoothAudioOutput: hasBluetoothAudioOutput,
-              ),
-            );
-          }
-        });
       } catch (e) {
         l.logger.w('[PreJoinBloc] Error checking audio session: $e');
       }
 
-      // Identify if there is any external audio output devic based on label or audio session
-      final hasExternalAudioOutput =
-          hasLabelSuggestingExternalAudioOutput ||
-          hasExternalAudioOutputFromAudioSession;
-      final hasBluetoothAudioOutput = hasBluetoothAudioOutputFromAudioSession;
+      final audioOutputCapabilities =
+          await AudioOutputProbe.detectFromSpeakerDevices(speakerDevices);
+      final hasExternalAudioOutput = audioOutputCapabilities.hasExternal;
+      final hasBluetoothAudioOutput = audioOutputCapabilities.hasBluetooth;
 
       LocalAudioTrack? audioTrack;
       LocalVideoTrack? videoTrack;
@@ -414,30 +966,14 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         final nextHasExternal = value
             .where((d) => d.kind == 'audiooutput')
             .hasLabelSuggestingExternalAudioOutput;
-        bool hasExternalAudioOutputFromAudioSession = false;
-        bool hasBluetoothAudioOutputFromAudioSession = false;
-        try {
-          final audioSession = await AudioSession.instance;
-          final devices = await audioSession.getDevices();
-          hasExternalAudioOutputFromAudioSession = devices.any(
-            (device) => device.type.isExternalAudioOutput,
-          );
-          hasBluetoothAudioOutputFromAudioSession = devices.any(
-            (device) => device.type.isBluetoothAudioOutput,
-          );
-        } catch (e) {
-          l.logger.w('[PreJoinBloc] Error checking audio session: $e');
-        }
-
-        // Identify if there is any external audio output devic based on label or audio session
-        final hasExternalAudioOutput =
-            nextHasExternal || hasExternalAudioOutputFromAudioSession;
-        final hasBluetoothAudioOutput = hasBluetoothAudioOutputFromAudioSession;
+        final capabilities = await AudioOutputProbe.detect(
+          labelSuggestsExternal: nextHasExternal,
+        );
 
         add(
           PreJoinAudioOutputDevicesChanged(
-            hasExternalAudioOutput: hasExternalAudioOutput,
-            hasBluetoothAudioOutput: hasBluetoothAudioOutput,
+            hasExternalAudioOutput: capabilities.hasExternal,
+            hasBluetoothAudioOutput: capabilities.hasBluetooth,
           ),
         );
       });
@@ -699,6 +1235,150 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       }
     } catch (e) {
       l.logger.e('[PreJoinBloc] Error toggling camera background blur: $e');
+    }
+  }
+
+  Future<void> _loadPaidUserStatus(String userId) async {
+    try {
+      final appCoreManager = serviceManager.get<AppCoreManager>();
+      final userState = await appCoreManager.appCore.fetchUserState(
+        userId: userId,
+        forceRemote: false,
+      );
+      if (!isClosed) {
+        add(
+          PreJoinPaidUserResolved(isPaidUser: isPaid(user: userState.userData)),
+        );
+      }
+    } catch (e) {
+      l.logger.w('[PreJoinBloc] Error fetching paid user status: $e');
+    }
+  }
+
+  Future<void> _loadHostMeetingContext(String meetingLinkName) async {
+    if (meetingLinkName.isEmpty) {
+      return;
+    }
+
+    try {
+      final appCoreManager = serviceManager.get<AppCoreManager>();
+      final hostContext = await resolveHostMeetingContext(
+        appCoreManager: appCoreManager,
+        meetingLinkName: meetingLinkName,
+      );
+      if (isClosed || hostContext == null) {
+        return;
+      }
+      add(
+        PreJoinHostMeetingContextResolved(
+          waitingRoomEnabled: hostContext.waitingRoomEnabled,
+          roomName: hostContext.roomName,
+        ),
+      );
+    } catch (e) {
+      l.logger.w('[PreJoinBloc] Failed to resolve host meeting context: $e');
+    }
+  }
+
+  Future<void> _onAttemptJoin(
+    PreJoinAttemptJoin event,
+    Emitter<PreJoinState> emit,
+  ) async {
+    final meetLink = state.meetingLink;
+    if (meetLink == null || state.preJoinType != PreJoinType.join) {
+      return;
+    }
+
+    final displayName = event.displayName.trim();
+    if (displayName.isEmpty) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        isJoinAuthenticating: true,
+        shouldNavigateToWaitingRoom: false,
+        resetDisplayNameFieldError: true,
+        error: null,
+        displayName: displayName,
+      ),
+    );
+
+    try {
+      final appCoreManager = serviceManager.get<AppCoreManager>();
+      final auth = await authenticateForJoin(
+        appCoreManager: appCoreManager,
+        meetingLinkName: meetLink.meetingLinkName,
+        meetingPassword: meetLink.meetingPassword,
+        displayName: displayName,
+      );
+
+      if (isClosed) {
+        return;
+      }
+
+      final serverWaitingRoomEnabled =
+          auth.meetInfo.hasWaitingRoom;
+
+      // if the feature flag is enabled, we will use the client waiting room config
+      // otherwise, we will use the server waiting room config
+      final clientWaitingRoomEnabled = auth.isMeetingHost
+          ? (state.isWaitingRoomFeatureEnabled
+                ? state.waitingRoomEnabled
+                : serverWaitingRoomEnabled)
+          : serverWaitingRoomEnabled;
+
+      final pendingHostWaitingRoomSyncEnabled =
+          auth.isMeetingHost &&
+              serverWaitingRoomEnabled != clientWaitingRoomEnabled
+          ? clientWaitingRoomEnabled
+          : null;
+
+      /// Pass the waiting room setting from the server when create the meeting or join the meeting,
+      /// we will auto trigger the update waiting room flow once the host enter the meeting
+      final meetingInfo = auth.isMeetingHost
+          ? meetingInfoWithWaitingRoom(
+              auth.meetingInfo,
+              waitingRoomEnabled: serverWaitingRoomEnabled,
+            )
+          : auth.meetingInfo;
+
+      final needsWaitingRoomAdmission =
+          !auth.isMeetingHost && serverWaitingRoomEnabled;
+
+      emit(
+        state.copyWith(
+          // Keep loading until waiting-room admission UI is shown; MLS prep runs
+          // asynchronously after auth and would otherwise flash an active button.
+          isJoinAuthenticating: needsWaitingRoomAdmission,
+          roomName: auth.meetInfo.meetName,
+          meetingInfo: meetingInfo,
+          isMeetingHost: auth.isMeetingHost,
+          role: auth.isMeetingHost ? PrejoinRole.host : PrejoinRole.guest,
+          hasWaitingRoom: auth.isMeetingHost ? false : serverWaitingRoomEnabled,
+          waitingRoomEnabled: clientWaitingRoomEnabled,
+          pendingHostWaitingRoomSyncEnabled: pendingHostWaitingRoomSyncEnabled,
+          prejoinAuthDisplayName: auth.authDisplayName,
+        ),
+      );
+
+      if (needsWaitingRoomAdmission) {
+        add(PreJoinStartWaitingRoomAdmission(displayName));
+        return;
+      }
+
+      emit(state.copyWith(shouldNavigateToWaitingRoom: true));
+    } on BridgeError catch (error) {
+      if (error.consumeBridgeSessionIfNeeded()) {
+        emit(state.copyWith(isJoinAuthenticating: false));
+        return;
+      }
+      emit(
+        state.copyWith(isJoinAuthenticating: false, error: error.userMessage),
+      );
+    } catch (e) {
+      l.logger.e('[PreJoinBloc] Join auth failed: $e');
+      emit(state.copyWith(isJoinAuthenticating: false, error: e.toString()));
     }
   }
 }

@@ -11,6 +11,10 @@ serde_json = { workspace = true }
 base64 = { workspace = true }
 rand = { workspace = true }
 aes-gcm = { version = "0.10.3", features = ["zeroize"] }
+hkdf = "0.13.0"
+sha2 = "0.11.0"
+zeroize = { version = "1.8.1", features = ["zeroize_derive"] }
+getrandom = { workspace = true, features = ["wasm_js"] }
 
 # Native-only dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
@@ -18,9 +22,6 @@ proton-crypto = { workspace = true }
 proton-srp = { workspace = true, features = ["pgpinternal"] }
 proton-crypto-subtle = { workspace = true }
 proton-crypto-account = { workspace = true }
-hkdf = "0.13.0"
-sha2 = "0.11.0"
-zeroize = { version = "1.8.1", features = ["zeroize_derive"] }
 
 # WASM-only dependencies
 [target.'cfg(target_arch = "wasm32")'.dependencies]
@@ -28,7 +29,6 @@ js-sys = { workspace = true }
 web-sys = { workspace = true, features = ["console", "Window"] }
 wasm-bindgen = { workspace = true }
 wasm-bindgen-futures = { workspace = true }
-getrandom = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["rt", "macros"] }

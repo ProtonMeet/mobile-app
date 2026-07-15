@@ -10,7 +10,9 @@ use std::{
 };
 use tracing::{error, info};
 use tracing_appender::non_blocking::WorkerGuard;
-use tracing_subscriber::{fmt::time::ChronoLocal, fmt::MakeWriter, layer::SubscriberExt};
+use tracing_subscriber::{
+    fmt::time::ChronoLocal, fmt::MakeWriter, layer::SubscriberExt, EnvFilter,
+};
 
 use crate::{errors::BridgeError, flutter_logger::FlutterLogLayer};
 
@@ -24,11 +26,22 @@ pub fn init_rust_logging(
     file_name: &str,
     flutter_layer: bool,
 ) -> Result<(), BridgeError> {
+    // meet-core only; silence muon and other noisy HTTP/TLS deps.
     // Release builds must not emit debug-level Rust logs to logcat / log files.
     #[cfg(debug_assertions)]
-    env::set_var("RUST_LOG", "debug");
+    const DEFAULT_RUST_LOG: &str = concat!(
+        "proton_meet_core=debug,",
+        "muon=off,hyper=off,hyper_util=off,h2=off,tower=off,rustls=off,want=off"
+    );
     #[cfg(not(debug_assertions))]
-    env::set_var("RUST_LOG", "info");
+    const DEFAULT_RUST_LOG: &str = concat!(
+        "proton_meet_core=info,",
+        "muon=off,hyper=off,hyper_util=off,h2=off,tower=off,rustls=off,want=off"
+    );
+    env::set_var("RUST_LOG", DEFAULT_RUST_LOG);
+    let env_filter =
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(DEFAULT_RUST_LOG));
+
     info!("Initializing Rust logging with file: {}", file_path);
 
     // Acquire the lock on LOG_GUARD
@@ -60,6 +73,7 @@ pub fn init_rust_logging(
         .with_timer(ChronoLocal::new("%H:%M:%S%.3f".to_string()));
 
     let subscriber = tracing_subscriber::registry()
+        .with(env_filter)
         .with(file_layer)
         .with(console_layer)
         // bool::then() returns Option<T>, which Layer is implemented for
