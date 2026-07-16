@@ -928,6 +928,67 @@ impl App {
     pub async fn clear_join_request_handler_wasm(&self) {
         self.clear_join_request_handler().await;
     }
+
+    #[cfg(all(target_family = "wasm", not(test)))]
+    #[wasm_bindgen(js_name = setAgentPendingHandler)]
+    pub async fn set_agent_pending_handler_wasm(&self) -> Result<(), JsValue> {
+        self.user_service
+            .write()
+            .await
+            .set_agent_pending_handler(|device_id| {
+                Box::pin(async move {
+                    on_agent_pending(device_id);
+                })
+            });
+        Ok(())
+    }
+
+    #[cfg(all(target_family = "wasm", not(test)))]
+    #[wasm_bindgen(js_name = setAgentLeftHandler)]
+    pub async fn set_agent_left_handler_wasm(&self) -> Result<(), JsValue> {
+        self.user_service
+            .write()
+            .await
+            .set_agent_left_handler(|device_id| {
+                Box::pin(async move {
+                    on_agent_left(device_id);
+                })
+            });
+        Ok(())
+    }
+
+    #[wasm_bindgen(js_name = admitAgent)]
+    pub async fn admit_agent_wasm(
+        &self,
+        meeting_link_name: String,
+        agent_device_id: String,
+        meeting_password: String,
+    ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
+        self.admit_agent(meeting_link_name, agent_device_id, meeting_password)
+            .await
+            .map_err(|e| e.into())
+    }
+
+    #[wasm_bindgen(js_name = removeAgent)]
+    pub async fn remove_agent_wasm(
+        &self,
+        meeting_link_name: String,
+        agent_device_id: String,
+    ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
+        self.remove_agent(meeting_link_name, agent_device_id)
+            .await
+            .map_err(|e| e.into())
+    }
+
+    #[wasm_bindgen(js_name = listPendingAgents)]
+    pub async fn list_pending_agents_wasm(
+        &self,
+        meeting_link_name: String,
+    ) -> Result<Vec<String>, crate::errors::core::MeetCoreErrorEnum> {
+        self.list_pending_agents(meeting_link_name)
+            .await
+            .map_err(|e| e.into())
+    }
 }
 
 #[cfg(target_family = "wasm")]
@@ -974,6 +1035,12 @@ extern "C" {
         participant_uid: String,
         expires_at: u64,
     );
+
+    #[wasm_bindgen(js_namespace = agentPendingEvent)]
+    pub fn on_agent_pending(device_id: String);
+
+    #[wasm_bindgen(js_namespace = agentLeftEvent)]
+    pub fn on_agent_left(device_id: String);
 }
 
 // Provide a stub for tests

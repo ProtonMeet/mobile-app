@@ -25,6 +25,7 @@ use crate::domain::user::{
     models::{meeting_link_name::MeetingLinkName, UserId},
     ports::HttpClient,
 };
+use crate::service::service::{psk_id_for_commit, public_ratchet_tree_has_agent};
 
 #[derive(Clone)]
 pub struct MlsService {
@@ -140,14 +141,18 @@ impl MlsService {
         let group_info_msg = Self::convert_mls_spec_to_types(&group_info_msg)?;
         let ratchet_tree: PublicRatchetTree = ratchet_tree_option.try_into()?;
 
+        // Pick the PSK id based on whether the group already contains an agent leaf.
+        let psk_id = psk_id_for_commit(
+            meeting_link_name.as_str(),
+            public_ratchet_tree_has_agent(&ratchet_tree),
+        );
+
         let result = client
             .join_group_via_external_commit(
                 group_info_msg,
                 ratchet_tree,
                 Disclosure::Full,
-                vec![ExternalPskId(
-                    meeting_link_name.as_str().as_bytes().to_vec(),
-                )],
+                vec![psk_id],
             )
             .await;
         let (mls_group, commit_bundle) = match result {

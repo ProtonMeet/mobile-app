@@ -78,6 +78,32 @@ async fn main() -> Result<(), anyhow::Error> {
             runner.leave().await?;
             tracing::info!("Leaving room completed");
         }
+        Commands::AdmitAgent { agent_device_id } => {
+            let runner = AppRunner::prepare(
+                config.api_host,
+                config.ws_host,
+                config.http_host,
+                config.meeting_link_name.clone(),
+                config.meeting_link_password.clone(),
+                Some("host".to_string()),
+            )
+            .await?;
+            tracing::info!(
+                meeting = %config.meeting_link_name,
+                agent_device_id = %agent_device_id,
+                "Joined as host, admitting agent"
+            );
+            runner
+                .app
+                .admit_agent(
+                    config.meeting_link_name,
+                    agent_device_id,
+                    config.meeting_link_password,
+                )
+                .await?;
+            tracing::info!("Agent admission succeeded, leaving meeting");
+            runner.leave().await?;
+        }
         Commands::Test {
             scenario,
             threads,

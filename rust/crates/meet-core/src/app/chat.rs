@@ -31,7 +31,7 @@ impl App {
             .map_err(Into::into)
     }
 
-    async fn active_user_id(&self) -> Result<UserId, MeetCoreError> {
+    pub(super) async fn active_user_id(&self) -> Result<UserId, MeetCoreError> {
         let app_state = self.state.read().await;
         let user_info = app_state
             .active_user_info
