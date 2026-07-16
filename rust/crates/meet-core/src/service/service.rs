@@ -21,7 +21,7 @@ use crate::{infra::dto::realtime::VersionedGroupInfoData, utils::join};
 use base64::{engine::general_purpose, Engine};
 use ed25519_dalek::pkcs8::DecodePublicKey;
 use meet_mls::reexports::meet_policy::UserRole;
-use meet_type::RejoinReason;
+use meet_type::{RejoinReason, WebSocketTextResponse, WebSocketTextResponseCommand};
 use mls_rs::{
     framing::{Content, MlsMessagePayload},
     group::proposal::{Proposal, ProposalOrRef},
@@ -225,6 +225,22 @@ pub type JoinRequestHandler = Box<
         + 'static,
 >;
 
+#[cfg(not(target_family = "wasm"))]
+pub type AgentPendingHandler =
+    Box<dyn FnMut(String) -> Box<dyn Future<Output = ()> + Unpin + Send> + Send + 'static>;
+
+#[cfg(target_family = "wasm")]
+pub type AgentPendingHandler =
+    Box<dyn FnMut(String) -> Box<dyn Future<Output = ()> + Unpin> + 'static>;
+
+#[cfg(not(target_family = "wasm"))]
+pub type AgentLeftHandler =
+    Box<dyn FnMut(String) -> Box<dyn Future<Output = ()> + Unpin + Send> + Send + 'static>;
+
+#[cfg(target_family = "wasm")]
+pub type AgentLeftHandler =
+    Box<dyn FnMut(String) -> Box<dyn Future<Output = ()> + Unpin> + 'static>;
+
 #[derive(Clone)]
 pub struct Service {
     http_client: Arc<dyn HttpClient>,
@@ -236,6 +252,8 @@ pub struct Service {
     mls_sync_state_update_handler: Option<Arc<Mutex<MlsSyncStateUpdateHandler>>>,
     join_decision_handler: Option<Arc<Mutex<JoinDecisionHandler>>>,
     join_request_handler: Option<Arc<Mutex<JoinRequestHandler>>>,
+    agent_pending_handler: Option<Arc<Mutex<AgentPendingHandler>>>,
+    agent_left_handler: Option<Arc<Mutex<AgentLeftHandler>>>,
     ws_client: ArcWebSocketClient,
     mls_store: Arc<RwLock<MlsStore>>,
     state: Arc<Mutex<ServiceState>>,
@@ -259,6 +277,120 @@ fn mimi_sub_from_credential(credential: &Credential) -> Result<String, anyhow::E
             Ok(ProtonMeetIdentity::sub(&mut sd_kbt)?.to_string())
         }
         _ => Err(anyhow::anyhow!("Expected SdCwtDraft04 credential")),
+    }
+}
+
+/// True iff `credential` is from a server-issued (agent) identity. Read off
+/// `ProtonMeetClaims.is_from_server`, the same flag the auth service stamps
+/// onto agent SD-CWTs at issuance.
+pub(super) fn credential_is_agent(credential: &Credential) -> bool {
+    matches!(
+        credential,
+        Credential::SdCwtDraft04 {
+            claimset: Some(claimset),
+            ..
+        } if claimset.is_from_server
+    )
+}
+
+/// True iff any leaf in `mls_group`'s roster is an agent.
+fn group_has_agent(mls_group: &MlsGroup<MemKv>) -> bool {
+    mls_group
+        .roster()
+        .any(|m| credential_is_agent(&m.credential))
+}
+
+/// True if any leaf in the GroupInfo's ratchet tree is an agent. Used at
+/// External-Commit-join time when there's no local `MlsGroup` yet.
+fn ratchet_tree_option_has_agent(
+    tree_option: &mls_trait::mls_spec::drafts::ratchet_tree_options::RatchetTreeOption,
+) -> bool {
+    let Ok(tree) = mls_types::PublicRatchetTree::try_from(tree_option.clone()) else {
+        return false;
+    };
+    public_ratchet_tree_has_agent(&tree)
+}
+
+/// Same predicate as [`ratchet_tree_option_has_agent`] but takes the
+/// already-converted [`PublicRatchetTree`]. Used by call sites that have it
+/// in hand (e.g. `mls_service::join_group_via_external_commit`) to avoid a
+/// redundant `TryFrom`.
+pub(super) fn public_ratchet_tree_has_agent(tree: &mls_types::PublicRatchetTree) -> bool {
+    // Collect first so the iterator (which borrows the tree) doesn't outlive
+    // its source across the boolean fold.
+    let members: Vec<_> = tree.members().collect();
+    members
+        .into_iter()
+        .any(|m| match mls_types::Member::try_from(m) {
+            Ok(member) => credential_is_agent(&member.credential),
+            Err(_) => false,
+        })
+}
+
+/// Select the PSK id for a commit. Uses the meeting-scoped agent PSK id
+/// (`agent-psk-id.{link}`) if the group contains an agent leaf.
+/// Otherwise falls back to the meeting-link-name PSK (the id the human-only path has always used).
+pub(super) fn psk_id_for_commit(meeting_link_name: &str, has_agent: bool) -> ExternalPskId {
+    if has_agent {
+        ExternalPskId(
+            crate::service::agent_host_service::agent_psk_id_for_meeting(meeting_link_name),
+        )
+    } else {
+        ExternalPskId(meeting_link_name.as_bytes().to_vec())
+    }
+}
+
+/// Stagger return: caller proceeds with the commit, or bails because another
+/// participant already advanced the epoch during the wait.
+enum StaggerOutcome {
+    Proceed,
+    EpochAdvanced,
+}
+
+/// Shared rank-staggered wait used by `admit_agent` and `remove_agent`.
+/// Sleeps for `jitter * DELAY_PER_RANK_MS + (rank / RANK_GROUP_SIZE) * RANK_GROUP_DELAY_MS`
+/// then re-reads the group's epoch — if it advanced during the wait, the
+/// caller is no longer the designated committer for this event and should
+/// no-op. Same shape as the stagger inside `process_proposal_message`.
+async fn stagger_then_check_epoch(
+    service: &Service,
+    room_id: &str,
+    rank: u64,
+    epoch_at_start: u64,
+    op_name: &str,
+) -> StaggerOutcome {
+    use rand::Rng as _;
+    let rank_group = rank / RANK_GROUP_SIZE;
+    let random_jitter = rand::thread_rng().gen_range(0..=20);
+    let delay_ms = random_jitter * DELAY_PER_RANK_MS + rank_group * RANK_GROUP_DELAY_MS;
+    tracing::info!(
+        op = op_name,
+        rank,
+        rank_group,
+        delay_ms,
+        epoch_at_start,
+        "designated-committer stagger"
+    );
+    sleep(Duration::from_millis(delay_ms)).await;
+
+    match service.get_current_epoch(room_id).await {
+        Ok(current) if current != epoch_at_start => {
+            tracing::info!(
+                op = op_name,
+                epoch_at_start,
+                current,
+                "epoch advanced during stagger, another participant handled it, skipping"
+            );
+            StaggerOutcome::EpochAdvanced
+        }
+        Ok(_) => StaggerOutcome::Proceed,
+        Err(e) => {
+            tracing::warn!(
+                op = op_name,
+                "failed to get current epoch after stagger: {e:?}"
+            );
+            StaggerOutcome::Proceed
+        }
     }
 }
 
@@ -361,6 +493,8 @@ impl Service {
             mls_sync_state_update_handler: None,
             join_decision_handler: None,
             join_request_handler: None,
+            agent_pending_handler: None,
+            agent_left_handler: None,
             ws_client,
             mls_store,
             state,
@@ -621,7 +755,7 @@ impl Service {
         }
 
         role_proposals.push(ProposalArg::PskExternal {
-            id: ExternalPskId(room_id.as_bytes().to_vec()),
+            id: psk_id_for_commit(room_id, group_has_agent(&mls_group)),
         });
 
         // process all proposals in the same commit
@@ -1473,9 +1607,22 @@ impl UserService for Service {
             init_start.elapsed().as_millis()
         );
 
-        let psk_id = mls_types::ExternalPskId(meet_link_name.as_bytes().to_vec());
         let psk_value = derive_external_psk(meeting_password, meet_link_name)?;
-        client.insert_external_psk(psk_id, psk_value).await?;
+        let agent_psk_value = crate::infra::crypto_client::derive_agent_external_psk(&psk_value)?;
+        client
+            .insert_external_psk(
+                mls_types::ExternalPskId(meet_link_name.as_bytes().to_vec()),
+                psk_value,
+            )
+            .await?;
+        client
+            .insert_external_psk(
+                mls_types::ExternalPskId(
+                    crate::service::agent_host_service::agent_psk_id_for_meeting(meet_link_name),
+                ),
+                agent_psk_value,
+            )
+            .await?;
         tracing::debug!(
             "create_mls_client step=insert_external_psk ms={}",
             init_start.elapsed().as_millis()
@@ -1944,7 +2091,7 @@ impl UserService for Service {
             }
 
             proposal_args.push(ProposalArg::PskExternal {
-                id: ExternalPskId(meeting_link_name.as_bytes().to_vec()),
+                id: psk_id_for_commit(meeting_link_name, group_has_agent(&mls_group)),
             });
 
             let result = mls_group.new_commit(proposal_args).await;
@@ -2280,6 +2427,35 @@ impl UserService for Service {
 
         match message {
             WebSocketMessage::Text(text) => {
+                if let Ok(envelope) = serde_json::from_str::<WebSocketTextResponse>(&text) {
+                    match envelope.command {
+                        WebSocketTextResponseCommand::AgentPending(notification) => {
+                            if let Some(handler) = self.agent_pending_handler.as_ref() {
+                                let mut handler = handler.lock().await;
+                                handler(notification.device_id).await;
+                            } else {
+                                tracing::debug!(
+                                    "AgentPending received but no handler registered: device_id={}",
+                                    notification.device_id
+                                );
+                            }
+                            return Ok(());
+                        }
+                        WebSocketTextResponseCommand::AgentLeft(notification) => {
+                            if let Some(handler) = self.agent_left_handler.as_ref() {
+                                let mut handler = handler.lock().await;
+                                handler(notification.device_id).await;
+                            } else {
+                                tracing::debug!(
+                                    "AgentLeft received but no handler registered: device_id={}",
+                                    notification.device_id
+                                );
+                            }
+                            return Ok(());
+                        }
+                        _ => {}
+                    }
+                }
                 // try to parse as JoinRoomResponse
                 if let Ok(join_response) = serde_json::from_str::<JoinRoomResponse>(&text) {
                     #[cfg(debug_assertions)]
@@ -2884,6 +3060,13 @@ impl UserService for Service {
                     {
                         tracing::info!("Join by external commit");
 
+                        // Detect agent presence from the GroupInfo's ratchet tree before building the local group.
+                        let psk_id_for_join = psk_id_for_commit(
+                            meeting_link_name,
+                            ratchet_tree_option_has_agent(
+                                &ratchet_tree_and_group_info.data.ratchet_tree,
+                            ),
+                        );
                         let (mls_group, commit_bundle) = self
                             .create_external_commit_with_psks(
                                 &user_info_token.user_id(),
@@ -2891,7 +3074,7 @@ impl UserService for Service {
                                 cs,
                                 group_info,
                                 ratchet_tree_and_group_info.data.ratchet_tree,
-                                vec![ExternalPskId(meeting_link_name.as_bytes().to_vec())],
+                                vec![psk_id_for_join],
                             )
                             .await?;
 
@@ -4536,6 +4719,56 @@ impl Service {
         }))));
     }
 
+    #[cfg(not(target_family = "wasm"))]
+    pub fn set_agent_pending_handler<F, Fut>(&mut self, callback: F)
+    where
+        F: Fn(String) -> Fut + Send + 'static,
+        Fut: Future<Output = ()> + Unpin + Send + 'static,
+    {
+        tracing::info!("Service set agent pending handler");
+        self.agent_pending_handler = Some(Arc::new(Mutex::new(Box::new({
+            move |device_id| {
+                Box::new(callback(device_id)) as Box<dyn Future<Output = ()> + Send + Unpin>
+            }
+        }))));
+    }
+
+    #[cfg(target_family = "wasm")]
+    pub fn set_agent_pending_handler<F, Fut>(&mut self, callback: F)
+    where
+        F: Fn(String) -> Fut + 'static,
+        Fut: Future<Output = ()> + Unpin + 'static,
+    {
+        self.agent_pending_handler = Some(Arc::new(Mutex::new(Box::new({
+            move |device_id| Box::new(callback(device_id)) as Box<dyn Future<Output = ()> + Unpin>
+        }))));
+    }
+
+    #[cfg(not(target_family = "wasm"))]
+    pub fn set_agent_left_handler<F, Fut>(&mut self, callback: F)
+    where
+        F: Fn(String) -> Fut + Send + 'static,
+        Fut: Future<Output = ()> + Unpin + Send + 'static,
+    {
+        tracing::info!("Service set agent left handler");
+        self.agent_left_handler = Some(Arc::new(Mutex::new(Box::new({
+            move |device_id| {
+                Box::new(callback(device_id)) as Box<dyn Future<Output = ()> + Send + Unpin>
+            }
+        }))));
+    }
+
+    #[cfg(target_family = "wasm")]
+    pub fn set_agent_left_handler<F, Fut>(&mut self, callback: F)
+    where
+        F: Fn(String) -> Fut + 'static,
+        Fut: Future<Output = ()> + Unpin + 'static,
+    {
+        self.agent_left_handler = Some(Arc::new(Mutex::new(Box::new({
+            move |device_id| Box::new(callback(device_id)) as Box<dyn Future<Output = ()> + Unpin>
+        }))));
+    }
+
     /// Helper function to get the current epoch for a room
     async fn get_current_epoch(&self, room_id: &str) -> Result<u64, anyhow::Error> {
         let store = self.mls_store.read().await;
@@ -4938,13 +5171,15 @@ impl Service {
         };
         match received_message {
             ReceivedMessage::Commit { ref output, .. } => {
+                use crate::service::agent_host_service::agent_psk_id_for_meeting;
                 let expected_id = room_id.as_bytes();
+                let expected_agent_id = agent_psk_id_for_meeting(room_id);
                 let has_psk = output.applied_proposals.iter().any(|p| {
                     matches!(
                         &p.effect,
                         mls_trait::types::ProposalEffect::PskAdded {
                             reference: mls_types::PskReference::External(mls_types::ExternalPskId(id))
-                        } if id.as_slice() == expected_id
+                        } if id.as_slice() == expected_id || id.as_slice() == expected_agent_id.as_slice()
                     )
                 });
                 if !has_psk {
@@ -5191,13 +5426,16 @@ impl Service {
         Ok(ProposalProcessingOutcome::Applied)
     }
 
-    /// Validate the PSK proposal in the incoming commit message
+    /// Validate the PSK proposal in the incoming commit message.
     /// If the MLS message is a commit message, validate the PSK proposal in the commit message.
-    /// It must contain a PSK proposal with the expected ID (`room_id.as_bytes()`).
+    /// It must reference either the meeting PSK (id = `room_id.as_bytes()`)
+    /// or the meeting-scoped agent PSK (id = `agent-psk-id.{room_id}`).
     fn validate_psk_proposal(
         mls_message: mls_types::MlsMessage,
         room_id: &str,
     ) -> Result<(), anyhow::Error> {
+        use crate::service::agent_host_service::agent_psk_id_for_meeting;
+        let expected_agent_id = agent_psk_id_for_meeting(room_id);
         if let MlsMessagePayload::Plain(public_message) = mls_message.mls_message.payload {
             if let Content::Commit(commit) = public_message.content.content {
                 let proposals = commit.proposals;
@@ -5207,7 +5445,10 @@ impl Service {
                         if let Proposal::Psk(psk) = proposal.as_ref() {
                             if let Some(psk_id) = psk.external_psk_id() {
                                 has_psk = true;
-                                if psk_id.to_vec() != room_id.as_bytes() {
+                                let id_bytes = psk_id.to_vec();
+                                if id_bytes != room_id.as_bytes()
+                                    && id_bytes.as_slice() != expected_agent_id.as_slice()
+                                {
                                     tracing::error!("PSK ID mismatch for room {room_id}");
                                     return Err(anyhow::Error::from(
                                         ServiceError::PskProposalMissing,
@@ -5344,7 +5585,7 @@ impl Service {
         }
 
         proposal_args.push(ProposalArg::PskExternal {
-            id: ExternalPskId(room_id.as_bytes().to_vec()),
+            id: psk_id_for_commit(room_id, group_has_agent(&mls_group)),
         });
 
         let (commit_bundle, _welcome_option) = match mls_group.new_commit(proposal_args).await {
@@ -5631,6 +5872,386 @@ impl NewUserService for Service {
 impl Service {
     pub async fn get_cached_message(&self) -> Result<Arc<Mutex<MlsMessageCache>>, anyhow::Error> {
         Ok(self.message_cache.clone())
+    }
+}
+
+impl Service {
+    /// Host-side flow: admit an STT agent into the meeting's MLS group.
+    /// Runs on a host (a regular meeting member who knows the meeting password).
+    ///
+    /// 1. `GET /v1/agent/keypackage?agent_device_id=...`: fetch agent's KP.
+    /// 2. `derive_agent_external_psk`: compute the HKDF-derived agent PSK
+    ///    every member already holds under `agent-psk-id.{link}`.
+    /// 3. `AgentHostService::seal_psk_for_agent`: HPKE.Seal to agent's HPKE PK.
+    /// 4. Take the group write lock, re-check epoch, build the commit
+    ///    (`new_commit([PskExternal, Add])`), upload via `update_group_info`
+    ///    while still holding the lock, merge on success or clear the
+    ///    pending commit on failure.
+    /// 5. `POST /v1/agent/bundle`: push encrypted PSK + Welcome + ratchet
+    ///    tree to meet-server so the agent's WS subscriber receives an
+    ///    `RTCMessageInContent::AgentBundle` binary frame.
+    pub async fn admit_agent(
+        &self,
+        meeting_link_name: &crate::domain::user::models::meeting_link_name::MeetingLinkName,
+        user_id: &crate::domain::user::models::UserId,
+        agent_device_id: String,
+        meeting_password: String,
+    ) -> Result<(), anyhow::Error> {
+        use crate::service::agent_host_service::{
+            agent_psk_id_for_meeting, AgentBundleForPush, AgentHostService,
+        };
+        use mls_rs_codec::MlsDecode as _;
+
+        let psk_id_bytes = agent_psk_id_for_meeting(meeting_link_name.as_str());
+        let room_id = meeting_link_name.as_str().to_string();
+
+        let group_arc = {
+            let store_lock = self.mls_store.read().await;
+            store_lock
+                .group_map
+                .get(&room_id)
+                .ok_or_else(|| anyhow::anyhow!("group not loaded for meeting"))?
+                .clone()
+        };
+
+        {
+            use std::str::FromStr;
+            let mls_group = group_arc.read().await;
+            let already_present = mls_group.roster().any(|m| {
+                mimi_sub_from_credential(m.credential())
+                    .ok()
+                    .and_then(|uri| MimiSubject::from_str(&uri).ok())
+                    .map(|mimi| mimi.device_id() == agent_device_id)
+                    .unwrap_or(false)
+            });
+            if already_present {
+                tracing::info!(
+                    "admit_agent: device_id={agent_device_id} already in roster, skipping"
+                );
+                return Ok(());
+            }
+        }
+
+        let (epoch_at_start, rank) = {
+            let mls_group = group_arc.read().await;
+            let self_leaf_index = mls_group.own_leaf_index()?;
+            let epoch_at = *mls_group.epoch();
+            let authorizer = mls_group.authorizer()?;
+            let own_role = authorizer.own_role(epoch_at)?;
+            let rank = if own_role.role_index == UserRole::RoomAdmin as u32 {
+                0
+            } else {
+                self.get_deterministic_random_rank(
+                    *self_leaf_index,
+                    epoch_at,
+                    mls_group.roster().collect::<Vec<_>>(),
+                )
+                .await?
+            };
+            (epoch_at, rank)
+        };
+
+        if let StaggerOutcome::EpochAdvanced =
+            stagger_then_check_epoch(self, &room_id, rank, epoch_at_start, "admit_agent").await
+        {
+            return Ok(());
+        }
+
+        // Unlocked prep — network + CPU-only work, before we grab the group
+        // write lock.
+        let host_sd_kbt = self.get_sd_kbt(user_id).await?;
+        let agent_kp = self
+            .http_client
+            .fetch_agent_keypackage(&host_sd_kbt, &agent_device_id)
+            .await?;
+        let agent_kp_bytes = agent_kp.key_package;
+        let agent_hpke_pk = agent_kp.hpke_public_key;
+
+        let cs = {
+            let mls_store = self.mls_store.read().await;
+            mls_store.config.ciphersuite
+        };
+        let meeting_psk = crate::infra::crypto_client::derive_external_psk(
+            &meeting_password,
+            meeting_link_name.as_str(),
+        )?;
+        let agent_psk = crate::infra::crypto_client::derive_agent_external_psk(&meeting_psk)?;
+        let psk: &[u8] = &agent_psk.0;
+        let encrypted_psk = AgentHostService::seal_psk_for_agent(&agent_hpke_pk, psk, cs)
+            .await
+            .map_err(|e| anyhow::anyhow!("seal_psk: {e}"))?;
+
+        // Insert the PSK on the client before we take the group lock. Client
+        // and group are different lock domains; ordering here avoids nesting.
+        {
+            let mls_store = self.mls_store.write().await;
+            let client = mls_store.find_client(&user_id.to_string(), &cs)?;
+            client
+                .insert_external_psk(
+                    ExternalPskId(psk_id_bytes.clone()),
+                    mls_types::ExternalPsk(psk.to_vec()),
+                )
+                .await?;
+        }
+
+        let agent_kp_typed = {
+            let mut slice = agent_kp_bytes.as_slice();
+            mls_types::KeyPackage::mls_decode(&mut slice)
+                .map_err(|e| anyhow::anyhow!("decode agent KP: {e:?}"))?
+        };
+
+        // Take the group write lock and hold it across new_commit → upload →
+        // merge/clear. Matches `remove_agent`: safe against concurrent WS
+        // commit processing racing our un-merged pending commit.
+        let mut mls_group = group_arc.write().await;
+
+        // TOCTOU re-check: the stagger validated the epoch, then we spent time
+        // on network + crypto. If the epoch advanced in that window, another
+        // committer beat us — bail before starting a redundant commit.
+        let current_epoch = *mls_group.epoch();
+        if current_epoch != epoch_at_start {
+            tracing::info!(
+                op = "admit_agent",
+                epoch_at_start,
+                current_epoch,
+                "epoch advanced between stagger and lock, another admin handled it, skipping"
+            );
+            return Ok(());
+        }
+
+        let (commit_bundle, _) = mls_group
+            .new_commit(vec![
+                ProposalArg::PskExternal {
+                    id: ExternalPskId(psk_id_bytes.clone()),
+                },
+                ProposalArg::Add(Box::new(agent_kp_typed)),
+            ])
+            .await
+            .map_err(|e| anyhow::anyhow!("admit_agent new_commit: {e:?}"))?;
+
+        let welcome_mls_types = commit_bundle
+            .welcome
+            .ok_or_else(|| anyhow::anyhow!("admit_agent: commit produced no welcome"))?;
+        let welcome_spec = convert_mls_types_to_spec(&welcome_mls_types)?;
+        let welcome_value = match welcome_spec.content {
+            MlsMessageContent::Welcome(w) => w,
+            _ => {
+                mls_group.clear_pending_commit();
+                return Err(anyhow::anyhow!(
+                    "admit_agent: commit welcome not a Welcome variant"
+                ));
+            }
+        };
+        let group_info = commit_bundle
+            .group_info
+            .ok_or_else(|| anyhow::anyhow!("admit_agent: commit bundle missing group_info"))?;
+        let ratchet_tree = commit_bundle
+            .ratchet_tree
+            .ok_or_else(|| anyhow::anyhow!("admit_agent: commit bundle missing ratchet_tree"))?;
+
+        let group_info_message = convert_mls_types_to_spec(&group_info)?;
+        let ratchet_tree_option: RatchetTreeOption = ratchet_tree
+            .try_into()
+            .map_err(|e| anyhow::anyhow!("admit_agent: ratchet_tree convert: {e:?}"))?;
+
+        let commit_info = MlsCommitInfo {
+            room_id: meeting_link_name.as_str().as_bytes().to_vec(),
+            welcome_message: Some(welcome_value.clone()),
+            commit: convert_mls_types_to_spec(&commit_bundle.commit)?,
+        };
+
+        // Upload while still holding the group lock. On failure, clear the
+        // pending commit so the host stays at epoch N. On success, merge and
+        // release.
+        let upload = self
+            .http_client
+            .update_group_info(
+                &host_sd_kbt,
+                &group_info_message,
+                &ratchet_tree_option,
+                Some(&commit_info),
+                None,
+            )
+            .await;
+
+        match upload {
+            Ok(_) => {
+                mls_group.merge_pending_commit().await?;
+            }
+            Err(e) => {
+                mls_group.clear_pending_commit();
+                return Err(anyhow::anyhow!("update_group_info: {e}"));
+            }
+        }
+
+        drop(mls_group);
+
+        if let Some(handler) = self.mls_group_update_handler.as_ref() {
+            let mut handler = handler.lock().await;
+            handler(room_id.clone(), GroupKeyUpdateReason::Join).await;
+        }
+
+        // push_bundle after the merge — server has already accepted the commit
+        // and other members will process it via fanout, so the group has moved
+        // to N+1 regardless of whether the agent gets its bundle. If
+        // push_bundle fails, the agent's KP will time out and the host can
+        // retry admission; the group state remains consistent.
+        let welcome_bytes = welcome_value
+            .to_tls_bytes()
+            .map_err(|e| anyhow::anyhow!("welcome tls encode: {e:?}"))?;
+        let ratchet_tree_option_bytes = ratchet_tree_option
+            .to_tls_bytes()
+            .map_err(|e| anyhow::anyhow!("ratchet_tree_option tls encode: {e:?}"))?;
+        let host = AgentHostService::new(self.http_client.clone(), self.mls_store.clone());
+        host.push_bundle(
+            &host_sd_kbt,
+            AgentBundleForPush {
+                agent_device_id,
+                psk_id: psk_id_bytes,
+                encrypted_psk,
+                welcome: welcome_bytes,
+                ratchet_tree: ratchet_tree_option_bytes,
+            },
+        )
+        .await
+        .map_err(|e| anyhow::anyhow!("push_bundle: {e}"))?;
+
+        Ok(())
+    }
+
+    /// `GET /v1/agent/keypackages`: list the `mimi_device_id`s of every agent
+    /// whose KeyPackage is currently uploaded for the host's meeting.
+    pub async fn list_pending_agents(
+        &self,
+        user_id: &crate::domain::user::models::UserId,
+    ) -> Result<Vec<String>, anyhow::Error> {
+        let host_sd_kbt = self.get_sd_kbt(user_id).await?;
+        Ok(self
+            .http_client
+            .list_agent_keypackages(&host_sd_kbt)
+            .await?)
+    }
+
+    /// Respond to a server-pushed `AgentLeft` event by removing the agent's
+    /// MLS leaf, rotating the SFrame epoch for forward secrecy.
+    pub async fn remove_agent(
+        &self,
+        meeting_link_name: &crate::domain::user::models::meeting_link_name::MeetingLinkName,
+        user_id: &crate::domain::user::models::UserId,
+        agent_device_id: String,
+    ) -> Result<(), anyhow::Error> {
+        use std::str::FromStr;
+
+        let room_id = meeting_link_name.as_str().to_string();
+        let group_arc = {
+            let store_lock = self.mls_store.read().await;
+            store_lock
+                .group_map
+                .get(&room_id)
+                .ok_or_else(|| anyhow::anyhow!("group not loaded for meeting"))?
+                .clone()
+        };
+
+        let (epoch_at_start, leaf_index, is_admin) = {
+            let mls_group = group_arc.read().await;
+            let epoch_at = *mls_group.epoch();
+            let role = mls_group.own_role_for_current_epoch()?;
+            let is_admin = role.role_index == UserRole::RoomAdmin as u32;
+            let leaf = mls_group.roster().find_map(|m| {
+                let mimi_uri = mimi_sub_from_credential(m.credential()).ok()?;
+                let mimi = MimiSubject::from_str(&mimi_uri).ok()?;
+                (mimi.device_id() == agent_device_id).then(|| m.leaf_index())
+            });
+            (epoch_at, leaf, is_admin)
+        };
+
+        let Some(leaf_index) = leaf_index else {
+            tracing::debug!(
+                "remove_agent: device_id={agent_device_id} not in roster (already removed?), skipping"
+            );
+            return Ok(());
+        };
+
+        let rank = if is_admin {
+            0
+        } else {
+            let (roster, self_leaf_index) = {
+                let mls_group = group_arc.read().await;
+                (
+                    mls_group.roster().collect::<Vec<_>>(),
+                    *mls_group.own_leaf_index()?,
+                )
+            };
+            self.get_deterministic_random_rank(self_leaf_index, epoch_at_start, roster)
+                .await?
+        };
+
+        if let StaggerOutcome::EpochAdvanced =
+            stagger_then_check_epoch(self, &room_id, rank, epoch_at_start, "remove_agent").await
+        {
+            return Ok(());
+        }
+
+        let host_sd_kbt = self.get_sd_kbt(user_id).await?;
+        let mut mls_group = group_arc.write().await;
+
+        let proposal_args = vec![
+            ProposalArg::Remove(leaf_index),
+            ProposalArg::PskExternal {
+                id: ExternalPskId(
+                    crate::service::agent_host_service::agent_psk_id_for_meeting(
+                        meeting_link_name.as_str(),
+                    ),
+                ),
+            },
+        ];
+        let (commit_bundle, _) = mls_group.new_commit(proposal_args).await?;
+
+        let group_info = commit_bundle
+            .group_info
+            .ok_or_else(|| anyhow::anyhow!("remove_agent: commit bundle missing group_info"))?;
+        let ratchet_tree = commit_bundle
+            .ratchet_tree
+            .ok_or_else(|| anyhow::anyhow!("remove_agent: commit bundle missing ratchet_tree"))?;
+
+        let group_info_message = convert_mls_types_to_spec(&group_info)?;
+        let ratchet_tree_option = ratchet_tree
+            .try_into()
+            .map_err(|e| anyhow::anyhow!("remove_agent: ratchet_tree convert: {e}"))?;
+        let welcome = commit_bundle.welcome.map(TryInto::try_into).transpose()?;
+        let commit_info = MlsCommitInfo {
+            room_id: meeting_link_name.as_str().as_bytes().to_vec(),
+            welcome_message: welcome,
+            commit: convert_mls_types_to_spec(&commit_bundle.commit)?,
+        };
+
+        let upload = self
+            .http_client
+            .update_group_info(
+                &host_sd_kbt,
+                &group_info_message,
+                &ratchet_tree_option,
+                Some(&commit_info),
+                None,
+            )
+            .await;
+
+        match upload {
+            Ok(_) => {
+                mls_group.merge_pending_commit().await?;
+                drop(mls_group);
+
+                if let Some(handler) = self.mls_group_update_handler.as_ref() {
+                    let mut handler = handler.lock().await;
+                    handler(room_id, GroupKeyUpdateReason::Leave).await;
+                }
+                Ok(())
+            }
+            Err(e) => {
+                mls_group.clear_pending_commit();
+                Err(anyhow::anyhow!("remove_agent update_group_info: {e}"))
+            }
+        }
     }
 }
 

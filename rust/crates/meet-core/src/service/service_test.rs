@@ -7905,6 +7905,143 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let state = service.state.lock().await;
         assert_eq!(state.mls_group_state, MlsGroupState::Pending);
     }
+
+    #[tokio::test]
+    async fn agent_admit_full_handshake_derives_same_meet_key() {
+        use crate::service::agent_host_service::{agent_psk_id_for_meeting, AgentHostService};
+        use identity::Disclosure;
+        use meet_identifiers::Domain;
+        use mls_trait::{MlsClientTrait, MlsGroupTrait, ProposalArg};
+        use mls_types::{
+            CipherSuite, ExternalPsk, ExternalPskId, HpkeKeyPair, HpkePublicKey, HpkeSecretKey,
+        };
+        use proton_claims::reexports::cose_key_set::CoseKeySet;
+        use proton_meet_mls::{MlsClient, MlsClientConfig, MlsGroupConfig};
+
+        async fn build_client(email: &str) -> MlsClient<MemKv, mls_trait::Initialized> {
+            let kv = MemKv::new();
+            let (client, _) = MlsClient::new(kv, MlsClientConfig::default())
+                .await
+                .unwrap();
+            let domain = Domain::new_random();
+            let cnf = client.get_holder_confirmation_key_pem().unwrap();
+            let (sd_cwt, issuer_sk) =
+                mock_sdcwt_issuance(&cnf, &domain, email, proton_claims::Role::User, false)
+                    .unwrap();
+            let cks = CoseKeySet::new(&issuer_sk).unwrap();
+            client.initialize(MemKv::new(), sd_cwt, &cks, &cks).unwrap()
+        }
+
+        let host_client = build_client("host@proton.me").await;
+        let agent_client = build_client("stt-agent-7d8f0c@proton.me").await;
+
+        let host_user_id = host_client.clone().sd_cwt_mut().unwrap().user_id().unwrap();
+
+        let meeting_link_name = "TESTLINK00";
+        let expected_agent_psk_id = agent_psk_id_for_meeting(meeting_link_name);
+        let group_id = meet_identifiers::GroupId::new(&host_user_id.domain);
+        let mut host_group = host_client
+            .new_group(
+                &group_id,
+                Disclosure::Full,
+                MlsGroupConfig::default(host_user_id.clone(), true),
+            )
+            .await
+            .unwrap()
+            .store()
+            .await
+            .unwrap();
+
+        let (_, _) = host_group.new_commit(vec![]).await.unwrap();
+        host_group.merge_pending_commit().await.unwrap();
+
+        let (mut agent_kps, _) = agent_client
+            .new_key_packages(1, Disclosure::Full)
+            .await
+            .unwrap();
+        let agent_kp = agent_kps.pop().unwrap();
+        let agent_kp_ref = agent_kp.kp_ref().unwrap();
+        let agent_hpke_init_key: Vec<u8> = agent_kp.leaf_node.public_key.as_ref().to_vec();
+
+        let psk = [0x42u8; 32];
+        let cs = CipherSuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519;
+        let sealed = AgentHostService::seal_psk_for_agent(&agent_hpke_init_key, &psk, cs)
+            .await
+            .unwrap();
+
+        host_client
+            .insert_external_psk(
+                ExternalPskId(expected_agent_psk_id.clone()),
+                ExternalPsk(psk.to_vec()),
+            )
+            .await
+            .unwrap();
+        let (bundle, _) = host_group
+            .new_commit(vec![
+                ProposalArg::PskExternal {
+                    id: ExternalPskId(expected_agent_psk_id.clone()),
+                },
+                ProposalArg::Add(Box::new(agent_kp.clone())),
+            ])
+            .await
+            .unwrap();
+        host_group.merge_pending_commit().await.unwrap();
+
+        let welcome = bundle.welcome.expect("commit must produce a welcome");
+        let ratchet_tree = bundle
+            .ratchet_tree
+            .expect("commit must produce a ratchet tree");
+
+        let entities = agent_client.all_key_package_entities().await.unwrap();
+        let entity = entities
+            .into_iter()
+            .find(|e| e.kp_ref().ok().as_ref() == Some(&agent_kp_ref))
+            .expect("agent KP must be in KV");
+        let hpke_kp = HpkeKeyPair {
+            hpke_public_key: HpkePublicKey::from(agent_kp.leaf_node.public_key.clone()),
+            hpke_secret_key: HpkeSecretKey::from(entity.value.leaf_node_key.clone()),
+        };
+        let psk_open = agent_client
+            .hpke_decrypt(&sealed, hpke_kp, "agent-psk", b"")
+            .await
+            .unwrap();
+        assert_eq!(
+            psk_open.as_slice(),
+            psk.as_slice(),
+            "host-sealed PSK must round-trip through HPKE intact"
+        );
+
+        agent_client
+            .insert_external_psk(
+                ExternalPskId(expected_agent_psk_id.clone()),
+                ExternalPsk(psk_open.to_vec()),
+            )
+            .await
+            .unwrap();
+        let (agent_group, _received) = agent_client
+            .join_group(welcome, ratchet_tree)
+            .await
+            .unwrap();
+        let agent_group = agent_group.store().await.unwrap();
+
+        assert_eq!(
+            host_group.epoch(),
+            agent_group.epoch(),
+            "host and agent must agree on the joined epoch"
+        );
+        let host_key = host_group.export_secret("meet-key", b"", 32).await.unwrap();
+        let agent_key = agent_group
+            .export_secret("meet-key", b"", 32)
+            .await
+            .unwrap();
+        let host_key_bytes: &[u8] = host_key.as_ref();
+        let agent_key_bytes: &[u8] = agent_key.as_ref();
+        assert_eq!(
+            host_key_bytes, agent_key_bytes,
+            "host and agent must export the same meet-key — this is what \
+             gates the agent decrypting the SFrame'd meeting audio"
+        );
+    }
 }
 
 #[cfg(test)]

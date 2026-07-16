@@ -31,6 +31,7 @@ use tracing::error;
 #[cfg(target_family = "wasm")]
 use {wasm_bindgen::prelude::wasm_bindgen, wasm_bindgen::JsValue};
 
+mod agent;
 mod auth;
 mod chat;
 #[cfg(not(target_arch = "wasm32"))]
@@ -566,6 +567,28 @@ impl App {
             .write()
             .await
             .set_livekit_admin_change_handler(callback);
+    }
+
+    pub async fn set_agent_pending_handler<F, Fut>(&self, callback: F)
+    where
+        F: Fn(String) -> Fut + Send + 'static,
+        Fut: Future<Output = ()> + Unpin + Send + 'static,
+    {
+        self.user_service
+            .write()
+            .await
+            .set_agent_pending_handler(callback);
+    }
+
+    pub async fn set_agent_left_handler<F, Fut>(&self, callback: F)
+    where
+        F: Fn(String) -> Fut + Send + 'static,
+        Fut: Future<Output = ()> + Unpin + Send + 'static,
+    {
+        self.user_service
+            .write()
+            .await
+            .set_agent_left_handler(callback);
     }
 }
 

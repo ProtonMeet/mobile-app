@@ -18,7 +18,7 @@ use crate::domain::user::models::meet_link_info::{
 use crate::domain::user::models::meeting::{Meeting, MeetingInfo};
 use crate::domain::user::models::participant_track_settings::ParticipantTrackSettings;
 use crate::domain::user::models::user_settings::UserSettings;
-use crate::domain::user::ports::HttpClient;
+use crate::domain::user::ports::{AgentKeyPackage, HttpClient};
 use crate::errors::http_client::HttpClientError;
 use crate::infra::dto::access_token::{
     AccessTokenRequest, AccessTokenResponse, GetSdCwtRequest, GetSdCwtResponse,
@@ -91,7 +91,7 @@ pub struct ProxyConfig {
 pub struct ProtonHttpClient {
     client: Arc<Mutex<MeetClient>>,
     session: Arc<Mutex<MeetSession>>,
-    http_host: String,
+    pub http_host: String,
     mls_session: reqwest::Client,
     #[cfg_attr(target_arch = "wasm32", allow(dead_code))]
     app_version: String,
@@ -877,6 +877,117 @@ impl HttpClient for ProtonHttpClient {
         Ok(response.token)
     }
 
+    async fn post_agent_bundle(
+        &self,
+        base64_sd_kbt: &str,
+        agent_device_id: &str,
+        psk_id: &[u8],
+        encrypted_psk: &[u8],
+        welcome: &[u8],
+        ratchet_tree: &[u8],
+    ) -> Result<(), HttpClientError> {
+        use base64::engine::general_purpose::STANDARD as B64;
+        use base64::Engine as _;
+
+        let url = self.build_http_url("v1/agent/bundle")?;
+
+        #[derive(Debug, Serialize)]
+        #[serde(rename_all = "PascalCase")]
+        struct PushAgentBundleRequest<'a> {
+            agent_device_id: &'a str,
+            psk_id: String,
+            encrypted_psk: String,
+            welcome: String,
+            ratchet_tree: String,
+        }
+
+        let body = PushAgentBundleRequest {
+            agent_device_id,
+            psk_id: B64.encode(psk_id),
+            encrypted_psk: B64.encode(encrypted_psk),
+            welcome: B64.encode(welcome),
+            ratchet_tree: B64.encode(ratchet_tree),
+        };
+
+        self.mls_session
+            .post(url)
+            .bearer_auth(base64_sd_kbt)
+            .json(&body)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<ApiResponse<serde::de::IgnoredAny>>()
+            .await?
+            .into_ok()
+    }
+
+    async fn fetch_agent_keypackage(
+        &self,
+        base64_sd_kbt: &str,
+        agent_device_id: &str,
+    ) -> Result<AgentKeyPackage, HttpClientError> {
+        use base64::engine::general_purpose::STANDARD as B64;
+        use base64::Engine as _;
+
+        let mut url = self.build_http_url("v1/agent/keypackage")?;
+        url.query_pairs_mut()
+            .append_pair("agent_device_id", agent_device_id);
+
+        #[derive(Deserialize)]
+        #[serde(rename_all = "PascalCase")]
+        struct KpResp {
+            key_package: String,
+            hpke_public_key: String,
+        }
+
+        let resp: KpResp = self
+            .mls_session
+            .get(url)
+            .bearer_auth(base64_sd_kbt)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<ApiResponse<KpResp>>()
+            .await?
+            .into_data()?;
+
+        let decode = |field: &str, value: &str| {
+            B64.decode(value)
+                .map_err(|e| HttpClientError::MlsHttpError {
+                    message: format!("agent keypackage: decode {field}: {e}"),
+                })
+        };
+        Ok(AgentKeyPackage {
+            key_package: decode("KeyPackage", &resp.key_package)?,
+            hpke_public_key: decode("HpkePublicKey", &resp.hpke_public_key)?,
+        })
+    }
+
+    async fn list_agent_keypackages(
+        &self,
+        base64_sd_kbt: &str,
+    ) -> Result<Vec<String>, HttpClientError> {
+        let url = self.build_http_url("v1/agent/keypackages")?;
+
+        #[derive(Deserialize)]
+        #[serde(rename_all = "PascalCase")]
+        struct ListResp {
+            device_ids: Vec<String>,
+        }
+
+        let resp: ListResp = self
+            .mls_session
+            .get(url)
+            .bearer_auth(base64_sd_kbt)
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<ApiResponse<ListResp>>()
+            .await?
+            .into_data()?;
+        Ok(resp.device_ids)
+    }
+
     async fn fetch_external_sender(&self) -> Result<Vec<u8>, HttpClientError> {
         if let Some(cached) = self.external_sender_cache.read().await.as_ref() {
             return Ok(cached.clone());
@@ -975,6 +1086,30 @@ pub struct ApiResponse<T> {
     pub success: bool,
     pub data: Option<T>,
     pub error: Option<String>,
+}
+
+impl<T> ApiResponse<T> {
+    /// Unwrap the `{ success, data, error }` envelope into `data`, mapping a
+    /// `success: false` or missing-`data` response to an `MlsHttpError`.
+    fn into_data(self) -> Result<T, HttpClientError> {
+        if !self.success {
+            return Err(HttpClientError::MlsHttpError {
+                message: self.error.unwrap_or_else(|| "request failed".to_string()),
+            });
+        }
+        self.data.ok_or_else(|| HttpClientError::MlsHttpError {
+            message: "response missing data".to_string(),
+        })
+    }
+
+    fn into_ok(self) -> Result<(), HttpClientError> {
+        if !self.success {
+            return Err(HttpClientError::MlsHttpError {
+                message: self.error.unwrap_or_else(|| "request failed".to_string()),
+            });
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -1182,5 +1317,34 @@ mod tests {
                 "prod TLS config should use CertPinningVerifier, got: {debug_str}"
             );
         }
+    }
+
+    #[test]
+    fn api_response_into_ok_accepts_success_true() {
+        let json = r#"{"success":true}"#;
+        let resp: ApiResponse<serde::de::IgnoredAny> = serde_json::from_str(json).unwrap();
+        assert!(resp.into_ok().is_ok());
+    }
+
+    #[test]
+    fn api_response_into_ok_rejects_success_false_with_server_error_message() {
+        let json = r#"{"success":false,"error":"agent device unknown"}"#;
+        let resp: ApiResponse<serde::de::IgnoredAny> = serde_json::from_str(json).unwrap();
+        match resp.into_ok() {
+            Err(HttpClientError::MlsHttpError { message }) => {
+                assert_eq!(message, "agent device unknown");
+            }
+            other => panic!("expected MlsHttpError with server message, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn api_response_into_ok_rejects_success_false_with_no_error_field() {
+        let json = r#"{"success":false}"#;
+        let resp: ApiResponse<serde::de::IgnoredAny> = serde_json::from_str(json).unwrap();
+        assert!(matches!(
+            resp.into_ok(),
+            Err(HttpClientError::MlsHttpError { .. })
+        ));
     }
 }

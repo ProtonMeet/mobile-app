@@ -41,6 +41,7 @@ mls-spec.workspace = true
 tls_codec = "0.4.2"
 mls-types.workspace = true
 mls-rs-codec.workspace = true
+mls-rs-core.workspace = true
 mls-trait.workspace = true
 mls-rs-crypto-rustcrypto.workspace = true
 url = "2.5.4"
@@ -51,6 +52,7 @@ zstd = "0.13"
 ed25519-dalek = { version = "2.1", features = ["pem", "pkcs8", "rand_core"] }
 sha2 = { workspace = true }
 argon2 = "0.5"
+hkdf = "0.12"
 zeroize = "1.8"
 esdicawt.workspace = true
 mls-rs.workspace = true

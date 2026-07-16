@@ -1,5 +1,6 @@
 use crate::domain::user::ports::CryptoClient;
 use argon2::{Algorithm, Argon2, Params, Version};
+use hkdf::Hkdf;
 use proton_meet_common::models::ProtonUserKey;
 use proton_meet_crypto::{
     key::Key as CryptoKey, CryptoError, MeetCrypto, SRPProof, SRPVerifier, SessionKeyAlgorithm,
@@ -27,6 +28,22 @@ pub(crate) fn derive_external_psk(
         .hash_password_into(meeting_password.as_bytes(), &salt_hash[..16], &mut output)
         .map_err(|e| anyhow::anyhow!("failed to derive external PSK with Argon2: {e}"))?;
 
+    Ok(mls_types::ExternalPsk(output.to_vec()))
+}
+
+/// Derive the "agent PSK" from the meeting-password PSK via HKDF-SHA256-Expand.
+/// Used as the value registered under `agent-psk-id.{link}`.
+///
+/// Input is the 32-byte Argon2id output of [`derive_external_psk`], it's
+/// already pseudo-random and suitable as an HKDF PRK, so we skip Extract.
+pub(crate) fn derive_agent_external_psk(
+    meeting_psk: &mls_types::ExternalPsk,
+) -> Result<mls_types::ExternalPsk, anyhow::Error> {
+    let hk = Hkdf::<Sha256>::from_prk(&meeting_psk.0)
+        .map_err(|e| anyhow::anyhow!("HKDF::from_prk (agent psk): {e}"))?;
+    let mut output = [0_u8; MLS_EXTERNAL_PSK_OUTPUT_LEN];
+    hk.expand(b"meet:agent-psk", &mut output)
+        .map_err(|e| anyhow::anyhow!("HKDF expand (agent psk): {e}"))?;
     Ok(mls_types::ExternalPsk(output.to_vec()))
 }
 

@@ -14,6 +14,13 @@ use crate::infra::dto::realtime::{
 use mls_spec::{drafts::ratchet_tree_options::RatchetTreeOption, messages::MlsMessage};
 use proton_meet_macro::async_trait_with_mock;
 
+/// An agent's uploaded KeyPackage, decoded to raw bytes by the HTTP impl.
+#[derive(Debug, Clone)]
+pub struct AgentKeyPackage {
+    pub key_package: Vec<u8>,
+    pub hpke_public_key: Vec<u8>,
+}
+
 #[async_trait_with_mock]
 pub trait HttpClient: Send + Sync {
     fn get_session(&self) -> crate::infra::muon::MeetSession;
@@ -139,6 +146,33 @@ pub trait HttpClient: Send + Sync {
     async fn ping(&self) -> Result<u64, HttpClientError>;
 
     async fn fetch_external_sender(&self) -> Result<Vec<u8>, HttpClientError>;
+
+    /// `POST /v1/agent/bundle`: Host pushes the HPKE-sealed PSK + Welcome + ratchet tree
+    /// to the meet-server this client is configured to talk to.
+    async fn post_agent_bundle(
+        &self,
+        base64_sd_kbt: &str,
+        agent_device_id: &str,
+        psk_id: &[u8],
+        encrypted_psk: &[u8],
+        welcome: &[u8],
+        ratchet_tree: &[u8],
+    ) -> Result<(), HttpClientError>;
+
+    /// `GET /v1/agent/keypackage?agent_device_id=...`: Fetch the agent's
+    /// uploaded KeyPackage + HPKE init key, decoded to raw bytes.
+    async fn fetch_agent_keypackage(
+        &self,
+        base64_sd_kbt: &str,
+        agent_device_id: &str,
+    ) -> Result<AgentKeyPackage, HttpClientError>;
+
+    /// `GET /v1/agent/keypackages`: List the device ids of every agent whose
+    /// KeyPackage is currently uploaded for the caller's meeting.
+    async fn list_agent_keypackages(
+        &self,
+        base64_sd_kbt: &str,
+    ) -> Result<Vec<String>, HttpClientError>;
 }
 
 #[cfg(test)]

@@ -108,6 +108,7 @@ fn build_ws_auth_cookie(url: &Url, base64_sd_kbt: &str, expires: Option<&str>) -
         cookie.push_str(&format!("; Domain={domain}"));
     }
 
+    #[cfg(not(feature = "insecure-tls"))]
     if url.scheme() == "wss" {
         cookie.push_str("; Secure");
     }
@@ -504,7 +505,21 @@ impl WebSocketClient for WsClient {
     async fn connect(&self, base64_sd_kbt: &str) -> Result<(), anyhow::Error> {
         let _connect_guard = self.connect_lock.lock().await;
 
-        #[cfg(target_family = "wasm")]
+        #[cfg(all(target_family = "wasm", feature = "insecure-tls"))]
+        {
+            let mut url = self.build_ws_url("v1/ws")?;
+            url.query_pairs_mut().append_pair("token", base64_sd_kbt);
+            {
+                let mut state = self.connection_state.lock().await;
+                state.connection_state = ConnectionState::Connecting;
+            }
+            let ws_stream = tokio_tungstenite_wasm::connect(url.as_str()).await?;
+            let (write, read) = ws_stream.split();
+            *self.ws_sender.lock().await = Some(write.into());
+            *self.ws_receiver.lock().await = Some(read.into());
+        }
+
+        #[cfg(all(target_family = "wasm", not(feature = "insecure-tls")))]
         {
             let url = self.build_ws_url("v1/ws")?;
             let use_worker_cookie_bridge = self.worker_cookie_bridge_enabled();
@@ -568,6 +583,18 @@ impl WebSocketClient for WsClient {
             use tokio_tungstenite_wasm::Connector;
 
             let url = self.build_ws_url("v1/ws")?;
+            #[cfg(feature = "insecure-tls")]
+            let ws_stream = {
+                let cfg = crate::utils::reqwest::dev_rustls_client_config();
+                let connector = Connector::Rustls(Arc::new(cfg));
+                tokio_tungstenite_wasm::connect_with_tls_auth(
+                    url.as_str(),
+                    base64_sd_kbt,
+                    Some(connector),
+                )
+                .await?
+            };
+            #[cfg(not(feature = "insecure-tls"))]
             let ws_stream = if self.enable_prod_tls_pinning {
                 let tls_config: Arc<ClientConfig> = Arc::new(build_prod_tls_config()?);
                 let connector = Connector::Rustls(tls_config);
@@ -1378,6 +1405,7 @@ mod tests {
         assert!(!client.worker_cookie_bridge_enabled());
     }
 
+    #[cfg(not(feature = "insecure-tls"))]
     #[test]
     fn build_ws_auth_cookie_uses_expected_attributes_for_wss_endpoint() {
         let url = Url::parse("wss://meet.proton.me/meet/api/v1/ws").expect("valid ws url");
@@ -1395,6 +1423,7 @@ mod tests {
         assert!(cookie.contains("; Path=/"));
     }
 
+    #[cfg(not(feature = "insecure-tls"))]
     #[test]
     fn build_ws_clear_cookie_preserves_scope_and_epoch_expiry() {
         let url = Url::parse("wss://meet.proton.me/meet/api/v1/ws").expect("valid ws url");
