@@ -3432,7 +3432,7 @@ dependencies = [
 [[package]]
 name = "meet-identifiers"
 version = "0.1.0"
-source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#7079f0decc5779997cf1179d23a4ded1669cac8d"
+source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#508ae2be6a74a3d1b7cbdb5439a70dfe58246e76"
 dependencies = [
  "base64",
  "email_address",
@@ -3454,7 +3454,7 @@ dependencies = [
 [[package]]
 name = "meet-mls"
 version = "0.1.0"
-source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#7079f0decc5779997cf1179d23a4ded1669cac8d"
+source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#508ae2be6a74a3d1b7cbdb5439a70dfe58246e76"
 dependencies = [
  "meet-identifiers",
  "meet-policy",
@@ -3470,7 +3470,7 @@ dependencies = [
 [[package]]
 name = "meet-policy"
 version = "0.1.0"
-source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#7079f0decc5779997cf1179d23a4ded1669cac8d"
+source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#508ae2be6a74a3d1b7cbdb5439a70dfe58246e76"
 dependencies = [
  "fwd-comp",
  "meet-identifiers",
@@ -3864,7 +3864,7 @@ dependencies = [
 [[package]]
 name = "mls-utils"
 version = "0.1.0"
-source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#7079f0decc5779997cf1179d23a4ded1669cac8d"
+source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#508ae2be6a74a3d1b7cbdb5439a70dfe58246e76"
 dependencies = [
  "base64",
  "bs58",
@@ -4645,7 +4645,7 @@ dependencies = [
 [[package]]
 name = "proton-claims"
 version = "0.1.0"
-source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#7079f0decc5779997cf1179d23a4ded1669cac8d"
+source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#508ae2be6a74a3d1b7cbdb5439a70dfe58246e76"
 dependencies = [
  "derive_builder",
  "digest 0.10.7",
