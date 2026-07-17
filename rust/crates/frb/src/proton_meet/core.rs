@@ -686,7 +686,15 @@ impl AppCore {
                     is_waiting_room,
                 )
                 .await?;
-            tracing::info!("Successfully joined meeting with GroupInfo-based join switching");
+            meet_info.participants_count = self
+                .inner
+                .get_participants_count(meet_link_name.clone())
+                .await
+                .unwrap_or(0);
+            tracing::info!(
+                "Successfully joined meeting with GroupInfo-based join switching, participant_count={}",
+                meet_info.participants_count
+            );
             return Ok(meet_info.into());
         }
 
