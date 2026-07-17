@@ -19,6 +19,7 @@ import 'proton_meet/desktop_web_login.dart';
 import 'proton_meet/meet_auth_store.dart';
 import 'proton_meet/meet_link.dart';
 import 'proton_meet/models/app_event.dart';
+import 'proton_meet/models/chat_event.dart';
 import 'proton_meet/models/connection_state.dart';
 import 'proton_meet/models/desktop_web_login.dart';
 import 'proton_meet/models/event.dart';
@@ -329,6 +330,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   FlutterLogLayer dco_decode_flutter_log_layer(dynamic raw);
+
+  @protected
+  FrbChatComposeResult dco_decode_frb_chat_compose_result(dynamic raw);
+
+  @protected
+  FrbChatEventKind dco_decode_frb_chat_event_kind(dynamic raw);
+
+  @protected
+  FrbChatIncomingEvent dco_decode_frb_chat_incoming_event(dynamic raw);
+
+  @protected
+  FrbChatProtocol dco_decode_frb_chat_protocol(dynamic raw);
 
   @protected
   FrbEventItem dco_decode_frb_event_item(dynamic raw);
@@ -756,6 +769,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   FlutterLogLayer sse_decode_flutter_log_layer(SseDeserializer deserializer);
+
+  @protected
+  FrbChatComposeResult sse_decode_frb_chat_compose_result(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  FrbChatEventKind sse_decode_frb_chat_event_kind(SseDeserializer deserializer);
+
+  @protected
+  FrbChatIncomingEvent sse_decode_frb_chat_incoming_event(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  FrbChatProtocol sse_decode_frb_chat_protocol(SseDeserializer deserializer);
 
   @protected
   FrbEventItem sse_decode_frb_event_item(SseDeserializer deserializer);
@@ -1324,6 +1353,30 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_flutter_log_layer(
     FlutterLogLayer self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_frb_chat_compose_result(
+    FrbChatComposeResult self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_frb_chat_event_kind(
+    FrbChatEventKind self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_frb_chat_incoming_event(
+    FrbChatIncomingEvent self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_frb_chat_protocol(
+    FrbChatProtocol self,
     SseSerializer serializer,
   );
 

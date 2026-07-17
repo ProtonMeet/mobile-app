@@ -156,6 +156,7 @@ dependencies:
   in_app_update: ^4.2.5
   # showcaseview for feature onboarding
   showcaseview: ^5.0.2
+  emoji_picker_flutter: ^4.4.0
 
 dev_dependencies:
   flutter_test:

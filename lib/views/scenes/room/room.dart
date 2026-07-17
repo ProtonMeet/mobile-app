@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_webrtc/flutter_webrtc.dart' show DesktopCapturerSource;
 import 'package:just_the_tooltip/just_the_tooltip.dart';
 import 'package:livekit_client/livekit_client.dart' hide ConnectionState;
@@ -39,6 +38,7 @@ import 'package:meet/managers/user_activity.manager.dart';
 import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/platform/html.window.dart';
 import 'package:meet/rust/errors.dart';
+import 'package:meet/rust/proton_meet/models/chat_event.dart';
 import 'package:meet/rust/proton_meet/models/meet_info.dart';
 import 'package:meet/rust/proton_meet/models/meeting_info.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
@@ -58,6 +58,8 @@ import 'package:meet/views/scenes/feedbacks/left_meeting_feedback_sheet.dart';
 import 'package:meet/views/scenes/feedbacks/pre_rating_sheet.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
 import 'package:meet/views/scenes/room/chat/chat_bubble.dart';
+import 'package:meet/views/scenes/room/chat/chat_controller.dart';
+import 'package:meet/views/scenes/room/chat/chat_models.dart';
 import 'package:meet/views/scenes/room/controls_bar/controls_bar_responsive.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 import 'package:meet/views/scenes/room/layout/fixed_sizing_camera_layout.dart';
@@ -159,7 +161,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   final CameraLayout _layout = CameraLayout.grid;
   final bool _showRotationButton = false;
 
-  DateTime _lastOpenChatTime = DateTime.now();
   int _screenSharingIndex = 0;
   bool _isCameraView = false;
   bool _cameraWasEnabledBeforePause = false;
@@ -175,6 +176,15 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   /// LiveKit transport reconnects during this meeting (for store-review quality).
   bool _hadLiveKitTransportIssuesThisMeeting = false;
   final Map<String, ParticipantReaction> _activeReactions = {};
+
+  /// Single source of truth for the chat panel (messages, threads, reactions).
+  /// Bloc only emits ephemeral [RoomChatEffect]s; this controller owns durable state.
+  final ChatController _chatController = ChatController(localIdentity: '');
+
+  bool get _newChatEnabled => ManagerFactory()
+      .get<DataProviderManager>()
+      .unleashDataProvider
+      .isMeetNewChatHandling();
 
   /// Recording-status envelopes received before [RoomState.isRoomInitialized]
   /// flipped true. We can't validate them yet because the participant map (and
@@ -333,6 +343,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   @override
   void dispose() {
     _activeReactions.clear();
+    _chatController.dispose();
 
     WidgetsBinding.instance.removeObserver(this);
     // Restore normal unknown-route behavior after leaving the meeting.
@@ -694,6 +705,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           'Room disconnected: reason => ${event.reason}',
           'system',
           'System',
+          logLevel: Level.info,
         ),
       );
       // To-do: check if we really need addPostFrameCallback here
@@ -755,6 +767,16 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       }
     })
     ..on<DataReceivedEvent>((event) async {
+      // MimiV1 chat payloads are raw MLS binary (not JSON envelopes). Route
+      // them through the new decode path when the feature flag is enabled.
+      if (_newChatEnabled && !_isJsonEnvelope(event.data)) {
+        try {
+          await _handleMimiChat(event);
+        } catch (e) {
+          l.logger.w('[RoomPage] _handleMimiChat failed: $e');
+        }
+        return;
+      }
       try {
         handleChatMessage(event);
       } catch (e) {
@@ -1064,9 +1086,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     String identity,
     String name,
   ) async {
-    // To-do: implement chat message reaction UI
+    // Legacy reaction protocol (no event ids / unreact). Only meaningful when
+    // the MimiV1 chat path is disabled; otherwise reactions flow through
+    // [_handleMimiChat]. Left as a best-effort no-op for legacy peers.
     l.logger.d(
-      '[RoomPage] _handleChatMessageReaction: identity=$identity, name=$name',
+      '[RoomPage] legacy _handleChatMessageReaction: identity=$identity, name=$name',
     );
   }
 
@@ -1107,23 +1131,283 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
+  /// Mirrors pending [RoomState] chat outputs into [ChatController], then clears
+  /// the bloc buffers so they do not accumulate across the meeting.
+  void _syncChatFromBloc(RoomState state) {
+    for (final notice in state.chatSystemNotices) {
+      _chatController.addSystemMessage(
+        id: notice.id,
+        message: notice.message,
+        identity: notice.identity,
+        name: notice.name,
+        timestamp: notice.timestamp,
+        joinLeaveKind: notice.joinLeaveKind,
+        joinLeaveMeetingName: notice.meetingName,
+      );
+    }
+
+    for (final effect in state.chatEffects) {
+      _applyChatEffect(effect);
+    }
+
+    if (state.chatSystemNotices.isNotEmpty || state.chatEffects.isNotEmpty) {
+      _bloc.add(const ChatBlocOutputsConsumed());
+    }
+  }
+
+  void _applyChatEffect(RoomChatEffect effect) {
+    switch (effect.kind) {
+      case RoomChatEffectKind.addReaction:
+        _chatController.addReaction(
+          reactionId: effect.reactionId!,
+          messageId: effect.messageId!,
+          emoji: effect.emoji!,
+          identity: effect.identity!,
+        );
+        return;
+      case RoomChatEffectKind.removeReaction:
+        _chatController.removeReaction(
+          replacesId: effect.replacesId!,
+          identity: effect.identity!,
+        );
+        return;
+      case RoomChatEffectKind.localEcho:
+        final msg = effect.messagePayload!;
+        _chatController.addLocalEcho(msg);
+        return;
+      case RoomChatEffectKind.updateMessageStatus:
+        _chatController.updateStatus(effect.messageId!, effect.status!);
+        return;
+      case RoomChatEffectKind.removeMessage:
+        _chatController.removeMessage(effect.messageId!);
+        return;
+      case RoomChatEffectKind.receiveMessage:
+        final msg = effect.messagePayload!;
+        _chatController.receiveMessage(msg);
+        if (effect.showToast &&
+            mounted &&
+            context.mounted &&
+            !_showChatBubble) {
+          final localId = _bloc.state.room.localParticipant?.identity ?? '';
+          if (!isRelevantThreadMessage(
+            msg,
+            _chatController.messages,
+            localId,
+          )) {
+            return;
+          }
+          LocalToast.showToastification(
+            context,
+            msg.name,
+            msg.message,
+            onTap: (_) {
+              setState(() {
+                _showChatBubble = true;
+                _showParticipantList = false;
+              });
+            },
+          );
+        }
+        return;
+    }
+  }
+
+  /// Sends a chat message. When [replyToId]/[topicId] are set it is a thread
+  /// reply. Uses the MimiV1 compose path when the feature flag is enabled,
+  /// otherwise falls back to the legacy broadcast (no threads).
+  Future<void> sendChatMessage(
+    String text, {
+    String? replyToId,
+    String? topicId,
+  }) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+
+    if (!_newChatEnabled) {
+      await broadcastE2EEMessage(trimmed);
+      return;
+    }
+
+    _bloc.add(
+      SendChatMessage(
+        text: trimmed,
+        replyToId: replyToId,
+        topicId: topicId,
+        localDisplayName: widget.displayName,
+      ),
+    );
+  }
+
+  /// Toggles an emoji reaction (MimiV1) on [messageId].
+  Future<void> toggleChatReaction(String messageId, String emoji) async {
+    if (!_newChatEnabled) return;
+    _bloc.add(
+      ToggleChatReaction(
+        messageId: messageId,
+        emoji: emoji,
+        existingReactionId: _chatController.findLocalReactionId(
+          messageId,
+          emoji,
+        ),
+      ),
+    );
+  }
+
+  /// Retries a failed outgoing message, preserving thread metadata.
+  void _retryChatMessage(RoomChatMessage message) {
+    _bloc.add(RemoveChatMessage(message.id));
+    unawaited(
+      sendChatMessage(
+        message.message,
+        replyToId: message.inReplyToId,
+        topicId: message.topicId,
+      ),
+    );
+  }
+
+  /// Decodes an incoming MimiV1 payload with retry ([0, 2s, 5s]) — MLS may not
+  /// be ready yet, so we must not silently drop.
+  Future<FrbChatIncomingEvent?> _decodeChatWithRetry(List<int> data) async {
+    const delaysMs = [0, 2000, 5000];
+    for (final delay in delaysMs) {
+      if (delay > 0) {
+        await Future<void>.delayed(Duration(milliseconds: delay));
+      }
+      try {
+        return await appCoreManager.appCore.decodeChat(data: data);
+      } catch (e) {
+        l.logger.w('[RoomPage] decodeChat failed (retrying): $e');
+      }
+    }
+    return null;
+  }
+
+  /// True when [data] is a JSON envelope (legacy / control message) rather than
+  /// a raw MimiV1 MLS binary payload.
+  bool _isJsonEnvelope(List<int> data) {
+    try {
+      final decoded = jsonDecode(utf8.decode(data));
+      return decoded is Map;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Handles an incoming MimiV1 chat data-channel payload.
+  Future<void> _handleMimiChat(DataReceivedEvent event) async {
+    final decoded = await _decodeChatWithRetry(event.data);
+    if (decoded == null) return;
+
+    // Identity check: LiveKit identity must equal MLS sender id.
+    final liveKitId = event.participant?.identity;
+    if (liveKitId != null && liveKitId != decoded.senderParticipantId) {
+      l.logger.e(
+        '[RoomPage] MimiV1 sender mismatch: livekit=$liveKitId '
+        'mls=${decoded.senderParticipantId}',
+      );
+      return;
+    }
+
+    final localId = _bloc.state.room.localParticipant?.identity;
+    final fallbackName = event.participant != null
+        ? _bloc.getParticipantDisplayName(event.participant!)
+        : (event.participant?.name ?? context.local.unknown);
+
+    switch (decoded.kind) {
+      case FrbChatEventKind.message:
+        // Ignore our own echo — we already added a local echo optimistically.
+        if (localId != null && decoded.senderParticipantId == localId) return;
+        final displayName = _displayNameForTrustedSender(
+          decoded.senderParticipantId,
+          event,
+          fallbackName,
+        );
+        final incoming = RoomChatMessage(
+          id: decoded.id,
+          message: decoded.text ?? '',
+          timestamp: decoded.receivedAtMs.toInt(),
+          identity: decoded.senderParticipantId,
+          name: displayName,
+          inReplyToId: decoded.inReplyToId,
+          topicId: decoded.topicId,
+        );
+        _bloc.add(
+          ReceiveMimiChatMessage(
+            id: incoming.id,
+            message: incoming.message,
+            timestamp: incoming.timestamp,
+            identity: incoming.identity,
+            name: incoming.name,
+            inReplyToId: incoming.inReplyToId,
+            topicId: incoming.topicId,
+            showToast:
+                mounted &&
+                context.mounted &&
+                !_showChatBubble &&
+                isRelevantThreadMessage(
+                  incoming,
+                  _chatController.messages,
+                  localId ?? '',
+                ),
+          ),
+        );
+        return;
+      case FrbChatEventKind.reaction:
+        if (localId != null && decoded.senderParticipantId == localId) return;
+        _bloc.add(
+          ReceiveMimiChatReaction(
+            reactionId: decoded.id,
+            senderIdentity: decoded.senderParticipantId,
+            replacesId: decoded.replacesId,
+            targetId: decoded.targetId,
+            emoji: decoded.emoji,
+          ),
+        );
+        return;
+      case FrbChatEventKind.unsupported:
+        l.logger.d('[RoomPage] Received unsupported chat event');
+        return;
+    }
+  }
+
   void addMessage(
     String message,
     String identity,
     String name, {
     bool showToast = false,
     String type = 'text',
+    ChatJoinLeaveKind? joinLeaveKind,
+    String? meetingName,
   }) {
-    _bloc.add(
-      AddSystemMessage(
-        message,
-        identity,
-        name,
-        type: type,
-        logLevel: Level.info,
-      ),
-    );
-    if (showToast) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final id = '$identity-${DateTime.now().microsecondsSinceEpoch}';
+
+    if (type == 'system') {
+      _bloc.add(
+        AddSystemMessage(
+          message,
+          identity,
+          name,
+          type: type,
+          logLevel: Level.info,
+          joinLeaveKind: joinLeaveKind,
+          meetingName: meetingName,
+        ),
+      );
+    } else {
+      _bloc.add(
+        ReceiveChatTextMessage(
+          id: id,
+          message: message,
+          timestamp: now,
+          identity: identity,
+          name: name,
+          showToast: showToast,
+        ),
+      );
+    }
+
+    if (showToast && type != 'text') {
       LocalToast.showToastification(
         context,
         name,
@@ -2088,6 +2372,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    // Keep the chat controller's "open" state in sync with the visible panel
+    // (drives seen/unread calculation). No-ops when unchanged.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _chatController.setChatOpen(_showChatBubble);
+    });
     return BlocProvider(
       create: (context) => _bloc,
       child: MultiBlocListener(
@@ -2182,6 +2471,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               }
             },
           ),
+          // Mirror ephemeral bloc chat outputs into ChatController (SSOT).
+          BlocListener<RoomBloc, RoomState>(
+            listenWhen: (prev, curr) =>
+                prev.chatSyncGeneration != curr.chatSyncGeneration,
+            listener: (context, state) => _syncChatFromBloc(state),
+          ),
           // Add chat message for all joined participants
           BlocListener<RoomBloc, RoomState>(
             listenWhen: (prev, curr) =>
@@ -2190,10 +2485,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               final participantDetail = state.joinedParticipants.last;
               final meetingName = widget.meetInfo.meetName;
               addMessage(
-                'Joined $meetingName',
+                '',
                 participantDetail.uuid,
                 participantDetail.name,
                 type: 'system',
+                joinLeaveKind: ChatJoinLeaveKind.joined,
+                meetingName: meetingName,
               );
             },
           ),
@@ -2239,10 +2536,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               // Add system message to chat bubble
               final meetingName = widget.meetInfo.meetName;
               addMessage(
-                'Left $meetingName',
+                '',
                 participantDetail.uuid,
                 participantDetail.name,
                 type: 'system',
+                joinLeaveKind: ChatJoinLeaveKind.left,
+                meetingName: meetingName,
               );
             },
           ),
@@ -2710,15 +3009,23 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         return state;
       },
       builder: (context, state) {
-        final chatUnreadCount = state.messages
-            .where(
-              (message) =>
-                  message is types.TextMessage &&
-                  (message.createdAt ?? 0) >
-                      _lastOpenChatTime.millisecondsSinceEpoch,
-            )
-            .length;
-        return SizedBox(
+        return ListenableBuilder(
+          listenable: _chatController,
+          builder: (context, _) {
+            final chatUnreadCount = _chatController.unreadCount;
+            return _buildControlsBarBody(context, state, chatUnreadCount);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildControlsBarBody(
+    BuildContext context,
+    RoomState state,
+    int chatUnreadCount,
+  ) {
+    return SizedBox(
           width: context.width,
           height: bottomControlHeight,
           child: ResponsiveControlsBar(
@@ -2879,7 +3186,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                       _showChatBubble = !_showChatBubble;
                       // close participant list when show chat bubble on mobile
                       if (_showChatBubble) {
-                        _lastOpenChatTime = DateTime.now();
                         _showParticipantList = false;
                         _showSettings = false;
                       }
@@ -2921,8 +3227,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             },
           ),
         );
-      },
-    );
   }
 
   Widget buildParticipantsCameraWehnScreenSharing(BuildContext context) {
@@ -3217,9 +3521,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       child: buildChatBubbleContent(context),
       onDismissed: () {
         setState(() {
-          _lastOpenChatTime = DateTime.now();
           _showChatBubble = false;
         });
+        _chatController.setChatOpen(false);
       },
     );
   }
@@ -3300,27 +3604,22 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   }
 
   Widget buildChatBubbleContent(BuildContext context) {
-    return BlocSelector<
-      RoomBloc,
-      RoomState,
-      (List<types.Message>, List<ParticipantInfo>, Room)
-    >(
-      selector: (s) => (s.messages, s.participantTracks, s.room),
+    return BlocSelector<RoomBloc, RoomState, (List<ParticipantInfo>, Room)>(
+      selector: (s) => (s.participantTracks, s.room),
       builder: (context, data) {
-        final room = data.$3;
+        final room = data.$2;
+        final localId = room.localParticipant?.identity ?? '';
+        _chatController.updateLocalIdentity(localId);
         return ChatBubble(
-          userIdentity: room.localParticipant?.identity ?? '',
-          userName: room.localParticipant?.name ?? '',
-          onSendPressed: (types.PartialText text) async {
-            try {
-              await broadcastE2EEMessage(text.text);
-              print('Message sent successfully');
-            } catch (e) {
-              print(e);
-            }
-          },
-          messages: data.$1,
-          participantTracks: data.$2,
+          controller: _chatController,
+          userIdentity: localId,
+          userName: widget.displayName,
+          newChatEnabled: _newChatEnabled,
+          onSend: sendChatMessage,
+          onToggleReaction: toggleChatReaction,
+          onRetry: _retryChatMessage,
+          onDiscard: (m) => _bloc.add(RemoveChatMessage(m.id)),
+          participantTracks: data.$1,
         );
       },
     );

@@ -3,10 +3,8 @@ import 'dart:async';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:livekit_client/livekit_client.dart';
-import 'package:logger/logger.dart';
 import 'package:meet/constants/constants.dart';
 import 'package:meet/helper/audio_output_probe.dart';
 import 'package:meet/helper/background_blur/camera_background_blur_sync.dart';
@@ -35,6 +33,7 @@ import 'package:sentry/sentry.dart';
 
 import 'recording/recording_status_handler.dart';
 import 'room_bloc_alone_meeting.dart';
+import 'room_bloc_chat.dart';
 import 'room_bloc_connection_check.dart';
 import 'room_bloc_data.dart';
 import 'room_bloc_debug_logging.dart';
@@ -63,6 +62,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
         RoomEventsBinding,
         RoomParticipantsHandlers,
         RoomWaitingRoomHandlers,
+        RoomChatHandlers,
         RoomTracksHandlers,
         RoomDataHandlers,
         RoomAloneMeetingHandlers,
@@ -81,7 +81,6 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
   StreamSubscription? _audioSessionDevicesSub;
 
   bool _screenShareToggleInFlight = false;
-  static const int _joinLeaveChatSuppressThreshold = 50;
   Timer? _roomHealthSampleTimer;
 
   // Auto fullscreen timer for screenshare
@@ -271,6 +270,10 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
 
     /// register chat handlers
     /// see: room_bloc_chat.dart
+    registerChatHandlers();
+
+    /// register data-channel handlers
+    /// see: room_bloc_data.dart
     registerDataHandlers();
 
     /// register alone meeting handlers
@@ -301,8 +304,6 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     on<ParticipantRecordingStopped>(_onParticipantRecordingStopped);
     registerWaitingRoomHandlers();
 
-    on<AddSystemMessage>(_onAddSystemMessageReceived);
-
     /// register system message handlers
     on<ToggleFullScreen>(_onToggleFullScreen);
     on<ToggleChatBubble>(_onToggleChatBubble);
@@ -330,7 +331,6 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     on<UpdateVideoFPS>(_onUpdateVideoFPS);
     on<UpdateVideoQuality>(_onUpdateVideoQuality);
     on<RoomParticipantUpdated>(_onRoomParticipantUpdated);
-    on<RoomMessageReceived>(_onRoomMessageReceived);
     on<MlsGroupUpdated>(_onMlsGroupUpdated);
     on<BridgeLocalTrackPublished>(_onBridgeLocalTrackPublished);
 
@@ -1398,97 +1398,6 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     Emitter<RoomState> emit,
   ) {
     // emit(state.copyWith(participantTracks: event.tracks));
-  }
-
-  /// Handles receiving a chat message from another participant.
-  ///
-  /// Adds the received message to the message list, associating it with
-  /// the sender's identity and display name.
-  ///
-  /// Parameters:
-  /// - [event]: The room message received event containing message and sender info
-  /// - [emit]: State emitter for updating the room state
-  void _onRoomMessageReceived(
-    RoomMessageReceived event,
-    Emitter<RoomState> emit,
-  ) {
-    final messages = List<types.Message>.from(state.messages);
-    final id = messages.length;
-    final now = DateTime.now();
-    final json = {
-      "author": {"id": event.identity, "firstName": event.name},
-      "id": id.toString(),
-      "type": "text",
-      "text": event.message,
-      "createdAt": now.millisecondsSinceEpoch,
-      "updatedAt": now.millisecondsSinceEpoch,
-    };
-    try {
-      final typeMessage = types.Message.fromJson(json);
-      messages.insert(0, typeMessage);
-      emit(state.copyWith(messages: messages));
-    } catch (e) {
-      l.logger.e('[RoomBloc] Failed to add chat message: $e');
-    }
-  }
-
-  /// Handles receiving a system message.
-  ///
-  /// System messages are automated notifications (e.g., "User X joined the room")
-  /// that are displayed differently from regular chat messages.
-  ///
-  /// Parameters:
-  /// - [event]: The room system message received event containing the message
-  /// - [emit]: State emitter for updating the room state
-  void _onAddSystemMessageReceived(
-    AddSystemMessage event,
-    Emitter<RoomState> emit,
-  ) {
-    final messages = List<types.Message>.from(state.messages);
-    final id = messages.length;
-    final now = DateTime.now();
-    final isJoinLeaveSystemMessage =
-        event.type == 'system' &&
-        (event.message.startsWith('Joined ') ||
-            event.message.startsWith('Left '));
-    final isLargeRoom =
-        state.participantTracks.length >= _joinLeaveChatSuppressThreshold ||
-        state.participantsCount >= _joinLeaveChatSuppressThreshold;
-
-    // In large rooms, suppress join/leave chat bubble spam to avoid memory/CPU growth.
-    // Still log it to the stats logger below.
-    if (isJoinLeaveSystemMessage && isLargeRoom) {
-      // logSystemLogToStatLogger(
-      //   DateTime.now().millisecondsSinceEpoch,
-      //   event.message,
-      // );
-      return;
-    }
-
-    final json = {
-      "author": {"id": event.identity, "firstName": event.name},
-      "id": id.toString(),
-      "type": event.type,
-      "text": event.message,
-      "createdAt": now.millisecondsSinceEpoch,
-      "updatedAt": now.millisecondsSinceEpoch,
-    };
-    // only put messages with log level info to the chat bubble
-    if (event.logLevel == Level.info) {
-      try {
-        final typeMessage = types.Message.fromJson(json);
-        messages.insert(0, typeMessage);
-        emit(state.copyWith(messages: messages));
-      } catch (e) {
-        e.toString();
-      }
-    }
-
-    /// add system message to logger
-    // logSystemLogToStatLogger(
-    //   DateTime.now().millisecondsSinceEpoch,
-    //   event.message,
-    // );
   }
 
   /// Callback invoked when the room state updates.

@@ -1,4 +1,5 @@
 pub mod app_event;
+pub mod chat_event;
 pub mod connection_state;
 pub mod desktop_web_login;
 pub mod event;

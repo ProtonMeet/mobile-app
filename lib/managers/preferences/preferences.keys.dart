@@ -30,6 +30,10 @@ class PreferenceKeys {
   /// Whether the one-time "tap to stop sharing" tooltip has been shown.
   static const String stopSharingTooltipShown =
       "proton_meet_app_k_stop_sharing_tooltip_shown";
+
+  /// Last selected emoji category in the chat emoji picker (`Category.name`).
+  static const String chatEmojiPickerCategory =
+      "proton_meet_app_k_chat_emoji_picker_category";
 }
 
 /// Keys that persist across logout and should only reset on reinstall

@@ -11,6 +11,7 @@ use std::sync::OnceLock;
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::broadcast;
 
+use crate::proton_meet::models::chat_event::FrbChatComposeResult;
 use crate::{
     errors::BridgeError,
     frb_generated::StreamSink,
@@ -38,6 +39,7 @@ use flutter_rust_bridge::{frb, DartFnFuture};
 use proton_meet_app::user_config::user_config::{ConfigStorage, VideoMaxBitrate, VideoResolution};
 use proton_meet_calendar::{IcsEvent, RecurrenceRule};
 use proton_meet_chat::legacy_wire::MeetChatMessage;
+use proton_meet_chat::{ChatComposeRequest, MessageId, ReplyTarget};
 pub use proton_meet_core::errors::core::MeetCoreError;
 use proton_meet_core::{
     app::App,
@@ -1330,6 +1332,73 @@ impl AppCore {
             seen: message.seen,
             message: decrypted_message.clone(),
         })
+    }
+
+    /// Compose a MimiV1 chat message (root message or thread reply).
+    ///
+    /// `reply_to_id` is the id of the message being replied to (usually the
+    /// thread root); `reply_topic_id` is the thread root id. Both must be hex
+    /// message ids. Returns the encrypted `payload` to publish plus a
+    /// `local_echo` for optimistic UI.
+    pub async fn compose_chat_message(
+        &self,
+        text: String,
+        reply_to_id: Option<String>,
+        reply_topic_id: Option<String>,
+    ) -> Result<FrbChatComposeResult, BridgeError> {
+        let reply_to = match reply_to_id {
+            None => None,
+            Some(id) => Some(ReplyTarget {
+                message_id: MessageId::from_hex(&id).map_err(MeetCoreError::from)?,
+                topic_id: reply_topic_id
+                    .map(|t| MessageId::from_hex(&t).map_err(MeetCoreError::from))
+                    .transpose()?,
+            }),
+        };
+        Ok(self
+            .inner
+            .compose_chat(ChatComposeRequest::Message { text, reply_to })
+            .await?
+            .into())
+    }
+
+    /// Compose a MimiV1 emoji reaction on `target_id` (a message id).
+    pub async fn compose_chat_reaction(
+        &self,
+        target_id: String,
+        emoji: String,
+    ) -> Result<FrbChatComposeResult, BridgeError> {
+        let target = MessageId::from_hex(&target_id).map_err(MeetCoreError::from)?;
+        Ok(self
+            .inner
+            .compose_chat(ChatComposeRequest::React { target, emoji })
+            .await?
+            .into())
+    }
+
+    /// Compose a MimiV1 unreact event removing a previous reaction.
+    ///
+    /// `replaces_id` is the id of the original reaction event to withdraw.
+    pub async fn compose_chat_unreact(
+        &self,
+        target_id: String,
+        replaces_id: String,
+    ) -> Result<FrbChatComposeResult, BridgeError> {
+        let target = MessageId::from_hex(&target_id).map_err(MeetCoreError::from)?;
+        let replaces = MessageId::from_hex(&replaces_id).map_err(MeetCoreError::from)?;
+        Ok(self
+            .inner
+            .compose_chat(ChatComposeRequest::Unreact { target, replaces })
+            .await?
+            .into())
+    }
+
+    /// Decode an incoming chat data-channel payload into a structured event.
+    pub async fn decode_chat(
+        &self,
+        data: Vec<u8>,
+    ) -> Result<crate::proton_meet::models::chat_event::FrbChatIncomingEvent, BridgeError> {
+        Ok(self.inner.decode_chat(data).await?.into())
     }
 
     /// Manually trigger WebSocket reconnection.

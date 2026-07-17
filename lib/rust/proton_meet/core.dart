@@ -7,6 +7,7 @@ import '../errors.dart';
 import '../frb_generated.dart';
 import 'meet_auth_store.dart';
 import 'models/app_event.dart';
+import 'models/chat_event.dart';
 import 'models/connection_state.dart';
 import 'models/event.dart';
 import 'models/join_request.dart';
@@ -76,6 +77,32 @@ abstract class AppCore implements RustOpaqueInterface {
 
   Future<void> clearWaitingRoomJoinRequest();
 
+  /// Compose a MimiV1 chat message (root message or thread reply).
+  ///
+  /// `reply_to_id` is the id of the message being replied to (usually the
+  /// thread root); `reply_topic_id` is the thread root id. Both must be hex
+  /// message ids. Returns the encrypted `payload` to publish plus a
+  /// `local_echo` for optimistic UI.
+  Future<FrbChatComposeResult> composeChatMessage({
+    required String text,
+    String? replyToId,
+    String? replyTopicId,
+  });
+
+  /// Compose a MimiV1 emoji reaction on `target_id` (a message id).
+  Future<FrbChatComposeResult> composeChatReaction({
+    required String targetId,
+    required String emoji,
+  });
+
+  /// Compose a MimiV1 unreact event removing a previous reaction.
+  ///
+  /// `replaces_id` is the id of the original reaction event to withdraw.
+  Future<FrbChatComposeResult> composeChatUnreact({
+    required String targetId,
+    required String replacesId,
+  });
+
   Future<void> connectWebsocketForWaitingRoom();
 
   /// Submits an encrypted MLS join request to meet-server for waiting-room admission.
@@ -105,6 +132,9 @@ abstract class AppCore implements RustOpaqueInterface {
     required bool isRotate,
     required bool waitingRoom,
   });
+
+  /// Decode an incoming chat data-channel payload into a structured event.
+  Future<FrbChatIncomingEvent> decodeChat({required List<int> data});
 
   Future<(String, String)> decryptMessage({required List<int> data});
 
