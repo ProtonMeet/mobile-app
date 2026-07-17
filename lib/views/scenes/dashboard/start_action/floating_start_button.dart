@@ -9,6 +9,9 @@ import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart
 import 'expandable_start.dart';
 import 'menu_item.dart';
 
+/// Bottom scroll inset so list content stays visible above the collapsed button.
+const double kFloatingStartButtonScrollInset = 50.0;
+
 class FloatingStartButton extends StatefulWidget {
   const FloatingStartButton({
     required this.onSchedule,
