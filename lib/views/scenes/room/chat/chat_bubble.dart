@@ -1,29 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import 'package:meet/views/scenes/room/chat/chat_controller.dart';
+import 'package:meet/views/scenes/room/chat/chat_models.dart';
 import 'package:meet/views/scenes/room/chat/chat_widget.dart';
 import 'package:meet/views/scenes/room/participant/participant_info.dart';
 
-class ChatBubble extends StatefulWidget {
+class ChatBubble extends StatelessWidget {
+  final ChatController controller;
   final String userIdentity;
   final String userName;
-  final List<types.Message> messages;
-  final void Function(types.PartialText) onSendPressed;
+  final bool newChatEnabled;
+  final ChatSendCallback onSend;
+  final ChatReactionCallback onToggleReaction;
+  final void Function(RoomChatMessage message)? onRetry;
+  final void Function(RoomChatMessage message)? onDiscard;
   final List<ParticipantInfo>? participantTracks;
 
   const ChatBubble({
+    required this.controller,
     required this.userIdentity,
     required this.userName,
-    required this.onSendPressed,
-    required this.messages,
+    required this.onSend,
+    required this.onToggleReaction,
+    this.newChatEnabled = false,
+    this.onRetry,
+    this.onDiscard,
     this.participantTracks,
     super.key,
   });
 
-  @override
-  State<ChatBubble> createState() => _ChatBubbleState();
-}
-
-class _ChatBubbleState extends State<ChatBubble> {
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
@@ -44,9 +48,15 @@ class _ChatBubbleState extends State<ChatBubble> {
           child: MediaQuery(
             data: mediaQuery,
             child: ChatWidget(
-              messages: widget.messages,
-              onSendPressed: widget.onSendPressed,
-              participantTracks: widget.participantTracks,
+              controller: controller,
+              localIdentity: userIdentity,
+              localName: userName,
+              newChatEnabled: newChatEnabled,
+              onSend: onSend,
+              onToggleReaction: onToggleReaction,
+              onRetry: onRetry,
+              onDiscard: onDiscard,
+              participantTracks: participantTracks,
             ),
           ),
         ),

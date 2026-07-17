@@ -202,6 +202,22 @@ class PreferencesManager implements Manager {
     await storage.write(PreferenceKeys.stopSharingTooltipShown, shown);
   }
 
+  /// Last selected chat emoji picker category (`Category.name` from emoji_picker_flutter).
+  Future<String?> getChatEmojiPickerCategory() async {
+    try {
+      final value = await storage.read(PreferenceKeys.chatEmojiPickerCategory);
+      if (value is String && value.isNotEmpty) return value;
+      return null;
+    } catch (e) {
+      logger.e("error getting chat emoji picker category: $e");
+      return null;
+    }
+  }
+
+  Future<void> setChatEmojiPickerCategory(String categoryName) async {
+    await storage.write(PreferenceKeys.chatEmojiPickerCategory, categoryName);
+  }
+
   @override
   Future<void> reload() async {}
 

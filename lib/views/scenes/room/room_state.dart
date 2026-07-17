@@ -9,11 +9,95 @@ import 'package:meet/rust/proton_meet/models/meeting_info.dart';
 import 'package:meet/rust/proton_meet/models/mls_sync_state.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
 import 'package:meet/views/scenes/room/camera_layout.dart';
+import 'package:meet/views/scenes/room/chat/chat_models.dart';
 import 'package:meet/views/scenes/room/layout/responsive_camera_layout.dart'
     show ResponsiveCameraLayout;
 import 'package:meet/views/scenes/room/participant/participant_info.dart';
 import 'package:meet/views/scenes/room/participant_detail.dart';
 import 'package:proton_denoise/proton_denoise.dart';
+
+/// A system notice destined for the in-room chat panel (join/leave, disconnect, …).
+///
+/// Produced by [RoomBloc] when handling [AddSystemMessage] with
+/// [Level.info][logLevel]; [RoomPage] mirrors these into [ChatController].
+class RoomChatSystemNotice extends Equatable {
+  const RoomChatSystemNotice({
+    required this.id,
+    required this.message,
+    required this.identity,
+    required this.name,
+    required this.timestamp,
+    this.joinLeaveKind,
+    this.meetingName,
+  });
+
+  final String id;
+  final String message;
+  final String identity;
+  final String name;
+  final int timestamp;
+  final ChatJoinLeaveKind? joinLeaveKind;
+  final String? meetingName;
+
+  @override
+  List<Object?> get props => [
+    id,
+    message,
+    identity,
+    name,
+    timestamp,
+    joinLeaveKind,
+    meetingName,
+  ];
+}
+
+/// Side-effect emitted by [RoomBloc] chat handlers for [RoomPage] to mirror
+/// into [ChatController].
+enum RoomChatEffectKind {
+  addReaction,
+  removeReaction,
+  localEcho,
+  updateMessageStatus,
+  receiveMessage,
+  removeMessage,
+}
+
+class RoomChatEffect extends Equatable {
+  const RoomChatEffect({
+    required this.kind,
+    this.reactionId,
+    this.replacesId,
+    this.messageId,
+    this.emoji,
+    this.identity,
+    this.messagePayload,
+    this.status,
+    this.showToast = false,
+  });
+
+  final RoomChatEffectKind kind;
+  final String? reactionId;
+  final String? replacesId;
+  final String? messageId;
+  final String? emoji;
+  final String? identity;
+  final RoomChatMessage? messagePayload;
+  final ChatMessageStatus? status;
+  final bool showToast;
+
+  @override
+  List<Object?> get props => [
+    kind,
+    reactionId,
+    replacesId,
+    messageId,
+    emoji,
+    identity,
+    messagePayload,
+    status,
+    showToast,
+  ];
+}
 
 /// Rejoin status enum for tracking rejoin process steps
 enum RejoinStatus {
@@ -137,6 +221,17 @@ class RoomState extends Equatable {
 
   /// messages
   final List<types.Message> messages;
+
+  /// System chat notices emitted by [AddSystemMessage] (UI syncs to ChatController).
+  final List<RoomChatSystemNotice> chatSystemNotices;
+
+  /// Ephemeral chat side-effects (reactions, echoes, incoming messages) for UI
+  /// sync. Cleared after [RoomPage] mirrors into [ChatController].
+  final List<RoomChatEffect> chatEffects;
+
+  /// Bumped when [chatEffects] or [chatSystemNotices] gain pending items.
+  /// Used by [BlocListener] instead of comparing the lists in [props].
+  final int chatSyncGeneration;
 
   /// mls group data
   final String epoch;
@@ -362,6 +457,9 @@ class RoomState extends Equatable {
     this.speakerTracks = const [],
     this.raisedHandsByIdentity = const {},
     this.messages = const [],
+    this.chatSystemNotices = const [],
+    this.chatEffects = const [],
+    this.chatSyncGeneration = 0,
     this.joinedParticipants = const [],
     this.leftParticipants = const [],
     this.waitingRoomParticipants = const [],
@@ -440,6 +538,9 @@ class RoomState extends Equatable {
     List<ParticipantInfo>? speakerTracks,
     Map<String, bool>? raisedHandsByIdentity,
     List<types.Message>? messages,
+    List<RoomChatSystemNotice>? chatSystemNotices,
+    List<RoomChatEffect>? chatEffects,
+    int? chatSyncGeneration,
     List<ParticipantDetail>? joinedParticipants,
     List<ParticipantDetail>? leftParticipants,
     List<WaitingRoomJoinRequest>? waitingRoomParticipants,
@@ -521,6 +622,9 @@ class RoomState extends Equatable {
       raisedHandsByIdentity:
           raisedHandsByIdentity ?? this.raisedHandsByIdentity,
       messages: messages ?? this.messages,
+      chatSystemNotices: chatSystemNotices ?? this.chatSystemNotices,
+      chatEffects: chatEffects ?? this.chatEffects,
+      chatSyncGeneration: chatSyncGeneration ?? this.chatSyncGeneration,
       joinedParticipants: joinedParticipants ?? this.joinedParticipants,
       leftParticipants: leftParticipants ?? this.leftParticipants,
       waitingRoomParticipants:
@@ -631,6 +735,7 @@ class RoomState extends Equatable {
     speakerTracks,
     raisedHandsByIdentity,
     messages,
+    chatSyncGeneration,
 
     joinedParticipants,
     leftParticipants,
