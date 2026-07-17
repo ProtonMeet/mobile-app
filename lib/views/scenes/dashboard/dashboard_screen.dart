@@ -13,6 +13,7 @@ import 'package:meet/views/components/alerts/early_access_dialog.dart';
 import 'package:meet/views/components/app_nav_bar.dart';
 import 'package:meet/views/scenes/dashboard/join/join_meeting_dialog.dart';
 import 'package:meet/views/scenes/dashboard/search/search_bar.dart';
+import 'package:meet/views/scenes/dashboard/start_action/floating_start_button.dart';
 import 'package:meet/views/scenes/signin/auth_bloc.dart';
 import 'package:meet/views/scenes/signin/auth_event.dart';
 
@@ -525,7 +526,9 @@ class DashboardScreenState extends State<DashboardScreen> {
               ],
               SliverSafeArea(
                 top: false,
-                sliver: const SliverToBoxAdapter(child: SizedBox.shrink()),
+                sliver: SliverToBoxAdapter(
+                  child: SizedBox(height: kFloatingStartButtonScrollInset),
+                ),
               ),
             ],
           ),
