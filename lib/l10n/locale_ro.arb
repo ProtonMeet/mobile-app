@@ -171,8 +171,82 @@
   "enter_display_name": "Introduceți-vă numele",
   "display_name_required": "Numele dvs. este obligatoriu.",
   "remember_display_name_on_device": "Reține-mi numele pe acest dispozitiv pentru conferințe viitoare.",
+  "use_this_name_next_time": "Folosește acest nume data viitoare",
+  "@use_this_name_next_time": {
+    "description": "Toggle label on pre-join screen to remember display name"
+  },
+  "prejoin_meeting_has_waiting_room": "Această conferință are o sală de așteptare",
+  "@prejoin_meeting_has_waiting_room": {
+    "description": "Informational message on pre-join when waiting room is enabled"
+  },
+  "waiting_room_host_not_started_title": "Se așteaptă ca gazda să înceapă",
+  "@waiting_room_host_not_started_title": {
+    "description": "Title when guest waits for host to start a meeting with waiting room"
+  },
+  "waiting_room_host_not_started_description": "Vă veți alătura când gazda începe conferința și vă va primi.",
+  "@waiting_room_host_not_started_description": {
+    "description": "Description when guest waits for host to start"
+  },
+  "waiting_room_awaiting_admission_title": "Se așteaptă ca gazda să vă primească",
+  "@waiting_room_awaiting_admission_title": {
+    "description": "Title when guest waits for host admission"
+  },
+  "waiting_room_awaiting_admission_description": "Gazda a fost notificată că așteptați.",
+  "@waiting_room_awaiting_admission_description": {
+    "description": "Description when guest waits for host admission"
+  },
+  "waiting_room_expires_in": "Expiră peste {time}",
+  "@waiting_room_expires_in": {
+    "description": "Countdown pill label while waiting for admission",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "waiting_room_join_request_rejected": "Gazda v-a refuzat solicitarea de participare.",
+  "@waiting_room_join_request_rejected": {
+    "description": "Global notification when the host rejects a waiting-room join request"
+  },
+  "waiting_room_admission_timed_out": "Solicitarea de a participa a expirat. Reîncercați.",
+  "@waiting_room_admission_timed_out": {
+    "description": "Global notification when the guest waiting room admission countdown reaches zero"
+  },
+  "waiting_room_host_join_request_notification": "Cineva așteaptă în sala de așteptare să se alăture.",
+  "@waiting_room_host_join_request_notification": {
+    "description": "Global notification shown to the host when a guest submits a waiting-room join request"
+  },
+  "waiting_room_join_request_not_found": "Această solicitare de participare nu mai este disponibilă. A expirat sau poate a fost rezolvată.",
+  "@waiting_room_join_request_not_found": {
+    "description": "Toast shown when the host tries to admit a waiting-room request that is no longer pending"
+  },
+  "participant_list_waiting_room_tab": "Sală de așteptare",
+  "@participant_list_waiting_room_tab": {
+    "description": "Tab label for waiting room participants in host participant list"
+  },
+  "participant_list_all_participants_tab": "Toți participanții",
+  "@participant_list_all_participants_tab": {
+    "description": "Tab label for in-meeting participants in host participant list"
+  },
+  "participant_list_admit_all": "Admitere toți",
+  "@participant_list_admit_all": {
+    "description": "Button label to admit all waiting room participants"
+  },
+  "participant_list_joined_at": "Alăturat la {time}",
+  "@participant_list_joined_at": {
+    "description": "Subtitle for a waiting room participant row",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "participant_list_no_waiting_participants": "Nu așteaptă nimeni să se alăture.",
+  "@participant_list_no_waiting_participants": {
+    "description": "Empty state when the waiting room participant list is empty"
+  },
   "join_meeting_button": "Participare la conferință",
-  "create_meeting_button": "Conferință nouă",
+  "create_meeting_button": "Creare",
   "import_meeting_button": "Importare conferință",
   "import_meeting_title": "Importare conferință",
   "import_meeting_hint_text": "Legătură web accesare conferință",
@@ -824,6 +898,86 @@
   "@chat_privacy_message": {
     "description": "Privacy message displayed in chat when there are no messages."
   },
+  "chat_title": "Conversație",
+  "@chat_title": {
+    "description": "Title for the in-meeting chat panel"
+  },
+  "chat_input_hint": "Scrieți un mesaj criptat…",
+  "@chat_input_hint": {
+    "description": "Placeholder for the main chat composer"
+  },
+  "chat_new_messages": "{count, plural, =1{Un mesaj nou} few{Mesaje noi: {count}} other{Mesaje noi: {count}}}",
+  "@chat_new_messages": {
+    "description": "Pill shown when new root-level chat messages arrive while scrolled up",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_new_messages_badge": "{count, plural, =1{Unul nou} few{{count} noi} other{{count} noi}}",
+  "@chat_new_messages_badge": {
+    "description": "Compact floating badge above the composer when new messages arrive while scrolled up",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_thread_view_replies": "{count, plural, =1{Afișare un răspuns} few{Afișare {count} răspunsuri} other{Afișare {count} de răspunsuri}}",
+  "@chat_thread_view_replies": {
+    "description": "Collapsed thread toggle to expand and view replies",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_thread_replies_count": "{count, plural, =1{Un răspuns} few{{count} răspunsuri} other{{count} de răspunsuri}}",
+  "@chat_thread_replies_count": {
+    "description": "Expanded thread toggle showing reply count",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_thread_new_reply": "Răspuns nou",
+  "@chat_thread_new_reply": {
+    "description": "Badge shown on a collapsed thread when there are unseen replies"
+  },
+  "chat_system_joined_prefix": "Alăturat la ",
+  "@chat_system_joined_prefix": {
+    "description": "Prefix before the meeting name in a join system chat notice"
+  },
+  "chat_system_left_prefix": "Părăsit ",
+  "@chat_system_left_prefix": {
+    "description": "Prefix before the meeting name in a leave system chat notice"
+  },
+  "chat_reply_hint": "Răspuns...",
+  "@chat_reply_hint": {
+    "description": "Placeholder for the thread reply composer"
+  },
+  "chat_thread_missing_root": "Această conversație a început înainte de a vă alătura.",
+  "@chat_thread_missing_root": {
+    "description": "Placeholder when a thread root message is not available locally"
+  },
+  "chat_not_delivered": "Nu a fost livrat",
+  "@chat_not_delivered": {
+    "description": "Status label for a failed outgoing chat message"
+  },
+  "chat_discard": "Abandonare",
+  "@chat_discard": {
+    "description": "Action to remove a failed outgoing chat message"
+  },
+  "chat_reply": "Răspuns",
+  "@chat_reply": {
+    "description": "Action to reply to a chat message in a thread"
+  },
+  "chat_copy_text": "Copiere text",
+  "@chat_copy_text": {
+    "description": "Action to copy chat message text to clipboard"
+  },
   "meeting_quality_feedback": "Feedback calitate conferință",
   "@meeting_quality_feedback": {
     "description": "Title for meeting quality feedback form"
@@ -1306,6 +1460,34 @@
   "schedule_time_zone_selected": "Fus orar selectat",
   "@schedule_time_zone_selected": {
     "description": "Label for schedule time zone selected"
+  },
+  "schedule_waiting_room": "Sală de așteptare",
+  "@schedule_waiting_room": {
+    "description": "Label for waiting room field in schedule meeting dialog"
+  },
+  "schedule_waiting_room_on": "Sală de așteptare activă",
+  "@schedule_waiting_room_on": {
+    "description": "Waiting room enabled option title"
+  },
+  "schedule_waiting_room_on_hint": "Folosiți sala de așteptare cu un plan cu plată",
+  "@schedule_waiting_room_on_hint": {
+    "description": "Waiting room enabled option hint"
+  },
+  "schedule_waiting_room_off": "Sală de așteptare inactivă",
+  "@schedule_waiting_room_off": {
+    "description": "Waiting room disabled option title"
+  },
+  "switch_on": "Activată",
+  "@switch_on": {
+    "description": "Label when switch on"
+  },
+  "switch_off": "Dezactivată",
+  "@switch_off": {
+    "description": "Label when switch off"
+  },
+  "schedule_waiting_room_off_hint": "Oricine care are legătura web se poate alătura imediat.",
+  "@schedule_waiting_room_off_hint": {
+    "description": "Waiting room disabled option hint"
   },
   "month_jan": "Ianuarie",
   "@month_jan": {

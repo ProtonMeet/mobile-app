@@ -171,6 +171,80 @@
   "enter_display_name": "Indiquez votre nom",
   "display_name_required": "Vous devez indiquer un nom.",
   "remember_display_name_on_device": "Se souvenir de mon nom sur cet appareil pour les prochaines réunions",
+  "use_this_name_next_time": "Utiliser ce nom la prochaine fois",
+  "@use_this_name_next_time": {
+    "description": "Toggle label on pre-join screen to remember display name"
+  },
+  "prejoin_meeting_has_waiting_room": "Cette réunion dispose d’une salle d’attente",
+  "@prejoin_meeting_has_waiting_room": {
+    "description": "Informational message on pre-join when waiting room is enabled"
+  },
+  "waiting_room_host_not_started_title": "En attente du démarrage par l’hôte",
+  "@waiting_room_host_not_started_title": {
+    "description": "Title when guest waits for host to start a meeting with waiting room"
+  },
+  "waiting_room_host_not_started_description": "Vous rejoindrez la réunion lorsque l’hôte la démarrera et vous admettra.",
+  "@waiting_room_host_not_started_description": {
+    "description": "Description when guest waits for host to start"
+  },
+  "waiting_room_awaiting_admission_title": "En attente que l’hôte vous autorise à entrer",
+  "@waiting_room_awaiting_admission_title": {
+    "description": "Title when guest waits for host admission"
+  },
+  "waiting_room_awaiting_admission_description": "L’hôte a été informé que vous êtes en attente.",
+  "@waiting_room_awaiting_admission_description": {
+    "description": "Description when guest waits for host admission"
+  },
+  "waiting_room_expires_in": "Expire dans {time}",
+  "@waiting_room_expires_in": {
+    "description": "Countdown pill label while waiting for admission",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "waiting_room_join_request_rejected": "L’hôte a refusé votre demande de rejoindre la réunion",
+  "@waiting_room_join_request_rejected": {
+    "description": "Global notification when the host rejects a waiting-room join request"
+  },
+  "waiting_room_admission_timed_out": "Votre demande de participation a expiré. Veuillez réessayer.",
+  "@waiting_room_admission_timed_out": {
+    "description": "Global notification when the guest waiting room admission countdown reaches zero"
+  },
+  "waiting_room_host_join_request_notification": "Une personne est en attente dans la salle d’attente pour rejoindre la réunion",
+  "@waiting_room_host_join_request_notification": {
+    "description": "Global notification shown to the host when a guest submits a waiting-room join request"
+  },
+  "waiting_room_join_request_not_found": "Cette demande de participation n’est plus disponible. Elle a peut-être expiré ou a déjà été traitée.",
+  "@waiting_room_join_request_not_found": {
+    "description": "Toast shown when the host tries to admit a waiting-room request that is no longer pending"
+  },
+  "participant_list_waiting_room_tab": "Salle d'attente",
+  "@participant_list_waiting_room_tab": {
+    "description": "Tab label for waiting room participants in host participant list"
+  },
+  "participant_list_all_participants_tab": "Tous les participants",
+  "@participant_list_all_participants_tab": {
+    "description": "Tab label for in-meeting participants in host participant list"
+  },
+  "participant_list_admit_all": "Admettre tout le monde",
+  "@participant_list_admit_all": {
+    "description": "Button label to admit all waiting room participants"
+  },
+  "participant_list_joined_at": "A rejoint à {time}",
+  "@participant_list_joined_at": {
+    "description": "Subtitle for a waiting room participant row",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "participant_list_no_waiting_participants": "Personne n’attend pour rejoindre la réunion",
+  "@participant_list_no_waiting_participants": {
+    "description": "Empty state when the waiting room participant list is empty"
+  },
   "join_meeting_button": "Participer à la réunion",
   "create_meeting_button": "Créer",
   "import_meeting_button": "Importer une réunion",
@@ -824,6 +898,86 @@
   "@chat_privacy_message": {
     "description": "Privacy message displayed in chat when there are no messages."
   },
+  "chat_title": "Chat",
+  "@chat_title": {
+    "description": "Title for the in-meeting chat panel"
+  },
+  "chat_input_hint": "Saisissez un message chiffré…",
+  "@chat_input_hint": {
+    "description": "Placeholder for the main chat composer"
+  },
+  "chat_new_messages": "{count, plural, =1{1 nouveau message} other{{count} nouveaux messages}}",
+  "@chat_new_messages": {
+    "description": "Pill shown when new root-level chat messages arrive while scrolled up",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_new_messages_badge": "{count, plural, =1{1 nouveau} other{{count} nouveaux}}",
+  "@chat_new_messages_badge": {
+    "description": "Compact floating badge above the composer when new messages arrive while scrolled up",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_thread_view_replies": "{count, plural, =1{Voir 1 réponse} other{Afficher {count} réponses}}",
+  "@chat_thread_view_replies": {
+    "description": "Collapsed thread toggle to expand and view replies",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_thread_replies_count": "{count, plural, =1{1 réponse} other{{count} réponses}}",
+  "@chat_thread_replies_count": {
+    "description": "Expanded thread toggle showing reply count",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_thread_new_reply": "Nouvelle réponse",
+  "@chat_thread_new_reply": {
+    "description": "Badge shown on a collapsed thread when there are unseen replies"
+  },
+  "chat_system_joined_prefix": "Rejoint ",
+  "@chat_system_joined_prefix": {
+    "description": "Prefix before the meeting name in a join system chat notice"
+  },
+  "chat_system_left_prefix": "a quitté ",
+  "@chat_system_left_prefix": {
+    "description": "Prefix before the meeting name in a leave system chat notice"
+  },
+  "chat_reply_hint": "Répondre…",
+  "@chat_reply_hint": {
+    "description": "Placeholder for the thread reply composer"
+  },
+  "chat_thread_missing_root": "Cette conversation a commencé avant votre arrivée.",
+  "@chat_thread_missing_root": {
+    "description": "Placeholder when a thread root message is not available locally"
+  },
+  "chat_not_delivered": "Non livré",
+  "@chat_not_delivered": {
+    "description": "Status label for a failed outgoing chat message"
+  },
+  "chat_discard": "Abandonner",
+  "@chat_discard": {
+    "description": "Action to remove a failed outgoing chat message"
+  },
+  "chat_reply": "Répondre",
+  "@chat_reply": {
+    "description": "Action to reply to a chat message in a thread"
+  },
+  "chat_copy_text": "Copier le texte",
+  "@chat_copy_text": {
+    "description": "Action to copy chat message text to clipboard"
+  },
   "meeting_quality_feedback": "Commentaire sur la qualité de la réunion",
   "@meeting_quality_feedback": {
     "description": "Title for meeting quality feedback form"
@@ -1306,6 +1460,34 @@
   "schedule_time_zone_selected": "Fuseau horaire sélectionné",
   "@schedule_time_zone_selected": {
     "description": "Label for schedule time zone selected"
+  },
+  "schedule_waiting_room": "Salle d'attente",
+  "@schedule_waiting_room": {
+    "description": "Label for waiting room field in schedule meeting dialog"
+  },
+  "schedule_waiting_room_on": "Salle d’attente activée",
+  "@schedule_waiting_room_on": {
+    "description": "Waiting room enabled option title"
+  },
+  "schedule_waiting_room_on_hint": "Utiliser la salle d’attente avec un abonnement payant",
+  "@schedule_waiting_room_on_hint": {
+    "description": "Waiting room enabled option hint"
+  },
+  "schedule_waiting_room_off": "Salle d’attente désactivée",
+  "@schedule_waiting_room_off": {
+    "description": "Waiting room disabled option title"
+  },
+  "switch_on": "Activé",
+  "@switch_on": {
+    "description": "Label when switch on"
+  },
+  "switch_off": "Désactivé",
+  "@switch_off": {
+    "description": "Label when switch off"
+  },
+  "schedule_waiting_room_off_hint": "Toute personne disposant du lien peut rejoindre immédiatement",
+  "@schedule_waiting_room_off_hint": {
+    "description": "Waiting room disabled option hint"
   },
   "month_jan": "Janvier",
   "@month_jan": {

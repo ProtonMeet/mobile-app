@@ -171,8 +171,82 @@
   "enter_display_name": "Introduïu el vostre nom",
   "display_name_required": "El nom és obligatori",
   "remember_display_name_on_device": "Recorda el meu nom en aquest dispositiu per a futures reunions",
+  "use_this_name_next_time": "Feu servir aquest nom la pròxima vegada",
+  "@use_this_name_next_time": {
+    "description": "Toggle label on pre-join screen to remember display name"
+  },
+  "prejoin_meeting_has_waiting_room": "Aquesta reunió té una sala d'espera",
+  "@prejoin_meeting_has_waiting_room": {
+    "description": "Informational message on pre-join when waiting room is enabled"
+  },
+  "waiting_room_host_not_started_title": "S'està esperant que l'amfitrió iniciï la reunió",
+  "@waiting_room_host_not_started_title": {
+    "description": "Title when guest waits for host to start a meeting with waiting room"
+  },
+  "waiting_room_host_not_started_description": "Us hi unireu quan l'amfitrió iniciï la reunió i us admeti.",
+  "@waiting_room_host_not_started_description": {
+    "description": "Description when guest waits for host to start"
+  },
+  "waiting_room_awaiting_admission_title": "S'està esperant que l'amfitrió us admeti",
+  "@waiting_room_awaiting_admission_title": {
+    "description": "Title when guest waits for host admission"
+  },
+  "waiting_room_awaiting_admission_description": "S'ha notificat a l'amfitrió que esteu esperant.",
+  "@waiting_room_awaiting_admission_description": {
+    "description": "Description when guest waits for host admission"
+  },
+  "waiting_room_expires_in": "Caducarà en {time}",
+  "@waiting_room_expires_in": {
+    "description": "Countdown pill label while waiting for admission",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "waiting_room_join_request_rejected": "L'amfitrió ha rebutjat la vostra sol·licitud d'unir-vos-hi",
+  "@waiting_room_join_request_rejected": {
+    "description": "Global notification when the host rejects a waiting-room join request"
+  },
+  "waiting_room_admission_timed_out": "La vostra sol·licitud d'unió ha expirat. Torneu-ho a provar.",
+  "@waiting_room_admission_timed_out": {
+    "description": "Global notification when the guest waiting room admission countdown reaches zero"
+  },
+  "waiting_room_host_join_request_notification": "Hi ha algú a la sala esperant per unir-s'hi",
+  "@waiting_room_host_join_request_notification": {
+    "description": "Global notification shown to the host when a guest submits a waiting-room join request"
+  },
+  "waiting_room_join_request_not_found": "Aquesta sol·licitud d'unió ja no està disponible. És possible que hagi expirat o que ja s'hagi gestionat.",
+  "@waiting_room_join_request_not_found": {
+    "description": "Toast shown when the host tries to admit a waiting-room request that is no longer pending"
+  },
+  "participant_list_waiting_room_tab": "Sala d'espera",
+  "@participant_list_waiting_room_tab": {
+    "description": "Tab label for waiting room participants in host participant list"
+  },
+  "participant_list_all_participants_tab": "Tots els participants",
+  "@participant_list_all_participants_tab": {
+    "description": "Tab label for in-meeting participants in host participant list"
+  },
+  "participant_list_admit_all": "Admetre'ls tots",
+  "@participant_list_admit_all": {
+    "description": "Button label to admit all waiting room participants"
+  },
+  "participant_list_joined_at": "Us hi heu unit a les {time}",
+  "@participant_list_joined_at": {
+    "description": "Subtitle for a waiting room participant row",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "participant_list_no_waiting_participants": "No hi ha ningú esperant per unir-s'hi",
+  "@participant_list_no_waiting_participants": {
+    "description": "Empty state when the waiting room participant list is empty"
+  },
   "join_meeting_button": "Unir-se a la reunió",
-  "create_meeting_button": "Crea una reunió",
+  "create_meeting_button": "Crear",
   "import_meeting_button": "Importa la reunió",
   "import_meeting_title": "Importeu la reunió",
   "import_meeting_hint_text": "Introduïu l'enllaç de la reunió",
@@ -824,6 +898,86 @@
   "@chat_privacy_message": {
     "description": "Privacy message displayed in chat when there are no messages."
   },
+  "chat_title": "Xat",
+  "@chat_title": {
+    "description": "Title for the in-meeting chat panel"
+  },
+  "chat_input_hint": "Escriviu un missatge encriptat…",
+  "@chat_input_hint": {
+    "description": "Placeholder for the main chat composer"
+  },
+  "chat_new_messages": "{count, plural, =1{1 missatge nou} other{{count} missatges nous}}",
+  "@chat_new_messages": {
+    "description": "Pill shown when new root-level chat messages arrive while scrolled up",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_new_messages_badge": "{count, plural, =1{1 de nou} other{{count} de nous}}",
+  "@chat_new_messages_badge": {
+    "description": "Compact floating badge above the composer when new messages arrive while scrolled up",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_thread_view_replies": "{count, plural, =1{Veure 1 resposta} other{Veure {count} respostes}}",
+  "@chat_thread_view_replies": {
+    "description": "Collapsed thread toggle to expand and view replies",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_thread_replies_count": "{count, plural, =1{1 resposta} other{{count} respostes}}",
+  "@chat_thread_replies_count": {
+    "description": "Expanded thread toggle showing reply count",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_thread_new_reply": "Nova resposta",
+  "@chat_thread_new_reply": {
+    "description": "Badge shown on a collapsed thread when there are unseen replies"
+  },
+  "chat_system_joined_prefix": "Us hi heu afegit ",
+  "@chat_system_joined_prefix": {
+    "description": "Prefix before the meeting name in a join system chat notice"
+  },
+  "chat_system_left_prefix": "Heu sortit ",
+  "@chat_system_left_prefix": {
+    "description": "Prefix before the meeting name in a leave system chat notice"
+  },
+  "chat_reply_hint": "Responeu…",
+  "@chat_reply_hint": {
+    "description": "Placeholder for the thread reply composer"
+  },
+  "chat_thread_missing_root": "Aquesta conversa havia començat abans que us hi afegíssiu.",
+  "@chat_thread_missing_root": {
+    "description": "Placeholder when a thread root message is not available locally"
+  },
+  "chat_not_delivered": "No s'ha lliurat",
+  "@chat_not_delivered": {
+    "description": "Status label for a failed outgoing chat message"
+  },
+  "chat_discard": "Descarta",
+  "@chat_discard": {
+    "description": "Action to remove a failed outgoing chat message"
+  },
+  "chat_reply": "Responeu",
+  "@chat_reply": {
+    "description": "Action to reply to a chat message in a thread"
+  },
+  "chat_copy_text": "Copiar el text",
+  "@chat_copy_text": {
+    "description": "Action to copy chat message text to clipboard"
+  },
   "meeting_quality_feedback": "Comentaris sobre la qualitat de la reunió",
   "@meeting_quality_feedback": {
     "description": "Title for meeting quality feedback form"
@@ -1306,6 +1460,34 @@
   "schedule_time_zone_selected": "Zona horària seleccionada",
   "@schedule_time_zone_selected": {
     "description": "Label for schedule time zone selected"
+  },
+  "schedule_waiting_room": "Sala d'espera",
+  "@schedule_waiting_room": {
+    "description": "Label for waiting room field in schedule meeting dialog"
+  },
+  "schedule_waiting_room_on": "S'ha activat la sala d'espera",
+  "@schedule_waiting_room_on": {
+    "description": "Waiting room enabled option title"
+  },
+  "schedule_waiting_room_on_hint": "Utilitzeu la sala d'espera amb un pla de pagament",
+  "@schedule_waiting_room_on_hint": {
+    "description": "Waiting room enabled option hint"
+  },
+  "schedule_waiting_room_off": "S'ha desactivat la sala d'espera",
+  "@schedule_waiting_room_off": {
+    "description": "Waiting room disabled option title"
+  },
+  "switch_on": "Activada",
+  "@switch_on": {
+    "description": "Label when switch on"
+  },
+  "switch_off": "Desactivada",
+  "@switch_off": {
+    "description": "Label when switch off"
+  },
+  "schedule_waiting_room_off_hint": "Qualsevol persona amb l'enllaç s'hi pot unir immediatament",
+  "@schedule_waiting_room_off_hint": {
+    "description": "Waiting room disabled option hint"
   },
   "month_jan": "Gener",
   "@month_jan": {
