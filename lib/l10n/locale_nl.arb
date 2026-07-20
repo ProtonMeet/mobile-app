@@ -149,7 +149,7 @@
   "bitrate_very_high_1300": "Zeer hoog (1300 kbps)",
   "bitrate_very_high_1200": "Zeer hoog (1200 kbps)",
   "bitrate_very_high_1100": "Zeer hoog (1100 kbps)",
-  "bitrate_high_1000": "Hoog (1000 kbps)",
+  "bitrate_high_1000": "Hoog (1000 kbps)\n",
   "bitrate_high_900": "Hoog (900 kbps",
   "bitrate_high_800": "Hoog (800 kbps)",
   "bitrate_medium_high_700": "Middelmatig hoog (700 kbps)",
@@ -171,6 +171,80 @@
   "enter_display_name": "Vul uw naam in",
   "display_name_required": "Uw naam is verplicht",
   "remember_display_name_on_device": "Onthoud mijn naam op dit apparaat voor toekomstige vergaderingen",
+  "use_this_name_next_time": "Gebruik de volgende keer deze naam",
+  "@use_this_name_next_time": {
+    "description": "Toggle label on pre-join screen to remember display name"
+  },
+  "prejoin_meeting_has_waiting_room": "Deze vergadering heeft een wachtkamer",
+  "@prejoin_meeting_has_waiting_room": {
+    "description": "Informational message on pre-join when waiting room is enabled"
+  },
+  "waiting_room_host_not_started_title": "Wachten tot de host begint",
+  "@waiting_room_host_not_started_title": {
+    "description": "Title when guest waits for host to start a meeting with waiting room"
+  },
+  "waiting_room_host_not_started_description": "U neemt deel wanneer de gastheer de vergadering start en u toelaat.",
+  "@waiting_room_host_not_started_description": {
+    "description": "Description when guest waits for host to start"
+  },
+  "waiting_room_awaiting_admission_title": "Wachten tot de gastheer je toelaat",
+  "@waiting_room_awaiting_admission_title": {
+    "description": "Title when guest waits for host admission"
+  },
+  "waiting_room_awaiting_admission_description": "De host heeft een melding ontvangen dat u wacht.",
+  "@waiting_room_awaiting_admission_description": {
+    "description": "Description when guest waits for host admission"
+  },
+  "waiting_room_expires_in": "Vervalt binnen {time}",
+  "@waiting_room_expires_in": {
+    "description": "Countdown pill label while waiting for admission",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "waiting_room_join_request_rejected": "De gastheer heeft uw verzoek om lid te worden afgewezen",
+  "@waiting_room_join_request_rejected": {
+    "description": "Global notification when the host rejects a waiting-room join request"
+  },
+  "waiting_room_admission_timed_out": "Er is een time-out opgetreden voor uw verzoek om lid te worden. Probeer het opnieuw.",
+  "@waiting_room_admission_timed_out": {
+    "description": "Global notification when the guest waiting room admission countdown reaches zero"
+  },
+  "waiting_room_host_join_request_notification": "Er wacht iemand in de wachtkamer om deel te nemen",
+  "@waiting_room_host_join_request_notification": {
+    "description": "Global notification shown to the host when a guest submits a waiting-room join request"
+  },
+  "waiting_room_join_request_not_found": "Dit deelnameverzoek is niet langer beschikbaar. Mogelijk is de aanvraag verlopen of al afgehandeld.",
+  "@waiting_room_join_request_not_found": {
+    "description": "Toast shown when the host tries to admit a waiting-room request that is no longer pending"
+  },
+  "participant_list_waiting_room_tab": "Wachtruimte",
+  "@participant_list_waiting_room_tab": {
+    "description": "Tab label for waiting room participants in host participant list"
+  },
+  "participant_list_all_participants_tab": "Alle deelnemers",
+  "@participant_list_all_participants_tab": {
+    "description": "Tab label for in-meeting participants in host participant list"
+  },
+  "participant_list_admit_all": "Iedereen toelaten",
+  "@participant_list_admit_all": {
+    "description": "Button label to admit all waiting room participants"
+  },
+  "participant_list_joined_at": "Aangemeld om {time}",
+  "@participant_list_joined_at": {
+    "description": "Subtitle for a waiting room participant row",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "participant_list_no_waiting_participants": "Niemand in de wachtruimte",
+  "@participant_list_no_waiting_participants": {
+    "description": "Empty state when the waiting room participant list is empty"
+  },
   "join_meeting_button": "Aan vergadering deelnemen",
   "create_meeting_button": "Aanmaken",
   "import_meeting_button": "Vergadering importeren",
@@ -824,6 +898,86 @@
   "@chat_privacy_message": {
     "description": "Privacy message displayed in chat when there are no messages."
   },
+  "chat_title": "Chat",
+  "@chat_title": {
+    "description": "Title for the in-meeting chat panel"
+  },
+  "chat_input_hint": "Type an encrypted message…",
+  "@chat_input_hint": {
+    "description": "Placeholder for the main chat composer"
+  },
+  "chat_new_messages": "{count, plural, =1{1 new message} other{{count} new messages}}",
+  "@chat_new_messages": {
+    "description": "Pill shown when new root-level chat messages arrive while scrolled up",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_new_messages_badge": "{count, plural, =1{1 new} other{{count} new}}",
+  "@chat_new_messages_badge": {
+    "description": "Compact floating badge above the composer when new messages arrive while scrolled up",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_thread_view_replies": "{count, plural, =1{View 1 reply} other{View {count} replies}}",
+  "@chat_thread_view_replies": {
+    "description": "Collapsed thread toggle to expand and view replies",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_thread_replies_count": "{count, plural, =1{1 reply} other{{count} replies}}",
+  "@chat_thread_replies_count": {
+    "description": "Expanded thread toggle showing reply count",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_thread_new_reply": "New reply",
+  "@chat_thread_new_reply": {
+    "description": "Badge shown on a collapsed thread when there are unseen replies"
+  },
+  "chat_system_joined_prefix": "Joined ",
+  "@chat_system_joined_prefix": {
+    "description": "Prefix before the meeting name in a join system chat notice"
+  },
+  "chat_system_left_prefix": "Left ",
+  "@chat_system_left_prefix": {
+    "description": "Prefix before the meeting name in a leave system chat notice"
+  },
+  "chat_reply_hint": "Reply…",
+  "@chat_reply_hint": {
+    "description": "Placeholder for the thread reply composer"
+  },
+  "chat_thread_missing_root": "This conversation started before you joined.",
+  "@chat_thread_missing_root": {
+    "description": "Placeholder when a thread root message is not available locally"
+  },
+  "chat_not_delivered": "Not delivered",
+  "@chat_not_delivered": {
+    "description": "Status label for a failed outgoing chat message"
+  },
+  "chat_discard": "Discard",
+  "@chat_discard": {
+    "description": "Action to remove a failed outgoing chat message"
+  },
+  "chat_reply": "Reply",
+  "@chat_reply": {
+    "description": "Action to reply to a chat message in a thread"
+  },
+  "chat_copy_text": "Copy text",
+  "@chat_copy_text": {
+    "description": "Action to copy chat message text to clipboard"
+  },
   "meeting_quality_feedback": "Feedback over vergaderkwaliteit",
   "@meeting_quality_feedback": {
     "description": "Title for meeting quality feedback form"
@@ -1306,6 +1460,34 @@
   "schedule_time_zone_selected": "Geselecteerde tijdzone",
   "@schedule_time_zone_selected": {
     "description": "Label for schedule time zone selected"
+  },
+  "schedule_waiting_room": "Wachtruimte",
+  "@schedule_waiting_room": {
+    "description": "Label for waiting room field in schedule meeting dialog"
+  },
+  "schedule_waiting_room_on": "Wachtruimte beschikbaar",
+  "@schedule_waiting_room_on": {
+    "description": "Waiting room enabled option title"
+  },
+  "schedule_waiting_room_on_hint": "Gebruik wachtruimte met een betaald abonnement",
+  "@schedule_waiting_room_on_hint": {
+    "description": "Waiting room enabled option hint"
+  },
+  "schedule_waiting_room_off": "Wachtruimte niet beschikbaar",
+  "@schedule_waiting_room_off": {
+    "description": "Waiting room disabled option title"
+  },
+  "switch_on": "Aan",
+  "@switch_on": {
+    "description": "Label when switch on"
+  },
+  "switch_off": "Uit",
+  "@switch_off": {
+    "description": "Label when switch off"
+  },
+  "schedule_waiting_room_off_hint": "Iedereen met de link kan onmiddellijk aanmelden",
+  "@schedule_waiting_room_off_hint": {
+    "description": "Waiting room disabled option hint"
   },
   "month_jan": "Januari",
   "@month_jan": {
