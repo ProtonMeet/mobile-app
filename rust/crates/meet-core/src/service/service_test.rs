@@ -72,7 +72,7 @@ pub(crate) mod tests {
     use mockall::predicate::eq;
     use proton_claims::{
         reexports::{cose_key_set::CoseKeySet, Issuer, IssuerParams, SpiceOidcClaims},
-        MimiProvider, ProtonMeetClaims,
+        ClientType, MimiProvider, ProtonMeetClaims,
     };
     use proton_meet_mls::{
         kv::MemKv, CommitBundle, MlsClient, MlsClientConfig, MlsGroup, MlsStore,
@@ -5109,6 +5109,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             mimi_provider: MimiProvider::ProtonAg,
             is_from_server: false,
             is_host,
+            client_type: ClientType::Guest,
         };
 
         let issuer_sk = "-----BEGIN PRIVATE KEY-----

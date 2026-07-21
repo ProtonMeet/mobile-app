@@ -325,7 +325,7 @@ mod tests {
     use mls_trait::{types::ReceivedMessage, MlsClientTrait, MlsGroupTrait};
     use proton_claims::{
         reexports::{cose_key_set::CoseKeySet, Issuer, IssuerParams, SpiceOidcClaims},
-        MimiProvider, ProtonMeetClaims,
+        ClientType, MimiProvider, ProtonMeetClaims,
     };
     use proton_meet_mls::{kv::MemKv, MlsClient, MlsClientConfig};
     use tokio::sync::RwLock;
@@ -853,6 +853,7 @@ mod tests {
             mimi_provider: MimiProvider::ProtonAg,
             is_from_server: false,
             is_host,
+            client_type: ClientType::Guest,
         };
 
         let issuer_sk = "-----BEGIN PRIVATE KEY-----

@@ -11,7 +11,7 @@ mod tests {
     use mls_trait::ProposalArg;
     use proton_claims::{
         reexports::{cose_key_set::CoseKeySet, Issuer, IssuerParams, SpiceOidcClaims},
-        MimiProvider,
+        ClientType, MimiProvider,
     };
     use proton_claims::{ProtonMeetClaims, Role};
     use proton_meet_mls::{
@@ -54,6 +54,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             mimi_provider: MimiProvider::ProtonAg,
             is_from_server: false,
             is_host: false,
+            client_type: ClientType::Guest,
         };
 
         // Generate device ID from holder verifying key

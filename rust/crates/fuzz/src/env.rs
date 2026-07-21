@@ -24,7 +24,7 @@ use mls_trait::{KvExt, MlsClientTrait, MlsGroupEntity, MlsGroupTrait, ProposalAr
 use mls_types::MlsMessage;
 use proton_claims::reexports::cose_key_set::CoseKeySet;
 use proton_claims::reexports::{Issuer, IssuerParams, SpiceOidcClaims};
-use proton_claims::{MimiProvider, ProtonMeetClaims, Role};
+use proton_claims::{ClientType, MimiProvider, ProtonMeetClaims, Role};
 use proton_meet_mls::kv::MemKv;
 use proton_meet_mls::{MlsClient, MlsClientConfig, MlsGroup, MlsGroupConfig};
 use std::str::FromStr;
@@ -779,6 +779,7 @@ fn mock_issuance(
         mimi_provider: MimiProvider::ProtonAg,
         is_from_server: false,
         is_host,
+        client_type: ClientType::Guest,
     };
 
     let issuer_signing_key = SigningKey::from_pkcs8_pem(ISSUER_SK_PEM).expect("issuer pkcs8");
