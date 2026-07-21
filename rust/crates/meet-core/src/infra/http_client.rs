@@ -915,10 +915,8 @@ impl HttpClient for ProtonHttpClient {
             .json(&body)
             .send()
             .await?
-            .error_for_status()?
-            .json::<ApiResponse<serde::de::IgnoredAny>>()
-            .await?
-            .into_ok()
+            .error_for_status()?;
+        Ok(())
     }
 
     async fn fetch_agent_keypackage(
