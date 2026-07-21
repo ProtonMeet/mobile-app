@@ -104,6 +104,7 @@ use crate::{
 
 use identity::{Disclosure, PresentationContext, ProtonMeetIdentity, SdCwt};
 use meet_identifiers::{AsOwned, Domain, GroupId, Id, LeafIndex};
+use proton_claims::ClientType;
 
 const DELAY_PER_RANK_MS: u64 = 100;
 const RANK_GROUP_SIZE: u64 = 3;
@@ -281,7 +282,7 @@ fn mimi_sub_from_credential(credential: &Credential) -> Result<String, anyhow::E
 }
 
 /// True iff `credential` is from a server-issued (agent) identity. Read off
-/// `ProtonMeetClaims.is_from_server`, the same flag the auth service stamps
+/// `ProtonMeetClaims.client_type`, the same flag the auth service stamps
 /// onto agent SD-CWTs at issuance.
 pub(super) fn credential_is_agent(credential: &Credential) -> bool {
     matches!(
@@ -289,7 +290,7 @@ pub(super) fn credential_is_agent(credential: &Credential) -> bool {
         Credential::SdCwtDraft04 {
             claimset: Some(claimset),
             ..
-        } if claimset.is_from_server
+        } if claimset.client_type == ClientType::Agent
     )
 }
 
@@ -686,6 +687,7 @@ impl Service {
 
         let roster = mls_group.all_device_ids().collect::<HashSet<_>>();
         let mut added_user_identifiers = HashSet::new();
+        let mut agent_user_identifiers = HashSet::new();
 
         for proposal_info in &proposal_infos {
             // Extract Add proposal from nested structure
@@ -722,7 +724,11 @@ impl Service {
                 continue;
             }
 
-            added_user_identifiers.insert(device_id.owning_identity_id().as_owned());
+            let owning_identity_id = device_id.owning_identity_id().as_owned();
+            if credential_is_agent(&cred) {
+                agent_user_identifiers.insert(owning_identity_id.clone());
+            }
+            added_user_identifiers.insert(owning_identity_id);
         }
         let mut role_proposals = Vec::with_capacity(added_user_identifiers.len());
         let participant_list: HashSet<_> = mls_group
@@ -737,9 +743,14 @@ impl Service {
                 tracing::debug!("Skipped adding existing user identifier: {:?}", &identifier);
                 continue;
             }
+            let role = if agent_user_identifiers.contains(&user_identifier) {
+                UserRole::Agent
+            } else {
+                UserRole::Member
+            };
             let Some(role_update) = mls_group
                 .authorizer()?
-                .role_proposal_for_added_user(epoch, identifier, UserRole::Member)?
+                .role_proposal_for_added_user(epoch, identifier, role)?
                 .map(|component| ProposalArg::UpdateComponent {
                     id: component.component_id,
                     data: component.data,
@@ -4221,6 +4232,7 @@ impl Service {
         let roster = mls_group.all_device_ids().collect::<HashSet<_>>();
         let mut proposal_args: Vec<ProposalArg> = Vec::with_capacity(key_packages.len());
         let mut added_user_identifiers = HashSet::new();
+        let mut agent_user_identifiers = HashSet::new();
 
         for key_package in key_packages {
             let Ok(mut cred) = key_package.credential() else {
@@ -4238,7 +4250,11 @@ impl Service {
                 );
                 continue;
             }
-            added_user_identifiers.insert(device_id.owning_identity_id().as_owned());
+            let owning_identity_id = device_id.owning_identity_id().as_owned();
+            if credential_is_agent(&cred) {
+                agent_user_identifiers.insert(owning_identity_id.clone());
+            }
+            added_user_identifiers.insert(owning_identity_id);
             proposal_args.push(ProposalArg::Add(Box::new(key_package.into())));
         }
 
@@ -4261,9 +4277,22 @@ impl Service {
             if participant_list.contains(&identifier) {
                 continue;
             }
+            let is_agent = agent_user_identifiers.contains(&user_identifier);
+            let role = if is_agent {
+                UserRole::Agent
+            } else {
+                UserRole::Member
+            };
+            if is_agent {
+                tracing::info!(
+                    "Agent entering room: assigning role {:?} to user identifier {:?}",
+                    role,
+                    user_identifier
+                );
+            }
             let Some(role_update) = mls_group
                 .authorizer()?
-                .role_proposal_for_added_user(epoch, identifier, UserRole::Member)?
+                .role_proposal_for_added_user(epoch, identifier, role)?
                 .map(|component| ProposalArg::UpdateComponent {
                     id: component.component_id,
                     data: component.data,
@@ -6019,12 +6048,37 @@ impl Service {
             return Ok(());
         }
 
+        let agent_role_update = {
+            let mut cred = agent_kp_typed
+                .credential()
+                .map_err(|e| anyhow::anyhow!("admit_agent: agent KP credential: {e:?}"))?;
+            let device_id = cred
+                .device_id()
+                .map_err(|e| anyhow::anyhow!("admit_agent: agent KP device_id: {e:?}"))?;
+            let owning_identity_id = device_id.owning_identity_id().as_owned();
+            let identifier = ProtonMeetIdentityProvider::user_identifier(&owning_identity_id);
+            let epoch = *mls_group.epoch();
+            mls_group
+                .authorizer()?
+                .role_proposal_for_added_user(epoch, identifier, UserRole::Agent)?
+                .map(|component| ProposalArg::UpdateComponent {
+                    id: component.component_id,
+                    data: component.data,
+                })
+                .ok_or_else(|| {
+                    anyhow::anyhow!(
+                        "admit_agent: role_proposal_for_added_user returned None (Agent role change not authorized)"
+                    )
+                })?
+        };
+
         let (commit_bundle, _) = mls_group
             .new_commit(vec![
                 ProposalArg::PskExternal {
                     id: ExternalPskId(psk_id_bytes.clone()),
                 },
                 ProposalArg::Add(Box::new(agent_kp_typed)),
+                agent_role_update,
             ])
             .await
             .map_err(|e| anyhow::anyhow!("admit_agent new_commit: {e:?}"))?;
