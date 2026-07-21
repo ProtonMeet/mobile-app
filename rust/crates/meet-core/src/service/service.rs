@@ -6029,6 +6029,17 @@ impl Service {
                 .map_err(|e| anyhow::anyhow!("decode agent KP: {e:?}"))?
         };
 
+        {
+            let cred = agent_kp_typed
+                .credential()
+                .map_err(|e| anyhow::anyhow!("admit_agent: agent KP credential: {e:?}"))?;
+            if !credential_is_agent(&cred) {
+                anyhow::bail!(
+                    "admit_agent: refusing to admit device_id={agent_device_id}: KP credential is not ClientType::Agent"
+                );
+            }
+        }
+
         // Take the group write lock and hold it across new_commit → upload →
         // merge/clear. Matches `remove_agent`: safe against concurrent WS
         // commit processing racing our un-merged pending commit.
