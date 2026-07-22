@@ -14,6 +14,7 @@ class ControlAction {
     this.key,
     this.globalKey,
     this.description,
+    this.testId,
   });
 
   final Widget icon;
@@ -28,4 +29,5 @@ class ControlAction {
   final Key? key;
   final GlobalKey? globalKey;
   final String? description;
+  final String? testId;
 }

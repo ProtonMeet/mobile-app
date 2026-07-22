@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/audio_output_display.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/views/components/safe_video_track_renderer.dart';
+import 'package:meet/views/components/test_id.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_bloc.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_speaker_phone_panel.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_state.dart';
@@ -277,6 +279,7 @@ class VideoPreviewWithControls extends StatelessWidget {
         : context.colors.deviceSelectorDisabledBackground;
 
     return _ControlButton(
+      testId: TestIds.prejoinVideoToggle,
       onTap: (!isCameraPermissionGranted && !isVideoEnabled)
           ? onCameraPermissionRequest
           : onVideoToggle,
@@ -295,6 +298,7 @@ class VideoPreviewWithControls extends StatelessWidget {
         : context.colors.deviceSelectorDisabledBackground;
 
     return _ControlButton(
+      testId: TestIds.prejoinMicToggle,
       onTap: (!isMicrophonePermissionGranted && !isAudioEnabled)
           ? onMicrophonePermissionRequest
           : onAudioToggle,
@@ -320,31 +324,33 @@ class VideoPreviewWithControls extends StatelessWidget {
     // Active toggle = filled blue, matching the meeting-settings switch colour. Inactive uses
     // the same neutral control-bar background as the swap-camera button next to it.
     final bg = context.colors.controlBarBtnBackground;
-    return GestureDetector(
-      onTap: onCameraBackgroundBlurToggle,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Container(
-          width: buttonSize,
-          height: buttonSize,
-          padding: const EdgeInsets.all(14),
-          decoration: ShapeDecoration(
-            color: bg,
-            shape: RoundedRectangleBorder(
-              side: BorderSide(width: 0.86, color: bg),
-              borderRadius: BorderRadius.circular(100),
+    return TestId(
+      id: TestIds.prejoinBackgroundBlur,
+      button: true,
+      child: GestureDetector(
+        onTap: onCameraBackgroundBlurToggle,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: Container(
+            width: buttonSize,
+            height: buttonSize,
+            padding: const EdgeInsets.all(14),
+            decoration: ShapeDecoration(
+              color: bg,
+              shape: RoundedRectangleBorder(
+                side: BorderSide(width: 0.86, color: bg),
+                borderRadius: BorderRadius.circular(100),
+              ),
             ),
-          ),
-          // No bespoke SVG asset for blur — Material `blur_on` / `blur_off` are stock 24dp
-          // glyphs that render cleanly at the swap button's 20-pixel footprint.
-          child: SizedBox(
-            width: 20,
-            height: 20,
-            child: FittedBox(
-              child: Icon(
-                cameraBackgroundBlurEnabled ? Icons.blur_on : Icons.blur_off,
-                color: context.colors.textNorm,
-                semanticLabel: context.local.camera_background_blur,
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: FittedBox(
+                child: Icon(
+                  cameraBackgroundBlurEnabled ? Icons.blur_on : Icons.blur_off,
+                  color: context.colors.textNorm,
+                  semanticLabel: context.local.camera_background_blur,
+                ),
               ),
             ),
           ),
@@ -355,31 +361,35 @@ class VideoPreviewWithControls extends StatelessWidget {
 
   Widget _buildSwapVideoButton(BuildContext context) {
     final buttonSize = 48.0;
-    return GestureDetector(
-      onTap: onSwapVideo,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Container(
-          width: buttonSize,
-          height: buttonSize,
-          padding: const EdgeInsets.all(14),
-          decoration: ShapeDecoration(
-            color: context.colors.controlBarBtnBackground,
-            shape: RoundedRectangleBorder(
-              side: BorderSide(
-                width: 0.86,
-                color: context.colors.controlBarBtnBackground,
+    return TestId(
+      id: TestIds.prejoinSwapCamera,
+      button: true,
+      child: GestureDetector(
+        onTap: onSwapVideo,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: Container(
+            width: buttonSize,
+            height: buttonSize,
+            padding: const EdgeInsets.all(14),
+            decoration: ShapeDecoration(
+              color: context.colors.controlBarBtnBackground,
+              shape: RoundedRectangleBorder(
+                side: BorderSide(
+                  width: 0.86,
+                  color: context.colors.controlBarBtnBackground,
+                ),
+                borderRadius: BorderRadius.circular(100),
               ),
-              borderRadius: BorderRadius.circular(100),
             ),
-          ),
-          child: context.images.iconSwapCamera.svg(
-            width: 20,
-            height: 20,
-            fit: BoxFit.fill,
-            colorFilter: ColorFilter.mode(
-              context.colors.textNorm,
-              BlendMode.srcIn,
+            child: context.images.iconSwapCamera.svg(
+              width: 20,
+              height: 20,
+              fit: BoxFit.fill,
+              colorFilter: ColorFilter.mode(
+                context.colors.textNorm,
+                BlendMode.srcIn,
+              ),
             ),
           ),
         ),
@@ -389,7 +399,10 @@ class VideoPreviewWithControls extends StatelessWidget {
 
   Widget _buildSpeakerPhoneButton(BuildContext context) {
     final buttonSize = 48.0;
-    return GestureDetector(
+    return TestId(
+      id: TestIds.prejoinSpeaker,
+      button: true,
+      child: GestureDetector(
       onTap: () {
         final preJoinBloc = context.read<PreJoinBloc>();
         showModalBottomSheet(
@@ -443,6 +456,7 @@ class VideoPreviewWithControls extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -518,6 +532,7 @@ class _ControlButton extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     this.showWarning = false,
+    this.testId,
   });
 
   final VoidCallback onTap;
@@ -525,10 +540,13 @@ class _ControlButton extends StatelessWidget {
   final Widget icon;
   final Color iconColor;
   final bool showWarning;
+  final String? testId;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return withTestId(
+      testId,
+      GestureDetector(
       onTap: onTap,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
@@ -590,6 +608,8 @@ class _ControlButton extends StatelessWidget {
           ],
         ),
       ),
+    ),
+      button: true,
     );
   }
 }

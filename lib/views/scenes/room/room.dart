@@ -13,6 +13,7 @@ import 'package:livekit_client/livekit_client.dart' hide ConnectionState;
 import 'package:logger/logger.dart';
 import 'package:meet/constants/constants.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
@@ -47,6 +48,7 @@ import 'package:meet/rust/proton_meet/user_config.dart';
 import 'package:meet/views/components/alerts/media_permission_dialog.dart';
 import 'package:meet/views/components/alerts/meeting_will_end_dialog.dart';
 import 'package:meet/views/components/alerts/session_expired_dialog.dart';
+import 'package:meet/views/components/test_id.dart';
 import 'package:meet/views/components/bottom.sheets/leave_room_bottom_sheet.dart';
 import 'package:meet/views/components/custom.tooltip.dart';
 import 'package:meet/views/components/loading_view.dart';
@@ -2614,12 +2616,17 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                 if (isRoomReady && !desktop) {
                   _bloc.add(StartAutoFullScreenTimer());
                 }
-                return Scaffold(
+                return TestId(
+                  id: TestIds.roomScreen,
+                  child: Scaffold(
                   resizeToAvoidBottomInset: false,
                   backgroundColor: context.colors.interActionWeakMinor3,
                   floatingActionButton: desktop || !_showRotationButton
                       ? null
-                      : FloatingActionButton(
+                      : TestId(
+                          id: TestIds.roomRotate,
+                          button: true,
+                          child: FloatingActionButton(
                           backgroundColor: context.colors.protonBlue.withValues(
                             alpha: 0.5,
                           ),
@@ -2638,6 +2645,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                             }
                           },
                           child: Icon(Icons.screen_rotation_rounded),
+                        ),
                         ),
                   floatingActionButtonLocation:
                       OffsetFloatingActionButtonLocation(
@@ -2693,6 +2701,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                       ],
                     ),
                   ),
+                ),
                 );
               },
             ),
@@ -3102,12 +3111,14 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                       tooltip: context.local.share_screen,
                       onPressed: onScreenShareTapped,
                       isActive: true,
+                      testId: TestIds.roomScreenShare,
                     )
                   : null;
 
               return [
                 /// Mute speaker
                 ControlAction(
+                  testId: TestIds.roomSpeakerMute,
                   activeIcon: context.images.iconSpeakerOn.svg(
                     width: 24,
                     height: 24,
@@ -3135,6 +3146,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                 /// Emoji reactions
                 if (state.room.localParticipant != null)
                   ControlAction(
+                    testId: TestIds.roomReactions,
                     icon: Icon(Icons.emoji_emotions_outlined, size: 24),
                     tooltip: context.local.emoji_reactions,
                     onPressed: () {
@@ -3146,6 +3158,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                 if (_bloc.isPictureInPictureFeatureEnabled() &&
                     state.pipAvailable == true)
                   ControlAction(
+                    testId: TestIds.roomPip,
                     icon: const Icon(Icons.picture_in_picture),
                     tooltip: context.local.enter_pip,
                     onPressed: () {
@@ -3161,6 +3174,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
                 /// Participants
                 ControlAction(
+                  testId: TestIds.roomParticipants,
                   icon: context.images.iconParticipants.svg24(),
                   badge: '${state.room.remoteParticipants.length + 1}',
                   tooltip:
@@ -3179,6 +3193,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
                 /// Chat
                 ControlAction(
+                  testId: TestIds.roomChat,
                   icon: context.images.iconChat.svg(width: 24, height: 24),
                   tooltip:
                       context.local.show_chatroom +
@@ -3200,6 +3215,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
                 /// Settings
                 ControlAction(
+                  testId: TestIds.roomSettings,
                   icon: context.images.iconSettings.svg(width: 24, height: 24),
                   tooltip: context.local.show_settings,
                   onPressed: () {
@@ -3215,6 +3231,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
                 /// Info
                 ControlAction(
+                  testId: TestIds.roomInfo,
                   icon: context.images.iconInfo.svg(width: 24, height: 24),
                   tooltip: context.local.meeting_info,
                   onPressed: () {

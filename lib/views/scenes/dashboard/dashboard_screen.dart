@@ -2,6 +2,7 @@ import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
@@ -11,6 +12,7 @@ import 'package:meet/managers/app.state.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/views/components/alerts/early_access_dialog.dart';
 import 'package:meet/views/components/app_nav_bar.dart';
+import 'package:meet/views/components/test_id.dart';
 import 'package:meet/views/scenes/dashboard/join/join_meeting_dialog.dart';
 import 'package:meet/views/scenes/dashboard/search/search_bar.dart';
 import 'package:meet/views/scenes/dashboard/start_action/floating_start_button.dart';
@@ -216,7 +218,10 @@ class DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildGuestPersonalMeetingEntry(BuildContext context) {
-    return Material(
+    return TestId(
+      id: TestIds.dashboardGuestPersonalMeeting,
+      button: true,
+      child: Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: widget.onPersonalMeeting,
@@ -264,6 +269,7 @@ class DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 

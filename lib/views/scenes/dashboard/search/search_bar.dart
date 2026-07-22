@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/views/components/sort_button.dart';
+import 'package:meet/views/components/test_id.dart';
 
 class DashboardSearchBar extends StatelessWidget {
   const DashboardSearchBar({
@@ -24,7 +26,10 @@ class DashboardSearchBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           Expanded(
-            child: InkWell(
+            child: TestId(
+              id: TestIds.dashboardSearchBar,
+              button: true,
+              child: InkWell(
               onTap: onTap,
               borderRadius: BorderRadius.circular(200),
               child: Container(
@@ -50,10 +55,11 @@ class DashboardSearchBar extends StatelessWidget {
                 ),
               ),
             ),
+            ),
           ),
           if (onSortTap != null) ...[
             const SizedBox(width: 6),
-            SortButton(onTap: onSortTap!),
+            SortButton(onTap: onSortTap!, testId: TestIds.dashboardSort),
           ],
           if (onFilterTap != null) ...[
             const SizedBox(width: 6),

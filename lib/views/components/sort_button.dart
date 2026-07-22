@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
+import 'package:meet/views/components/test_id.dart';
 
 class SortButton extends StatelessWidget {
   const SortButton({
     required this.onTap,
     this.width = 40.0,
     this.height = 40.0,
+    this.testId,
     super.key,
   });
 
   final VoidCallback onTap;
   final double width;
   final double height;
+  final String? testId;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return withTestId(
+      testId,
+      InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(200),
       child: Container(
@@ -32,6 +37,8 @@ class SortButton extends StatelessWidget {
         ),
         child: context.images.iconSorting.svg16(color: context.colors.textWeak),
       ),
+    ),
+      button: true,
     );
   }
 }

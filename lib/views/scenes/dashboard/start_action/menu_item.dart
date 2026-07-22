@@ -3,22 +3,27 @@ import 'package:meet/constants/assets.gen.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
+import 'package:meet/views/components/test_id.dart';
 
 class MenuItem extends StatelessWidget {
   const MenuItem({
     required this.icon,
     required this.label,
     required this.onTap,
+    this.testId,
     super.key,
   });
 
   final SvgGenImage icon;
   final String label;
   final VoidCallback onTap;
+  final String? testId;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return withTestId(
+      testId,
+      InkWell(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -37,6 +42,8 @@ class MenuItem extends StatelessWidget {
           ],
         ),
       ),
+    ),
+      button: true,
     );
   }
 }

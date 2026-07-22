@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
+import 'package:meet/views/components/test_id.dart';
 
 class ButtonV5 extends StatelessWidget {
   final String text;
@@ -16,6 +17,7 @@ class ButtonV5 extends StatelessWidget {
   final bool enable;
   final double? elevation;
   final Size? maximumSize;
+  final String? testId;
 
   const ButtonV5({
     required this.text,
@@ -38,11 +40,14 @@ class ButtonV5 extends StatelessWidget {
     this.enable = true,
     this.disableWithAction = false,
     this.maximumSize = Size.infinite,
+    this.testId,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return withTestId(
+      testId,
+      Center(
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -79,6 +84,8 @@ class ButtonV5 extends StatelessWidget {
           ),
         ],
       ),
+    ),
+      button: true,
     );
   }
 }

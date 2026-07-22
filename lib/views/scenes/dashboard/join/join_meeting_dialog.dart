@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/constants/app.config.dart';
 import 'package:meet/constants/assets.gen.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/strings.dart';
@@ -17,6 +18,7 @@ import 'package:meet/rust/proton_meet/meet_link.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/views/components/alerts/base_bottom_sheet.dart';
 import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart';
+import 'package:meet/views/components/test_id.dart';
 import 'package:meet/views/scenes/dashboard/dashboard_bloc.dart';
 import 'package:meet/views/scenes/dashboard/dashboard_state.dart';
 import 'package:meet/views/scenes/dashboard/join/action_buttons.dart';
@@ -450,7 +452,9 @@ class _JoinMeetingModelState extends State<JoinMeetingModel> {
         ),
         duration: const Duration(milliseconds: 160),
         curve: Curves.easeOutCubic,
-        child: BaseBottomSheet(
+        child: TestId(
+          id: TestIds.joinDialog,
+          child: BaseBottomSheet(
           onBackdropTap: () => Navigator.of(context).maybePop(),
           borderRadius: BorderRadius.circular(40),
           borderSide: BorderSide(
@@ -517,6 +521,7 @@ class _JoinMeetingModelState extends State<JoinMeetingModel> {
               ],
             ),
           ),
+        ),
         ),
       ),
     );

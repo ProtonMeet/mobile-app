@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/helper/local_toast.dart';
@@ -11,6 +12,7 @@ import 'package:meet/views/components/alerts/media_permission_dialog.dart';
 import 'package:meet/views/components/alerts/meeting_locked_error.dart';
 import 'package:meet/views/components/close_button_v1.dart';
 import 'package:meet/views/components/custom.loading.dart';
+import 'package:meet/views/components/test_id.dart';
 import 'package:meet/views/scenes/signin/auth_bloc.dart';
 import 'package:meet/views/scenes/signin/auth_state.dart';
 
@@ -254,32 +256,35 @@ class _PreJoinPageState extends State<PreJoinPage> {
               child: BlocSelector<AuthBloc, AuthState, AuthState>(
                 selector: (s) => s,
                 builder: (context, state) {
-                  return Scaffold(
-                    backgroundColor: context.colors.backgroundNorm,
-                    resizeToAvoidBottomInset: true,
-                    body: SafeArea(
-                      child: Stack(
-                        children: [
-                          ColoredBox(
-                            color: context.colors.clear,
-                            child: PreJoinScreen(
-                              bloc: widget.bloc,
-                              authBloc: widget.authBloc,
-                              displayNameController: _displayNameController,
-                              roomNameController: _roomNameController,
-                              displayNameFocusNode: _displayNameFocusNode,
-                              meetingLinkFocusNode: _meetingLinkFocusNode,
+                  return TestId(
+                    id: TestIds.prejoinScreen,
+                    child: Scaffold(
+                      backgroundColor: context.colors.backgroundNorm,
+                      resizeToAvoidBottomInset: true,
+                      body: SafeArea(
+                        child: Stack(
+                          children: [
+                            ColoredBox(
+                              color: context.colors.clear,
+                              child: PreJoinScreen(
+                                bloc: widget.bloc,
+                                authBloc: widget.authBloc,
+                                displayNameController: _displayNameController,
+                                roomNameController: _roomNameController,
+                                displayNameFocusNode: _displayNameFocusNode,
+                                meetingLinkFocusNode: _meetingLinkFocusNode,
+                              ),
                             ),
-                          ),
-                          Positioned(
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            child: _PreJoinTopBar(
-                              onClose: () => _handlePreJoinClose(context),
+                            Positioned(
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              child: _PreJoinTopBar(
+                                onClose: () => _handlePreJoinClose(context),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   );
@@ -364,34 +369,34 @@ class _PreJoinTopBar extends StatelessWidget {
                         color: context.colors.textWeak,
                       ),
                     ),
-                    IconButton(
-                      onPressed: copyText.isEmpty
-                          ? null
-                          : () {
-                              Clipboard.setData(
-                                ClipboardData(text: copyText),
-                              ).then((_) {
-                                if (context.mounted) {
-                                  LocalToast.showToast(
-                                    context,
-                                    context.local.copied_to_clipboard,
-                                  );
-                                }
-                              });
-                            },
-                      icon: context.images.iconCopy.svg20(
-                        color: context.colors.interActionNorm,
-                      ),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 32,
-                        minHeight: 32,
+                    TestId(
+                      id: TestIds.prejoinCopyMeetingCode,
+                      button: true,
+                      child: IconButton(
+                        onPressed: copyText.isEmpty
+                            ? null
+                            : () {
+                                Clipboard.setData(
+                                  ClipboardData(text: copyText),
+                                ).then((_) {
+                                  if (context.mounted) {
+                                    LocalToast.showToast(
+                                      context,
+                                      context.local.copied_to_clipboard,
+                                    );
+                                  }
+                                });
+                              },
+                        icon: context.images.iconCopy.svg20(
+                          color: context.colors.interActionNorm,
+                        ),
                       ),
                     ),
                   ],
                 ] else
                   const Spacer(),
                 CloseButtonV1(
+                  testId: TestIds.prejoinClose,
                   onPressed: onClose,
                   backgroundColor: Colors.transparent,
                   iconSize: 24,

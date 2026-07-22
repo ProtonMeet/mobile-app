@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/constants/constants.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/strings.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
@@ -12,6 +13,7 @@ import 'package:meet/views/components/button.v5.dart';
 import 'package:meet/views/components/button.v6.dart';
 import 'package:meet/views/components/custom.loading.dart';
 import 'package:meet/views/components/textfield.text.v2.dart';
+import 'package:meet/views/components/test_id.dart';
 import 'package:meet/views/scenes/dashboard/schedule/waiting_room_sheet.dart';
 import 'package:meet/views/scenes/prejoin/remember_checkbox.dart';
 import 'package:meet/views/scenes/signin/auth_bloc.dart';
@@ -160,6 +162,8 @@ class PreJoinScreen extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(color: context.colors.clear),
                         height: previewHeight,
+                        child: TestId(
+                        id: TestIds.prejoinPreview,
                         child: VideoPreviewWithControls(
                           width: screenWidth - (padding * 2),
                           height: previewHeight,
@@ -207,6 +211,7 @@ class PreJoinScreen extends StatelessWidget {
                             }
                           },
                         ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: _previewBottomGap),
@@ -253,6 +258,7 @@ class PreJoinScreen extends StatelessWidget {
                               const SizedBox(height: 16),
                               if (state.preJoinType == PreJoinType.join)
                                 ButtonV6(
+                                  testId: TestIds.prejoinJoin,
                                   onPressed: () =>
                                       _onJoinPressed(context, state),
                                   enable:
@@ -273,6 +279,7 @@ class PreJoinScreen extends StatelessWidget {
                                 ),
                               if (state.preJoinType == PreJoinType.create)
                                 ButtonV5(
+                                  testId: TestIds.prejoinCreate,
                                   onPressed: () async {
                                     if (PlatformInfoChannel.isInForceUpgradeState()) {
                                       return;
@@ -383,7 +390,10 @@ class PreJoinScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      TextField(
+                      TestId(
+                        id: TestIds.prejoinDisplayNameField,
+                        textField: true,
+                        child: TextField(
                         controller: displayNameController,
                         focusNode: displayNameFocusNode,
                         maxLength: maxDisplayNameLength,
@@ -404,6 +414,7 @@ class PreJoinScreen extends StatelessWidget {
                         onChanged: (value) {
                           bloc.add(UpdateDisplayName(value));
                         },
+                        ),
                       ),
                     ],
                   ),
@@ -428,11 +439,15 @@ class PreJoinScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      Switch.adaptive(
+                      TestId(
+                        id: TestIds.prejoinRememberName,
+                        button: true,
+                        child: Switch.adaptive(
                         value: state.keepDisplayNameOnDevice,
                         onChanged: (value) {
                           bloc.add(ToggleKeepDisplayName(keep: value));
                         },
+                        ),
                       ),
                     ],
                   ),
@@ -486,7 +501,10 @@ class PreJoinScreen extends StatelessWidget {
       return label;
     }
 
-    return GestureDetector(
+    return TestId(
+      id: TestIds.prejoinWaitingRoomStatus,
+      button: state.isMeetingHost && state.isWaitingRoomFeatureEnabled,
+      child: GestureDetector(
       onTap: () {
         showWaitingRoomSheet(
           context,
@@ -498,6 +516,7 @@ class PreJoinScreen extends StatelessWidget {
         );
       },
       child: label,
+    ),
     );
   }
 
@@ -539,6 +558,7 @@ class PreJoinScreen extends StatelessWidget {
 
         const SizedBox(height: 10),
         RememberCheckbox(
+          testId: TestIds.prejoinRememberName,
           value: state.keepDisplayNameOnDevice,
           onChanged: (value) {
             bloc.add(ToggleKeepDisplayName(keep: value));
@@ -696,6 +716,7 @@ class PreJoinScreen extends StatelessWidget {
         ],
         const SizedBox(height: 32),
         ButtonV6(
+          testId: TestIds.prejoinLeaveWaiting,
           text: context.local.leave,
           width: buttonWidth,
           height: buttonHeight,

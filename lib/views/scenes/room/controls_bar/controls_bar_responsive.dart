@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/constants/constants.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/background_blur/camera_background_blur_sync.dart';
 import 'package:meet/helper/denoise/denoise_audio_sync.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
@@ -20,6 +21,7 @@ import 'package:meet/managers/channels/platform_info_channel.dart';
 import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/rust/proton_meet/user_config.dart';
 import 'package:meet/rust/proton_meet/user_config_extensions.dart';
+import 'package:meet/views/components/test_id.dart';
 import 'package:meet/views/scenes/room/controls_bar/controls_icon_button.dart';
 import 'package:meet/views/scenes/room/controls_bar/controls_video_action.dart';
 import 'package:meet/views/scenes/room/room_bloc.dart';
@@ -418,6 +420,7 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
               key: a.key,
               globalKey: a.globalKey,
               description: a.description,
+              testId: a.testId,
             );
 
             Widget buildMoreMenu() {
@@ -427,6 +430,7 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
               return ControlIconButton(
                 icon: context.images.iconMore.svg24(),
                 tooltip: context.local.more,
+                testId: TestIds.roomMore,
                 onPressed: () {
                   OverflowMenuBottomSheet.show(context, overflow);
                 },
@@ -483,7 +487,10 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
       await _setVideoInputDevice(device, context);
     }
 
-    return VideoControlButton(
+    return TestId(
+      id: TestIds.roomVideo,
+      button: true,
+      child: VideoControlButton(
       room: widget.room,
       autoSelectDevcie: mobile && !_isIOSAppOnMacOS,
       isCameraEnabled: participant?.isCameraEnabled() ?? false,
@@ -496,11 +503,15 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
       videoInputs: _videoInputs,
       selectedVideoInputId: widget.room.selectedVideoInputDeviceId,
       isMicrophonePermissionGranted: _isMicrophonePermissionGranted,
+      ),
     );
   }
 
   Widget _buildAudioAction(BuildContext context) {
-    return AudioControlButton(
+    return TestId(
+      id: TestIds.roomMic,
+      button: true,
+      child: AudioControlButton(
       context: context,
       room: widget.room,
       autoSelectDevice: mobile && !_isIOSAppOnMacOS,
@@ -515,11 +526,15 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
       audioOutputs: _audioOutputs,
       selectedAudioInputId: widget.room.selectedAudioInputDeviceId,
       selectedAudioOutputId: widget.room.selectedAudioOutputDeviceId,
+      ),
     );
   }
 
   Widget _buildLeaveButton(BuildContext context) {
-    return ElevatedButton(
+    return TestId(
+      id: TestIds.roomLeave,
+      button: true,
+      child: ElevatedButton(
       style: ElevatedButton.styleFrom(
         fixedSize: Size(widget.buttonWidth, widget.buttonWidth),
         backgroundColor: context.colors.deviceSelectorDisabledBackground,
@@ -529,6 +544,7 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
       ),
       onPressed: widget.onLeave,
       child: context.images.iconEndCall.svg30(color: context.colors.white),
+      ),
     );
   }
 }

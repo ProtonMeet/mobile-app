@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
+import 'package:meet/views/components/test_id.dart';
 
 enum MeetUpcomingTab { myMeetings, myRooms }
 
@@ -114,7 +116,10 @@ class _MeetUpcomingTitleState extends State<MeetUpcomingTitle>
           splashFactory: NoSplash.splashFactory,
           tabs: [
             Tab(
-              child: Padding(
+              child: TestId(
+                id: TestIds.dashboardTabMyMeetings,
+                button: true,
+                child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -129,9 +134,13 @@ class _MeetUpcomingTitleState extends State<MeetUpcomingTitle>
                   ],
                 ),
               ),
+              ),
             ),
             Tab(
-              child: Padding(
+              child: TestId(
+                id: TestIds.dashboardTabMyRooms,
+                button: true,
+                child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -144,6 +153,7 @@ class _MeetUpcomingTitleState extends State<MeetUpcomingTitle>
                     ),
                   ],
                 ),
+              ),
               ),
             ),
           ],
@@ -164,6 +174,7 @@ class _MeetUpcomingTitleState extends State<MeetUpcomingTitle>
         mainAxisSize: MainAxisSize.min,
         children: [
           _TextTab(
+            testId: TestIds.dashboardTabMyMeetings,
             label: myMeetingsLabel,
             count: widget.myMeetingsCount,
             selected: myMeetingsSelected,
@@ -176,6 +187,7 @@ class _MeetUpcomingTitleState extends State<MeetUpcomingTitle>
             decoration: BoxDecoration(color: context.colors.borderCard),
           ),
           _TextTab(
+            testId: TestIds.dashboardTabMyRooms,
             label: myRoomsLabel,
             count: widget.myRoomsCount,
             selected: myRoomsSelected,
@@ -207,6 +219,7 @@ class _MeetUpcomingTitleState extends State<MeetUpcomingTitle>
           if (effectiveShowButton) ...[
             const SizedBox(width: 16),
             _ActionButton(
+              testId: hasReload ? TestIds.dashboardFetchReload : null,
               onTap: widget.isLoading
                   ? null
                   : hasReload
@@ -239,12 +252,14 @@ class _TextTab extends StatelessWidget {
     required this.count,
     required this.selected,
     required this.onTap,
+    this.testId,
   });
 
   final String label;
   final int count;
   final bool selected;
   final VoidCallback onTap;
+  final String? testId;
 
   @override
   Widget build(BuildContext context) {
@@ -255,7 +270,9 @@ class _TextTab extends StatelessWidget {
     final textStyle = selected
         ? ProtonStyles.subheadline(color: textColor)
         : ProtonStyles.subheadline(color: textColor, fontSize: 18.0);
-    return Material(
+    return withTestId(
+      testId,
+      Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
@@ -272,6 +289,8 @@ class _TextTab extends StatelessWidget {
           ),
         ),
       ),
+    ),
+      button: true,
     );
   }
 }
@@ -304,14 +323,17 @@ class _CountBadge extends StatelessWidget {
 }
 
 class _ActionButton extends StatelessWidget {
-  const _ActionButton({this.onTap, this.icon});
+  const _ActionButton({this.onTap, this.icon, this.testId});
 
   final VoidCallback? onTap;
   final Widget? icon;
+  final String? testId;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    return withTestId(
+      testId,
+      Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
@@ -343,6 +365,8 @@ class _ActionButton extends StatelessWidget {
           ),
         ),
       ),
+    ),
+      button: true,
     );
   }
 }
