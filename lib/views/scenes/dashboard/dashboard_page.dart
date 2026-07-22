@@ -154,7 +154,12 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  void joinMeetingWithLink(String roomId, String password, String meetingLink) {
+  void joinMeetingWithLink(
+    String roomId,
+    String password,
+    String meetingLink, {
+    FrbUpcomingMeeting? hostMeeting,
+  }) {
     if (PlatformInfoChannel.isInForceUpgradeState()) {
       return;
     }
@@ -173,6 +178,7 @@ class _DashboardPageState extends State<DashboardPage> {
         "isAudioEnabled": false,
         "isE2EEEnabled": true,
         "authBloc": widget.authBloc,
+        "hostMeeting": ?hostMeeting,
       },
     );
   }

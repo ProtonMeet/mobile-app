@@ -50,11 +50,12 @@ class PreJoinScreen extends StatelessWidget {
 
   static bool _shouldShowWaitingRoomStatus(PreJoinState state) {
     if (state.preJoinType != PreJoinType.join ||
-        !state.isMeetingHost) {
+        !state.isMeetingHost ||
+        !state.isWaitingRoomFeatureEnabled) {
       return false;
     }
-    
-    return state.isWaitingRoomFeatureEnabled;
+
+    return true;
   }
 
   /// Keep the bottom slot tall enough for both join and waiting-room admission UIs so
@@ -256,6 +257,7 @@ class PreJoinScreen extends StatelessWidget {
                                       _onJoinPressed(context, state),
                                   enable:
                                       !state.isJoinAuthenticating &&
+                                      !state.isLoadingHostMeetingContext &&
                                       !state.isInWaitingRoomAdmission &&
                                       !PlatformInfoChannel.isInForceUpgradeState(),
                                   isLoading: state.isJoinAuthenticating,
@@ -448,6 +450,20 @@ class PreJoinScreen extends StatelessWidget {
   }
 
   Widget _buildWaitingRoomStatus(BuildContext context, PreJoinState state) {
+    if (state.isLoadingHostMeetingContext) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: CustomLoading(
+            size: 16,
+            strokeWidth: 2,
+            color: context.colors.protonBlue,
+          ),
+        ),
+      );
+    }
+
     final waitingRoomEnabled = state.isMeetingHost
         ? state.waitingRoomEnabled
         : state.hasWaitingRoom;

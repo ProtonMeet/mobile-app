@@ -51,8 +51,7 @@ class DashboardScreen extends StatefulWidget {
   @protected
   final DashboardBloc bloc;
   final AuthBloc authBloc;
-  final void Function(String roomId, String password, String meetingLink)
-  onJoinMeetingWithLink;
+  final OnJoin onJoinMeetingWithLink;
   final VoidCallback onStartSecureMeeting;
   final VoidCallback onScheduleMeeting;
   final VoidCallback onPersonalMeeting;

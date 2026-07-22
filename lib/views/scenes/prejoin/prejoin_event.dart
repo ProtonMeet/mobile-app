@@ -121,6 +121,8 @@ class PreJoinHostMeetingContextResolved extends PreJoinEvent {
   });
 }
 
+class PreJoinHostMeetingContextLoadFinished extends PreJoinEvent {}
+
 class PreJoinNavigateToWaitingRoomConsumed extends PreJoinEvent {}
 
 class PreJoinStartWaitingRoomAdmission extends PreJoinEvent {

@@ -93,6 +93,9 @@ class PreJoinState {
   /// Decrypted meeting metadata from pre-join auth; forwarded to the room.
   final FrbMeetingInfo? meetingInfo;
   final bool isMeetingHost;
+
+  /// True while resolving host room name / waiting-room policy from upcoming meetings.
+  final bool isLoadingHostMeetingContext;
   final bool isJoinAuthenticating;
   final bool shouldNavigateToWaitingRoom;
 
@@ -161,6 +164,7 @@ class PreJoinState {
     this.displayNameFieldError,
     this.meetingInfo,
     this.isMeetingHost = false,
+    this.isLoadingHostMeetingContext = false,
     this.isJoinAuthenticating = false,
     this.shouldNavigateToWaitingRoom = false,
     this.pendingHostWaitingRoomSyncEnabled,
@@ -227,6 +231,7 @@ class PreJoinState {
     String? displayNameFieldError,
     FrbMeetingInfo? meetingInfo,
     bool? isMeetingHost,
+    bool? isLoadingHostMeetingContext,
     bool? isJoinAuthenticating,
     bool? shouldNavigateToWaitingRoom,
     bool? pendingHostWaitingRoomSyncEnabled,
@@ -312,6 +317,8 @@ class PreJoinState {
           cameraBackgroundBlurEnabled ?? this.cameraBackgroundBlurEnabled,
       meetingInfo: meetingInfo ?? this.meetingInfo,
       isMeetingHost: isMeetingHost ?? this.isMeetingHost,
+      isLoadingHostMeetingContext:
+          isLoadingHostMeetingContext ?? this.isLoadingHostMeetingContext,
       isJoinAuthenticating:
           isJoinAuthenticating ?? this.isJoinAuthenticating,
       shouldNavigateToWaitingRoom:

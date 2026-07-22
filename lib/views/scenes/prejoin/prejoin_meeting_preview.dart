@@ -52,17 +52,6 @@ FrbMeetingInfo meetingInfoWithWaitingRoom(
   );
 }
 
-Future<bool> resolveIsMeetingHost({
-  required AppCoreManager appCoreManager,
-  required String meetingLinkName,
-}) async {
-  final context = await resolveHostMeetingContext(
-    appCoreManager: appCoreManager,
-    meetingLinkName: meetingLinkName,
-  );
-  return context != null;
-}
-
 /// Host context resolved from upcoming meetings (no SRP auth required).
 class PreJoinHostMeetingContext {
   const PreJoinHostMeetingContext({
@@ -103,15 +92,12 @@ Future<PreJoinJoinAuthResult> authenticateForJoin({
   required String meetingLinkName,
   required String meetingPassword,
   required String displayName,
+  required bool isMeetingHost,
 }) async {
   final meetInfo = await appCoreManager.appCore.authenticateMeetingLink(
     meetLinkName: meetingLinkName,
     meetLinkPassword: meetingPassword,
     displayName: displayName,
-  );
-  final isMeetingHost = await resolveIsMeetingHost(
-    appCoreManager: appCoreManager,
-    meetingLinkName: meetingLinkName,
   );
   return PreJoinJoinAuthResult(
     meetInfo: meetInfo,

@@ -175,10 +175,7 @@ class _PreJoinPageState extends State<PreJoinPage> {
                 curr.shouldShowMeetingLockedBottomSheet,
             listener: (context, state) {
               final meetingLink = state.meetingLink?.meetingLinkName;
-              showMeetingLockedBottomSheet(
-                context,
-                meetingLink: meetingLink,
-              );
+              showMeetingLockedBottomSheet(context, meetingLink: meetingLink);
               widget.bloc.add(PreJoinMeetingLockedBottomSheetConsumed());
             },
           ),
@@ -307,26 +304,27 @@ class _PreJoinTopBar extends StatelessWidget {
       PreJoinBloc,
       PreJoinState,
       ({
-        bool isLoading,
+        bool showRoomNameLoading,
         String roomName,
         String meetingLinkName,
         String? meetingLinkUrl,
         PreJoinType type,
-        WaitingRoomAdmissionPhase admissionPhase,
       })
     >(
-      selector: (state) => (
-        isLoading:
-            state.isJoinAuthenticating ||
-            (state.waitingRoomAdmissionPhase ==
-                    WaitingRoomAdmissionPhase.hostNotStarted &&
-                state.roomName.trim().isEmpty),
-        roomName: state.roomName.trim(),
-        meetingLinkName: state.meetingLink?.meetingLinkName.trim() ?? '',
-        meetingLinkUrl: state.meetingLinkUrl,
-        type: state.preJoinType,
-        admissionPhase: state.waitingRoomAdmissionPhase,
-      ),
+      selector: (state) {
+        final roomName = state.roomName.trim();
+        return (
+          showRoomNameLoading:
+              roomName.isEmpty &&
+              (state.isJoinAuthenticating ||
+                  state.waitingRoomAdmissionPhase ==
+                      WaitingRoomAdmissionPhase.hostNotStarted),
+          roomName: roomName,
+          meetingLinkName: state.meetingLink?.meetingLinkName.trim() ?? '',
+          meetingLinkUrl: state.meetingLinkUrl,
+          type: state.preJoinType,
+        );
+      },
       builder: (context, data) {
         final meetingCode = data.meetingLinkName;
         final copyText = (data.meetingLinkUrl?.trim().isNotEmpty ?? false)
@@ -341,7 +339,7 @@ class _PreJoinTopBar extends StatelessWidget {
               children: [
                 if (data.type == PreJoinType.join) ...[
                   Expanded(
-                    child: data.isLoading
+                    child: data.showRoomNameLoading
                         ? _PreJoinLoadingTitle(
                             label: context.local.loading.trim(),
                           )
@@ -366,13 +364,13 @@ class _PreJoinTopBar extends StatelessWidget {
                         color: context.colors.textWeak,
                       ),
                     ),
-                    if (!data.isLoading)
-                      IconButton(
+                    IconButton(
                       onPressed: copyText.isEmpty
                           ? null
                           : () {
-                              Clipboard.setData(ClipboardData(text: copyText))
-                                  .then((_) {
+                              Clipboard.setData(
+                                ClipboardData(text: copyText),
+                              ).then((_) {
                                 if (context.mounted) {
                                   LocalToast.showToast(
                                     context,
@@ -415,26 +413,29 @@ class _PreJoinLoadingTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Flexible(
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: ProtonStyles.body2Semibold(
-              color: context.colors.protonBlue,
+    return Padding(
+      padding: const EdgeInsets.only(left: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: ProtonStyles.body2Semibold(
+                color: context.colors.protonBlue,
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 8),
-        CustomLoading(
-          size: 16,
-          strokeWidth: 2,
-          color: context.colors.protonBlue,
-        ),
-      ],
+          const SizedBox(width: 8),
+          CustomLoading(
+            size: 16,
+            strokeWidth: 2,
+            color: context.colors.protonBlue,
+          ),
+        ],
+      ),
     );
   }
 }
