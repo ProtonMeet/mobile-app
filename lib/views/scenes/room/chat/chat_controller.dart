@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'chat_models.dart';
 
 /// Default quick-reaction emojis surfaced on hover / long-press.
-const List<String> kQuickReactionEmojis = ['👏', '💜', '🙌', '👍', '👎'];
+const List<String> kQuickReactionEmojis = ['👍', '❤️', '😂', '😮', '🥲', '👎'];
 
 /// Holds the full chat state for a room (messages, threads, reactions) and
 /// implements the reducer-equivalent actions from the Chat Threads spec.
