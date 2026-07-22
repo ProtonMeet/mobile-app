@@ -146,6 +146,8 @@ class PreJoinJoinRequestRejectedNotificationConsumed extends PreJoinEvent {}
 class PreJoinWaitingRoomAdmissionTimedOutNotificationConsumed
     extends PreJoinEvent {}
 
+class PreJoinMeetingLockedBottomSheetConsumed extends PreJoinEvent {}
+
 class PreJoinJoinDecisionReceived extends PreJoinEvent {
   final String requestId;
   final bool admitted;

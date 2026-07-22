@@ -8,6 +8,7 @@ import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/helper/local_toast.dart';
 import 'package:meet/views/components/alerts/media_permission_dialog.dart';
+import 'package:meet/views/components/alerts/meeting_locked_error.dart';
 import 'package:meet/views/components/close_button_v1.dart';
 import 'package:meet/views/components/custom.loading.dart';
 import 'package:meet/views/scenes/signin/auth_bloc.dart';
@@ -166,6 +167,19 @@ class _PreJoinPageState extends State<PreJoinPage> {
                 curr.error!.isNotEmpty,
             listener: (context, state) {
               LocalToast.showToast(context, state.error!);
+            },
+          ),
+          BlocListener<PreJoinBloc, PreJoinState>(
+            listenWhen: (prev, curr) =>
+                !prev.shouldShowMeetingLockedBottomSheet &&
+                curr.shouldShowMeetingLockedBottomSheet,
+            listener: (context, state) {
+              final meetingLink = state.meetingLink?.meetingLinkName;
+              showMeetingLockedBottomSheet(
+                context,
+                meetingLink: meetingLink,
+              );
+              widget.bloc.add(PreJoinMeetingLockedBottomSheetConsumed());
             },
           ),
           BlocListener<PreJoinBloc, PreJoinState>(

@@ -110,6 +110,7 @@ class PreJoinState {
   final bool shouldProceedToJoinAfterHostAccept;
   final bool shouldShowJoinRequestRejectedNotification;
   final bool shouldShowWaitingRoomAdmissionTimedOutNotification;
+  final bool shouldShowMeetingLockedBottomSheet;
 
   PreJoinState({
     this.roomName = '',
@@ -172,6 +173,7 @@ class PreJoinState {
     this.shouldProceedToJoinAfterHostAccept = false,
     this.shouldShowJoinRequestRejectedNotification = false,
     this.shouldShowWaitingRoomAdmissionTimedOutNotification = false,
+    this.shouldShowMeetingLockedBottomSheet = false,
   });
 
   PreJoinState copyWith({
@@ -238,6 +240,7 @@ class PreJoinState {
     bool? shouldProceedToJoinAfterHostAccept,
     bool? shouldShowJoinRequestRejectedNotification,
     bool? shouldShowWaitingRoomAdmissionTimedOutNotification,
+    bool? shouldShowMeetingLockedBottomSheet,
   }) {
     return PreJoinState(
       roomName: roomName ?? this.roomName,
@@ -338,6 +341,9 @@ class PreJoinState {
       shouldShowWaitingRoomAdmissionTimedOutNotification:
           shouldShowWaitingRoomAdmissionTimedOutNotification ??
           this.shouldShowWaitingRoomAdmissionTimedOutNotification,
+      shouldShowMeetingLockedBottomSheet:
+          shouldShowMeetingLockedBottomSheet ??
+          this.shouldShowMeetingLockedBottomSheet,
     );
   }
 
