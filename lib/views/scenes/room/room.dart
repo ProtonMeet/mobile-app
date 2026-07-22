@@ -186,6 +186,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       .unleashDataProvider
       .isMeetNewChatHandling();
 
+  bool get _chatThreadsEnabled => ManagerFactory()
+      .get<DataProviderManager>()
+      .unleashDataProvider
+      .isMeetChatThreads();
+
   /// Recording-status envelopes received before [RoomState.isRoomInitialized]
   /// flipped true. We can't validate them yet because the participant map (and
   /// therefore admin/host lookup) isn't loaded. Drained by
@@ -3614,7 +3619,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           controller: _chatController,
           userIdentity: localId,
           userName: widget.displayName,
-          newChatEnabled: _newChatEnabled,
+          chatThreadsEnabled: _chatThreadsEnabled,
           onSend: sendChatMessage,
           onToggleReaction: toggleChatReaction,
           onRetry: _retryChatMessage,

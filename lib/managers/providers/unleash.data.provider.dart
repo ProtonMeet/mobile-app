@@ -63,6 +63,9 @@ enum UnleashFeature {
   /// When disabled, chat falls back to the legacy encrypt/decrypt path
   /// (no threads, no MimiV1 reactions).
   meetNewChatHandling,
+
+  /// Long-press message actions: quick reactions + thread reply bottom sheet.
+  meetChatThreads,
 }
 
 /// Function to retrieve all default toggles
@@ -133,6 +136,8 @@ extension UnleashFeatureExt on UnleashFeature {
         return "MeetWaitingRoom";
       case UnleashFeature.meetNewChatHandling:
         return "MeetNewChatHandling";
+      case UnleashFeature.meetChatThreads:
+        return "MeetChatThreads";
     }
   }
 
@@ -415,4 +420,7 @@ class UnleashDataProvider extends DataProvider {
   /// MimiV1 chat: threads + event-based emoji reactions.
   bool isMeetNewChatHandling() =>
       isFeatureEnabled(UnleashFeature.meetNewChatHandling);
+
+  /// Long-press chat message actions (quick reactions + thread reply sheet).
+  bool isMeetChatThreads() => isFeatureEnabled(UnleashFeature.meetChatThreads);
 }
