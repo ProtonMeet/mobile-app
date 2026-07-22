@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/constants/constants.dart';
@@ -666,7 +667,7 @@ class PreJoinScreen extends StatelessWidget {
             textAlign: TextAlign.center,
             style: ProtonStyles.body2Medium(color: context.colors.textWeak),
           ),
-          if (admission.joinRequestId.isNotEmpty) ...[
+          if (admission.joinRequestId.isNotEmpty && kDebugMode) ...[
             const SizedBox(height: 12),
             SelectableText(
               admission.joinRequestId,
