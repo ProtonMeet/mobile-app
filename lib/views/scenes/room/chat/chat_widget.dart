@@ -29,7 +29,7 @@ class ChatWidget extends StatefulWidget {
   final ChatController controller;
   final String localIdentity;
   final String localName;
-  final bool newChatEnabled;
+  final bool chatThreadsEnabled;
   final ChatSendCallback onSend;
   final ChatReactionCallback onToggleReaction;
   final void Function(RoomChatMessage message)? onRetry;
@@ -42,7 +42,7 @@ class ChatWidget extends StatefulWidget {
     required this.localName,
     required this.onSend,
     required this.onToggleReaction,
-    this.newChatEnabled = false,
+    this.chatThreadsEnabled = false,
     this.onRetry,
     this.onDiscard,
     this.participantTracks,
@@ -1231,7 +1231,7 @@ class _ChatWidgetState extends State<ChatWidget> {
     }
 
     final showControls =
-        widget.newChatEnabled && message.status != ChatMessageStatus.pending;
+        widget.chatThreadsEnabled && message.status != ChatMessageStatus.pending;
 
     final row = Padding(
       padding: EdgeInsets.symmetric(vertical: isReply ? 6 : 8),

@@ -8,7 +8,7 @@ class ChatBubble extends StatelessWidget {
   final ChatController controller;
   final String userIdentity;
   final String userName;
-  final bool newChatEnabled;
+  final bool chatThreadsEnabled;
   final ChatSendCallback onSend;
   final ChatReactionCallback onToggleReaction;
   final void Function(RoomChatMessage message)? onRetry;
@@ -21,7 +21,7 @@ class ChatBubble extends StatelessWidget {
     required this.userName,
     required this.onSend,
     required this.onToggleReaction,
-    this.newChatEnabled = false,
+    this.chatThreadsEnabled = false,
     this.onRetry,
     this.onDiscard,
     this.participantTracks,
@@ -51,7 +51,7 @@ class ChatBubble extends StatelessWidget {
               controller: controller,
               localIdentity: userIdentity,
               localName: userName,
-              newChatEnabled: newChatEnabled,
+              chatThreadsEnabled: chatThreadsEnabled,
               onSend: onSend,
               onToggleReaction: onToggleReaction,
               onRetry: onRetry,
