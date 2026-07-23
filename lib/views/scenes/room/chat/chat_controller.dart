@@ -120,8 +120,9 @@ class ChatController extends ChangeNotifier {
   // ── addChatMessages ──
   /// Inserts a message, creating a "missing root" placeholder if this is a
   /// reply whose root is not present locally. Computes seen state.
-  void receiveMessage(RoomChatMessage message) {
-    if (indexOfId(message.id) != -1) return;
+  /// Returns `true` when [message] was newly inserted (not a duplicate id).
+  bool receiveMessage(RoomChatMessage message) {
+    if (indexOfId(message.id) != -1) return false;
 
     if (message.isReply) {
       _ensureMissingRoot(
@@ -133,6 +134,7 @@ class ChatController extends ChangeNotifier {
 
     _insertChronological(message.copyWith(seen: _computeIncomingSeen(message)));
     _commit(structure: true);
+    return true;
   }
 
   bool _computeIncomingSeen(RoomChatMessage message) {
@@ -366,15 +368,12 @@ class ChatController extends ChangeNotifier {
 
 /// Notification-relevance filter: decide whether a message should
 /// surface a toast / announcement for the local user.
+///
+/// Thread replies are intentionally silent; only root-level messages notify.
 bool isRelevantThreadMessage(
   RoomChatMessage message,
   List<RoomChatMessage> chatMessages,
   String localIdentity,
 ) {
-  if (!message.isReply) return true;
-  return chatMessages.any(
-    (m) =>
-        (m.id == message.topicId || m.topicId == message.topicId) &&
-        m.identity == localIdentity,
-  );
+  return !message.isReply;
 }

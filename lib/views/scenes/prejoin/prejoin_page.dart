@@ -314,6 +314,7 @@ class _PreJoinTopBar extends StatelessWidget {
         String meetingLinkName,
         String? meetingLinkUrl,
         PreJoinType type,
+        bool showCloseButton,
       })
     >(
       selector: (state) {
@@ -328,6 +329,9 @@ class _PreJoinTopBar extends StatelessWidget {
           meetingLinkName: state.meetingLink?.meetingLinkName.trim() ?? '',
           meetingLinkUrl: state.meetingLinkUrl,
           type: state.preJoinType,
+          showCloseButton:
+              state.waitingRoomAdmissionPhase !=
+              WaitingRoomAdmissionPhase.awaitingAdmission,
         );
       },
       builder: (context, data) {
@@ -395,13 +399,14 @@ class _PreJoinTopBar extends StatelessWidget {
                   ],
                 ] else
                   const Spacer(),
-                CloseButtonV1(
-                  testId: TestIds.prejoinClose,
-                  onPressed: onClose,
-                  backgroundColor: Colors.transparent,
-                  iconSize: 24,
-                  iconColor: context.colors.textNorm.withValues(alpha: 0.6),
-                ),
+                if (data.showCloseButton)
+                  CloseButtonV1(
+                    testId: TestIds.prejoinClose,
+                    onPressed: onClose,
+                    backgroundColor: Colors.transparent,
+                    iconSize: 24,
+                    iconColor: context.colors.textNorm.withValues(alpha: 0.6),
+                  ),
               ],
             ),
           ),

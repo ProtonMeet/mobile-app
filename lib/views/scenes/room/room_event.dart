@@ -276,6 +276,11 @@ class WaitingRoomJoinRequestsExpirationTick extends RoomBlocEvent {
   const WaitingRoomJoinRequestsExpirationTick();
 }
 
+/// Debounced retry to resolve waiting-room guest display names via getParticipants.
+class WaitingRoomJoinRequestDisplayNameRetry extends RoomBlocEvent {
+  const WaitingRoomJoinRequestDisplayNameRetry();
+}
+
 /// A waiting-room join request was removed (cancelled, rejected, or admitted).
 class WaitingRoomJoinRequestRemoved extends RoomBlocEvent {
   final String requestId;
