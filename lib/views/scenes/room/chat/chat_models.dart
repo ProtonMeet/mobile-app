@@ -94,6 +94,35 @@ class RoomChatMessage {
 
   bool get hasReactions => reactions.values.any((l) => l.isNotEmpty);
 
+  /// Wire/update payload merged into an existing row without dropping local UI
+  /// state (thread expand, draft, reactions, seen).
+  RoomChatMessage withEchoPreservingLocalUi(RoomChatMessage echo) {
+    return echo.copyWith(
+      expanded: expanded,
+      replyDraft: replyDraft,
+      seen: seen,
+      reactions: cloneReactions(reactions),
+    );
+  }
+
+  /// Placeholder root when a reply arrives before its root message.
+  factory RoomChatMessage.missingRoot({
+    required String rootId,
+    required int timestamp,
+    String? topicId,
+  }) {
+    return RoomChatMessage(
+      id: rootId,
+      message: '',
+      timestamp: timestamp,
+      identity: '',
+      name: '',
+      topicId: topicId ?? rootId,
+      seen: true,
+      isMissingRoot: true,
+    );
+  }
+
   RoomChatMessage copyWith({
     bool? seen,
     ChatMessageStatus? status,

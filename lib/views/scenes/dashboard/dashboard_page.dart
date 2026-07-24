@@ -11,6 +11,8 @@ import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/extension/response_error.extension.dart';
 import 'package:meet/helper/local_toast.dart';
+import 'package:meet/constants/test_ids.dart';
+import 'package:meet/views/components/test_id.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/user.agent.dart';
 import 'package:meet/managers/app.state.manager.dart';
@@ -154,7 +156,12 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  void joinMeetingWithLink(String roomId, String password, String meetingLink) {
+  void joinMeetingWithLink(
+    String roomId,
+    String password,
+    String meetingLink, {
+    FrbUpcomingMeeting? hostMeeting,
+  }) {
     if (PlatformInfoChannel.isInForceUpgradeState()) {
       return;
     }
@@ -173,6 +180,7 @@ class _DashboardPageState extends State<DashboardPage> {
         "isAudioEnabled": false,
         "isE2EEEnabled": true,
         "authBloc": widget.authBloc,
+        "hostMeeting": ?hostMeeting,
       },
     );
   }
@@ -649,7 +657,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 },
               ),
             ],
-            child: Scaffold(
+            child: TestId(
+              id: TestIds.dashboardScreen,
+              child: Scaffold(
               resizeToAvoidBottomInset: false,
               backgroundColor: context.colors.backgroundDark,
               body: Stack(
@@ -728,6 +738,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ],
               ),
+            ),
             ),
           );
         },

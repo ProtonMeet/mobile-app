@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
+import 'package:meet/views/components/test_id.dart';
 
 class SearchButton extends StatelessWidget {
   const SearchButton({
     required this.onTap,
     this.width = 40.0,
     this.height = 40.0,
+    this.testId,
     super.key,
   });
 
   final VoidCallback onTap;
   final double width;
   final double height;
+  final String? testId;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return withTestId(
+      testId,
+      Container(
       width: width,
       height: height,
       decoration: ShapeDecoration(
@@ -32,6 +37,8 @@ class SearchButton extends StatelessWidget {
           color: context.colors.textWeak,
         ),
       ),
+    ),
+      button: true,
     );
   }
 }

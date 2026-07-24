@@ -93,6 +93,9 @@ class PreJoinState {
   /// Decrypted meeting metadata from pre-join auth; forwarded to the room.
   final FrbMeetingInfo? meetingInfo;
   final bool isMeetingHost;
+
+  /// True while resolving host room name / waiting-room policy from upcoming meetings.
+  final bool isLoadingHostMeetingContext;
   final bool isJoinAuthenticating;
   final bool shouldNavigateToWaitingRoom;
 
@@ -110,6 +113,7 @@ class PreJoinState {
   final bool shouldProceedToJoinAfterHostAccept;
   final bool shouldShowJoinRequestRejectedNotification;
   final bool shouldShowWaitingRoomAdmissionTimedOutNotification;
+  final bool shouldShowMeetingLockedBottomSheet;
 
   PreJoinState({
     this.roomName = '',
@@ -160,6 +164,7 @@ class PreJoinState {
     this.displayNameFieldError,
     this.meetingInfo,
     this.isMeetingHost = false,
+    this.isLoadingHostMeetingContext = false,
     this.isJoinAuthenticating = false,
     this.shouldNavigateToWaitingRoom = false,
     this.pendingHostWaitingRoomSyncEnabled,
@@ -172,6 +177,7 @@ class PreJoinState {
     this.shouldProceedToJoinAfterHostAccept = false,
     this.shouldShowJoinRequestRejectedNotification = false,
     this.shouldShowWaitingRoomAdmissionTimedOutNotification = false,
+    this.shouldShowMeetingLockedBottomSheet = false,
   });
 
   PreJoinState copyWith({
@@ -225,6 +231,7 @@ class PreJoinState {
     String? displayNameFieldError,
     FrbMeetingInfo? meetingInfo,
     bool? isMeetingHost,
+    bool? isLoadingHostMeetingContext,
     bool? isJoinAuthenticating,
     bool? shouldNavigateToWaitingRoom,
     bool? pendingHostWaitingRoomSyncEnabled,
@@ -238,6 +245,7 @@ class PreJoinState {
     bool? shouldProceedToJoinAfterHostAccept,
     bool? shouldShowJoinRequestRejectedNotification,
     bool? shouldShowWaitingRoomAdmissionTimedOutNotification,
+    bool? shouldShowMeetingLockedBottomSheet,
   }) {
     return PreJoinState(
       roomName: roomName ?? this.roomName,
@@ -309,6 +317,8 @@ class PreJoinState {
           cameraBackgroundBlurEnabled ?? this.cameraBackgroundBlurEnabled,
       meetingInfo: meetingInfo ?? this.meetingInfo,
       isMeetingHost: isMeetingHost ?? this.isMeetingHost,
+      isLoadingHostMeetingContext:
+          isLoadingHostMeetingContext ?? this.isLoadingHostMeetingContext,
       isJoinAuthenticating:
           isJoinAuthenticating ?? this.isJoinAuthenticating,
       shouldNavigateToWaitingRoom:
@@ -338,6 +348,9 @@ class PreJoinState {
       shouldShowWaitingRoomAdmissionTimedOutNotification:
           shouldShowWaitingRoomAdmissionTimedOutNotification ??
           this.shouldShowWaitingRoomAdmissionTimedOutNotification,
+      shouldShowMeetingLockedBottomSheet:
+          shouldShowMeetingLockedBottomSheet ??
+          this.shouldShowMeetingLockedBottomSheet,
     );
   }
 

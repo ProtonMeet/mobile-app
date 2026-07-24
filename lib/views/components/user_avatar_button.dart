@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
+import 'package:meet/views/components/test_id.dart';
 
 class UserAvatarButton extends StatelessWidget {
   const UserAvatarButton({
@@ -8,6 +9,7 @@ class UserAvatarButton extends StatelessWidget {
     required this.onTap,
     this.width = 40.0,
     this.height = 40.0,
+    this.testId,
     super.key,
   });
 
@@ -15,6 +17,7 @@ class UserAvatarButton extends StatelessWidget {
   final VoidCallback onTap;
   final double width;
   final double height;
+  final String? testId;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +25,9 @@ class UserAvatarButton extends StatelessWidget {
     final String initial = (displayName?.isNotEmpty == true
         ? displayName!.trim()[0].toUpperCase()
         : '?');
-    return Container(
+    return withTestId(
+      testId,
+      Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
@@ -37,6 +42,8 @@ class UserAvatarButton extends StatelessWidget {
           style: ProtonStyles.body2Semibold(color: colors.avatarPurple1Text),
         ),
       ),
+    ),
+      button: true,
     );
   }
 }

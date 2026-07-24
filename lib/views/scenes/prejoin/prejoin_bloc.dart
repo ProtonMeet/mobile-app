@@ -96,11 +96,15 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       (event, emit) => emit(
         state.copyWith(
           isMeetingHost: true,
+          isLoadingHostMeetingContext: false,
           role: PrejoinRole.host,
           waitingRoomEnabled: event.waitingRoomEnabled,
           roomName: event.roomName ?? state.roomName,
         ),
       ),
+    );
+    on<PreJoinHostMeetingContextLoadFinished>(
+      (_, emit) => emit(state.copyWith(isLoadingHostMeetingContext: false)),
     );
     on<PreJoinNavigateToWaitingRoomConsumed>(
       (_, emit) => emit(state.copyWith(shouldNavigateToWaitingRoom: false)),
@@ -133,6 +137,31 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         ),
       ),
     );
+    on<PreJoinMeetingLockedBottomSheetConsumed>(
+      (_, emit) =>
+          emit(state.copyWith(shouldShowMeetingLockedBottomSheet: false)),
+    );
+  }
+
+  /// Emits a meeting-locked state and returns true if the error is a meeting-locked error.
+  /// Otherwise, returns false.
+  /// We don't need to show a generic error message to the user when the error is a meeting-locked error.
+  bool _tryEmitMeetingLocked(Emitter<PreJoinState> emit, Object error) {
+    if (error is! BridgeError_MeetingLocked) {
+      return false;
+    }
+    _cancelWaitingRoomAdmissionTimers();
+    _clearJoinDecisionCallback();
+    emit(
+      state.copyWith(
+        waitingRoomAdmissionPhase: WaitingRoomAdmissionPhase.inactive,
+        waitingRoomJoinRequestId: '',
+        isJoinAuthenticating: false,
+        shouldShowMeetingLockedBottomSheet: true,
+        error: null,
+      ),
+    );
+    return true;
   }
 
   @override
@@ -280,6 +309,9 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         phase: state.waitingRoomAdmissionPhase.name,
         meetLinkName: meetLink.meetingLinkName,
       );
+      if (_tryEmitMeetingLocked(emit, e)) {
+        return;
+      }
       emit(
         state.copyWith(
           waitingRoomAdmissionPhase: WaitingRoomAdmissionPhase.inactive,
@@ -404,6 +436,10 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       if (e is BridgeError && e.consumeBridgeSessionIfNeeded()) {
         _clearJoinDecisionCallback();
         emit(state.copyWith(isJoinAuthenticating: false));
+        _finishWaitingRoomAdmission();
+        return;
+      }
+      if (_tryEmitMeetingLocked(emit, e)) {
         _finishWaitingRoomAdmission();
         return;
       }
@@ -556,6 +592,9 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         meetLinkName: meetLink.meetingLinkName,
         requestId: state.waitingRoomJoinRequestId,
       );
+      if (_tryEmitMeetingLocked(emit, e)) {
+        return;
+      }
       emit(
         state.copyWith(
           waitingRoomAdmissionPhase: WaitingRoomAdmissionPhase.inactive,
@@ -788,10 +827,31 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     if (!isGuest && userId != null) {
       unawaited(_loadPaidUserStatus(userId));
     }
-    if (event.args.type == PreJoinType.join && event.args.meetingLink != null) {
-      unawaited(
-        _loadHostMeetingContext(event.args.meetingLink!.meetingLinkName),
-      );
+    if (event.args.type == PreJoinType.join &&
+        event.args.isMeetingHost &&
+        event.args.meetingLink != null) {
+      final link = event.args.meetingLink!;
+      final roomName = link.meetingName.trim();
+
+      if (roomName.isNotEmpty) {
+        emit(
+          state.copyWith(
+            isMeetingHost: true,
+            role: PrejoinRole.host,
+            roomName: roomName,
+            waitingRoomEnabled: event.args.waitingRoomEnabled,
+          ),
+        );
+      } else if (appCoreManager.isAuthenticated) {
+        emit(
+          state.copyWith(
+            isMeetingHost: true,
+            role: PrejoinRole.host,
+            isLoadingHostMeetingContext: true,
+          ),
+        );
+        unawaited(_loadHostMeetingContext(link.meetingLinkName));
+      }
     }
 
     final permissionService = serviceManager.get<PermissionService>();
@@ -1266,17 +1326,23 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         appCoreManager: appCoreManager,
         meetingLinkName: meetingLinkName,
       );
-      if (isClosed || hostContext == null) {
+      if (isClosed) {
         return;
       }
-      add(
-        PreJoinHostMeetingContextResolved(
-          waitingRoomEnabled: hostContext.waitingRoomEnabled,
-          roomName: hostContext.roomName,
-        ),
-      );
+      if (hostContext != null) {
+        add(
+          PreJoinHostMeetingContextResolved(
+            waitingRoomEnabled: hostContext.waitingRoomEnabled,
+            roomName: hostContext.roomName,
+          ),
+        );
+      }
     } catch (e) {
       l.logger.w('[PreJoinBloc] Failed to resolve host meeting context: $e');
+    } finally {
+      if (!isClosed) {
+        add(PreJoinHostMeetingContextLoadFinished());
+      }
     }
   }
 
@@ -1311,6 +1377,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         meetingLinkName: meetLink.meetingLinkName,
         meetingPassword: meetLink.meetingPassword,
         displayName: displayName,
+        isMeetingHost: state.isMeetingHost,
       );
 
       if (isClosed) {
@@ -1373,11 +1440,17 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         emit(state.copyWith(isJoinAuthenticating: false));
         return;
       }
+      if (_tryEmitMeetingLocked(emit, error)) {
+        return;
+      }
       emit(
         state.copyWith(isJoinAuthenticating: false, error: error.userMessage),
       );
     } catch (e) {
       l.logger.e('[PreJoinBloc] Join auth failed: $e');
+      if (_tryEmitMeetingLocked(emit, e)) {
+        return;
+      }
       emit(state.copyWith(isJoinAuthenticating: false, error: e.toString()));
     }
   }

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/constants/app.config.dart';
 import 'package:meet/constants/assets.gen.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/strings.dart';
@@ -14,8 +15,10 @@ import 'package:meet/managers/app.state.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/rust/proton_meet/meet_link.dart';
+import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/views/components/alerts/base_bottom_sheet.dart';
 import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart';
+import 'package:meet/views/components/test_id.dart';
 import 'package:meet/views/scenes/dashboard/dashboard_bloc.dart';
 import 'package:meet/views/scenes/dashboard/dashboard_state.dart';
 import 'package:meet/views/scenes/dashboard/join/action_buttons.dart';
@@ -26,7 +29,12 @@ import 'package:meet/views/scenes/dashboard/upcoming/recurring_meeting_helper.da
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 
 typedef OnJoin =
-    void Function(String roomId, String passcode, String meetingLink);
+    void Function(
+      String roomId,
+      String passcode,
+      String meetingLink, {
+      FrbUpcomingMeeting? hostMeeting,
+    });
 typedef OnRegenerateLink = void Function();
 
 Future<void> showJoinMeetingDialog(
@@ -41,6 +49,7 @@ Future<void> showJoinMeetingDialog(
   bool isPersonalMeeting = false,
   MeetUpcomingTab? tab,
   DashboardBloc? bloc,
+  FrbUpcomingMeeting? hostMeeting,
   // join
   OnJoin? onJoin,
   // Regenerate link callback (for personal meetings)
@@ -93,6 +102,7 @@ Future<void> showJoinMeetingDialog(
     showProtonCalendar: showProtonCalendar,
     showOutlookCalendar: showOutlookCalendar,
     bloc: bloc,
+    hostMeeting: hostMeeting,
   );
 
   return showModalBottomSheet(
@@ -168,6 +178,7 @@ class JoinMeetingModel extends StatefulWidget {
     this.onOpenProton,
     this.showOutlookCalendar = false,
     this.bloc,
+    this.hostMeeting,
   });
 
   final OnJoin? onJoin;
@@ -191,6 +202,7 @@ class JoinMeetingModel extends StatefulWidget {
   final bool showProtonCalendar;
   final bool showOutlookCalendar;
   final DashboardBloc? bloc;
+  final FrbUpcomingMeeting? hostMeeting;
 
   @override
   State<JoinMeetingModel> createState() => _JoinMeetingModelState();
@@ -345,7 +357,12 @@ class _JoinMeetingModelState extends State<JoinMeetingModel> {
       return;
     }
     Navigator.of(context).pop();
-    widget.onJoin?.call(_roomId!, _passcode!, _ctrl.text);
+    widget.onJoin?.call(
+      _roomId!,
+      _passcode!,
+      _ctrl.text,
+      hostMeeting: widget.hostMeeting,
+    );
   }
 
   void _onCopy() {
@@ -435,7 +452,9 @@ class _JoinMeetingModelState extends State<JoinMeetingModel> {
         ),
         duration: const Duration(milliseconds: 160),
         curve: Curves.easeOutCubic,
-        child: BaseBottomSheet(
+        child: TestId(
+          id: TestIds.joinDialog,
+          child: BaseBottomSheet(
           onBackdropTap: () => Navigator.of(context).maybePop(),
           borderRadius: BorderRadius.circular(40),
           borderSide: BorderSide(
@@ -502,6 +521,7 @@ class _JoinMeetingModelState extends State<JoinMeetingModel> {
               ],
             ),
           ),
+        ),
         ),
       ),
     );

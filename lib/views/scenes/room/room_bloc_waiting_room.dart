@@ -8,6 +8,7 @@ import 'package:meet/helper/sentry_waiting_room.dart';
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/rust/proton_meet/models/join_request.dart';
+import 'package:meet/rust/proton_meet/models/meet_participant.dart';
 import 'package:sentry/sentry.dart';
 
 import 'room_bloc_participants.dart';
@@ -17,6 +18,8 @@ import 'room_state.dart';
 mixin RoomWaitingRoomHandlers
     on Bloc<RoomBlocEvent, RoomState>, RoomParticipantsHandlers {
   Timer? _waitingRoomExpirationTimer;
+  Timer? _waitingRoomDisplayNameRetryTimer;
+  int _waitingRoomDisplayNameRetryAttempts = 0;
   int _expiredWaitingRoomJoinRequestCount = 0;
   bool _expiredWaitingRoomJoinRequestSentryReported = false;
 
@@ -25,6 +28,9 @@ mixin RoomWaitingRoomHandlers
     on<WaitingRoomJoinRequestRemoved>(_onWaitingRoomJoinRequestRemoved);
     on<WaitingRoomJoinRequestsExpirationTick>(
       _onWaitingRoomJoinRequestsExpirationTick,
+    );
+    on<WaitingRoomJoinRequestDisplayNameRetry>(
+      _onWaitingRoomJoinRequestDisplayNameRetry,
     );
     on<AdmitWaitingRoomJoinRequest>(_onAdmitWaitingRoomJoinRequest);
     on<RejectWaitingRoomJoinRequest>(_onRejectWaitingRoomJoinRequest);
@@ -70,6 +76,10 @@ mixin RoomWaitingRoomHandlers
     );
     emit(nextState);
     _syncWaitingRoomExpirationTimer(nextState.waitingRoomParticipants);
+    if (_hasUnresolvedWaitingRoomDisplayNames(nextState.waitingRoomParticipants)) {
+      _waitingRoomDisplayNameRetryAttempts = 0;
+      _scheduleWaitingRoomDisplayNameRetry();
+    }
   }
 
   void _onWaitingRoomJoinRequestRemoved(
@@ -148,6 +158,105 @@ mixin RoomWaitingRoomHandlers
   void cancelWaitingRoomExpirationTimer() {
     _waitingRoomExpirationTimer?.cancel();
     _waitingRoomExpirationTimer = null;
+  }
+
+  bool _hasUnresolvedWaitingRoomDisplayNames(
+    List<WaitingRoomJoinRequest> requests,
+  ) {
+    return requests.any(
+      (request) => request.isActive && _isMissingWaitingRoomDisplayName(request),
+    );
+  }
+
+  bool _isMissingWaitingRoomDisplayName(WaitingRoomJoinRequest request) {
+    final name = request.displayName?.trim();
+    return name == null || name.isEmpty;
+  }
+
+  void _scheduleWaitingRoomDisplayNameRetry() {
+    _waitingRoomDisplayNameRetryTimer?.cancel();
+    _waitingRoomDisplayNameRetryTimer = Timer(
+      waitingRoomJoinRequestDisplayNameRetryDelay,
+      () {
+        if (!isClosed) {
+          add(const WaitingRoomJoinRequestDisplayNameRetry());
+        }
+      },
+    );
+  }
+
+  void cancelWaitingRoomDisplayNameRetryTimer() {
+    _waitingRoomDisplayNameRetryTimer?.cancel();
+    _waitingRoomDisplayNameRetryTimer = null;
+    _waitingRoomDisplayNameRetryAttempts = 0;
+  }
+
+  Future<void> _onWaitingRoomJoinRequestDisplayNameRetry(
+    WaitingRoomJoinRequestDisplayNameRetry event,
+    Emitter<RoomState> emit,
+  ) async {
+    _waitingRoomDisplayNameRetryTimer = null;
+
+    if (!_hasUnresolvedWaitingRoomDisplayNames(
+      state.waitingRoomParticipants,
+    )) {
+      _waitingRoomDisplayNameRetryAttempts = 0;
+      return;
+    }
+
+    if (_waitingRoomDisplayNameRetryAttempts >=
+        waitingRoomJoinRequestDisplayNameRetryCount) {
+      _waitingRoomDisplayNameRetryAttempts = 0;
+      return;
+    }
+    _waitingRoomDisplayNameRetryAttempts++;
+
+    Map<String, MeetParticipant> participants;
+    try {
+      participants = await loadFrbParticipants();
+    } catch (e, stackTrace) {
+      l.logger.w(
+        '[RoomBloc] waiting-room display name retry failed: $e',
+        stackTrace: stackTrace,
+      );
+      participants = state.frbParticipantsMap;
+    }
+
+    var changed = false;
+    final next = state.waitingRoomParticipants.map((request) {
+      if (!request.isActive || !_isMissingWaitingRoomDisplayName(request)) {
+        return request;
+      }
+      final name = participants[request.participantUid]?.displayName?.trim();
+      if (name == null || name.isEmpty) {
+        return request;
+      }
+      changed = true;
+      return WaitingRoomJoinRequest(
+        requestId: request.requestId,
+        participantUid: request.participantUid,
+        displayName: name,
+        receivedAt: request.receivedAt,
+        expiresAt: request.expiresAt,
+      );
+    }).toList(growable: false);
+
+    if (changed) {
+      emit(
+        state.copyWith(
+          waitingRoomParticipants: next,
+          frbParticipantsMap: participants,
+        ),
+      );
+    }
+
+    if (_hasUnresolvedWaitingRoomDisplayNames(next) &&
+        _waitingRoomDisplayNameRetryAttempts <
+            waitingRoomJoinRequestDisplayNameRetryCount) {
+      _scheduleWaitingRoomDisplayNameRetry();
+    } else {
+      _waitingRoomDisplayNameRetryAttempts = 0;
+    }
   }
 
   void _recordExpiredWaitingRoomJoinRequestOnReceive(
