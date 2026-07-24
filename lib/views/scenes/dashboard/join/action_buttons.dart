@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
+import 'package:meet/views/components/test_id.dart';
 import 'package:meet/views/scenes/dashboard/join/link_text_field.dart';
 import 'package:meet/views/scenes/dashboard/schedule/add_to_calendar_sheet.dart';
 import 'package:meet/views/scenes/dashboard/upcoming/meet_upcoming_title.dart';
@@ -58,7 +60,10 @@ class ActionButtons extends StatelessWidget {
             child: SizedBox(
               width: double.infinity,
               height: 60,
-              child: InkWell(
+              child: TestId(
+                id: TestIds.joinDialogAddCalendar,
+                button: true,
+                child: InkWell(
                 onTap: () {
                   showAddToCalendarSheet(
                     context,
@@ -88,6 +93,7 @@ class ActionButtons extends StatelessWidget {
                 ),
               ),
             ),
+            ),
           ),
         ],
 
@@ -101,7 +107,10 @@ class ActionButtons extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   height: 60,
-                  child: ElevatedButton(
+                  child: TestId(
+                    id: TestIds.joinDialogJoin,
+                    button: true,
+                    child: ElevatedButton(
                     onPressed: status.canSubmit ? onSubmit : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: status.canSubmit
@@ -121,6 +130,7 @@ class ActionButtons extends StatelessWidget {
                       ),
                     ),
                   ),
+                  ),
                 ),
               ],
             ),
@@ -133,7 +143,10 @@ class ActionButtons extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(24, 8, 24, 0),
             child: SizedBox(
               width: double.infinity,
-              child: InkWell(
+              child: TestId(
+                id: TestIds.joinDialogRegenerate,
+                button: true,
+                child: InkWell(
                 onTap: isRegenerating ? null : onRegenerateLink,
                 borderRadius: BorderRadius.circular(200),
                 child: Container(
@@ -179,6 +192,7 @@ class ActionButtons extends StatelessWidget {
                   ),
                 ),
               ),
+              ),
             ),
           ),
         ],
@@ -196,7 +210,10 @@ class ActionButtons extends StatelessWidget {
             child: SizedBox(
               width: double.infinity,
               height: 60,
-              child: ElevatedButton(
+              child: TestId(
+                id: TestIds.joinDialogDone,
+                button: true,
+                child: ElevatedButton(
                 onPressed: onDone,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: context.colors.interActionPurpleMinor1,
@@ -210,6 +227,7 @@ class ActionButtons extends StatelessWidget {
                     color: context.colors.textInverted,
                   ),
                 ),
+              ),
               ),
             ),
           ),

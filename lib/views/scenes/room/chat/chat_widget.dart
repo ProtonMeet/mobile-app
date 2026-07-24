@@ -132,6 +132,7 @@ class _ChatWidgetState extends State<ChatWidget> {
   bool _isScrollingToBottom = false;
   int _newMessagesOverlayCount = 0;
   final Set<String> _trackedMessageIds = {};
+  final Set<String> _handledLocalRootScrollIds = {};
 
   ChatController get _controller => widget.controller;
 
@@ -186,8 +187,12 @@ class _ChatWidgetState extends State<ChatWidget> {
   void _handleNewMessages(List<RoomChatMessage> newMessages) {
     if (!mounted || !_scrollController.hasClients) return;
 
-    final hasLocalRoot = newMessages.any(_isLocalRootMessage);
-    if (hasLocalRoot) {
+    final unseenLocalRoots = newMessages
+        .where(_isLocalRootMessage)
+        .where((message) => !_handledLocalRootScrollIds.contains(message.id))
+        .toList();
+    if (unseenLocalRoots.isNotEmpty) {
+      _handledLocalRootScrollIds.addAll(unseenLocalRoots.map((m) => m.id));
       _scheduleScrollToBottom();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || !_scrollController.hasClients) return;
@@ -394,7 +399,13 @@ class _ChatWidgetState extends State<ChatWidget> {
   void _closeThreadReply(RoomChatMessage root) {
     _replyControllers[root.id]?.clear();
     _controller.setThreadReplyDraft(root.id, null);
-    _controller.setThreadExpanded(root.id, false);
+    final current = _controller.messageById(root.id);
+    final threadHasReplies = _controller.threads.any(
+      (thread) => thread.root.id == root.id && thread.hasReplies,
+    );
+    if (current != null && !threadHasReplies && !current.hasReactions) {
+      _controller.setThreadExpanded(root.id, false);
+    }
     _replyFocus(root.id).unfocus();
   }
 

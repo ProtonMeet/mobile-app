@@ -21,8 +21,7 @@ class SearchResultsView extends StatelessWidget {
 
   final String searchQuery;
   final List<FrbUpcomingMeeting> searchResults;
-  final void Function(String roomId, String password, String meetingLink)
-  onJoinMeetingWithLink;
+  final OnJoin onJoinMeetingWithLink;
   final MeetUpcomingTab currentTab;
 
   @override
@@ -86,6 +85,7 @@ class SearchResultsView extends StatelessWidget {
                   context,
                   bloc: context.read<DashboardBloc>(),
                   onJoin: onJoinMeetingWithLink,
+                  hostMeeting: meeting,
                   initialUrl: meeting.formatMeetingLink(),
                   tab: currentTab,
                   autofocus: false,

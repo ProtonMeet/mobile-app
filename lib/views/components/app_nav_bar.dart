@@ -2,11 +2,13 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/desktop_content_fit.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/views/components/search_button.dart';
 import 'package:meet/views/components/sort_button.dart';
+import 'package:meet/views/components/test_id.dart';
 import 'package:meet/views/components/user_avatar_button.dart';
 
 class AppNavBar extends StatelessWidget {
@@ -344,16 +346,22 @@ class _NormalModeContent extends StatelessWidget {
           const SizedBox(width: 8),
           if (searchBarReachedNavBar &&
               (onSearchTap != null || onSortTap != null)) ...[
-            if (onSearchTap != null) SearchButton(onTap: onSearchTap!),
+            if (onSearchTap != null)
+              SearchButton(onTap: onSearchTap!, testId: TestIds.dashboardNavSearch),
             if (onSearchTap != null && onSortTap != null)
               const SizedBox(width: 6),
-            if (onSortTap != null) SortButton(onTap: onSortTap!),
+            if (onSortTap != null)
+              SortButton(onTap: onSortTap!, testId: TestIds.dashboardNavSort),
           ] else if (isSignedIn) ...[
             if (onNativePlansTestTap != null) ...[
               _NativePlansButton(onTap: onNativePlansTestTap!),
               const SizedBox(width: 6),
             ],
-            UserAvatarButton(displayName: displayName, onTap: onLogoutTap),
+            UserAvatarButton(
+              displayName: displayName,
+              onTap: onLogoutTap,
+              testId: TestIds.dashboardUserMenu,
+            ),
           ] else
             _SignInButton(onTap: onSignInTap),
           const SizedBox(width: 12),
@@ -380,7 +388,10 @@ class _SearchModeContent extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Container(
+          child: TestId(
+            id: TestIds.dashboardSearchField,
+            textField: true,
+            child: Container(
             height: 40,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: ShapeDecoration(
@@ -412,14 +423,19 @@ class _SearchModeContent extends StatelessWidget {
               ),
             ),
           ),
+          ),
         ),
         const SizedBox(width: 8),
-        TextButton(
+        TestId(
+          id: TestIds.dashboardSearchCancel,
+          button: true,
+          child: TextButton(
           onPressed: onCancelSearch,
           child: Text(
             context.local.cancel,
             style: ProtonStyles.body2Medium(color: context.colors.textNorm),
           ),
+        ),
         ),
       ],
     );
@@ -463,7 +479,9 @@ class _SettingsButton extends StatelessWidget {
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return withTestId(
+      TestIds.dashboardSettings,
+      Container(
       width: 40,
       height: 40,
       decoration: ShapeDecoration(
@@ -477,6 +495,8 @@ class _SettingsButton extends StatelessWidget {
         onPressed: onTap,
         icon: context.images.iconSettings.svg20(color: context.colors.textWeak),
       ),
+    ),
+      button: true,
     );
   }
 }
@@ -490,7 +510,9 @@ class _SignInButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Container(
+    return withTestId(
+      TestIds.dashboardSignIn,
+      Container(
       height: 40,
       constraints: const BoxConstraints(minWidth: 75),
       decoration: BoxDecoration(
@@ -505,6 +527,8 @@ class _SignInButton extends StatelessWidget {
           style: ProtonStyles.body2Medium(color: colors.textWeak),
         ),
       ),
+    ),
+      button: true,
     );
   }
 }

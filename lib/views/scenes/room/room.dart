@@ -13,6 +13,7 @@ import 'package:livekit_client/livekit_client.dart' hide ConnectionState;
 import 'package:logger/logger.dart';
 import 'package:meet/constants/constants.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
@@ -47,6 +48,7 @@ import 'package:meet/rust/proton_meet/user_config.dart';
 import 'package:meet/views/components/alerts/media_permission_dialog.dart';
 import 'package:meet/views/components/alerts/meeting_will_end_dialog.dart';
 import 'package:meet/views/components/alerts/session_expired_dialog.dart';
+import 'package:meet/views/components/test_id.dart';
 import 'package:meet/views/components/bottom.sheets/leave_room_bottom_sheet.dart';
 import 'package:meet/views/components/custom.tooltip.dart';
 import 'package:meet/views/components/loading_view.dart';
@@ -1151,8 +1153,15 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       );
     }
 
+    RoomChatMessage? lastReceivedMessageToShowToast;
     for (final effect in state.chatEffects) {
-      _applyChatEffect(effect);
+      final toast = _applyChatEffect(effect);
+      if (toast != null) {
+        lastReceivedMessageToShowToast = toast;
+      }
+    }
+    if (lastReceivedMessageToShowToast != null) {
+      _showIncomingChatToast(lastReceivedMessageToShowToast);
     }
 
     if (state.chatSystemNotices.isNotEmpty || state.chatEffects.isNotEmpty) {
@@ -1160,7 +1169,21 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     }
   }
 
-  void _applyChatEffect(RoomChatEffect effect) {
+  void _showIncomingChatToast(RoomChatMessage msg) {
+    LocalToast.showToastification(
+      context,
+      msg.name,
+      msg.message,
+      onTap: (_) {
+        setState(() {
+          _showChatBubble = true;
+          _showParticipantList = false;
+        });
+      },
+    );
+  }
+
+  RoomChatMessage? _applyChatEffect(RoomChatEffect effect) {
     switch (effect.kind) {
       case RoomChatEffectKind.addReaction:
         _chatController.addReaction(
@@ -1169,51 +1192,38 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           emoji: effect.emoji!,
           identity: effect.identity!,
         );
-        return;
+        return null;
       case RoomChatEffectKind.removeReaction:
         _chatController.removeReaction(
           replacesId: effect.replacesId!,
           identity: effect.identity!,
         );
-        return;
+        return null;
       case RoomChatEffectKind.localEcho:
         final msg = effect.messagePayload!;
         _chatController.addLocalEcho(msg);
-        return;
+        return null;
       case RoomChatEffectKind.updateMessageStatus:
         _chatController.updateStatus(effect.messageId!, effect.status!);
-        return;
+        return null;
       case RoomChatEffectKind.removeMessage:
         _chatController.removeMessage(effect.messageId!);
-        return;
+        return null;
       case RoomChatEffectKind.receiveMessage:
         final msg = effect.messagePayload!;
-        _chatController.receiveMessage(msg);
-        if (effect.showToast &&
-            mounted &&
-            context.mounted &&
-            !_showChatBubble) {
-          final localId = _bloc.state.room.localParticipant?.identity ?? '';
-          if (!isRelevantThreadMessage(
-            msg,
-            _chatController.messages,
-            localId,
-          )) {
-            return;
-          }
-          LocalToast.showToastification(
-            context,
-            msg.name,
-            msg.message,
-            onTap: (_) {
-              setState(() {
-                _showChatBubble = true;
-                _showParticipantList = false;
-              });
-            },
-          );
+        final isNew = _chatController.receiveMessage(msg);
+        if (!effect.showToast ||
+            !isNew ||
+            !mounted ||
+            !context.mounted ||
+            _showChatBubble) {
+          return null;
         }
-        return;
+        final localId = _bloc.state.room.localParticipant?.identity ?? '';
+        if (!isRelevantThreadMessage(msg, _chatController.messages, localId)) {
+          return null;
+        }
+        return msg; // return the message to be shown as a toast, we will only show the last message as a toast
     }
   }
 
@@ -1735,47 +1745,52 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           top: false,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ...availableEmojiReactions.map(
-                  (emoji) => InkWell(
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      unawaited(useEmojiReaction(emoji));
-                    },
-                    borderRadius: BorderRadius.circular(999),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Text(emoji, style: const TextStyle(fontSize: 30)),
-                    ),
-                  ),
-                ),
-                if (localIdentity != null)
-                  InkWell(
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      unawaited(useRaiseHand(raised: !isHandRaised));
-                    },
-                    borderRadius: BorderRadius.circular(999),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isHandRaised
-                              ? Colors.grey.withValues(alpha: 0.35)
-                              : Colors.transparent,
-                          shape: BoxShape.circle,
-                        ),
-                        padding: const EdgeInsets.all(12),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  ...availableEmojiReactions.map(
+                    (emoji) => InkWell(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        unawaited(useEmojiReaction(emoji));
+                      },
+                      borderRadius: BorderRadius.circular(999),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
                         child: Text(
-                          raisedHandEmoji,
+                          emoji,
                           style: const TextStyle(fontSize: 30),
                         ),
                       ),
                     ),
                   ),
-              ],
+                  if (localIdentity != null)
+                    InkWell(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        unawaited(useRaiseHand(raised: !isHandRaised));
+                      },
+                      borderRadius: BorderRadius.circular(999),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isHandRaised
+                                ? Colors.grey.withValues(alpha: 0.35)
+                                : Colors.transparent,
+                            shape: BoxShape.circle,
+                          ),
+                          padding: const EdgeInsets.all(12),
+                          child: Text(
+                            raisedHandEmoji,
+                            style: const TextStyle(fontSize: 30),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         );
@@ -2614,83 +2629,89 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                 if (isRoomReady && !desktop) {
                   _bloc.add(StartAutoFullScreenTimer());
                 }
-                return Scaffold(
-                  resizeToAvoidBottomInset: false,
-                  backgroundColor: context.colors.interActionWeakMinor3,
-                  floatingActionButton: desktop || !_showRotationButton
-                      ? null
-                      : FloatingActionButton(
-                          backgroundColor: context.colors.protonBlue.withValues(
-                            alpha: 0.5,
+                return TestId(
+                  id: TestIds.roomScreen,
+                  child: Scaffold(
+                    resizeToAvoidBottomInset: false,
+                    backgroundColor: context.colors.interActionWeakMinor3,
+                    floatingActionButton: desktop || !_showRotationButton
+                        ? null
+                        : TestId(
+                            id: TestIds.roomRotate,
+                            button: true,
+                            child: FloatingActionButton(
+                              backgroundColor: context.colors.protonBlue
+                                  .withValues(alpha: 0.5),
+                              onPressed: () async {
+                                setState(() {
+                                  _isLandscape = !_isLandscape;
+                                });
+                                if (_isLandscape) {
+                                  await SystemChrome.setPreferredOrientations([
+                                    DeviceOrientation.landscapeRight,
+                                  ]);
+                                } else {
+                                  await SystemChrome.setPreferredOrientations([
+                                    DeviceOrientation.portraitUp,
+                                  ]);
+                                }
+                              },
+                              child: Icon(Icons.screen_rotation_rounded),
+                            ),
                           ),
-                          onPressed: () async {
-                            setState(() {
-                              _isLandscape = !_isLandscape;
-                            });
-                            if (_isLandscape) {
-                              await SystemChrome.setPreferredOrientations([
-                                DeviceOrientation.landscapeRight,
-                              ]);
-                            } else {
-                              await SystemChrome.setPreferredOrientations([
-                                DeviceOrientation.portraitUp,
-                              ]);
-                            }
-                          },
-                          child: Icon(Icons.screen_rotation_rounded),
+                    floatingActionButtonLocation:
+                        OffsetFloatingActionButtonLocation(
+                          FloatingActionButtonLocation.endFloat,
+                          const Offset(
+                            0,
+                            -135,
+                          ), // move top 135 to avoid overflow on control bar
                         ),
-                  floatingActionButtonLocation:
-                      OffsetFloatingActionButtonLocation(
-                        FloatingActionButtonLocation.endFloat,
-                        const Offset(
-                          0,
-                          -135,
-                        ), // move top 135 to avoid overflow on control bar
-                      ),
-                  body: SafeArea(
-                    child: Stack(
-                      children: [
-                        ColoredBox(
-                          color: context.colors.interActionWeakMinor3,
-                          child: ResponsiveV2(xlarge: buildMobile(context)),
-                        ),
-                        // Show loading overlay when room is not initialized
-                        if (!isRoomReady)
-                          Positioned.fill(
-                            child: ColoredBox(
-                              color: context.colors.interActionWeakMinor3,
-                              child: ResponsiveV2(
-                                xlarge: Center(
-                                  child: ConstrainedBox(
-                                    constraints: const BoxConstraints(
-                                      maxWidth: 600,
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        LoadingView(
-                                          title: "Launching Meeting...",
-                                          description:
-                                              widget
-                                                      .meetInfo
-                                                      .participantsCount >
-                                                  0
-                                              ? 'Joining meeting with ${widget.meetInfo.participantsCount} other participants'
-                                              : 'Starting meeting as the first participant',
-                                          // To-do: check with designer to see if we need to show the different description for it
-                                          // description: context
-                                          //     .local
-                                          //     .room_initialing_hint,
-                                        ),
-                                      ],
+                    body: SafeArea(
+                      child: Stack(
+                        children: [
+                          ColoredBox(
+                            color: context.colors.interActionWeakMinor3,
+                            child: ResponsiveV2(xlarge: buildMobile(context)),
+                          ),
+                          // Show loading overlay when room is not initialized
+                          if (!isRoomReady)
+                            Positioned.fill(
+                              child: ColoredBox(
+                                color: context.colors.interActionWeakMinor3,
+                                child: ResponsiveV2(
+                                  xlarge: Center(
+                                    child: ConstrainedBox(
+                                      constraints: const BoxConstraints(
+                                        maxWidth: 600,
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          LoadingView(
+                                            title: "Launching Meeting...",
+                                            description:
+                                                widget
+                                                        .meetInfo
+                                                        .participantsCount >
+                                                    0
+                                                ? 'Joining meeting with ${widget.meetInfo.participantsCount} other participants'
+                                                : 'Starting meeting as the first participant',
+                                            // To-do: check with designer to see if we need to show the different description for it
+                                            // description: context
+                                            //     .local
+                                            //     .room_initialing_hint,
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -3031,207 +3052,212 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     int chatUnreadCount,
   ) {
     return SizedBox(
-          width: context.width,
-          height: bottomControlHeight,
-          child: ResponsiveControlsBar(
-            room: state.room,
-            backgroundColor: context.colors.interActionWeakMinor3,
-            onLeave: () {
-              // Only show the "End meeting for all" button when the local
-              // participant is the only host in the meeting.
-              leaveRoomDialog(isHost: state.isOnlyHost, isAlone: state.isAlone);
-            },
-            cameraResolution: _cameraResolution,
-            cameraMaxBitrate: _cameraMaxBitrate,
-            currentCameraPosition: state.currentCameraPosition,
-            applyCameraBackgroundBlur: state.cameraBackgroundBlurEnabled,
-            applyAudioDenoise: state.audioDenoiseEnabled,
-            trailing: state.isLocalScreenSharing
-                ? CustomTooltip(
-                    controller: _stopSharingTooltipController,
-                    triggerMode: TooltipTriggerMode.manual,
-                    message: context.local.tap_to_stop_sharing,
-                    child: Material(
-                      color: context.colors.signalDangerMajor3,
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: () => _bloc.add(ToggleScreenShare()),
-                        child: SizedBox(
-                          width: 56,
-                          height: 56,
-                          child: Center(
-                            child: context.images.iconScreenShare.svg(
-                              width: 24,
-                              height: 24,
-                              colorFilter: ColorFilter.mode(
-                                context.colors.white,
-                                BlendMode.srcIn,
-                              ),
-                            ),
+      width: context.width,
+      height: bottomControlHeight,
+      child: ResponsiveControlsBar(
+        room: state.room,
+        backgroundColor: context.colors.interActionWeakMinor3,
+        onLeave: () {
+          // Only show the "End meeting for all" button when the local
+          // participant is the only host in the meeting.
+          leaveRoomDialog(isHost: state.isOnlyHost, isAlone: state.isAlone);
+        },
+        cameraResolution: _cameraResolution,
+        cameraMaxBitrate: _cameraMaxBitrate,
+        currentCameraPosition: state.currentCameraPosition,
+        applyCameraBackgroundBlur: state.cameraBackgroundBlurEnabled,
+        applyAudioDenoise: state.audioDenoiseEnabled,
+        trailing: state.isLocalScreenSharing
+            ? CustomTooltip(
+                controller: _stopSharingTooltipController,
+                triggerMode: TooltipTriggerMode.manual,
+                message: context.local.tap_to_stop_sharing,
+                child: Material(
+                  color: context.colors.signalDangerMajor3,
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: () => _bloc.add(ToggleScreenShare()),
+                    child: SizedBox(
+                      width: 56,
+                      height: 56,
+                      child: Center(
+                        child: context.images.iconScreenShare.svg(
+                          width: 24,
+                          height: 24,
+                          colorFilter: ColorFilter.mode(
+                            context.colors.white,
+                            BlendMode.srcIn,
                           ),
                         ),
                       ),
                     ),
-                  )
-                : null,
-            audioDenoiseType: state.audioDenoiseType,
-            optionalActionsBuilder: () {
-              final isSpeakerMuted = state.isSpeakerMuted ?? false;
+                  ),
+                ),
+              )
+            : null,
+        audioDenoiseType: state.audioDenoiseType,
+        optionalActionsBuilder: () {
+          final isSpeakerMuted = state.isSpeakerMuted ?? false;
 
-              // Screen share toggle. We build two slightly different
-              // `ControlAction`s rather than one shared instance:
-              //   - `unshareAction` is shown at the very FRONT of the row
-              //     while we are actively presenting, and carries the
-              //     showcase GlobalKey (so the tutorial tip points at it).
-              //   - `shareAction` is shown in the default slot otherwise,
-              //     and intentionally has NO globalKey (preventing the
-              //     showcase from latching onto the "Share screen" button
-              //     when there is nothing to stop).
-              final isScreenShareEnabled = _bloc.isScreenShareFeatureEnabled();
-              void onScreenShareTapped() {
-                unawaited(_onToggleScreenSharePressed(context));
-              }
+          // Screen share toggle. We build two slightly different
+          // `ControlAction`s rather than one shared instance:
+          //   - `unshareAction` is shown at the very FRONT of the row
+          //     while we are actively presenting, and carries the
+          //     showcase GlobalKey (so the tutorial tip points at it).
+          //   - `shareAction` is shown in the default slot otherwise,
+          //     and intentionally has NO globalKey (preventing the
+          //     showcase from latching onto the "Share screen" button
+          //     when there is nothing to stop).
+          final isScreenShareEnabled = _bloc.isScreenShareFeatureEnabled();
+          void onScreenShareTapped() {
+            unawaited(_onToggleScreenSharePressed(context));
+          }
 
-              final shareAction = isScreenShareEnabled
-                  ? ControlAction(
-                      icon: context.images.iconScreenShare.svg(
-                        width: 24,
-                        height: 24,
-                      ),
-                      tooltip: context.local.share_screen,
-                      onPressed: onScreenShareTapped,
-                      isActive: true,
-                    )
-                  : null;
-
-              return [
-                /// Mute speaker
-                ControlAction(
-                  activeIcon: context.images.iconSpeakerOn.svg(
+          final shareAction = isScreenShareEnabled
+              ? ControlAction(
+                  icon: context.images.iconScreenShare.svg(
                     width: 24,
                     height: 24,
-                    colorFilter: ColorFilter.mode(
-                      context.colors.textNorm,
-                      BlendMode.srcIn,
-                    ),
                   ),
-                  icon: context.images.iconSpeakerOff.svg(
-                    width: 24,
-                    height: 24,
-                    colorFilter: ColorFilter.mode(
-                      context.colors.textNorm,
-                      BlendMode.srcIn,
-                    ),
-                  ),
-                  tooltip: isSpeakerMuted ? 'Unmute speaker' : 'Mute speaker',
-                  onPressed: () {
-                    _bloc.add(ToggleSpeaker());
-                  },
-                  isActive: !isSpeakerMuted,
-                  inactiveBackgroundColor: context.colors.signalDangerMajor3,
+                  tooltip: context.local.share_screen,
+                  onPressed: onScreenShareTapped,
+                  isActive: true,
+                  testId: TestIds.roomScreenShare,
+                )
+              : null;
+
+          return [
+            /// Mute speaker
+            ControlAction(
+              testId: TestIds.roomSpeakerMute,
+              activeIcon: context.images.iconSpeakerOn.svg(
+                width: 24,
+                height: 24,
+                colorFilter: ColorFilter.mode(
+                  context.colors.textNorm,
+                  BlendMode.srcIn,
                 ),
-
-                /// Emoji reactions
-                if (state.room.localParticipant != null)
-                  ControlAction(
-                    icon: Icon(Icons.emoji_emotions_outlined, size: 24),
-                    tooltip: context.local.emoji_reactions,
-                    onPressed: () {
-                      unawaited(_showEmojiReactionMenu());
-                    },
-                  ),
-
-                /// PiP - only show if supported and feature flag is enabled
-                if (_bloc.isPictureInPictureFeatureEnabled() &&
-                    state.pipAvailable == true)
-                  ControlAction(
-                    icon: const Icon(Icons.picture_in_picture),
-                    tooltip: context.local.enter_pip,
-                    onPressed: () {
-                      _bloc.add(EnterPipMode(backgroundApp: iOS));
-                    },
-                  ),
-
-                /// Screen share (start) — hidden while sharing; the stop
-                /// control lives in the controls bar as the second-to-last
-                /// button (right before the leave button).
-                if (!state.isLocalScreenSharing && shareAction != null)
-                  shareAction,
-
-                /// Participants
-                ControlAction(
-                  icon: context.images.iconParticipants.svg24(),
-                  badge: '${state.room.remoteParticipants.length + 1}',
-                  tooltip:
-                      '${context.local.show_participants_list} (${state.room.remoteParticipants.length + 1})',
-                  onPressed: () {
-                    setState(() {
-                      _showParticipantList = !_showParticipantList;
-                      // close chat bubble when show participant list on mobile
-                      if (_showParticipantList) {
-                        _showChatBubble = false;
-                        _showSettings = false;
-                      }
-                    });
-                  },
+              ),
+              icon: context.images.iconSpeakerOff.svg(
+                width: 24,
+                height: 24,
+                colorFilter: ColorFilter.mode(
+                  context.colors.textNorm,
+                  BlendMode.srcIn,
                 ),
+              ),
+              tooltip: isSpeakerMuted ? 'Unmute speaker' : 'Mute speaker',
+              onPressed: () {
+                _bloc.add(ToggleSpeaker());
+              },
+              isActive: !isSpeakerMuted,
+              inactiveBackgroundColor: context.colors.signalDangerMajor3,
+            ),
 
-                /// Chat
-                ControlAction(
-                  icon: context.images.iconChat.svg(width: 24, height: 24),
-                  tooltip:
-                      context.local.show_chatroom +
-                      (chatUnreadCount > 0 ? ' ($chatUnreadCount)' : ''),
-                  badge: chatUnreadCount > 0
-                      ? chatUnreadCount.toString()
-                      : null,
-                  onPressed: () {
-                    setState(() {
-                      _showChatBubble = !_showChatBubble;
-                      // close participant list when show chat bubble on mobile
-                      if (_showChatBubble) {
-                        _showParticipantList = false;
-                        _showSettings = false;
-                      }
-                    });
-                  },
-                ),
+            /// Emoji reactions
+            if (state.room.localParticipant != null)
+              ControlAction(
+                testId: TestIds.roomReactions,
+                icon: Icon(Icons.emoji_emotions_outlined, size: 24),
+                tooltip: context.local.emoji_reactions,
+                onPressed: () {
+                  unawaited(_showEmojiReactionMenu());
+                },
+              ),
 
-                /// Settings
-                ControlAction(
-                  icon: context.images.iconSettings.svg(width: 24, height: 24),
-                  tooltip: context.local.show_settings,
-                  onPressed: () {
-                    setState(() {
-                      _showSettings = !_showSettings;
-                      if (_showSettings) {
-                        _showChatBubble = false;
-                        _showParticipantList = false;
-                      }
-                    });
-                  },
-                ),
+            /// PiP - only show if supported and feature flag is enabled
+            if (_bloc.isPictureInPictureFeatureEnabled() &&
+                state.pipAvailable == true)
+              ControlAction(
+                testId: TestIds.roomPip,
+                icon: const Icon(Icons.picture_in_picture),
+                tooltip: context.local.enter_pip,
+                onPressed: () {
+                  _bloc.add(EnterPipMode(backgroundApp: iOS));
+                },
+              ),
 
-                /// Info
-                ControlAction(
-                  icon: context.images.iconInfo.svg(width: 24, height: 24),
-                  tooltip: context.local.meeting_info,
-                  onPressed: () {
-                    setState(() {
-                      _showMeetingInfo = !_showMeetingInfo;
-                      if (_showMeetingInfo) {
-                        _showChatBubble = false;
-                        _showParticipantList = false;
-                        _showSettings = false;
-                      }
-                    });
-                  },
-                ),
-              ];
-            },
-          ),
-        );
+            /// Screen share (start) — hidden while sharing; the stop
+            /// control lives in the controls bar as the second-to-last
+            /// button (right before the leave button).
+            if (!state.isLocalScreenSharing && shareAction != null) shareAction,
+
+            /// Participants
+            ControlAction(
+              testId: TestIds.roomParticipants,
+              icon: context.images.iconParticipants.svg24(),
+              badge: '${state.room.remoteParticipants.length + 1}',
+              tooltip:
+                  '${context.local.show_participants_list} (${state.room.remoteParticipants.length + 1})',
+              onPressed: () {
+                setState(() {
+                  _showParticipantList = !_showParticipantList;
+                  // close chat bubble when show participant list on mobile
+                  if (_showParticipantList) {
+                    _showChatBubble = false;
+                    _showSettings = false;
+                  }
+                });
+              },
+            ),
+
+            /// Chat
+            ControlAction(
+              testId: TestIds.roomChat,
+              icon: context.images.iconChat.svg(width: 24, height: 24),
+              tooltip:
+                  context.local.show_chatroom +
+                  (chatUnreadCount > 0 ? ' ($chatUnreadCount)' : ''),
+              badge: chatUnreadCount > 0 ? chatUnreadCount.toString() : null,
+              onPressed: () {
+                setState(() {
+                  _showChatBubble = !_showChatBubble;
+                  // close participant list when show chat bubble on mobile
+                  if (_showChatBubble) {
+                    _showParticipantList = false;
+                    _showSettings = false;
+                  }
+                });
+              },
+            ),
+
+            /// Settings
+            ControlAction(
+              testId: TestIds.roomSettings,
+              icon: context.images.iconSettings.svg(width: 24, height: 24),
+              tooltip: context.local.show_settings,
+              onPressed: () {
+                setState(() {
+                  _showSettings = !_showSettings;
+                  if (_showSettings) {
+                    _showChatBubble = false;
+                    _showParticipantList = false;
+                  }
+                });
+              },
+            ),
+
+            /// Info
+            ControlAction(
+              testId: TestIds.roomInfo,
+              icon: context.images.iconInfo.svg(width: 24, height: 24),
+              tooltip: context.local.meeting_info,
+              onPressed: () {
+                setState(() {
+                  _showMeetingInfo = !_showMeetingInfo;
+                  if (_showMeetingInfo) {
+                    _showChatBubble = false;
+                    _showParticipantList = false;
+                    _showSettings = false;
+                  }
+                });
+              },
+            ),
+          ];
+        },
+      ),
+    );
   }
 
   Widget buildParticipantsCameraWehnScreenSharing(BuildContext context) {

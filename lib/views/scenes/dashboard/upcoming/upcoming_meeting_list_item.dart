@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
@@ -11,6 +12,7 @@ import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/rust/proton_meet/user_subscription.dart' as user_sub;
 import 'package:meet/views/components/alerts/create_room_dialog.dart';
 import 'package:meet/views/components/alerts/delete_meeting_dialog.dart';
+import 'package:meet/views/components/test_id.dart';
 import 'package:meet/views/scenes/dashboard/dashboard_bloc.dart';
 import 'package:meet/views/scenes/dashboard/dashboard_event.dart';
 import 'package:meet/views/scenes/dashboard/schedule/schedule_meeting_dialog.dart';
@@ -61,7 +63,10 @@ class UpcomingMeetingListItem extends StatelessWidget {
       useLocalTimezone: true,
     );
 
-    return Material(
+    return TestId(
+      id: TestIds.upcomingMeetingItem(index),
+      button: true,
+      child: Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onJoin,
@@ -211,6 +216,7 @@ class UpcomingMeetingListItem extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 

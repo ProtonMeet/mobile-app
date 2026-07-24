@@ -175,6 +175,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     _watchDogTimer?.cancel();
     _roomHealthSampleTimer?.cancel();
     cancelWaitingRoomExpirationTimer();
+    cancelWaitingRoomDisplayNameRetryTimer();
     _cancelFullScreenTimer();
     _deviceChangeSub?.cancel();
     _audioSessionDevicesSub?.cancel();

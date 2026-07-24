@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/user.agent.dart';
 import 'package:meet/managers/channels/platform.channel.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
@@ -55,12 +56,15 @@ class AppRouter {
           final isE2EEEnabled = args['isE2EEEnabled'] as bool;
           final isAudioEnabled = args['isAudioEnabled'] as bool;
           final authBloc = args['authBloc'] as AuthBloc;
+          final hostMeeting = args['hostMeeting'] as FrbUpcomingMeeting?;
 
           final joinArgs = JoinArgs(
-            meetingLink: FrbUpcomingMeeting.newForJoin(
-              meetingLinkName: room,
-              meetingPassword: password,
-            ),
+            meetingLink:
+                hostMeeting ??
+                FrbUpcomingMeeting.newForJoin(
+                  meetingLinkName: room,
+                  meetingPassword: password,
+                ),
             meetingLinkUrl: meetingLink,
             displayName: displayName,
             e2eeKey: "e2eekey",
@@ -68,6 +72,8 @@ class AppRouter {
             isVideoEnabled: isVideoEnabled,
             e2ee: isE2EEEnabled,
             authBloc: authBloc,
+            isMeetingHost: hostMeeting != null,
+            waitingRoomEnabled: hostMeeting?.hasWaitingRoom ?? false,
           );
 
           final bloc = PreJoinBloc(UserAgent(), serviceManager);

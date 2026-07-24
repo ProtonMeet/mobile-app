@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/views/components/close_button_v1.dart';
+import 'package:meet/views/components/test_id.dart';
 
 class SignInCard extends StatelessWidget {
   const SignInCard({
@@ -41,7 +43,10 @@ class SignInCard extends StatelessWidget {
               children: [
                 MouseRegion(
                   cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
+                  child: TestId(
+                    id: TestIds.dashboardSignInCard,
+                    button: true,
+                    child: GestureDetector(
                     onTap: () {
                       onDismiss();
                       onSignInTap();
@@ -52,6 +57,7 @@ class SignInCard extends StatelessWidget {
                         color: context.colors.interActionNorm,
                       ),
                     ),
+                  ),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -69,6 +75,7 @@ class SignInCard extends StatelessWidget {
           right: 16,
           top: 16,
           child: CloseButtonV1(
+            testId: TestIds.dashboardSignInCardDismiss,
             onPressed: onDismiss,
             backgroundColor: Colors.transparent,
           ),

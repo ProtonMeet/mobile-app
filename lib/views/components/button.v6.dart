@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:meet/views/components/custom.loading.dart';
+import 'package:meet/views/components/test_id.dart';
 
 typedef FutureCallback = Future<void> Function();
 
@@ -16,6 +17,7 @@ class ButtonV6 extends StatefulWidget {
   final bool? isLoading;
   final Size? maximumSize;
   final Alignment alignment;
+  final String? testId;
 
   const ButtonV6({
     required this.text,
@@ -36,6 +38,7 @@ class ButtonV6 extends StatefulWidget {
     this.isLoading,
     this.maximumSize = Size.infinite,
     this.alignment = Alignment.center,
+    this.testId,
   });
 
   @override
@@ -74,7 +77,9 @@ class ButtonV6State extends State<ButtonV6>
     final disabledTextColor = (widget.textStyle.color ?? Colors.white)
         .withValues(alpha: 0.82);
 
-    return Align(
+    return withTestId(
+      widget.testId,
+      Align(
       alignment: widget.alignment,
       child: Stack(
         alignment: Alignment.center,
@@ -128,6 +133,8 @@ class ButtonV6State extends State<ButtonV6>
             ),
         ],
       ),
+    ),
+      button: true,
     );
   }
 }

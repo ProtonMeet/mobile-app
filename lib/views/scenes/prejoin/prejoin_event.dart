@@ -121,6 +121,8 @@ class PreJoinHostMeetingContextResolved extends PreJoinEvent {
   });
 }
 
+class PreJoinHostMeetingContextLoadFinished extends PreJoinEvent {}
+
 class PreJoinNavigateToWaitingRoomConsumed extends PreJoinEvent {}
 
 class PreJoinStartWaitingRoomAdmission extends PreJoinEvent {
@@ -145,6 +147,8 @@ class PreJoinJoinRequestRejectedNotificationConsumed extends PreJoinEvent {}
 
 class PreJoinWaitingRoomAdmissionTimedOutNotificationConsumed
     extends PreJoinEvent {}
+
+class PreJoinMeetingLockedBottomSheetConsumed extends PreJoinEvent {}
 
 class PreJoinJoinDecisionReceived extends PreJoinEvent {
   final String requestId;

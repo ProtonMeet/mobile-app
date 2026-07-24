@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'chat_models.dart';
 
 /// Default quick-reaction emojis surfaced on hover / long-press.
-const List<String> kQuickReactionEmojis = ['👏', '💜', '🙌', '👍', '👎'];
+const List<String> kQuickReactionEmojis = ['👍', '❤️', '😂', '😮', '🥲', '👎'];
 
 /// Holds the full chat state for a room (messages, threads, reactions) and
 /// implements the reducer-equivalent actions from the Chat Threads spec.
@@ -28,14 +28,12 @@ class ChatController extends ChangeNotifier {
   /// Main composer draft.
   String draftMessage = '';
 
-  List<RoomChatMessage>? _messagesView;
   bool _threadIndexDirty = true;
   final List<String> _rootIds = [];
   final Map<String, List<String>> _replyIdsByTopic = {};
   final Set<String> _replyIds = {};
 
-  List<RoomChatMessage> get messages =>
-      _messagesView ??= List.unmodifiable(_messages);
+  List<RoomChatMessage> get messages => List.unmodifiable(_messages);
 
   /// Grouped threads for the main chat list. Resolves live message objects from
   /// the cached index so seen/expanded/reaction updates avoid full rescans.
@@ -54,12 +52,15 @@ class ChatController extends ChangeNotifier {
     ];
   }
 
-  void _invalidateMessageViews() {
-    _messagesView = null;
-  }
-
   void _markThreadStructureDirty() {
     _threadIndexDirty = true;
+  }
+
+  void _commit({bool structure = false}) {
+    if (structure) {
+      _markThreadStructureDirty();
+    }
+    notifyListeners();
   }
 
   void _rebuildThreadIndexIfNeeded() {
@@ -119,31 +120,21 @@ class ChatController extends ChangeNotifier {
   // ── addChatMessages ──
   /// Inserts a message, creating a "missing root" placeholder if this is a
   /// reply whose root is not present locally. Computes seen state.
-  void receiveMessage(RoomChatMessage message) {
-    // Ignore duplicates (e.g. our own broadcast echoed back).
-    if (indexOfId(message.id) != -1) return;
+  /// Returns `true` when [message] was newly inserted (not a duplicate id).
+  bool receiveMessage(RoomChatMessage message) {
+    if (indexOfId(message.id) != -1) return false;
 
     if (message.isReply) {
-      final rootId = message.topicId!;
-      if (indexOfId(rootId) == -1) {
-        _insertChronological(
-          RoomChatMessage(
-            id: rootId,
-            message: '',
-            timestamp: message.timestamp,
-            identity: '',
-            name: '',
-            topicId: rootId,
-            seen: true,
-            isMissingRoot: true,
-          ),
-        );
-      }
+      _ensureMissingRoot(
+        rootId: message.topicId!,
+        timestamp: message.timestamp,
+        topicId: message.topicId,
+      );
     }
 
-    final seen = _computeIncomingSeen(message);
-    _insertChronological(message.copyWith(seen: seen));
-    notifyListeners();
+    _insertChronological(message.copyWith(seen: _computeIncomingSeen(message)));
+    _commit(structure: true);
+    return true;
   }
 
   bool _computeIncomingSeen(RoomChatMessage message) {
@@ -160,26 +151,39 @@ class ChatController extends ChangeNotifier {
   void addLocalEcho(RoomChatMessage message) {
     final existing = indexOfId(message.id);
     if (existing != -1) {
-      _messages[existing] = message;
-    } else {
-      if (message.isReply && indexOfId(message.topicId!) == -1) {
-        // Shouldn't normally happen for our own replies, but be safe.
-        _insertChronological(
-          RoomChatMessage(
-            id: message.topicId!,
-            message: '',
-            timestamp: message.timestamp,
-            identity: '',
-            name: '',
-            topicId: message.topicId,
-            seen: true,
-            isMissingRoot: true,
-          ),
-        );
-      }
-      _insertChronological(message);
+      _messages[existing] = _messages[existing].withEchoPreservingLocalUi(
+        message,
+      );
+      _commit();
+      return;
     }
-    notifyListeners();
+
+    if (message.isReply && message.topicId != null) {
+      _ensureMissingRoot(
+        rootId: message.topicId!,
+        timestamp: message.timestamp,
+        topicId: message.topicId,
+      );
+      _setThreadExpanded(message.topicId!, expanded: true, notify: false);
+    }
+
+    _insertChronological(message);
+    _commit(structure: true);
+  }
+
+  void _ensureMissingRoot({
+    required String rootId,
+    required int timestamp,
+    String? topicId,
+  }) {
+    if (indexOfId(rootId) != -1) return;
+    _insertChronological(
+      RoomChatMessage.missingRoot(
+        rootId: rootId,
+        timestamp: timestamp,
+        topicId: topicId,
+      ),
+    );
   }
 
   /// Adds a plain system (join/leave) notice.
@@ -206,29 +210,24 @@ class ChatController extends ChangeNotifier {
         joinLeaveMeetingName: joinLeaveMeetingName,
       ),
     );
-    notifyListeners();
+    _commit(structure: true);
   }
 
-  // ── updateChatMessageStatus ──
   void updateStatus(String id, ChatMessageStatus status) {
     final i = indexOfId(id);
     if (i == -1) return;
     _messages[i] = _messages[i].copyWith(status: status);
-    notifyListeners();
+    _commit();
   }
 
-  // ── removeChatMessage ──
   void removeMessage(String id) {
     final removed = _messages.indexWhere((m) => m.id == id);
     if (removed == -1) return;
     _messages.removeAt(removed);
     _reactionIndex.removeWhere((_, ref) => ref.messageId == id);
-    _invalidateMessageViews();
-    _markThreadStructureDirty();
-    notifyListeners();
+    _commit(structure: true);
   }
 
-  // ── markChatMessagesAsSeen ──
   void markAllSeen() {
     final expandedRootIds = _messages
         .where((m) => m.expanded)
@@ -243,27 +242,41 @@ class ChatController extends ChangeNotifier {
       _messages[i] = m.copyWith(seen: true);
       changed = true;
     }
-    if (changed) notifyListeners();
+    if (changed) {
+      _commit();
+    }
   }
 
-  // ── setChatThreadExpanded ──
   void setThreadExpanded(String rootId, bool expanded) {
+    _setThreadExpanded(rootId, expanded: expanded);
+  }
+
+  void _setThreadExpanded(
+    String rootId, {
+    required bool expanded,
+    bool notify = true,
+  }) {
     final i = indexOfId(rootId);
-    if (i == -1) return;
+    if (i == -1 || _messages[i].expanded == expanded) return;
+
     _messages[i] = _messages[i].copyWith(expanded: expanded);
     if (expanded) {
-      // Mark all replies in this thread as seen.
-      for (var j = 0; j < _messages.length; j++) {
-        final m = _messages[j];
-        if (m.topicId == rootId && m.id != rootId && !m.seen) {
-          _messages[j] = m.copyWith(seen: true);
-        }
-      }
+      _markThreadRepliesSeen(rootId);
     }
-    notifyListeners();
+    if (notify) {
+      _commit();
+    }
   }
 
-  // ── setChatThreadReplyDraft ──
+  void _markThreadRepliesSeen(String rootId) {
+    for (var j = 0; j < _messages.length; j++) {
+      final m = _messages[j];
+      if (m.topicId == rootId && m.id != rootId && !m.seen) {
+        _messages[j] = m.copyWith(seen: true);
+      }
+    }
+  }
+
   void setThreadReplyDraft(String rootId, String? draft) {
     final i = indexOfId(rootId);
     if (i == -1) return;
@@ -271,10 +284,8 @@ class ChatController extends ChangeNotifier {
       replyDraft: draft,
       clearReplyDraft: draft == null || draft.isEmpty,
     );
-    // Draft changes don't need a rebuild of the whole list.
   }
 
-  // ── addChatMessageReaction ──
   void addReaction({
     required String reactionId,
     required String messageId,
@@ -284,27 +295,29 @@ class ChatController extends ChangeNotifier {
     final i = indexOfId(messageId);
     if (i == -1) return;
     if (emoji.isEmpty || emoji.length > 10) return;
+
     final m = _messages[i];
     final reactions = cloneReactions(m.reactions);
     final list = reactions.putIfAbsent(emoji, () => <String>[]);
     if (!list.contains(identity)) list.add(identity);
+
     _messages[i] = m.copyWith(reactions: reactions);
     _reactionIndex[reactionId] = ChatReactionRef(
       messageId: messageId,
       emoji: emoji,
       identity: identity,
     );
-    notifyListeners();
+    _commit();
   }
 
-  // ── removeChatMessageReaction ──
   void removeReaction({required String replacesId, required String identity}) {
     final ref = _reactionIndex.remove(replacesId);
     if (ref == null) return;
-    // Only the reaction author may remove it.
     if (ref.identity != identity) return;
+
     final i = indexOfId(ref.messageId);
     if (i == -1) return;
+
     final m = _messages[i];
     final reactions = cloneReactions(m.reactions);
     final list = reactions[ref.emoji];
@@ -313,11 +326,9 @@ class ChatController extends ChangeNotifier {
       if (list.isEmpty) reactions.remove(ref.emoji);
     }
     _messages[i] = m.copyWith(reactions: reactions);
-    notifyListeners();
+    _commit();
   }
 
-  /// Finds the local participant's original reaction event id for
-  /// (messageId, emoji), used as `replaces_id` when toggling off.
   String? findLocalReactionId(String messageId, String emoji) {
     for (final entry in _reactionIndex.entries) {
       final ref = entry.value;
@@ -335,41 +346,34 @@ class ChatController extends ChangeNotifier {
     return list?.contains(localIdentity) ?? false;
   }
 
-  // ── Thread participant check (for new-reply badge) ──
   bool isThreadParticipant(ChatThread thread) {
     if (thread.root.identity == localIdentity) return true;
     return thread.replies.any((r) => r.identity == localIdentity);
   }
 
-  /// Whether a thread has unseen replies that should badge for this user.
   bool threadHasUnseenBadge(ChatThread thread) {
     if (!isThreadParticipant(thread)) return false;
     return thread.replies.any((r) => !r.seen);
   }
 
   void _insertChronological(RoomChatMessage message) {
-    // Most messages arrive in order; append then bubble back if needed.
     var index = _messages.length;
     while (index > 0 && _messages[index - 1].timestamp > message.timestamp) {
       index--;
     }
     _messages.insert(index, message);
-    _invalidateMessageViews();
     _markThreadStructureDirty();
   }
 }
 
 /// Notification-relevance filter: decide whether a message should
 /// surface a toast / announcement for the local user.
+///
+/// Thread replies are intentionally silent; only root-level messages notify.
 bool isRelevantThreadMessage(
   RoomChatMessage message,
   List<RoomChatMessage> chatMessages,
   String localIdentity,
 ) {
-  if (!message.isReply) return true; // root / non-thread always notifies
-  return chatMessages.any(
-    (m) =>
-        (m.id == message.topicId || m.topicId == message.topicId) &&
-        m.identity == localIdentity,
-  );
+  return !message.isReply;
 }

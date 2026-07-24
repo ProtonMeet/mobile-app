@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/audio_output_display.dart';
+import 'package:meet/views/components/test_id.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/views/scenes/room/room_bloc.dart';
@@ -76,10 +78,14 @@ class RoomTopBar extends StatelessWidget implements PreferredSizeWidget {
                     hasExternalAudioOutput: data.$2,
                     hasBluetoothAudioOutput: data.$3,
                   );
-                  return IconButton(
+                  return TestId(
+                    id: TestIds.roomSpeakerOutput,
+                    button: true,
+                    child: IconButton(
                     onPressed: onSpeakerButtonPressed,
                     icon: icon.svg20(color: context.colors.textNorm),
                     tooltip: "Select speaker",
+                    ),
                   );
                 },
               ),
@@ -88,12 +94,16 @@ class RoomTopBar extends StatelessWidget implements PreferredSizeWidget {
         if (showSwapCamera)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: IconButton(
+            child: TestId(
+              id: TestIds.roomSwapCamera,
+              button: true,
+              child: IconButton(
               onPressed: onSwapCamera,
               icon: context.images.iconSwapCamera.svg20(
                 color: context.colors.textNorm,
               ),
               tooltip: 'Swap camera',
+              ),
             ),
           ),
       ],

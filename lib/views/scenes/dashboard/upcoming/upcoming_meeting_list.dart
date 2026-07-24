@@ -34,8 +34,7 @@ class UpcomingMeetingList extends StatelessWidget {
   final List<FrbUpcomingMeeting> meetinsDisplay;
   final MeetUpcomingTab upcomingTab;
   final bool isLoaded;
-  final void Function(String roomId, String password, String meetingLink)
-  onJoinMeetingWithLink;
+  final OnJoin onJoinMeetingWithLink;
   final VoidCallback onSchedule;
   final VoidCallback onCreateRoom;
   final SortOptionMyMeetings sortOption;
@@ -64,8 +63,7 @@ List<Widget> buildUpcomingMeetingSlivers({
   required List<FrbUpcomingMeeting> meetinsDisplay,
   required MeetUpcomingTab upcomingTab,
   required bool isLoaded,
-  required void Function(String roomId, String password, String meetingLink)
-  onJoinMeetingWithLink,
+  required OnJoin onJoinMeetingWithLink,
   required VoidCallback onSchedule,
   required VoidCallback onCreateRoom,
   required SortOptionMyMeetings sortOption,
@@ -146,8 +144,7 @@ List<Widget> _buildMeetingSlivers({
   required BuildContext context,
   required List<FrbUpcomingMeeting> meetinsDisplay,
   required MeetUpcomingTab upcomingTab,
-  required void Function(String roomId, String password, String meetingLink)
-  onJoinMeetingWithLink,
+  required OnJoin onJoinMeetingWithLink,
   required VoidCallback onCreateRoom,
   required bool isLoaded,
   required SortOptionMyMeetings sortOption,
@@ -182,6 +179,7 @@ List<Widget> _buildMeetingSlivers({
                     displayColors: displayColors,
                     isPersonalMeeting: isPersonalMeeting,
                     onJoin: onJoinMeetingWithLink,
+                    hostMeeting: meeting,
                     initialUrl: meetingLink,
                     meetingName: meetingName,
                     subtitle: meeting.formatCreateTimeNormal(
@@ -275,6 +273,7 @@ List<Widget> _buildMeetingSlivers({
                       displayColors: displayColors,
                       isPersonalMeeting: isPersonalMeeting,
                       onJoin: onJoinMeetingWithLink,
+                      hostMeeting: meeting,
                       initialUrl: meetingLink,
                       meetingName: meetingName,
                       subtitle: meeting.formatStartDateTime(

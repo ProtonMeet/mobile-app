@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:meet/constants/constants.dart';
+import 'package:meet/constants/test_ids.dart';
+import 'package:meet/views/components/test_id.dart';
 
 import 'start_action_text.dart';
 
@@ -24,11 +26,15 @@ class ExpandableStart extends StatelessWidget {
     final sigma = 3.0;
     final bgColor = Colors.white.withValues(alpha: 0.18);
     final borderColor = Colors.white.withValues(alpha: 0.04);
+    final testId = t < 0.5 ? TestIds.dashboardStartFab : TestIds.dashboardStartInstant;
     return Align(
       alignment: Alignment.bottomCenter,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 24, left: 16, right: 16),
-        child: GestureDetector(
+        child: TestId(
+          id: testId,
+          button: true,
+          child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: t < 0.5 ? onToggle : onInstant,
           child: Material(
@@ -73,6 +79,7 @@ class ExpandableStart extends StatelessWidget {
                     ),
                   ),
           ),
+        ),
         ),
       ),
     );

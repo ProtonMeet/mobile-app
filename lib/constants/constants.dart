@@ -80,6 +80,16 @@ const Duration waitingRoomJoinRequestExpirationPollInterval = Duration(
   seconds: 1,
 );
 
+/// Retries for resolving a waiting-room guest display name (participants API
+/// may lag behind the join-request websocket). Retried on the existing 1s poll
+/// tick, batched into a single getParticipants call.
+const int waitingRoomJoinRequestDisplayNameRetryCount = 3;
+
+/// Debounced interval between waiting-room display-name resolve attempts.
+const Duration waitingRoomJoinRequestDisplayNameRetryDelay = Duration(
+  seconds: 2,
+);
+
 /// Expired waiting-room join requests received in one host session before
 /// reporting to Sentry (report when count exceeds this value).
 const int waitingRoomExpiredJoinRequestSentryThreshold = 3;
@@ -93,7 +103,7 @@ const bool showExpandableErrorDetails = true;
 
 /// Emoji reactions
 const int reactionDisplayDurationMs = 3000;
-const List<String> availableEmojiReactions = ['👍', '👎', '👏'];
+const List<String> availableEmojiReactions = ['👍', '👎', '👏', '😁', '❤️', '🎉', '🙌'];
 const String raisedHandEmoji = '🤚';
 
 /// Valid IANA timezone identifiers for timezone selection.

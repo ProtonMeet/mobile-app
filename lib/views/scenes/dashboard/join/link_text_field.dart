@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
+import 'package:meet/views/components/test_id.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 
 enum LinkStatus { empty, invalid, valid, invalidPassword }
@@ -69,7 +71,10 @@ class LinkTextField extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: TextField(
+                  child: TestId(
+                    id: TestIds.joinDialogLinkField,
+                    textField: true,
+                    child: TextField(
                     enabled: editable,
                     controller: controller,
                     focusNode: focusNode,
@@ -89,12 +94,16 @@ class LinkTextField extends StatelessWidget {
                       color: context.colors.textNorm,
                     ),
                   ),
+                  ),
                 ),
 
                 /// Copy button when not editable
                 if (!editable) ...[
                   const SizedBox(width: 8),
-                  Material(
+                  TestId(
+                    id: TestIds.joinDialogCopy,
+                    button: true,
+                    child: Material(
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: onCopy,
@@ -108,6 +117,7 @@ class LinkTextField extends StatelessWidget {
                         ),
                       ),
                     ),
+                  ),
                   ),
                 ],
               ],

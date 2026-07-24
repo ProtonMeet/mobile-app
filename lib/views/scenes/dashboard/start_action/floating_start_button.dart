@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:meet/constants/constants.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart';
@@ -227,16 +228,19 @@ class _FloatingStartButtonState extends State<FloatingStartButton>
                 children: [
                   if (widget.isScheduleInAdvanceEnabled)
                     MenuItem(
+                      testId: TestIds.dashboardStartSchedule,
                       label: context.local.schedule_a_meeting,
                       icon: context.images.iconMeetingCalendar,
                       onTap: () => _action(widget.onSchedule),
                     ),
                   MenuItem(
+                    testId: TestIds.dashboardStartCreateRoom,
                     label: context.local.create_new_room,
                     icon: context.images.iconMeetingPerson,
                     onTap: () => _action(widget.onCreateRoom),
                   ),
                   MenuItem(
+                    testId: TestIds.dashboardStartJoinLink,
                     label: context.local.join_with_a_link,
                     icon: context.images.iconLink,
                     onTap: () => _action(widget.onJoinLink),

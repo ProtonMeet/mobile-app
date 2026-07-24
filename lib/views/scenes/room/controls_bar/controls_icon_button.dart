@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/views/components/custom.tooltip.dart';
+import 'package:meet/views/components/test_id.dart';
 import 'package:showcaseview/showcaseview.dart';
 
 class ControlIconButton extends StatelessWidget {
@@ -17,6 +18,7 @@ class ControlIconButton extends StatelessWidget {
   final String? tooltip;
   final GlobalKey? globalKey;
   final String? description;
+  final String? testId;
 
   const ControlIconButton({
     required this.icon,
@@ -33,6 +35,7 @@ class ControlIconButton extends StatelessWidget {
     this.tooltip,
     this.globalKey,
     this.description,
+    this.testId,
   });
 
   @override
@@ -55,7 +58,9 @@ class ControlIconButton extends StatelessWidget {
   }
 
   Widget buildMainWidget(BuildContext context) {
-    return Container(
+    return withTestId(
+      testId,
+      Container(
       width: size,
       height: size,
       decoration: ShapeDecoration(
@@ -110,6 +115,8 @@ class ControlIconButton extends StatelessWidget {
             ),
         ],
       ),
+    ),
+      button: true,
     );
   }
 }
