@@ -902,11 +902,11 @@
   "@chat_title": {
     "description": "Title for the in-meeting chat panel"
   },
-  "chat_input_hint": "Type an encrypted message…",
+  "chat_input_hint": "Typ een versleuteld bericht…",
   "@chat_input_hint": {
     "description": "Placeholder for the main chat composer"
   },
-  "chat_new_messages": "{count, plural, =1{1 new message} other{{count} new messages}}",
+  "chat_new_messages": "{count, plural, =1{1 nieuw bericht} other{{count} nieuwe berichten}}",
   "@chat_new_messages": {
     "description": "Pill shown when new root-level chat messages arrive while scrolled up",
     "placeholders": {
@@ -915,7 +915,7 @@
       }
     }
   },
-  "chat_new_messages_badge": "{count, plural, =1{1 new} other{{count} new}}",
+  "chat_new_messages_badge": "{count, plural, =1{1 nieuw} other{{count} nieuw}}",
   "@chat_new_messages_badge": {
     "description": "Compact floating badge above the composer when new messages arrive while scrolled up",
     "placeholders": {
@@ -924,7 +924,7 @@
       }
     }
   },
-  "chat_thread_view_replies": "{count, plural, =1{View 1 reply} other{View {count} replies}}",
+  "chat_thread_view_replies": "{count, plural, =1{Bekijk 1 antwoord} other{Bekijk {count} antwoorden}}",
   "@chat_thread_view_replies": {
     "description": "Collapsed thread toggle to expand and view replies",
     "placeholders": {
@@ -933,7 +933,7 @@
       }
     }
   },
-  "chat_thread_replies_count": "{count, plural, =1{1 reply} other{{count} replies}}",
+  "chat_thread_replies_count": "{count, plural, =1{1 antwoord} other{{count} antwoorden}}",
   "@chat_thread_replies_count": {
     "description": "Expanded thread toggle showing reply count",
     "placeholders": {
@@ -942,39 +942,39 @@
       }
     }
   },
-  "chat_thread_new_reply": "New reply",
+  "chat_thread_new_reply": "Nieuw antwoord",
   "@chat_thread_new_reply": {
     "description": "Badge shown on a collapsed thread when there are unseen replies"
   },
-  "chat_system_joined_prefix": "Joined ",
+  "chat_system_joined_prefix": "Deelname aan ",
   "@chat_system_joined_prefix": {
     "description": "Prefix before the meeting name in a join system chat notice"
   },
-  "chat_system_left_prefix": "Left ",
+  "chat_system_left_prefix": "Verlaten ",
   "@chat_system_left_prefix": {
     "description": "Prefix before the meeting name in a leave system chat notice"
   },
-  "chat_reply_hint": "Reply…",
+  "chat_reply_hint": "Antwoorden…",
   "@chat_reply_hint": {
     "description": "Placeholder for the thread reply composer"
   },
-  "chat_thread_missing_root": "This conversation started before you joined.",
+  "chat_thread_missing_root": "Dit gesprek was al begonnen voordat u erbij kwam.",
   "@chat_thread_missing_root": {
     "description": "Placeholder when a thread root message is not available locally"
   },
-  "chat_not_delivered": "Not delivered",
+  "chat_not_delivered": "Niet afgeleverd",
   "@chat_not_delivered": {
     "description": "Status label for a failed outgoing chat message"
   },
-  "chat_discard": "Discard",
+  "chat_discard": "Weggooien",
   "@chat_discard": {
     "description": "Action to remove a failed outgoing chat message"
   },
-  "chat_reply": "Reply",
+  "chat_reply": "Antwoorden",
   "@chat_reply": {
     "description": "Action to reply to a chat message in a thread"
   },
-  "chat_copy_text": "Copy text",
+  "chat_copy_text": "Tekst kopiëren",
   "@chat_copy_text": {
     "description": "Action to copy chat message text to clipboard"
   },
