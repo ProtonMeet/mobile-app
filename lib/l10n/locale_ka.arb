@@ -1,0 +1,1980 @@
+{
+  "@@locale": "ka",
+  "@@last_modified": "2024-02-12T00:10:57.227125",
+  "app_name": "Proton Meet",
+  "@app_name": {
+    "description": "The name of the application"
+  },
+  "logout": "გასვლა",
+  "login": "შესვლა",
+  "sign_in": "შესვლა",
+  "sign_out": "გასვლა",
+  "learn_more": "გაიგეთ მეტი",
+  "no_data": "მონაცემების გარეშე",
+  "submit": "გადაცემა",
+  "cancel": "გაუქმება",
+  "close": "დახურვა",
+  "ok": "Ok",
+  "unlock_app": "აპის განბლოკვა",
+  "search": "ძებნა",
+  "placeholder": "ადგილმჭერი",
+  "something_went_wrong": "რაღაც არასწორად წავიდა",
+  "retry": "თავიდან ცდა",
+  "@retry": {
+    "description": "Retry loading dashboard after an error"
+  },
+  "report_a_problem": "პრობლემის შეტყობინება",
+  "sign_in_to_proton_title": "Proton-ში შესვლა",
+  "sign_in_to_proton_subtitle": "შეიყვანეთ თქვენი Proton-ის ანგარიშის დეტალები.",
+  "options": "მორგება",
+  "@options": {
+    "description": "Title for options dialog"
+  },
+  "manage_accounts": "ანგარიშების მართვა",
+  "@manage_accounts": {
+    "description": "Title for manage accounts dialog"
+  },
+  "delete_account": "ანგარიშის წაშლა",
+  "@delete_account": {
+    "description": "Title for delete account dialog"
+  },
+  "signin_intro_title": "მოგესალმებათ Proton Meet",
+  "@signin_intro_title": {
+    "description": "Title in the sign-in intro sheet"
+  },
+  "signin_intro_subtitle": "გასაგრძელებლად შედით, ან შექმენით ანგარიში",
+  "@signin_intro_subtitle": {
+    "description": "Subtitle in the sign-in intro sheet"
+  },
+  "signin_intro_create_account": "ანგარიშის შექმნა",
+  "@signin_intro_create_account": {
+    "description": "Primary button label in the sign-in intro sheet"
+  },
+  "signin_intro_sign_in": "შესვლა",
+  "@signin_intro_sign_in": {
+    "description": "Secondary button label in the sign-in intro sheet"
+  },
+  "sign_in_username_or_email": "მომხმარებლის სახელი, ან ელფოსტა",
+  "email": "ელფოსტა",
+  "user_name": "მომხმარებლის სახელი",
+  "account": "ანგარიში",
+  "password": "პაროლი",
+  "session_expired_content": "თქვენი უსაფრთხოეიბსთვის თქვენი სესიის მოლოდინის ვადა ამოიწურა. შედით სისტემაში თქვენი შეხვედრების მართვის გასაგრძელებლად.",
+  "session_expired_title": "სესიის ვადა ამოიწურა!",
+  "session_expired_continue_without_signing_in": "გაგრძელება შესვლის გარეშე",
+  "@session_expired_continue_without_signing_in": {
+    "description": "Secondary button label for session expired bottom sheet"
+  },
+  "force_upgrade": "ნაძალადევი განახლება",
+  "upgrade": "განახლება",
+  "search_participants": "მონაწილეების ძებნა...",
+  "participants_count": "monawileebi ({count})",
+  "no_participants_found": "მონაწილეების გარეშე",
+  "try_different_search_term": "სცადეთ სხვა საძიებო სტრიქონი",
+  "you": "(თქვენ)",
+  "invite_participant": "მონაწილის მოწვევა",
+  "leave": "გასვლა",
+  "emoji_reaction": "ემოძის რეაქცია",
+  "unshare_screen": "ეკრანის გაზიარების შეწყვეტა",
+  "share_screen": "ეკრანის გაზიარება",
+  "show_chatroom": "ჩატი",
+  "show_participants_list": "მონაწილეები",
+  "show_settings": "მორგება",
+  "show_meeting_stats": "შეხვედრის განგაშების ჩვენება",
+  "meeting_info": "ინფორმაცია",
+  "meeting_settings": "მორგება",
+  "host": "ჰოსტი",
+  "lock_meeting": "შეხვედრის ჩაკეტვა",
+  "meeting_locked": "შეხვედრა ჩაკეტილია",
+  "@meeting_locked": {
+    "description": "Title when meeting is locked"
+  },
+  "meeting_locked_description": "ეს შეხვედრა ჩაკეტილია. შესასვლელად დაუკავშირდით მასპინძელს.",
+  "@meeting_locked_description": {
+    "description": "Description when meeting is locked"
+  },
+  "meeting_locked_notification": "შეხვედრა ჩაკეტილია. ახალ მონაწილეებს გაწევრება არ შეუძლიათ.",
+  "@meeting_locked_notification": {
+    "description": "Toast notification when meeting is locked by host"
+  },
+  "meet_server_version_not_supported_title": "აუცილებელია განახლება",
+  "@meet_server_version_not_supported_title": {
+    "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
+  },
+  "meet_server_version_not_supported_description": "თქვენი აპის ვერსია ამ შეხვედრას ვერ დაუკავშირდება. გასაგრძელებლად განაახლეთ Proton Meet.",
+  "@meet_server_version_not_supported_description": {
+    "description": "Description when the client must be updated to join a meeting"
+  },
+  "meeting_unlocked_notification": "შეხვედრა განიბლოკა. ახლა მონაწილეებს ისევ შეუძლიათ, გაწევრდნენ.",
+  "@meeting_unlocked_notification": {
+    "description": "Toast notification when meeting is unlocked by host"
+  },
+  "hide_profile_pictures": "პროფილის სურათების დამალვა",
+  "picture_in_picture_mode": "რეჟიმი \\\"სურათი სურათში\\\"",
+  "security": "უსაფრთხოება",
+  "enable_waiting_room": "მოსაცდელი ოთახის ჩართვა",
+  "hide_self_view": "საკუთარი თავის ხედის დამალვა",
+  "allow_all_participants_to": "ყველა მონაწილისთვის უფლების მიცემა:",
+  "chat": "ჩატი",
+  "rename_themselves": "საკუთარი სახელის გადარქმევა",
+  "unmute_themselves": "საკუთარი თავის დადუმების გაუქმება",
+  "meeting": "შეხვედრა",
+  "show_meeting_timer": "შეხვედრის წამზომის ჩვენება",
+  "unsubscribe_video_by_default": "შემომავალი ვიდეოს გამორთვა",
+  "camera_background_blur": "ფონის დაბურვა",
+  "audio_noise_cancellation": "ხმაურის ჩახშობა",
+  "dark_mode": "მუქი რეჟიმი",
+  "show_connection_indicator": "კავშირის მაჩვენებლის ჩვენება",
+  "desktop_notifications": "გაფრთხილებები სამუშაო მაგიდაზე",
+  "meeting_quality": "შეხვედრის ხარისხი",
+  "camera_resolution": "კამერის რეზოლუცია",
+  "camera_max_bitrate": "კამერის მაქს. დისკტრეტიზაციის სიხშირე",
+  "screen_sharing_resolution": "ეკრანის გაზიარების გარჩევადობა",
+  "screen_sharing_max_bitrate": "ეკრანის გაზიარების მაქს. დისკრეტიზაციის სიხშირე",
+  "export_debug_log": "გამართვის ჟურნალის გატანა",
+  "type_a_message": "აკრიფეთ შეტყობინება...",
+  "search_messages": "შეტყობინებების ძებნა...",
+  "meeting_chat": "შეხვედრის ჩატი",
+  "no_messages_found": "შეტყობინებები აღმოჩენილი არაა",
+  "no_messages_yet": "ჯერ, შეტყობინებების გარეშე",
+  "start_the_conversation": "საუბრის დაწყება",
+  "unknown": "უცნობი",
+  "bitrate_extreme_high_2000": "ულტრამაღალი (2000 კბ/წმ)",
+  "bitrate_ultra_high_1900": "ულტრამაღალი (1900 კბ/წმ)",
+  "bitrate_ultra_high_1800": "ულტრამაღალი (1800 კბ/წმ)",
+  "bitrate_ultra_high_1700": "ულტრამაღალი (1700 კბ/წმ)",
+  "bitrate_ultra_high_1600": "ულტრამაღალი (1600 კბ/წმ)",
+  "bitrate_ultra_high_1500": "ულტრამაღალი (1500 კბ/წმ)",
+  "bitrate_very_high_1400": "ძალიან მაღალი (1400 კბ/წმ)",
+  "bitrate_very_high_1300": "ძალიან მაღალი (1300 კბ/წმ)",
+  "bitrate_very_high_1200": "ძალიან მაღალი (1200 კბ/წმ)",
+  "bitrate_very_high_1100": "ძალიან მაღალი (1100 კბ/წმ)",
+  "bitrate_high_1000": "მაღალი (1000 კბ/წმ)",
+  "bitrate_high_900": "მაღალი (900 კბ/წმ)",
+  "bitrate_high_800": "მაღალი (800 კბ/წმ)",
+  "bitrate_medium_high_700": "საშუალო-მაღალი (700 კბ/წმ)",
+  "bitrate_medium_high_600": "საშუალო-მაღალი (600 კბ/წმ)",
+  "bitrate_medium_high_500": "საშუალო-მაღალი (500 კბ/წმ)",
+  "bitrate_medium_400": "საშუალო (400 კბ/წმ)",
+  "bitrate_medium_low_300": "საშუალო-დაბალი (300 კბ/წმ)",
+  "bitrate_low_200": "დაბალი (200 კბ/წმ)",
+  "bitrate_very_low_100": "ძალიან დაბალი (100 კბ/წმ)",
+  "resolution_360p": "360p",
+  "resolution_720p": "720p",
+  "resolution_1080p": "1080p",
+  "resolution_4k": "4K",
+  "join_meeting": "ისაუბრეთ კონფიდენციალურად",
+  "app_description": "ჩვენი გამჭოლი დაშიფვრით დაშიფრული შეტყობინებები იცავს თქვენს კონფიდენციალობას და საშუალებას გაძლევთ, თავისუფლად გამოხატოთ თქვენი აზრი.",
+  "meeting_link": "შეხვედრის ბმული",
+  "meeting_detail": "შეხვედრის დეტალები",
+  "display_name": "თქვენი სახელი",
+  "enter_display_name": "შეიყვანეთ თქვენი სახელი",
+  "display_name_required": "თქვენი სახელი აუცილებელია",
+  "remember_display_name_on_device": "ჩემი სახელის დამახსოვრება ამ მოწყობილობაზე მომავალი შეხვედრებისთვის",
+  "use_this_name_next_time": "ამ სახელის გამოყენება შემდეგ ჯერზე",
+  "@use_this_name_next_time": {
+    "description": "Toggle label on pre-join screen to remember display name"
+  },
+  "prejoin_meeting_has_waiting_room": "ამ შეხვედრას აქვს მოსაცდელი ოთახი",
+  "@prejoin_meeting_has_waiting_room": {
+    "description": "Informational message on pre-join when waiting room is enabled"
+  },
+  "waiting_room_host_not_started_title": "სხვების მოლოდინი დასაწყებად",
+  "@waiting_room_host_not_started_title": {
+    "description": "Title when guest waits for host to start a meeting with waiting room"
+  },
+  "waiting_room_host_not_started_description": "თქვენ გაწევრდებით, როცა მასპინძელი დაიწყებს შეხვედრას და შეგიშვებთ.",
+  "@waiting_room_host_not_started_description": {
+    "description": "Description when guest waits for host to start"
+  },
+  "waiting_room_awaiting_admission_title": "სხვების მოლოდინი, რომ შეგიშვან",
+  "@waiting_room_awaiting_admission_title": {
+    "description": "Title when guest waits for host admission"
+  },
+  "waiting_room_awaiting_admission_description": "მასპინძელი გაფრთხილებულია, რომ ელოდებით",
+  "@waiting_room_awaiting_admission_description": {
+    "description": "Description when guest waits for host admission"
+  },
+  "waiting_room_expires_in": "ვადა იწურება: {time}",
+  "@waiting_room_expires_in": {
+    "description": "Countdown pill label while waiting for admission",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "waiting_room_join_request_rejected": "მასპინძელმა უარჰყო თქვენი მოთხოვნა გაწევრებაზე",
+  "@waiting_room_join_request_rejected": {
+    "description": "Global notification when the host rejects a waiting-room join request"
+  },
+  "waiting_room_admission_timed_out": "თქვენი მოთხოვნის ვადა გაწევრებაზე ამოიწურა. კიდევ სცადეთ.",
+  "@waiting_room_admission_timed_out": {
+    "description": "Global notification when the guest waiting room admission countdown reaches zero"
+  },
+  "waiting_room_host_join_request_notification": "ვიღაც ელოდება შემოერთებას მოსაცდელ ოთახში",
+  "@waiting_room_host_join_request_notification": {
+    "description": "Global notification shown to the host when a guest submits a waiting-room join request"
+  },
+  "waiting_room_join_request_not_found": "ეს გაწევრების მოთხოვნა ხელმისაწვდომი აღარაა. შეიძლება, მისი ვადა ამოიწურა, ან ის უკვე დამუშავდა.",
+  "@waiting_room_join_request_not_found": {
+    "description": "Toast shown when the host tries to admit a waiting-room request that is no longer pending"
+  },
+  "participant_list_waiting_room_tab": "მოსაცდელი ოთახი",
+  "@participant_list_waiting_room_tab": {
+    "description": "Tab label for waiting room participants in host participant list"
+  },
+  "participant_list_all_participants_tab": "ყველა მონაწილე",
+  "@participant_list_all_participants_tab": {
+    "description": "Tab label for in-meeting participants in host participant list"
+  },
+  "participant_list_admit_all": "ყველას დადასტურება",
+  "@participant_list_admit_all": {
+    "description": "Button label to admit all waiting room participants"
+  },
+  "participant_list_joined_at": "გაწევრების დროა {time}",
+  "@participant_list_joined_at": {
+    "description": "Subtitle for a waiting room participant row",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "participant_list_no_waiting_participants": "შემოსვლას არავინ ელოდება",
+  "@participant_list_no_waiting_participants": {
+    "description": "Empty state when the waiting room participant list is empty"
+  },
+  "join_meeting_button": "შეხვედრაზე შესვლა",
+  "create_meeting_button": "შექმნა",
+  "import_meeting_button": "შეხვედრის შემოტანა",
+  "import_meeting_title": "შეხვედრის შემოტანა",
+  "import_meeting_hint_text": "შეიყვანეთ შეხვედრის ბმული",
+  "open_home": "საწყისის გახსნა",
+  "start_simulation": "სიმულაციის გაშვება",
+  "change_layout": "განლაგების შეცვლა",
+  "layout_spaced_grid": "გაჯირჯვებული ბადე",
+  "layout_compact_grid": "კომპაქტური ბადე",
+  "layout_speaker_view": "წარმომდგენის ხედი",
+  "layout_multi_speaker_view": "ერთზე მეტი მოსაუბრის რეჟიმი",
+  "no_active_speaker": "აქტიური დინამიკის გარეშე",
+  "camera_view": "კამერის ხედი",
+  "is_presenting": "მუშავდება",
+  "stop_presenting": "წარმოდგენის გაჩერება",
+  "tap_to_stop_sharing": "დაატყაპუნეთ გაზიარების გასაჩერებლად",
+  "notification_permission_settings_title": "გაფრთხილებასთან წვდომის დაშვება",
+  "@notification_permission_settings_title": {
+    "description": "Title when notification permission was denied and screen sharing requires it"
+  },
+  "notification_permission_settings_message": "ეკრანის გაზიარებას სჭირდება გაფრთხილების უფლება, რომ შეხვედრა ფონში აქტიურად დარჩეს.",
+  "@notification_permission_settings_message": {
+    "description": "Body for notification permission inform sheet shown before screen sharing"
+  },
+  "participant_joined": "მონაწილე შემოგვიერთდა🎉",
+  "participant_left": "მონაწილე გავიდა👋",
+  "participant_name_prefix": "სახელი: ",
+  "participant_identity_prefix": "იდენტიფიკაცია: ",
+  "setting_updated": "პარამეტრი განახლდა",
+  "changes_effect_next_screen_sharing": "ცვლილებები ძალაში ეკრანის შემდეგი გაზიარებისას შევა.",
+  "video_stats_copied": "ვიდეოს სტატისტიკა დაკოპირდა ბუფერში",
+  "anonymous_user": "ანონიმური მომხმარებელი",
+  "loading": "იტვირთება ...",
+  "@loading": {
+    "description": "Loading text"
+  },
+  "video": "ვიდეო",
+  "audio": "აუდიო",
+  "turn_off_camera": "კამერის გამორთვა",
+  "turn_on_camera": "კამერის ჩართვა",
+  "video_settings": "ვიდეოს მორგება",
+  "select_camera_device": "აირჩიეთ კამერის მოწყობილობა",
+  "turn_off_microphone": "მიკროფონის გამორთვა",
+  "turn_on_microphone": "მიკროფონის ჩართვა",
+  "audio_settings": "ხმის მორგება",
+  "select_microphone": "აირჩიეთ მიკროფონი",
+  "select_speaker": "აირჩიეთ დინამიკი",
+  "permission_not_given": "წვდომები მონიჭებული არ გაქვთ",
+  "permission_camera": "კამერის ჩასართავად მასთან წვდომა გვჭირდება",
+  "permission_microphone": "მიკროფონის ჩასართავად მასთან წვდომა გვჭირდება",
+  "camera_is_off": "კამერა გამორთულია",
+  "copied_to_clipboard": "დაკოპირდა ბუფერში",
+  "personal_meeting": "პირადი შეხვედრა",
+  "@personal_meeting": {
+    "description": "Title for personal meeting dialog"
+  },
+  "personal_meeting_description": "თქვენი ყოველთვის ხელმისაწვდომი შეხვედრების ოთახი",
+  "@personal_meeting_description": {
+    "description": "Description text for personal meeting room"
+  },
+  "personal_meeting_room": "პირადი შეხვედრების ოთახი",
+  "@personal_meeting_room": {
+    "description": "Title for personal meeting room dialog"
+  },
+  "join_a_meeting": "შეხვედრაზე შესვლა",
+  "@join_a_meeting": {
+    "description": "Title for join meeting dialog"
+  },
+  "join_meeting_subtitle": "დაცულ შეხვედრაზე შესასვლელად ჩასვით აქ თქვენი Proton Meet-ის ბმული",
+  "@join_meeting_subtitle": {
+    "description": "Subtitle text for join meeting dialog"
+  },
+  "please_enter_valid_meeting_link": "შეიყვანეთ სწორი შეხვედრის ბმული.",
+  "@please_enter_valid_meeting_link": {
+    "description": "Error message when meeting link is invalid"
+  },
+  "meeting_password_incorrect": "შეხვედრის პაროლი არასწორია",
+  "@meeting_password_incorrect": {
+    "description": "Error message when the meeting password embedded in the join link is invalid"
+  },
+  "meeting_password_invalid": "შეხვედრის პაროლი არასწორია",
+  "link_copied_to_clipboard": "ბმული დაკოპირდა ბუფერში",
+  "@link_copied_to_clipboard": {
+    "description": "Success message when meeting link is copied"
+  },
+  "meeting_link_label": "შეხვედრის ბმული",
+  "@meeting_link_label": {
+    "description": "Label for meeting link input field"
+  },
+  "copy_link": "ბმულის კოპირება",
+  "@copy_link": {
+    "description": "Button text to copy meeting link"
+  },
+  "copy_link_and_close": "ბმულის კოპირება და დახურვა",
+  "@copy_link_and_close": {
+    "description": "Button text to copy link and close dialog"
+  },
+  "copy": "კოპირება",
+  "@copy": {
+    "description": "Copy action"
+  },
+  "delete": "წაშლა",
+  "@delete": {
+    "description": "Delete action"
+  },
+  "delete_meeting": "შეხვედრის წაშლა",
+  "@delete_meeting": {
+    "description": "Title for delete meeting dialog"
+  },
+  "delete_meeting_confirmation": "დარწმუნებული ხართ, რომ გსურთ ამ შეხვედრის წაშლა? ეს ქმედება შეუქცევადია.",
+  "@delete_meeting_confirmation": {
+    "description": "Confirmation message for deleting a meeting"
+  },
+  "creating_meeting": "შეხვედრის შექმნა ...",
+  "@creating_meeting": {
+    "description": "Loading message shown while creating a meeting"
+  },
+  "deleting_meeting": "შეხვედრის წაშლა ...",
+  "@deleting_meeting": {
+    "description": "Loading message shown while deleting a meeting"
+  },
+  "updating_meeting": "შეხვედრის განახლება ...",
+  "@updating_meeting": {
+    "description": "Loading message shown while updating a meeting"
+  },
+  "scheduling_meeting": "შეხვედრის დაგეგმვა ...",
+  "@scheduling_meeting": {
+    "description": "Loading message shown while scheduling a meeting"
+  },
+  "guest_user_description": "როგორც სტუმარს, შეგიძლიათ, დაიწყოთ ანონიმური და უფასო შეხვედრები ამ პანელიდან.",
+  "@guest_user_description": {
+    "description": "Description text explaining guest user capabilities"
+  },
+  "create_free_account": "უფასო ანგარიშის შექმნა",
+  "@create_free_account": {
+    "description": "Button text to create a free account"
+  },
+  "please_sign_in_to_access_feature": "ამ ფუნქციის გამოსაყენებლად შედით სისტემაში! ",
+  "@please_sign_in_to_access_feature": {
+    "description": "Message prompting user to sign in"
+  },
+  "already_have_account": "უკვე აქვთ ანგარიში? ",
+  "@already_have_account": {
+    "description": "Text before login link for existing users"
+  },
+  "we_hope_you_enjoyed_meeting": "იმედია, ისიამოვნეთ თქვენი დაცული შეხვედრით! ",
+  "@we_hope_you_enjoyed_meeting": {
+    "description": "Message shown after user leaves meeting"
+  },
+  "left_by_mistake": "შეცდომით გახვედით? ",
+  "@left_by_mistake": {
+    "description": "Text before rejoin link"
+  },
+  "rejoin_meeting": "შეხვედრაზე თავიდან შესვლა",
+  "@rejoin_meeting": {
+    "description": "Button text to rejoin a meeting"
+  },
+  "left_meeting_title": "თქვენ დატოვეთ შეხვედრა",
+  "@left_meeting_title": {
+    "description": "Title shown in left meeting bottom sheet"
+  },
+  "left_meeting_subtitle_guest_free": "დააორგანიზეთ საკუთარი, უსაფრთხო შეხვედრა. დაიწყეთ ზარი Proton Meet-ში და გაუზიარეთ ბმული ვისაც გნებავთ, რომ მოიწვიოთ. მარტივი, უსაფრთხო და უფასო.",
+  "@left_meeting_subtitle_guest_free": {
+    "description": "Subtitle shown for non-paid non-host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_guest_paid": "მადლობა, რომ შემოგვიერთდით.",
+  "@left_meeting_subtitle_guest_paid": {
+    "description": "Subtitle shown for paid non-host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_host_free": "მადლობა შეხვედრის ორგანიზებისთვის.",
+  "@left_meeting_subtitle_host_free": {
+    "description": "Subtitle shown for free host users after leaving a meeting"
+  },
+  "left_meeting_subtitle_host_paid": "მადლობა ფასიანი შეხვედრის ორგანიზებისთვის.",
+  "@left_meeting_subtitle_host_paid": {
+    "description": "Subtitle shown for paid host users after leaving a meeting"
+  },
+  "start_meeting_now": "შეხვედრის დაწყება ახლა",
+  "@start_meeting_now": {
+    "description": "Button text to start a meeting immediately from left meeting bottom sheet"
+  },
+  "publish": "გამოცემა",
+  "@publish": {
+    "description": "Dialog title for publishing camera and microphone"
+  },
+  "publish_camera_mic_question": "გნებავთ თქვენი კამერისა & მიკროფონის გამოცემა?",
+  "@publish_camera_mic_question": {
+    "description": "Question asking user to publish camera and microphone"
+  },
+  "no": "არა",
+  "@no": {
+    "description": "Negative response button text"
+  },
+  "yes": "დიახ",
+  "@yes": {
+    "description": "Positive response button text"
+  },
+  "play_audio": "ხმის დაკვრა",
+  "@play_audio": {
+    "description": "Dialog title and button text for playing audio"
+  },
+  "ios_safari_audio_activation": "iOS Safari-ისთვის ხმის დაკვრა ხელით უნდა ჩართოთ!",
+  "@ios_safari_audio_activation": {
+    "description": "Message explaining iOS Safari audio activation requirement"
+  },
+  "ignore": "იგნორი",
+  "@ignore": {
+    "description": "Button text to ignore an action"
+  },
+  "unpublish": "გამოცემის გაუქმება",
+  "@unpublish": {
+    "description": "Dialog title for unpublishing camera and microphone"
+  },
+  "unpublish_camera_mic_question": "გნებავთ თქვენი კამერისა & მიკროფონის გამოცემის გაუქმება?",
+  "@unpublish_camera_mic_question": {
+    "description": "Question asking user to unpublish camera and microphone"
+  },
+  "error": "შეცდომა",
+  "@error": {
+    "description": "Generic error dialog title"
+  },
+  "disconnect": "გათიშვა",
+  "@disconnect": {
+    "description": "Dialog title and button text for disconnecting"
+  },
+  "are_you_sure_disconnect": "მართლა გნებავთ გათიშვა?",
+  "@are_you_sure_disconnect": {
+    "description": "Confirmation question before disconnecting"
+  },
+  "reconnect": "თავიდან დაკავშირება",
+  "@reconnect": {
+    "description": "Dialog title and button text for reconnecting"
+  },
+  "force_reconnection_message": "ეს მოახდენს თავიდან დაკავშირებას ნაძალადევად",
+  "@force_reconnection_message": {
+    "description": "Message explaining that reconnection will be forced"
+  },
+  "reconnection_successful": "თავიდან დაკავშირება წარმატებულია.",
+  "@reconnection_successful": {
+    "description": "Success message after reconnection"
+  },
+  "no_connection": "კავშირის გარეშე",
+  "@no_connection": {
+    "description": "Message shown when there is no network connection"
+  },
+  "mls_not_synced": "MLS სინქრონიზებული არაა",
+  "@mls_not_synced": {
+    "description": "Message shown when MLS is not synced"
+  },
+  "reconnecting_warning": "თავიდან დაკავშირება",
+  "@reconnecting_warning": {
+    "description": "Message shown when MLS is not synced or websocket trying to reconnect"
+  },
+  "websocket_reconnecting": "მიმდინარეობს WebSocket-თან თავიდან დაავშირება",
+  "@websocket_reconnecting": {
+    "description": "Message shown when WebSocket is reconnecting"
+  },
+  "received_data": "მიღებული მონაცემები",
+  "@received_data": {
+    "description": "Dialog title for received data"
+  },
+  "room_recording_reminder": "ოთახის ჩაწერის შეხსენება",
+  "@room_recording_reminder": {
+    "description": "Dialog title for room recording status"
+  },
+  "room_recording_active": "ოთახის ჩაწერა აქტიურია.",
+  "@room_recording_active": {
+    "description": "Message when room recording is active"
+  },
+  "room_recording_stopped": "ოთახის ჩაწერა გაჩერებულია.",
+  "@room_recording_stopped": {
+    "description": "Message when room recording is stopped"
+  },
+  "meeting_being_recorded": "მიმდინარეობს ამ შეხვედრის ჩაწერა",
+  "@meeting_being_recorded": {
+    "description": "Title for recording in progress dialog"
+  },
+  "recording_consent_message": "ამ შეხვედრაზე დარჩენით თქვენ ადასტურებთ ფაქტს, რომ ის იწერება.",
+  "@recording_consent_message": {
+    "description": "Message about recording consent"
+  },
+  "recording_in_progress": "მიმდინარეობს ჩაწერა",
+  "@recording_in_progress": {
+    "description": "Top banner shown to all participants when the meeting is being recorded"
+  },
+  "recording_in_progress_with_name": "მიმდინარეობა ჩასწრა - {name} იწერს",
+  "@recording_in_progress_with_name": {
+    "description": "Top banner when exactly one named participant is recording",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "recording_in_progress_with_name_and_others": "მიმდინარეობს ჩაწერა - {name} და კიდევ {count} იწერენ",
+  "@recording_in_progress_with_name_and_others": {
+    "description": "Top banner when multiple participants are recording",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recording_label": "მიმდინარეობს ჩაწერა",
+  "@recording_label": {
+    "description": "Chip shown next to participants currently recording the meeting"
+  },
+  "agree_and_continue": "თანხმობა და გაგრძელება",
+  "@agree_and_continue": {
+    "description": "Button text to agree and continue in meeting"
+  },
+  "continue_button": "გაგრძელება",
+  "@continue_button": {
+    "description": "Button text to continue in meeting"
+  },
+  "allow_subscription": "გამოწერის დაშვება",
+  "@allow_subscription": {
+    "description": "Dialog title for allowing subscription"
+  },
+  "allow_subscription_question": "მივცეთ ყველა მონაწილეს უფლება, გამოიწეროს ტრეკები, რომელსაც ლოკალური მონაწილე გამოაქვეყნებს?",
+  "@allow_subscription_question": {
+    "description": "Question asking user to allow subscription"
+  },
+  "simulate_scenario": "სცენარის სიმულაცია",
+  "@simulate_scenario": {
+    "description": "Dialog title for simulating scenarios"
+  },
+  "leave_room": "ოთახიდან გასვლა",
+  "@leave_room": {
+    "description": "Dialog title for leaving room"
+  },
+  "are_you_sure_leave_room": "ნამდვილად გსურთ ამ ოთახის დატოვება?",
+  "@are_you_sure_leave_room": {
+    "description": "Confirmation question before leaving room"
+  },
+  "no_response": "არა",
+  "@no_response": {
+    "description": "Negative response in confirmation dialogs"
+  },
+  "yes_response": "დიახ",
+  "@yes_response": {
+    "description": "Positive response in confirmation dialogs"
+  },
+  "personal_meeting_link": "პირადი შეხვედრის ბმული",
+  "@personal_meeting_link": {
+    "description": "Label for personal meeting link button"
+  },
+  "regenerate_link": "ახალი ბმულის გენერაცია",
+  "@regenerate_link": {
+    "description": "Button text to regenerate a meeting link"
+  },
+  "regenerating": "თავიდან გენერაცია ...",
+  "@regenerating": {
+    "description": "Loading message shown while regenerating a meeting link"
+  },
+  "start_secure_meeting": "დაცული შეხვედრის დაწყება",
+  "@start_secure_meeting": {
+    "description": "Button text to start a secure meeting"
+  },
+  "upcoming_meetings": "მოსალოდნელი შეხვედრები",
+  "@upcoming_meetings": {
+    "description": "Section title for upcoming meetings list"
+  },
+  "my_rooms_count": "ჩემი ოთახები",
+  "@my_rooms_count": {
+    "description": "Title showing the count of my rooms"
+  },
+  "my_meetings_count": "ჩემი შეხვედრები",
+  "@my_meetings_count": {
+    "description": "Title showing the count of my meetings"
+  },
+  "schedule_meeting": "შეხვედრის დაგეგმვა",
+  "@schedule_meeting": {
+    "description": "Button text to schedule a meeting"
+  },
+  "start_meeting": "შეხვედრის დაწყება",
+  "@start_meeting": {
+    "description": "Button text to start a meeting"
+  },
+  "recent_meetings": "უახლესი შეხვედრები",
+  "@recent_meetings": {
+    "description": "Section title for recent meetings list"
+  },
+  "start_instant_meeting": "მყისიერი შეხვედრის დაწყება",
+  "@start_instant_meeting": {
+    "description": "Button text to start an instant meeting"
+  },
+  "copy_link_button": "ბმულის კოპირება",
+  "@copy_link_button": {
+    "description": "Button text to copy a link"
+  },
+  "start_now": "დაწყება ახლავე",
+  "@start_now": {
+    "description": "Button text to start immediately"
+  },
+  "leave_meeting": "შეხვედრიდან გასვლა",
+  "@leave_meeting": {
+    "description": "Dialog title for leaving a meeting"
+  },
+  "are_you_sure_leave_meeting": "ნამდვილად გსურთ ამ შეხვედრის დატოვება?",
+  "@are_you_sure_leave_meeting": {
+    "description": "Confirmation question before leaving meeting"
+  },
+  "user_is_presenting": "{name} (თქვენ) წარმოადგენს",
+  "@user_is_presenting": {
+    "description": "String for local user presenting screen share",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "remote_user_is_presenting": "{name} წარმოადგენს",
+  "@remote_user_is_presenting": {
+    "description": "String for remote user presenting screen share",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "screen_share": "ეკრანის გაზიარება",
+  "@screen_share": {
+    "description": "Tooltip and button text for screen sharing"
+  },
+  "disable_denoising": "ხმაურის მოცილების გამორთვა",
+  "@disable_denoising": {
+    "description": "Tooltip for disabling audio denoising"
+  },
+  "enable_denoising": "ხმაურის მოცილების ჩართვა",
+  "@enable_denoising": {
+    "description": "Tooltip for enabling audio denoising"
+  },
+  "exit_full_screen": "გასვლა სრულეკრანიანი რეჟიმიდან",
+  "@exit_full_screen": {
+    "description": "Tooltip for exiting full screen mode"
+  },
+  "enter_full_screen": "სრულეკრანიან რეჟიმზე გადასვლა",
+  "@enter_full_screen": {
+    "description": "Tooltip for entering full screen mode"
+  },
+  "enter_pip": "გადასვლა რეჟიმზე \\\"სურათი სურათში\\\"",
+  "@enter_pip": {
+    "description": "Tooltip for entering Picture-in-Picture mode"
+  },
+  "screen_sharing": "ეკრანის გაზიარება",
+  "@screen_sharing": {
+    "description": "Notification title for screen sharing"
+  },
+  "sharing_your_screen": "თქვენ აზიარებთ ეკრანს",
+  "@sharing_your_screen": {
+    "description": "Notification text when sharing screen"
+  },
+  "screen_share_not_supported_mobile": "ბილური ვებიდან ეკრანის გაზიარება მხარდაჭერილი არაა",
+  "@screen_share_not_supported_mobile": {
+    "description": "Error message when screen sharing is not supported on mobile"
+  },
+  "switch_speakerphone_on": "ტელეფონის დინამიკის გამოყენება",
+  "@switch_speakerphone_on": {
+    "description": "Tooltip for switching audio output to the phone speaker"
+  },
+  "switch_speakerphone_off": "ნაგულისხმევი ხმის გამოტანის გამოყენება",
+  "@switch_speakerphone_off": {
+    "description": "Tooltip for switching audio output back to the default device"
+  },
+  "audio_output_default_device": "ნაგულისხმევი მოწყობილობა",
+  "@audio_output_default_device": {
+    "description": "Bottom sheet option: use default audio output routing (e.g. earpiece or headphones)"
+  },
+  "audio_output_earpiece": "ყურსასმენი",
+  "@audio_output_earpiece": {
+    "description": "Bottom sheet option: use Earpiece audio output routing"
+  },
+  "audio_output_bluetooth_device": "ბლუთუზი მოწყობილობები",
+  "@audio_output_bluetooth_device": {
+    "description": "Bottom sheet option: use Bluetooth device audio output routing"
+  },
+  "audio_output_headphones": "ყურსასმენები",
+  "@audio_output_headphones": {
+    "description": "Bottom sheet option: use Headphones audio output routing"
+  },
+  "audio_output_phone_speakers": "ტელეფონის დინამიკი",
+  "@audio_output_phone_speakers": {
+    "description": "Bottom sheet option: use the phone built-in loudspeaker"
+  },
+  "please_grant_camera_permission": "გასაგრძელებლად დაუშვით წვდომა კამერასთან",
+  "@please_grant_camera_permission": {
+    "description": "Message requesting camera permission"
+  },
+  "please_grant_microphone_permission": "გასაგრძელებლად დაუშვით წვდომა მიკროფონთან",
+  "@please_grant_microphone_permission": {
+    "description": "Message requesting microphone permission"
+  },
+  "your_meeting_is_ready": "თქვენი შეხვედრა მზადაა",
+  "@your_meeting_is_ready": {
+    "description": "Title message when meeting is ready"
+  },
+  "share_link_invite_description": "გააზიარეთ ეს ბმული სხვების მოსაწვევად. მისი პოვნა ნებისმიერ დროს შეგიძლიათ ხელსაწყოთა პანელზე ინფორმაციი ხატულაზე დაწკაპუნებით.",
+  "@share_link_invite_description": {
+    "description": "Instructions for sharing meeting link"
+  },
+  "two_factor_authentication": "2FA",
+  "@two_factor_authentication": {
+    "description": "Title for two-factor authentication"
+  },
+  "enter_2fa_code": "გასაგრძელებლად შეიყვანეთ თქვენი 2FA კოდი",
+  "@enter_2fa_code": {
+    "description": "Prompt for entering 2FA code"
+  },
+  "twofa_code": "2FA კოდი",
+  "@twofa_code": {
+    "description": "Label for 2FA code input field"
+  },
+  "verify": "გადამოწმება",
+  "@verify": {
+    "description": "Button text to verify"
+  },
+  "switch_to": "გადართვა",
+  "@switch_to": {
+    "description": "Text before account name in account switcher"
+  },
+  "add_another_account": "კიდევ ერთი ანგარიშის დამატება",
+  "@add_another_account": {
+    "description": "Button text to add another account"
+  },
+  "delete_proton_account": "Proton-ის ანგარიშის წაშლა",
+  "@delete_proton_account": {
+    "description": "Button text to delete Proton account"
+  },
+  "invalid_meeting_link": "არასწორი მოწვევის ბმული",
+  "@invalid_meeting_link": {
+    "description": "Error message for invalid meeting link"
+  },
+  "permission_required": "საჭიროა ნებართვა",
+  "@permission_required": {
+    "description": "Label when permission is required"
+  },
+  "unsubscribe_audio": "აუდიოს გამოწერის გაუქმება",
+  "@unsubscribe_audio": {
+    "description": "Menu item to unsubscribe from audio"
+  },
+  "subscribe_audio": "აუდიოს გამოწერა",
+  "@subscribe_audio": {
+    "description": "Menu item to subscribe to audio"
+  },
+  "unsubscribe_video": "ვიდეოს გამოწერის გაუქმება",
+  "@unsubscribe_video": {
+    "description": "Menu item to unsubscribe from video"
+  },
+  "subscribe_video": "ვიდეოს გამოწერა",
+  "@subscribe_video": {
+    "description": "Menu item to subscribe to video"
+  },
+  "remote_mute_video": "ვიდეოს დაშორებული გამორთვა",
+  "@remote_mute_video": {
+    "description": "Menu item to remotely mute video"
+  },
+  "remote_mute_audio": "აუდიოს დაშორებული გამორთვა",
+  "@remote_mute_audio": {
+    "description": "Menu item to remotely mute audio"
+  },
+  "force_mute": "ნაძალადევი დადუმება",
+  "@force_mute": {
+    "description": "Menu item to force mute a participant"
+  },
+  "force_mute_participant": "{name}-ის ნაძალადევი დადუმება",
+  "@force_mute_participant": {
+    "description": "Toast message when force muting a participant",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "force_disable_camera": "კამერის ნაძალადევი გამორთვა",
+  "@force_disable_camera": {
+    "description": "Menu item to force disable camera"
+  },
+  "force_disable_camera_participant": "კამერის {name} ნაძალადევი გამორთვა",
+  "@force_disable_camera_participant": {
+    "description": "Toast message when force disabling camera",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "kick_out": "გაგდება",
+  "@kick_out": {
+    "description": "Menu item to kick out a participant"
+  },
+  "kick_out_participant": "{name}-ის გაგდება",
+  "@kick_out_participant": {
+    "description": "Toast message when kicking out a participant",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "subscribe_menu": "გამოწერის მენიუ",
+  "@subscribe_menu": {
+    "description": "Tooltip for subscribe menu button"
+  },
+  "subscribe": "გამოწერა",
+  "@subscribe": {
+    "description": "Menu item to subscribe"
+  },
+  "unsubscribe": "გამოწერის გაუქმება",
+  "@unsubscribe": {
+    "description": "Menu item to unsubscribe"
+  },
+  "preferred_fps": "სასურველი FPS",
+  "@preferred_fps": {
+    "description": "Tooltip for preferred FPS setting"
+  },
+  "preferred_quality": "სასურველი ხარისხი",
+  "@preferred_quality": {
+    "description": "Tooltip for preferred quality setting"
+  },
+  "high": "მაღალი",
+  "@high": {
+    "description": "High quality option"
+  },
+  "medium": "საშუალო",
+  "@medium": {
+    "description": "Medium quality option"
+  },
+  "low": "დაბალი",
+  "@low": {
+    "description": "Low quality option"
+  },
+  "unnamed_room": "უსახელო ოთახი",
+  "@unnamed_room": {
+    "description": "Default name for rooms without a name"
+  },
+  "participants_count_text": "{count} მონაწილე",
+  "@participants_count_text": {
+    "description": "Text showing number of participants",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_privacy_message": "ეს გამჭოლად დაშიფრული ცატია ეფემერული შეტყობიბებებით, რომლებიც გაქრება ზარის დასრულებისას.",
+  "@chat_privacy_message": {
+    "description": "Privacy message displayed in chat when there are no messages."
+  },
+  "chat_title": "Chat",
+  "@chat_title": {
+    "description": "Title for the in-meeting chat panel"
+  },
+  "chat_input_hint": "Type an encrypted message…",
+  "@chat_input_hint": {
+    "description": "Placeholder for the main chat composer"
+  },
+  "chat_new_messages": "{count, plural, =1{1 new message} other{{count} new messages}}",
+  "@chat_new_messages": {
+    "description": "Pill shown when new root-level chat messages arrive while scrolled up",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_new_messages_badge": "{count, plural, =1{1 new} other{{count} new}}",
+  "@chat_new_messages_badge": {
+    "description": "Compact floating badge above the composer when new messages arrive while scrolled up",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_thread_view_replies": "{count, plural, =1{View 1 reply} other{View {count} replies}}",
+  "@chat_thread_view_replies": {
+    "description": "Collapsed thread toggle to expand and view replies",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_thread_replies_count": "{count, plural, =1{1 reply} other{{count} replies}}",
+  "@chat_thread_replies_count": {
+    "description": "Expanded thread toggle showing reply count",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_thread_new_reply": "New reply",
+  "@chat_thread_new_reply": {
+    "description": "Badge shown on a collapsed thread when there are unseen replies"
+  },
+  "chat_system_joined_prefix": "Joined ",
+  "@chat_system_joined_prefix": {
+    "description": "Prefix before the meeting name in a join system chat notice"
+  },
+  "chat_system_left_prefix": "Left ",
+  "@chat_system_left_prefix": {
+    "description": "Prefix before the meeting name in a leave system chat notice"
+  },
+  "chat_reply_hint": "Reply…",
+  "@chat_reply_hint": {
+    "description": "Placeholder for the thread reply composer"
+  },
+  "chat_thread_missing_root": "This conversation started before you joined.",
+  "@chat_thread_missing_root": {
+    "description": "Placeholder when a thread root message is not available locally"
+  },
+  "chat_not_delivered": "Not delivered",
+  "@chat_not_delivered": {
+    "description": "Status label for a failed outgoing chat message"
+  },
+  "chat_discard": "Discard",
+  "@chat_discard": {
+    "description": "Action to remove a failed outgoing chat message"
+  },
+  "chat_reply": "Reply",
+  "@chat_reply": {
+    "description": "Action to reply to a chat message in a thread"
+  },
+  "chat_copy_text": "Copy text",
+  "@chat_copy_text": {
+    "description": "Action to copy chat message text to clipboard"
+  },
+  "meeting_quality_feedback": "შეხვედრის ხარისხის უკუკავშირი",
+  "@meeting_quality_feedback": {
+    "description": "Title for meeting quality feedback form"
+  },
+  "quality_feedback_email_message": "გადაცემის შემთხვევაში თქვენ ელფოსტით გვიზიარებთ კავშირის ჟურნალს.",
+  "@quality_feedback_email_message": {
+    "description": "Message explaining that connection log will be shared via email"
+  },
+  "call_quality_how_was": "როგორი იყო ზარის ხარისხი?",
+  "@call_quality_how_was": {
+    "description": "Prompt above star rating on post-meeting feedback"
+  },
+  "call_quality_what_went_wrong": "რამე პრობლემაა?",
+  "@call_quality_what_went_wrong": {
+    "description": "Heading when user rated call quality below threshold"
+  },
+  "call_quality_problem_subtitle": "რა პრობლემას წააწყდით?",
+  "@call_quality_problem_subtitle": {
+    "description": "Subtitle under what went wrong on low-rating feedback"
+  },
+  "call_quality_add_optional_details": "არასავალდებულო დეტალების დამატება",
+  "@call_quality_add_optional_details": {
+    "description": "Expand control for free-text feedback"
+  },
+  "call_quality_share_more_details": "მეტი დეტალების გაზიარება",
+  "@call_quality_share_more_details": {
+    "description": "Placeholder for optional feedback text"
+  },
+  "call_quality_help_text": "ზარის ხარისხის გასაუმჯობესებლად ხდება არასავალდებულო უკუკავშირის გაგზავნა.",
+  "@call_quality_help_text": {
+    "description": "Short privacy note under the rating on post-meeting feedback"
+  },
+  "call_quality_feedback_submitted": "თქვენი უკუკავშირი გადაცემულია",
+  "@call_quality_feedback_submitted": {
+    "description": "Toast after successful meeting feedback"
+  },
+  "call_quality_could_not_send": "უკუკავშირის გაგზავნა შეუძლებელია",
+  "@call_quality_could_not_send": {
+    "description": "Toast when meeting feedback API fails"
+  },
+  "call_quality_category_audio": "აუდიო",
+  "@call_quality_category_audio": {
+    "description": "Section label for audio-related feedback options"
+  },
+  "call_quality_category_video": "ვიდეო",
+  "@call_quality_category_video": {
+    "description": "Section label for video-related feedback options"
+  },
+  "call_quality_category_screen": "ეკრანის გაზიარება",
+  "@call_quality_category_screen": {
+    "description": "Section label for screen-share feedback options"
+  },
+  "call_quality_audio_breaking": "ხმა ჭედავდა",
+  "@call_quality_audio_breaking": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_audio_couldnt_hear": "სხვების არ მესმის",
+  "@call_quality_audio_couldnt_hear": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_audio_others_couldnt_hear": "სხვებს ჩემი არ ესმოდათ",
+  "@call_quality_audio_others_couldnt_hear": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_poor": "ვიდეოს ხარისხი დაბალია",
+  "@call_quality_video_poor": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_couldnt_see": "მე ვერ ვხედავდი სხვების ვიდეოს",
+  "@call_quality_video_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_video_others_couldnt_see": "სხვები ვერ ხედავდნენ ჩემს ვიდეოს",
+  "@call_quality_video_others_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_blurry": "წარმოდგება გადღაბილი იყო",
+  "@call_quality_screen_blurry": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_couldnt_see": "მე ვერ ვხედავდი პრეზენტაციას",
+  "@call_quality_screen_couldnt_see": {
+    "description": "Low-rating feedback option"
+  },
+  "call_quality_screen_couldnt_present": "ვერ გავუშვი წარმოდგენა",
+  "@call_quality_screen_couldnt_present": {
+    "description": "Low-rating feedback option"
+  },
+  "skip": "გამოტოვება",
+  "@skip": {
+    "description": "Button text to skip an action"
+  },
+  "feature_not_ready": "ეს ფუნქცია, ჯერ, მზად არაა",
+  "@feature_not_ready": {
+    "description": "Message when a feature is not ready"
+  },
+  "video_stats_all_participants": "ვიდეოს სტატისტიკა - ყველა მონაწილე",
+  "@video_stats_all_participants": {
+    "description": "Title for video statistics dialog"
+  },
+  "video_stats": "ვიდეოს სტატისტიკა",
+  "@video_stats": {
+    "description": "Label for video statistics"
+  },
+  "page_not_found": "გვერდი აღმოჩენილი არაა",
+  "@page_not_found": {
+    "description": "Error message when page is not found"
+  },
+  "invalid_deeplink_format": "ღრმა ბმულის არასწორი ფორმატი: {name}",
+  "@invalid_deeplink_format": {
+    "description": "Error message for invalid deeplink format",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "open_settings": "მორგების ფანჯრის გახსნა",
+  "@open_settings": {
+    "description": "Button text to open settings"
+  },
+  "schedule": "დაგეგმვა",
+  "@schedule": {
+    "description": "Button text to schedule"
+  },
+  "start": "დაწყება",
+  "@start": {
+    "description": "Button text to start"
+  },
+  "start_an_instant_meeting": "მყისიერი შეხვედრის დაწყება",
+  "@start_an_instant_meeting": {
+    "description": "Button text to start an instant meeting"
+  },
+  "more": "მეტი",
+  "@more": {
+    "description": "Tooltip for more options button"
+  },
+  "unlock_failed_too_many_times": "განბლოკვა მეტისმეტად ბევრჯერ ჩავარდა",
+  "@unlock_failed_too_many_times": {
+    "description": "Error message when unlock fails too many times"
+  },
+  "show_all_stats_debug": "სრული სტატისტიკის ჩვენება (გამართვის რეჟიმი)",
+  "@show_all_stats_debug": {
+    "description": "Button text to show all stats in debug mode"
+  },
+  "close_simulation": "სიმულაციის დახურვა",
+  "@close_simulation": {
+    "description": "Button text to close simulation"
+  },
+  "close_all_rooms_exit_simulation": "მართლა გნებავთ, დახუროთ ყველა ოთახი და გახვიდეთ სიმულაციის რეჟიმიდან?",
+  "@close_all_rooms_exit_simulation": {
+    "description": "Confirmation question before closing simulation"
+  },
+  "yes_close_all": "დიახ, ყველას დახურვა",
+  "@yes_close_all": {
+    "description": "Button text to confirm closing all rooms"
+  },
+  "simulation_mode": "სიმულაციის რეჟიმი",
+  "@simulation_mode": {
+    "description": "Title for simulation mode"
+  },
+  "simulation_mode_description": "შექმენით და მართეთ სიმულირებული ოთახები ტესტირებისთვის",
+  "@simulation_mode_description": {
+    "description": "Description text for simulation mode"
+  },
+  "simulated_rooms": "სიმულირებული ოთახები",
+  "@simulated_rooms": {
+    "description": "Title for simulated rooms section"
+  },
+  "room_with_users": "ოთახი {key} ({count} მომხმარებელი)",
+  "@room_with_users": {
+    "description": "Text showing room ID and user count",
+    "placeholders": {
+      "key": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "enable_video": "ვიდეოს ჩართვა",
+  "@enable_video": {
+    "description": "Button text to enable video"
+  },
+  "meeting_will_end_in": "შეხვედრის დასრულებამდე დარჩენილია {time}",
+  "@meeting_will_end_in": {
+    "description": "Title for meeting will end dialog with countdown timer",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "0:30"
+      }
+    }
+  },
+  "meeting_expiry_banner_title_prefix": "შეხვედრის დასრულებამდე დარჩენილია ",
+  "@meeting_expiry_banner_title_prefix": {
+    "description": "Title prefix for meeting expiry countdown banner; duration is appended"
+  },
+  "meeting_expiry_banner_description": "უფასო შეხვედრების ხანგრძლივობა 1 საათზეა შეზღუდული. ეს ზარი მალე გაითიშება.",
+  "@meeting_expiry_banner_description": {
+    "description": "Subtitle on meeting expiry warning banner for free meetings"
+  },
+  "host_close_meeting_description": "გნებავთ, გახვიდეთ შეხვედრიდან, თუ დაასრულებთ მას ყველასთვის?",
+  "@host_close_meeting_description": {
+    "description": "Description text when host want to leave meeting"
+  },
+  "close_meeting_description": "დარწმუნებული ბრძანდებით, რომ გნებავთ, გახვიდეთ? შეხვედრა თქვენს გარეშე გაგრძელდება.",
+  "@close_meeting_description": {
+    "description": "Description text when host want to leave meeting"
+  },
+  "meeting_will_end_description": "რადგან შეხვედრაზე ერთადერთი მონაწილე ბრძანდებით, შეხვედრა ავტომატურად დაიხურება. გნებავთ დარცენა ამ შეხვედრაზე?",
+  "meeting_created": "შეხვედრა შეიქმნა",
+  "@meeting_created": {
+    "description": "Title for meeting created dialog"
+  },
+  "room_initialing_hint": "დაშორებული ვიდეოტრეკების გამოწერა…",
+  "@room_initialing_hint": {
+    "description": "Hint for room initialing process"
+  },
+  "add_to_calendar": "კალენდარში დამატება",
+  "@add_to_calendar": {
+    "description": "Button label to add a meeting to calendar"
+  },
+  "meeting_details": "დეტალები",
+  "@meeting_details": {
+    "description": "Button label to show meeting details"
+  },
+  "meeting_details_section": "შეხვედრის დეტალები",
+  "@meeting_details_section": {
+    "description": "Section title for meeting details in info panel"
+  },
+  "title_label": "სათაური",
+  "@title_label": {
+    "description": "Label for meeting title field"
+  },
+  "date_label": "თარიღი",
+  "@date_label": {
+    "description": "Label for meeting date field"
+  },
+  "time_label": "დრო",
+  "@time_label": {
+    "description": "Label for meeting time field"
+  },
+  "invite_link_label": "მოსაწვევი ბმული",
+  "@invite_link_label": {
+    "description": "Label for invite link field"
+  },
+  "messaging_layer_security": "Messaging Layer Security (MLS)",
+  "@messaging_layer_security": {
+    "description": "Title for MLS section in meeting info panel"
+  },
+  "participants_label": "მონაწილეები",
+  "@participants_label": {
+    "description": "Label for participants count field"
+  },
+  "epoch_label": "ეპოქა",
+  "@epoch_label": {
+    "description": "Label for epoch field"
+  },
+  "security_code_label": "უსაფრთხოების კოდი",
+  "@security_code_label": {
+    "description": "Label for security code field"
+  },
+  "recurrence_daily": "ყოველდღიური",
+  "@recurrence_daily": {
+    "description": "Recurrence frequency label for daily meetings"
+  },
+  "recurrence_weekly": "ყოველკვირეული",
+  "@recurrence_weekly": {
+    "description": "Recurrence frequency label for weekly meetings"
+  },
+  "recurrence_monthly": "ყოველთვიური",
+  "@recurrence_monthly": {
+    "description": "Recurrence frequency label for monthly meetings"
+  },
+  "recurrence_yearly": "ყოველწლიური",
+  "@recurrence_yearly": {
+    "description": "Recurrence frequency label for yearly meetings"
+  },
+  "@meeting_will_end_description": {
+    "description": "Description text explaining why meeting will end"
+  },
+  "stay_in_meeting": "შეხვედრაზე დარჩენა",
+  "@stay_in_meeting": {
+    "description": "Button text to stay in meeting"
+  },
+  "end_meeting_for_all": "შეხვედრის დასრულება ყველასთვის",
+  "@end_meeting_for_all": {
+    "description": "Button text to end meeting for all"
+  },
+  "stay_in_the_meeting": "შეხვედრაზე დარჩენა",
+  "@stay_in_the_meeting": {
+    "description": "Button text to stay in the meeting"
+  },
+  "connection_lost": "კავშირის შეფერხება",
+  "@connection_lost": {
+    "description": "Connection lost description"
+  },
+  "connection_lost_content": "კავშირი გაწყდა. დაუკავშირდით შეხვედრას თავიდან",
+  "@connection_lost_content": {
+    "description": "Connection lost description"
+  },
+  "go_back_to_dashboard": "სამუშაო დაფაზე დაბრუნება",
+  "@go_back_to_dashboard": {
+    "description": "Description text for go back to the dashboard button"
+  },
+  "early_access_description": "ეს ფუნქცია ხელმისაწვდომია ექსკლუზიურად Lifetime-ის და Visionary-ის მომხმარებლებისტვის ადრეული წვდომისას.",
+  "@early_access_description": {
+    "description": "Description text explaining guest user capabilities"
+  },
+  "early_access_title": "ამ ფუნქციის გამოსაყენებლად შედით სისტემაში",
+  "@early_access_title": {
+    "description": "Message prompting user to sign in for this early access feature"
+  },
+  "early_access_title_for_login_user": "იოლი წვდომის ფუნქცია",
+  "@early_access_title_for_login_user": {
+    "description": "Message to let user know this is early access feature available for Lifetime and Visionary users"
+  },
+  "schedule_a_meeting": "შეხვედრის დაგეგმვა",
+  "@schedule_a_meeting": {
+    "description": "Menu item label to schedule a meeting in Proton Meet app"
+  },
+  "create_a_room": "ოთახის შექმნა",
+  "@create_a_room": {
+    "description": "Menu item label to create a room"
+  },
+  "create_new_room": "ახალი ოთახის შექმნა",
+  "@create_new_room": {
+    "description": "Menu item label to create a new room"
+  },
+  "emoji_reactions": "ემოძის რეაქციები",
+  "@emoji_reactions": {
+    "description": "Emoji reactions tooltip"
+  },
+  "lower_participant_hand": "მონაწილის ხელის ჩამოწევა",
+  "@lower_participant_hand": {
+    "description": "Tooltip text for lowering a participant's raised hand"
+  },
+  "edit_room": "ოთახის ჩასწორება",
+  "@edit_room": {
+    "description": "Menu item label to edit a room"
+  },
+  "edit_meeting": "შეხვედრის ჩასწორება",
+  "@edit_meeting": {
+    "description": "Menu item label to edit a meeting"
+  },
+  "join_with_a_link": "ბმულით შესვლა",
+  "@join_with_a_link": {
+    "description": "Menu item label to join a meeting with a link"
+  },
+  "room_name": "სახელი",
+  "@room_name": {
+    "description": "Label for room name input field header"
+  },
+  "room_id": "ოთახის ID",
+  "@room_id": {
+    "description": "Label for room ID display"
+  },
+  "room_deleted": "ოთახი წაიშალა",
+  "@room_deleted": {
+    "description": "Success message shown after a room is deleted"
+  },
+  "meeting_deleted": "შეხვედრა წაიშალა",
+  "@meeting_deleted": {
+    "description": "Success message shown after a meeting is deleted"
+  },
+  "enter_room_name_hint": "მაგ: დიზაინის გუნდი, ყოველკვირეული მიმოხილვა",
+  "@enter_room_name_hint": {
+    "description": "Hint text for room name input field"
+  },
+  "create_room_subtitle": "შეხვედრების ოთახის გამოყენება ნებისმიერ დროს შეგიძლიათ",
+  "@create_room_subtitle": {
+    "description": "Subtitle text for create room dialog"
+  },
+  "create_button": "შექმნა",
+  "@create_button": {
+    "description": "Button text to create"
+  },
+  "save": "შენახვა",
+  "@save": {
+    "description": "Button text to save"
+  },
+  "create_and_copy_link": "ბმულის შექმნა და კოპირება",
+  "@create_and_copy_link": {
+    "description": "Button text to create meeting and copy link"
+  },
+  "you_are_using_paid_meet_plan": "თქვენ იყენებთ Meet-ის ფასიან სატარიფო გეგმას.",
+  "@you_are_using_paid_meet_plan": {
+    "description": "Message shown to host indicating they are using a paid plan"
+  },
+  "you_are_using_free_meet_plan": "იყენებთ Meet-ის უფასო სატარიფო გეგმას.",
+  "@you_are_using_free_meet_plan": {
+    "description": "Message shown to host indicating they are using the free plan"
+  },
+  "call_supports_up_to": "ამ ზარზე დაშვებული მაქს. მონაწილეა ",
+  "@call_supports_up_to": {
+    "description": "Message prefix showing the maximum number of participants allowed in the call"
+  },
+  "call_reached_limit": "ამ ზარმა მიაღწია ",
+  "@call_reached_limit": {
+    "description": "Message prefix showing the call has reached the limit"
+  },
+  "participants_suffix": " მონაწილე.",
+  "@participants_suffix": {
+    "description": "Message suffix after the participant count"
+  },
+  "participants_reached_limit_suffix": " მონაწილის ლიმიტი.",
+  "@participants_reached_limit_suffix": {
+    "description": "Message suffix after the call reached limit message"
+  },
+  "no_more_participants_can_join": "მეტი ხალხის დასამატებლად წაშალეთ მონაწილე, ან ასწიეთ სატარიფო გეგმა.",
+  "@no_more_participants_can_join": {
+    "description": "Message shown when the call has reached the maximum number of participants"
+  },
+  "connection_quality_poor": "ცუდი კავშირი",
+  "@connection_quality_poor": {
+    "description": "Tooltip message shown when connection quality is poor"
+  },
+  "meeting_ended_by_host": "მასპინძელმა დაასრულა შეხვედრა",
+  "@meeting_ended_by_host": {
+    "description": "Toast message shown when the host ends the meeting for everyone"
+  },
+  "client_kicked_out_by_host": "ჰოსტმა წაგშალათ შეხვედრიდან",
+  "@client_kicked_out_by_host": {
+    "description": "Toast message shown when the host removes current user from the meeting"
+  },
+  "kicked_out_bottom_sheet_title": "თქვენ წაგშალეს",
+  "@kicked_out_bottom_sheet_title": {
+    "description": "Title shown in left meeting bottom sheet when current user is removed by host"
+  },
+  "kicked_out_bottom_sheet_content": "ჰოსტმა წაგშალათ შეხვედრიდან.",
+  "@kicked_out_bottom_sheet_content": {
+    "description": "Content shown in left meeting bottom sheet when current user is removed by host"
+  },
+  "add_title": "სათაურის დამატება",
+  "@add_title": {
+    "description": "Placeholder text for meeting title input field"
+  },
+  "schedule_at": "დრო",
+  "@schedule_at": {
+    "description": "Label for schedule at, used in schedule dialog"
+  },
+  "schedule_duration_min": "წთ",
+  "@schedule_duration_min": {
+    "description": "Label for schedule duration in minutes"
+  },
+  "schedule_duration_hr": "სთ",
+  "@schedule_duration_hr": {
+    "description": "Label for schedule duration in hours"
+  },
+  "schedule_recurrence_none": "არ მეორდება",
+  "@schedule_recurrence_none": {
+    "description": "Label for schedule recurrence none"
+  },
+  "schedule_recurrence_daily": "ყოველდღიური",
+  "@schedule_recurrence_daily": {
+    "description": "Label for schedule recurrence daily"
+  },
+  "schedule_recurrence_weekly": "ყოველკვირეული",
+  "@schedule_recurrence_weekly": {
+    "description": "Label for schedule recurrence weekly"
+  },
+  "schedule_recurrence_monthly": "ყოველთვიური",
+  "@schedule_recurrence_monthly": {
+    "description": "Label for schedule recurrence monthly"
+  },
+  "schedule_recurrence_yearly": "ყოველწლიური",
+  "@schedule_recurrence_yearly": {
+    "description": "Label for schedule recurrence yearly"
+  },
+  "schedule_time_zone_search_hint": "დროის სარტყლის ძებნა",
+  "@schedule_time_zone_search_hint": {
+    "description": "Label for schedule time zone search hint"
+  },
+  "schedule_time_zone_current": "მიმდინარე დროის სარტყელი",
+  "@schedule_time_zone_current": {
+    "description": "Label for schedule time zone current"
+  },
+  "schedule_time_zone_selected": "არჩეული დროის სარტყელი",
+  "@schedule_time_zone_selected": {
+    "description": "Label for schedule time zone selected"
+  },
+  "schedule_waiting_room": "მოსაცდელი ოთახი",
+  "@schedule_waiting_room": {
+    "description": "Label for waiting room field in schedule meeting dialog"
+  },
+  "schedule_waiting_room_on": "მოსაცდელი ოთახი ჩართ",
+  "@schedule_waiting_room_on": {
+    "description": "Waiting room enabled option title"
+  },
+  "schedule_waiting_room_on_hint": "გამოიყენეთ მოსაცდელი ოთახი ფასიან სათარიფო გეგმასთან ერთად",
+  "@schedule_waiting_room_on_hint": {
+    "description": "Waiting room enabled option hint"
+  },
+  "schedule_waiting_room_off": "მოსაცდელი ოთახი გამორთ",
+  "@schedule_waiting_room_off": {
+    "description": "Waiting room disabled option title"
+  },
+  "switch_on": "ჩართული",
+  "@switch_on": {
+    "description": "Label when switch on"
+  },
+  "switch_off": "გამორთ",
+  "@switch_off": {
+    "description": "Label when switch off"
+  },
+  "schedule_waiting_room_off_hint": "ყველას, ვისაც აქვს ბმული, შეუძლია, დაუყოვნებლივ გაწევრდეს",
+  "@schedule_waiting_room_off_hint": {
+    "description": "Waiting room disabled option hint"
+  },
+  "month_jan": "იანვარი",
+  "@month_jan": {
+    "description": "Full month name for January"
+  },
+  "month_feb": "თებერვალი",
+  "@month_feb": {
+    "description": "Full month name for February"
+  },
+  "month_mar": "მარტი",
+  "@month_mar": {
+    "description": "Full month name for March"
+  },
+  "month_apr": "აპრილი",
+  "@month_apr": {
+    "description": "Full month name for April"
+  },
+  "month_may": "მაი",
+  "@month_may": {
+    "description": "Full month name for May"
+  },
+  "month_jun": "ივნისი",
+  "@month_jun": {
+    "description": "Full month name for June"
+  },
+  "month_jul": "ივლისი",
+  "@month_jul": {
+    "description": "Full month name for July"
+  },
+  "month_aug": "აგვისტო",
+  "@month_aug": {
+    "description": "Full month name for August"
+  },
+  "month_sep": "სექტემბერი",
+  "@month_sep": {
+    "description": "Full month name for September"
+  },
+  "month_oct": "ოქტომბერი",
+  "@month_oct": {
+    "description": "Full month name for October"
+  },
+  "month_nov": "ნოემბერი",
+  "@month_nov": {
+    "description": "Full month name for November"
+  },
+  "month_dec": "დეკემბერი",
+  "@month_dec": {
+    "description": "Full month name for December"
+  },
+  "month_short_jan": "იანვ",
+  "@month_short_jan": {
+    "description": "Abbreviated month name January (order Jan–Dec)"
+  },
+  "month_short_feb": "თებ",
+  "@month_short_feb": {
+    "description": "Abbreviated month name February"
+  },
+  "month_short_mar": "მარ",
+  "@month_short_mar": {
+    "description": "Abbreviated month name March"
+  },
+  "month_short_apr": "აპრ",
+  "@month_short_apr": {
+    "description": "Abbreviated month name April"
+  },
+  "month_short_may": "მაი",
+  "@month_short_may": {
+    "description": "Abbreviated month name May"
+  },
+  "month_short_jun": "ივნ",
+  "@month_short_jun": {
+    "description": "Abbreviated month name June"
+  },
+  "month_short_jul": "ივლ",
+  "@month_short_jul": {
+    "description": "Abbreviated month name July"
+  },
+  "month_short_aug": "აგვ",
+  "@month_short_aug": {
+    "description": "Abbreviated month name August"
+  },
+  "month_short_sep": "სექ",
+  "@month_short_sep": {
+    "description": "Abbreviated month name September"
+  },
+  "month_short_oct": "ოქტ",
+  "@month_short_oct": {
+    "description": "Abbreviated month name October"
+  },
+  "month_short_nov": "ნოე",
+  "@month_short_nov": {
+    "description": "Abbreviated month name November"
+  },
+  "month_short_dec": "დეკ",
+  "@month_short_dec": {
+    "description": "Abbreviated month name December"
+  },
+  "weekday_monday": "ორშაბათი",
+  "@weekday_monday": {
+    "description": "Weekday name for Monday"
+  },
+  "weekday_tuesday": "სამშაბათი",
+  "@weekday_tuesday": {
+    "description": "Weekday name for Tuesday"
+  },
+  "weekday_wednesday": "ოთხშაბათი",
+  "@weekday_wednesday": {
+    "description": "Weekday name for Wednesday"
+  },
+  "weekday_thursday": "ხუთშაბათი",
+  "@weekday_thursday": {
+    "description": "Weekday name for Thursday"
+  },
+  "weekday_friday": "პარასკევი",
+  "@weekday_friday": {
+    "description": "Weekday name for Friday"
+  },
+  "weekday_saturday": "შაბათი",
+  "@weekday_saturday": {
+    "description": "Weekday name for Saturday"
+  },
+  "weekday_sunday": "კვირა",
+  "@weekday_sunday": {
+    "description": "Weekday name for Sunday"
+  },
+  "weekday_short_monday": "ორშ",
+  "@weekday_short_monday": {
+    "description": "Short weekday label Monday (list order Mon–Sun)"
+  },
+  "weekday_short_tuesday": "სამშ",
+  "@weekday_short_tuesday": {
+    "description": "Short weekday label Tuesday"
+  },
+  "weekday_short_wednesday": "ოთხ",
+  "@weekday_short_wednesday": {
+    "description": "Short weekday label Wednesday"
+  },
+  "weekday_short_thursday": "ხუთ",
+  "@weekday_short_thursday": {
+    "description": "Short weekday label Thursday"
+  },
+  "weekday_short_friday": "პარ",
+  "@weekday_short_friday": {
+    "description": "Short weekday label Friday"
+  },
+  "weekday_short_saturday": "შაბ",
+  "@weekday_short_saturday": {
+    "description": "Short weekday label Saturday"
+  },
+  "weekday_short_sunday": "კვ",
+  "@weekday_short_sunday": {
+    "description": "Short weekday label Sunday"
+  },
+  "calendar_system": "ტელეფონის კალენდარში ჩამატება",
+  "@calendar_system": {
+    "description": "Menu label for opening system calendar"
+  },
+  "calendar_google": "დამატება Google Calendar-ში",
+  "@calendar_google": {
+    "description": "Menu label for opening Google Calendar"
+  },
+  "calendar_share_ics": "მოვლენის ფაილის გაზიარება",
+  "@calendar_share_ics": {
+    "description": "Menu label for sharing ICS file"
+  },
+  "calendar_outlook": "დამატება Outlook Calendar-ში",
+  "@calendar_outlook": {
+    "description": "Menu label for opening Outlook Calendar"
+  },
+  "calendar_proton": "დამატება Proton Calendar-ში",
+  "@calendar_proton": {
+    "description": "Menu label for opening Proton Calendar"
+  },
+  "scheduled_meeting_share": "გაზიარება",
+  "@scheduled_meeting_share": {
+    "description": "Share button label in scheduled meeting summary"
+  },
+  "scheduled_meeting_done": "მზადაა",
+  "@scheduled_meeting_done": {
+    "description": "Done button label in scheduled meeting summary"
+  },
+  "scheduled_meeting_link": "ბმული",
+  "@scheduled_meeting_link": {
+    "description": "Link label in scheduled meeting summary"
+  },
+  "upcoming_today": "დღეს",
+  "@upcoming_today": {
+    "description": "Upcoming meetings header label for today"
+  },
+  "upcoming_tomorrow": "ხვალ",
+  "@upcoming_tomorrow": {
+    "description": "Upcoming meetings header label for tomorrow"
+  },
+  "on_yesterday": "გუშინ",
+  "@on_yesterday": {
+    "description": "Meetings header label for yesterday"
+  },
+  "upcoming_prefix": "მოსალოდნელი",
+  "@upcoming_prefix": {
+    "description": "Prefix for upcoming meetings header label"
+  },
+  "ended_prefix": "დსარულდა",
+  "@ended_prefix": {
+    "description": "Prefix for ended/past meetings header label"
+  },
+  "ended_today": "დასრულდა დღეს",
+  "@ended_today": {
+    "description": "Label for meetings ended today"
+  },
+  "ended_yesterday": "დასრულდა გუშინ",
+  "@ended_yesterday": {
+    "description": "Label for meetings ended yesterday"
+  },
+  "ended_on": "დასრულების დროა",
+  "@ended_on": {
+    "description": "Label for meetings ended on a specific date"
+  },
+  "created_prefix": "შეიქმნა",
+  "@created_prefix": {
+    "description": "Prefix for newly created meetings header label"
+  },
+  "created_today": "შეიქმნა დღეს",
+  "@created_today": {
+    "description": "Label for meetings created today"
+  },
+  "created_yesterday": "შეიქმნა გუშინ",
+  "@created_yesterday": {
+    "description": "Label for meetings created yesterday"
+  },
+  "created_last_week": "შეიქმნა წინა კვირაში",
+  "@created_last_week": {
+    "description": "Label for meetings created within the last week"
+  },
+  "created": "შექმნის დროა",
+  "@created": {
+    "description": "Label prefix for created time"
+  },
+  "last_used_today": "ბოლოს გამოყენებული იყო დღეს",
+  "@last_used_today": {
+    "description": "Label for meetings last used today"
+  },
+  "last_used_yesterday": "ბოლოს გამოყენებული იყო გუშინ",
+  "@last_used_yesterday": {
+    "description": "Label for meetings last used yesterday"
+  },
+  "last_used": "ბოლოს გამოყენების დრო",
+  "@last_used": {
+    "description": "Label prefix for last used time"
+  },
+  "created_on": "შექმნის დრო: {month} {day}, {year}",
+  "@created_on": {
+    "description": "Label for meetings created on a specific date",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      },
+      "day": {
+        "type": "int"
+      },
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "secure_meeting": "დაცული შეხვედრა",
+  "@secure_meeting": {
+    "description": "Default meeting name when no title is set"
+  },
+  "premium_meeting": "ფასიანი შეხვედრა",
+  "@premium_meeting": {
+    "description": "Default meeting name for paid meeting"
+  },
+  "free_meeting": "უფასო შეხვედრა",
+  "@free_meeting": {
+    "description": "Default meeting name for free meeting"
+  },
+  "share_with_people_you_trust": "გაუზიარეთ ხალხს, ვისაც ენდობით",
+  "@share_with_people_you_trust": {
+    "description": "Personal meeting hint text"
+  },
+  "time_am": "AM",
+  "@time_am": {
+    "description": "AM suffix for 12-hour time format"
+  },
+  "time_pm": "PM",
+  "@time_pm": {
+    "description": "PM suffix for 12-hour time format"
+  },
+  "start_typing_to_search": "მოსაძებნად დაიწყეთ კრეფა...",
+  "@start_typing_to_search": {
+    "description": "Placeholder text shown when search query is empty"
+  },
+  "no_results_found_for": "\\\"{searchQuery}\\\"-ისთვის შედეგები აღმოცენილი არაა",
+  "@no_results_found_for": {
+    "description": "Message shown when search returns no results",
+    "placeholders": {
+      "searchQuery": {
+        "type": "String",
+        "example": "meeting name"
+      }
+    }
+  },
+  "sort_newest": "უახლესი",
+  "@sort_newest": {
+    "description": "Sort option label for newest items"
+  },
+  "sort_last_used": "ბოლოს გამოყენებული",
+  "@sort_last_used": {
+    "description": "Sort option label for last used items"
+  },
+  "sort_by": "{option}-ით დალაგება",
+  "@sort_by": {
+    "description": "Toast notification message when sort option is selected",
+    "placeholders": {
+      "option": {
+        "type": "String"
+      }
+    }
+  },
+  "sort_upcoming": "მოსალოდნელი",
+  "@sort_upcoming": {
+    "description": "Sort option label for upcoming meetings"
+  },
+  "sort_new_created": "ახლადშექმნილი",
+  "@sort_new_created": {
+    "description": "Sort option label for newly created items"
+  },
+  "sort_past_meeting": "გასული",
+  "@sort_past_meeting": {
+    "description": "Sort option label for past meetings"
+  },
+  "version": "ვერსია {versionDisplay}",
+  "@version": {
+    "description": "Version text with version number",
+    "placeholders": {
+      "versionDisplay": {
+        "type": "String",
+        "example": "1.0.0-dev (00)"
+      }
+    }
+  },
+  "unable_to_reconnect": "თავიდან დაკავშირება შეუძლებელია",
+  "@unable_to_reconnect": {
+    "description": "Title shown when reconnection fails"
+  },
+  "reconnection_failed_message": "კავშირის აღდგენა ვერ მოვახერხეთ. სცადეთ, შეხვედრაზე თავიდან შეხვიდეთ",
+  "@reconnection_failed_message": {
+    "description": "Message shown when reconnection fails"
+  },
+  "connection": "კავშირი",
+  "@connection": {
+    "description": "Section title for connection settings"
+  },
+  "reconnect_meeting": "თავიდან დაკავშირება შეხვედრასთან",
+  "@reconnect_meeting": {
+    "description": "Button label to reconnect to meeting"
+  },
+  "always_show_status": "სტატუსის ყოველთვის ჩვენება",
+  "@always_show_status": {
+    "description": "Setting label to always show connection status banner"
+  },
+  "connection_check_mls_checking": "კავშირის Semowmeba\nMLS-ის სტატუსის შემოწმება...",
+  "@connection_check_mls_checking": {
+    "description": "Message shown when checking MLS sync status"
+  },
+  "connection_issue_restoring": "კავშირის შეცდომა\nჩვენ ვმუშაობთ სრული ფუნქციონალის აღდგენაზე...",
+  "@connection_issue_restoring": {
+    "description": "Message shown when connection issue is being resolved"
+  },
+  "connection_check_mls_failed": "კავშირის შემოწმება\nMLS-ის სტატუსის შემოწმება ჩავარდა. მოხდება თავიდან დაკავშირება...",
+  "@connection_check_mls_failed": {
+    "description": "Message shown when MLS sync check fails"
+  },
+  "connection_check_mls_passed": "კავშირის Semowmeba\nMLS-ის სტატუსის შემოწმება წარმატებულია",
+  "@connection_check_mls_passed": {
+    "description": "Message shown when MLS sync check passes"
+  },
+  "trying_to_reconnect": "თავიდან დაკავშირების მცდელობა…",
+  "@trying_to_reconnect": {
+    "description": "Message shown when attempting to reconnect to meeting"
+  },
+  "sign_in_card_title": "შედით, ან შექმენით ანგარიში",
+  "@sign_in_card_title": {
+    "description": "Title text for the sign-in card displayed on dashboard"
+  },
+  "sign_in_card_description": "დაგეგმეთ შეხვედრები, იქონიეთ წვდომა პირად ოთახთან და შექმენით ახალი ოთახები.",
+  "@sign_in_card_description": {
+    "description": "Description text for the sign-in card explaining benefits of signing in"
+  },
+  "almost_there_title": "თითქმის მიაღწიეთ",
+  "@almost_there_title": {
+    "description": "Title for the almost there bottom sheet"
+  },
+  "almost_there_content_before": "შეხვედრის დასაგეგმად შექმენით უფასო ",
+  "@almost_there_content_before": {
+    "description": "Content before Proton account in almost there bottom sheet (schedule meeting)"
+  },
+  "almost_there_content_before_create_room": "ოთახის შესაქმნელად, შექმენით უფასო ",
+  "@almost_there_content_before_create_room": {
+    "description": "Content before Proton account in almost there bottom sheet (create room)"
+  },
+  "almost_there_content_before_personal_room": "თქვენი პირადი შეხვედრების ოთახის გამოსაყენებლად შექმენით უფასო ",
+  "@almost_there_content_before_personal_room": {
+    "description": "Content before Proton account in almost there bottom sheet (personal meeting room)"
+  },
+  "almost_there_proton_account": "Proton-ის ანგარიში",
+  "@almost_there_proton_account": {
+    "description": "Proton account text in almost there bottom sheet"
+  },
+  "almost_there_content_after": ". Proton Meet-ში ავტომატურად დაბრუნდებით.",
+  "@almost_there_content_after": {
+    "description": "Content after Proton account in almost there bottom sheet"
+  },
+  "app_settings_title": "აპის მორგება",
+  "@app_settings_title": {
+    "description": "Title for the app settings bottom sheet"
+  },
+  "settings_section_general": "ზოგადი",
+  "@settings_section_general": {
+    "description": "Section header in app settings"
+  },
+  "settings_section_support": "მხარდაჭერა",
+  "@settings_section_support": {
+    "description": "Section header for support links in app settings"
+  },
+  "settings_section_legal": "იურიდიული ინფორმაცია",
+  "@settings_section_legal": {
+    "description": "Section header for legal links in app settings"
+  },
+  "languages": "ენები",
+  "@languages": {
+    "description": "Label for language selection in settings"
+  },
+  "privacy_policy": "კონფიდენციალობის პოლიტიკა",
+  "@privacy_policy": {
+    "description": "Link to privacy policy"
+  },
+  "terms_and_conditions": "წესები და პირობები",
+  "@terms_and_conditions": {
+    "description": "Link to terms and conditions"
+  },
+  "knowledge_base": "ცოდნის ბაზა",
+  "@knowledge_base": {
+    "description": "Link to help center / knowledge base"
+  },
+  "system_default_mode": "სისტემის ნაგულისხმევი",
+  "@system_default_mode": {
+    "description": "Use device language for app UI"
+  },
+  "pre_rating_sheet_title": "მოგწონთ Proton Meet?",
+  "@pre_rating_sheet_title": {
+    "description": "Title on the pre-rating bottom sheet before in-app review"
+  },
+  "pre_rating_sheet_subtitle": "ჩვენ ვკითხულობთ და ვაფასებთ უკუკავშირს.",
+  "@pre_rating_sheet_subtitle": {
+    "description": "Subtitle on the pre-rating bottom sheet"
+  },
+  "pre_rating_sheet_yes_enjoy_proton_meet": "დიახ",
+  "@pre_rating_sheet_yes_enjoy_proton_meet": {
+    "description": "Primary button on the pre-rating sheet to open store review"
+  },
+  "pre_rating_sheet_not_really_enjoy_proton_meet": "არც ისე",
+  "@pre_rating_sheet_not_really_enjoy_proton_meet": {
+    "description": "Secondary button on the pre-rating sheet"
+  },
+  "store_review_thanks_toast": "გმადლობთ უკუკავშირისთვის",
+  "@store_review_thanks_toast": {
+    "description": "Toast shown before the OS in-app store review prompt"
+  },
+  "iap_native_test_title": "სატარიფო გეგმები (საკუთარი)",
+  "@iap_native_test_title": {
+    "description": "Title for dev sheet that invokes native IAP / plans"
+  },
+  "iap_native_test_body": "იყენებს Prototn-ის საკუთარ გადახდებს (იგივე არხს, რასაც Proton Wallet). შესვლა აუცილებელია.",
+  "@iap_native_test_body": {
+    "description": "Explains native channel test sheet"
+  },
+  "iap_native_test_current_plan": "მიმდინარე სატარიფო გეგმა",
+  "@iap_native_test_current_plan": {
+    "description": "Button: native.navigation.plan.subscription"
+  },
+  "iap_native_test_upgrade": "განახლება",
+  "@iap_native_test_upgrade": {
+    "description": "Button: native.navigation.plan.upgrade"
+  },
+  "iap_native_test_sign_in_required": "ადგილობრივი გადახდების გასახსნელად შედით Proton-ის ანგარიშით.",
+  "@iap_native_test_sign_in_required": {
+    "description": "Message shown when sign in is required to open native payments"
+  }
+}
