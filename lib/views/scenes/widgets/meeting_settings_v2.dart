@@ -140,6 +140,9 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
     if (widget.audioDenoiseEnabled != oldWidget.audioDenoiseEnabled) {
       audioDenoiseEnabled = widget.audioDenoiseEnabled;
     }
+    if (widget.waitingRoomEnabled != oldWidget.waitingRoomEnabled) {
+      waitingRoomEnabled = widget.waitingRoomEnabled;
+    }
   }
 
   @override
@@ -373,6 +376,9 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
               if (widget.showWaitingRoom)
                 _SettingSwitch(
                   title: context.local.enable_waiting_room,
+                  subtitle: waitingRoomEnabled
+                      ? context.local.waiting_room_setting_on_description
+                      : context.local.waiting_room_setting_off_description,
                   value: waitingRoomEnabled,
                   isLoading: _isWaitingRoomLoading,
                   onChanged:
@@ -582,6 +588,7 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
 
 class _SettingSwitch extends StatelessWidget {
   final String title;
+  final String? subtitle;
   final bool value;
   final ValueChanged<bool>? onChanged;
   final bool isLoading;
@@ -589,6 +596,7 @@ class _SettingSwitch extends StatelessWidget {
   const _SettingSwitch({
     required this.title,
     required this.value,
+    this.subtitle,
     this.onChanged,
     this.isLoading = false,
   });
@@ -605,6 +613,15 @@ class _SettingSwitch extends StatelessWidget {
                 title,
                 style: ProtonStyles.body1Medium(color: context.colors.textNorm),
               ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  subtitle!,
+                  style: ProtonStyles.body2Regular(
+                    color: context.colors.textWeak,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
