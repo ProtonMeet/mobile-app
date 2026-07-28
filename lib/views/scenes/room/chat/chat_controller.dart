@@ -369,11 +369,26 @@ class ChatController extends ChangeNotifier {
 /// Notification-relevance filter: decide whether a message should
 /// surface a toast / announcement for the local user.
 ///
-/// Thread replies are intentionally silent; only root-level messages notify.
+/// Root messages from others always notify. Thread replies notify only when
+/// the local user is a thread participant (root author or has replied).
 bool isRelevantThreadMessage(
   RoomChatMessage message,
   List<RoomChatMessage> chatMessages,
   String localIdentity,
 ) {
-  return !message.isReply;
+  if (message.isSystem || message.isMissingRoot) return false;
+  if (localIdentity.isNotEmpty && message.identity == localIdentity) {
+    return false;
+  }
+
+  if (!message.isReply) return true;
+
+  final topicId = message.topicId;
+  if (topicId == null) return false;
+
+  return chatMessages.any(
+    (m) =>
+        (m.id == topicId || m.topicId == topicId) &&
+        m.identity == localIdentity,
+  );
 }
