@@ -113,6 +113,22 @@
   "picture_in_picture_mode": "Picture-in-picture mode",
   "security": "安全",
   "enable_waiting_room": "Enable waiting room",
+  "waiting_room_setting_on_description": "參與者需經您核准後才能加入",
+  "@waiting_room_setting_on_description": {
+    "description": "Waiting room switch description when enabled in meeting settings"
+  },
+  "waiting_room_setting_off_description": "持有連結的任何人都可以加入",
+  "@waiting_room_setting_off_description": {
+    "description": "Waiting room switch description when disabled in meeting settings"
+  },
+  "waiting_room_enabled_notification": "已啟用等候室，參與者需經您核准後才能加入。",
+  "@waiting_room_enabled_notification": {
+    "description": "Global notification when the host enables waiting room in meeting settings"
+  },
+  "waiting_room_disabled_notification": "已停用等候室，持有連結的任何人都可以加入。",
+  "@waiting_room_disabled_notification": {
+    "description": "Global notification when the host disables waiting room in meeting settings"
+  },
   "hide_self_view": "Hide self view",
   "allow_all_participants_to": "Allow all participants to:",
   "chat": "聊天",

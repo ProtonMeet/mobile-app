@@ -2365,6 +2365,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       setState(() {
         _waitingRoomEnabled = value;
       });
+      context.showGlobalNotification(
+        value
+            ? context.local.waiting_room_enabled_notification
+            : context.local.waiting_room_disabled_notification,
+      );
     }
     return success;
   }
