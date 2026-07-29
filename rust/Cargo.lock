@@ -240,6 +240,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "assert-impl"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c3464313de0c867016e3e69d7e1e9ae3499bcc4c18e12283d381359ed38b5b9e"
+
+[[package]]
 name = "assert_matches"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4775,6 +4781,7 @@ dependencies = [
  "getrandom 0.3.4",
  "gloo-timers",
  "hkdf 0.12.4",
+ "http",
  "idb",
  "identity",
  "indexmap 2.14.0",
@@ -4818,6 +4825,7 @@ dependencies = [
  "thiserror 2.0.18",
  "tls_codec",
  "tokio",
+ "tokio-tungstenite",
  "tokio-tungstenite-wasm",
  "tracing",
  "tracing-subscriber",
@@ -6008,7 +6016,7 @@ version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f103c50866b8743da9429b8a581d81a27c2d3a9c4ac7df8f8571c1dd7896eda"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.5.0",
  "proc-macro2",
  "quote",
  "syn 2.0.118",
@@ -6468,9 +6476,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-tungstenite"
-version = "0.26.2"
+version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a9daff607c6d2bf6c16fd681ccb7eecc83e4e2cdc1ca067ffaadfca5de7f084"
+checksum = "d25a406cddcc431a75d3d9afc6a7c0f7428d4891dd973e4d54c56b46127bf857"
 dependencies = [
  "futures-util",
  "log",
@@ -6482,13 +6490,14 @@ dependencies = [
  "tokio-native-tls",
  "tokio-rustls",
  "tungstenite",
+ "webpki-roots 0.26.11",
 ]
 
 [[package]]
 name = "tokio-tungstenite-wasm"
-version = "0.6.0"
-source = "git+git+ssh://git@gitlab.protontech.ch/meet/tokio-tungstenite-wasm.git?branch=feat%2Fconnect_with_auth#2f49bcc475a3e2c23144619faf33478f21cafd5d"
+version = "0.8.2"
 dependencies = [
+ "assert-impl",
  "bytes",
  "futures-channel",
  "futures-util",
@@ -6496,6 +6505,7 @@ dependencies = [
  "httparse",
  "js-sys",
  "native-tls",
+ "rand 0.9.4",
  "rustls",
  "thiserror 2.0.18",
  "tokio",
@@ -6753,9 +6763,9 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
 name = "tungstenite"
-version = "0.26.2"
+version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4793cb5e56680ecbb1d843515b23b6de9a75eb04b66643e256a396d43be33c13"
+checksum = "8628dcc84e5a09eb3d8423d6cb682965dea9133204e8fb3efee74c2a0c259442"
 dependencies = [
  "bytes",
  "data-encoding",
