@@ -27,6 +27,12 @@ class FrbMeetingInfo {
   /// 1 if meeting has waiting room enabled
   final int waitingRoom;
 
+  /// 1 if waiting room can be managed
+  final int manageWaitingRoom;
+
+  /// 1 if meeting is personal
+  final int personalMeeting;
+
   /// Maximum duration of this meeting in seconds
   final int maxDuration;
 
@@ -43,6 +49,8 @@ class FrbMeetingInfo {
     required this.sessionKey,
     required this.locked,
     required this.waitingRoom,
+    required this.manageWaitingRoom,
+    required this.personalMeeting,
     required this.maxDuration,
     required this.maxParticipants,
     this.expirationTime,
@@ -56,6 +64,8 @@ class FrbMeetingInfo {
       sessionKey.hashCode ^
       locked.hashCode ^
       waitingRoom.hashCode ^
+      manageWaitingRoom.hashCode ^
+      personalMeeting.hashCode ^
       maxDuration.hashCode ^
       maxParticipants.hashCode ^
       expirationTime.hashCode;
@@ -71,6 +81,8 @@ class FrbMeetingInfo {
           sessionKey == other.sessionKey &&
           locked == other.locked &&
           waitingRoom == other.waitingRoom &&
+          manageWaitingRoom == other.manageWaitingRoom &&
+          personalMeeting == other.personalMeeting &&
           maxDuration == other.maxDuration &&
           maxParticipants == other.maxParticipants &&
           expirationTime == other.expirationTime;

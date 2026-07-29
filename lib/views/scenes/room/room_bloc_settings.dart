@@ -178,6 +178,8 @@ mixin RoomSettingsHandlers
           sessionKey: info.sessionKey,
           locked: info.locked,
           waitingRoom: event.enabled ? 1 : 0,
+          manageWaitingRoom: info.manageWaitingRoom,
+          personalMeeting: info.personalMeeting,
           maxDuration: info.maxDuration,
           maxParticipants: info.maxParticipants,
           expirationTime: info.expirationTime,
