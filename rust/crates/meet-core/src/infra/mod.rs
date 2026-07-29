@@ -21,6 +21,8 @@ pub mod tls_pinning;
 pub mod unleash_api;
 pub mod user_api;
 pub mod ws_client;
+#[cfg(not(target_family = "wasm"))]
+pub mod ws_connect;
 
 // Backward-compatible re-exports for external crates (frb, meet-cli, e2e tests).
 #[cfg(not(target_arch = "wasm32"))]

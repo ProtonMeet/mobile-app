@@ -551,6 +551,7 @@ impl WebSocketClient for WsClient {
         #[cfg(all(not(target_family = "wasm"), target_os = "ios"))]
         {
             use crate::infra::tls_pinning::build_prod_tls_config;
+            use crate::infra::ws_connect;
             use rustls::ClientConfig;
             use rustls_platform_verifier::ConfigVerifierExt;
             use std::sync::Arc;
@@ -564,12 +565,9 @@ impl WebSocketClient for WsClient {
             let connector = Connector::Rustls(tls_config);
 
             let url = self.build_ws_url("v1/ws")?;
-            let ws_stream = tokio_tungstenite_wasm::connect_with_tls_auth(
-                url.as_str(),
-                base64_sd_kbt,
-                Some(connector),
-            )
-            .await?;
+            let ws_stream =
+                ws_connect::connect_with_tls_auth(url.as_str(), base64_sd_kbt, Some(connector))
+                    .await?;
             let (write, read) = ws_stream.split();
             *self.ws_sender.lock().await = Some(write);
             *self.ws_receiver.lock().await = Some(read);
@@ -578,6 +576,7 @@ impl WebSocketClient for WsClient {
         #[cfg(all(not(target_family = "wasm"), not(target_os = "ios")))]
         {
             use crate::infra::tls_pinning::build_prod_tls_config;
+            use crate::infra::ws_connect;
             use rustls::ClientConfig;
             use std::sync::Arc;
             use tokio_tungstenite_wasm::Connector;
@@ -587,25 +586,17 @@ impl WebSocketClient for WsClient {
             let ws_stream = {
                 let cfg = crate::utils::reqwest::dev_rustls_client_config();
                 let connector = Connector::Rustls(Arc::new(cfg));
-                tokio_tungstenite_wasm::connect_with_tls_auth(
-                    url.as_str(),
-                    base64_sd_kbt,
-                    Some(connector),
-                )
-                .await?
+                ws_connect::connect_with_tls_auth(url.as_str(), base64_sd_kbt, Some(connector))
+                    .await?
             };
             #[cfg(not(feature = "insecure-tls"))]
             let ws_stream = if self.enable_prod_tls_pinning {
                 let tls_config: Arc<ClientConfig> = Arc::new(build_prod_tls_config()?);
                 let connector = Connector::Rustls(tls_config);
-                tokio_tungstenite_wasm::connect_with_tls_auth(
-                    url.as_str(),
-                    base64_sd_kbt,
-                    Some(connector),
-                )
-                .await?
+                ws_connect::connect_with_tls_auth(url.as_str(), base64_sd_kbt, Some(connector))
+                    .await?
             } else {
-                tokio_tungstenite_wasm::connect_with_auth(url.as_str(), base64_sd_kbt).await?
+                ws_connect::connect_with_auth(url.as_str(), base64_sd_kbt).await?
             };
             let (write, read) = ws_stream.split();
             *self.ws_sender.lock().await = Some(write);
