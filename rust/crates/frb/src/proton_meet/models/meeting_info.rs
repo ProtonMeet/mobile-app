@@ -13,6 +13,10 @@ pub struct FrbMeetingInfo {
     pub locked: u8,
     /// 1 if meeting has waiting room enabled
     pub waiting_room: u8,
+    /// 1 if waiting room can be managed
+    pub manage_waiting_room: u8,
+    /// 1 if meeting is personal
+    pub personal_meeting: u8,
     /// Maximum duration of this meeting in seconds
     pub max_duration: u32,
     /// Maximum number of participants allowed in this meeting
@@ -30,6 +34,8 @@ impl From<MeetingInfo> for FrbMeetingInfo {
             session_key: meeting_info.session_key,
             locked: meeting_info.locked,
             waiting_room: meeting_info.waiting_room,
+            manage_waiting_room: meeting_info.manage_waiting_room,
+            personal_meeting: meeting_info.personal_meeting,
             max_duration: meeting_info.max_duration,
             max_participants: meeting_info.max_participants,
             expiration_time: meeting_info.expiration_time.map(|t| t.timestamp()),

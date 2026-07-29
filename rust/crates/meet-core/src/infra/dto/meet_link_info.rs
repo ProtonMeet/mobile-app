@@ -95,6 +95,10 @@ pub struct MeetingInfoDto {
     pub session_key: String,
     pub locked: u8,
     pub waiting_room: u8,
+    /// 1 if waiting room can be managed
+    pub manage_waiting_room: u8,
+    /// 1 if meeting is personal
+    pub personal_meeting: u8,
     pub max_duration: u32,
     pub max_participants: u32,
     pub expiration_time: Option<i64>,
@@ -109,6 +113,8 @@ impl From<MeetInfoResponse> for MeetingInfo {
             session_key: response.meeting_info.session_key,
             locked: response.meeting_info.locked,
             waiting_room: response.meeting_info.waiting_room,
+            manage_waiting_room: response.meeting_info.manage_waiting_room,
+            personal_meeting: response.meeting_info.personal_meeting,
             max_duration: response.meeting_info.max_duration,
             max_participants: response.meeting_info.max_participants,
             expiration_time: response

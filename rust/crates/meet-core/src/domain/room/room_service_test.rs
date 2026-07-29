@@ -68,6 +68,8 @@ mod tests {
             meeting_link_name: TEST_MEET_LINK_NAME.to_string(),
             locked: 0,
             waiting_room: 0,
+            manage_waiting_room: 0,
+            personal_meeting: 0,
             max_duration: 3600,
             max_participants: 100,
             expiration_time: None,

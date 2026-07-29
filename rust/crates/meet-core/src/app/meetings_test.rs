@@ -280,6 +280,8 @@ async fn get_meeting_info_delegates_to_room_service() {
                 max_participants: 100,
                 expiration_time: None,
                 waiting_room: 0,
+                manage_waiting_room: 0,
+                personal_meeting: 0,
             })))
         });
 
@@ -315,6 +317,8 @@ async fn get_meeting_info_decrypts_meeting_name_from_prejoin_cache() {
                 max_participants: 100,
                 expiration_time: None,
                 waiting_room: 0,
+                manage_waiting_room: 0,
+                personal_meeting: 0,
             })))
         });
 
@@ -508,6 +512,8 @@ async fn authenticate_meeting_link_stores_session_key() {
         max_participants: 100,
         expiration_time: None,
         waiting_room: 0,
+        manage_waiting_room: 0,
+        personal_meeting: 0,
     };
 
     let mut http = MockHttpClient::new();

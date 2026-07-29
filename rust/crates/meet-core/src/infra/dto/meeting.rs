@@ -290,6 +290,10 @@ pub struct MeetingInfoDto {
     pub locked: u8,
     /// 1 if meeting has waiting room enabled
     pub waiting_room: u8,
+    /// 1 if waiting room can be managed
+    pub manage_waiting_room: u8,
+    /// 1 if meeting is personal
+    pub personal_meeting: u8,
     /// Maximum duration of this meeting in seconds
     pub max_duration: u32,
     /// Maximum number of participants allowed in this meeting
@@ -316,6 +320,8 @@ impl TryFrom<MeetingInfoDto> for MeetingInfo {
             session_key: dto.session_key,
             locked: dto.locked,
             waiting_room: dto.waiting_room,
+            manage_waiting_room: dto.manage_waiting_room,
+            personal_meeting: dto.personal_meeting,
             max_duration: dto.max_duration,
             max_participants: dto.max_participants,
             expiration_time,

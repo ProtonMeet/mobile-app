@@ -47,6 +47,10 @@ pub struct MeetingInfo {
     pub locked: u8,
     /// 1 if meeting has waiting room enabled
     pub waiting_room: u8,
+    /// 1 if waiting room can be managed
+    pub manage_waiting_room: u8,
+    /// 1 if meeting is personal
+    pub personal_meeting: u8,
     /// Maximum duration of this meeting in seconds
     pub max_duration: u32,
     /// Maximum number of participants allowed in this meeting

@@ -120,6 +120,8 @@ mod tests {
             max_duration: 3600,
             max_participants: 25,
             expiration_time: None,
+            manage_waiting_room: 0,
+            personal_meeting: 0,
         }
     }
 

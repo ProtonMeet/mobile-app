@@ -240,6 +240,8 @@ mod tests {
             max_participants: 25,
             expiration_time: None,
             waiting_room: 0,
+            manage_waiting_room: 0,
+            personal_meeting: 0,
         }
     }
 

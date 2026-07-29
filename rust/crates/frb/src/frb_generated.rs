@@ -8291,6 +8291,8 @@ impl SseDecode for crate::proton_meet::models::meeting_info::FrbMeetingInfo {
         let mut var_sessionKey = <String>::sse_decode(deserializer);
         let mut var_locked = <u8>::sse_decode(deserializer);
         let mut var_waitingRoom = <u8>::sse_decode(deserializer);
+        let mut var_manageWaitingRoom = <u8>::sse_decode(deserializer);
+        let mut var_personalMeeting = <u8>::sse_decode(deserializer);
         let mut var_maxDuration = <u32>::sse_decode(deserializer);
         let mut var_maxParticipants = <u32>::sse_decode(deserializer);
         let mut var_expirationTime = <Option<i64>>::sse_decode(deserializer);
@@ -8301,6 +8303,8 @@ impl SseDecode for crate::proton_meet::models::meeting_info::FrbMeetingInfo {
             session_key: var_sessionKey,
             locked: var_locked,
             waiting_room: var_waitingRoom,
+            manage_waiting_room: var_manageWaitingRoom,
+            personal_meeting: var_personalMeeting,
             max_duration: var_maxDuration,
             max_participants: var_maxParticipants,
             expiration_time: var_expirationTime,
@@ -9898,6 +9902,8 @@ impl flutter_rust_bridge::IntoDart for crate::proton_meet::models::meeting_info:
             self.session_key.into_into_dart().into_dart(),
             self.locked.into_into_dart().into_dart(),
             self.waiting_room.into_into_dart().into_dart(),
+            self.manage_waiting_room.into_into_dart().into_dart(),
+            self.personal_meeting.into_into_dart().into_dart(),
             self.max_duration.into_into_dart().into_dart(),
             self.max_participants.into_into_dart().into_dart(),
             self.expiration_time.into_into_dart().into_dart(),
@@ -11128,6 +11134,8 @@ impl SseEncode for crate::proton_meet::models::meeting_info::FrbMeetingInfo {
         <String>::sse_encode(self.session_key, serializer);
         <u8>::sse_encode(self.locked, serializer);
         <u8>::sse_encode(self.waiting_room, serializer);
+        <u8>::sse_encode(self.manage_waiting_room, serializer);
+        <u8>::sse_encode(self.personal_meeting, serializer);
         <u32>::sse_encode(self.max_duration, serializer);
         <u32>::sse_encode(self.max_participants, serializer);
         <Option<i64>>::sse_encode(self.expiration_time, serializer);
