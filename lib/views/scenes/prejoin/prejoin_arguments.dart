@@ -32,6 +32,7 @@ class JoinArgs {
     this.isVideoEnabled = true,
     this.isAudioEnabled = true,
     this.isMeetingHost = false,
+    this.hasDashboardMeetingContext = false,
     this.waitingRoomEnabled = false,
     this.pendingHostWaitingRoomSyncEnabled,
     this.prefetchedMeetingInfo,
@@ -55,6 +56,9 @@ class JoinArgs {
 
   /// True when the signed-in user owns this meeting (from upcoming meetings).
   final bool isMeetingHost;
+
+  /// True when pre-join was opened from the dashboard with upcoming-meeting context.
+  final bool hasDashboardMeetingContext;
 
   /// Host-controlled waiting room toggle from pre-join (host only).
   final bool waitingRoomEnabled;

@@ -323,6 +323,8 @@ class _PreJoinTopBar extends StatelessWidget {
           showRoomNameLoading:
               roomName.isEmpty &&
               (state.isJoinAuthenticating ||
+                  state.isLoadingMeetingContext ||
+                  state.isLoadingHostMeetingContext ||
                   state.waitingRoomAdmissionPhase ==
                       WaitingRoomAdmissionPhase.hostNotStarted),
           roomName: roomName,

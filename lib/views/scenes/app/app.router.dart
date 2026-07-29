@@ -73,6 +73,7 @@ class AppRouter {
             e2ee: isE2EEEnabled,
             authBloc: authBloc,
             isMeetingHost: hostMeeting != null,
+            hasDashboardMeetingContext: hostMeeting != null,
             waitingRoomEnabled: hostMeeting?.hasWaitingRoom ?? false,
           );
 

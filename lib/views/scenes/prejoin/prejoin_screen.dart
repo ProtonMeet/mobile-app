@@ -52,7 +52,7 @@ class PreJoinScreen extends StatelessWidget {
 
   static bool _shouldShowWaitingRoomStatus(PreJoinState state) {
     if (state.preJoinType != PreJoinType.join ||
-        !state.isMeetingHost ||
+        !state.canManageWaitingRoom ||
         !state.isWaitingRoomFeatureEnabled) {
       return false;
     }
@@ -264,6 +264,7 @@ class PreJoinScreen extends StatelessWidget {
                                   enable:
                                       !state.isJoinAuthenticating &&
                                       !state.isLoadingHostMeetingContext &&
+                                      !state.isLoadingMeetingContext &&
                                       !state.isInWaitingRoomAdmission &&
                                       !PlatformInfoChannel.isInForceUpgradeState(),
                                   isLoading: state.isJoinAuthenticating,
@@ -497,19 +498,19 @@ class PreJoinScreen extends StatelessWidget {
       ),
     );
 
-    if (!state.isMeetingHost || !state.isWaitingRoomFeatureEnabled) {
+    if (!state.canManageWaitingRoom || !state.isWaitingRoomFeatureEnabled) {
       return label;
     }
 
     return TestId(
       id: TestIds.prejoinWaitingRoomStatus,
-      button: state.isMeetingHost && state.isWaitingRoomFeatureEnabled,
+      button: state.canManageWaitingRoom && state.isWaitingRoomFeatureEnabled,
       child: GestureDetector(
       onTap: () {
         showWaitingRoomSheet(
           context,
           selected: state.waitingRoomEnabled,
-          isOnOptionEnabled: state.isMeetingHost, // state.isPaidUser
+          isOnOptionEnabled: state.canManageWaitingRoom,
           onSelect: (enabled) {
             bloc.add(WaitingRoomChanged(enabled));
           },

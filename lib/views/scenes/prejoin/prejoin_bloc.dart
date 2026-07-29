@@ -7,7 +7,6 @@ import 'package:meet/helper/audio_output_probe.dart';
 import 'package:meet/helper/denoise/denoise_audio_capture_options.dart';
 import 'package:meet/helper/extension/bridge_error.extension.dart';
 import 'package:meet/helper/extension/bridge_session_check.extension.dart';
-import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/local_video_track_extension.dart';
 import 'package:meet/helper/extension/media_device_list_ext.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
@@ -22,6 +21,7 @@ import 'package:meet/managers/services/denoise_audio.service.dart';
 import 'package:meet/managers/services/force_upgrade.dart';
 import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/rust/errors.dart';
+import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/rust/proton_meet/user_config.dart';
 import 'package:meet/rust/proton_meet/user_subscription.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_event.dart';
@@ -98,6 +98,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
           isMeetingHost: true,
           isLoadingHostMeetingContext: false,
           role: PrejoinRole.host,
+          canManageWaitingRoom: true,
           waitingRoomEnabled: event.waitingRoomEnabled,
           roomName: event.roomName ?? state.roomName,
         ),
@@ -106,6 +107,11 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     on<PreJoinHostMeetingContextLoadFinished>(
       (_, emit) => emit(state.copyWith(isLoadingHostMeetingContext: false)),
     );
+    on<PreJoinMeetingContextResolved>(_onMeetingContextResolved);
+    on<PreJoinMeetingContextLoadFinished>(
+      (_, emit) => emit(state.copyWith(isLoadingMeetingContext: false)),
+    );
+    on<PreJoinMeetingContextFailed>(_onMeetingContextFailed);
     on<PreJoinNavigateToWaitingRoomConsumed>(
       (_, emit) => emit(state.copyWith(shouldNavigateToWaitingRoom: false)),
     );
@@ -697,7 +703,15 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       } catch (e) {
         l.logger.w('[PreJoinBloc] Failed to clear prejoin SRP cache: $e');
       }
-      emit(state.copyWith(prejoinAuthDisplayName: ''));
+      emit(
+        state.copyWith(
+          resetMeetingAuth: true,
+          hasWaitingRoom: false,
+          waitingRoomEnabled: false,
+          prejoinAuthDisplayName: '',
+          role: PrejoinRole.guest,
+        ),
+      );
     }
 
     emit(
@@ -824,13 +838,28 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         isWaitingRoomFeatureEnabled: isWaitingRoomFeatureEnabled,
       ),
     );
+    final meetLink = event.args.meetingLink;
+    final needsUpfrontMeetingContext =
+        event.args.type == PreJoinType.join &&
+        meetLink != null &&
+        !event.args.hasDashboardMeetingContext;
+    if (needsUpfrontMeetingContext) {
+      emit(state.copyWith(isLoadingMeetingContext: true));
+      unawaited(
+        _loadMeetingContext(
+          meetLink: meetLink,
+          displayName: initialDisplayName,
+        ),
+      );
+    }
     if (!isGuest && userId != null) {
       unawaited(_loadPaidUserStatus(userId));
     }
     if (event.args.type == PreJoinType.join &&
+        event.args.hasDashboardMeetingContext &&
         event.args.isMeetingHost &&
-        event.args.meetingLink != null) {
-      final link = event.args.meetingLink!;
+        meetLink != null) {
+      final link = meetLink;
       final roomName = link.meetingName.trim();
 
       if (roomName.isNotEmpty) {
@@ -838,6 +867,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
           state.copyWith(
             isMeetingHost: true,
             role: PrejoinRole.host,
+            canManageWaitingRoom: true,
             roomName: roomName,
             waitingRoomEnabled: event.args.waitingRoomEnabled,
           ),
@@ -847,6 +877,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
           state.copyWith(
             isMeetingHost: true,
             role: PrejoinRole.host,
+            canManageWaitingRoom: true,
             isLoadingHostMeetingContext: true,
           ),
         );
@@ -1315,6 +1346,151 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     }
   }
 
+  Future<void> _loadMeetingContext({
+    required FrbUpcomingMeeting meetLink,
+    required String displayName,
+  }) async {
+    if (meetLink.meetingLinkName.isEmpty) {
+      if (!isClosed) {
+        add(PreJoinMeetingContextLoadFinished());
+      }
+      return;
+    }
+
+    try {
+      final appCoreManager = serviceManager.get<AppCoreManager>();
+      final auth = await authenticateForJoin(
+        appCoreManager: appCoreManager,
+        meetingLinkName: meetLink.meetingLinkName,
+        meetingPassword: meetLink.meetingPassword,
+        displayName: displayName,
+      );
+      if (isClosed) {
+        return;
+      }
+      add(PreJoinMeetingContextResolved(auth: auth));
+    } catch (e, stackTrace) {
+      l.logger.e(
+        '[PreJoinBloc] Failed to load meeting context: $e',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      if (!isClosed) {
+        add(PreJoinMeetingContextFailed(e));
+      }
+    } finally {
+      if (!isClosed) {
+        add(PreJoinMeetingContextLoadFinished());
+      }
+    }
+  }
+
+  void _onMeetingContextFailed(
+    PreJoinMeetingContextFailed event,
+    Emitter<PreJoinState> emit,
+  ) {
+    if (event.error is BridgeError &&
+        (event.error as BridgeError).consumeBridgeSessionIfNeeded()) {
+      return;
+    }
+    if (_tryEmitMeetingLocked(emit, event.error)) {
+      return;
+    }
+    final message = event.error is BridgeError
+        ? (event.error as BridgeError).userMessage
+        : extractErrorMessage(event.error);
+    emit(
+      state.copyWith(
+        isLoadingMeetingContext: false,
+        error: message,
+      ),
+    );
+  }
+
+  void _onMeetingContextResolved(
+    PreJoinMeetingContextResolved event,
+    Emitter<PreJoinState> emit,
+  ) {
+    _emitJoinAuthPreviewState(
+      emit,
+      event.auth,
+      isJoinAuthenticating: false,
+      applyClientWaitingRoomAtJoin: false,
+    );
+  }
+
+  /// Resolves host waiting-room choice at join time (after the user may have toggled).
+  ({bool clientEnabled, bool? pendingSync}) _resolveWaitingRoomAtJoin({
+    required bool serverWaitingRoomEnabled,
+    required bool canManageWaitingRoom,
+    required bool userWaitingRoomEnabled,
+    required bool isWaitingRoomFeatureEnabled,
+  }) {
+    if (!canManageWaitingRoom) {
+      return (
+        clientEnabled: serverWaitingRoomEnabled,
+        pendingSync: null,
+      );
+    }
+
+    final clientEnabled = isWaitingRoomFeatureEnabled
+        ? userWaitingRoomEnabled
+        : serverWaitingRoomEnabled;
+    final pendingSync = serverWaitingRoomEnabled != clientEnabled
+        ? clientEnabled
+        : null;
+
+    return (clientEnabled: clientEnabled, pendingSync: pendingSync);
+  }
+
+  /// Applies SRP + meeting-info preview to pre-join state (page load or join).
+  void _emitJoinAuthPreviewState(
+    Emitter<PreJoinState> emit,
+    PreJoinJoinAuthResult auth, {
+    required bool isJoinAuthenticating,
+    required bool applyClientWaitingRoomAtJoin,
+  }) {
+    final serverWaitingRoomEnabled = auth.serverWaitingRoomEnabled;
+    final canManageWaitingRoom = auth.canManageWaitingRoom;
+
+    final waitingRoom = applyClientWaitingRoomAtJoin
+        ? _resolveWaitingRoomAtJoin(
+            serverWaitingRoomEnabled: serverWaitingRoomEnabled,
+            canManageWaitingRoom: canManageWaitingRoom,
+            userWaitingRoomEnabled: state.waitingRoomEnabled,
+            isWaitingRoomFeatureEnabled: state.isWaitingRoomFeatureEnabled,
+          )
+        : (
+            clientEnabled: serverWaitingRoomEnabled,
+            pendingSync: null,
+          );
+
+    final meetingInfo = canManageWaitingRoom
+        ? meetingInfoWithWaitingRoom(
+            auth.meetingInfo,
+            waitingRoomEnabled: serverWaitingRoomEnabled,
+          )
+        : auth.meetingInfo;
+
+    emit(
+      state.copyWith(
+        isJoinAuthenticating: isJoinAuthenticating,
+        isLoadingMeetingContext: false,
+        roomName: auth.meetingInfo.meetingName,
+        meetingInfo: meetingInfo,
+        isMeetingHost: auth.isMeetingHost,
+        canManageWaitingRoom: canManageWaitingRoom,
+        role: auth.isMeetingHost ? PrejoinRole.host : PrejoinRole.guest,
+        hasWaitingRoom: canManageWaitingRoom ? false : serverWaitingRoomEnabled,
+        waitingRoomEnabled: waitingRoom.clientEnabled,
+        resetPendingHostWaitingRoomSyncEnabled:
+            !applyClientWaitingRoomAtJoin || waitingRoom.pendingSync == null,
+        pendingHostWaitingRoomSyncEnabled: waitingRoom.pendingSync,
+        prejoinAuthDisplayName: auth.authDisplayName,
+      ),
+    );
+  }
+
   Future<void> _loadHostMeetingContext(String meetingLinkName) async {
     if (meetingLinkName.isEmpty) {
       return;
@@ -1371,62 +1547,58 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     );
 
     try {
+      if (state.hasJoinAuthCompleted &&
+          displayName == state.prejoinAuthDisplayName) {
+        final serverWaitingRoomEnabled = state.meetingInfo!.waitingRoom == 1;
+        final waitingRoom = _resolveWaitingRoomAtJoin(
+          serverWaitingRoomEnabled: serverWaitingRoomEnabled,
+          canManageWaitingRoom: state.canManageWaitingRoom,
+          userWaitingRoomEnabled: state.waitingRoomEnabled,
+          isWaitingRoomFeatureEnabled: state.isWaitingRoomFeatureEnabled,
+        );
+        final needsWaitingRoomAdmission =
+            !state.isMeetingHost && serverWaitingRoomEnabled;
+
+        emit(
+          state.copyWith(
+            isJoinAuthenticating: needsWaitingRoomAdmission,
+            waitingRoomEnabled: waitingRoom.clientEnabled,
+            resetPendingHostWaitingRoomSyncEnabled:
+                waitingRoom.pendingSync == null,
+            pendingHostWaitingRoomSyncEnabled: waitingRoom.pendingSync,
+          ),
+        );
+
+        if (needsWaitingRoomAdmission) {
+          add(PreJoinStartWaitingRoomAdmission(displayName));
+          return;
+        }
+
+        emit(state.copyWith(shouldNavigateToWaitingRoom: true));
+        return;
+      }
+
       final appCoreManager = serviceManager.get<AppCoreManager>();
       final auth = await authenticateForJoin(
         appCoreManager: appCoreManager,
         meetingLinkName: meetLink.meetingLinkName,
         meetingPassword: meetLink.meetingPassword,
         displayName: displayName,
-        isMeetingHost: state.isMeetingHost,
       );
 
       if (isClosed) {
         return;
       }
 
-      final serverWaitingRoomEnabled =
-          auth.meetInfo.hasWaitingRoom;
-
-      // if the feature flag is enabled, we will use the client waiting room config
-      // otherwise, we will use the server waiting room config
-      final clientWaitingRoomEnabled = auth.isMeetingHost
-          ? (state.isWaitingRoomFeatureEnabled
-                ? state.waitingRoomEnabled
-                : serverWaitingRoomEnabled)
-          : serverWaitingRoomEnabled;
-
-      final pendingHostWaitingRoomSyncEnabled =
-          auth.isMeetingHost &&
-              serverWaitingRoomEnabled != clientWaitingRoomEnabled
-          ? clientWaitingRoomEnabled
-          : null;
-
-      /// Pass the waiting room setting from the server when create the meeting or join the meeting,
-      /// we will auto trigger the update waiting room flow once the host enter the meeting
-      final meetingInfo = auth.isMeetingHost
-          ? meetingInfoWithWaitingRoom(
-              auth.meetingInfo,
-              waitingRoomEnabled: serverWaitingRoomEnabled,
-            )
-          : auth.meetingInfo;
-
+      final serverWaitingRoomEnabled = auth.serverWaitingRoomEnabled;
       final needsWaitingRoomAdmission =
           !auth.isMeetingHost && serverWaitingRoomEnabled;
 
-      emit(
-        state.copyWith(
-          // Keep loading until waiting-room admission UI is shown; MLS prep runs
-          // asynchronously after auth and would otherwise flash an active button.
-          isJoinAuthenticating: needsWaitingRoomAdmission,
-          roomName: auth.meetInfo.meetName,
-          meetingInfo: meetingInfo,
-          isMeetingHost: auth.isMeetingHost,
-          role: auth.isMeetingHost ? PrejoinRole.host : PrejoinRole.guest,
-          hasWaitingRoom: auth.isMeetingHost ? false : serverWaitingRoomEnabled,
-          waitingRoomEnabled: clientWaitingRoomEnabled,
-          pendingHostWaitingRoomSyncEnabled: pendingHostWaitingRoomSyncEnabled,
-          prejoinAuthDisplayName: auth.authDisplayName,
-        ),
+      _emitJoinAuthPreviewState(
+        emit,
+        auth,
+        isJoinAuthenticating: needsWaitingRoomAdmission,
+        applyClientWaitingRoomAtJoin: true,
       );
 
       if (needsWaitingRoomAdmission) {

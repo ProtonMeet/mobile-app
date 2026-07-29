@@ -17,6 +17,10 @@ class PreJoinJoinAuthResult {
   final FrbMeetingInfo meetingInfo;
   final bool isMeetingHost;
   final String authDisplayName;
+
+  bool get canManageWaitingRoom => meetingInfo.manageWaitingRoom == 1;
+
+  bool get serverWaitingRoomEnabled => meetingInfo.waitingRoom == 1;
 }
 
 /// Builds [FrbMeetingInfo] for room UI from a decrypted join auth response.
@@ -96,17 +100,19 @@ Future<PreJoinJoinAuthResult> authenticateForJoin({
   required String meetingLinkName,
   required String meetingPassword,
   required String displayName,
-  required bool isMeetingHost,
 }) async {
   final meetInfo = await appCoreManager.appCore.authenticateMeetingLink(
     meetLinkName: meetingLinkName,
     meetLinkPassword: meetingPassword,
     displayName: displayName,
   );
+  final meetingInfo = await appCoreManager.appCore.getMeetingInfo(
+    meetingLinkName: meetingLinkName,
+  );
   return PreJoinJoinAuthResult(
     meetInfo: meetInfo,
-    meetingInfo: meetingInfoFromMeetPreview(meetInfo),
-    isMeetingHost: isMeetingHost,
+    meetingInfo: meetingInfo,
+    isMeetingHost: meetingInfo.manageWaitingRoom == 1,
     authDisplayName: displayName,
   );
 }

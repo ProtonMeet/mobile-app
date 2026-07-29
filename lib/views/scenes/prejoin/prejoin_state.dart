@@ -70,6 +70,9 @@ class PreJoinState {
 
   /// When false, the host waiting-room toggle is hidden (gated by MeetWaitingRoom flag).
   final bool isWaitingRoomFeatureEnabled;
+
+  /// True when meeting info allows changing the waiting-room setting (ManageWaitingRoom).
+  final bool canManageWaitingRoom;
   final bool meetingPasswordEnabled;
   final String meetingPasswordValue;
   final LocalAudioTrack? audioTrack;
@@ -96,6 +99,9 @@ class PreJoinState {
 
   /// True while resolving host room name / waiting-room policy from upcoming meetings.
   final bool isLoadingHostMeetingContext;
+
+  /// True while SRP auth + getMeetingInfo run for direct-link entry.
+  final bool isLoadingMeetingContext;
   final bool isJoinAuthenticating;
   final bool shouldNavigateToWaitingRoom;
 
@@ -143,6 +149,7 @@ class PreJoinState {
     this.waitingRoomEnabled = false,
     this.hasWaitingRoom = false,
     this.isWaitingRoomFeatureEnabled = false,
+    this.canManageWaitingRoom = false,
     this.meetingPasswordEnabled = false,
     this.meetingPasswordValue = '',
     this.audioTrack,
@@ -165,6 +172,7 @@ class PreJoinState {
     this.meetingInfo,
     this.isMeetingHost = false,
     this.isLoadingHostMeetingContext = false,
+    this.isLoadingMeetingContext = false,
     this.isJoinAuthenticating = false,
     this.shouldNavigateToWaitingRoom = false,
     this.pendingHostWaitingRoomSyncEnabled,
@@ -209,6 +217,7 @@ class PreJoinState {
     bool? waitingRoomEnabled,
     bool? hasWaitingRoom,
     bool? isWaitingRoomFeatureEnabled,
+    bool? canManageWaitingRoom,
     bool? meetingPasswordEnabled,
     String? meetingPasswordValue,
     LocalAudioTrack? audioTrack,
@@ -228,10 +237,12 @@ class PreJoinState {
     bool? keepDisplayNameOnDevice,
     bool? shouldOverrideAuthDisplayName,
     bool resetDisplayNameFieldError = false,
+    bool resetMeetingAuth = false,
     String? displayNameFieldError,
     FrbMeetingInfo? meetingInfo,
     bool? isMeetingHost,
     bool? isLoadingHostMeetingContext,
+    bool? isLoadingMeetingContext,
     bool? isJoinAuthenticating,
     bool? shouldNavigateToWaitingRoom,
     bool? pendingHostWaitingRoomSyncEnabled,
@@ -248,7 +259,6 @@ class PreJoinState {
     bool? shouldShowMeetingLockedBottomSheet,
   }) {
     return PreJoinState(
-      roomName: roomName ?? this.roomName,
       displayName: displayName ?? this.displayName,
       preJoinType: preJoinType ?? this.preJoinType,
       isAudioEnabled: isAudioEnabled ?? this.isAudioEnabled,
@@ -315,10 +325,18 @@ class PreJoinState {
           : (displayNameFieldError ?? this.displayNameFieldError),
       cameraBackgroundBlurEnabled:
           cameraBackgroundBlurEnabled ?? this.cameraBackgroundBlurEnabled,
-      meetingInfo: meetingInfo ?? this.meetingInfo,
-      isMeetingHost: isMeetingHost ?? this.isMeetingHost,
+      meetingInfo: resetMeetingAuth ? null : (meetingInfo ?? this.meetingInfo),
+      isMeetingHost: resetMeetingAuth
+          ? false
+          : (isMeetingHost ?? this.isMeetingHost),
+      canManageWaitingRoom: resetMeetingAuth
+          ? false
+          : (canManageWaitingRoom ?? this.canManageWaitingRoom),
+      roomName: resetMeetingAuth ? '' : (roomName ?? this.roomName),
       isLoadingHostMeetingContext:
           isLoadingHostMeetingContext ?? this.isLoadingHostMeetingContext,
+      isLoadingMeetingContext:
+          isLoadingMeetingContext ?? this.isLoadingMeetingContext,
       isJoinAuthenticating:
           isJoinAuthenticating ?? this.isJoinAuthenticating,
       shouldNavigateToWaitingRoom:

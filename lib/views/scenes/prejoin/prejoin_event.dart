@@ -1,6 +1,7 @@
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/rust/proton_meet/user_config.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
+import 'package:meet/views/scenes/prejoin/prejoin_meeting_preview.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_state.dart';
 
 abstract class PreJoinEvent {}
@@ -122,6 +123,21 @@ class PreJoinHostMeetingContextResolved extends PreJoinEvent {
 }
 
 class PreJoinHostMeetingContextLoadFinished extends PreJoinEvent {}
+
+/// SRP auth + getMeetingInfo resolved for direct-link / non-dashboard entry.
+class PreJoinMeetingContextResolved extends PreJoinEvent {
+  final PreJoinJoinAuthResult auth;
+
+  PreJoinMeetingContextResolved({required this.auth});
+}
+
+class PreJoinMeetingContextLoadFinished extends PreJoinEvent {}
+
+class PreJoinMeetingContextFailed extends PreJoinEvent {
+  final Object error;
+
+  PreJoinMeetingContextFailed(this.error);
+}
 
 class PreJoinNavigateToWaitingRoomConsumed extends PreJoinEvent {}
 
