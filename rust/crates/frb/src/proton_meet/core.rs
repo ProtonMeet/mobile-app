@@ -1125,6 +1125,18 @@ impl AppCore {
         Ok(())
     }
 
+    /// Updates waiting-room policy before the meeting starts (no in-call MLS commit).
+    pub async fn update_waiting_room_setting_pre_meeting(
+        &self,
+        meet_link_name: String,
+        enable: bool,
+    ) -> Result<(), BridgeError> {
+        self.inner
+            .update_waiting_room_setting_pre_meeting(meet_link_name, enable)
+            .await?;
+        Ok(())
+    }
+
     pub async fn remove_participant(&self, participant_uuid: String) -> Result<(), BridgeError> {
         self.inner.remove_participant(participant_uuid).await?;
         Ok(())

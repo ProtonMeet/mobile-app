@@ -41,7 +41,8 @@ impl WaitingRoomSettingRequest {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PhpWaitingRoomDataField {
-    pub data: String,
+    pub data: Option<String>,
+    pub waiting_room: u8,
 }
 
 pub fn serialize_group_info_payload<T: Serialize>(
@@ -69,10 +70,12 @@ pub fn compress_group_info_json(json: &[u8]) -> Result<Vec<u8>, GroupInfoPayload
 
 pub fn encode_php_waiting_room_data_field(
     inner_json: &[u8],
+    enable: bool,
 ) -> Result<PhpWaitingRoomDataField, GroupInfoPayloadError> {
     let compressed = compress_group_info_json(inner_json)?;
     Ok(PhpWaitingRoomDataField {
-        data: base64::engine::general_purpose::STANDARD.encode(compressed),
+        data: Some(base64::engine::general_purpose::STANDARD.encode(compressed)),
+        waiting_room: u8::from(enable),
     })
 }
 
@@ -83,9 +86,9 @@ mod tests {
     #[test]
     fn php_waiting_room_body_is_base64_of_zstd_json() {
         let inner = br#"{"Data":[1,2],"CommitData":[3,4]}"#;
-        let body = encode_php_waiting_room_data_field(inner).unwrap();
+        let body = encode_php_waiting_room_data_field(inner, true).unwrap();
         let decoded = base64::engine::general_purpose::STANDARD
-            .decode(&body.data)
+            .decode(body.data.as_ref().unwrap())
             .unwrap();
         let json = zstd::bulk::decompress(&decoded, 1024 * 1024).unwrap();
         assert_eq!(json, inner);
@@ -119,14 +122,32 @@ mod tests {
         for (enable, expected) in [(true, 1u8), (false, 0u8)] {
             let request = WaitingRoomSettingRequest::new(vec![1], vec![2], enable);
             let inner = serialize_waiting_room_setting_request(&request).unwrap();
-            let field = encode_php_waiting_room_data_field(&inner).unwrap();
+            let field = encode_php_waiting_room_data_field(&inner, enable).unwrap();
             let raw = base64::engine::general_purpose::STANDARD
-                .decode(&field.data)
+                .decode(field.data.as_ref().unwrap())
                 .unwrap();
             let json = zstd::bulk::decompress(&raw, 1024 * 1024).unwrap();
             assert!(String::from_utf8(json)
                 .unwrap()
                 .contains(&format!(r#""WaitingRoom":{expected}"#)));
         }
+    }
+
+    #[test]
+    fn waiting_room_pre_meeting_body_serializes_null_data_and_flag() {
+        let field = PhpWaitingRoomDataField {
+            data: None,
+            waiting_room: 1,
+        };
+        let json = serde_json::to_string(&field).unwrap();
+        assert_eq!(json, r#"{"Data":null,"WaitingRoom":1}"#);
+    }
+
+    #[test]
+    fn waiting_room_in_call_body_includes_top_level_flag() {
+        let field = encode_php_waiting_room_data_field(b"{}", false).unwrap();
+        let json = serde_json::to_string(&field).unwrap();
+        assert!(json.starts_with(r#"{"Data":""#));
+        assert!(json.ends_with(r#","WaitingRoom":0}"#));
     }
 }

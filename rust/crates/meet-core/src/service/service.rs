@@ -83,7 +83,7 @@ use crate::{
         },
         group_info_payload::{
             encode_php_waiting_room_data_field, serialize_waiting_room_setting_request,
-            WaitingRoomSettingRequest,
+            PhpWaitingRoomDataField, WaitingRoomSettingRequest,
         },
         message_cache::{CachedMessageType, MlsMessageCache},
         mimi_subject_parser::MimiSubject,
@@ -3759,6 +3759,21 @@ impl UserService for Service {
         Service::update_waiting_room_setting_policy(self, user_identifier, meet_link_name, enable)
             .await
     }
+
+    async fn update_waiting_room_setting_pre_meeting(
+        &self,
+        user_identifier: &UserId,
+        meet_link_name: &str,
+        enable: bool,
+    ) -> Result<(), MeetCoreError> {
+        Service::update_waiting_room_setting_pre_meeting(
+            self,
+            user_identifier,
+            meet_link_name,
+            enable,
+        )
+        .await
+    }
 }
 
 impl Service {
@@ -4377,23 +4392,37 @@ impl Service {
     }
 
     fn waiting_room_setting_request_body(
-        commit: crate::service::waiting_room_setting::WaitingRoomPolicyCommit,
+        commit: Option<crate::service::waiting_room_setting::WaitingRoomPolicyCommit>,
         enable: bool,
     ) -> Result<String, MeetCoreError> {
-        let request =
-            WaitingRoomSettingRequest::new(commit.group_info_tls, commit.commit_data, enable);
-        let inner_json = serialize_waiting_room_setting_request(&request).map_err(|e| {
-            MeetCoreError::InternalError {
-                message: format!("Failed to serialize waiting-room group info request: {e}"),
-                details: None,
+        let php_field = match commit {
+            Some(commit) => {
+                let request = WaitingRoomSettingRequest::new(
+                    commit.group_info_tls,
+                    commit.commit_data,
+                    enable,
+                );
+                let inner_json =
+                    serialize_waiting_room_setting_request(&request).map_err(|e| {
+                        MeetCoreError::InternalError {
+                            message: format!(
+                                "Failed to serialize waiting-room group info request: {e}"
+                            ),
+                            details: None,
+                        }
+                    })?;
+                encode_php_waiting_room_data_field(&inner_json, enable).map_err(|e| {
+                    MeetCoreError::InternalError {
+                        message: format!("Failed to encode waiting-room PHP payload: {e}"),
+                        details: None,
+                    }
+                })?
             }
-        })?;
-        let php_field = encode_php_waiting_room_data_field(&inner_json).map_err(|e| {
-            MeetCoreError::InternalError {
-                message: format!("Failed to encode waiting-room PHP payload: {e}"),
-                details: None,
-            }
-        })?;
+            None => PhpWaitingRoomDataField {
+                data: None,
+                waiting_room: u8::from(enable),
+            },
+        };
         serde_json::to_string(&php_field).map_err(|e| MeetCoreError::InternalError {
             message: format!("Failed to encode waiting-room request JSON: {e}"),
             details: None,
@@ -4409,7 +4438,7 @@ impl Service {
     ) -> Result<PreparedWaitingRoomSettingUpdate, MeetCoreError> {
         let commit = build_waiting_room_policy_commit(mls_group, meet_link_name, enable).await?;
 
-        let request_body_json = Self::waiting_room_setting_request_body(commit, enable)?;
+        let request_body_json = Self::waiting_room_setting_request_body(Some(commit), enable)?;
         let meeting_id = self.get_meeting_id(user_identifier).await?;
         let base64_sd_kbt = self.get_sd_kbt(user_identifier).await?;
 
@@ -4418,6 +4447,26 @@ impl Service {
             base64_sd_kbt,
             request_body_json,
         })
+    }
+
+    /// Updates waiting-room policy before the meeting starts (no MLS group/commit).
+    async fn update_waiting_room_setting_pre_meeting(
+        &self,
+        user_identifier: &UserId,
+        meet_link_name: &str,
+        enable: bool,
+    ) -> Result<(), MeetCoreError> {
+        tracing::info!(
+            "update_waiting_room_setting_pre_meeting meet_link_name={} enable={}",
+            meet_link_name,
+            enable
+        );
+        let request_body_json = Self::waiting_room_setting_request_body(None, enable)?;
+        let base64_sd_kbt = self.get_sd_kbt(user_identifier).await?;
+        self.meeting_api
+            .update_waiting_room_setting(meet_link_name, &base64_sd_kbt, &request_body_json)
+            .await?;
+        Ok(())
     }
 
     /// Toggle waiting-room policy for an in-call host/co-host (`RoomAdmin`).
