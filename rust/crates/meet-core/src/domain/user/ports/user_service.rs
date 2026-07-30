@@ -202,12 +202,4 @@ pub trait UserService {
         meet_link_name: &str,
         enable: bool,
     ) -> Result<(), MeetCoreError>;
-
-    /// Update waiting-room policy before the meeting starts (no MLS commit payload).
-    async fn update_waiting_room_setting_pre_meeting(
-        &self,
-        user_identifier: &UserId,
-        meet_link_name: &str,
-        enable: bool,
-    ) -> Result<(), MeetCoreError>;
 }

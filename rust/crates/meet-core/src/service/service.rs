@@ -3760,20 +3760,6 @@ impl UserService for Service {
             .await
     }
 
-    async fn update_waiting_room_setting_pre_meeting(
-        &self,
-        user_identifier: &UserId,
-        meet_link_name: &str,
-        enable: bool,
-    ) -> Result<(), MeetCoreError> {
-        Service::update_waiting_room_setting_pre_meeting(
-            self,
-            user_identifier,
-            meet_link_name,
-            enable,
-        )
-        .await
-    }
 }
 
 impl Service {
@@ -4447,26 +4433,6 @@ impl Service {
             base64_sd_kbt,
             request_body_json,
         })
-    }
-
-    /// Updates waiting-room policy before the meeting starts (no MLS group/commit).
-    async fn update_waiting_room_setting_pre_meeting(
-        &self,
-        user_identifier: &UserId,
-        meet_link_name: &str,
-        enable: bool,
-    ) -> Result<(), MeetCoreError> {
-        tracing::info!(
-            "update_waiting_room_setting_pre_meeting meet_link_name={} enable={}",
-            meet_link_name,
-            enable
-        );
-        let request_body_json = Self::waiting_room_setting_request_body(None, enable)?;
-        let base64_sd_kbt = self.get_sd_kbt(user_identifier).await?;
-        self.meeting_api
-            .update_waiting_room_setting(meet_link_name, &base64_sd_kbt, &request_body_json)
-            .await?;
-        Ok(())
     }
 
     /// Toggle waiting-room policy for an in-call host/co-host (`RoomAdmin`).

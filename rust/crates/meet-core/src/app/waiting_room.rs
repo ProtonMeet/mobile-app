@@ -283,12 +283,15 @@ impl App {
         meet_link_name: String,
         enable: bool,
     ) -> Result<(), MeetCoreError> {
-        let user_id = self.current_user_id().await?;
-        self.user_service
-            .read()
-            .await
-            .update_waiting_room_setting_pre_meeting(&user_id, &meet_link_name, enable)
-            .await
+        tracing::info!(
+            "update_waiting_room_setting_pre_meeting meet_link_name={} enable={}",
+            meet_link_name,
+            enable
+        );
+        self.meeting_api
+            .update_waiting_room_setting_pre_meeting(&meet_link_name, enable)
+            .await?;
+        Ok(())
     }
 
     pub(crate) async fn admit_waiting_room_join_requests_internal(
