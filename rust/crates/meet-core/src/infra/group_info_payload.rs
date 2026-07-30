@@ -22,14 +22,44 @@ pub struct UpdateGroupInfoRequest {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "PascalCase")]
+pub struct WaitingRoomSettingRequest {
+    pub data: Vec<u8>,
+    pub commit_data: Vec<u8>,
+    pub waiting_room: u8,
+}
+
+impl WaitingRoomSettingRequest {
+    pub fn new(data: Vec<u8>, commit_data: Vec<u8>, enable: bool) -> Self {
+        Self {
+            data,
+            commit_data,
+            waiting_room: u8::from(enable),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct PhpWaitingRoomDataField {
     pub data: String,
+}
+
+pub fn serialize_group_info_payload<T: Serialize>(
+    request: &T,
+) -> Result<Vec<u8>, GroupInfoPayloadError> {
+    Ok(serde_json::to_vec(request)?)
 }
 
 pub fn serialize_update_group_info_request(
     request: &UpdateGroupInfoRequest,
 ) -> Result<Vec<u8>, GroupInfoPayloadError> {
-    Ok(serde_json::to_vec(request)?)
+    serialize_group_info_payload(request)
+}
+
+pub fn serialize_waiting_room_setting_request(
+    request: &WaitingRoomSettingRequest,
+) -> Result<Vec<u8>, GroupInfoPayloadError> {
+    serialize_group_info_payload(request)
 }
 
 pub fn compress_group_info_json(json: &[u8]) -> Result<Vec<u8>, GroupInfoPayloadError> {
@@ -59,5 +89,44 @@ mod tests {
             .unwrap();
         let json = zstd::bulk::decompress(&decoded, 1024 * 1024).unwrap();
         assert_eq!(json, inner);
+    }
+
+    #[test]
+    fn waiting_room_setting_request_serializes_correctly() {
+        let request = WaitingRoomSettingRequest::new(vec![1, 2, 3], vec![4, 5, 6], true);
+        let json = serialize_waiting_room_setting_request(&request).unwrap();
+        let json_str = String::from_utf8(json).unwrap();
+        assert_eq!(
+            json_str,
+            r#"{"Data":[1,2,3],"CommitData":[4,5,6],"WaitingRoom":1}"#
+        );
+    }
+
+    #[test]
+    fn update_group_info_request_no_waiting_room_field() {
+        let request = UpdateGroupInfoRequest {
+            data: vec![1, 2, 3],
+            commit_data: Some(vec![4, 5]),
+            proposals: Some(vec![vec![6, 7]]),
+        };
+        let json = serialize_update_group_info_request(&request).unwrap();
+        let json_str = String::from_utf8(json).unwrap();
+        assert!(!json_str.contains("WaitingRoom"));
+    }
+
+    #[test]
+    fn waiting_room_setting_body_round_trips_flag() {
+        for (enable, expected) in [(true, 1u8), (false, 0u8)] {
+            let request = WaitingRoomSettingRequest::new(vec![1], vec![2], enable);
+            let inner = serialize_waiting_room_setting_request(&request).unwrap();
+            let field = encode_php_waiting_room_data_field(&inner).unwrap();
+            let raw = base64::engine::general_purpose::STANDARD
+                .decode(&field.data)
+                .unwrap();
+            let json = zstd::bulk::decompress(&raw, 1024 * 1024).unwrap();
+            assert!(String::from_utf8(json)
+                .unwrap()
+                .contains(&format!(r#""WaitingRoom":{expected}"#)));
+        }
     }
 }

@@ -82,8 +82,8 @@ use crate::{
             websocket::{ClientAck, WebSocketTextRequestCommand},
         },
         group_info_payload::{
-            encode_php_waiting_room_data_field, serialize_update_group_info_request,
-            UpdateGroupInfoRequest,
+            encode_php_waiting_room_data_field, serialize_waiting_room_setting_request,
+            WaitingRoomSettingRequest,
         },
         message_cache::{CachedMessageType, MlsMessageCache},
         mimi_subject_parser::MimiSubject,
@@ -4377,14 +4377,12 @@ impl Service {
     }
 
     fn waiting_room_setting_request_body(
-        commit: &crate::service::waiting_room_setting::WaitingRoomPolicyCommit,
+        commit: crate::service::waiting_room_setting::WaitingRoomPolicyCommit,
+        enable: bool,
     ) -> Result<String, MeetCoreError> {
-        let request = UpdateGroupInfoRequest {
-            data: commit.group_info_tls.clone(),
-            commit_data: Some(commit.commit_data.clone()),
-            proposals: None,
-        };
-        let inner_json = serialize_update_group_info_request(&request).map_err(|e| {
+        let request =
+            WaitingRoomSettingRequest::new(commit.group_info_tls, commit.commit_data, enable);
+        let inner_json = serialize_waiting_room_setting_request(&request).map_err(|e| {
             MeetCoreError::InternalError {
                 message: format!("Failed to serialize waiting-room group info request: {e}"),
                 details: None,
@@ -4411,7 +4409,7 @@ impl Service {
     ) -> Result<PreparedWaitingRoomSettingUpdate, MeetCoreError> {
         let commit = build_waiting_room_policy_commit(mls_group, meet_link_name, enable).await?;
 
-        let request_body_json = Self::waiting_room_setting_request_body(&commit)?;
+        let request_body_json = Self::waiting_room_setting_request_body(commit, enable)?;
         let meeting_id = self.get_meeting_id(user_identifier).await?;
         let base64_sd_kbt = self.get_sd_kbt(user_identifier).await?;
 
@@ -4467,7 +4465,6 @@ impl Service {
                     &prepared.meeting_id,
                     &prepared.base64_sd_kbt,
                     &prepared.request_body_json,
-                    enable,
                 )
                 .await;
 

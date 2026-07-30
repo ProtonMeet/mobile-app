@@ -157,14 +157,9 @@ impl MeetingApi for ProtonHttpClient {
         meeting_id: &str,
         base64_sd_kbt: &str,
         request_body_json: &str,
-        enable: bool,
     ) -> Result<(), HttpClientError> {
         let path = format!("/meet/v1/meetings/links/{meeting_id}/waiting-room");
-        let req = if enable {
-            self.post(path)
-        } else {
-            self.delete(path)
-        };
+        let req = self.put(path);
         let req = req
             .header(("X-PM-MEET-MLS-SD-KBT", format!("Bearer {base64_sd_kbt}")))
             .body(request_body_json.as_bytes())
