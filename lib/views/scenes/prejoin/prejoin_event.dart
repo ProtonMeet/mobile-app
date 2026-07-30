@@ -54,6 +54,8 @@ class WaitingRoomChanged extends PreJoinEvent {
   WaitingRoomChanged(this.enabled);
 }
 
+class WaitingRoomSettingErrorConsumed extends PreJoinEvent {}
+
 class VideoCodecChanged extends PreJoinEvent {
   final VideoCodec codec;
   VideoCodecChanged(this.codec);

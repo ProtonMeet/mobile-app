@@ -466,7 +466,7 @@ class PreJoinScreen extends StatelessWidget {
   }
 
   Widget _buildWaitingRoomStatus(BuildContext context, PreJoinState state) {
-    if (state.isLoadingHostMeetingContext) {
+    if (state.isLoadingHostMeetingContext || state.isUpdatingWaitingRoomSetting) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Align(
@@ -506,7 +506,9 @@ class PreJoinScreen extends StatelessWidget {
       id: TestIds.prejoinWaitingRoomStatus,
       button: state.canManageWaitingRoom && state.isWaitingRoomFeatureEnabled,
       child: GestureDetector(
-      onTap: () {
+      onTap: state.isUpdatingWaitingRoomSetting
+          ? null
+          : () {
         showWaitingRoomSheet(
           context,
           selected: state.waitingRoomEnabled,

@@ -6,7 +6,11 @@ import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/datetime.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
+import 'package:meet/helper/extension/bridge_error.extension.dart';
 import 'package:meet/helper/logger.dart' as l;
+import 'package:meet/helper/pre_meeting_waiting_room.dart';
+import 'package:meet/managers/app.core.manager.dart';
+import 'package:meet/rust/errors.dart';
 import 'package:meet/managers/app.state.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/views/components/alerts/base_bottom_sheet.dart';
@@ -96,6 +100,7 @@ Future<void> showEditScheduleMeetingDialog(
   required OnScheduleMeeting onEdit,
   required ScheduleMeetingData initialData,
   required bool isPaidUser,
+  required String meetingLinkName,
   ParticipantDisplayColors? displayColors,
   bool showWaitingRoom = false,
 }) {
@@ -118,6 +123,7 @@ Future<void> showEditScheduleMeetingDialog(
       initialData: initialData,
       displayColors: displayColors,
       showWaitingRoom: showWaitingRoom,
+      meetingLinkName: meetingLinkName,
     ),
   );
 }
@@ -131,6 +137,7 @@ class ScheduleMeetingDialog extends StatefulWidget {
     this.initialData,
     this.displayColors,
     this.showWaitingRoom = false,
+    this.meetingLinkName,
   });
 
   final OnScheduleMeeting onSchedule;
@@ -141,6 +148,7 @@ class ScheduleMeetingDialog extends StatefulWidget {
 
   /// Gates the waiting-room field (MeetWaitingRoom flag, resolved by the dashboard bloc).
   final bool showWaitingRoom;
+  final String? meetingLinkName;
 
   @override
   State<ScheduleMeetingDialog> createState() => _ScheduleMeetingDialogState();
@@ -170,6 +178,8 @@ class ScheduleMeetingDialogMobile extends StatefulWidget {
     required this.onCancel,
     this.displayColors,
     this.timeValidationError,
+    this.isWaitingRoomUpdating = false,
+    this.waitingRoomError,
     super.key,
   });
 
@@ -195,6 +205,8 @@ class ScheduleMeetingDialogMobile extends StatefulWidget {
   final VoidCallback onCancel;
   final ParticipantDisplayColors? displayColors;
   final String? timeValidationError;
+  final bool isWaitingRoomUpdating;
+  final String? waitingRoomError;
 
   @override
   State<ScheduleMeetingDialogMobile> createState() =>
@@ -245,6 +257,8 @@ class _ScheduleMeetingDialogMobileState
             onSave: widget.onSave,
             onCancel: widget.onCancel,
             timeValidationError: widget.timeValidationError,
+            isWaitingRoomUpdating: widget.isWaitingRoomUpdating,
+            waitingRoomError: widget.waitingRoomError,
             onDragUpdate: _handleDragUpdate,
             onDragEnd: _handleDragEnd,
             displayColors: widget.displayColors,
@@ -287,6 +301,9 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
   RecurrenceFrequency _recurrence = RecurrenceFrequency.none;
   bool _showTimeZones = true;
   bool _waitingRoomEnabled = false;
+  bool _canManageWaitingRoom = false;
+  bool _isUpdatingWaitingRoom = false;
+  String? _waitingRoomError;
   late String _selectedTimeZone;
   String? _deviceTimeZone;
   bool _hasInitialTimeZone = false;
@@ -303,8 +320,51 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
       _setDefaultStartDateTime();
       _applyDuration();
     }
+    if (widget.initialData != null &&
+        widget.showWaitingRoom &&
+        widget.meetingLinkName != null) {
+      unawaited(_loadCanManageWaitingRoom());
+    }
     _loadDeviceTimeZone();
   }
+
+  Future<void> _loadCanManageWaitingRoom() async {
+    final meetingLinkName = widget.meetingLinkName;
+    if (meetingLinkName == null || meetingLinkName.isEmpty) {
+      return;
+    }
+    try {
+      final appCore = ManagerFactory().get<AppCoreManager>().appCore;
+      final canManage = await resolveCanManageWaitingRoom(
+        appCore: appCore,
+        meetLinkName: meetingLinkName,
+      );
+      if (mounted) {
+        setState(() {
+          _canManageWaitingRoom = canManage;
+        });
+      }
+    } catch (e) {
+      l.logger.w(
+        '[ScheduleMeetingDialog] Failed to resolve manage waiting room: $e',
+      );
+    }
+  }
+
+  bool get _showWaitingRoomField {
+    if (!widget.showWaitingRoom) {
+      return false;
+    }
+    if (widget.initialData == null) {
+      return true;
+    }
+    return _canManageWaitingRoom;
+  }
+
+  bool get _usePreMeetingWaitingRoomApi =>
+      widget.initialData != null &&
+      widget.meetingLinkName != null &&
+      _canManageWaitingRoom;
 
   @override
   void dispose() {
@@ -673,15 +733,66 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
     );
   }
 
-  void _selectWaitingRoom() {
-    showWaitingRoomSheet(
+  Future<void> _selectWaitingRoom() async {
+    if (_isUpdatingWaitingRoom) {
+      return;
+    }
+
+    await showWaitingRoomSheet(
       context,
       selected: _waitingRoomEnabled,
-      isOnOptionEnabled: true, // To-do: check if it's a paid feature; widget.isPaidUser && _waitingRoomEnabled
-      onSelect: (enabled) {
+      isOnOptionEnabled: true,
+      onSelect: (enabled) async {
+        if (!_usePreMeetingWaitingRoomApi) {
+          setState(() {
+            _waitingRoomEnabled = enabled;
+          });
+          return;
+        }
+
+        if (enabled == _waitingRoomEnabled) {
+          return;
+        }
+
+        final previousEnabled = _waitingRoomEnabled;
         setState(() {
           _waitingRoomEnabled = enabled;
+          _isUpdatingWaitingRoom = true;
+          _waitingRoomError = null;
         });
+
+        try {
+          final appCore = ManagerFactory().get<AppCoreManager>().appCore;
+          await updatePreMeetingWaitingRoomSetting(
+            appCore: appCore,
+            meetLinkName: widget.meetingLinkName!,
+            enable: enabled,
+          );
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            _isUpdatingWaitingRoom = false;
+          });
+        } on BridgeError catch (error) {
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            _waitingRoomEnabled = previousEnabled;
+            _isUpdatingWaitingRoom = false;
+            _waitingRoomError = error.userMessage;
+          });
+        } catch (error) {
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            _waitingRoomEnabled = previousEnabled;
+            _isUpdatingWaitingRoom = false;
+            _waitingRoomError = extractErrorMessage(error);
+          });
+        }
       },
     );
   }
@@ -902,7 +1013,7 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
       durationLabel: durationLabel,
       timeZoneLabel: timeZoneLabel,
       waitingRoomLabel: waitingRoomLabel,
-      showWaitingRoom: widget.showWaitingRoom,
+      showWaitingRoom: _showWaitingRoomField,
       recurrenceLabel: _recurrence.label,
       showTimeZones: _showTimeZones,
       isSaveEnabled: _titleCtrl.text.trim().isNotEmpty && _isEndAfterStart(),
@@ -917,6 +1028,8 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
       onCancel: () => Navigator.of(context).maybePop(),
       displayColors: widget.displayColors,
       timeValidationError: _timeValidationError,
+      isWaitingRoomUpdating: _isUpdatingWaitingRoom,
+      waitingRoomError: _waitingRoomError,
     );
   }
 }

@@ -117,9 +117,6 @@ class RoomPage extends StatefulWidget {
   /// Meeting limits resolved during pre-join; skips getMeetingInfo in room.
   final FrbMeetingInfo? prefetchedMeetingInfo;
 
-  /// Host-only: when non-null, room bloc syncs waiting-room policy on enter.
-  final bool? pendingHostWaitingRoomSyncEnabled;
-
   const RoomPage(
     this.room,
     this.listener,
@@ -132,7 +129,6 @@ class RoomPage extends StatefulWidget {
     this.authBloc,
     this.cameraBackgroundBlurEnabled = false,
     this.prefetchedMeetingInfo,
-    this.pendingHostWaitingRoomSyncEnabled,
     super.key,
   });
 
@@ -235,8 +231,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           meetingLink: widget.meetLink,
           cameraBackgroundBlurEnabled: widget.cameraBackgroundBlurEnabled,
           prefetchedMeetingInfo: widget.prefetchedMeetingInfo,
-          pendingHostWaitingRoomSyncEnabled:
-              widget.pendingHostWaitingRoomSyncEnabled,
         ),
       );
 
@@ -246,12 +240,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       });
     }
 
-    final pendingHostWaitingRoomSync = widget.pendingHostWaitingRoomSyncEnabled;
-    if (pendingHostWaitingRoomSync != null) {
-      _waitingRoomEnabled = pendingHostWaitingRoomSync;
-    } else {
-      _waitingRoomEnabled = widget.meetInfo.hasWaitingRoom;
-    }
+    _waitingRoomEnabled = widget.meetInfo.hasWaitingRoom;
 
     // Initialize call activity action channel for Dynamic Island actions
     //TODO(fix): move to room_bloc.dart

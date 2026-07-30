@@ -366,6 +366,7 @@ class UpcomingMeetingListItem extends StatelessWidget {
         context,
         initialData: initialData,
         isPaidUser: isPaidUser,
+        meetingLinkName: meeting.meetingLinkName,
         displayColors: displayColors,
         showWaitingRoom: context.read<DashboardBloc>().isMeetWaitingRoomEnabled(),
         onEdit: (data) {
@@ -379,6 +380,9 @@ class UpcomingMeetingListItem extends StatelessWidget {
         context,
         initialRoomName: meeting.meetingName,
         displayColors: displayColors,
+        showWaitingRoom: context.read<DashboardBloc>().isMeetWaitingRoomEnabled(),
+        meetingLinkName: meeting.meetingLinkName,
+        initialWaitingRoomEnabled: meeting.waitingRoom.isWaitingRoomEnabled,
         onEditRoom: (roomName) {
           context.read<DashboardBloc>().add(
             UpdateMeetingEvent(meeting: meeting, updatedMeetingName: roomName),

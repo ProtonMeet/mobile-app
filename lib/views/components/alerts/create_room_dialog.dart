@@ -2,12 +2,18 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/helper/extension/bridge_error.extension.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
+import 'package:meet/helper/logger.dart' as l;
+import 'package:meet/helper/pre_meeting_waiting_room.dart';
+import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/app.state.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
+import 'package:meet/rust/errors.dart';
 import 'package:meet/views/components/alerts/base_bottom_sheet.dart';
 import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart';
+import 'package:meet/views/components/custom.loading.dart';
 import 'package:meet/views/scenes/dashboard/schedule/waiting_room_sheet.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 
@@ -51,6 +57,9 @@ Future<void> showEditRoomDialog(
   String? initialRoomName,
   bool autofocus = true,
   ParticipantDisplayColors? displayColors,
+  bool showWaitingRoom = false,
+  String? meetingLinkName,
+  bool initialWaitingRoomEnabled = false,
 }) {
   // Block dialog when in force upgrade state
   final appStateManager = ManagerFactory().get<AppStateManager>();
@@ -70,6 +79,9 @@ Future<void> showEditRoomDialog(
       autofocus: autofocus,
       selectAllOnFocus: true,
       displayColors: displayColors,
+      showWaitingRoom: showWaitingRoom,
+      meetingLinkName: meetingLinkName,
+      initialWaitingRoomEnabled: initialWaitingRoomEnabled,
     ),
   );
 }
@@ -85,6 +97,8 @@ class CreateRoomDialog extends StatefulWidget {
     this.displayColors,
     this.isPaidUser = false,
     this.showWaitingRoom = false,
+    this.meetingLinkName,
+    this.initialWaitingRoomEnabled = false,
   }) : assert(
          (onCreateRoom != null) ^ (onEditRoom != null),
          'Provide exactly one of onCreateRoom or onEditRoom',
@@ -100,6 +114,8 @@ class CreateRoomDialog extends StatefulWidget {
 
   /// Gates the waiting-room option (MeetWaitingRoom flag, resolved by the caller's bloc).
   final bool showWaitingRoom;
+  final String? meetingLinkName;
+  final bool initialWaitingRoomEnabled;
 
   @override
   State<CreateRoomDialog> createState() => _CreateRoomDialogState();
@@ -115,13 +131,43 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
   bool _hasInitialized = false;
   bool _isButtonEnabled = false;
   bool _waitingRoomEnabled = false;
+  bool _canManageWaitingRoom = false;
+  bool _isUpdatingWaitingRoom = false;
+  String? _waitingRoomError;
 
   @override
   void initState() {
     super.initState();
+    _waitingRoomEnabled = widget.initialWaitingRoomEnabled;
     _focus.addListener(_onFocusChange);
     _ctrl.addListener(_onTextChanged);
     _isButtonEnabled = _ctrl.text.trim().isNotEmpty;
+    if (widget.selectAllOnFocus &&
+        widget.showWaitingRoom &&
+        widget.meetingLinkName != null) {
+      unawaited(_loadCanManageWaitingRoom());
+    }
+  }
+
+  Future<void> _loadCanManageWaitingRoom() async {
+    final meetingLinkName = widget.meetingLinkName;
+    if (meetingLinkName == null || meetingLinkName.isEmpty) {
+      return;
+    }
+    try {
+      final appCore = ManagerFactory().get<AppCoreManager>().appCore;
+      final canManage = await resolveCanManageWaitingRoom(
+        appCore: appCore,
+        meetLinkName: meetingLinkName,
+      );
+      if (mounted) {
+        setState(() {
+          _canManageWaitingRoom = canManage;
+        });
+      }
+    } catch (e) {
+      l.logger.w('[CreateRoomDialog] Failed to resolve manage waiting room: $e');
+    }
   }
 
   void _onTextChanged() {
@@ -199,32 +245,112 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
   Widget _buildWaitingRoomOption(BuildContext context) {
     final waitingRoomLabel = _formatWaitingRoomLabel(context);
 
-    return GestureDetector(
-      onTap: () {
-        showWaitingRoomSheet(
-          context,
-          selected: _waitingRoomEnabled,
-          isOnOptionEnabled: true, // To-do: check if it's a paid feature
-          onSelect: (enabled) {
-            setState(() {
-              _waitingRoomEnabled = enabled;
-            });
-          },
-        );
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 10,
-        ).copyWith(right: 32),
-        child: Align(
-          alignment: Alignment.centerRight,
-          child: Text(
-            waitingRoomLabel,
-            style: ProtonStyles.body1Medium(color: context.colors.protonBlue),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        GestureDetector(
+          onTap: _isUpdatingWaitingRoom ? null : _selectWaitingRoom,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 10,
+            ).copyWith(right: 32),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (_isUpdatingWaitingRoom) ...[
+                  CustomLoading(
+                    size: 16,
+                    strokeWidth: 2,
+                    color: context.colors.protonBlue,
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  waitingRoomLabel,
+                  style: ProtonStyles.body1Medium(
+                    color: context.colors.protonBlue,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
+        if (_waitingRoomError != null)
+          Padding(
+            padding: const EdgeInsets.only(right: 32, left: 16, bottom: 4),
+            child: Text(
+              _waitingRoomError!,
+              textAlign: TextAlign.right,
+              style: ProtonStyles.body2Medium(
+                color: context.colors.notificationError,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _selectWaitingRoom() async {
+    final meetingLinkName = widget.meetingLinkName;
+    final isEditWithPreMeetingApi =
+        widget.selectAllOnFocus && meetingLinkName != null && _canManageWaitingRoom;
+
+    await showWaitingRoomSheet(
+      context,
+      selected: _waitingRoomEnabled,
+      isOnOptionEnabled: true,
+      onSelect: (enabled) async {
+        if (!isEditWithPreMeetingApi) {
+          setState(() {
+            _waitingRoomEnabled = enabled;
+          });
+          return;
+        }
+        if (_isUpdatingWaitingRoom || enabled == _waitingRoomEnabled) {
+          return;
+        }
+
+        final previousEnabled = _waitingRoomEnabled;
+        setState(() {
+          _waitingRoomEnabled = enabled;
+          _isUpdatingWaitingRoom = true;
+          _waitingRoomError = null;
+        });
+
+        try {
+          final appCore = ManagerFactory().get<AppCoreManager>().appCore;
+          await updatePreMeetingWaitingRoomSetting(
+            appCore: appCore,
+            meetLinkName: meetingLinkName,
+            enable: enabled,
+          );
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            _isUpdatingWaitingRoom = false;
+          });
+        } on BridgeError catch (error) {
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            _waitingRoomEnabled = previousEnabled;
+            _isUpdatingWaitingRoom = false;
+            _waitingRoomError = error.userMessage;
+          });
+        } catch (error) {
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            _waitingRoomEnabled = previousEnabled;
+            _isUpdatingWaitingRoom = false;
+            _waitingRoomError = extractErrorMessage(error);
+          });
+        }
+      },
     );
   }
 
@@ -363,7 +489,10 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
                   ),
                 ),
 
-                if (!widget.selectAllOnFocus && widget.showWaitingRoom) ...[
+                if ((!widget.selectAllOnFocus && widget.showWaitingRoom) ||
+                    (widget.selectAllOnFocus &&
+                        widget.showWaitingRoom &&
+                        _canManageWaitingRoom)) ...[
                   const SizedBox(height: 10),
                   RepaintBoundary(child: _buildWaitingRoomOption(context)),
                 ],

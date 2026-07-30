@@ -34,7 +34,6 @@ class JoinArgs {
     this.isMeetingHost = false,
     this.hasDashboardMeetingContext = false,
     this.waitingRoomEnabled = false,
-    this.pendingHostWaitingRoomSyncEnabled,
     this.prefetchedMeetingInfo,
     this.prejoinAuthDisplayName = '',
     this.reusePrejoinAuth = false,
@@ -62,9 +61,6 @@ class JoinArgs {
 
   /// Host-controlled waiting room toggle from pre-join (host only).
   final bool waitingRoomEnabled;
-
-  /// Host-only: when non-null, room should sync waiting-room policy to this value on enter.
-  final bool? pendingHostWaitingRoomSyncEnabled;
 
   /// True when the host joins with waiting room enabled for MLS join.
   bool get enableWaitingRoomForJoin =>

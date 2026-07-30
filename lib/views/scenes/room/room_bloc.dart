@@ -689,11 +689,6 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
         l.logger.e('Error fetching meeting info: $e');
       }
     }
-
-    await syncPendingHostWaitingRoomOnEnter(
-      pendingEnabled: event.pendingHostWaitingRoomSyncEnabled,
-      meetLinkName: event.meetLinkName,
-    );
   }
 
   /// Handles the event when the user dismisses the notification permission inform sheet.

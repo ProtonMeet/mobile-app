@@ -324,6 +324,7 @@ extension FrbUpcomingMeetingExtension on FrbUpcomingMeeting {
       timeZone: timeZone,
       recurrence: _mapRRuleToRecurrence(rRule),
       showTimeZones: true,
+      waitingRoomEnabled: waitingRoom.isWaitingRoomEnabled,
     );
   }
 

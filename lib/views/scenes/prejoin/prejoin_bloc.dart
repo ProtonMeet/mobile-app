@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
+import 'package:meet/helper/pre_meeting_waiting_room.dart';
 import 'package:meet/helper/audio_output_probe.dart';
 import 'package:meet/helper/denoise/denoise_audio_capture_options.dart';
 import 'package:meet/helper/extension/bridge_error.extension.dart';
@@ -66,8 +67,9 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     on<SelectAudioDevice>(_onSelectAudioDevice);
     on<SelectSpeakerDevice>(_onSelectSpeakerDevice);
     on<SelectVideoResolution>(_onSelectVideoResolution);
-    on<WaitingRoomChanged>(
-      (event, emit) => emit(state.copyWith(waitingRoomEnabled: event.enabled)),
+    on<WaitingRoomChanged>(_onWaitingRoomChanged);
+    on<WaitingRoomSettingErrorConsumed>(
+      (_, emit) => emit(state.copyWith(resetWaitingRoomSettingError: true)),
     );
 
     on<VideoCodecChanged>(
@@ -1407,6 +1409,95 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     );
   }
 
+  Future<void> _onWaitingRoomChanged(
+    WaitingRoomChanged event,
+    Emitter<PreJoinState> emit,
+  ) async {
+    if (!state.canManageWaitingRoom ||
+        !state.isWaitingRoomFeatureEnabled ||
+        state.isUpdatingWaitingRoomSetting) {
+      return;
+    }
+
+    final meetLink = state.meetingLink;
+    if (meetLink == null || meetLink.meetingLinkName.isEmpty) {
+      return;
+    }
+
+    final previousEnabled = state.waitingRoomEnabled;
+    if (previousEnabled == event.enabled) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        isUpdatingWaitingRoomSetting: true,
+        waitingRoomEnabled: event.enabled,
+        resetWaitingRoomSettingError: true,
+      ),
+    );
+
+    try {
+      final appCore = serviceManager.get<AppCoreManager>().appCore;
+      await updatePreMeetingWaitingRoomSetting(
+        appCore: appCore,
+        meetLinkName: meetLink.meetingLinkName,
+        enable: event.enabled,
+      );
+      if (isClosed) {
+        return;
+      }
+      final meetingInfo = state.meetingInfo;
+      emit(
+        state.copyWith(
+          isUpdatingWaitingRoomSetting: false,
+          meetingInfo: meetingInfo != null
+              ? meetingInfoWithWaitingRoom(
+                  meetingInfo,
+                  waitingRoomEnabled: event.enabled,
+                )
+              : null,
+        ),
+      );
+    } on BridgeError catch (error, stackTrace) {
+      if (isClosed) {
+        return;
+      }
+      captureWaitingRoomFailureToSentry(
+        flow: 'host_prejoin_policy_toggle',
+        error: error,
+        stackTrace: stackTrace,
+        meetLinkName: meetLink.meetingLinkName,
+        phase: event.enabled ? 'enable' : 'disable',
+      );
+      emit(
+        state.copyWith(
+          isUpdatingWaitingRoomSetting: false,
+          waitingRoomEnabled: previousEnabled,
+          waitingRoomSettingError: error.userMessage,
+        ),
+      );
+    } catch (error, stackTrace) {
+      if (isClosed) {
+        return;
+      }
+      captureWaitingRoomFailureToSentry(
+        flow: 'host_prejoin_policy_toggle',
+        error: error,
+        stackTrace: stackTrace,
+        meetLinkName: meetLink.meetingLinkName,
+        phase: event.enabled ? 'enable' : 'disable',
+      );
+      emit(
+        state.copyWith(
+          isUpdatingWaitingRoomSetting: false,
+          waitingRoomEnabled: previousEnabled,
+          waitingRoomSettingError: extractErrorMessage(error),
+        ),
+      );
+    }
+  }
+
   void _onMeetingContextResolved(
     PreJoinMeetingContextResolved event,
     Emitter<PreJoinState> emit,
@@ -1415,32 +1506,8 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       emit,
       event.auth,
       isJoinAuthenticating: false,
-      applyClientWaitingRoomAtJoin: false,
+      useLocalWaitingRoomPreference: false,
     );
-  }
-
-  /// Resolves host waiting-room choice at join time (after the user may have toggled).
-  ({bool clientEnabled, bool? pendingSync}) _resolveWaitingRoomAtJoin({
-    required bool serverWaitingRoomEnabled,
-    required bool canManageWaitingRoom,
-    required bool userWaitingRoomEnabled,
-    required bool isWaitingRoomFeatureEnabled,
-  }) {
-    if (!canManageWaitingRoom) {
-      return (
-        clientEnabled: serverWaitingRoomEnabled,
-        pendingSync: null,
-      );
-    }
-
-    final clientEnabled = isWaitingRoomFeatureEnabled
-        ? userWaitingRoomEnabled
-        : serverWaitingRoomEnabled;
-    final pendingSync = serverWaitingRoomEnabled != clientEnabled
-        ? clientEnabled
-        : null;
-
-    return (clientEnabled: clientEnabled, pendingSync: pendingSync);
   }
 
   /// Applies SRP + meeting-info preview to pre-join state (page load or join).
@@ -1448,27 +1515,21 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     Emitter<PreJoinState> emit,
     PreJoinJoinAuthResult auth, {
     required bool isJoinAuthenticating,
-    required bool applyClientWaitingRoomAtJoin,
+    bool useLocalWaitingRoomPreference = true,
   }) {
     final serverWaitingRoomEnabled = auth.serverWaitingRoomEnabled;
     final canManageWaitingRoom = auth.canManageWaitingRoom;
 
-    final waitingRoom = applyClientWaitingRoomAtJoin
-        ? _resolveWaitingRoomAtJoin(
-            serverWaitingRoomEnabled: serverWaitingRoomEnabled,
-            canManageWaitingRoom: canManageWaitingRoom,
-            userWaitingRoomEnabled: state.waitingRoomEnabled,
-            isWaitingRoomFeatureEnabled: state.isWaitingRoomFeatureEnabled,
-          )
-        : (
-            clientEnabled: serverWaitingRoomEnabled,
-            pendingSync: null,
-          );
+    final waitingRoomEnabled = canManageWaitingRoom &&
+            state.isWaitingRoomFeatureEnabled &&
+            useLocalWaitingRoomPreference
+        ? state.waitingRoomEnabled
+        : serverWaitingRoomEnabled;
 
     final meetingInfo = canManageWaitingRoom
         ? meetingInfoWithWaitingRoom(
             auth.meetingInfo,
-            waitingRoomEnabled: serverWaitingRoomEnabled,
+            waitingRoomEnabled: waitingRoomEnabled,
           )
         : auth.meetingInfo;
 
@@ -1482,10 +1543,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         canManageWaitingRoom: canManageWaitingRoom,
         role: auth.isMeetingHost ? PrejoinRole.host : PrejoinRole.guest,
         hasWaitingRoom: canManageWaitingRoom ? false : serverWaitingRoomEnabled,
-        waitingRoomEnabled: waitingRoom.clientEnabled,
-        resetPendingHostWaitingRoomSyncEnabled:
-            !applyClientWaitingRoomAtJoin || waitingRoom.pendingSync == null,
-        pendingHostWaitingRoomSyncEnabled: waitingRoom.pendingSync,
+        waitingRoomEnabled: waitingRoomEnabled,
         prejoinAuthDisplayName: auth.authDisplayName,
       ),
     );
@@ -1550,22 +1608,12 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       if (state.hasJoinAuthCompleted &&
           displayName == state.prejoinAuthDisplayName) {
         final serverWaitingRoomEnabled = state.meetingInfo!.waitingRoom == 1;
-        final waitingRoom = _resolveWaitingRoomAtJoin(
-          serverWaitingRoomEnabled: serverWaitingRoomEnabled,
-          canManageWaitingRoom: state.canManageWaitingRoom,
-          userWaitingRoomEnabled: state.waitingRoomEnabled,
-          isWaitingRoomFeatureEnabled: state.isWaitingRoomFeatureEnabled,
-        );
         final needsWaitingRoomAdmission =
             !state.isMeetingHost && serverWaitingRoomEnabled;
 
         emit(
           state.copyWith(
             isJoinAuthenticating: needsWaitingRoomAdmission,
-            waitingRoomEnabled: waitingRoom.clientEnabled,
-            resetPendingHostWaitingRoomSyncEnabled:
-                waitingRoom.pendingSync == null,
-            pendingHostWaitingRoomSyncEnabled: waitingRoom.pendingSync,
           ),
         );
 
@@ -1598,7 +1646,6 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         emit,
         auth,
         isJoinAuthenticating: needsWaitingRoomAdmission,
-        applyClientWaitingRoomAtJoin: true,
       );
 
       if (needsWaitingRoomAdmission) {

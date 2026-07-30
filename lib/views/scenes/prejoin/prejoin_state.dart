@@ -105,8 +105,8 @@ class PreJoinState {
   final bool isJoinAuthenticating;
   final bool shouldNavigateToWaitingRoom;
 
-  /// Host-only: when non-null, room should sync waiting-room policy to this value on enter.
-  final bool? pendingHostWaitingRoomSyncEnabled;
+  final bool isUpdatingWaitingRoomSetting;
+  final String? waitingRoomSettingError;
   final bool isPaidUser;
   final String prejoinAuthDisplayName;
   final WaitingRoomAdmissionPhase waitingRoomAdmissionPhase;
@@ -175,7 +175,8 @@ class PreJoinState {
     this.isLoadingMeetingContext = false,
     this.isJoinAuthenticating = false,
     this.shouldNavigateToWaitingRoom = false,
-    this.pendingHostWaitingRoomSyncEnabled,
+    this.isUpdatingWaitingRoomSetting = false,
+    this.waitingRoomSettingError,
     this.isPaidUser = false,
     this.prejoinAuthDisplayName = '',
     this.waitingRoomAdmissionPhase = WaitingRoomAdmissionPhase.inactive,
@@ -245,8 +246,9 @@ class PreJoinState {
     bool? isLoadingMeetingContext,
     bool? isJoinAuthenticating,
     bool? shouldNavigateToWaitingRoom,
-    bool? pendingHostWaitingRoomSyncEnabled,
-    bool resetPendingHostWaitingRoomSyncEnabled = false,
+    bool? isUpdatingWaitingRoomSetting,
+    String? waitingRoomSettingError,
+    bool resetWaitingRoomSettingError = false,
     bool? isPaidUser,
     String? prejoinAuthDisplayName,
     WaitingRoomAdmissionPhase? waitingRoomAdmissionPhase,
@@ -341,10 +343,11 @@ class PreJoinState {
           isJoinAuthenticating ?? this.isJoinAuthenticating,
       shouldNavigateToWaitingRoom:
           shouldNavigateToWaitingRoom ?? this.shouldNavigateToWaitingRoom,
-      pendingHostWaitingRoomSyncEnabled: resetPendingHostWaitingRoomSyncEnabled
+      isUpdatingWaitingRoomSetting:
+          isUpdatingWaitingRoomSetting ?? this.isUpdatingWaitingRoomSetting,
+      waitingRoomSettingError: resetWaitingRoomSettingError
           ? null
-          : (pendingHostWaitingRoomSyncEnabled ??
-                this.pendingHostWaitingRoomSyncEnabled),
+          : (waitingRoomSettingError ?? this.waitingRoomSettingError),
       isPaidUser: isPaidUser ?? this.isPaidUser,
       prejoinAuthDisplayName:
           prejoinAuthDisplayName ?? this.prejoinAuthDisplayName,
@@ -396,7 +399,6 @@ class PreJoinState {
       isMeetingHost: isMeetingHost,
       waitingRoomEnabled: isMeetingHost && waitingRoomEnabled,
       prefetchedMeetingInfo: meetingInfo,
-      pendingHostWaitingRoomSyncEnabled: pendingHostWaitingRoomSyncEnabled,
       prejoinAuthDisplayName: prejoinAuthDisplayName,
       reusePrejoinAuth: canReusePrejoinAuth,
       reuseMlsJoin: reuseMlsJoin,
