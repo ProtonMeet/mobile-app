@@ -62,7 +62,6 @@ pub trait MeetingApi: Send + Sync {
         meeting_id: &str,
         base64_sd_kbt: &str,
         request_body_json: &str,
-        enable: bool,
     ) -> Result<(), HttpClientError>;
 }
 
@@ -285,16 +284,17 @@ mod tests {
         let mut mock = MockMeetingApi::new();
 
         mock.expect_update_waiting_room_setting()
-            .withf(|meeting_id, kbt, body, enable| {
-                meeting_id == "meeting-1"
-                    && kbt == "sd-kbt"
-                    && body == r#"{"Data":"abc"}"#
-                    && *enable
+            .withf(|meeting_id, kbt, body| {
+                meeting_id == "meeting-1" && kbt == "sd-kbt" && body.contains(r#""WaitingRoom":"#)
             })
-            .returning(|_, _, _, _| Box::pin(async { Ok(()) }));
+            .returning(|_, _, _| Box::pin(async { Ok(()) }));
 
         let result = mock
-            .update_waiting_room_setting("meeting-1", "sd-kbt", r#"{"Data":"abc"}"#, true)
+            .update_waiting_room_setting(
+                "meeting-1",
+                "sd-kbt",
+                r#"{"Data":"abc","CommitData":[1,2],"WaitingRoom":1}"#,
+            )
             .await;
         assert!(result.is_ok());
     }
@@ -304,16 +304,17 @@ mod tests {
         let mut mock = MockMeetingApi::new();
 
         mock.expect_update_waiting_room_setting()
-            .withf(|meeting_id, kbt, body, enable| {
-                meeting_id == "meeting-1"
-                    && kbt == "sd-kbt"
-                    && body == r#"{"Data":"abc"}"#
-                    && !*enable
+            .withf(|meeting_id, kbt, body| {
+                meeting_id == "meeting-1" && kbt == "sd-kbt" && body.contains(r#""WaitingRoom":"#)
             })
-            .returning(|_, _, _, _| Box::pin(async { Ok(()) }));
+            .returning(|_, _, _| Box::pin(async { Ok(()) }));
 
         let result = mock
-            .update_waiting_room_setting("meeting-1", "sd-kbt", r#"{"Data":"abc"}"#, false)
+            .update_waiting_room_setting(
+                "meeting-1",
+                "sd-kbt",
+                r#"{"Data":"abc","CommitData":[1,2],"WaitingRoom":0}"#,
+            )
             .await;
         assert!(result.is_ok());
     }

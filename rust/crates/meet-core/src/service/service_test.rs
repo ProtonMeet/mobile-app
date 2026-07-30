@@ -3333,7 +3333,7 @@ pub(crate) mod tests {
         meeting_api
             .expect_update_waiting_room_setting()
             .times(1)
-            .returning(|_, _, _, _| {
+            .returning(|_, _, _| {
                 Box::pin(ready(Err(HttpClientError::ErrorCode(
                     Status::from_u16(422).unwrap(),
                     crate::errors::http_client::ResponseError {
