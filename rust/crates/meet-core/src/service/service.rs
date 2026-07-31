@@ -3759,7 +3759,6 @@ impl UserService for Service {
         Service::update_waiting_room_setting_policy(self, user_identifier, meet_link_name, enable)
             .await
     }
-
 }
 
 impl Service {
@@ -4388,15 +4387,14 @@ impl Service {
                     commit.commit_data,
                     enable,
                 );
-                let inner_json =
-                    serialize_waiting_room_setting_request(&request).map_err(|e| {
-                        MeetCoreError::InternalError {
-                            message: format!(
-                                "Failed to serialize waiting-room group info request: {e}"
-                            ),
-                            details: None,
-                        }
-                    })?;
+                let inner_json = serialize_waiting_room_setting_request(&request).map_err(|e| {
+                    MeetCoreError::InternalError {
+                        message: format!(
+                            "Failed to serialize waiting-room group info request: {e}"
+                        ),
+                        details: None,
+                    }
+                })?;
                 encode_php_waiting_room_data_field(&inner_json, enable).map_err(|e| {
                     MeetCoreError::InternalError {
                         message: format!("Failed to encode waiting-room PHP payload: {e}"),
