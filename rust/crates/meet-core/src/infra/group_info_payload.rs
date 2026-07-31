@@ -41,6 +41,7 @@ impl WaitingRoomSettingRequest {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PhpWaitingRoomDataField {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<String>,
     pub waiting_room: u8,
 }
@@ -134,13 +135,13 @@ mod tests {
     }
 
     #[test]
-    fn waiting_room_pre_meeting_body_serializes_null_data_and_flag() {
+    fn waiting_room_pre_meeting_body_omits_data_and_includes_flag() {
         let field = PhpWaitingRoomDataField {
             data: None,
             waiting_room: 1,
         };
         let json = serde_json::to_string(&field).unwrap();
-        assert_eq!(json, r#"{"Data":null,"WaitingRoom":1}"#);
+        assert_eq!(json, r#"{"WaitingRoom":1}"#);
     }
 
     #[test]
