@@ -2,11 +2,11 @@ PODS:
   - Flutter (1.0.0)
   - flutter_webrtc (1.4.0):
     - Flutter
-    - WebRTC-SDK (= 144.7559.01)
-  - livekit_client (2.8.1):
+    - WebRTC-SDK (= 144.7559.09)
+  - livekit_client (2.9.0):
     - Flutter
     - flutter_webrtc
-    - WebRTC-SDK (= 144.7559.01)
+    - WebRTC-SDK (= 144.7559.09)
   - MediaPipeTasksCommon (0.10.35)
   - MediaPipeTasksVision (0.10.35):
     - MediaPipeTasksCommon (= 0.10.35)
@@ -21,7 +21,7 @@ PODS:
     - MediaPipeTasksVision (= 0.10.35)
   - rust_builder (0.0.1):
     - Flutter
-  - WebRTC-SDK (144.7559.01)
+  - WebRTC-SDK (144.7559.09)
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
@@ -56,16 +56,16 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  flutter_webrtc: ec91d94b484ad49cf191ef93413f64a40ffd3b4c
-  livekit_client: a28e738fa0d6b16d780631bfe7a4ea76a9be382d
+  flutter_webrtc: 3ee86aa10e0313c38c93fdb215dd86e77014f96a
+  livekit_client: 08c2f86ab9d5f69bd617525a97d085e7f4b70d4a
   MediaPipeTasksCommon: ae27d88c4d185db114a1a768c504f8270dda79b5
   MediaPipeTasksVision: 1d6c3efa89830a131dbd0dc4fb80dea283fac521
   proton_denoise: 473cd6865c80a1cb0410866a5c952bb49e115401
   proton_screen_recorder: 86a2cace4e5522337dfdc1c6be6ad8c2d848e0ee
   proton_video_effects: 07d9de7ab5329e6620a65cf520d939ee09ccd368
   rust_builder: e5e181121263dc90680706deeeb4621278fa7d17
-  WebRTC-SDK: ab9b5319e458c2bfebdc92b3600740da35d5630d
+  WebRTC-SDK: e6006119cd730d6315d875e4a421b6cc8bb88833
 
-PODFILE CHECKSUM: bb3c45b446be48fcd71353d56d6c95bf72ca700d
+PODFILE CHECKSUM: d1c20b3ad7f7d25b9a0f363b8951a93ec8fba663
 
 COCOAPODS: 1.16.2

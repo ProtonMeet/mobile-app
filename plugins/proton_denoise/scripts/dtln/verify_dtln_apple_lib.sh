@@ -49,7 +49,7 @@ pick_verify_member() {
       echo "city.cc.o"
       return 0
     fi
-    member="$("${ar_bin}" -t "${archive}" 2>/dev/null | sed -n '1p' || true)"
+    member="$("${ar_bin}" -t "${archive}" 2>/dev/null | grep -E '\.o$' | sed -n '1p' || true)"
     if [[ -n "${member}" ]]; then
       echo "${member}"
       return 0
