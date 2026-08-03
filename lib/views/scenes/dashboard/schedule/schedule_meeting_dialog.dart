@@ -103,6 +103,7 @@ Future<void> showEditScheduleMeetingDialog(
   required String meetingLinkName,
   ParticipantDisplayColors? displayColors,
   bool showWaitingRoom = false,
+  OnWaitingRoomSettingChanged? onWaitingRoomSettingChanged,
 }) {
   // Block dialog when in force upgrade state
   final appStateManager = ManagerFactory().get<AppStateManager>();
@@ -124,6 +125,7 @@ Future<void> showEditScheduleMeetingDialog(
       displayColors: displayColors,
       showWaitingRoom: showWaitingRoom,
       meetingLinkName: meetingLinkName,
+      onWaitingRoomSettingChanged: onWaitingRoomSettingChanged,
     ),
   );
 }
@@ -138,6 +140,7 @@ class ScheduleMeetingDialog extends StatefulWidget {
     this.displayColors,
     this.showWaitingRoom = false,
     this.meetingLinkName,
+    this.onWaitingRoomSettingChanged,
   });
 
   final OnScheduleMeeting onSchedule;
@@ -149,6 +152,7 @@ class ScheduleMeetingDialog extends StatefulWidget {
   /// Gates the waiting-room field (MeetWaitingRoom flag, resolved by the dashboard bloc).
   final bool showWaitingRoom;
   final String? meetingLinkName;
+  final OnWaitingRoomSettingChanged? onWaitingRoomSettingChanged;
 
   @override
   State<ScheduleMeetingDialog> createState() => _ScheduleMeetingDialogState();
@@ -301,7 +305,6 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
   RecurrenceFrequency _recurrence = RecurrenceFrequency.none;
   bool _showTimeZones = true;
   bool _waitingRoomEnabled = false;
-  bool _canManageWaitingRoom = false;
   bool _isUpdatingWaitingRoom = false;
   String? _waitingRoomError;
   late String _selectedTimeZone;
@@ -320,35 +323,7 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
       _setDefaultStartDateTime();
       _applyDuration();
     }
-    if (widget.initialData != null &&
-        widget.showWaitingRoom &&
-        widget.meetingLinkName != null) {
-      unawaited(_loadCanManageWaitingRoom());
-    }
     _loadDeviceTimeZone();
-  }
-
-  Future<void> _loadCanManageWaitingRoom() async {
-    final meetingLinkName = widget.meetingLinkName;
-    if (meetingLinkName == null || meetingLinkName.isEmpty) {
-      return;
-    }
-    try {
-      final appCore = ManagerFactory().get<AppCoreManager>().appCore;
-      final canManage = await resolveCanManageWaitingRoom(
-        appCore: appCore,
-        meetLinkName: meetingLinkName,
-      );
-      if (mounted) {
-        setState(() {
-          _canManageWaitingRoom = canManage;
-        });
-      }
-    } catch (e) {
-      l.logger.w(
-        '[ScheduleMeetingDialog] Failed to resolve manage waiting room: $e',
-      );
-    }
   }
 
   bool get _showWaitingRoomField {
@@ -358,13 +333,27 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
     if (widget.initialData == null) {
       return true;
     }
-    return _canManageWaitingRoom;
+    final meetingLinkName = widget.meetingLinkName;
+    return meetingLinkName != null && meetingLinkName.isNotEmpty;
   }
 
-  bool get _usePreMeetingWaitingRoomApi =>
-      widget.initialData != null &&
-      widget.meetingLinkName != null &&
-      _canManageWaitingRoom;
+  bool get _usePreMeetingWaitingRoomApi {
+    final meetingLinkName = widget.meetingLinkName;
+    return widget.initialData != null &&
+        meetingLinkName != null &&
+        meetingLinkName.isNotEmpty;
+  }
+
+  void _notifyWaitingRoomChanged(bool enabled) {
+    final meetingLinkName = widget.meetingLinkName;
+    if (meetingLinkName == null || meetingLinkName.isEmpty) {
+      return;
+    }
+    widget.onWaitingRoomSettingChanged?.call(
+      meetingLinkName: meetingLinkName,
+      enabled: enabled,
+    );
+  }
 
   @override
   void dispose() {
@@ -774,6 +763,7 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
           setState(() {
             _isUpdatingWaitingRoom = false;
           });
+          _notifyWaitingRoomChanged(enabled);
         } on BridgeError catch (error) {
           if (!mounted) {
             return;

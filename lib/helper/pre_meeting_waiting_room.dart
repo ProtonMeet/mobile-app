@@ -1,5 +1,10 @@
 import 'package:meet/rust/proton_meet/core.dart';
 
+typedef OnWaitingRoomSettingChanged = void Function({
+  required String meetingLinkName,
+  required bool enabled,
+});
+
 Future<void> updatePreMeetingWaitingRoomSetting({
   required AppCore appCore,
   required String meetLinkName,

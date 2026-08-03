@@ -359,3 +359,26 @@ extension FrbUpcomingMeetingExtension on FrbUpcomingMeeting {
 extension WaitingRoomValue on int? {
   bool get isWaitingRoomEnabled => this == 1;
 }
+
+extension FrbUpcomingMeetingCopy on FrbUpcomingMeeting {
+  FrbUpcomingMeeting withWaitingRoom({required bool enabled}) {
+    return FrbUpcomingMeeting(
+      id: id,
+      addressId: addressId,
+      meetingLinkName: meetingLinkName,
+      meetingName: meetingName,
+      meetingPassword: meetingPassword,
+      meetingType: meetingType,
+      startTime: startTime,
+      endTime: endTime,
+      rRule: rRule,
+      timeZone: timeZone,
+      calendarId: calendarId,
+      protonCalendar: protonCalendar,
+      createTime: createTime,
+      lastUsedTime: lastUsedTime,
+      calendarEventId: calendarEventId,
+      waitingRoom: enabled ? 1 : 0,
+    );
+  }
+}

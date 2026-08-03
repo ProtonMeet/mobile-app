@@ -167,3 +167,13 @@ class MeetingUpdateEvent extends DashboardBlocEvent {
   final List<FrbUpcomingMeeting> meetings;
   MeetingUpdateEvent({required this.meetings});
 }
+
+class PatchMeetingWaitingRoomEvent extends DashboardBlocEvent {
+  PatchMeetingWaitingRoomEvent({
+    required this.meetingLinkName,
+    required this.enabled,
+  });
+
+  final String meetingLinkName;
+  final bool enabled;
+}

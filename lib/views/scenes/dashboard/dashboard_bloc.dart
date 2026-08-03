@@ -80,6 +80,7 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
     on<LoadSignInCardVisibilityEvent>(_onLoadSignInCardVisibilityEvent);
     on<DismissSignInCardEvent>(_onDismissSignInCardEvent);
     on<MeetingUpdateEvent>(_onMeetingUpdateEvent);
+    on<PatchMeetingWaitingRoomEvent>(_onPatchMeetingWaitingRoomEvent);
 
     // Connect to meeting event loop manager
     _connectToMeetingEventLoop();
@@ -1293,7 +1294,25 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         (meeting) => meeting.id == updatedMeeting.id,
       );
       if (updatedIndex != -1) {
-        updatedMeetings[updatedIndex] = updatedMeeting;
+        final existing = updatedMeetings[updatedIndex];
+        updatedMeetings[updatedIndex] = FrbUpcomingMeeting(
+          id: updatedMeeting.id,
+          addressId: updatedMeeting.addressId,
+          meetingLinkName: updatedMeeting.meetingLinkName,
+          meetingName: updatedMeeting.meetingName,
+          meetingPassword: updatedMeeting.meetingPassword,
+          meetingType: updatedMeeting.meetingType,
+          startTime: updatedMeeting.startTime,
+          endTime: updatedMeeting.endTime,
+          rRule: updatedMeeting.rRule,
+          timeZone: updatedMeeting.timeZone,
+          calendarId: updatedMeeting.calendarId,
+          protonCalendar: updatedMeeting.protonCalendar,
+          createTime: updatedMeeting.createTime,
+          lastUsedTime: updatedMeeting.lastUsedTime,
+          calendarEventId: updatedMeeting.calendarEventId,
+          waitingRoom: existing.waitingRoom ?? updatedMeeting.waitingRoom,
+        );
       }
 
       final isPersonalMeetingUpdate = updatedMeeting.isPersonalMeeting;
@@ -1754,7 +1773,9 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         (meeting) => meeting.id == updatedSchedule.id,
       );
       if (updatedIndex != -1) {
-        updatedMeetings[updatedIndex] = updatedSchedule;
+        updatedMeetings[updatedIndex] = updatedSchedule.withWaitingRoom(
+          enabled: event.data.waitingRoomEnabled,
+        );
       }
 
       operationCompleted = true;
@@ -1767,7 +1788,9 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
             isLoading: false,
             upcomingMeetings: updatedMeetings,
             scheduledMeetingData: event.data,
-            scheduledMeeting: updatedSchedule,
+            scheduledMeeting: updatedSchedule.withWaitingRoom(
+              enabled: event.data.waitingRoomEnabled,
+            ),
           ),
         );
         add(UpdateUpcomingStateEvent(upcomingTab: state.upcomingTab));
@@ -2431,6 +2454,47 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         state.copyWith(myRoomsCount: 0, myMeetingsCount: 0, meetinsDisplay: []),
       );
     }
+  }
+
+  void _onPatchMeetingWaitingRoomEvent(
+    PatchMeetingWaitingRoomEvent event,
+    Emitter<DashboardState> emit,
+  ) {
+    if (_isBlockedByForceUpgrade('PatchMeetingWaitingRoom')) {
+      return;
+    }
+
+    final linkName = event.meetingLinkName;
+    if (linkName.isEmpty) {
+      return;
+    }
+
+    var didPatch = false;
+    final updatedMeetings = state.upcomingMeetings.map((meeting) {
+      if (meeting.meetingLinkName != linkName) {
+        return meeting;
+      }
+      didPatch = true;
+      return meeting.withWaitingRoom(enabled: event.enabled);
+    }).toList();
+
+    FrbUpcomingMeeting? personalMeeting = state.personalMeeting;
+    if (personalMeeting?.meetingLinkName == linkName) {
+      personalMeeting = personalMeeting!.withWaitingRoom(enabled: event.enabled);
+      didPatch = true;
+    }
+
+    if (!didPatch) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        upcomingMeetings: updatedMeetings,
+        personalMeeting: personalMeeting,
+      ),
+    );
+    add(UpdateUpcomingStateEvent(upcomingTab: state.upcomingTab));
   }
 }
 

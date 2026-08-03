@@ -1,11 +1,8 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/bridge_error.extension.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
-import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/pre_meeting_waiting_room.dart';
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/app.state.manager.dart';
@@ -60,6 +57,7 @@ Future<void> showEditRoomDialog(
   bool showWaitingRoom = false,
   String? meetingLinkName,
   bool initialWaitingRoomEnabled = false,
+  OnWaitingRoomSettingChanged? onWaitingRoomSettingChanged,
 }) {
   // Block dialog when in force upgrade state
   final appStateManager = ManagerFactory().get<AppStateManager>();
@@ -82,6 +80,7 @@ Future<void> showEditRoomDialog(
       showWaitingRoom: showWaitingRoom,
       meetingLinkName: meetingLinkName,
       initialWaitingRoomEnabled: initialWaitingRoomEnabled,
+      onWaitingRoomSettingChanged: onWaitingRoomSettingChanged,
     ),
   );
 }
@@ -99,6 +98,7 @@ class CreateRoomDialog extends StatefulWidget {
     this.showWaitingRoom = false,
     this.meetingLinkName,
     this.initialWaitingRoomEnabled = false,
+    this.onWaitingRoomSettingChanged,
   }) : assert(
          (onCreateRoom != null) ^ (onEditRoom != null),
          'Provide exactly one of onCreateRoom or onEditRoom',
@@ -116,6 +116,7 @@ class CreateRoomDialog extends StatefulWidget {
   final bool showWaitingRoom;
   final String? meetingLinkName;
   final bool initialWaitingRoomEnabled;
+  final OnWaitingRoomSettingChanged? onWaitingRoomSettingChanged;
 
   @override
   State<CreateRoomDialog> createState() => _CreateRoomDialogState();
@@ -131,9 +132,26 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
   bool _hasInitialized = false;
   bool _isButtonEnabled = false;
   bool _waitingRoomEnabled = false;
-  bool _canManageWaitingRoom = false;
   bool _isUpdatingWaitingRoom = false;
   String? _waitingRoomError;
+
+  bool get _showWaitingRoomOption {
+    if (!widget.showWaitingRoom) {
+      return false;
+    }
+    if (!widget.selectAllOnFocus) {
+      return true;
+    }
+    final meetingLinkName = widget.meetingLinkName;
+    return meetingLinkName != null && meetingLinkName.isNotEmpty;
+  }
+
+  bool get _usePreMeetingWaitingRoomApi {
+    final meetingLinkName = widget.meetingLinkName;
+    return widget.selectAllOnFocus &&
+        meetingLinkName != null &&
+        meetingLinkName.isNotEmpty;
+  }
 
   @override
   void initState() {
@@ -142,32 +160,17 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
     _focus.addListener(_onFocusChange);
     _ctrl.addListener(_onTextChanged);
     _isButtonEnabled = _ctrl.text.trim().isNotEmpty;
-    if (widget.selectAllOnFocus &&
-        widget.showWaitingRoom &&
-        widget.meetingLinkName != null) {
-      unawaited(_loadCanManageWaitingRoom());
-    }
   }
 
-  Future<void> _loadCanManageWaitingRoom() async {
+  void _notifyWaitingRoomChanged(bool enabled) {
     final meetingLinkName = widget.meetingLinkName;
     if (meetingLinkName == null || meetingLinkName.isEmpty) {
       return;
     }
-    try {
-      final appCore = ManagerFactory().get<AppCoreManager>().appCore;
-      final canManage = await resolveCanManageWaitingRoom(
-        appCore: appCore,
-        meetLinkName: meetingLinkName,
-      );
-      if (mounted) {
-        setState(() {
-          _canManageWaitingRoom = canManage;
-        });
-      }
-    } catch (e) {
-      l.logger.w('[CreateRoomDialog] Failed to resolve manage waiting room: $e');
-    }
+    widget.onWaitingRoomSettingChanged?.call(
+      meetingLinkName: meetingLinkName,
+      enabled: enabled,
+    );
   }
 
   void _onTextChanged() {
@@ -293,8 +296,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
 
   Future<void> _selectWaitingRoom() async {
     final meetingLinkName = widget.meetingLinkName;
-    final isEditWithPreMeetingApi =
-        widget.selectAllOnFocus && meetingLinkName != null && _canManageWaitingRoom;
+    final isEditWithPreMeetingApi = _usePreMeetingWaitingRoomApi;
 
     await showWaitingRoomSheet(
       context,
@@ -322,7 +324,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
           final appCore = ManagerFactory().get<AppCoreManager>().appCore;
           await updatePreMeetingWaitingRoomSetting(
             appCore: appCore,
-            meetLinkName: meetingLinkName,
+            meetLinkName: meetingLinkName!,
             enable: enabled,
           );
           if (!mounted) {
@@ -331,6 +333,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
           setState(() {
             _isUpdatingWaitingRoom = false;
           });
+          _notifyWaitingRoomChanged(enabled);
         } on BridgeError catch (error) {
           if (!mounted) {
             return;
@@ -489,10 +492,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
                   ),
                 ),
 
-                if ((!widget.selectAllOnFocus && widget.showWaitingRoom) ||
-                    (widget.selectAllOnFocus &&
-                        widget.showWaitingRoom &&
-                        _canManageWaitingRoom)) ...[
+                if (_showWaitingRoomOption) ...[
                   const SizedBox(height: 10),
                   RepaintBoundary(child: _buildWaitingRoomOption(context)),
                 ],
