@@ -15,7 +15,9 @@ pub struct UserSettingsDto {
     #[serde(rename = "MeetingID")]
     pub meeting_id: String,
     #[serde(rename = "AddressID")]
-    pub address_id: String,
+    pub address_id: Option<String>,
+    #[serde(default)]
+    pub waiting_room: u8,
 }
 
 impl From<UserSettingsResponse> for UserSettings {
@@ -23,6 +25,104 @@ impl From<UserSettingsResponse> for UserSettings {
         UserSettings {
             meeting_id: response.user_settings.meeting_id,
             address_id: response.user_settings.address_id,
+            waiting_room: response.user_settings.waiting_room == 1,
         }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct UpdateUserSettingsWaitingRoomRequest {
+    pub waiting_room: u8,
+}
+
+impl UpdateUserSettingsWaitingRoomRequest {
+    pub fn new(enable: bool) -> Self {
+        Self {
+            waiting_room: u8::from(enable),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_waiting_room_enabled_as_true() {
+        let json = r#"{
+            "UserSettings": {
+                "MeetingID": "meeting-1",
+                "AddressID": "address-1",
+                "WaitingRoom": 1
+            },
+            "Code": 1000
+        }"#;
+        let response: UserSettingsResponse =
+            serde_json::from_str(json).expect("parse user settings");
+        let settings = UserSettings::from(response);
+        assert!(settings.waiting_room);
+    }
+
+    #[test]
+    fn parses_waiting_room_disabled_as_false() {
+        let json = r#"{
+            "UserSettings": {
+                "MeetingID": "meeting-1",
+                "AddressID": "address-1",
+                "WaitingRoom": 0
+            },
+            "Code": 1000
+        }"#;
+        let response: UserSettingsResponse =
+            serde_json::from_str(json).expect("parse user settings");
+        let settings = UserSettings::from(response);
+        assert!(!settings.waiting_room);
+    }
+
+    #[test]
+    fn update_request_serializes_enable_to_one() {
+        let json = serde_json::to_string(&UpdateUserSettingsWaitingRoomRequest::new(true))
+            .expect("serialize request");
+        assert_eq!(json, r#"{"WaitingRoom":1}"#);
+    }
+
+    #[test]
+    fn update_request_serializes_disable_to_zero() {
+        let json = serde_json::to_string(&UpdateUserSettingsWaitingRoomRequest::new(false))
+            .expect("serialize request");
+        assert_eq!(json, r#"{"WaitingRoom":0}"#);
+    }
+
+    #[test]
+    fn defaults_waiting_room_to_false_when_missing() {
+        let json = r#"{
+            "UserSettings": {
+                "MeetingID": "meeting-1",
+                "AddressID": "address-1"
+            },
+            "Code": 1000
+        }"#;
+        let response: UserSettingsResponse =
+            serde_json::from_str(json).expect("parse user settings");
+        let settings = UserSettings::from(response);
+        assert!(!settings.waiting_room);
+    }
+
+    #[test]
+    fn parses_null_address_id() {
+        let json = r#"{
+            "UserSettings": {
+                "MeetingID": "meeting-1",
+                "AddressID": null,
+                "WaitingRoom": 1
+            },
+            "Code": 1000
+        }"#;
+        let response: UserSettingsResponse =
+            serde_json::from_str(json).expect("parse user settings");
+        let settings = UserSettings::from(response);
+        assert_eq!(settings.address_id, None);
+        assert!(settings.waiting_room);
     }
 }

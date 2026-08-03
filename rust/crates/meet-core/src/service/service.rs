@@ -3594,6 +3594,17 @@ impl UserService for Service {
         Ok(user_settings)
     }
 
+    async fn update_user_settings_waiting_room(
+        &self,
+        enable: bool,
+    ) -> Result<UserSettings, anyhow::Error> {
+        let user_settings = self
+            .http_client
+            .update_user_settings_waiting_room(enable)
+            .await?;
+        Ok(user_settings)
+    }
+
     async fn get_sd_kbt(&self, user_identifier: &UserId) -> Result<String, anyhow::Error> {
         let mls_store = self.mls_store.read().await;
         let cs = mls_store.config.ciphersuite;

@@ -29,6 +29,7 @@ use crate::{
         rejoin_reason::RejoinReason,
         schedule_meeting::ScheduleMeetingRequest,
         upcoming_meeting::FrbUpcomingMeeting,
+        user_settings::FrbUserSettings,
     },
 };
 
@@ -1056,6 +1057,19 @@ impl AppCore {
     ) -> Result<FrbMeetingInfo, BridgeError> {
         let meeting_info = self.inner.get_meeting_info(&meeting_link_name).await?;
         Ok(meeting_info.into())
+    }
+
+    pub async fn get_user_settings(&self) -> Result<FrbUserSettings, BridgeError> {
+        let user_settings = self.inner.get_user_settings().await?;
+        Ok(user_settings.into())
+    }
+
+    pub async fn update_user_settings_waiting_room(
+        &self,
+        enable: bool,
+    ) -> Result<FrbUserSettings, BridgeError> {
+        let user_settings = self.inner.update_user_settings_waiting_room(enable).await?;
+        Ok(user_settings.into())
     }
 
     pub async fn delete_meeting(&self, meeting_name: String) -> Result<(), BridgeError> {

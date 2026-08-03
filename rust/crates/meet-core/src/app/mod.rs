@@ -424,6 +424,19 @@ impl App {
         Ok(user_settings)
     }
 
+    pub async fn update_user_settings_waiting_room(
+        &self,
+        enable: bool,
+    ) -> Result<UserSettings, MeetCoreError> {
+        let user_settings = self
+            .user_service
+            .read()
+            .await
+            .update_user_settings_waiting_room(enable)
+            .await?;
+        Ok(user_settings)
+    }
+
     pub async fn remove_participant(
         &self,
         participant_uuid_to_remove: String,
