@@ -1,6 +1,7 @@
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:meet/constants/app.config.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
@@ -8,6 +9,7 @@ import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/helper/logger.dart' as l;
+import 'package:meet/helper/meet_join_link_parser.dart';
 import 'package:meet/managers/app.state.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/views/components/alerts/early_access_dialog.dart';
@@ -81,6 +83,60 @@ class DashboardScreenState extends State<DashboardScreen> {
   String? _navBarTitle;
   bool _searchBarReachedNavBar = false;
 
+  /// Attempts to join a meeting directly from a deep link URL.
+  ///
+  /// Parses [url] against the current API host. When the link is a fully valid
+  /// Proton Meet join URL (room id + passcode), triggers an immediate join and
+  /// clears the bloc's pending link state.
+  ///
+  /// Returns `true` if the URL was handled; `false` if parsing failed so the
+  /// caller can fall back to [showJoinMeetingDialog] (see [_handleDeepLink]).
+  bool _tryJoinFromDeepLink(String url) {
+    final trimmedUrl = url.trim();
+    if (trimmedUrl.isEmpty) {
+      return false;
+    }
+
+    final credentials = tryParseMeetJoinCredentials(
+      trimmedUrl,
+      allowedHost: appConfig.apiEnv.domain,
+    );
+    if (credentials == null) {
+      return false;
+    }
+
+    widget.onJoinMeetingWithLink(
+      credentials.roomId,
+      credentials.passcode,
+      credentials.meetingLink,
+    );
+    // Reset bloc URL so BlocListener does not re-handle the same link.
+    widget.bloc.add(JoinMeetingWithLinkEvent(joinMeetingWithLinkUrl: ''));
+    return true;
+  }
+
+  /// Handles an incoming deep link on the dashboard.
+  ///
+  /// Tries a silent join first via [_tryJoinFromDeepLink]. When the URL is
+  /// incomplete or invalid, opens [showJoinMeetingDialog] with [url] pre-filled
+  /// so the user can edit credentials before joining.
+  ///
+  /// Invoked from cold-start [AppLinks] and the dashboard
+  /// [JoinMeetingWithLinkEvent] listener.
+  void _handleDeepLink(String url) {
+    if (_tryJoinFromDeepLink(url)) {
+      return;
+    }
+    // Partial or invalid link: let the user confirm or fix the URL.
+    showJoinMeetingDialog(
+      context,
+      bloc: widget.bloc,
+      onJoin: widget.onJoinMeetingWithLink,
+      initialUrl: url,
+      autofocus: false,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -109,13 +165,7 @@ class DashboardScreenState extends State<DashboardScreen> {
             if (value != null) {
               final cxt = context;
               if (cxt.mounted) {
-                showJoinMeetingDialog(
-                  cxt,
-                  bloc: widget.bloc,
-                  onJoin: widget.onJoinMeetingWithLink,
-                  initialUrl: value.toString(),
-                  autofocus: false,
-                );
+                _handleDeepLink(value.toString());
               }
             }
           })
@@ -222,54 +272,54 @@ class DashboardScreenState extends State<DashboardScreen> {
       id: TestIds.dashboardGuestPersonalMeeting,
       button: true,
       child: Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: widget.onPersonalMeeting,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              context.images.iconPersonalMeeting.svg40(),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Opacity(
-                      opacity: 0.90,
-                      child: Text(
-                        context.local.personal_meeting_room,
-                        style: ProtonStyles.body1Semibold(
-                          color: context.colors.interActionNorm,
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onPersonalMeeting,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                context.images.iconPersonalMeeting.svg40(),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Opacity(
+                        opacity: 0.90,
+                        child: Text(
+                          context.local.personal_meeting_room,
+                          style: ProtonStyles.body1Semibold(
+                            color: context.colors.interActionNorm,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 3,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        context.local.personal_meeting_description,
+                        style: ProtonStyles.body2Medium(
+                          color: context.colors.textHint,
+                        ),
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      context.local.personal_meeting_description,
-                      style: ProtonStyles.body2Medium(
-                        color: context.colors.textHint,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              context.images.iconPinAngled.svg20(
-                color: context.colors.protonBlue,
-              ),
-              const SizedBox(width: 2),
-            ],
+                context.images.iconPinAngled.svg20(
+                  color: context.colors.protonBlue,
+                ),
+                const SizedBox(width: 2),
+              ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 
@@ -314,13 +364,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                 // Only show the dialog if Dashboard is the top-most route.
                 // If user is already in another screen (e.g. in-room), ignore silently.
                 if (!context.isTopMostRoute) return;
-                showJoinMeetingDialog(
-                  context,
-                  bloc: widget.bloc,
-                  onJoin: widget.onJoinMeetingWithLink,
-                  initialUrl: state.joinMeetingWithLinkUrl,
-                  autofocus: false,
-                );
+                _handleDeepLink(state.joinMeetingWithLinkUrl);
               },
             ),
             BlocListener<DashboardBloc, DashboardState>(

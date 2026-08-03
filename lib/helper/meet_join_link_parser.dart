@@ -7,6 +7,8 @@
 /// - Passcode via fragment `#pwd-YYYY` (or URL-encoded `%23pwd-YYYY`) or query `?pwd=YYYY`
 library;
 
+import 'package:meet/rust/proton_meet/meet_link.dart';
+
 class MeetJoinLinkParseResult {
   final String raw;
   final String trimmed;
@@ -46,6 +48,37 @@ class MeetJoinLinkParseResult {
       looksValidRoomId &&
       passcode != null &&
       passcode!.isNotEmpty;
+}
+
+/// Parsed join credentials when a deeplink passes full validation.
+class MeetJoinCredentials {
+  const MeetJoinCredentials({
+    required this.roomId,
+    required this.passcode,
+    required this.meetingLink,
+  });
+
+  final String roomId;
+  final String passcode;
+  final String meetingLink;
+}
+
+MeetJoinCredentials? tryParseMeetJoinCredentials(
+  String raw, {
+  String allowedHost = 'meet.proton.me',
+}) {
+  final result = parseMeetJoinLink(raw, allowedHost: allowedHost);
+  if (!result.isValid) {
+    return null;
+  }
+  if (!isUrlPasswordValid(hash: '#pwd-${result.passcode}')) {
+    return null;
+  }
+  return MeetJoinCredentials(
+    roomId: result.roomId!,
+    passcode: result.passcode!,
+    meetingLink: result.trimmed,
+  );
 }
 
 MeetJoinLinkParseResult parseMeetJoinLink(
