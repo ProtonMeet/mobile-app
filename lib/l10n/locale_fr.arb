@@ -113,6 +113,22 @@
   "picture_in_picture_mode": "Mode Image dans l'image",
   "security": "Sécurité",
   "enable_waiting_room": "Activer le salon d'attente",
+  "waiting_room_setting_on_description": "Les participants rejoignent le groupe une fois que vous les avez validés.",
+  "@waiting_room_setting_on_description": {
+    "description": "Waiting room switch description when enabled in meeting settings"
+  },
+  "waiting_room_setting_off_description": "Toute personne disposant du lien peut rejoindre.",
+  "@waiting_room_setting_off_description": {
+    "description": "Waiting room switch description when disabled in meeting settings"
+  },
+  "waiting_room_enabled_notification": "La salle d'attente activée est activée. Les participants ne peuvent rejoindre la réunion qu'après votre validation.",
+  "@waiting_room_enabled_notification": {
+    "description": "Global notification when the host enables waiting room in meeting settings"
+  },
+  "waiting_room_disabled_notification": "La sallle d'attente est désactivée. Toute personne disposant du lien peut rejoindre.",
+  "@waiting_room_disabled_notification": {
+    "description": "Global notification when the host disables waiting room in meeting settings"
+  },
   "hide_self_view": "Masquer l'aperçu personnel",
   "allow_all_participants_to": "Permettre à tous les participants de :",
   "chat": "Chat",
