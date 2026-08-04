@@ -54,6 +54,24 @@ async fn meet_sdk_from_app_extracts_name_and_version() {
     assert_eq!(sdk.version(), "1.2.3");
 }
 
+#[unified_test]
+async fn meet_sdk_from_app_strips_dev_pre_release_suffix() {
+    let app = App::new("macos-meet@1.0.0.33-dev")
+        .unwrap()
+        .with_user_agent("test-agent");
+    let sdk = meet_sdk_from_app(&app).expect("sdk");
+    assert_eq!(sdk.name(), "macos-meet");
+    assert_eq!(sdk.version(), "1.0.0.33");
+}
+
+#[unified_test]
+async fn meet_sdk_from_app_accepts_flutter_style_app_version() {
+    let app = App::new("ios-meet@2.3.12.456-dev").unwrap();
+    let sdk = meet_sdk_from_app(&app).expect("sdk");
+    assert_eq!(sdk.name(), "ios-meet");
+    assert_eq!(sdk.version(), "2.3.12.456");
+}
+
 // ---------------------------------------------------------------------------
 // Client + session (platform-specific build, shared default_session)
 // ---------------------------------------------------------------------------

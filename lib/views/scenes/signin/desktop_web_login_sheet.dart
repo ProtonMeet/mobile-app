@@ -40,17 +40,25 @@ class DesktopWebLoginSheet extends StatefulWidget {
 }
 
 class _DesktopWebLoginSheetState extends State<DesktopWebLoginSheet> {
-  static const _pollInterval = Duration(seconds: 3);
+  static const _pollInterval = Duration(seconds: 10);
+  static const _pollIntervalAfterWebAuth = Duration(seconds: 2);
 
   WebViewController? _controller;
   Timer? _pollTimer;
   String? _error;
   bool _isStarting = true;
   bool _useExternalBrowser = false;
+  bool _webAuthComplete = false;
+  bool _isPollingForSession = false;
   bool _pollInFlight = false;
   DesktopWebLoginManager? _loginManager;
 
   AppCoreManager get _appCoreManager => ManagerFactory().get<AppCoreManager>();
+
+  bool get _showSessionLoadingOverlay =>
+      !_isStarting &&
+      _error == null &&
+      (_webAuthComplete || (_useExternalBrowser && _isPollingForSession));
 
   @override
   void initState() {
@@ -84,7 +92,7 @@ class _DesktopWebLoginSheetState extends State<DesktopWebLoginSheet> {
       }
 
       setState(() => _isStarting = false);
-      _pollTimer = Timer.periodic(_pollInterval, (_) => unawaited(_poll()));
+      _startPolling();
       await _poll();
     } catch (e, st) {
       logger.e('Desktop web login start failed: $e', stackTrace: st);
@@ -95,6 +103,14 @@ class _DesktopWebLoginSheetState extends State<DesktopWebLoginSheet> {
         });
       }
     }
+  }
+
+  void _startPolling() {
+    _pollTimer?.cancel();
+    final interval = _webAuthComplete
+        ? _pollIntervalAfterWebAuth
+        : _pollInterval;
+    _pollTimer = Timer.periodic(interval, (_) => unawaited(_poll()));
   }
 
   Future<void> _initializeWebView(String loginUrl) async {
@@ -123,6 +139,15 @@ class _DesktopWebLoginSheetState extends State<DesktopWebLoginSheet> {
             }
             return NavigationDecision.prevent;
           },
+          onUrlChange: (change) {
+            final url = change.url;
+            if (url != null) {
+              unawaited(_detectWebAuthComplete(url));
+            }
+          },
+          onPageFinished: (url) {
+            unawaited(_detectWebAuthComplete(url));
+          },
           onWebResourceError: (error) async {
             logger.w('Desktop login WebView error: ${error.description}');
             if (_useExternalBrowser || !mounted) return;
@@ -140,9 +165,60 @@ class _DesktopWebLoginSheetState extends State<DesktopWebLoginSheet> {
     return message.contains('Desktop web login was not started');
   }
 
+  bool _urlIndicatesWebAuthComplete(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return false;
+
+    final host = uri.host;
+    if (host != 'account.proton.me' && !host.endsWith('.proton.black')) {
+      return false;
+    }
+
+    return uri.path.contains('/desktop/login') &&
+        !uri.fragment.contains('payload=');
+  }
+
+  Future<void> _detectWebAuthComplete(String url) async {
+    if (_webAuthComplete || _controller == null || _useExternalBrowser) {
+      return;
+    }
+
+    if (_urlIndicatesWebAuthComplete(url)) {
+      _markWebAuthComplete();
+      return;
+    }
+
+    try {
+      final result = await _controller!.runJavaScriptReturningResult('''
+(function() {
+  const text = document.body?.innerText?.toLowerCase() ?? '';
+  return text.includes('successfully signed in');
+})()
+''');
+      final complete = result == true || result.toString() == 'true';
+      if (complete) {
+        _markWebAuthComplete();
+      }
+    } catch (e, st) {
+      logger.d('Desktop login success detection skipped: $e', stackTrace: st);
+    }
+  }
+
+  void _markWebAuthComplete() {
+    if (_webAuthComplete || !mounted) return;
+    setState(() => _webAuthComplete = true);
+    _startPolling();
+    unawaited(_poll());
+  }
+
   Future<void> _poll() async {
     if (_pollInFlight || _loginManager == null) return;
+
     _pollInFlight = true;
+    if (mounted) {
+      setState(() => _isPollingForSession = true);
+    }
+
     try {
       final session = await _loginManager!.poll();
       if (!mounted || session == null) return;
@@ -197,11 +273,74 @@ class _DesktopWebLoginSheetState extends State<DesktopWebLoginSheet> {
       logger.e('Desktop web login poll failed: $e', stackTrace: st);
       if (!mounted) return;
       setState(() => _error = e.toString());
-      // Keep polling — a transient network/API error must not stop detection
-      // after the user has already signed in via the account WebView.
+      _pollTimer?.cancel();
     } finally {
       _pollInFlight = false;
+      if (mounted) {
+        setState(() => _isPollingForSession = false);
+      }
     }
+  }
+
+  Widget _buildSessionLoadingOverlay(BuildContext context) {
+    return ColoredBox(
+      color: context.colors.backgroundNorm.withValues(alpha: 0.92),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 320),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: context.colors.protonBlue),
+              const SizedBox(height: 20),
+              Text(
+                'Finishing sign-in…',
+                textAlign: TextAlign.center,
+                style: ProtonStyles.body1Medium(color: context.colors.textNorm),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Setting up your Proton Meet session.',
+                textAlign: TextAlign.center,
+                style: ProtonStyles.body2Regular(
+                  color: context.colors.textWeak,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    if (_isStarting) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_controller != null && !_useExternalBrowser) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          WebViewWidget(controller: _controller!),
+          if (_showSessionLoadingOverlay) _buildSessionLoadingOverlay(context),
+        ],
+      );
+    }
+
+    if (_useExternalBrowser && _error == null) {
+      return Center(
+        child: _showSessionLoadingOverlay
+            ? _buildSessionLoadingOverlay(context)
+            : Text(
+                'Complete sign-in in your browser, then return to Meet.',
+                textAlign: TextAlign.center,
+                style: ProtonStyles.body1Medium(color: context.colors.textWeak),
+              ),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 
   @override
@@ -252,30 +391,7 @@ class _DesktopWebLoginSheetState extends State<DesktopWebLoginSheet> {
                     ),
                   ),
                 ),
-              if (_useExternalBrowser && !_isStarting && _error == null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Text(
-                    'Complete sign-in in your browser, then return to Meet.',
-                    style: ProtonStyles.body1Medium(
-                      color: context.colors.textWeak,
-                    ),
-                  ),
-                ),
-              Expanded(
-                child: _isStarting
-                    ? const Center(child: CircularProgressIndicator())
-                    : _controller != null && !_useExternalBrowser
-                    ? WebViewWidget(controller: _controller!)
-                    : Center(
-                        child: Text(
-                          _error == null ? 'Waiting for sign-in…' : '',
-                          style: ProtonStyles.body1Medium(
-                            color: context.colors.textWeak,
-                          ),
-                        ),
-                      ),
-              ),
+              Expanded(child: _buildContent(context)),
             ],
           ),
         ),

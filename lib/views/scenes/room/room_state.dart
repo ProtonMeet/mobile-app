@@ -561,7 +561,6 @@ class RoomState extends Equatable {
     bool? cameraBackgroundBlurEnabled,
     bool? audioDenoiseEnabled,
     DenoiseType? audioDenoiseType,
-    DateTime? lastOpenChatTime,
     bool? showMeetingIsReady,
     String? meetingLink,
     bool? isSpeakerMuted,

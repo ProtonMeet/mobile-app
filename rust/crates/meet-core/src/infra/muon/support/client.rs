@@ -1,5 +1,6 @@
 //! Muon client construction and SDK header helpers.
 
+use muon::app::SemVer;
 use muon::common::sdk::Sdk;
 use muon::{App, Client, Environment};
 
@@ -17,12 +18,24 @@ fn meet_prng() -> rand_v09::rngs::ThreadRng {
     rand_v09::rng()
 }
 
+/// Strip pre-release/build metadata from a muon [`SemVer`] so it satisfies
+/// [`Sdk`] version rules (numeric MAJOR.MINOR.PATCH[.BUILD] only).
+fn sdk_version_from_semver(version: &SemVer) -> Option<String> {
+    let rendered = version.to_string();
+    let without_build_meta = rendered.split('+').next()?;
+    let numeric_core = without_build_meta.split('-').next()?;
+    // Validate against muon's SDK version parser before returning.
+    Sdk::new("meet", numeric_core).ok()?;
+    Some(numeric_core.to_string())
+}
+
 /// SDK identity for `x-pm-sdk-versions` / `x-pm-origin-sdk` (muon 2.x).
 pub fn meet_sdk_from_app(app: &App) -> Option<Sdk> {
     let app_version = app.app_version();
     let name = app_version.name()?;
     let version = app_version.version()?;
-    Sdk::new(&name.to_string(), &version.to_string()).ok()
+    let sdk_version = sdk_version_from_semver(version)?;
+    Sdk::new(&name.to_string(), &sdk_version).ok()
 }
 
 /// Build a muon client with [`MeetPersistence`] = [`AuthStore`] (native only).
