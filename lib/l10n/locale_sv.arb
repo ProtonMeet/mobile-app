@@ -113,6 +113,22 @@
   "picture_in_picture_mode": "Bild-i-bild-läge",
   "security": "Säkerhet",
   "enable_waiting_room": "Aktivera väntrum",
+  "waiting_room_setting_on_description": "Participants join after you approve them",
+  "@waiting_room_setting_on_description": {
+    "description": "Waiting room switch description when enabled in meeting settings"
+  },
+  "waiting_room_setting_off_description": "Anyone with the link can join",
+  "@waiting_room_setting_off_description": {
+    "description": "Waiting room switch description when disabled in meeting settings"
+  },
+  "waiting_room_enabled_notification": "Enabled waiting room, participants join after you approve them.",
+  "@waiting_room_enabled_notification": {
+    "description": "Global notification when the host enables waiting room in meeting settings"
+  },
+  "waiting_room_disabled_notification": "Disabled waiting room, anyone with the link can join.",
+  "@waiting_room_disabled_notification": {
+    "description": "Global notification when the host disables waiting room in meeting settings"
+  },
   "hide_self_view": "Hide self view",
   "allow_all_participants_to": "Tillåt alla deltagare att:",
   "chat": "Chatta",

@@ -113,6 +113,22 @@
   "picture_in_picture_mode": "Resim içinde resim kipi",
   "security": "Güvenlik",
   "enable_waiting_room": "Bekleme odasını etkinleştir",
+  "waiting_room_setting_on_description": "Katılımcılar görüşmeye siz onayladıktan sonra katılabilir",
+  "@waiting_room_setting_on_description": {
+    "description": "Waiting room switch description when enabled in meeting settings"
+  },
+  "waiting_room_setting_off_description": "Bağlantıyı bilen herkes katılabilir",
+  "@waiting_room_setting_off_description": {
+    "description": "Waiting room switch description when disabled in meeting settings"
+  },
+  "waiting_room_enabled_notification": "Bekleme odası açıldı. Katılımcılar görüşmeye siz onayladıktan sonra katılabilir.",
+  "@waiting_room_enabled_notification": {
+    "description": "Global notification when the host enables waiting room in meeting settings"
+  },
+  "waiting_room_disabled_notification": "Bekleme odası kapatıldı. Bağlantıyı bilen herkes katılabilir.",
+  "@waiting_room_disabled_notification": {
+    "description": "Global notification when the host disables waiting room in meeting settings"
+  },
   "hide_self_view": "Kendi görüntümü gizle",
   "allow_all_participants_to": "Tüm katılımcılar şunları yapabilsin:",
   "chat": "Sohbet etme",

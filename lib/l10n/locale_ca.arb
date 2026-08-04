@@ -113,6 +113,22 @@
   "picture_in_picture_mode": "Mode picture-in-picture",
   "security": "Seguretat",
   "enable_waiting_room": "Habilita la sala d'espera",
+  "waiting_room_setting_on_description": "Els participants s'hi uniran quan els aproveu",
+  "@waiting_room_setting_on_description": {
+    "description": "Waiting room switch description when enabled in meeting settings"
+  },
+  "waiting_room_setting_off_description": "Qualsevol persona amb l'enllaç s'hi pot afegir",
+  "@waiting_room_setting_off_description": {
+    "description": "Waiting room switch description when disabled in meeting settings"
+  },
+  "waiting_room_enabled_notification": "S'ha habilitat la sala d'espera, els participants s'hi afegiran quan els aproveu.",
+  "@waiting_room_enabled_notification": {
+    "description": "Global notification when the host enables waiting room in meeting settings"
+  },
+  "waiting_room_disabled_notification": "S'ha deshabilitat la sala d'espera, qualsevol persona amb l'enllaç s'hi podrà afegir.",
+  "@waiting_room_disabled_notification": {
+    "description": "Global notification when the host disables waiting room in meeting settings"
+  },
   "hide_self_view": "Amagar la vista pròpia",
   "allow_all_participants_to": "Aquesta trucada admet fins a:",
   "chat": "Xat",

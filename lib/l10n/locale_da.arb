@@ -113,6 +113,22 @@
   "picture_in_picture_mode": "Billede-i-billede-tilstand",
   "security": "Sikkerhed",
   "enable_waiting_room": "Aktivér venteværelse",
+  "waiting_room_setting_on_description": "Deltagere tilslutter sig efter, at de godkendes",
+  "@waiting_room_setting_on_description": {
+    "description": "Waiting room switch description when enabled in meeting settings"
+  },
+  "waiting_room_setting_off_description": "Enhver med linket kan deltage",
+  "@waiting_room_setting_off_description": {
+    "description": "Waiting room switch description when disabled in meeting settings"
+  },
+  "waiting_room_enabled_notification": "Venteværelse aktiveret. Deltagere tilslutter sig efter, at de godkendes.",
+  "@waiting_room_enabled_notification": {
+    "description": "Global notification when the host enables waiting room in meeting settings"
+  },
+  "waiting_room_disabled_notification": "Venteværelse deaktiveret. Enhver med linket kan deltage.",
+  "@waiting_room_disabled_notification": {
+    "description": "Global notification when the host disables waiting room in meeting settings"
+  },
   "hide_self_view": "Skjul selvvisning",
   "allow_all_participants_to": "Tillad alle deltagere at:",
   "chat": "Chat",
