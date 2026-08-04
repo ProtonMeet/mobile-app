@@ -167,8 +167,14 @@ class RustBuilder {
   Future<Map<String, String>> _buildEnvironment() async {
     // always include RUSTFLAGS environment variable
     final Map<String, String> rustEnv = {};
-    final rustFlags = Platform.environment['RUSTFLAGS'];
+    var rustFlags = Platform.environment['RUSTFLAGS'];
     if (rustFlags != null && rustFlags.isNotEmpty) {
+      // mls-rs / mls-types require `--cfg mls_build_async`. macOS pod builds set RUSTFLAGS
+      // for linker flags; that env var overrides cargokit.yaml rustflags, so ensure the cfg
+      // is always present when RUSTFLAGS is set (see build_pod.sh).
+      if (!rustFlags.contains('mls_build_async')) {
+        rustFlags = '$rustFlags --cfg mls_build_async';
+      }
       rustEnv['RUSTFLAGS'] = rustFlags;
       _log.info('Using RUSTFLAGS: $rustFlags');
     }

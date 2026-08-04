@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/constants/constants.dart';
 import 'package:meet/helper/extension/remote_video_track_extension.dart';
@@ -441,10 +442,9 @@ class _ResponsiveCameraLayoutState extends State<ResponsiveCameraLayout> {
           children: [
             Positioned.fill(
               child: GridView.builder(
+                scrollCacheExtent: ScrollCacheExtent.pixels(screenHeight * 3),
                 padding: const EdgeInsets.all(8),
                 physics: const ClampingScrollPhysics(),
-                // Keep nearby items cached to speed up page switches
-                cacheExtent: screenHeight * 3,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: bestCol,
                   mainAxisSpacing: 8,

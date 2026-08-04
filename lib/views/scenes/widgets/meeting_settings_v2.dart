@@ -1,12 +1,10 @@
-import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/local_toast.dart';
-import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart';
+import 'package:meet/views/scenes/room/side_panel_widget.dart';
 import 'package:proton_denoise/proton_denoise.dart';
 
 class MeetingSettingsV2 extends StatefulWidget {
@@ -85,14 +83,6 @@ class DenoiseTypeUiOption {
   String get label => type.displayName;
 }
 
-class _MeetingSettingsV2Constants {
-  static const double headerHeight = 51.0;
-  static const double horizontalPadding = 24.0;
-  static const double borderRadiusMedium = 24.0;
-  static const double borderRadiusLarge = 40.0;
-  static const double borderColorAlpha = 0.03;
-}
-
 class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
   final ScrollController _scrollController = ScrollController();
 
@@ -147,194 +137,26 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
 
   @override
   Widget build(BuildContext context) {
-    final isLandscape = context.isLandscape && mobile;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Desktop side panel can pass unbounded max height; cap like mobile sheets.
-        final panelHeight = constraints.maxHeight.isFinite
-            ? constraints.maxHeight
-            : MediaQuery.sizeOf(context).height * 0.84;
-
-        return SizedBox(
-          height: panelHeight,
-          width: constraints.maxWidth.isFinite ? constraints.maxWidth : null,
-          child: ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(
-                _MeetingSettingsV2Constants.borderRadiusLarge,
-              ),
-              topRight: Radius.circular(
-                _MeetingSettingsV2Constants.borderRadiusLarge,
-              ),
-            ),
-            child: RepaintBoundary(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                child: DecoratedBox(
-                  decoration: _buildContainerDecoration(context),
-                  child: GestureDetector(
-                    onTap: () => FocusScope.of(context).unfocus(),
-                    behavior: HitTestBehavior.deferToChild,
-                    child: _buildScrollableContent(context, isLandscape),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Decoration _buildContainerDecoration(BuildContext context) {
-    const borderRadius = BorderRadius.only(
-      topLeft: Radius.circular(_MeetingSettingsV2Constants.borderRadiusMedium),
-      topRight: Radius.circular(_MeetingSettingsV2Constants.borderRadiusMedium),
-    );
-
-    return BoxDecoration(
-      color: context.colors.blurBottomSheetBackground,
-      border: Border.all(
-        color: Colors.white.withValues(
-          alpha: _MeetingSettingsV2Constants.borderColorAlpha,
+    return RoomSidePanelScroll(
+      scrollController: _scrollController,
+      header: Text(
+        context.local.meeting_settings,
+        style: ProtonStyles.headline(
+          fontSize: 18,
+          color: context.colors.textNorm,
         ),
       ),
-      borderRadius: borderRadius,
-    );
-  }
-
-  Widget _buildScrollableContent(BuildContext context, bool isLandscape) {
-    return Stack(
-      children: [
-        CustomScrollView(
-          controller: _scrollController,
-          slivers: [
-            SliverAppBar(
-              pinned: true,
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              automaticallyImplyLeading: false,
-              toolbarHeight:
-                  _MeetingSettingsV2Constants.headerHeight +
-                  (!isLandscape ? 36.0 : 8.0),
-              expandedHeight:
-                  _MeetingSettingsV2Constants.headerHeight +
-                  (!isLandscape ? 36.0 : 8.0),
-              flexibleSpace: SizedBox.expand(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(
-                      _MeetingSettingsV2Constants.borderRadiusMedium,
-                    ),
-                    topRight: Radius.circular(
-                      _MeetingSettingsV2Constants.borderRadiusMedium,
-                    ),
-                  ),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                    child: DecoratedBox(
-                      decoration: ShapeDecoration(
-                        color: context.colors.clear,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(
-                              _MeetingSettingsV2Constants.borderRadiusMedium,
-                            ),
-                            topRight: Radius.circular(
-                              _MeetingSettingsV2Constants.borderRadiusMedium,
-                            ),
-                          ),
-                        ),
-                      ),
-                      child: _buildHeaderWithoutHandle(isLandscape),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  _buildSettings(context),
-                  const SizedBox(height: 24),
-                ]),
-              ),
-            ),
-          ],
-        ),
-        // Handle area that allows bottom sheet drag to work
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          height:
-              _MeetingSettingsV2Constants.headerHeight +
-              (!isLandscape ? 36.0 : 8.0),
-          child: AbsorbPointer(
-            child: Stack(
-              children: [
-                if (!isLandscape)
-                  const Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 36.0,
-                    child: BottomSheetHandleBar(),
-                  ),
-                Positioned(
-                  top: !isLandscape ? 36.0 : 8.0,
-                  left: 0,
-                  right: 0,
-                  height: _MeetingSettingsV2Constants.headerHeight,
-                  child: Container(
-                    padding: const EdgeInsets.only(
-                      left: _MeetingSettingsV2Constants.horizontalPadding,
-                      right: _MeetingSettingsV2Constants.horizontalPadding,
-                      bottom: _MeetingSettingsV2Constants.horizontalPadding,
-                    ),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        context.local.meeting_settings,
-                        style: ProtonStyles.headline(
-                          fontSize: 18,
-                          color: context.colors.textNorm,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              _buildSettings(context),
+              const SizedBox(height: 24),
+            ]),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildHeaderWithoutHandle(bool isLandscape) {
-    return Container(
-      width: double.infinity,
-      height:
-          _MeetingSettingsV2Constants.headerHeight +
-          (!isLandscape ? 36.0 : 8.0),
-      padding: EdgeInsets.only(
-        left: _MeetingSettingsV2Constants.horizontalPadding,
-        right: _MeetingSettingsV2Constants.horizontalPadding,
-        bottom: _MeetingSettingsV2Constants.horizontalPadding,
-        top: !isLandscape ? 36.0 : 8.0,
-      ),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          context.local.meeting_settings,
-          style: ProtonStyles.headline(
-            fontSize: 18,
-            color: context.colors.textNorm,
-          ),
-        ),
-      ),
     );
   }
 
@@ -549,7 +371,9 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
             color: Colors.white.withValues(alpha: 0.04),
             shape: RoundedRectangleBorder(
               side: BorderSide(color: Colors.white.withValues(alpha: 0.04)),
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(
+                RoomSidePanelLayout.borderRadiusMedium,
+              ),
             ),
           ),
           child: Column(

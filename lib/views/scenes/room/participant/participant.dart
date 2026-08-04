@@ -208,17 +208,16 @@ class RemoteParticipantWidget extends ParticipantWidget {
 /// tick, connection-quality probe, mute/unmute, track sub/unsub, etc.
 /// In a 200-person room that easily reaches 200+ events/s — without
 /// this diff we used to schedule a full tile rebuild for every one.
-typedef _ParticipantSnapshot =
-    ({
-      bool isSpeaking,
-      ConnectionQuality connectionQuality,
-      String? audioPubSid,
-      bool? audioMuted,
-      bool? audioSubscribed,
-      String? videoPubSid,
-      bool? videoTrackMuted,
-      bool hasVideoTrack,
-    });
+typedef _ParticipantSnapshot = ({
+  bool isSpeaking,
+  ConnectionQuality connectionQuality,
+  String? audioPubSid,
+  bool? audioMuted,
+  bool? audioSubscribed,
+  String? videoPubSid,
+  bool? videoTrackMuted,
+  bool hasVideoTrack,
+});
 
 abstract class _ParticipantWidgetState<T extends ParticipantWidget>
     extends State<T> {
@@ -231,6 +230,7 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
   TrackPublication? get audioPublication;
 
   bool get isScreenShare => widget.type == ParticipantTrackType.kScreenShare;
+
   EventsListener<ParticipantEvent>? _listener;
   ParticipantReaction? _currentReaction;
   String? _displayReactionEmoji;

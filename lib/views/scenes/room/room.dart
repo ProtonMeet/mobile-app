@@ -149,10 +149,65 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   StreamSubscription? _deviceChangeSub;
   StreamSubscription<DataState>? _appStateSubscription;
 
-  bool _showChatBubble = false;
-  bool _showParticipantList = false;
-  bool _showSettings = false;
-  bool _showMeetingInfo = false;
+  RoomSidePanel? _openSidePanel;
+
+  bool _isSidePanelOpen(RoomSidePanel panel) => _openSidePanel == panel;
+
+  /// Keeps [ChatController.isChatOpen] aligned with the visible chat panel so
+  /// unread badge / seen state stay correct (replaces legacy lastOpenChatTime).
+  void _syncChatOpenWithSidePanel() {
+    _chatController.setChatOpen(_isSidePanelOpen(RoomSidePanel.chat));
+  }
+
+  void _closeSidePanel() {
+    if (_openSidePanel == null) return;
+    setState(() {
+      _openSidePanel = null;
+    });
+    _syncChatOpenWithSidePanel();
+  }
+
+  /// Opens [panel], or closes it when already open. Only one panel at a time.
+  void _toggleSidePanel(RoomSidePanel panel) {
+    final closing = _openSidePanel == panel;
+    final switching = _openSidePanel != null && !closing;
+    if (switching) {
+      dismissRoomPanelBottomSheetIfPresent();
+    }
+    setState(() {
+      if (closing) {
+        _openSidePanel = null;
+      } else {
+        _openSidePanel = panel;
+      }
+    });
+    _syncChatOpenWithSidePanel();
+  }
+
+  void _openChatSidePanel() {
+    if (_openSidePanel == RoomSidePanel.chat) return;
+    if (_openSidePanel != null) {
+      dismissRoomPanelBottomSheetIfPresent();
+    }
+    setState(() {
+      _openSidePanel = RoomSidePanel.chat;
+    });
+    _syncChatOpenWithSidePanel();
+  }
+
+  /// Enter mobile fullscreen and close any open side panel so chat unread state
+  /// is not cleared while the panel is hidden.
+  void _enterMobileFullScreen() {
+    if (_openSidePanel != null) {
+      dismissRoomPanelBottomSheetIfPresent();
+      setState(() {
+        _openSidePanel = null;
+      });
+      _syncChatOpenWithSidePanel();
+    }
+    _bloc.add(ToggleFullScreen());
+  }
+
   bool _isLandscape = false;
   bool _isScreenSharing = false;
   bool _hideSelfCamera = false;
@@ -1175,10 +1230,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       msg.name,
       msg.message,
       onTap: (_) {
-        setState(() {
-          _showChatBubble = true;
-          _showParticipantList = false;
-        });
+        _openChatSidePanel();
       },
     );
   }
@@ -1216,7 +1268,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             !isNew ||
             !mounted ||
             !context.mounted ||
-            _showChatBubble) {
+            _isSidePanelOpen(RoomSidePanel.chat)) {
           return null;
         }
         final localId = _bloc.state.room.localParticipant?.identity ?? '';
@@ -1358,7 +1410,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             showToast:
                 mounted &&
                 context.mounted &&
-                !_showChatBubble &&
+                !_isSidePanelOpen(RoomSidePanel.chat) &&
                 isRelevantThreadMessage(
                   incoming,
                   _chatController.messages,
@@ -1427,12 +1479,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         context,
         name,
         message,
-        onTap: (_) {
-          setState(() {
-            _showChatBubble = true;
-            _showParticipantList = false;
-          });
-        },
+        onTap: (_) => _openChatSidePanel(),
       );
     }
   }
@@ -1527,17 +1574,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       final trustedId = result.mlsSenderId;
       final displayName = _displayNameForTrustedSender(trustedId, event, name);
       addMessage(result.plaintext, trustedId, displayName);
-      if (context.mounted && mounted && !_showChatBubble) {
+      if (context.mounted && mounted && !_isSidePanelOpen(RoomSidePanel.chat)) {
         LocalToast.showToastification(
           context,
           displayName,
           result.plaintext,
-          onTap: (_) {
-            setState(() {
-              _showChatBubble = true;
-              _showParticipantList = false;
-            });
-          },
+          onTap: (_) => _openChatSidePanel(),
         );
       }
     } catch (e) {
@@ -1620,17 +1662,14 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           fallbackDisplayName,
         );
         addMessage(decryptedMessage, trustedSenderId, displayName);
-        if (mounted && context.mounted && !_showChatBubble) {
+        if (mounted &&
+            context.mounted &&
+            !_isSidePanelOpen(RoomSidePanel.chat)) {
           LocalToast.showToastification(
             context,
             displayName,
             decryptedMessage,
-            onTap: (_) {
-              setState(() {
-                _showChatBubble = true;
-                _showParticipantList = false;
-              });
-            },
+            onTap: (_) => _openChatSidePanel(),
           );
         }
         return;
@@ -2397,10 +2436,10 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    // Keep the chat controller's "open" state in sync with the visible panel
-    // (drives seen/unread calculation). No-ops when unchanged.
+    // Safety net: keep chat open state aligned if panel visibility changes
+    // outside the toggle helpers (e.g. sheet dismiss callbacks).
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _chatController.setChatOpen(_showChatBubble);
+      if (mounted) _syncChatOpenWithSidePanel();
     });
     return BlocProvider(
       create: (context) => _bloc,
@@ -2450,12 +2489,13 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                   if (!mounted) {
                     return;
                   }
+                  if (_openSidePanel != null) {
+                    dismissRoomPanelBottomSheetIfPresent();
+                  }
                   setState(() {
-                    _showParticipantList = true;
-                    _showChatBubble = false;
-                    _showSettings = false;
-                    _showMeetingInfo = false;
+                    _openSidePanel = RoomSidePanel.participants;
                   });
+                  _syncChatOpenWithSidePanel();
                 },
               );
             },
@@ -2803,7 +2843,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         return GestureDetector(
           onTap: () {
             if (!_bloc.state.isFullScreen) {
-              _bloc.add(ToggleFullScreen());
+              _enterMobileFullScreen();
             } else {
               _resetAutoFullScreenTimer();
             }
@@ -2845,30 +2885,57 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
-  List<Widget> _buildMainContentSidePanels(BuildContext context) => [
-    if (_showParticipantList && !_showChatBubble) buildParticipantList(context),
-    if (_showChatBubble) buildChatBubble(context),
-    if (_showSettings) buildMeetingSettings(context),
-    if (_showMeetingInfo) buildMeetingInfo(context),
-  ];
+  Widget? _buildActiveSidePanel(BuildContext context) {
+    switch (_openSidePanel) {
+      case RoomSidePanel.participants:
+        return buildParticipantList(context);
+      case RoomSidePanel.chat:
+        return buildChatBubble(context);
+      case RoomSidePanel.settings:
+        return buildMeetingSettings(context);
+      case RoomSidePanel.meetingInfo:
+        return buildMeetingInfo(context);
+      case null:
+        return null;
+    }
+  }
+
+  Widget _buildMediaArea(BuildContext context) {
+    final mediaContent = (!_isScreenSharing || _isCameraView)
+        ? _buildCameraMediaContent(context)
+        : _buildScreenSharingMediaContent(context);
+    return RoomConnectionAwareMediaArea(child: mediaContent);
+  }
+
+  Widget _buildMediaGestureWrapper(BuildContext context, Widget child) {
+    return GestureDetector(
+      onTap: () {
+        if (!_bloc.state.isFullScreen) {
+          _enterMobileFullScreen();
+        } else {
+          _resetAutoFullScreenTimer();
+        }
+      },
+      onPanStart: (_) => _resetAutoFullScreenTimer(),
+      onPanUpdate: (_) => _resetAutoFullScreenTimer(),
+      child: child,
+    );
+  }
+
+  /// Narrow layout: media plus optional bottom-sheet panel host.
+  Widget _buildNarrowMainContent(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(child: _buildMediaArea(context)),
+        ?_buildActiveSidePanel(context),
+      ],
+    );
+  }
 
   /// Builds the main content area (without controls bar)
   /// This is shared between mobile and desktop views
   Widget _buildMainContent(BuildContext context) {
-    final mediaContent = (!_isScreenSharing || _isCameraView)
-        ? _buildCameraMediaContent(context)
-        : _buildScreenSharingMediaContent(context);
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Column(
-          children: [
-            Expanded(child: RoomConnectionAwareMediaArea(child: mediaContent)),
-            ..._buildMainContentSidePanels(context),
-          ],
-        );
-      },
-    );
+    return _buildNarrowMainContent(context);
   }
 
   Widget _buildNormalMobileView(BuildContext context) {
@@ -2893,33 +2960,54 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         final isCameraEnabled = data.$5;
         final isPaidUser = data.$6;
         final isRoomReady = isRoomInitialized && isTrackInitialized;
-        return Column(
-          children: [
-            const RecordingTopBanner(),
-            if (!isPipMode && isRoomReady)
-              _buildHeaderWithSlide(
+        final header = (!isPipMode && isRoomReady)
+            ? _buildHeaderWithSlide(
                 context: context,
                 room: room,
                 isCameraEnabled: isCameraEnabled,
                 isPaidUser: isPaidUser,
-              ),
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  // Immediately enter full screen when tapping the view
-                  if (!_bloc.state.isFullScreen) {
-                    _bloc.add(ToggleFullScreen());
-                  } else {
-                    _resetAutoFullScreenTimer();
-                  }
-                },
-                onPanStart: (_) => _resetAutoFullScreenTimer(),
-                onPanUpdate: (_) => _resetAutoFullScreenTimer(),
-                child: _buildMainContent(context),
-              ),
-            ),
-            if (room.localParticipant != null) _buildControlsBarWithFade(),
-          ],
+              )
+            : null;
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final useSideRail = roomSidePanelUsesSideRail(constraints.maxWidth);
+            final sidePanel = _buildActiveSidePanel(context);
+
+            return Column(
+              children: [
+                const RecordingTopBanner(),
+                ?header,
+                Expanded(
+                  child: useSideRail
+                      ? Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: RepaintBoundary(
+                                child: _buildMediaGestureWrapper(
+                                  context,
+                                  _buildMediaArea(context),
+                                ),
+                              ),
+                            ),
+                            RoomAnimatedSideRail(
+                              isOpen: _openSidePanel != null,
+                              panel: _openSidePanel,
+                              panelWidth: roomSidePanelWidth,
+                              child: sidePanel ?? const SizedBox.shrink(),
+                            ),
+                          ],
+                        )
+                      : _buildMediaGestureWrapper(
+                          context,
+                          _buildMainContent(context),
+                        ),
+                ),
+                if (room.localParticipant != null) _buildControlsBarWithFade(),
+              ],
+            );
+          },
         );
       },
     );
@@ -2977,7 +3065,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         final isFullScreen = data.$2;
         // Slide header away in fullscreen on mobile only.
         final shouldHide = !desktop && isFullScreen;
-        const headerHeight = 60.0;
+        final headerHeight = RoomTopBar.totalHeight(context);
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),
@@ -3195,16 +3283,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               badge: '${state.room.remoteParticipants.length + 1}',
               tooltip:
                   '${context.local.show_participants_list} (${state.room.remoteParticipants.length + 1})',
-              onPressed: () {
-                setState(() {
-                  _showParticipantList = !_showParticipantList;
-                  // close chat bubble when show participant list on mobile
-                  if (_showParticipantList) {
-                    _showChatBubble = false;
-                    _showSettings = false;
-                  }
-                });
-              },
+              onPressed: () => _toggleSidePanel(RoomSidePanel.participants),
             ),
 
             /// Chat
@@ -3215,16 +3294,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                   context.local.show_chatroom +
                   (chatUnreadCount > 0 ? ' ($chatUnreadCount)' : ''),
               badge: chatUnreadCount > 0 ? chatUnreadCount.toString() : null,
-              onPressed: () {
-                setState(() {
-                  _showChatBubble = !_showChatBubble;
-                  // close participant list when show chat bubble on mobile
-                  if (_showChatBubble) {
-                    _showParticipantList = false;
-                    _showSettings = false;
-                  }
-                });
-              },
+              onPressed: () => _toggleSidePanel(RoomSidePanel.chat),
             ),
 
             /// Settings
@@ -3232,15 +3302,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               testId: TestIds.roomSettings,
               icon: context.images.iconSettings.svg(width: 24, height: 24),
               tooltip: context.local.show_settings,
-              onPressed: () {
-                setState(() {
-                  _showSettings = !_showSettings;
-                  if (_showSettings) {
-                    _showChatBubble = false;
-                    _showParticipantList = false;
-                  }
-                });
-              },
+              onPressed: () => _toggleSidePanel(RoomSidePanel.settings),
             ),
 
             /// Info
@@ -3248,16 +3310,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               testId: TestIds.roomInfo,
               icon: context.images.iconInfo.svg(width: 24, height: 24),
               tooltip: context.local.meeting_info,
-              onPressed: () {
-                setState(() {
-                  _showMeetingInfo = !_showMeetingInfo;
-                  if (_showMeetingInfo) {
-                    _showChatBubble = false;
-                    _showParticipantList = false;
-                    _showSettings = false;
-                  }
-                });
-              },
+              onPressed: () => _toggleSidePanel(RoomSidePanel.meetingInfo),
             ),
           ];
         },
@@ -3409,78 +3462,68 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       child: BlocSelector<RoomBloc, RoomState, List<ParticipantInfo>>(
         selector: (state) => state.screenSharingTracks,
         builder: (context, tracks) {
-          return Row(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      if (tracks.isNotEmpty)
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _isCameraView = true;
-                            });
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(right: 4),
-                            alignment: Alignment.center,
-                            padding: _screenSharePanelPadding,
-                            decoration: BoxDecoration(
-                              color: _isCameraView
-                                  ? context.colors.interActionWeak
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: context.colors.textWeak,
-                              ),
-                            ),
-                            child: Text(
-                              context.local.camera_view,
-                              style: ProtonStyles.body2Medium(
-                                color: context.colors.textNorm,
-                              ),
-                            ),
-                          ),
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (tracks.isNotEmpty)
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _isCameraView = true;
+                      });
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 4),
+                      alignment: Alignment.center,
+                      padding: _screenSharePanelPadding,
+                      decoration: BoxDecoration(
+                        color: _isCameraView
+                            ? context.colors.interActionWeak
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: context.colors.textWeak),
+                      ),
+                      child: Text(
+                        context.local.camera_view,
+                        style: ProtonStyles.body2Medium(
+                          color: context.colors.textNorm,
                         ),
-                      for (int i = 0; i < tracks.length; i++)
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _isCameraView = false;
-                              _screenSharingIndex = i;
-                              _bloc.add(ToggleFullScreen());
-                            });
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(right: 4),
-                            alignment: Alignment.center,
-                            padding: _screenSharePanelPadding,
-                            decoration: BoxDecoration(
-                              color:
-                                  (i == _screenSharingIndex && !_isCameraView)
-                                  ? context.colors.interActionWeak
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: context.colors.textWeak,
-                              ),
-                            ),
-                            child: Text(
-                              '🖥️ ${_bloc.getParticipantDisplayName(tracks[i].participant)} ${context.local.is_presenting}',
-                              overflow: TextOverflow.ellipsis,
-                              style: ProtonStyles.body2Medium(
-                                color: context.colors.textNorm,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
+                for (int i = 0; i < tracks.length; i++)
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _isCameraView = false;
+                        _screenSharingIndex = i;
+                      });
+                      _enterMobileFullScreen();
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 4),
+                      alignment: Alignment.center,
+                      padding: _screenSharePanelPadding,
+                      decoration: BoxDecoration(
+                        color: (i == _screenSharingIndex && !_isCameraView)
+                            ? context.colors.interActionWeak
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: context.colors.textWeak),
+                      ),
+                      child: Text(
+                        '🖥️ ${_bloc.getParticipantDisplayName(tracks[i].participant)} ${context.local.is_presenting}',
+                        overflow: TextOverflow.ellipsis,
+                        style: ProtonStyles.body2Medium(
+                          color: context.colors.textNorm,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           );
         },
       ),
@@ -3502,65 +3545,31 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     StatisticsDialog.showAllParticipantsStats(context, allParticipants);
   }
 
-  Widget buildSidePanelContent(BuildContext context, Widget child) {
-    final shouldExpand = _isScreenSharing && !_isCameraView;
-    // Use mobile-like UI for small screens, desktop-like for medium+ screens
-    // This allows iOS and macOS to share UI based on screen size
-    if (!context.isAtLeastMedium) {
-      // Use bottom sheet style on mobile
-      return AnimatedPadding(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.only(bottom: shouldExpand ? 0 : 12),
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: DecoratedBox(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-            ),
-            child: SafeArea(top: false, child: child),
-          ),
-        ),
-      );
-    } else {
-      // Default: side panel (desktop/web)
-      return Padding(
-        padding: EdgeInsets.only(
-          top: shouldExpand ? 0 : 12,
-          right: 8,
-          bottom: 12,
-        ),
-        child: child,
-      );
-    }
-  }
-
-  Widget buildParticipantList(BuildContext context) {
+  Widget _wrapSidePanel({required RoomSidePanel panel, required Widget child}) {
     return SidePanelOrSheet(
+      key: ValueKey(panel),
       isScreenSharing: _isScreenSharing,
       isCameraView: _isCameraView,
-      maxWidth: maxMobileSheetWidth,
-      child: buildParticipantListContent(context),
+      maxWidth: roomSidePanelWidth,
+      child: child,
       onDismissed: () {
-        setState(() {
-          _showParticipantList = false;
-        });
+        if (_openSidePanel != panel) return;
+        _closeSidePanel();
       },
     );
   }
 
+  Widget buildParticipantList(BuildContext context) {
+    return _wrapSidePanel(
+      panel: RoomSidePanel.participants,
+      child: buildParticipantListContent(context),
+    );
+  }
+
   Widget buildChatBubble(BuildContext context) {
-    return SidePanelOrSheet(
-      isScreenSharing: _isScreenSharing,
-      isCameraView: _isCameraView,
-      maxWidth: maxMobileSheetWidth,
+    return _wrapSidePanel(
+      panel: RoomSidePanel.chat,
       child: buildChatBubbleContent(context),
-      onDismissed: () {
-        setState(() {
-          _showChatBubble = false;
-        });
-        _chatController.setChatOpen(false);
-      },
     );
   }
 
@@ -3568,42 +3577,25 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     return BlocSelector<RoomBloc, RoomState, bool>(
       selector: (state) => state.isHost,
       builder: (context, isHost) {
-        return SidePanelOrSheet(
-          isScreenSharing: _isScreenSharing,
-          isCameraView: _isCameraView,
-          maxWidth: maxMobileSheetWidth,
+        return _wrapSidePanel(
+          panel: RoomSidePanel.settings,
           child: buildMeetingSettingsContent(context, isHost: isHost),
-          onDismissed: () {
-            setState(() {
-              _showSettings = false;
-            });
-          },
         );
       },
     );
   }
 
   Widget buildMeetingInfo(BuildContext context) {
-    return SidePanelOrSheet(
-      isScreenSharing: _isScreenSharing,
-      isCameraView: _isCameraView,
-      maxWidth: maxMobileSheetWidth,
+    return _wrapSidePanel(
+      panel: RoomSidePanel.meetingInfo,
       child: buildMeetingInfoContent(context),
-      onDismissed: () {
-        setState(() {
-          _showMeetingInfo = false;
-        });
-      },
     );
   }
 
   Widget buildMeetingInfoContent(BuildContext context) {
     // Get meeting info from widget
     final meetingTitle = widget.meetInfo.meetName;
-    return Container(
-      width: double.infinity,
-      height: context.height,
-      color: Colors.transparent,
+    return SizedBox.expand(
       child: MeetingInfoPanel(
         meetingTitle: meetingTitle,
         meetingDate: widget.meetLink.formatStartDateTime(
@@ -3842,9 +3834,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   }
 
   Widget buildParticipantListContent(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: context.height,
+    return ColoredBox(
       color: Colors.transparent,
       child: BlocSelector<RoomBloc, RoomState, String>(
         selector: (state) {

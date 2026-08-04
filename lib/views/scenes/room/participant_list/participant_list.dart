@@ -8,12 +8,11 @@ import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/local_toast.dart';
 
 import 'package:meet/rust/proton_meet/models/meeting_info.dart';
-import 'package:meet/views/components/alerts/base_bottom_sheet_v2.dart';
-import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 import 'package:meet/views/scenes/room/participant_list/waiting_room_host_participant_list.dart';
 import 'package:meet/views/scenes/room/room_bloc.dart';
 import 'package:meet/views/scenes/room/room_state.dart';
+import 'package:meet/views/scenes/room/side_panel_widget.dart';
 import 'package:meet/views/scenes/utils.dart';
 import 'package:meet/views/scenes/widgets/icon.button.with.actions.dart';
 
@@ -51,13 +50,13 @@ class ParticipantList extends StatelessWidget {
   final List<ParticipantDetail> participants;
   final List<WaitingRoomParticipantDetail> waitingParticipants;
   final void Function(Participant<TrackPublication<Track>>? participant)
-      onTapParticipantVideoLocalAction;
+  onTapParticipantVideoLocalAction;
   final void Function(Participant<TrackPublication<Track>>? participant)?
-      onTapParticipantAudioLocalAction;
+  onTapParticipantAudioLocalAction;
   final void Function(Participant<TrackPublication<Track>>? participant)?
-      onTapParticipantVideoRemoteAction;
+  onTapParticipantVideoRemoteAction;
   final void Function(Participant<TrackPublication<Track>>? participant)?
-      onTapParticipantAudioRemoteAction;
+  onTapParticipantAudioRemoteAction;
   final bool isHost;
 
   @override
@@ -75,8 +74,10 @@ class ParticipantList extends StatelessWidget {
             waitingParticipants: waitingParticipants,
             onTapParticipantVideoLocalAction: onTapParticipantVideoLocalAction,
             onTapParticipantAudioLocalAction: onTapParticipantAudioLocalAction,
-            onTapParticipantVideoRemoteAction: onTapParticipantVideoRemoteAction,
-            onTapParticipantAudioRemoteAction: onTapParticipantAudioRemoteAction,
+            onTapParticipantVideoRemoteAction:
+                onTapParticipantVideoRemoteAction,
+            onTapParticipantAudioRemoteAction:
+                onTapParticipantAudioRemoteAction,
             isHost: isHost,
           );
         }
@@ -108,13 +109,13 @@ class ParticipantListBody extends StatefulWidget {
 
   final List<ParticipantDetail> participants;
   final void Function(Participant<TrackPublication<Track>>? participant)
-      onTapParticipantVideoLocalAction;
+  onTapParticipantVideoLocalAction;
   final void Function(Participant<TrackPublication<Track>>? participant)?
-      onTapParticipantAudioLocalAction;
+  onTapParticipantAudioLocalAction;
   final void Function(Participant<TrackPublication<Track>>? participant)?
-      onTapParticipantVideoRemoteAction;
+  onTapParticipantVideoRemoteAction;
   final void Function(Participant<TrackPublication<Track>>? participant)?
-      onTapParticipantAudioRemoteAction;
+  onTapParticipantAudioRemoteAction;
   final bool isHost;
   final ParticipantListPresentation presentation;
 
@@ -123,12 +124,19 @@ class ParticipantListBody extends StatefulWidget {
 }
 
 class _ParticipantListBodyState extends State<ParticipantListBody> {
+  final ScrollController _scrollController = ScrollController();
   final Map<String, bool> _showMoreButton = {};
   final Map<String, ({Color backgroundColor, Color profileTextColor})>
-      _colorCache = {};
+  _colorCache = {};
   final Map<String, String> _initialsCache = {};
 
   List<ParticipantDetail> get _filteredParticipants => widget.participants;
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   void didUpdateWidget(ParticipantListBody oldWidget) {
@@ -156,36 +164,10 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
       );
     }
 
-    final slivers = _buildSlivers(context);
-
-    final isLandscape = context.isLandscape;
-
-    final navBarHeight =
-        ParticipantListLayoutConstants.headerHeight +
-        (isLandscape
-            ? ParticipantListLayoutConstants.spacingMedium
-            : ParticipantListLayoutConstants.handleHeight);
-
-    return BaseBottomSheetV2.withPinnedSliverScroll(
-      isLandscape: isLandscape,
-      blurSigma: 14,
-      toolbarHeight: navBarHeight,
-      flexibleSpaceChild: _buildPinnedHeader(context, isLandscape),
-      slivers: slivers,
-    );
-  }
-
-  Widget _buildPinnedHeader(BuildContext context, bool isLandscape) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (!isLandscape)
-          const BottomSheetHandleBar()
-        else
-          const SizedBox(height: ParticipantListLayoutConstants.spacingMedium),
-        _buildHeader(context),
-      ],
+    return RoomSidePanelScroll(
+      scrollController: _scrollController,
+      header: _buildHeaderTitleRow(context),
+      slivers: _buildSlivers(context),
     );
   }
 
@@ -214,7 +196,9 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(
+                  RoomSidePanelLayout.borderRadiusMedium,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,69 +284,47 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
     return (meetingInfo?.maxParticipants ?? 0) == guestMeetingRoomSize;
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeaderTitleRow(BuildContext context) {
     return RepaintBoundary(
-      child: Container(
-        width: double.infinity,
-        height: ParticipantListLayoutConstants.headerHeight,
-        padding: const EdgeInsets.only(
-          top: 12.0,
-          bottom: 4.0,
-          left: ParticipantListLayoutConstants.horizontalPadding,
-          right: ParticipantListLayoutConstants.horizontalPadding,
-        ),
-        decoration: const ShapeDecoration(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(
-                ParticipantListLayoutConstants.borderRadiusMedium,
-              ),
-              topRight: Radius.circular(
-                ParticipantListLayoutConstants.borderRadiusMedium,
-              ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            context.local.show_participants_list,
+            style: ProtonStyles.headline(
+              fontSize: 18,
+              color: context.colors.textNorm,
             ),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              context.local.show_participants_list,
-              style: ProtonStyles.headline(
-                fontSize: 18,
-                color: context.colors.textNorm,
-              ),
-            ),
-            const SizedBox(width: ParticipantListLayoutConstants.spacingSmall),
-            BlocSelector<RoomBloc, RoomState, (FrbMeetingInfo?, bool)>(
-              selector: (state) => (state.meetingInfo, state.isHost),
-              builder: (context, data) {
-                final meetingInfo = data.$1;
-                final isHost = data.$2;
-                final participantCount = widget.participants.length;
-                final isGuestMeetingRoom = _isGuestMeetingRoom(meetingInfo);
-                final countText =
-                    (meetingInfo != null && (isHost || isGuestMeetingRoom))
-                    ? '($participantCount/${meetingInfo.maxParticipants})'
-                    : '($participantCount)';
-                final isAtLimit =
-                    meetingInfo != null &&
-                    participantCount >= meetingInfo.maxParticipants;
-                return Text(
-                  countText,
-                  style: ProtonStyles.headline(
-                    fontSize: 16,
-                    color: isHost
-                        ? isAtLimit
-                              ? context.colors.notificationError
-                              : context.colors.textWeak
-                        : context.colors.textWeak,
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
+          const SizedBox(width: ParticipantListLayoutConstants.spacingSmall),
+          BlocSelector<RoomBloc, RoomState, (FrbMeetingInfo?, bool)>(
+            selector: (state) => (state.meetingInfo, state.isHost),
+            builder: (context, data) {
+              final meetingInfo = data.$1;
+              final isHost = data.$2;
+              final participantCount = widget.participants.length;
+              final isGuestMeetingRoom = _isGuestMeetingRoom(meetingInfo);
+              final countText =
+                  (meetingInfo != null && (isHost || isGuestMeetingRoom))
+                  ? '($participantCount/${meetingInfo.maxParticipants})'
+                  : '($participantCount)';
+              final isAtLimit =
+                  meetingInfo != null &&
+                  participantCount >= meetingInfo.maxParticipants;
+              return Text(
+                countText,
+                style: ProtonStyles.headline(
+                  fontSize: 16,
+                  color: isHost
+                      ? isAtLimit
+                            ? context.colors.notificationError
+                            : context.colors.textWeak
+                      : context.colors.textWeak,
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -414,7 +376,7 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
         height: ParticipantListLayoutConstants.participantItemHeight,
         padding: const EdgeInsets.only(
           top: ParticipantListLayoutConstants.verticalPadding,
-          left: ParticipantListLayoutConstants.horizontalPadding,
+          left: RoomSidePanelLayout.horizontalPadding,
           right: ParticipantListLayoutConstants.spacingSmall,
           bottom: ParticipantListLayoutConstants.verticalPadding,
         ),
@@ -451,7 +413,9 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: ParticipantListLayoutConstants.spacingLarge),
+                  const SizedBox(
+                    width: ParticipantListLayoutConstants.spacingLarge,
+                  ),
                   Expanded(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
