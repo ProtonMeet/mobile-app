@@ -804,6 +804,24 @@ impl App {
             .map_err(|e| e.into())
     }
 
+    #[wasm_bindgen(js_name = refreshWaitingRoomGuestSessionForJoinRequest)]
+    pub async fn refresh_waiting_room_guest_session_for_join_request_wasm(
+        &self,
+        access_token: String,
+        meet_link_name: String,
+        meet_link_password: String,
+        session_id: Option<String>,
+    ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
+        self.refresh_waiting_room_guest_session_for_join_request_with_access_token(
+            access_token,
+            meet_link_name,
+            meet_link_password,
+            session_id,
+        )
+        .await
+        .map_err(|e| e.into())
+    }
+
     #[wasm_bindgen(js_name = createJoinRequest)]
     pub async fn create_join_request_wasm(
         &self,

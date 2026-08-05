@@ -18,7 +18,17 @@ impl App {
         meeting_session_key: MeetingSessionKey,
     ) -> Result<SubmitJoinRequestResponse, MeetCoreError> {
         tracing::info!("create_join_request start");
-        let user_id = self.current_user_id().await?;
+        if self.has_prejoin_srp_auth_for(&meet_link_name).await {
+            tracing::debug!("moile prejoin srp auth found, refreshing waiting room guest session");
+            self.refresh_waiting_room_guest_session_for_join_request(&meet_link_name)
+                .await?;
+        }
+        let user_id = self.current_user_id().await.map_err(|_| {
+            MeetCoreError::InternalError {
+                message: "No active MLS session for join request. Call prepareMlsSessionForWaitingRoom or refreshWaitingRoomGuestSessionForJoinRequest first.".to_string(),
+                details: None,
+            }
+        })?;
         let join_request = self
             .waiting_room_service
             .create_join_request(&meet_link_name.into(), &user_id, &meeting_session_key)

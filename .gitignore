@@ -163,6 +163,11 @@ build_rs_cov.profraw
 test_proton_wallet_rust_db.*
 test_proton_meet_rust_db.*
 
+
+# # Graphify generated output
+graphify-out/
+
+
 # FVM Version Cache
 .fvm/
 
