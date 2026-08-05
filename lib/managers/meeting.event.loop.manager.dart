@@ -286,7 +286,8 @@ class MeetingEventLoopManager extends Service implements Manager {
   String _hashMeetings(List<FrbUpcomingMeeting> meetings) {
     // Create a simple hash based on meeting IDs and update times
     final hashParts = meetings.map((m) {
-      return '${m.meetingLinkName}_${m.startTime}_${m.endTime}_${m.meetingName}';
+      return '${m.meetingLinkName}_${m.startTime}_${m.endTime}_'
+          '${m.meetingName}_${m.waitingRoom}';
     }).toList()..sort();
     return hashParts.join('|');
   }

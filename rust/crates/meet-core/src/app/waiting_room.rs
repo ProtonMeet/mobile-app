@@ -288,6 +288,23 @@ impl App {
             .await
     }
 
+    /// Updates waiting-room policy before the meeting starts (direct backend API, no MLS commit).
+    pub async fn update_waiting_room_setting_pre_meeting(
+        &self,
+        meet_link_name: String,
+        enable: bool,
+    ) -> Result<(), MeetCoreError> {
+        tracing::info!(
+            "update_waiting_room_setting_pre_meeting meet_link_name={} enable={}",
+            meet_link_name,
+            enable
+        );
+        self.meeting_api
+            .update_waiting_room_setting_pre_meeting(&meet_link_name, enable)
+            .await?;
+        Ok(())
+    }
+
     pub(crate) async fn admit_waiting_room_join_requests_internal(
         &self,
         meet_link_name: String,

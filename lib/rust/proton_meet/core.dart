@@ -448,6 +448,12 @@ abstract class AppCore implements RustOpaqueInterface {
     required bool enable,
   });
 
+  /// Updates waiting-room policy before the meeting starts (no in-call MLS commit).
+  Future<void> updateWaitingRoomSettingPreMeeting({
+    required String meetLinkName,
+    required bool enable,
+  });
+
   /// Waits up to 5 minutes for the host to admit via Welcome, then joins the MLS group.
   Future<void> waitForWaitingRoomWelcome({required String meetLinkName});
 }

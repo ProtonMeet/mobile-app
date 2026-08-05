@@ -324,6 +324,7 @@ extension FrbUpcomingMeetingExtension on FrbUpcomingMeeting {
       timeZone: timeZone,
       recurrence: _mapRRuleToRecurrence(rRule),
       showTimeZones: true,
+      waitingRoomEnabled: waitingRoom.isWaitingRoomEnabled,
     );
   }
 
@@ -357,4 +358,27 @@ extension FrbUpcomingMeetingExtension on FrbUpcomingMeeting {
 /// Backend waiting-room flag: `1` enabled, `null`/`0` disabled.
 extension WaitingRoomValue on int? {
   bool get isWaitingRoomEnabled => this == 1;
+}
+
+extension FrbUpcomingMeetingCopy on FrbUpcomingMeeting {
+  FrbUpcomingMeeting withWaitingRoom({required bool enabled}) {
+    return FrbUpcomingMeeting(
+      id: id,
+      addressId: addressId,
+      meetingLinkName: meetingLinkName,
+      meetingName: meetingName,
+      meetingPassword: meetingPassword,
+      meetingType: meetingType,
+      startTime: startTime,
+      endTime: endTime,
+      rRule: rRule,
+      timeZone: timeZone,
+      calendarId: calendarId,
+      protonCalendar: protonCalendar,
+      createTime: createTime,
+      lastUsedTime: lastUsedTime,
+      calendarEventId: calendarEventId,
+      waitingRoom: enabled ? 1 : 0,
+    );
+  }
 }
