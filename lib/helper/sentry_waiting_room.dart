@@ -170,6 +170,41 @@ void captureWaitingRoomTimeoutToSentry({
   );
 }
 
+/// Host admit-all left one or more join requests unadmitted after retries.
+/// Non-blocking.
+void captureWaitingRoomAdmitAllPartialFailureToSentry({
+  required String meetLinkName,
+  required List<String> expectedRequestIds,
+  required List<String> admittedRequestIds,
+  required List<String> unadmittedRequestIds,
+}) {
+  _enqueueSentryReport(
+    () => Sentry.captureMessage(
+      'Waiting room admit-all left ${unadmittedRequestIds.length} '
+      'join request(s) unadmitted',
+      level: SentryLevel.error,
+      withScope: (scope) {
+        scope.setTag('error_type', kSentryErrorTypeWaitingRoomFailed);
+        scope.setTag('waiting_room_flow', 'host_admit_all');
+        if (meetLinkName.isNotEmpty) {
+          scope.setTag('meeting_link_name', meetLinkName);
+        }
+        scope.setTag(
+          'unadmitted_count',
+          unadmittedRequestIds.length.toString(),
+        );
+
+        scope.setContexts('waiting_room_details', {
+          'kind': 'admit_all_failure',
+          'expected_count': expectedRequestIds.length,
+          'admitted_count': admittedRequestIds.length,
+          'unadmitted_count': unadmittedRequestIds.length,
+        });
+      },
+    ),
+  );
+}
+
 /// Host received more expired waiting-room join requests than the configured
 /// threshold (possible device clock skew). Non-blocking.
 void captureExpiredWaitingRoomJoinRequestsThresholdToSentry({

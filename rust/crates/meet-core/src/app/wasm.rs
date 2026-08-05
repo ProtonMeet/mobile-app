@@ -885,6 +885,7 @@ impl App {
             Some(session_key),
         )
         .await
+        .map(|_| ())
         .map_err(|e| e.into())
     }
 
@@ -893,7 +894,7 @@ impl App {
         &self,
         meet_link_name: String,
         session_key_base64: String,
-    ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
+    ) -> Result<Vec<String>, crate::errors::core::MeetCoreErrorEnum> {
         let session_key = meeting_session_key_from_base64(&session_key_base64)?;
         self.admit_all_waiting_room_join_requests(meet_link_name, Some(session_key))
             .await

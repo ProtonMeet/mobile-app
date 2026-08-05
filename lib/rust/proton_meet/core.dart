@@ -42,7 +42,10 @@ import 'user_config.dart';
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>>
 abstract class AppCore implements RustOpaqueInterface {
   /// Admits all pending waiting-room join requests (host only).
-  Future<void> admitAllWaitingRoomJoinRequests({required String meetLinkName});
+  /// Returns the `request_id`s that were successfully admitted.
+  Future<List<String>> admitAllWaitingRoomJoinRequests({
+    required String meetLinkName,
+  });
 
   /// Admits a single waiting-room join request (host only).
   Future<void> admitWaitingRoomJoinRequest({
