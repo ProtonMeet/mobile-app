@@ -119,32 +119,6 @@ mixin RoomSettingsHandlers
     }
   }
 
-  /// Applies a host's pre-join waiting-room preference once the room is ready.
-  Future<void> syncPendingHostWaitingRoomOnEnter({
-    required bool? pendingEnabled,
-    required String meetLinkName,
-  }) async {
-    if (pendingEnabled == null) {
-      return;
-    }
-
-    try {
-      await toggleWaitingRoomSetting(
-        value: pendingEnabled,
-        meetLinkName: meetLinkName,
-      );
-    } catch (e, stackTrace) {
-      l.logger.e('Error syncing host waiting room on enter: $e');
-      captureWaitingRoomFailureToSentry(
-        flow: 'host_sync_policy_on_enter',
-        error: e,
-        stackTrace: stackTrace,
-        meetLinkName: meetLinkName,
-        phase: pendingEnabled ? 'enable' : 'disable',
-      );
-    }
-  }
-
   /// Sets the unsubscribe video by default state.
   ///
   /// When enabled, new video tracks will be automatically unsubscribed.

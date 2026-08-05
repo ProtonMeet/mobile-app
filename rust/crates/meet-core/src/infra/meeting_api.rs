@@ -13,6 +13,7 @@ use crate::infra::dto::meeting::{
     UpdateMeetingScheduleRequest,
 };
 use crate::infra::dto::meeting_feedback::MeetingFeedbackRequest;
+use crate::infra::group_info_payload::PhpWaitingRoomDataField;
 use crate::infra::http_client::ProtonHttpClient;
 use crate::infra::http_client_util::HttpClientUtil;
 use crate::infra::proton_response_ext::ProtonResponseExt;
@@ -165,6 +166,25 @@ impl MeetingApi for ProtonHttpClient {
             .body(request_body_json.as_bytes())
             .header(ContentType::JSON);
         let res = self.get_session().send(req).await?;
+        let _ = res.parse_response::<ProtonEmptyResponse>()?;
+        Ok(())
+    }
+
+    async fn update_waiting_room_setting_pre_meeting(
+        &self,
+        meet_link_name: &str,
+        enable: bool,
+    ) -> Result<(), HttpClientError> {
+        let body = PhpWaitingRoomDataField {
+            data: None,
+            waiting_room: u8::from(enable),
+        };
+        let req = self
+            .put(format!(
+                "/meet/v1/meetings/links/{meet_link_name}/waiting-room"
+            ))
+            .body_json(body)?;
+        let res = self.send_session_request(req).await?;
         let _ = res.parse_response::<ProtonEmptyResponse>()?;
         Ok(())
     }

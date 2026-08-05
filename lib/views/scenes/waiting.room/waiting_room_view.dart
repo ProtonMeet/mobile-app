@@ -216,8 +216,6 @@ class _WaitingRoomPageState extends State<WaitingRoomPage>
       authBloc: widget.args.authBloc,
       cameraBackgroundBlurEnabled: widget.cameraBackgroundBlurEnabled,
       prefetchedMeetingInfo: widget.args.prefetchedMeetingInfo,
-      pendingHostWaitingRoomSyncEnabled:
-          widget.args.pendingHostWaitingRoomSyncEnabled,
     );
 
     // Use a custom fade transition for smoother animation

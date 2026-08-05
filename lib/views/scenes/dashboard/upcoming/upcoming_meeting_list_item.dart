@@ -355,6 +355,20 @@ class UpcomingMeetingListItem extends StatelessWidget {
   }
 
   void _handleEdit(BuildContext context) {
+    final dashboardBloc = context.read<DashboardBloc>();
+    final showWaitingRoom = dashboardBloc.isMeetWaitingRoomEnabled();
+    void patchWaitingRoom({
+      required String meetingLinkName,
+      required bool enabled,
+    }) {
+      dashboardBloc.add(
+        PatchMeetingWaitingRoomEvent(
+          meetingLinkName: meetingLinkName,
+          enabled: enabled,
+        ),
+      );
+    }
+
     if (meeting.isMyMeetings()) {
       final initialData = meeting.toScheduleMeetingData(
         useLocalTimezone: false,
@@ -366,10 +380,12 @@ class UpcomingMeetingListItem extends StatelessWidget {
         context,
         initialData: initialData,
         isPaidUser: isPaidUser,
+        meetingLinkName: meeting.meetingLinkName,
         displayColors: displayColors,
-        showWaitingRoom: context.read<DashboardBloc>().isMeetWaitingRoomEnabled(),
+        showWaitingRoom: showWaitingRoom,
+        onWaitingRoomSettingChanged: patchWaitingRoom,
         onEdit: (data) {
-          context.read<DashboardBloc>().add(
+          dashboardBloc.add(
             UpdateScheduledMeetingEvent(meeting: meeting, data: data),
           );
         },
@@ -379,8 +395,12 @@ class UpcomingMeetingListItem extends StatelessWidget {
         context,
         initialRoomName: meeting.meetingName,
         displayColors: displayColors,
+        showWaitingRoom: showWaitingRoom,
+        meetingLinkName: meeting.meetingLinkName,
+        initialWaitingRoomEnabled: meeting.waitingRoom.isWaitingRoomEnabled,
+        onWaitingRoomSettingChanged: patchWaitingRoom,
         onEditRoom: (roomName) {
-          context.read<DashboardBloc>().add(
+          dashboardBloc.add(
             UpdateMeetingEvent(meeting: meeting, updatedMeetingName: roomName),
           );
         },

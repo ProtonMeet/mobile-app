@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
+import 'package:meet/views/components/custom.loading.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 
 import 'schedule_meeting_field_row.dart';
@@ -33,6 +34,8 @@ class ScheduleMeetingContent extends StatelessWidget {
     required this.onDragEnd,
     this.displayColors,
     this.timeValidationError,
+    this.isWaitingRoomUpdating = false,
+    this.waitingRoomError,
     super.key,
   });
 
@@ -61,6 +64,8 @@ class ScheduleMeetingContent extends StatelessWidget {
   final GestureDragEndCallback onDragEnd;
   final ParticipantDisplayColors? displayColors;
   final String? timeValidationError;
+  final bool isWaitingRoomUpdating;
+  final String? waitingRoomError;
 
   @override
   Widget build(BuildContext context) {
@@ -201,7 +206,15 @@ class ScheduleMeetingContent extends StatelessWidget {
             topBorder: false,
             icon: context.images.iconScheduleWaitingRoom.svg20(),
             label: waitingRoomLabel,
-            onTap: onSelectWaitingRoom,
+            onTap: isWaitingRoomUpdating ? () {} : onSelectWaitingRoom,
+            validationError: waitingRoomError,
+            trailing: isWaitingRoomUpdating
+                ? CustomLoading(
+                    size: 16,
+                    strokeWidth: 2,
+                    color: context.colors.protonBlue,
+                  )
+                : null,
           ),
 
         /// recurrence field

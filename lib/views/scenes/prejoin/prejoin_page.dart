@@ -164,6 +164,16 @@ class _PreJoinPageState extends State<PreJoinPage> {
           ),
           BlocListener<PreJoinBloc, PreJoinState>(
             listenWhen: (prev, curr) =>
+                prev.waitingRoomSettingError != curr.waitingRoomSettingError &&
+                curr.waitingRoomSettingError != null &&
+                curr.waitingRoomSettingError!.isNotEmpty,
+            listener: (context, state) {
+              LocalToast.showToast(context, state.waitingRoomSettingError!);
+              widget.bloc.add(WaitingRoomSettingErrorConsumed());
+            },
+          ),
+          BlocListener<PreJoinBloc, PreJoinState>(
+            listenWhen: (prev, curr) =>
                 prev.error != curr.error &&
                 curr.error != null &&
                 curr.error!.isNotEmpty,
@@ -323,6 +333,8 @@ class _PreJoinTopBar extends StatelessWidget {
           showRoomNameLoading:
               roomName.isEmpty &&
               (state.isJoinAuthenticating ||
+                  state.isLoadingMeetingContext ||
+                  state.isLoadingHostMeetingContext ||
                   state.waitingRoomAdmissionPhase ==
                       WaitingRoomAdmissionPhase.hostNotStarted),
           roomName: roomName,

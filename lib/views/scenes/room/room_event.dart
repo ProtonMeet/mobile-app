@@ -37,9 +37,6 @@ class RoomInitialized extends RoomBlocEvent {
   /// Populated during pre-join to skip a redundant getMeetingInfo call.
   final FrbMeetingInfo? prefetchedMeetingInfo;
 
-  /// Host-only: when non-null, sync waiting-room policy to this value after room init.
-  final bool? pendingHostWaitingRoomSyncEnabled;
-
   const RoomInitialized({
     required this.room,
     required this.listener,
@@ -50,7 +47,6 @@ class RoomInitialized extends RoomBlocEvent {
     required this.meetingLink,
     this.cameraBackgroundBlurEnabled = false,
     this.prefetchedMeetingInfo,
-    this.pendingHostWaitingRoomSyncEnabled,
   });
 
   @override
@@ -64,7 +60,6 @@ class RoomInitialized extends RoomBlocEvent {
     meetingLink,
     cameraBackgroundBlurEnabled,
     prefetchedMeetingInfo,
-    pendingHostWaitingRoomSyncEnabled,
   ];
 }
 

@@ -63,6 +63,13 @@ pub trait MeetingApi: Send + Sync {
         base64_sd_kbt: &str,
         request_body_json: &str,
     ) -> Result<(), HttpClientError>;
+
+    /// Enable or disable waiting room before the meeting starts (Proton session auth only).
+    async fn update_waiting_room_setting_pre_meeting(
+        &self,
+        meet_link_name: &str,
+        enable: bool,
+    ) -> Result<(), HttpClientError>;
 }
 
 #[cfg(test)]
@@ -307,6 +314,20 @@ mod tests {
 
         let result = mock
             .update_waiting_room_setting("meeting-1", "sd-kbt", r#"{"Data":"abc","WaitingRoom":0}"#)
+            .await;
+        assert!(result.is_ok());
+    }
+
+    #[unified_test]
+    async fn test_update_waiting_room_setting_pre_meeting_enable_success() {
+        let mut mock = MockMeetingApi::new();
+
+        mock.expect_update_waiting_room_setting_pre_meeting()
+            .withf(|name, enable| name == "link-name" && *enable)
+            .returning(|_, _| Box::pin(async { Ok(()) }));
+
+        let result = mock
+            .update_waiting_room_setting_pre_meeting("link-name", true)
             .await;
         assert!(result.is_ok());
     }
