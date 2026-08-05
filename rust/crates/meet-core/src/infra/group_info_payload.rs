@@ -1,5 +1,5 @@
 use base64::Engine;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 pub const GROUP_INFO_ZSTD_LEVEL: i32 = 3;
@@ -44,6 +44,14 @@ pub struct PhpWaitingRoomDataField {
     pub data: String,
 }
 
+/// PUT `/meet/v1/meetings/links/{id}/waiting-room` body.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct WaitingRoomSettingPutRequest {
+    pub data: String,
+    pub waiting_room: u8,
+}
+
 pub fn serialize_group_info_payload<T: Serialize>(
     request: &T,
 ) -> Result<Vec<u8>, GroupInfoPayloadError> {
@@ -74,6 +82,18 @@ pub fn encode_php_waiting_room_data_field(
     Ok(PhpWaitingRoomDataField {
         data: base64::engine::general_purpose::STANDARD.encode(compressed),
     })
+}
+
+pub fn encode_waiting_room_setting_put_body(
+    inner_json: &[u8],
+    enable: bool,
+) -> Result<String, GroupInfoPayloadError> {
+    let php_field = encode_php_waiting_room_data_field(inner_json)?;
+    let put_request = WaitingRoomSettingPutRequest {
+        data: php_field.data,
+        waiting_room: u8::from(enable),
+    };
+    Ok(serde_json::to_string(&put_request)?)
 }
 
 #[cfg(test)]
@@ -127,6 +147,20 @@ mod tests {
             assert!(String::from_utf8(json)
                 .unwrap()
                 .contains(&format!(r#""WaitingRoom":{expected}"#)));
+        }
+    }
+
+    #[test]
+    fn waiting_room_setting_put_body_includes_top_level_flag() {
+        for (enable, expected) in [(true, 1u8), (false, 0u8)] {
+            let request = WaitingRoomSettingRequest::new(vec![1], vec![2], enable);
+            let inner = serialize_waiting_room_setting_request(&request).unwrap();
+            let body = encode_waiting_room_setting_put_body(&inner, enable).unwrap();
+            assert!(body.contains(&format!(r#""WaitingRoom":{expected}"#)));
+            let parsed: WaitingRoomSettingPutRequest =
+                serde_json::from_str(&body).expect("parse put body");
+            assert_eq!(parsed.waiting_room, expected);
+            assert!(!parsed.data.is_empty());
         }
     }
 }

@@ -611,14 +611,15 @@ impl AppCore {
     }
 
     /// Admits all pending waiting-room join requests (host only).
+    /// Returns the `request_id`s that were successfully admitted.
     pub async fn admit_all_waiting_room_join_requests(
         &self,
         meet_link_name: String,
-    ) -> Result<(), BridgeError> {
-        self.inner
+    ) -> Result<Vec<String>, BridgeError> {
+        Ok(self
+            .inner
             .admit_all_waiting_room_join_requests(meet_link_name, None)
-            .await?;
-        Ok(())
+            .await?)
     }
 
     #[allow(clippy::too_many_arguments)]
