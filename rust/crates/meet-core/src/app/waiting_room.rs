@@ -18,7 +18,17 @@ impl App {
         meeting_session_key: MeetingSessionKey,
     ) -> Result<SubmitJoinRequestResponse, MeetCoreError> {
         tracing::info!("create_join_request start");
-        let user_id = self.current_user_id().await?;
+        if self.has_prejoin_srp_auth_for(&meet_link_name).await {
+            tracing::debug!("moile prejoin srp auth found, refreshing waiting room guest session");
+            self.refresh_waiting_room_guest_session_for_join_request(&meet_link_name)
+                .await?;
+        }
+        let user_id = self.current_user_id().await.map_err(|_| {
+            MeetCoreError::InternalError {
+                message: "No active MLS session for join request. Call prepareMlsSessionForWaitingRoom or refreshWaitingRoomGuestSessionForJoinRequest first.".to_string(),
+                details: None,
+            }
+        })?;
         let join_request = self
             .waiting_room_service
             .create_join_request(&meet_link_name.into(), &user_id, &meeting_session_key)
@@ -240,13 +250,14 @@ impl App {
         );
         self.admit_waiting_room_join_requests_internal(meet_link_name, Some(vec![request_id]), None)
             .await
+            .map(|_| ())
     }
 
     pub async fn admit_all_waiting_room_join_requests(
         &self,
         meet_link_name: String,
         meeting_session_key: Option<MeetingSessionKey>,
-    ) -> Result<(), MeetCoreError> {
+    ) -> Result<Vec<String>, MeetCoreError> {
         tracing::info!(
             "admit_all_waiting_room_join_requests start meet_link_name={}",
             meet_link_name
@@ -299,7 +310,7 @@ impl App {
         meet_link_name: String,
         request_ids: Option<Vec<String>>,
         meeting_session_key: Option<MeetingSessionKey>,
-    ) -> Result<(), MeetCoreError> {
+    ) -> Result<Vec<String>, MeetCoreError> {
         tracing::debug!(
             "admit_waiting_room_join_requests_internal start meet_link_name={} request_count={}",
             meet_link_name,
@@ -329,7 +340,7 @@ impl App {
                 "no pending waiting-room join requests to admit meet_link_name={}",
                 meet_link_name
             );
-            return Ok(());
+            return Ok(vec![]);
         }
 
         tracing::info!(
@@ -353,7 +364,8 @@ impl App {
             key_packages.push(key_package);
             admitted_request_ids.push(request.request_id.clone());
         }
-        self.user_service
+        let admitted_request_ids = self
+            .user_service
             .write()
             .await
             .admit_waiting_room_join_requests(
@@ -362,6 +374,12 @@ impl App {
                 key_packages,
                 admitted_request_ids,
             )
-            .await
+            .await?;
+        tracing::info!(
+            "admit_waiting_room_join_requests_internal success meet_link_name={} admitted_request_ids={:?}",
+            meet_link_name,
+            admitted_request_ids
+        );
+        Ok(admitted_request_ids)
     }
 }

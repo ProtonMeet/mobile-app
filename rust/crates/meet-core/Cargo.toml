@@ -1,6 +1,6 @@
 [package]
 name = "proton-meet-core"
-version = "1.2.0-12"
+version = "1.3.0-5"
 edition = "2021"
 
 [lib]
@@ -87,24 +87,9 @@ rustls = { version = "0.23.31", default-features = false, features = [
     "std",
 ] }
 rustls-platform-verifier = "0.7.0"
-async-compat = "0.2.4"
-muon = { workspace = true, features = [
-    "other-product",
-    "full-native",
-    "login",
-] }
 openssl = { version = "*", features = ["vendored"] }
 
-# Native (non-Android): Proton account login via muon SRP (`login` → proton-srp).
-[target.'cfg(all(not(target_os = "android"), not(target_arch = "wasm32")))'.dependencies]
-async-compat = "0.2.4"
-muon = { workspace = true, features = [
-    "other-product",
-    "full-native",
-    "login",
-] }
-
-# WASM: pre-authenticated / forked sessions only — omit `login` to drop proton-srp/pgp.
+# WASM: pre-authenticated / forked sessions only — no `login` (no proton-srp/pgp).
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 muon = { workspace = true, features = [
     "other-product",
@@ -139,6 +124,18 @@ wasmtimer = "0.4.2"
 console_error_panic_hook = "0.1.7"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+async-compat = "0.2.4"
+# Native-only muon: `login` for SRP/password auth; `full-native` minus `http2` (H2 keep-alive
+# panics on muon 2.6.x — see HyperTimer / HyperSleep re-poll). HTTP/1.1 keeps TLS pinning.
+muon = { workspace = true, features = [
+    "other-product",
+    "lenient",
+    "login",
+    "alternative-routing",
+    "common-multipart",
+    "transport-reqwest-rustls",
+    "transport-hyper",
+] }
 rusqlite = { version = "=0.39.0", features = ["bundled", "serde_json"] }
 tokio = { workspace = true }
 tempfile = "3"

@@ -1,5 +1,5 @@
 use base64::Engine;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 pub const GROUP_INFO_ZSTD_LEVEL: i32 = 3;
@@ -43,6 +43,14 @@ impl WaitingRoomSettingRequest {
 pub struct PhpWaitingRoomDataField {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<String>,
+    pub waiting_room: u8,
+}
+
+/// PUT `/meet/v1/meetings/links/{id}/waiting-room` body.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct WaitingRoomSettingPutRequest {
+    pub data: String,
     pub waiting_room: u8,
 }
 

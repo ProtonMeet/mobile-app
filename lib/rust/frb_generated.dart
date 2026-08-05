@@ -114,7 +114,8 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
-  Future<void> crateProtonMeetCoreAppCoreAdmitAllWaitingRoomJoinRequests({
+  Future<List<String>>
+  crateProtonMeetCoreAppCoreAdmitAllWaitingRoomJoinRequests({
     required AppCore that,
     required String meetLinkName,
   });
@@ -866,7 +867,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
-  Future<void> crateProtonMeetCoreAppCoreAdmitAllWaitingRoomJoinRequests({
+  Future<List<String>>
+  crateProtonMeetCoreAppCoreAdmitAllWaitingRoomJoinRequests({
     required AppCore that,
     required String meetLinkName,
   }) {
@@ -887,7 +889,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
+          decodeSuccessData: sse_decode_list_String,
           decodeErrorData: sse_decode_bridge_error,
         ),
         constMeta:
@@ -10782,7 +10784,8 @@ class AppCoreImpl extends RustOpaque implements AppCore {
   );
 
   /// Admits all pending waiting-room join requests (host only).
-  Future<void> admitAllWaitingRoomJoinRequests({
+  /// Returns the `request_id`s that were successfully admitted.
+  Future<List<String>> admitAllWaitingRoomJoinRequests({
     required String meetLinkName,
   }) => RustLib.instance.api
       .crateProtonMeetCoreAppCoreAdmitAllWaitingRoomJoinRequests(

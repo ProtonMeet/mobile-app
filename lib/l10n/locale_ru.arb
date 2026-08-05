@@ -113,6 +113,22 @@
   "picture_in_picture_mode": "Режим «картинка в картинке»",
   "security": "Безопасность",
   "enable_waiting_room": "Включить зал ожидания",
+  "waiting_room_setting_on_description": "Participants join after you approve them",
+  "@waiting_room_setting_on_description": {
+    "description": "Waiting room switch description when enabled in meeting settings"
+  },
+  "waiting_room_setting_off_description": "Anyone with the link can join",
+  "@waiting_room_setting_off_description": {
+    "description": "Waiting room switch description when disabled in meeting settings"
+  },
+  "waiting_room_enabled_notification": "Enabled waiting room, participants join after you approve them.",
+  "@waiting_room_enabled_notification": {
+    "description": "Global notification when the host enables waiting room in meeting settings"
+  },
+  "waiting_room_disabled_notification": "Disabled waiting room, anyone with the link can join.",
+  "@waiting_room_disabled_notification": {
+    "description": "Global notification when the host disables waiting room in meeting settings"
+  },
   "hide_self_view": "Скрыть собственное видео",
   "allow_all_participants_to": "Разрешить всем участникам:",
   "chat": "Чат",
@@ -885,7 +901,7 @@
   "@unnamed_room": {
     "description": "Default name for rooms without a name"
   },
-  "participants_count_text": "{count, plural, one {{count} участник} few {{count} участника} many {{count} участников} other {{count} участников}}",
+  "participants_count_text": "{count} participants",
   "@participants_count_text": {
     "description": "Text showing number of participants",
     "placeholders": {
@@ -1147,7 +1163,7 @@
   "@simulated_rooms": {
     "description": "Title for simulated rooms section"
   },
-  "room_with_users": "Комната {key} ({count, plural, one {{count} пользователь} few {{count} пользователя} many {{count} пользователей} other {{count} пользователей}})",
+  "room_with_users": "Room {key} ({count} users)",
   "@room_with_users": {
     "description": "Text showing room ID and user count",
     "placeholders": {

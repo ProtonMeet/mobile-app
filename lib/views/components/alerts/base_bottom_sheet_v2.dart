@@ -111,6 +111,9 @@ class BaseBottomSheetV2 extends StatelessWidget {
     this.blurSigma = 10,
     this.topCornerRadius = 40,
     this.borderSideAlpha = 0.03,
+    this.borderColor,
+    this.shellBorderRadius,
+    this.fillHeight = false,
     this.enableHandleDragPassthrough = false,
     this.handlePassthroughHeight = 88,
 
@@ -160,12 +163,16 @@ class BaseBottomSheetV2 extends StatelessWidget {
     bool showPinnedHeader = true,
     double toolbarHeight = 40,
     double innerCornerRadius = 24,
+    double? headerOuterCornerRadius,
     bool innerEnableHandleDragPassthrough = true,
     double headerBlurSigma = 10,
     double bottomPadding = 24,
     double blurSigma = 10,
     double topCornerRadius = 40,
     double borderSideAlpha = 0.03,
+    Color? borderColor,
+    BorderRadius? shellBorderRadius,
+    bool fillHeight = false,
     bool outerEnableHandleDragPassthrough = false,
     double outerHandlePassthroughHeight = 40,
     Color? sheetBackgroundColor,
@@ -174,6 +181,8 @@ class BaseBottomSheetV2 extends StatelessWidget {
     double? modalMaxHeight,
     double modalMaxWidth = maxMobileSheetWidth,
     Widget? flexibleSpaceChild,
+    Widget? headerVisualOverlay,
+    Widget? footer,
     bool modalFillMaxHeight = true,
     VoidCallback? onPinnedHeaderBack,
     bool pinnedHeaderBackEnabled = true,
@@ -200,6 +209,9 @@ class BaseBottomSheetV2 extends StatelessWidget {
       blurSigma: blurSigma,
       topCornerRadius: topCornerRadius,
       borderSideAlpha: borderSideAlpha,
+      borderColor: borderColor,
+      shellBorderRadius: shellBorderRadius,
+      fillHeight: fillHeight,
       enableHandleDragPassthrough: outerEnableHandleDragPassthrough,
       handlePassthroughHeight: outerHandlePassthroughHeight,
       outerPassthroughLeadingInset:
@@ -212,18 +224,44 @@ class BaseBottomSheetV2 extends StatelessWidget {
       modalMaxHeight: modalMaxHeight,
       modalMaxWidth: modalMaxWidth,
       modalFillMaxHeight: modalFillMaxHeight,
-      child: _SliverScrollBody(
-        controller: scrollController,
-        showPinnedHeader: showPinnedHeader,
-        toolbarHeight: effectiveToolbarHeight,
-        innerCornerRadius: innerCornerRadius,
-        flexibleSpaceChild: flexChild,
-        enableHandleDragPassthrough: innerEnableHandleDragPassthrough,
-        headerBlurSigma: headerBlurSigma,
-        shrinkWrap: !modalFillMaxHeight,
-        pinnedHeaderLeadingReserve: leadingReserve,
-        slivers: slivers,
-      ),
+      child: footer != null
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _SliverScrollBody(
+                    controller: scrollController,
+                    showPinnedHeader: showPinnedHeader,
+                    toolbarHeight: effectiveToolbarHeight,
+                    innerCornerRadius: innerCornerRadius,
+                    headerOuterCornerRadius: headerOuterCornerRadius,
+                    flexibleSpaceChild: flexChild,
+                    enableHandleDragPassthrough:
+                        innerEnableHandleDragPassthrough,
+                    headerBlurSigma: headerBlurSigma,
+                    shrinkWrap: !modalFillMaxHeight,
+                    pinnedHeaderLeadingReserve: leadingReserve,
+                    headerVisualOverlay: headerVisualOverlay,
+                    slivers: slivers,
+                  ),
+                ),
+                footer,
+              ],
+            )
+          : _SliverScrollBody(
+              controller: scrollController,
+              showPinnedHeader: showPinnedHeader,
+              toolbarHeight: effectiveToolbarHeight,
+              innerCornerRadius: innerCornerRadius,
+              headerOuterCornerRadius: headerOuterCornerRadius,
+              flexibleSpaceChild: flexChild,
+              enableHandleDragPassthrough: innerEnableHandleDragPassthrough,
+              headerBlurSigma: headerBlurSigma,
+              shrinkWrap: !modalFillMaxHeight,
+              pinnedHeaderLeadingReserve: leadingReserve,
+              headerVisualOverlay: headerVisualOverlay,
+              slivers: slivers,
+            ),
     );
   }
 
@@ -242,7 +280,18 @@ class BaseBottomSheetV2 extends StatelessWidget {
   final double topCornerRadius;
 
   /// White border opacity on the outer [RoundedRectangleBorder] stroke.
+  /// Ignored when [borderColor] is set.
   final double borderSideAlpha;
+
+  /// When set, used for the outer shell border instead of white @ [borderSideAlpha].
+  final Color? borderColor;
+
+  /// When set, used for the outer shell corners (e.g. all corners on side rails).
+  /// When null, only the top corners use [topCornerRadius].
+  final BorderRadius? shellBorderRadius;
+
+  /// When true, the shell expands to fill available height (desktop side rail).
+  final bool fillHeight;
 
   /// When true, adds an *outer* transparent strip (height [handlePassthroughHeight])
   /// over the blurred shell so vertical drags on the handle region propagate to
@@ -280,24 +329,30 @@ class BaseBottomSheetV2 extends StatelessWidget {
           )
         : child;
 
+    final borderSide = borderColor != null
+        ? BorderSide(color: borderColor!)
+        : BorderSide(color: Colors.white.withValues(alpha: borderSideAlpha));
+
+    final shellRadius =
+        shellBorderRadius ??
+        BorderRadius.only(
+          topLeft: Radius.circular(topCornerRadius),
+          topRight: Radius.circular(topCornerRadius),
+        );
+
     final body = Container(
       width: double.infinity,
+      height: fillHeight ? double.infinity : null,
       padding: EdgeInsets.only(bottom: bottomPadding),
       clipBehavior: Clip.antiAlias,
-      decoration: ShapeDecoration(
+      decoration: BoxDecoration(
         color: sheetBackgroundColor ?? context.colors.blurBottomSheetBackground,
-        shape: RoundedRectangleBorder(
-          side: BorderSide(
-            color: Colors.white.withValues(alpha: borderSideAlpha),
-          ),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(topCornerRadius),
-            topRight: Radius.circular(topCornerRadius),
-          ),
-        ),
+        border: Border.fromBorderSide(borderSide),
+        borderRadius: shellRadius,
       ),
       child: RepaintBoundary(
         child: ClipRRect(
+          borderRadius: shellRadius,
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
             child: paddedChild,
@@ -419,11 +474,13 @@ class _SliverScrollBody extends StatelessWidget {
     this.showPinnedHeader = true,
     this.toolbarHeight = 87,
     this.innerCornerRadius = 24,
+    this.headerOuterCornerRadius,
     this.flexibleSpaceChild,
     this.enableHandleDragPassthrough = true,
     this.headerBlurSigma = 10,
     this.shrinkWrap = false,
     this.pinnedHeaderLeadingReserve = 0,
+    this.headerVisualOverlay,
   });
 
   final ScrollController? controller;
@@ -431,6 +488,7 @@ class _SliverScrollBody extends StatelessWidget {
   final bool showPinnedHeader;
   final double toolbarHeight;
   final double innerCornerRadius;
+  final double? headerOuterCornerRadius;
   final Widget? flexibleSpaceChild;
   final bool enableHandleDragPassthrough;
   final double headerBlurSigma;
@@ -440,13 +498,19 @@ class _SliverScrollBody extends StatelessWidget {
   /// pinned back) remain interactive.
   final double pinnedHeaderLeadingReserve;
 
+  /// Optional visual overlay (e.g. drag handle + title) stacked above the scroll
+  /// view at [toolbarHeight]. Room side panels use this for sheet handle chrome.
+  final Widget? headerVisualOverlay;
+
   @override
   Widget build(BuildContext context) {
+    final outerHeaderRadius = headerOuterCornerRadius ?? innerCornerRadius;
+
     final scrollSlivers = <Widget>[
       if (showPinnedHeader)
         SliverAppBar(
           pinned: true,
-          backgroundColor: Colors.transparent,
+          backgroundColor: context.colors.clear,
           elevation: 0,
           scrolledUnderElevation: 0,
           shadowColor: Colors.transparent,
@@ -457,8 +521,8 @@ class _SliverScrollBody extends StatelessWidget {
           flexibleSpace: SizedBox.expand(
             child: ClipRRect(
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(innerCornerRadius),
-                topRight: Radius.circular(innerCornerRadius),
+                topLeft: Radius.circular(outerHeaderRadius),
+                topRight: Radius.circular(outerHeaderRadius),
               ),
               child: BackdropFilter(
                 filter: ImageFilter.blur(
@@ -495,18 +559,28 @@ class _SliverScrollBody extends StatelessWidget {
       ),
     );
 
-    if (showPinnedHeader && enableHandleDragPassthrough) {
+    if (showPinnedHeader &&
+        (enableHandleDragPassthrough || headerVisualOverlay != null)) {
       return Stack(
         children: [
           scrollView,
-          Positioned.directional(
-            textDirection: Directionality.of(context),
-            top: 0,
-            start: pinnedHeaderLeadingReserve,
-            end: 0,
-            height: toolbarHeight,
-            child: AbsorbPointer(child: Container(color: Colors.transparent)),
-          ),
+          if (enableHandleDragPassthrough)
+            Positioned.directional(
+              textDirection: Directionality.of(context),
+              top: 0,
+              start: pinnedHeaderLeadingReserve,
+              end: 0,
+              height: toolbarHeight,
+              child: AbsorbPointer(child: Container(color: Colors.transparent)),
+            ),
+          if (headerVisualOverlay != null)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: toolbarHeight,
+              child: AbsorbPointer(child: headerVisualOverlay!),
+            ),
         ],
       );
     }

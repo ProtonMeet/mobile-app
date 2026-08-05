@@ -441,15 +441,38 @@ mixin RoomWaitingRoomHandlers
       _syncWaitingRoomExpirationTimer(pruned.waitingRoomParticipants);
     }
 
-    if (pruned.waitingRoomParticipants.isEmpty) return;
+    final expectedRequestIds = pruned.waitingRoomParticipants
+        .where((request) => request.isActive)
+        .map((request) => request.requestId)
+        .toList(growable: false);
+    if (expectedRequestIds.isEmpty) return;
 
     emit(state.copyWith(isAdmitAllWaitingRoomInProgress: true));
 
     final appCore = ManagerFactory().get<AppCoreManager>().appCore;
+    final meetLinkName = state.meetInfo.meetLinkName;
     try {
-      await appCore.admitAllWaitingRoomJoinRequests(
-        meetLinkName: state.meetInfo.meetLinkName,
+      final admittedIds = await appCore.admitAllWaitingRoomJoinRequests(
+        meetLinkName: meetLinkName,
       );
+      // trans to set for faster lookup
+      final admittedSet = admittedIds.toSet();
+      final unadmittedRequestIds = expectedRequestIds
+          .where((requestId) => !admittedSet.contains(requestId))
+          .toList(growable: false);
+
+      if (unadmittedRequestIds.isNotEmpty) {
+        l.logger.e(
+          '[RoomBloc] admit-all waiting-room join requests left '
+          '${unadmittedRequestIds.length} unadmitted: $unadmittedRequestIds',
+        );
+        captureWaitingRoomAdmitAllPartialFailureToSentry(
+          meetLinkName: meetLinkName,
+          expectedRequestIds: expectedRequestIds,
+          admittedRequestIds: admittedIds,
+          unadmittedRequestIds: unadmittedRequestIds,
+        );
+      }
     } catch (e, st) {
       l.logger.e(
         '[RoomBloc] failed to admit all waiting-room join requests: $e',
@@ -459,7 +482,7 @@ mixin RoomWaitingRoomHandlers
         flow: 'host_admit_all',
         error: e,
         stackTrace: st,
-        meetLinkName: state.meetInfo.meetLinkName,
+        meetLinkName: meetLinkName,
       );
     } finally {
       emit(state.copyWith(isAdmitAllWaitingRoomInProgress: false));

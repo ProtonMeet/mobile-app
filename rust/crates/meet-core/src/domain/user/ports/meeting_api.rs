@@ -297,11 +297,7 @@ mod tests {
             .returning(|_, _, _| Box::pin(async { Ok(()) }));
 
         let result = mock
-            .update_waiting_room_setting(
-                "meeting-1",
-                "sd-kbt",
-                r#"{"Data":"abc","CommitData":[1,2],"WaitingRoom":1}"#,
-            )
+            .update_waiting_room_setting("meeting-1", "sd-kbt", r#"{"Data":"abc","WaitingRoom":1}"#)
             .await;
         assert!(result.is_ok());
     }
@@ -317,11 +313,7 @@ mod tests {
             .returning(|_, _, _| Box::pin(async { Ok(()) }));
 
         let result = mock
-            .update_waiting_room_setting(
-                "meeting-1",
-                "sd-kbt",
-                r#"{"Data":"abc","CommitData":[1,2],"WaitingRoom":0}"#,
-            )
+            .update_waiting_room_setting("meeting-1", "sd-kbt", r#"{"Data":"abc","WaitingRoom":0}"#)
             .await;
         assert!(result.is_ok());
     }

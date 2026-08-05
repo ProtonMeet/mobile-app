@@ -122,7 +122,7 @@ mixin RoomTracksHandlers
   ///
   /// **Special handling:**
   /// - Includes participants without active video tracks for visibility in layouts
-  /// - Local participant is inserted at the beginning (unless hideSelfCamera is true)
+  /// - Local participant is inserted at the beginning unless [hideSelfCamera] is true
   /// - Calculates and updates speaker tracks
   /// - Manages screen sharing index bounds
   ///
@@ -212,42 +212,33 @@ mixin RoomTracksHandlers
       sortUserMediaTracksBySpoken(userMediaTracks);
     }
 
-    final localParticipantTracks =
-        room.localParticipant?.videoTrackPublications;
+    final localParticipant = room.localParticipant;
+    final localParticipantTracks = localParticipant?.videoTrackPublications;
     if (localParticipantTracks != null && localParticipantTracks.isNotEmpty) {
-      for (var t in localParticipantTracks) {
+      for (final t in localParticipantTracks) {
         if (t.isScreenShare) {
           screenTracks.add(
             ParticipantInfo(
-              participant: room.localParticipant!,
+              participant: localParticipant!,
               type: ParticipantTrackType.kScreenShare,
               displayName: getParticipantDisplayName(
-                room.localParticipant!,
+                localParticipant,
                 isLocalScreenShare: true,
               ),
             ),
           );
-        } else {
-          if (!hideSelfCamera) {
-            userMediaTracks.insert(
-              0,
-              ParticipantInfo(
-                displayName: getParticipantDisplayName(room.localParticipant!),
-                participant: room.localParticipant!,
-              ),
-            );
-          }
         }
       }
-    } else if (room.localParticipant != null && !hideSelfCamera) {
-      /// add to userMediaTracks though localParticipant didn't publish video
-      /// so we can see this user in camera layout
-      final displayName = getParticipantDisplayName(room.localParticipant!);
+    }
+
+    if (localParticipant != null &&
+        !hideSelfCamera &&
+        seenIdentities.add(localParticipant.identity)) {
       userMediaTracks.insert(
         0,
         ParticipantInfo(
-          displayName: displayName,
-          participant: room.localParticipant!,
+          displayName: getParticipantDisplayName(localParticipant),
+          participant: localParticipant,
         ),
       );
     }

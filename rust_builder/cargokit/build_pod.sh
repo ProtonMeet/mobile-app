@@ -59,6 +59,15 @@ if [ "$PLATFORM_NAME" = "iphoneos" ] || [ "$PLATFORM_NAME" = "iphonesimulator" ]
   export RUSTFLAGS="${RUSTFLAGS:+${RUSTFLAGS} }--cfg mls_build_async -C link-arg=-framework -C link-arg=CoreFoundation"
 fi
 
+# gopenpgp-sys embeds Go runtime objects (go.o). Without MACOSX_DEPLOYMENT_TARGET / CGO min-version
+# flags, Go builds them for the host SDK (e.g. 26.0) while rust_builder links at 12.0 → ld warnings.
+if [ "$PLATFORM_NAME" = "macosx" ]; then
+  export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-12.0}"
+  export CGO_CFLAGS="${CGO_CFLAGS:+$CGO_CFLAGS }-mmacosx-version-min=${MACOSX_DEPLOYMENT_TARGET}"
+  export CGO_LDFLAGS="${CGO_LDFLAGS:+$CGO_LDFLAGS }-mmacosx-version-min=${MACOSX_DEPLOYMENT_TARGET}"
+  export RUSTFLAGS="${RUSTFLAGS:+${RUSTFLAGS} }--cfg mls_build_async -C link-arg=-mmacosx-version-min=${MACOSX_DEPLOYMENT_TARGET}"
+fi
+
 "$BASEDIR/run_build_tool.sh" build-pod "$@"
 
 # Make a symlink from built framework to phony file, which will be used as input to

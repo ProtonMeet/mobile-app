@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
@@ -7,12 +5,12 @@ import 'package:meet/constants/app.keys.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/logger.dart' as l;
-import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart';
 import 'package:meet/views/scenes/room/chat/chat_controller.dart';
 import 'package:meet/views/scenes/room/chat/chat_emoji_picker.dart';
 import 'package:meet/views/scenes/room/chat/chat_models.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 import 'package:meet/views/scenes/room/participant/participant_info.dart';
+import 'package:meet/views/scenes/room/side_panel_widget.dart';
 import 'package:meet/views/scenes/utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -54,7 +52,6 @@ class ChatWidget extends StatefulWidget {
 }
 
 class _ChatWidgetConstants {
-  static const double headerHeight = 51.0;
   static const double inputButtonSize = 54.0;
   static const double sendIconSize = 24.0;
   static const double avatarSize = 40.0;
@@ -62,7 +59,6 @@ class _ChatWidgetConstants {
   static const double replyActionButtonSize = 32.0;
   static const double emptyStateIconSize = 48.0;
 
-  static const double horizontalPadding = 24.0;
   static const double verticalPadding = 8.0;
   static const double inputPadding = 8.0;
   static const double inputBottomPadding = 4.0;
@@ -71,8 +67,6 @@ class _ChatWidgetConstants {
   static const double spacingLarge = 16.0;
   static const double spacingXLarge = 70.0;
 
-  static const double borderRadiusMedium = 24.0;
-  static const double borderRadiusLarge = 40.0;
   static const double borderRadiusXLarge = 200.0;
   static const double borderRadiusAvatar = 20002.0;
 
@@ -383,7 +377,7 @@ class _ChatWidgetState extends State<ChatWidget> {
   }
 
   FocusNode _replyFocus(String rootId) {
-    return _replyFocusNodes.putIfAbsent(rootId, () => FocusNode());
+    return _replyFocusNodes.putIfAbsent(rootId, FocusNode.new);
   }
 
   void _handleReplySend(RoomChatMessage root) {
@@ -450,22 +444,6 @@ class _ChatWidgetState extends State<ChatWidget> {
         : _ChatWidgetConstants.inputBottomPadding;
   }
 
-  Decoration _buildContainerDecoration(BuildContext context) {
-    const borderRadius = BorderRadius.only(
-      topLeft: Radius.circular(_ChatWidgetConstants.borderRadiusMedium),
-      topRight: Radius.circular(_ChatWidgetConstants.borderRadiusMedium),
-    );
-    return BoxDecoration(
-      color: context.colors.blurBottomSheetBackground,
-      border: Border.all(
-        color: Colors.white.withValues(
-          alpha: _ChatWidgetConstants.borderColorAlpha,
-        ),
-      ),
-      borderRadius: borderRadius,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
@@ -495,53 +473,31 @@ class _ChatWidgetState extends State<ChatWidget> {
               maxHeight: heights.maxHeight,
               minHeight: heights.minHeight,
             ),
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(
-                  _ChatWidgetConstants.borderRadiusLarge,
-                ),
-                topRight: Radius.circular(
-                  _ChatWidgetConstants.borderRadiusLarge,
+            child: RoomSidePanelScroll(
+              scrollController: _scrollController,
+              fillHeight: isLandscape,
+              header: Text(
+                context.local.chat_title,
+                style: ProtonStyles.headline(
+                  fontSize: 18,
+                  color: context.colors.textNorm,
                 ),
               ),
-              child: RepaintBoundary(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                  child: Container(
-                    width: double.infinity,
-                    height: double.infinity,
-                    decoration: _buildContainerDecoration(context),
-                    child: GestureDetector(
-                      onTap: () => FocusScope.of(context).unfocus(),
-                      behavior: HitTestBehavior.deferToChild,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: RepaintBoundary(
-                              child: _buildMessageListWithSliverAppBar(
-                                context,
-                                isLandscape,
-                              ),
-                            ),
-                          ),
-                          SafeArea(
-                            child: RepaintBoundary(
-                              child: _buildInputField(
-                                context,
-                                inputBottomPadding,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(
-                            height: _ChatWidgetConstants.spacingMedium,
-                          ),
-                        ],
-                      ),
+              footer: SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Center(child: _buildNewMessagesOverlay(context)),
+                    RepaintBoundary(
+                      child: _buildInputField(context, inputBottomPadding),
                     ),
-                  ),
+                    const SizedBox(
+                      height: _ChatWidgetConstants.spacingMedium,
+                    ),
+                  ],
                 ),
               ),
+              slivers: _buildMessageSlivers(context),
             ),
           ),
         );
@@ -549,42 +505,37 @@ class _ChatWidgetState extends State<ChatWidget> {
     );
   }
 
-  Widget _buildPinnedHeader(BuildContext context, bool isLandscape) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (!isLandscape)
-          const BottomSheetHandleBar()
-        else
-          const SizedBox(height: _ChatWidgetConstants.spacingMedium),
-        _buildHeaderTitle(context),
-      ],
-    );
-  }
+  List<Widget> _buildMessageSlivers(BuildContext context) {
+    final threads = _controller.threads;
 
-  Widget _buildHeaderTitle(BuildContext context) {
-    return RepaintBoundary(
-      child: Container(
-        width: double.infinity,
-        height: _ChatWidgetConstants.headerHeight,
-        padding: const EdgeInsets.only(
-          left: _ChatWidgetConstants.horizontalPadding,
-          right: _ChatWidgetConstants.horizontalPadding,
-          bottom: _ChatWidgetConstants.horizontalPadding,
+    if (threads.isEmpty) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: _buildEmptyState(context),
         ),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            context.local.chat_title,
-            style: ProtonStyles.headline(
-              fontSize: 18,
-              color: context.colors.textNorm,
-            ),
+      ];
+    }
+
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: RoomSidePanelLayout.horizontalPadding,
+        ),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              return RepaintBoundary(
+                child: _buildThread(context, threads[index]),
+              );
+            },
+            childCount: threads.length,
+            addAutomaticKeepAlives: false,
+            addRepaintBoundaries: false,
           ),
         ),
       ),
-    );
+    ];
   }
 
   // ── New messages overlay (shown while scrolled up) ──
@@ -652,8 +603,8 @@ class _ChatWidgetState extends State<ChatWidget> {
         ),
         curve: Curves.easeOutCubic,
         padding: EdgeInsets.only(
-          left: _ChatWidgetConstants.horizontalPadding,
-          right: _ChatWidgetConstants.horizontalPadding,
+          left: RoomSidePanelLayout.horizontalPadding,
+          right: RoomSidePanelLayout.horizontalPadding,
           bottom: bottomPadding,
           top: _ChatWidgetConstants.inputPadding,
         ),
@@ -711,7 +662,7 @@ class _ChatWidgetState extends State<ChatWidget> {
             maxHeight: heights.maxHeight,
           ),
           padding: const EdgeInsets.symmetric(
-            horizontal: _ChatWidgetConstants.horizontalPadding,
+            horizontal: RoomSidePanelLayout.horizontalPadding,
             vertical: _ChatWidgetConstants.spacingLarge,
           ),
           decoration: ShapeDecoration(
@@ -791,106 +742,6 @@ class _ChatWidgetState extends State<ChatWidget> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildMessageListWithSliverAppBar(
-    BuildContext context,
-    bool isLandscape,
-  ) {
-    final threads = _controller.threads;
-
-    final toolbarHeight =
-        _ChatWidgetConstants.headerHeight +
-        (!isLandscape ? 36.0 : _ChatWidgetConstants.spacingMedium);
-
-    final scrollView = ScrollConfiguration(
-      behavior: ScrollConfiguration.of(context).copyWith(overscroll: false),
-      child: CustomScrollView(
-        controller: _scrollController,
-        physics: const ClampingScrollPhysics(),
-        slivers: [
-          SliverAppBar(
-            pinned: true,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            scrolledUnderElevation: 0,
-            shadowColor: Colors.transparent,
-            surfaceTintColor: Colors.transparent,
-            automaticallyImplyLeading: false,
-            toolbarHeight: toolbarHeight,
-            expandedHeight: toolbarHeight,
-            flexibleSpace: SizedBox.expand(
-              child: ClipRRect(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(
-                    _ChatWidgetConstants.borderRadiusMedium,
-                  ),
-                  topRight: Radius.circular(
-                    _ChatWidgetConstants.borderRadiusMedium,
-                  ),
-                ),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: DecoratedBox(
-                    decoration: ShapeDecoration(
-                      color: context.colors.clear,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(
-                            _ChatWidgetConstants.borderRadiusMedium,
-                          ),
-                          topRight: Radius.circular(
-                            _ChatWidgetConstants.borderRadiusMedium,
-                          ),
-                        ),
-                      ),
-                    ),
-                    child: _buildPinnedHeader(context, isLandscape),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          if (threads.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: _buildEmptyState(context),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: _ChatWidgetConstants.horizontalPadding,
-              ),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  return RepaintBoundary(
-                    child: _buildThread(context, threads[index]),
-                  );
-                }, childCount: threads.length),
-              ),
-            ),
-        ],
-      ),
-    );
-
-    return Stack(
-      children: [
-        scrollView,
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          height: toolbarHeight,
-          child: AbsorbPointer(child: Container(color: Colors.transparent)),
-        ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 12,
-          child: Center(child: _buildNewMessagesOverlay(context)),
-        ),
-      ],
     );
   }
 
@@ -1079,10 +930,7 @@ class _ChatWidgetState extends State<ChatWidget> {
       decoration: ShapeDecoration(
         color: _ChatWidgetConstants.reactionPillActiveColor,
         shape: RoundedRectangleBorder(
-          side: const BorderSide(
-            color: _ChatWidgetConstants.sendButtonColor,
-            width: 1,
-          ),
+          side: const BorderSide(color: _ChatWidgetConstants.sendButtonColor),
           borderRadius: BorderRadius.circular(999),
         ),
       ),
@@ -1382,10 +1230,7 @@ class _ChatWidgetState extends State<ChatWidget> {
               : _ChatWidgetConstants.reactionPillColor,
           shape: RoundedRectangleBorder(
             side: mine
-                ? const BorderSide(
-                    color: _ChatWidgetConstants.sendButtonColor,
-                    width: 1,
-                  )
+                ? const BorderSide(color: _ChatWidgetConstants.sendButtonColor)
                 : BorderSide.none,
             borderRadius: BorderRadius.circular(999),
           ),
@@ -1603,7 +1448,7 @@ class _ChatWidgetState extends State<ChatWidget> {
               children: [
                 _buildQuickReactionBar(sheetContext, message),
                 const SizedBox(height: 12),
-                Container(
+                DecoratedBox(
                   decoration: ShapeDecoration(
                     color: _ChatWidgetConstants.inputBackgroundColor,
                     shape: RoundedRectangleBorder(

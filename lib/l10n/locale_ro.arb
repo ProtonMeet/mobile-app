@@ -113,6 +113,22 @@
   "picture_in_picture_mode": "Mod imagine-în-imagine",
   "security": "Securitate",
   "enable_waiting_room": "Activare sală de așteptare",
+  "waiting_room_setting_on_description": "Participanții se alătură după ce-i aprobați",
+  "@waiting_room_setting_on_description": {
+    "description": "Waiting room switch description when enabled in meeting settings"
+  },
+  "waiting_room_setting_off_description": "Oricine are legătura web se poate alătura",
+  "@waiting_room_setting_off_description": {
+    "description": "Waiting room switch description when disabled in meeting settings"
+  },
+  "waiting_room_enabled_notification": "Sală de așteptare activată, participanții se alătură după ce îi aprobați.",
+  "@waiting_room_enabled_notification": {
+    "description": "Global notification when the host enables waiting room in meeting settings"
+  },
+  "waiting_room_disabled_notification": "Sală de așteptare dezactivată, oricine are legătura web se poate alătura.",
+  "@waiting_room_disabled_notification": {
+    "description": "Global notification when the host disables waiting room in meeting settings"
+  },
   "hide_self_view": "Ascundere vedere proprie",
   "allow_all_participants_to": "Permitere tuturor participanților să:",
   "chat": "Conversație",

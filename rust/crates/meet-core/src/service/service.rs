@@ -4202,14 +4202,22 @@ impl Service {
         user_identifier: &UserId,
         meeting_link_name: &str,
         key_packages: Vec<mls_types::KeyPackage>,
-        admitted_request_ids: Vec<String>,
-    ) -> Result<(), MeetCoreError> {
+        request_ids: Vec<String>,
+    ) -> Result<Vec<String>, MeetCoreError> {
         tracing::info!(
             "admit_waiting_room_join_requests start meeting_link_name={} admit_count={} request_ids={:?}",
-            meeting_link_name, key_packages.len(), admitted_request_ids
+            meeting_link_name,
+            key_packages.len(),
+            request_ids
         );
         if key_packages.is_empty() {
-            return Ok(());
+            return Ok(vec![]);
+        }
+        if key_packages.len() != request_ids.len() {
+            return Err(MeetCoreError::InternalError {
+                message: "key_packages and request_ids length mismatch".to_string(),
+                details: None,
+            });
         }
 
         let room_id = meeting_link_name;
@@ -4233,21 +4241,31 @@ impl Service {
         let mut proposal_args: Vec<ProposalArg> = Vec::with_capacity(key_packages.len());
         let mut added_user_identifiers = HashSet::new();
         let mut agent_user_identifiers = HashSet::new();
+        let mut resolved_request_ids = Vec::with_capacity(key_packages.len());
+        let mut committed_request_ids = Vec::with_capacity(key_packages.len());
 
-        for key_package in key_packages {
+        for (key_package, request_id) in key_packages.into_iter().zip(request_ids) {
             let Ok(mut cred) = key_package.credential() else {
-                tracing::warn!("Failed to extract credential from waiting-room key package");
+                tracing::warn!(
+                    request_id = %request_id,
+                    "Failed to extract credential from waiting-room key package"
+                );
                 continue;
             };
             let Ok(device_id) = cred.device_id() else {
-                tracing::warn!("Failed to extract device_id from waiting-room key package");
+                tracing::warn!(
+                    request_id = %request_id,
+                    "Failed to extract device_id from waiting-room key package"
+                );
                 continue;
             };
             if roster.contains(&device_id) {
                 tracing::info!(
                     device_id = %device_id,
+                    request_id = %request_id,
                     "Skipping Add proposal: device already in roster"
                 );
+                resolved_request_ids.push(request_id);
                 continue;
             }
             let owning_identity_id = device_id.owning_identity_id().as_owned();
@@ -4255,15 +4273,16 @@ impl Service {
                 agent_user_identifiers.insert(owning_identity_id.clone());
             }
             added_user_identifiers.insert(owning_identity_id);
+            committed_request_ids.push(request_id);
             proposal_args.push(ProposalArg::Add(Box::new(key_package.into())));
         }
 
         if proposal_args.is_empty() {
             let mut state = self.state.lock().await;
-            for request_id in admitted_request_ids {
-                state.pending_waiting_room_join_requests.remove(&request_id);
+            for request_id in &resolved_request_ids {
+                state.pending_waiting_room_join_requests.remove(request_id);
             }
-            return Ok(());
+            return Ok(resolved_request_ids);
         }
 
         let participant_list: HashSet<_> = mls_group
@@ -4347,7 +4366,8 @@ impl Service {
                 mls_group.merge_pending_commit().await?;
                 tracing::info!(
                     room_id,
-                    admitted_count = admitted_request_ids.len(),
+                    admitted_count = committed_request_ids.len(),
+                    resolved_count = resolved_request_ids.len(),
                     "Admitted waiting-room joiners"
                 );
             }
@@ -4361,6 +4381,9 @@ impl Service {
 
         drop(mls_group);
 
+        let mut admitted_request_ids = resolved_request_ids;
+        admitted_request_ids.extend(committed_request_ids);
+
         {
             let mut state = self.state.lock().await;
             for request_id in &admitted_request_ids {
@@ -4373,7 +4396,7 @@ impl Service {
             handler(room_id.to_string(), GroupKeyUpdateReason::Join).await;
         }
 
-        Ok(())
+        Ok(admitted_request_ids)
     }
 
     fn waiting_room_setting_request_body(
