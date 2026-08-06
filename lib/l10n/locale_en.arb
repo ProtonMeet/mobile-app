@@ -105,6 +105,30 @@
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
+  "check_device_clock_title": "Check your device's date and time",
+  "@check_device_clock_title": {
+    "description": "Title when the device clock skew prevents joining a meeting"
+  },
+  "check_device_clock_description": "We couldn't connect you to this meeting because your device's date and time are out of sync.\n\nTo fix this:\n• Open your device Settings\n• Turn on Set Automatically for date and time\n• Return to Proton Meet and join the meeting again",
+  "@check_device_clock_description": {
+    "description": "Description when the user must fix device clock settings before joining"
+  },
+  "token_is_invalid_title": "Unable to join meeting",
+  "@token_is_invalid_title": {
+    "description": "Title when the MLS session token is invalid"
+  },
+  "token_is_invalid_description": "Something went wrong while connecting. Tap Close and join the meeting again.",
+  "@token_is_invalid_description": {
+    "description": "Description when the MLS session token is invalid"
+  },
+  "token_is_expired_title": "Connection expired",
+  "@token_is_expired_title": {
+    "description": "Title when the MLS session token has expired"
+  },
+  "token_is_expired_description": "Your connection expired before you could join. Tap Close and join the meeting again.",
+  "@token_is_expired_description": {
+    "description": "Description when the MLS session token has expired"
+  },
   "meeting_unlocked_notification": "Meeting unlocked. Participants can join again.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"

@@ -8096,6 +8096,15 @@ impl SseDecode for crate::errors::BridgeError {
             24 => {
                 return crate::errors::BridgeError::WaitingRoomJoinCancelled;
             }
+            25 => {
+                return crate::errors::BridgeError::TokenIsInvalid;
+            }
+            26 => {
+                return crate::errors::BridgeError::TokenIsExpired;
+            }
+            27 => {
+                return crate::errors::BridgeError::CheckDeviceClock;
+            }
             _ => {
                 unimplemented!("");
             }
@@ -9611,6 +9620,9 @@ impl flutter_rust_bridge::IntoDart for crate::errors::BridgeError {
                 [23.into_dart()].into_dart()
             }
             crate::errors::BridgeError::WaitingRoomJoinCancelled => [24.into_dart()].into_dart(),
+            crate::errors::BridgeError::TokenIsInvalid => [25.into_dart()].into_dart(),
+            crate::errors::BridgeError::TokenIsExpired => [26.into_dart()].into_dart(),
+            crate::errors::BridgeError::CheckDeviceClock => [27.into_dart()].into_dart(),
             _ => {
                 unimplemented!("");
             }
@@ -10975,6 +10987,15 @@ impl SseEncode for crate::errors::BridgeError {
             }
             crate::errors::BridgeError::WaitingRoomJoinCancelled => {
                 <i32>::sse_encode(24, serializer);
+            }
+            crate::errors::BridgeError::TokenIsInvalid => {
+                <i32>::sse_encode(25, serializer);
+            }
+            crate::errors::BridgeError::TokenIsExpired => {
+                <i32>::sse_encode(26, serializer);
+            }
+            crate::errors::BridgeError::CheckDeviceClock => {
+                <i32>::sse_encode(27, serializer);
             }
             _ => {
                 unimplemented!("");
