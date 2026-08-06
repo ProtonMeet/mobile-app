@@ -1,15 +1,8 @@
-use meet_type::fanout::GroupInfoSummaryData;
-use mls_spec::drafts::ratchet_tree_options::RatchetTreeOption;
-use mls_spec::messages::MlsMessage;
-use mls_spec::{Parsable, Serializable};
 use muon::auth::Auth;
 use muon::common::sdk::Sdk;
 #[cfg(not(target_family = "wasm"))]
 use muon::common::Scheme;
 use muon::{App, ProtonRequest, ProtonResponse};
-
-use proton_meet_macro::async_trait;
-use serde::{Deserialize, Serialize};
 
 use crate::domain::user::models::login::Modulus;
 use crate::domain::user::models::meet_link_info::{
@@ -18,11 +11,9 @@ use crate::domain::user::models::meet_link_info::{
 use crate::domain::user::models::meeting::{Meeting, MeetingInfo};
 use crate::domain::user::models::participant_track_settings::ParticipantTrackSettings;
 use crate::domain::user::models::user_settings::UserSettings;
-use crate::domain::user::ports::{AgentKeyPackage, HttpClient};
+use crate::domain::user::ports::HttpClient;
 use crate::errors::http_client::HttpClientError;
-use crate::infra::dto::access_token::{
-    AccessTokenRequest, AccessTokenResponse, GetSdCwtRequest, GetSdCwtResponse,
-};
+use crate::infra::dto::access_token::{AccessTokenRequest, AccessTokenResponse};
 use crate::infra::dto::login::GetModulusResponse;
 use crate::infra::dto::meet_link_info::{
     AuthMeetLinkRequest, AuthMeetLinkResponse, MeetInfoResponse, MeetLinkInfoResponse,
@@ -32,17 +23,9 @@ use crate::infra::dto::meeting::ActiveMeetingsResponse;
 use crate::infra::dto::participant_track_settings::{
     ParticipantTrackSettingsRequest, ParticipantTrackSettingsResponse,
 };
-use crate::infra::dto::realtime::{
-    GroupInfoVersion, MlsCommitInfo, MlsProposalInfo, RTCMessageIn, RTCMessageInContent,
-    RatchetTreeAndGroupInfo, ServiceMetricsRequest, VersionedGroupInfoData,
-};
 use crate::infra::dto::remove_participant::{RemoveParticipantRequest, RemoveParticipantResponse};
 use crate::infra::dto::user_settings::UserSettingsResponse;
-use crate::infra::group_info_payload::{
-    compress_group_info_json, serialize_update_group_info_request, UpdateGroupInfoRequest,
-};
 use crate::infra::http_client_util::HttpClientUtil;
-use crate::infra::mls_response_ext::MlsResponseExt;
 #[cfg(target_arch = "wasm32")]
 use crate::infra::muon::environment_from_str;
 #[cfg(all(not(target_family = "wasm"), not(feature = "insecure-tls")))]
@@ -53,7 +36,7 @@ use crate::infra::muon::{
 #[cfg(not(target_arch = "wasm32"))]
 use crate::infra::muon::{AuthStore, SharedAuth};
 use crate::infra::proton_response_ext::ProtonResponseExt;
-use reqwest;
+use proton_meet_macro::async_trait;
 use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
 use std::sync::{Arc, Mutex};
 use tokio::sync::RwLock;
@@ -104,7 +87,7 @@ pub struct ProtonHttpClient {
 
 impl ProtonHttpClient {
     /// Helper function to build a URL from http_host and a path
-    fn build_http_url(&self, path: &str) -> Result<Url, HttpClientError> {
+    pub(crate) fn build_http_url(&self, path: &str) -> Result<Url, HttpClientError> {
         let mut base = self.http_host.trim_end_matches('/').to_string();
 
         // Add back trailing slash if the base has a path component
@@ -120,6 +103,18 @@ impl ProtonHttpClient {
         };
         let url = Url::parse(&base_url)?.join(path)?;
         Ok(url)
+    }
+
+    pub(crate) fn mls_session(&self) -> &reqwest::Client {
+        &self.mls_session
+    }
+
+    pub(crate) fn cks_cache(&self) -> &RwLock<Option<Vec<u8>>> {
+        &self.cks_cache
+    }
+
+    pub(crate) fn external_sender_cache(&self) -> &RwLock<Option<Vec<u8>>> {
+        &self.external_sender_cache
     }
 
     pub fn get_session(&self) -> MeetSession {
@@ -387,304 +382,6 @@ impl HttpClient for ProtonHttpClient {
         ProtonHttpClient::get_session(self)
     }
 
-    async fn get_group_info(
-        &self,
-        base64_sd_kbt: &str,
-    ) -> Result<VersionedGroupInfoData, HttpClientError> {
-        let url = self.build_http_url("v1/groupInfo")?;
-
-        let response = self
-            .mls_session
-            .get(url)
-            .header("Authorization", format!("Bearer {base64_sd_kbt}"))
-            .send()
-            .await?;
-
-        let response = response.parse_response::<GroupInfoResponse>().await?;
-        let ratchet_tree_and_group_info = if let Some(data) = response.data {
-            RatchetTreeAndGroupInfo::from_tls_bytes(&data)?
-        } else {
-            return Err(HttpClientError::GroupInfoEmpty);
-        };
-        let version = response.version.ok_or(HttpClientError::GroupInfoEmpty)?;
-        let result = VersionedGroupInfoData {
-            version: GroupInfoVersion::try_from(version)?,
-            data: ratchet_tree_and_group_info,
-        };
-        Ok(result)
-    }
-
-    async fn get_group_info_summary(
-        &self,
-        base64_sd_kbt: &str,
-    ) -> Result<GroupInfoSummaryData, HttpClientError> {
-        let mut url = self.build_http_url("v1/groupInfo")?;
-        url.query_pairs_mut().append_pair("summary", "true");
-
-        let response = self
-            .mls_session
-            .get(url)
-            .header("Authorization", format!("Bearer {base64_sd_kbt}"))
-            .send()
-            .await?;
-
-        let response = response.parse_response::<GroupInfoResponse>().await?;
-        let epoch = response
-            .epoch
-            .ok_or(HttpClientError::GroupInfoSummaryEmpty)?;
-        let group_id = response
-            .group_id
-            .ok_or(HttpClientError::GroupInfoSummaryEmpty)?;
-
-        Ok(GroupInfoSummaryData { epoch, group_id })
-    }
-
-    async fn update_group_info(
-        &self,
-        base64_sd_kbt: &str,
-        mls_message: &MlsMessage,
-        ratchet_tree: &RatchetTreeOption,
-        mls_commit_info: Option<&MlsCommitInfo>,
-        proposals: Option<Vec<MlsProposalInfo>>,
-    ) -> Result<(), HttpClientError> {
-        // Create a properly formatted URL
-        let url = self.build_http_url("v1/groupInfo")?;
-
-        let commit_data = {
-            if let Some(mls_commit_info) = mls_commit_info {
-                let rtc_message_in = RTCMessageIn {
-                    content: RTCMessageInContent::SendCommit(mls_commit_info.clone()),
-                };
-                let encoded_payload = rtc_message_in.to_tls_bytes()?;
-                Some(encoded_payload)
-            } else {
-                None
-            }
-        };
-
-        let proposal_messages = proposals.map(|proposals| {
-            proposals
-                .iter()
-                .flat_map(|proposal| {
-                    let rtc_message_in = RTCMessageIn {
-                        content: RTCMessageInContent::Proposal(proposal.clone()),
-                    };
-                    let encoded_payload = rtc_message_in.to_tls_bytes().ok()?;
-                    Some(encoded_payload)
-                })
-                .collect()
-        });
-
-        let update_group_info_request = UpdateGroupInfoRequest {
-            data: RatchetTreeAndGroupInfo {
-                ratchet_tree: ratchet_tree.clone(),
-                group_info: mls_message.clone(),
-            }
-            .to_tls_bytes()?,
-            commit_data,
-            proposals: proposal_messages,
-        };
-
-        let data =
-            serialize_update_group_info_request(&update_group_info_request).map_err(|e| {
-                HttpClientError::MlsHttpError {
-                    message: e.to_string(),
-                }
-            })?;
-        let uncompressed_size = data.len();
-
-        let compressed_data =
-            compress_group_info_json(&data).map_err(|e| HttpClientError::MlsHttpError {
-                message: e.to_string(),
-            })?;
-
-        #[cfg(debug_assertions)]
-        {
-            let compression_ratio = if uncompressed_size > 0 {
-                (compressed_data.len() as f64 / uncompressed_size as f64) * 100.0
-            } else {
-                0.0
-            };
-            tracing::info!(
-                "update_group_info_request size: {} (compressed: {}, ratio: {:.1}%)",
-                uncompressed_size,
-                compressed_data.len(),
-                compression_ratio
-            );
-        }
-
-        let response = self
-            .mls_session
-            .post(url)
-            .header("Content-Type", "application/json")
-            .header("Content-Encoding", "zstd; q=3")
-            .body(compressed_data)
-            .header("Authorization", format!("Bearer {base64_sd_kbt}"))
-            .send()
-            .await?;
-
-        // Check if the response was successful
-        response.error_for_status()?;
-
-        Ok(())
-    }
-
-    async fn join_group_by_proposal(
-        &self,
-        base64_sd_kbt: &str,
-        external_proposal: &MlsMessage,
-    ) -> Result<(), HttpClientError> {
-        let encoded_proposal = external_proposal.to_tls_bytes()?;
-        #[derive(Debug, Serialize)]
-        #[serde(rename_all = "PascalCase")]
-        struct JoinGroupByProposalRequest {
-            proposal: Vec<u8>,
-        }
-        let join_group_by_proposal_request = JoinGroupByProposalRequest {
-            proposal: encoded_proposal,
-        };
-        let url = self.build_http_url("v1/join")?;
-        let response = self
-            .mls_session
-            .post(url)
-            .json(&join_group_by_proposal_request)
-            .header("Authorization", format!("Bearer {base64_sd_kbt}"))
-            .send()
-            .await
-            .inspect_err(|e| {
-                #[cfg(target_family = "wasm")]
-                log::info!("Failed to join group by proposal inside: {e:?}\n");
-                #[cfg(not(target_family = "wasm"))]
-                tracing::info!("Failed to join group by proposal inside: {e:?}\n");
-            })?;
-        response.error_for_status()?;
-
-        Ok(())
-    }
-
-    async fn submit_join_request(
-        &self,
-        base64_sd_kbt: &str,
-        meeting_link_name: &str,
-        encrypted_key_package: &[u8],
-    ) -> Result<String, HttpClientError> {
-        let url = self.build_http_url(&format!("v1/joinRequest/{meeting_link_name}"))?;
-
-        #[derive(Debug, Deserialize)]
-        struct SubmitJoinRequestData {
-            request_id: String,
-        }
-
-        let response = self
-            .mls_session
-            .post(url)
-            .header("Content-Type", "application/octet-stream")
-            .header("Authorization", format!("Bearer {base64_sd_kbt}"))
-            .body(encrypted_key_package.to_vec())
-            .send()
-            .await?;
-
-        let status = response.status();
-        if status == reqwest::StatusCode::ACCEPTED {
-            let data = response.parse_response::<SubmitJoinRequestData>().await?;
-            return Ok(data.request_id);
-        }
-
-        use crate::errors::http_client::response_error_from_api_failure_body;
-
-        let body_bytes =
-            response
-                .bytes()
-                .await
-                .map_err(|err| HttpClientError::MlsDeserializeError {
-                    status,
-                    details: None,
-                    message: err.to_string(),
-                })?;
-
-        if let Ok(api_response) =
-            serde_json::from_slice::<ApiResponse<SubmitJoinRequestData>>(&body_bytes)
-        {
-            if !api_response.success {
-                return Err(HttpClientError::MlsResponseError {
-                    status,
-                    details: None,
-                    message: api_response
-                        .error
-                        .unwrap_or_else(|| "Join request rejected".into()),
-                });
-            }
-        }
-
-        let parsed = response_error_from_api_failure_body(&body_bytes, status.as_u16());
-        Err(HttpClientError::MlsResponseError {
-            status,
-            message: parsed.error,
-            details: Some(parsed.details.to_string()),
-        })
-    }
-
-    async fn reject_join_request(
-        &self,
-        base64_sd_kbt: &str,
-        meeting_link_name: &str,
-        request_id: &str,
-        participant_uid: &str,
-    ) -> Result<(), HttpClientError> {
-        let url = self.build_http_url(&format!("v1/joinRequest/{meeting_link_name}/reject"))?;
-
-        #[derive(Serialize)]
-        struct RejectJoinRequestBody<'a> {
-            request_id: &'a str,
-            participant_uid: &'a str,
-        }
-
-        let body = RejectJoinRequestBody {
-            request_id,
-            participant_uid,
-        };
-
-        let response = self
-            .mls_session
-            .post(url)
-            .header("Content-Type", "application/json")
-            .header("Authorization", format!("Bearer {base64_sd_kbt}"))
-            .body(
-                serde_json::to_vec(&body).map_err(|e| HttpClientError::MlsDeserializeError {
-                    status: reqwest::StatusCode::INTERNAL_SERVER_ERROR,
-                    details: None,
-                    message: e.to_string(),
-                })?,
-            )
-            .send()
-            .await?;
-
-        response.error_for_status()?;
-        Ok(())
-    }
-
-    async fn cancel_join_request(
-        &self,
-        base64_sd_kbt: &str,
-        meeting_link_name: &str,
-    ) -> Result<(), HttpClientError> {
-        let url = self.build_http_url(&format!("v1/joinRequest/{meeting_link_name}"))?;
-
-        let response = self
-            .mls_session
-            .delete(url)
-            .header("Authorization", format!("Bearer {base64_sd_kbt}"))
-            .send()
-            .await?;
-
-        if response.status() == reqwest::StatusCode::NOT_FOUND {
-            return Ok(());
-        }
-
-        response.error_for_status()?;
-        Ok(())
-    }
-
     async fn get_meet_link_info(
         &self,
         meet_link_name: &str,
@@ -854,211 +551,11 @@ impl HttpClient for ProtonHttpClient {
         Ok(user_settings_res.into())
     }
 
-    async fn fetch_sd_cwt(
-        &self,
-        meet_link_name: &str,
-        access_token: &str,
-        base64_holder_confirmation_key: &str,
-        session_id: Option<&str>,
-    ) -> Result<String, HttpClientError> {
-        let url = self.build_http_url("v1/session")?;
-        let response = self
-            .mls_session
-            .post(url)
-            .json(&GetSdCwtRequest {
-                meet_link_name: meet_link_name.to_string(),
-                holder_confirmation_key: base64_holder_confirmation_key.to_string(),
-                session_id: session_id.map(|s| s.to_string()),
-            })
-            .header("Authorization", format!("Bearer {access_token}"))
-            .send()
-            .await?;
-        let response = response.parse_response::<GetSdCwtResponse>().await?;
-        Ok(response.token)
-    }
-
-    async fn post_agent_bundle(
-        &self,
-        base64_sd_kbt: &str,
-        agent_device_id: &str,
-        psk_id: &[u8],
-        encrypted_psk: &[u8],
-        welcome: &[u8],
-        ratchet_tree: &[u8],
-    ) -> Result<(), HttpClientError> {
-        use base64::engine::general_purpose::STANDARD as B64;
-        use base64::Engine as _;
-
-        let url = self.build_http_url("v1/agent/bundle")?;
-
-        #[derive(Debug, Serialize)]
-        #[serde(rename_all = "PascalCase")]
-        struct PushAgentBundleRequest<'a> {
-            agent_device_id: &'a str,
-            psk_id: String,
-            encrypted_psk: String,
-            welcome: String,
-            ratchet_tree: String,
-        }
-
-        let body = PushAgentBundleRequest {
-            agent_device_id,
-            psk_id: B64.encode(psk_id),
-            encrypted_psk: B64.encode(encrypted_psk),
-            welcome: B64.encode(welcome),
-            ratchet_tree: B64.encode(ratchet_tree),
-        };
-
-        self.mls_session
-            .post(url)
-            .bearer_auth(base64_sd_kbt)
-            .json(&body)
-            .send()
-            .await?
-            .error_for_status()?;
-        Ok(())
-    }
-
-    async fn fetch_agent_keypackage(
-        &self,
-        base64_sd_kbt: &str,
-        agent_device_id: &str,
-    ) -> Result<AgentKeyPackage, HttpClientError> {
-        use base64::engine::general_purpose::STANDARD as B64;
-        use base64::Engine as _;
-
-        let mut url = self.build_http_url("v1/agent/keypackage")?;
-        url.query_pairs_mut()
-            .append_pair("agent_device_id", agent_device_id);
-
-        #[derive(Deserialize)]
-        #[serde(rename_all = "PascalCase")]
-        struct KpResp {
-            key_package: String,
-            hpke_public_key: String,
-        }
-
-        let resp: KpResp = self
-            .mls_session
-            .get(url)
-            .bearer_auth(base64_sd_kbt)
-            .send()
-            .await?
-            .error_for_status()?
-            .json::<ApiResponse<KpResp>>()
-            .await?
-            .into_data()?;
-
-        let decode = |field: &str, value: &str| {
-            B64.decode(value)
-                .map_err(|e| HttpClientError::MlsHttpError {
-                    message: format!("agent keypackage: decode {field}: {e}"),
-                })
-        };
-        Ok(AgentKeyPackage {
-            key_package: decode("KeyPackage", &resp.key_package)?,
-            hpke_public_key: decode("HpkePublicKey", &resp.hpke_public_key)?,
-        })
-    }
-
-    async fn list_agent_keypackages(
-        &self,
-        base64_sd_kbt: &str,
-    ) -> Result<Vec<String>, HttpClientError> {
-        let url = self.build_http_url("v1/agent/keypackages")?;
-
-        #[derive(Deserialize)]
-        #[serde(rename_all = "PascalCase")]
-        struct ListResp {
-            device_ids: Vec<String>,
-        }
-
-        let resp: ListResp = self
-            .mls_session
-            .get(url)
-            .bearer_auth(base64_sd_kbt)
-            .send()
-            .await?
-            .error_for_status()?
-            .json::<ApiResponse<ListResp>>()
-            .await?
-            .into_data()?;
-        Ok(resp.device_ids)
-    }
-
-    async fn fetch_external_sender(&self) -> Result<Vec<u8>, HttpClientError> {
-        if let Some(cached) = self.external_sender_cache.read().await.as_ref() {
-            return Ok(cached.clone());
-        }
-
-        let url = self.build_http_url(".well-known/external-sender")?;
-        let response = self.mls_session.get(url).send().await.map_err(|e| {
-            tracing::info!("Failed to fetch external sender inside: {:?}\n", e);
-            e
-        })?;
-        let response = response.error_for_status()?;
-        let external_sender_certs = response.bytes().await?;
-        let external_sender_certs = external_sender_certs.to_vec();
-
-        if external_sender_certs.is_empty() {
-            tracing::warn!("External sender response is empty; skipping cache to allow retry");
-            return Ok(external_sender_certs);
-        }
-
-        {
-            let mut cache = self.external_sender_cache.write().await;
-            *cache = Some(external_sender_certs.clone());
-        }
-
-        Ok(external_sender_certs)
-    }
-
-    async fn fetch_cose_key_set(&self) -> Result<Vec<u8>, HttpClientError> {
-        if let Some(cached) = self.cks_cache.read().await.as_ref() {
-            return Ok(cached.clone());
-        }
-
-        let url = self.build_http_url(".well-known/cks")?;
-        let response = self.mls_session.get(url).send().await.map_err(|e| {
-            tracing::info!("Failed to fetch cose key set inside: {:?}\n", e);
-            e
-        })?;
-        let response = response.error_for_status()?;
-        let cks_bytes = response.bytes().await?;
-        let cks_bytes = cks_bytes.to_vec();
-
-        {
-            let mut cache = self.cks_cache.write().await;
-            *cache = Some(cks_bytes.clone());
-        }
-
-        Ok(cks_bytes)
-    }
-
     async fn get_modulus(&self) -> Result<Modulus, HttpClientError> {
         let req = self.get("/core/v4/auth/modulus");
         let res = self.send_session_request(req).await?;
         let modulus_res = res.parse_response::<GetModulusResponse>()?;
         Ok(modulus_res.into())
-    }
-
-    async fn send_metrics(
-        &self,
-        base64_sd_kbt: &str,
-        _app_version: &str,
-        _user_agent: &str,
-        metrics_request: &ServiceMetricsRequest,
-    ) -> Result<(), HttpClientError> {
-        let url = self.build_http_url("v1/metrics")?;
-        let response = self
-            .mls_session
-            .post(url)
-            .json(metrics_request)
-            .header("Authorization", format!("Bearer {base64_sd_kbt}"))
-            .send()
-            .await?;
-        response.error_for_status()?;
-        Ok(())
     }
 
     async fn ping(&self) -> Result<u64, HttpClientError> {
@@ -1077,47 +574,6 @@ impl HttpClient for ProtonHttpClient {
         let rtt_ms = start.elapsed().as_millis() as u64;
         Ok(rtt_ms)
     }
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ApiResponse<T> {
-    pub success: bool,
-    pub data: Option<T>,
-    pub error: Option<String>,
-}
-
-impl<T> ApiResponse<T> {
-    /// Unwrap the `{ success, data, error }` envelope into `data`, mapping a
-    /// `success: false` or missing-`data` response to an `MlsHttpError`.
-    fn into_data(self) -> Result<T, HttpClientError> {
-        if !self.success {
-            return Err(HttpClientError::MlsHttpError {
-                message: self.error.unwrap_or_else(|| "request failed".to_string()),
-            });
-        }
-        self.data.ok_or_else(|| HttpClientError::MlsHttpError {
-            message: "response missing data".to_string(),
-        })
-    }
-
-    fn into_ok(self) -> Result<(), HttpClientError> {
-        if !self.success {
-            return Err(HttpClientError::MlsHttpError {
-                message: self.error.unwrap_or_else(|| "request failed".to_string()),
-            });
-        }
-        Ok(())
-    }
-}
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct GroupInfoResponse {
-    pub meeting_id: String,
-    pub data: Option<Vec<u8>>, // Serialized MLS data
-    pub epoch: Option<u64>,
-    pub group_id: Option<Vec<u8>>,
-    pub version: Option<u32>,
 }
 
 #[cfg(all(test, not(target_arch = "wasm32")))]
@@ -1315,34 +771,5 @@ mod tests {
                 "prod TLS config should use CertPinningVerifier, got: {debug_str}"
             );
         }
-    }
-
-    #[test]
-    fn api_response_into_ok_accepts_success_true() {
-        let json = r#"{"success":true}"#;
-        let resp: ApiResponse<serde::de::IgnoredAny> = serde_json::from_str(json).unwrap();
-        assert!(resp.into_ok().is_ok());
-    }
-
-    #[test]
-    fn api_response_into_ok_rejects_success_false_with_server_error_message() {
-        let json = r#"{"success":false,"error":"agent device unknown"}"#;
-        let resp: ApiResponse<serde::de::IgnoredAny> = serde_json::from_str(json).unwrap();
-        match resp.into_ok() {
-            Err(HttpClientError::MlsHttpError { message }) => {
-                assert_eq!(message, "agent device unknown");
-            }
-            other => panic!("expected MlsHttpError with server message, got {other:?}"),
-        }
-    }
-
-    #[test]
-    fn api_response_into_ok_rejects_success_false_with_no_error_field() {
-        let json = r#"{"success":false}"#;
-        let resp: ApiResponse<serde::de::IgnoredAny> = serde_json::from_str(json).unwrap();
-        assert!(matches!(
-            resp.into_ok(),
-            Err(HttpClientError::MlsHttpError { .. })
-        ));
     }
 }

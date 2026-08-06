@@ -17,11 +17,11 @@ pub struct AccessTokenResponse {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "PascalCase")]
-pub struct GetSdCwtRequest {
-    pub meet_link_name: String,
-    pub holder_confirmation_key: String,
+pub struct GetSdCwtRequest<'a> {
+    pub meet_link_name: &'a str,
+    pub holder_confirmation_key: &'a str,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub session_id: Option<String>,
+    pub session_id: Option<&'a str>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

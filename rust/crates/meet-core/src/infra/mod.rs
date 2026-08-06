@@ -12,6 +12,7 @@ pub mod http_client_util;
 pub mod meeting_api;
 pub mod message_cache;
 pub mod mimi_subject_parser;
+pub mod mls_api;
 pub mod mls_response_ext;
 pub mod muon;
 pub mod ports;

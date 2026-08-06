@@ -59,6 +59,12 @@ pub enum HttpClientError {
     GroupInfoSummaryEmpty,
     #[error("Proxy error: {0}")]
     ProxyError(String),
+    #[error("Invalid token")]
+    InvalidToken,
+    #[error("Check device clock")]
+    CheckDeviceClock,
+    #[error("Token expired")]
+    TokenExpired,
 
     #[error("GroupInfo version error: {0}")]
     GroupInfoVersionError(#[from] GroupInfoVersionError),
@@ -82,7 +88,7 @@ impl From<reqwest::Error> for HttpClientError {
     fn from(error: reqwest::Error) -> Self {
         #[cfg(not(target_family = "wasm"))]
         if error.is_status() {
-            Self::MlsStatusCode(error.status().unwrap().as_u16() as u32)
+            Self::MlsStatusCode(error.status().map_or(0, |status| status.as_u16() as u32))
         } else if error.is_timeout() {
             Self::MlsNetworkTimeout
         } else if error.is_connect() {
@@ -96,7 +102,7 @@ impl From<reqwest::Error> for HttpClientError {
         }
         #[cfg(target_family = "wasm")]
         if error.is_status() {
-            Self::MlsStatusCode(error.status().unwrap().as_u16() as u32)
+            Self::MlsStatusCode(error.status().map_or(0, |status| status.as_u16() as u32))
         } else if error.is_timeout() {
             Self::MlsNetworkTimeout
         } else {
