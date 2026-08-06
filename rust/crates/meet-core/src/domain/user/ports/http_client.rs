@@ -43,6 +43,11 @@ pub trait HttpClient: Send + Sync {
 
     async fn get_user_settings(&self) -> Result<UserSettings, HttpClientError>;
 
+    async fn update_user_settings_waiting_room(
+        &self,
+        enable: bool,
+    ) -> Result<UserSettings, HttpClientError>;
+
     async fn get_meet_link_info(
         &self,
         meet_link_name: &str,
@@ -136,7 +141,8 @@ mod tests {
     fn sample_user_settings() -> UserSettings {
         UserSettings {
             meeting_id: "meeting-id".to_string(),
-            address_id: "address-id".to_string(),
+            address_id: Some("address-id".to_string()),
+            waiting_room: false,
         }
     }
 

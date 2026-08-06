@@ -22,4 +22,5 @@ pub mod upcoming_meeting;
 pub mod user;
 pub mod user_address;
 pub mod user_key;
+pub mod user_settings;
 pub mod user_state;

@@ -43,7 +43,8 @@ pub struct ParticipantTrackSettingsInfo {
 #[cfg_attr(target_family = "wasm", wasm_bindgen(getter_with_clone))]
 pub struct UserSettingsInfo {
     pub meeting_id: String,
-    pub address_id: String,
+    pub address_id: Option<String>,
+    pub waiting_room: bool,
 }
 
 #[cfg_attr(target_family = "wasm", wasm_bindgen(getter_with_clone))]
@@ -495,6 +496,23 @@ impl App {
         Ok(UserSettingsInfo {
             meeting_id: user_settings.meeting_id,
             address_id: user_settings.address_id,
+            waiting_room: user_settings.waiting_room,
+        })
+    }
+
+    #[wasm_bindgen(js_name = updateUserSettingsWaitingRoom)]
+    pub async fn update_user_settings_waiting_room_wasm(
+        &self,
+        enable: bool,
+    ) -> Result<UserSettingsInfo, JsValue> {
+        let user_settings = self
+            .update_user_settings_waiting_room(enable)
+            .await
+            .map_err(|e| crate::errors::core::MeetCoreErrorEnum::from(e))?;
+        Ok(UserSettingsInfo {
+            meeting_id: user_settings.meeting_id,
+            address_id: user_settings.address_id,
+            waiting_room: user_settings.waiting_room,
         })
     }
 

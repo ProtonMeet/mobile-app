@@ -24,7 +24,9 @@ use crate::infra::dto::participant_track_settings::{
     ParticipantTrackSettingsRequest, ParticipantTrackSettingsResponse,
 };
 use crate::infra::dto::remove_participant::{RemoveParticipantRequest, RemoveParticipantResponse};
-use crate::infra::dto::user_settings::UserSettingsResponse;
+use crate::infra::dto::user_settings::{
+    UpdateUserSettingsWaitingRoomRequest, UserSettingsResponse,
+};
 use crate::infra::http_client_util::HttpClientUtil;
 #[cfg(target_arch = "wasm32")]
 use crate::infra::muon::environment_from_str;
@@ -546,6 +548,18 @@ impl HttpClient for ProtonHttpClient {
 
     async fn get_user_settings(&self) -> Result<UserSettings, HttpClientError> {
         let req = self.get("/meet/v1/user-settings");
+        let res = self.send_session_request(req).await?;
+        let user_settings_res = res.parse_response::<UserSettingsResponse>()?;
+        Ok(user_settings_res.into())
+    }
+
+    async fn update_user_settings_waiting_room(
+        &self,
+        enable: bool,
+    ) -> Result<UserSettings, HttpClientError> {
+        let req = self
+            .put("/meet/v1/user-settings/waiting-room")
+            .body_json(UpdateUserSettingsWaitingRoomRequest::new(enable))?;
         let res = self.send_session_request(req).await?;
         let user_settings_res = res.parse_response::<UserSettingsResponse>()?;
         Ok(user_settings_res.into())

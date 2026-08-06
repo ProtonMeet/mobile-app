@@ -165,6 +165,11 @@ pub trait UserService {
 
     async fn get_user_settings(&self) -> Result<UserSettings, anyhow::Error>;
 
+    async fn update_user_settings_waiting_room(
+        &self,
+        enable: bool,
+    ) -> Result<UserSettings, anyhow::Error>;
+
     async fn handle_livekit_admin_change(
         &self,
         room_id: &str,
