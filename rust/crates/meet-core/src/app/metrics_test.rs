@@ -1,10 +1,11 @@
 use std::sync::Arc;
 
 use crate::app::test_support::{
-    build_app, build_app_with_test_http, default_app_state, state_with_active_participant,
-    state_with_join_metrics_full, state_with_join_metrics_prereqs,
+    app_state_with_mls_participant, build_app, build_app_with_service_and_mls_api,
+    build_app_with_test_mls_api, default_app_state, join_test_service_with_mls_client,
+    state_with_active_participant, state_with_join_metrics_full, state_with_join_metrics_prereqs,
 };
-use crate::domain::user::ports::MockHttpClient;
+use crate::domain::user::ports::MockMlsApi;
 use crate::errors::core::MeetCoreError;
 use crate::infra::dto::realtime::RejoinReason;
 use crate::utils::instant;
@@ -160,12 +161,38 @@ async fn log_joined_room_errors_when_user_agent_missing() {
 }
 
 #[tokio::test]
+async fn log_joined_room_sends_metrics_through_mls_api() {
+    let (service, user_info, mls_store) =
+        join_test_service_with_mls_client("user-1", "LINK123").await;
+    let mut mls = MockMlsApi::new();
+    mls.expect_send_metrics()
+        .withf(|sd_kbt, app_version, user_agent, request| {
+            !sd_kbt.is_empty()
+                && app_version == "macos-meet@1.0.0"
+                && user_agent == "Mac OS X 10.15.7"
+                && request.user_join_time.is_some()
+        })
+        .once()
+        .returning(|_, _, _, _| Box::pin(async { Ok(()) }));
+
+    let state = app_state_with_mls_participant(
+        state_with_join_metrics_full("user-1"),
+        mls_store,
+        user_info,
+        None,
+    );
+    let app = build_app_with_service_and_mls_api(state, service, Arc::new(mls)).await;
+
+    app.log_joined_room(Some(true), Some(false)).await.unwrap();
+}
+
+#[tokio::test]
 async fn log_joined_room_with_join_mls_time_fails_before_send_metrics() {
-    let mut http = MockHttpClient::new();
-    http.expect_send_metrics().times(0);
+    let mut mls = MockMlsApi::new();
+    mls.expect_send_metrics().times(0);
 
     let app =
-        build_app_with_test_http(state_with_join_metrics_full("user-1"), Arc::new(http)).await;
+        build_app_with_test_mls_api(state_with_join_metrics_full("user-1"), Arc::new(mls)).await;
     let err = app
         .log_joined_room(Some(true), Some(false))
         .await
@@ -242,10 +269,10 @@ async fn log_user_rejoin_fails_when_sd_kbt_unavailable() {
 
 #[tokio::test]
 async fn send_metrics_mock_not_called_when_sd_kbt_missing() {
-    let mut http = MockHttpClient::new();
-    http.expect_send_metrics().times(0);
+    let mut mls = MockMlsApi::new();
+    mls.expect_send_metrics().times(0);
 
     let app =
-        build_app_with_test_http(state_with_join_metrics_full("user-1"), Arc::new(http)).await;
+        build_app_with_test_mls_api(state_with_join_metrics_full("user-1"), Arc::new(mls)).await;
     assert!(app.log_joined_room(None, None).await.is_err());
 }

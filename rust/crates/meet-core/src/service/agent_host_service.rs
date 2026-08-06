@@ -10,7 +10,7 @@ use mls_types::CipherSuite;
 use proton_meet_mls::MlsStore;
 use tokio::sync::RwLock;
 
-use crate::domain::user::ports::HttpClient;
+use crate::domain::user::ports::MlsApi;
 
 /// Prefix for the meeting-scoped agent PSK id. The full id is built by [`agent_psk_id_for_meeting`].
 pub const AGENT_PSK_ID_PREFIX: &[u8] = b"agent-psk-id.";
@@ -60,18 +60,15 @@ pub struct AgentBundleForPush {
 /// Host-side agent admission service. Holds a reference to the MLS store
 /// (same one [`crate::service::mls_service::MlsService`] uses) so it can
 /// look up the host's group and mutate it via `new_commit`, plus the
-/// shared [`HttpClient`] port for the bundle POST.
+/// shared [`MlsApi`] port for the bundle POST.
 pub struct AgentHostService {
-    http_client: Arc<dyn HttpClient>,
+    mls_api: Arc<dyn MlsApi>,
     mls_store: Arc<RwLock<MlsStore>>,
 }
 
 impl AgentHostService {
-    pub fn new(http_client: Arc<dyn HttpClient>, mls_store: Arc<RwLock<MlsStore>>) -> Self {
-        Self {
-            http_client,
-            mls_store,
-        }
+    pub fn new(mls_api: Arc<dyn MlsApi>, mls_store: Arc<RwLock<MlsStore>>) -> Self {
+        Self { mls_api, mls_store }
     }
 
     /// HPKE.Seal the PSK plaintext to the agent's HPKE init key. Uses the
@@ -106,14 +103,14 @@ impl AgentHostService {
             .map_err(|e| AgentHostError::HpkeSeal(format!("encode HpkeCiphertext: {e}")))
     }
 
-    /// `POST /v1/agent/bundle` via the shared [`HttpClient`] port.
+    /// `POST /v1/agent/bundle` via the shared [`MlsApi`] port.
     /// The port impl base64-encodes the byte fields for the JSON body.
     pub async fn push_bundle(
         &self,
         bearer_sd_cwt: &str,
         bundle: AgentBundleForPush,
     ) -> Result<(), AgentHostError> {
-        self.http_client
+        self.mls_api
             .post_agent_bundle(
                 bearer_sd_cwt,
                 &bundle.agent_device_id,

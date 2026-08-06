@@ -21,25 +21,17 @@ use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use crate::domain::mls::ports::{KeyPackageError, KeyPackagePort};
-use crate::domain::user::{
-    models::{meeting_link_name::MeetingLinkName, UserId},
-    ports::HttpClient,
-};
+use crate::domain::user::models::{meeting_link_name::MeetingLinkName, UserId};
 use crate::service::service::{psk_id_for_commit, public_ratchet_tree_has_agent};
 
 #[derive(Clone)]
 pub struct MlsService {
-    #[allow(dead_code)]
-    http_client: Arc<dyn HttpClient>,
     mls_store: Arc<RwLock<MlsStore>>,
 }
 
 impl MlsService {
-    pub fn new(http_client: Arc<dyn HttpClient>, mls_store: Arc<RwLock<MlsStore>>) -> Self {
-        Self {
-            http_client,
-            mls_store,
-        }
+    pub fn new(mls_store: Arc<RwLock<MlsStore>>) -> Self {
+        Self { mls_store }
     }
 
     pub async fn create_mls_group(
@@ -79,17 +71,6 @@ impl MlsService {
             // ),
             None => MlsGroupConfig::default(user_id.clone(), is_host),
         };
-        // TODO: Enable it later
-        // let external_sender_bytes = self.http_client.fetch_external_sender().await?;
-        // if external_sender_bytes.is_empty() {
-        //     tracing::warn!(
-        //         "External sender response empty; creating group without external sender"
-        //     );
-        // } else {
-        //     let external_sender = ExternalSender::from_tls_bytes(&external_sender_bytes)?;
-        //     group_config.external_senders.push(external_sender);
-        // }
-
         let mut group = client
             .new_group(&group_id, Disclosure::Full, group_config)
             .await?
@@ -333,10 +314,7 @@ mod tests {
 
     use super::MlsService;
     use crate::{
-        domain::user::{
-            models::{meeting_link_name::MeetingLinkName, UserId},
-            ports::MockHttpClient,
-        },
+        domain::user::models::{meeting_link_name::MeetingLinkName, UserId},
         infra::crypto_client::derive_external_psk,
         infra::mimi_subject_parser::ANONYMOUS_USER_IDENTIFIER,
     };
@@ -395,7 +373,7 @@ mod tests {
             group_map: HashMap::new(),
             config,
         }));
-        let service = MlsService::new(Arc::new(MockHttpClient::new()), mls_store);
+        let service = MlsService::new(mls_store);
 
         let (group_info_spec, _) = service
             .create_mls_group(&meeting_link_name, &user_id, None)
@@ -468,7 +446,7 @@ mod tests {
             group_map: HashMap::new(),
             config,
         }));
-        let service = MlsService::new(Arc::new(MockHttpClient::new()), mls_store.clone());
+        let service = MlsService::new(mls_store.clone());
 
         let (group_info_msg, ratchet_tree_option) = service
             .create_mls_group(&meeting_link_name, &host_user_id, None)
@@ -581,7 +559,7 @@ mod tests {
             group_map: HashMap::new(),
             config,
         }));
-        let service = MlsService::new(Arc::new(MockHttpClient::new()), mls_store);
+        let service = MlsService::new(mls_store);
 
         let (group_info_msg, ratchet_tree_option) = service
             .create_mls_group(&meeting_link_name, &host_user_id, None)
@@ -664,7 +642,7 @@ mod tests {
             group_map: HashMap::new(),
             config,
         }));
-        let service = MlsService::new(Arc::new(MockHttpClient::new()), mls_store.clone());
+        let service = MlsService::new(mls_store.clone());
 
         let (group_info_msg, ratchet_tree_option_initial) = service
             .create_mls_group(&meeting_link_name, &host_user_id, None)
@@ -794,7 +772,7 @@ mod tests {
             group_map: HashMap::new(),
             config,
         }));
-        let service = MlsService::new(Arc::new(MockHttpClient::new()), mls_store.clone());
+        let service = MlsService::new(mls_store.clone());
 
         let _ = service
             .create_mls_group(&meeting_link_name, &user_id, None)
