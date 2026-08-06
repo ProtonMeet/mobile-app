@@ -3491,7 +3491,7 @@ dependencies = [
 [[package]]
 name = "meet-type"
 version = "0.0.1"
-source = "git+https://github.com/ProtonMeet/meet-type.git?branch=main#af4055db27ce77125d4f8690ae55ec044ea42574"
+source = "git+https://github.com/ProtonMeet/meet-type.git?branch=main#71223e1de2a092216607f5d52fe1934ff0d4585f"
 dependencies = [
  "mls-spec",
  "serde",
@@ -3795,8 +3795,8 @@ dependencies = [
 
 [[package]]
 name = "mls-spec"
-version = "2.0.0"
-source = "git+https://github.com/OtaK/mls-spec.git?branch=feat%2Fdraft-galore#f1ad024c639dc5f7c04a7673d668fdc117ada66b"
+version = "2.0.1"
+source = "git+https://github.com/OtaK/mls-spec.git?branch=feat%2Fdraft-galore#a91b04a20bf587688ca644bdc9e329992a7cbccd"
 dependencies = [
  "async-trait",
  "hex",
@@ -6016,7 +6016,7 @@ version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f103c50866b8743da9429b8a581d81a27c2d3a9c4ac7df8f8571c1dd7896eda"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "proc-macro2",
  "quote",
  "syn 2.0.118",
