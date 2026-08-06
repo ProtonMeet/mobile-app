@@ -7400,30 +7400,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
     }
 
     #[tokio::test]
-    async fn join_room_with_switch_join_type_get_group_info_401_time_drift() {
-        let meet_link_name = "join_switch_401";
-        let service = create_test_service("user1", meet_link_name).await;
-        let user_token = service
-            .create_mls_client("access_token", meet_link_name, "meet_password", None)
-            .await
-            .unwrap();
-
-        let join_service =
-            join_switch_service_with_mls_api(&service, "user1", meet_link_name, |mls| {
-                mls.expect_get_group_info()
-                    .returning(|_| Box::pin(ready(Err(HttpClientError::MlsStatusCode(401)))));
-            })
-            .await;
-
-        let meeting_name = MeetingLinkName::from(meet_link_name);
-        let err = join_service
-            .join_room_with_switch_join_type(&user_token, &meeting_name, false, false)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, MeetCoreError::TimeDriftError));
-    }
-
-    #[tokio::test]
     async fn join_room_with_switch_join_type_server_version_not_supported() {
         let meet_link_name = "join_switch_bad_version";
         let config = MlsClientConfig::default();

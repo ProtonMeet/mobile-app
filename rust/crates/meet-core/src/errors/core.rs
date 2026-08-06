@@ -138,8 +138,14 @@ pub enum MeetCoreError {
         details: Option<String>,
     },
 
-    #[error("Time drift error")]
-    TimeDriftError,
+    #[error("Device clock is not in sync. Please check your device clock and refresh the page to try again.")]
+    CheckDeviceClock,
+
+    #[error("Token is expired. Please refresh the page and try again.")]
+    TokenIsExpired,
+
+    #[error("Token is invalid. Please refresh the page and try again.")]
+    TokenIsInvalid,
 
     #[error("Meeting is locked. Please try again later.")]
     MeetingLocked,
@@ -212,6 +218,9 @@ impl From<crate::errors::service::ServiceError> for MeetCoreError {
                         },
                         HttpClientError::MlsStatusCode(status) => Self::MlsStatusCode(*status),
                         HttpClientError::IncorrectPassword => Self::IncorrectPassword,
+                        HttpClientError::CheckDeviceClock => Self::CheckDeviceClock,
+                        HttpClientError::TokenExpired => Self::TokenIsExpired,
+                        HttpClientError::InvalidToken => Self::TokenIsInvalid,
                         _ => Self::HttpClientError {
                             status: 0,
                             message: inner_error.to_string(),
@@ -535,6 +544,9 @@ impl From<HttpClientError> for MeetCoreError {
                 message: err.error.clone(),
                 details: Some(err.details.to_string()),
             },
+            HttpClientError::CheckDeviceClock => Self::CheckDeviceClock,
+            HttpClientError::TokenExpired => Self::TokenIsExpired,
+            HttpClientError::InvalidToken => Self::TokenIsInvalid,
             HttpClientError::MlsStatusCode(status) => Self::MlsStatusCode(status),
             _ => Self::HttpClientError {
                 status: 0,
@@ -594,9 +606,11 @@ pub enum MeetCoreErrorEnum {
     MaxRetriesReached,
     StorageError,
     ServiceError,
-    TimeDriftError,
     MeetingLocked,
     IncorrectPassword,
+    TokenIsExpired,
+    TokenIsInvalid,
+    CheckDeviceClock,
     UuidError,
     NotRoomAdmin,
     MlsStatusCode,
@@ -641,7 +655,9 @@ impl From<MeetCoreError> for MeetCoreErrorEnum {
             MeetCoreError::MaxRetriesReached => Self::MaxRetriesReached,
             MeetCoreError::StorageError { .. } => Self::StorageError,
             MeetCoreError::ServiceError { .. } => Self::ServiceError,
-            MeetCoreError::TimeDriftError => Self::TimeDriftError,
+            MeetCoreError::CheckDeviceClock => Self::CheckDeviceClock,
+            MeetCoreError::TokenIsExpired => Self::TokenIsExpired,
+            MeetCoreError::TokenIsInvalid => Self::TokenIsInvalid,
             MeetCoreError::MeetingLocked => Self::MeetingLocked,
             MeetCoreError::IncorrectPassword => Self::IncorrectPassword,
             MeetCoreError::UuidError(_) => Self::UuidError,

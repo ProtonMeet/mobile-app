@@ -93,6 +93,15 @@ pub enum BridgeError {
     /// Guest cancelled an outstanding waiting-room join request.
     #[error("Waiting room join cancelled")]
     WaitingRoomJoinCancelled,
+
+    #[error("Token is invalid. Please refresh the page and try again.")]
+    TokenIsInvalid,
+
+    #[error("Token is expired. Please refresh the page and try again.")]
+    TokenIsExpired,
+
+    #[error("Device clock is not in sync. Please check your device clock and refresh the page to try again.")]
+    CheckDeviceClock,
 }
 
 #[derive(Debug)]
@@ -186,6 +195,9 @@ impl From<MeetCoreError> for BridgeError {
                 "MeetCoreError::ServiceError\nmessage: {message}\ndetails: {}",
                 details.as_deref().unwrap_or("(none)")
             )),
+            MeetCoreError::TokenIsInvalid => BridgeError::TokenIsInvalid,
+            MeetCoreError::TokenIsExpired => BridgeError::TokenIsExpired,
+            MeetCoreError::CheckDeviceClock => BridgeError::CheckDeviceClock,
             _ => BridgeError::MeetCore(format!(
                 "MeetCoreError: message: {:?}, source: {:?}",
                 value.to_string(),

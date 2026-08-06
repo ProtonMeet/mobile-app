@@ -26,6 +26,7 @@ import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
 import 'package:sentry/sentry.dart';
 
 import 'waiting_room_error_code.dart';
+import 'waiting_room_error_code.extension.dart';
 import 'waiting_room_event.dart';
 import 'waiting_room_state.dart';
 
@@ -159,7 +160,12 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
             hasSession: appCoreManager.isAuthenticated,
             meetingNameLength: meetingName.length,
           );
-          emit(state.copyWith(error: extractErrorMessage(e)));
+          emit(
+            state.copyWith(
+              isLoading: false,
+              error: waitingRoomErrorFromException(e),
+            ),
+          );
           return;
         }
       } else {
@@ -286,6 +292,33 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
               state.copyWith(
                 isLoading: false,
                 error: WaitingRoomErrorCode.mlsServerVersionNotSupported.name,
+              ),
+            );
+            return;
+          } else if (e is BridgeError_CheckDeviceClock) {
+            l.logger.e('[WaitingRoomBloc] Device clock is not in sync: $e');
+            emit(
+              state.copyWith(
+                isLoading: false,
+                error: WaitingRoomErrorCode.checkDeviceClock.name,
+              ),
+            );
+            return;
+          } else if (e is BridgeError_TokenIsInvalid) {
+            l.logger.e('[WaitingRoomBloc] Token is invalid: $e');
+            emit(
+              state.copyWith(
+                isLoading: false,
+                error: WaitingRoomErrorCode.tokenIsInvalid.name,
+              ),
+            );
+            return;
+          } else if (e is BridgeError_TokenIsExpired) {
+            l.logger.e('[WaitingRoomBloc] Token is expired: $e');
+            emit(
+              state.copyWith(
+                isLoading: false,
+                error: WaitingRoomErrorCode.tokenIsExpired.name,
               ),
             );
             return;
@@ -530,7 +563,12 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
         return;
       }
 
-      emit(state.copyWith(isLoading: false, error: extractErrorMessage(e)));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          error: waitingRoomErrorFromException(e),
+        ),
+      );
 
       // Log join room failed if feature flag is enabled
       try {

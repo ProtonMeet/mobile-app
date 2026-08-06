@@ -3182,16 +3182,6 @@ impl UserService for Service {
                         return Err(e.into());
                     }
 
-                    if let HttpClientError::MlsStatusCode(status) = &e {
-                        if *status == 401 {
-                            tracing::error!(
-                                "Failed to get group info: 401 Unauthorized, may caused by time drift, stopping retry"
-                            );
-                            // client will need to show proper error message to user when we have this error
-                            return Err(MeetCoreError::TimeDriftError);
-                        }
-                    }
-
                     // Generate unique meeting link name to avoid conflicts
                     let unique_meeting_link_name =
                         Self::generate_unique_group_id(meeting_link_name);
@@ -3460,16 +3450,6 @@ impl UserService for Service {
                     cached_group_info = None;
                     if !matches!(e, HttpClientError::GroupInfoEmpty) {
                         return Err(e.into());
-                    }
-
-                    if let HttpClientError::MlsStatusCode(status) = &e {
-                        if *status == 401 {
-                            tracing::error!(
-                                "Failed to get group info: 401 Unauthorized, may caused by time drift, stopping retry"
-                            );
-                            // client will need to show proper error message to user when we have this error
-                            return Err(MeetCoreError::TimeDriftError);
-                        }
                     }
 
                     // Generate unique meeting link name to avoid conflicts
@@ -5756,12 +5736,6 @@ impl NewUserService for Service {
                     return Ok(());
                 }
                 if let HttpClientError::MlsStatusCode(status) = &e {
-                    if *status == 401 {
-                        tracing::error!(
-                                "Failed to get group info: 401 Unauthorized, may caused by time drift, stopping retry"
-                            );
-                        return Err(MeetCoreError::TimeDriftError);
-                    }
                     if (400..500).contains(status) {
                         tracing::error!("Failed to get group info: {:?}, stopping retry", status);
                         return Err(e.into());

@@ -17,6 +17,13 @@ extension BridgeErrorExtension on BridgeError {
   String get userMessage => switch (this) {
     BridgeError_ApiResponse(:final field0) => field0.error,
     BridgeError_MeetCore(:final field0) => meetCoreServiceMessageLine(field0),
+    BridgeError_CheckDeviceClock() => 'Device clock is not in sync',
+    BridgeError_TokenIsInvalid() => 'Token is invalid',
+    BridgeError_TokenIsExpired() => 'Token is expired',
+    BridgeError_MeetingLocked() => 'Meeting is locked',
+    BridgeError_IncorrectPassword() => 'Incorrect meeting password',
+    BridgeError_MlsServerVersionNotSupported() =>
+      'MLS server version not supported',
     _ => toString(),
   };
 

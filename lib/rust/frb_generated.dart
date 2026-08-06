@@ -7156,6 +7156,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return BridgeError_WaitingRoomJoinRequestNotFound();
       case 24:
         return BridgeError_WaitingRoomJoinCancelled();
+      case 25:
+        return BridgeError_TokenIsInvalid();
+      case 26:
+        return BridgeError_TokenIsExpired();
+      case 27:
+        return BridgeError_CheckDeviceClock();
       default:
         throw Exception("unreachable");
     }
@@ -8366,6 +8372,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return BridgeError_WaitingRoomJoinRequestNotFound();
       case 24:
         return BridgeError_WaitingRoomJoinCancelled();
+      case 25:
+        return BridgeError_TokenIsInvalid();
+      case 26:
+        return BridgeError_TokenIsExpired();
+      case 27:
+        return BridgeError_CheckDeviceClock();
       default:
         throw UnimplementedError('');
     }
@@ -9976,6 +9988,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_i_32(23, serializer);
       case BridgeError_WaitingRoomJoinCancelled():
         sse_encode_i_32(24, serializer);
+      case BridgeError_TokenIsInvalid():
+        sse_encode_i_32(25, serializer);
+      case BridgeError_TokenIsExpired():
+        sse_encode_i_32(26, serializer);
+      case BridgeError_CheckDeviceClock():
+        sse_encode_i_32(27, serializer);
     }
   }
 

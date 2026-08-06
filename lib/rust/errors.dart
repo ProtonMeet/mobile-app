@@ -71,6 +71,9 @@ sealed class BridgeError with _$BridgeError implements FrbException {
   /// Guest cancelled an outstanding waiting-room join request.
   const factory BridgeError.waitingRoomJoinCancelled() =
       BridgeError_WaitingRoomJoinCancelled;
+  const factory BridgeError.tokenIsInvalid() = BridgeError_TokenIsInvalid;
+  const factory BridgeError.tokenIsExpired() = BridgeError_TokenIsExpired;
+  const factory BridgeError.checkDeviceClock() = BridgeError_CheckDeviceClock;
 }
 
 class ResponseError {

@@ -1,6 +1,6 @@
 [package]
 name = "proton-meet-core"
-version = "1.3.1"
+version = "1.3.2"
 edition = "2021"
 
 [lib]
@@ -140,7 +140,9 @@ rusqlite = { version = "=0.39.0", features = ["bundled", "serde_json"] }
 tokio = { workspace = true }
 tempfile = "3"
 http = "1"
-tokio-tungstenite = { version = "0.28", default-features = false, features = ["connect"] }
+tokio-tungstenite = { version = "0.28", default-features = false, features = [
+    "connect",
+] }
 tokio-tungstenite-wasm = { path = "../../vendor/tokio-tungstenite-wasm", features = [
     "rustls-tls-native-roots",
     "native-tls",

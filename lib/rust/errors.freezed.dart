@@ -55,7 +55,7 @@ extension BridgeErrorPatterns on BridgeError {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( BridgeError_MutexLock value)?  mutexLock,TResult Function( BridgeError_MeetCore value)?  meetCore,TResult Function( BridgeError_MissingTwoFactor value)?  missingTwoFactor,TResult Function( BridgeError_MeetCoreAny value)?  meetCoreAny,TResult Function( BridgeError_Login value)?  login,TResult Function( BridgeError_ApiLock value)?  apiLock,TResult Function( BridgeError_AccessToken value)?  accessToken,TResult Function( BridgeError_MuonAuthSession value)?  muonAuthSession,TResult Function( BridgeError_MuonAuthRefresh value)?  muonAuthRefresh,TResult Function( BridgeError_MuonClient value)?  muonClient,TResult Function( BridgeError_MuonSession value)?  muonSession,TResult Function( BridgeError_Fork value)?  fork,TResult Function( BridgeError_Encoding value)?  encoding,TResult Function( BridgeError_ParseError value)?  parseError,TResult Function( BridgeError_Std value)?  std,TResult Function( BridgeError_TracingsSubscriber value)?  tracingsSubscriber,TResult Function( BridgeError_MeetLink value)?  meetLink,TResult Function( BridgeError_Chat value)?  chat,TResult Function( BridgeError_TaskJoin value)?  taskJoin,TResult Function( BridgeError_ApiResponse value)?  apiResponse,TResult Function( BridgeError_MeetingLocked value)?  meetingLocked,TResult Function( BridgeError_IncorrectPassword value)?  incorrectPassword,TResult Function( BridgeError_MlsServerVersionNotSupported value)?  mlsServerVersionNotSupported,TResult Function( BridgeError_WaitingRoomJoinRequestNotFound value)?  waitingRoomJoinRequestNotFound,TResult Function( BridgeError_WaitingRoomJoinCancelled value)?  waitingRoomJoinCancelled,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( BridgeError_MutexLock value)?  mutexLock,TResult Function( BridgeError_MeetCore value)?  meetCore,TResult Function( BridgeError_MissingTwoFactor value)?  missingTwoFactor,TResult Function( BridgeError_MeetCoreAny value)?  meetCoreAny,TResult Function( BridgeError_Login value)?  login,TResult Function( BridgeError_ApiLock value)?  apiLock,TResult Function( BridgeError_AccessToken value)?  accessToken,TResult Function( BridgeError_MuonAuthSession value)?  muonAuthSession,TResult Function( BridgeError_MuonAuthRefresh value)?  muonAuthRefresh,TResult Function( BridgeError_MuonClient value)?  muonClient,TResult Function( BridgeError_MuonSession value)?  muonSession,TResult Function( BridgeError_Fork value)?  fork,TResult Function( BridgeError_Encoding value)?  encoding,TResult Function( BridgeError_ParseError value)?  parseError,TResult Function( BridgeError_Std value)?  std,TResult Function( BridgeError_TracingsSubscriber value)?  tracingsSubscriber,TResult Function( BridgeError_MeetLink value)?  meetLink,TResult Function( BridgeError_Chat value)?  chat,TResult Function( BridgeError_TaskJoin value)?  taskJoin,TResult Function( BridgeError_ApiResponse value)?  apiResponse,TResult Function( BridgeError_MeetingLocked value)?  meetingLocked,TResult Function( BridgeError_IncorrectPassword value)?  incorrectPassword,TResult Function( BridgeError_MlsServerVersionNotSupported value)?  mlsServerVersionNotSupported,TResult Function( BridgeError_WaitingRoomJoinRequestNotFound value)?  waitingRoomJoinRequestNotFound,TResult Function( BridgeError_WaitingRoomJoinCancelled value)?  waitingRoomJoinCancelled,TResult Function( BridgeError_TokenIsInvalid value)?  tokenIsInvalid,TResult Function( BridgeError_TokenIsExpired value)?  tokenIsExpired,TResult Function( BridgeError_CheckDeviceClock value)?  checkDeviceClock,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case BridgeError_MutexLock() when mutexLock != null:
@@ -83,7 +83,10 @@ return meetingLocked(_that);case BridgeError_IncorrectPassword() when incorrectP
 return incorrectPassword(_that);case BridgeError_MlsServerVersionNotSupported() when mlsServerVersionNotSupported != null:
 return mlsServerVersionNotSupported(_that);case BridgeError_WaitingRoomJoinRequestNotFound() when waitingRoomJoinRequestNotFound != null:
 return waitingRoomJoinRequestNotFound(_that);case BridgeError_WaitingRoomJoinCancelled() when waitingRoomJoinCancelled != null:
-return waitingRoomJoinCancelled(_that);case _:
+return waitingRoomJoinCancelled(_that);case BridgeError_TokenIsInvalid() when tokenIsInvalid != null:
+return tokenIsInvalid(_that);case BridgeError_TokenIsExpired() when tokenIsExpired != null:
+return tokenIsExpired(_that);case BridgeError_CheckDeviceClock() when checkDeviceClock != null:
+return checkDeviceClock(_that);case _:
   return orElse();
 
 }
@@ -101,7 +104,7 @@ return waitingRoomJoinCancelled(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( BridgeError_MutexLock value)  mutexLock,required TResult Function( BridgeError_MeetCore value)  meetCore,required TResult Function( BridgeError_MissingTwoFactor value)  missingTwoFactor,required TResult Function( BridgeError_MeetCoreAny value)  meetCoreAny,required TResult Function( BridgeError_Login value)  login,required TResult Function( BridgeError_ApiLock value)  apiLock,required TResult Function( BridgeError_AccessToken value)  accessToken,required TResult Function( BridgeError_MuonAuthSession value)  muonAuthSession,required TResult Function( BridgeError_MuonAuthRefresh value)  muonAuthRefresh,required TResult Function( BridgeError_MuonClient value)  muonClient,required TResult Function( BridgeError_MuonSession value)  muonSession,required TResult Function( BridgeError_Fork value)  fork,required TResult Function( BridgeError_Encoding value)  encoding,required TResult Function( BridgeError_ParseError value)  parseError,required TResult Function( BridgeError_Std value)  std,required TResult Function( BridgeError_TracingsSubscriber value)  tracingsSubscriber,required TResult Function( BridgeError_MeetLink value)  meetLink,required TResult Function( BridgeError_Chat value)  chat,required TResult Function( BridgeError_TaskJoin value)  taskJoin,required TResult Function( BridgeError_ApiResponse value)  apiResponse,required TResult Function( BridgeError_MeetingLocked value)  meetingLocked,required TResult Function( BridgeError_IncorrectPassword value)  incorrectPassword,required TResult Function( BridgeError_MlsServerVersionNotSupported value)  mlsServerVersionNotSupported,required TResult Function( BridgeError_WaitingRoomJoinRequestNotFound value)  waitingRoomJoinRequestNotFound,required TResult Function( BridgeError_WaitingRoomJoinCancelled value)  waitingRoomJoinCancelled,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( BridgeError_MutexLock value)  mutexLock,required TResult Function( BridgeError_MeetCore value)  meetCore,required TResult Function( BridgeError_MissingTwoFactor value)  missingTwoFactor,required TResult Function( BridgeError_MeetCoreAny value)  meetCoreAny,required TResult Function( BridgeError_Login value)  login,required TResult Function( BridgeError_ApiLock value)  apiLock,required TResult Function( BridgeError_AccessToken value)  accessToken,required TResult Function( BridgeError_MuonAuthSession value)  muonAuthSession,required TResult Function( BridgeError_MuonAuthRefresh value)  muonAuthRefresh,required TResult Function( BridgeError_MuonClient value)  muonClient,required TResult Function( BridgeError_MuonSession value)  muonSession,required TResult Function( BridgeError_Fork value)  fork,required TResult Function( BridgeError_Encoding value)  encoding,required TResult Function( BridgeError_ParseError value)  parseError,required TResult Function( BridgeError_Std value)  std,required TResult Function( BridgeError_TracingsSubscriber value)  tracingsSubscriber,required TResult Function( BridgeError_MeetLink value)  meetLink,required TResult Function( BridgeError_Chat value)  chat,required TResult Function( BridgeError_TaskJoin value)  taskJoin,required TResult Function( BridgeError_ApiResponse value)  apiResponse,required TResult Function( BridgeError_MeetingLocked value)  meetingLocked,required TResult Function( BridgeError_IncorrectPassword value)  incorrectPassword,required TResult Function( BridgeError_MlsServerVersionNotSupported value)  mlsServerVersionNotSupported,required TResult Function( BridgeError_WaitingRoomJoinRequestNotFound value)  waitingRoomJoinRequestNotFound,required TResult Function( BridgeError_WaitingRoomJoinCancelled value)  waitingRoomJoinCancelled,required TResult Function( BridgeError_TokenIsInvalid value)  tokenIsInvalid,required TResult Function( BridgeError_TokenIsExpired value)  tokenIsExpired,required TResult Function( BridgeError_CheckDeviceClock value)  checkDeviceClock,}){
 final _that = this;
 switch (_that) {
 case BridgeError_MutexLock():
@@ -129,7 +132,10 @@ return meetingLocked(_that);case BridgeError_IncorrectPassword():
 return incorrectPassword(_that);case BridgeError_MlsServerVersionNotSupported():
 return mlsServerVersionNotSupported(_that);case BridgeError_WaitingRoomJoinRequestNotFound():
 return waitingRoomJoinRequestNotFound(_that);case BridgeError_WaitingRoomJoinCancelled():
-return waitingRoomJoinCancelled(_that);}
+return waitingRoomJoinCancelled(_that);case BridgeError_TokenIsInvalid():
+return tokenIsInvalid(_that);case BridgeError_TokenIsExpired():
+return tokenIsExpired(_that);case BridgeError_CheckDeviceClock():
+return checkDeviceClock(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -143,7 +149,7 @@ return waitingRoomJoinCancelled(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( BridgeError_MutexLock value)?  mutexLock,TResult? Function( BridgeError_MeetCore value)?  meetCore,TResult? Function( BridgeError_MissingTwoFactor value)?  missingTwoFactor,TResult? Function( BridgeError_MeetCoreAny value)?  meetCoreAny,TResult? Function( BridgeError_Login value)?  login,TResult? Function( BridgeError_ApiLock value)?  apiLock,TResult? Function( BridgeError_AccessToken value)?  accessToken,TResult? Function( BridgeError_MuonAuthSession value)?  muonAuthSession,TResult? Function( BridgeError_MuonAuthRefresh value)?  muonAuthRefresh,TResult? Function( BridgeError_MuonClient value)?  muonClient,TResult? Function( BridgeError_MuonSession value)?  muonSession,TResult? Function( BridgeError_Fork value)?  fork,TResult? Function( BridgeError_Encoding value)?  encoding,TResult? Function( BridgeError_ParseError value)?  parseError,TResult? Function( BridgeError_Std value)?  std,TResult? Function( BridgeError_TracingsSubscriber value)?  tracingsSubscriber,TResult? Function( BridgeError_MeetLink value)?  meetLink,TResult? Function( BridgeError_Chat value)?  chat,TResult? Function( BridgeError_TaskJoin value)?  taskJoin,TResult? Function( BridgeError_ApiResponse value)?  apiResponse,TResult? Function( BridgeError_MeetingLocked value)?  meetingLocked,TResult? Function( BridgeError_IncorrectPassword value)?  incorrectPassword,TResult? Function( BridgeError_MlsServerVersionNotSupported value)?  mlsServerVersionNotSupported,TResult? Function( BridgeError_WaitingRoomJoinRequestNotFound value)?  waitingRoomJoinRequestNotFound,TResult? Function( BridgeError_WaitingRoomJoinCancelled value)?  waitingRoomJoinCancelled,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( BridgeError_MutexLock value)?  mutexLock,TResult? Function( BridgeError_MeetCore value)?  meetCore,TResult? Function( BridgeError_MissingTwoFactor value)?  missingTwoFactor,TResult? Function( BridgeError_MeetCoreAny value)?  meetCoreAny,TResult? Function( BridgeError_Login value)?  login,TResult? Function( BridgeError_ApiLock value)?  apiLock,TResult? Function( BridgeError_AccessToken value)?  accessToken,TResult? Function( BridgeError_MuonAuthSession value)?  muonAuthSession,TResult? Function( BridgeError_MuonAuthRefresh value)?  muonAuthRefresh,TResult? Function( BridgeError_MuonClient value)?  muonClient,TResult? Function( BridgeError_MuonSession value)?  muonSession,TResult? Function( BridgeError_Fork value)?  fork,TResult? Function( BridgeError_Encoding value)?  encoding,TResult? Function( BridgeError_ParseError value)?  parseError,TResult? Function( BridgeError_Std value)?  std,TResult? Function( BridgeError_TracingsSubscriber value)?  tracingsSubscriber,TResult? Function( BridgeError_MeetLink value)?  meetLink,TResult? Function( BridgeError_Chat value)?  chat,TResult? Function( BridgeError_TaskJoin value)?  taskJoin,TResult? Function( BridgeError_ApiResponse value)?  apiResponse,TResult? Function( BridgeError_MeetingLocked value)?  meetingLocked,TResult? Function( BridgeError_IncorrectPassword value)?  incorrectPassword,TResult? Function( BridgeError_MlsServerVersionNotSupported value)?  mlsServerVersionNotSupported,TResult? Function( BridgeError_WaitingRoomJoinRequestNotFound value)?  waitingRoomJoinRequestNotFound,TResult? Function( BridgeError_WaitingRoomJoinCancelled value)?  waitingRoomJoinCancelled,TResult? Function( BridgeError_TokenIsInvalid value)?  tokenIsInvalid,TResult? Function( BridgeError_TokenIsExpired value)?  tokenIsExpired,TResult? Function( BridgeError_CheckDeviceClock value)?  checkDeviceClock,}){
 final _that = this;
 switch (_that) {
 case BridgeError_MutexLock() when mutexLock != null:
@@ -171,7 +177,10 @@ return meetingLocked(_that);case BridgeError_IncorrectPassword() when incorrectP
 return incorrectPassword(_that);case BridgeError_MlsServerVersionNotSupported() when mlsServerVersionNotSupported != null:
 return mlsServerVersionNotSupported(_that);case BridgeError_WaitingRoomJoinRequestNotFound() when waitingRoomJoinRequestNotFound != null:
 return waitingRoomJoinRequestNotFound(_that);case BridgeError_WaitingRoomJoinCancelled() when waitingRoomJoinCancelled != null:
-return waitingRoomJoinCancelled(_that);case _:
+return waitingRoomJoinCancelled(_that);case BridgeError_TokenIsInvalid() when tokenIsInvalid != null:
+return tokenIsInvalid(_that);case BridgeError_TokenIsExpired() when tokenIsExpired != null:
+return tokenIsExpired(_that);case BridgeError_CheckDeviceClock() when checkDeviceClock != null:
+return checkDeviceClock(_that);case _:
   return null;
 
 }
@@ -188,7 +197,7 @@ return waitingRoomJoinCancelled(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String field0)?  mutexLock,TResult Function( String field0)?  meetCore,TResult Function()?  missingTwoFactor,TResult Function( String field0)?  meetCoreAny,TResult Function( String field0)?  login,TResult Function( String field0)?  apiLock,TResult Function( String field0)?  accessToken,TResult Function( String field0)?  muonAuthSession,TResult Function( String field0)?  muonAuthRefresh,TResult Function( String field0)?  muonClient,TResult Function( String field0)?  muonSession,TResult Function( String field0)?  fork,TResult Function( String field0)?  encoding,TResult Function( String field0)?  parseError,TResult Function( String field0)?  std,TResult Function( String field0)?  tracingsSubscriber,TResult Function( String field0)?  meetLink,TResult Function( String field0)?  chat,TResult Function( String field0)?  taskJoin,TResult Function( ResponseError field0)?  apiResponse,TResult Function()?  meetingLocked,TResult Function()?  incorrectPassword,TResult Function()?  mlsServerVersionNotSupported,TResult Function()?  waitingRoomJoinRequestNotFound,TResult Function()?  waitingRoomJoinCancelled,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String field0)?  mutexLock,TResult Function( String field0)?  meetCore,TResult Function()?  missingTwoFactor,TResult Function( String field0)?  meetCoreAny,TResult Function( String field0)?  login,TResult Function( String field0)?  apiLock,TResult Function( String field0)?  accessToken,TResult Function( String field0)?  muonAuthSession,TResult Function( String field0)?  muonAuthRefresh,TResult Function( String field0)?  muonClient,TResult Function( String field0)?  muonSession,TResult Function( String field0)?  fork,TResult Function( String field0)?  encoding,TResult Function( String field0)?  parseError,TResult Function( String field0)?  std,TResult Function( String field0)?  tracingsSubscriber,TResult Function( String field0)?  meetLink,TResult Function( String field0)?  chat,TResult Function( String field0)?  taskJoin,TResult Function( ResponseError field0)?  apiResponse,TResult Function()?  meetingLocked,TResult Function()?  incorrectPassword,TResult Function()?  mlsServerVersionNotSupported,TResult Function()?  waitingRoomJoinRequestNotFound,TResult Function()?  waitingRoomJoinCancelled,TResult Function()?  tokenIsInvalid,TResult Function()?  tokenIsExpired,TResult Function()?  checkDeviceClock,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case BridgeError_MutexLock() when mutexLock != null:
 return mutexLock(_that.field0);case BridgeError_MeetCore() when meetCore != null:
@@ -215,7 +224,10 @@ return meetingLocked();case BridgeError_IncorrectPassword() when incorrectPasswo
 return incorrectPassword();case BridgeError_MlsServerVersionNotSupported() when mlsServerVersionNotSupported != null:
 return mlsServerVersionNotSupported();case BridgeError_WaitingRoomJoinRequestNotFound() when waitingRoomJoinRequestNotFound != null:
 return waitingRoomJoinRequestNotFound();case BridgeError_WaitingRoomJoinCancelled() when waitingRoomJoinCancelled != null:
-return waitingRoomJoinCancelled();case _:
+return waitingRoomJoinCancelled();case BridgeError_TokenIsInvalid() when tokenIsInvalid != null:
+return tokenIsInvalid();case BridgeError_TokenIsExpired() when tokenIsExpired != null:
+return tokenIsExpired();case BridgeError_CheckDeviceClock() when checkDeviceClock != null:
+return checkDeviceClock();case _:
   return orElse();
 
 }
@@ -233,7 +245,7 @@ return waitingRoomJoinCancelled();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String field0)  mutexLock,required TResult Function( String field0)  meetCore,required TResult Function()  missingTwoFactor,required TResult Function( String field0)  meetCoreAny,required TResult Function( String field0)  login,required TResult Function( String field0)  apiLock,required TResult Function( String field0)  accessToken,required TResult Function( String field0)  muonAuthSession,required TResult Function( String field0)  muonAuthRefresh,required TResult Function( String field0)  muonClient,required TResult Function( String field0)  muonSession,required TResult Function( String field0)  fork,required TResult Function( String field0)  encoding,required TResult Function( String field0)  parseError,required TResult Function( String field0)  std,required TResult Function( String field0)  tracingsSubscriber,required TResult Function( String field0)  meetLink,required TResult Function( String field0)  chat,required TResult Function( String field0)  taskJoin,required TResult Function( ResponseError field0)  apiResponse,required TResult Function()  meetingLocked,required TResult Function()  incorrectPassword,required TResult Function()  mlsServerVersionNotSupported,required TResult Function()  waitingRoomJoinRequestNotFound,required TResult Function()  waitingRoomJoinCancelled,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String field0)  mutexLock,required TResult Function( String field0)  meetCore,required TResult Function()  missingTwoFactor,required TResult Function( String field0)  meetCoreAny,required TResult Function( String field0)  login,required TResult Function( String field0)  apiLock,required TResult Function( String field0)  accessToken,required TResult Function( String field0)  muonAuthSession,required TResult Function( String field0)  muonAuthRefresh,required TResult Function( String field0)  muonClient,required TResult Function( String field0)  muonSession,required TResult Function( String field0)  fork,required TResult Function( String field0)  encoding,required TResult Function( String field0)  parseError,required TResult Function( String field0)  std,required TResult Function( String field0)  tracingsSubscriber,required TResult Function( String field0)  meetLink,required TResult Function( String field0)  chat,required TResult Function( String field0)  taskJoin,required TResult Function( ResponseError field0)  apiResponse,required TResult Function()  meetingLocked,required TResult Function()  incorrectPassword,required TResult Function()  mlsServerVersionNotSupported,required TResult Function()  waitingRoomJoinRequestNotFound,required TResult Function()  waitingRoomJoinCancelled,required TResult Function()  tokenIsInvalid,required TResult Function()  tokenIsExpired,required TResult Function()  checkDeviceClock,}) {final _that = this;
 switch (_that) {
 case BridgeError_MutexLock():
 return mutexLock(_that.field0);case BridgeError_MeetCore():
@@ -260,7 +272,10 @@ return meetingLocked();case BridgeError_IncorrectPassword():
 return incorrectPassword();case BridgeError_MlsServerVersionNotSupported():
 return mlsServerVersionNotSupported();case BridgeError_WaitingRoomJoinRequestNotFound():
 return waitingRoomJoinRequestNotFound();case BridgeError_WaitingRoomJoinCancelled():
-return waitingRoomJoinCancelled();}
+return waitingRoomJoinCancelled();case BridgeError_TokenIsInvalid():
+return tokenIsInvalid();case BridgeError_TokenIsExpired():
+return tokenIsExpired();case BridgeError_CheckDeviceClock():
+return checkDeviceClock();}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -274,7 +289,7 @@ return waitingRoomJoinCancelled();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String field0)?  mutexLock,TResult? Function( String field0)?  meetCore,TResult? Function()?  missingTwoFactor,TResult? Function( String field0)?  meetCoreAny,TResult? Function( String field0)?  login,TResult? Function( String field0)?  apiLock,TResult? Function( String field0)?  accessToken,TResult? Function( String field0)?  muonAuthSession,TResult? Function( String field0)?  muonAuthRefresh,TResult? Function( String field0)?  muonClient,TResult? Function( String field0)?  muonSession,TResult? Function( String field0)?  fork,TResult? Function( String field0)?  encoding,TResult? Function( String field0)?  parseError,TResult? Function( String field0)?  std,TResult? Function( String field0)?  tracingsSubscriber,TResult? Function( String field0)?  meetLink,TResult? Function( String field0)?  chat,TResult? Function( String field0)?  taskJoin,TResult? Function( ResponseError field0)?  apiResponse,TResult? Function()?  meetingLocked,TResult? Function()?  incorrectPassword,TResult? Function()?  mlsServerVersionNotSupported,TResult? Function()?  waitingRoomJoinRequestNotFound,TResult? Function()?  waitingRoomJoinCancelled,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String field0)?  mutexLock,TResult? Function( String field0)?  meetCore,TResult? Function()?  missingTwoFactor,TResult? Function( String field0)?  meetCoreAny,TResult? Function( String field0)?  login,TResult? Function( String field0)?  apiLock,TResult? Function( String field0)?  accessToken,TResult? Function( String field0)?  muonAuthSession,TResult? Function( String field0)?  muonAuthRefresh,TResult? Function( String field0)?  muonClient,TResult? Function( String field0)?  muonSession,TResult? Function( String field0)?  fork,TResult? Function( String field0)?  encoding,TResult? Function( String field0)?  parseError,TResult? Function( String field0)?  std,TResult? Function( String field0)?  tracingsSubscriber,TResult? Function( String field0)?  meetLink,TResult? Function( String field0)?  chat,TResult? Function( String field0)?  taskJoin,TResult? Function( ResponseError field0)?  apiResponse,TResult? Function()?  meetingLocked,TResult? Function()?  incorrectPassword,TResult? Function()?  mlsServerVersionNotSupported,TResult? Function()?  waitingRoomJoinRequestNotFound,TResult? Function()?  waitingRoomJoinCancelled,TResult? Function()?  tokenIsInvalid,TResult? Function()?  tokenIsExpired,TResult? Function()?  checkDeviceClock,}) {final _that = this;
 switch (_that) {
 case BridgeError_MutexLock() when mutexLock != null:
 return mutexLock(_that.field0);case BridgeError_MeetCore() when meetCore != null:
@@ -301,7 +316,10 @@ return meetingLocked();case BridgeError_IncorrectPassword() when incorrectPasswo
 return incorrectPassword();case BridgeError_MlsServerVersionNotSupported() when mlsServerVersionNotSupported != null:
 return mlsServerVersionNotSupported();case BridgeError_WaitingRoomJoinRequestNotFound() when waitingRoomJoinRequestNotFound != null:
 return waitingRoomJoinRequestNotFound();case BridgeError_WaitingRoomJoinCancelled() when waitingRoomJoinCancelled != null:
-return waitingRoomJoinCancelled();case _:
+return waitingRoomJoinCancelled();case BridgeError_TokenIsInvalid() when tokenIsInvalid != null:
+return tokenIsInvalid();case BridgeError_TokenIsExpired() when tokenIsExpired != null:
+return tokenIsExpired();case BridgeError_CheckDeviceClock() when checkDeviceClock != null:
+return checkDeviceClock();case _:
   return null;
 
 }
@@ -1747,6 +1765,102 @@ int get hashCode => runtimeType.hashCode;
 @override
 String toString() {
   return 'BridgeError.waitingRoomJoinCancelled()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class BridgeError_TokenIsInvalid extends BridgeError {
+  const BridgeError_TokenIsInvalid(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_TokenIsInvalid);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'BridgeError.tokenIsInvalid()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class BridgeError_TokenIsExpired extends BridgeError {
+  const BridgeError_TokenIsExpired(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_TokenIsExpired);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'BridgeError.tokenIsExpired()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class BridgeError_CheckDeviceClock extends BridgeError {
+  const BridgeError_CheckDeviceClock(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_CheckDeviceClock);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'BridgeError.checkDeviceClock()';
 }
 
 

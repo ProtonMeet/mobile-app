@@ -3,15 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/views/components/alerts/join_meeting_error.dart';
-import 'package:meet/views/components/alerts/meeting_locked_error.dart';
-import 'package:meet/views/components/bottom.sheets/upgrade_due_to_meet_server_version_not_support_sheet.dart';
 import 'package:meet/views/components/loading_view.dart';
 import 'package:meet/views/scenes/core/responsive_v2.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
 import 'package:meet/views/scenes/room/room.dart';
 
 import 'waiting_room_bloc.dart';
-import 'waiting_room_error_code.dart';
+import 'waiting_room_error_code.extension.dart';
 import 'waiting_room_event.dart';
 import 'waiting_room_state.dart';
 
@@ -138,27 +136,25 @@ class _WaitingRoomPageState extends State<WaitingRoomPage>
                     state.args.meetingLink?.meetingLinkName;
                 // To-do: check if we really need addPostFrameCallback here
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (context.mounted) {
-                    if (state.error ==
-                        WaitingRoomErrorCode.meetingLocked.name) {
-                      showMeetingLockedBottomSheet(
+                  if (!context.mounted) return;
+
+                  final errorCode = WaitingRoomErrorCodeExtension.tryParse(
+                    state.error,
+                  );
+                  if (errorCode != null &&
+                      errorCode.showDedicatedBottomSheet(
                         context,
                         meetingLink: meetingLink,
-                      );
-                    } else if (state.error ==
-                        WaitingRoomErrorCode
-                            .mlsServerVersionNotSupported
-                            .name) {
-                      showUpgradeDueToMeetServerVersionNotSupportSheet(context);
-                    } else {
-                      showJoinMeetingErrorBottomSheet(
-                        context,
-                        errorMessage: state.error!,
-                        errorDetails: state.error,
-                        meetingLink: meetingLink,
-                      );
-                    }
+                      )) {
+                    return;
                   }
+
+                  showJoinMeetingErrorBottomSheet(
+                    context,
+                    errorMessage: state.error!,
+                    errorDetails: state.error,
+                    meetingLink: meetingLink,
+                  );
                 });
               }
             },
