@@ -151,7 +151,7 @@ impl App {
         };
 
         // Send metrics
-        self.http_api
+        self.mls_api
             .send_metrics(&base64_sd_kbt, &app_version, &user_agent, &metrics_request)
             .await
             .map_err(|e| MeetCoreError::HttpClientError {
@@ -242,7 +242,7 @@ impl App {
         };
 
         // Send metrics
-        self.http_api
+        self.mls_api
             .send_metrics(&base64_sd_kbt, &app_version, &user_agent, &metrics_request)
             .await
             .map_err(|e| MeetCoreError::HttpClientError {
@@ -331,7 +331,7 @@ impl App {
             designated_committer: None,
             user_rejoin: None,
         };
-        self.http_api
+        self.mls_api
             .send_metrics(&base64_sd_kbt, &app_version, &user_agent, &metrics_request)
             .await
             .map_err(|e| MeetCoreError::HttpClientError {
@@ -395,7 +395,7 @@ impl App {
         };
 
         // Send metrics
-        self.http_api
+        self.mls_api
             .send_metrics(&base64_sd_kbt, &app_version, &user_agent, &metrics_request)
             .await
             .map_err(|e| MeetCoreError::HttpClientError {
@@ -485,7 +485,7 @@ impl App {
         };
 
         // Send metrics
-        self.http_api
+        self.mls_api
             .send_metrics(&base64_sd_kbt, &app_version, &user_agent, &metrics_request)
             .await
             .map_err(|e| MeetCoreError::HttpClientError {
@@ -566,7 +566,7 @@ impl App {
         };
 
         // Send metrics
-        self.http_api
+        self.mls_api
             .send_metrics(&base64_sd_kbt, &app_version, &user_agent, &metrics_request)
             .await
             .map_err(|e| MeetCoreError::HttpClientError {

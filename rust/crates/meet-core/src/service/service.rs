@@ -64,8 +64,8 @@ use crate::{
     domain::user::{
         models::{user_settings::UserSettings, Address, UserId, UserTokenInfo},
         ports::{
-            meeting_api::MeetingApi, user_api::UserApi, ArcUserRepository, ConnectionState,
-            HttpClient, UserService,
+            meeting_api::MeetingApi, mls_api::MlsApi, user_api::UserApi, ArcUserRepository,
+            ConnectionState, HttpClient, UserService,
         },
     },
     errors::{
@@ -245,6 +245,7 @@ pub type AgentLeftHandler =
 #[derive(Clone)]
 pub struct Service {
     http_client: Arc<dyn HttpClient>,
+    mls_api: Arc<dyn MlsApi>,
     meeting_api: Arc<dyn MeetingApi>,
     user_api: Arc<dyn UserApi>,
     user_repository: ArcUserRepository,
@@ -448,6 +449,7 @@ fn restore_proposals_to_queue(
 impl Service {
     pub fn new(
         http_client: Arc<dyn HttpClient>,
+        mls_api: Arc<dyn MlsApi>,
         meeting_api: Arc<dyn MeetingApi>,
         user_api: Arc<dyn UserApi>,
         user_repository: ArcUserRepository,
@@ -481,11 +483,12 @@ impl Service {
             ),
         );
 
-        let mls_service = Arc::new(MlsService::new(http_client.clone(), mls_store.clone()));
+        let mls_service = Arc::new(MlsService::new(mls_store.clone()));
         let join_proposal_welcome_notify = Arc::new(Notify::new());
 
         Self {
             http_client,
+            mls_api,
             meeting_api,
             user_api,
             user_repository,
@@ -801,7 +804,7 @@ impl Service {
         };
 
         let result = self
-            .http_client
+            .mls_api
             .update_group_info(
                 &base64_sd_kbt,
                 &group_info_message,
@@ -1269,10 +1272,7 @@ impl Service {
 
             // get the group info from the server
             // let group_info_summary = self.ws_client.get_group_info_summary().await;
-            let group_info_summary = self
-                .http_client
-                .get_group_info_summary(&base64_sd_kbt)
-                .await;
+            let group_info_summary = self.mls_api.get_group_info_summary(&base64_sd_kbt).await;
 
             // wait for the epoch check delay to make sure the client can recevie in coming proposals and commits to update to latest status
             sleep(Duration::from_millis(epoch_check_delay_ms)).await;
@@ -1548,17 +1548,17 @@ impl UserService for Service {
         let base64_holder_signing_key =
             general_purpose::STANDARD.encode(holder_signing_key.to_bytes());
 
-        let fetch_sd_cwt_future = self.http_client.fetch_sd_cwt(
+        let fetch_sd_cwt_future = self.mls_api.fetch_sd_cwt(
             meet_link_name,
             access_token,
             &base64_holder_signing_key,
             session_id,
         );
-        let fetch_cks_future = self.http_client.fetch_cose_key_set();
+        let fetch_cks_future = self.mls_api.fetch_cose_key_set();
         // Fetch the external sender here to not add another latency in the MLS group creation.
         // The data will be cached in the http client.
         // Enable it later
-        // let fetch_external_sender_future = self.http_client.fetch_external_sender();
+        // let fetch_external_sender_future = self.mls_api.fetch_external_sender();
 
         let join_task_start = instant::now();
 
@@ -1704,7 +1704,7 @@ impl UserService for Service {
             .is_host;
         let group_config = MlsGroupConfig::default(user_id.clone(), is_host);
         // TODO: Enable it later
-        // let external_sender_bytes = self.http_client.fetch_external_sender().await?;
+        // let external_sender_bytes = self.mls_api.fetch_external_sender().await?;
         // if external_sender_bytes.is_empty() {
         //     tracing::warn!(
         //         "External sender response empty; creating group without external sender"
@@ -2146,7 +2146,7 @@ impl UserService for Service {
                 .await?;
 
             let result = self
-                .http_client
+                .mls_api
                 .update_group_info(
                     &base64_sd_kbt,
                     &group_info_message,
@@ -3054,7 +3054,7 @@ impl UserService for Service {
 
         tracing::info!("Retry logic for the whole join process");
         loop {
-            let result = self.http_client.get_group_info(&base64_sd_kbt).await;
+            let result = self.mls_api.get_group_info(&base64_sd_kbt).await;
             match result {
                 // join by external commit
                 Ok(ratchet_tree_and_group_info) => {
@@ -3128,7 +3128,7 @@ impl UserService for Service {
                         let group_info_message = convert_mls_types_to_spec(&group_info)?;
 
                         match self
-                            .http_client
+                            .mls_api
                             .update_group_info(
                                 &base64_sd_kbt,
                                 &group_info_message,
@@ -3214,7 +3214,7 @@ impl UserService for Service {
                         .try_into()?;
 
                     match self
-                        .http_client
+                        .mls_api
                         .update_group_info(
                             &base64_sd_kbt,
                             &group_info_message,
@@ -3288,7 +3288,7 @@ impl UserService for Service {
             let result = if let Some(cached) = cached_group_info.clone() {
                 Ok(cached)
             } else {
-                self.http_client.get_group_info(&base64_sd_kbt).await
+                self.mls_api.get_group_info(&base64_sd_kbt).await
             };
 
             match result {
@@ -3319,7 +3319,7 @@ impl UserService for Service {
                             .await?;
                         let proposal_message = convert_mls_types_to_spec(&proposal)?;
                         match self
-                            .http_client
+                            .mls_api
                             .join_group_by_proposal(&base64_sd_kbt, &proposal_message)
                             .await
                         {
@@ -3494,7 +3494,7 @@ impl UserService for Service {
                         .try_into()?;
 
                     match self
-                        .http_client
+                        .mls_api
                         .update_group_info(
                             &base64_sd_kbt,
                             &group_info_message,
@@ -3968,11 +3968,7 @@ impl Service {
         user_identifier: &UserId,
     ) -> Result<bool, MeetCoreError> {
         let base64_sd_kbt = self.get_sd_kbt(user_identifier).await?;
-        match self
-            .http_client
-            .get_group_info_summary(&base64_sd_kbt)
-            .await
-        {
+        match self.mls_api.get_group_info_summary(&base64_sd_kbt).await {
             Ok(_) => Ok(true),
             Err(HttpClientError::GroupInfoSummaryEmpty) => Ok(false),
             Err(e) => Err(e.into()),
@@ -3996,7 +3992,7 @@ impl Service {
         let base64_sd_kbt = self.get_sd_kbt(user_identifier).await?;
 
         if let Err(e) = self
-            .http_client
+            .mls_api
             .cancel_join_request(&base64_sd_kbt, meeting_link_name)
             .await
         {
@@ -4021,7 +4017,7 @@ impl Service {
 
         let base64_sd_kbt = self.get_sd_kbt(user_identifier).await?;
         let request_id = self
-            .http_client
+            .mls_api
             .submit_join_request(&base64_sd_kbt, meeting_link_name, encrypted_key_package)
             .await
             .map_err(MeetCoreError::from)?;
@@ -4152,7 +4148,7 @@ impl Service {
         }
 
         let base64_sd_kbt = self.get_sd_kbt(user_identifier).await?;
-        self.http_client
+        self.mls_api
             .reject_join_request(
                 &base64_sd_kbt,
                 meeting_link_name,
@@ -4351,7 +4347,7 @@ impl Service {
         };
 
         let result = self
-            .http_client
+            .mls_api
             .update_group_info(
                 &base64_sd_kbt,
                 &group_info_message,
@@ -5685,7 +5681,7 @@ impl Service {
             .await?;
 
         match self
-            .http_client
+            .mls_api
             .update_group_info(
                 &base64_sd_kbt,
                 &group_info_message,
@@ -5725,11 +5721,7 @@ impl NewUserService for Service {
     ) -> Result<(), MeetCoreError> {
         let base64_sd_kbt = self.get_sd_kbt(&user_info_token.user_id()).await?;
 
-        let ratchet_tree_and_group_info = match self
-            .http_client
-            .get_group_info(&base64_sd_kbt)
-            .await
-        {
+        let ratchet_tree_and_group_info = match self.mls_api.get_group_info(&base64_sd_kbt).await {
             Ok(ratchet_tree_and_group_info) => ratchet_tree_and_group_info,
             Err(e) => {
                 if matches!(e, HttpClientError::GroupInfoEmpty) {
@@ -5746,7 +5738,7 @@ impl NewUserService for Service {
                         .create_mls_group(meeting_link_name, &user_info_token.user_id(), room_kind)
                         .await?;
 
-                    self.http_client
+                    self.mls_api
                         .update_group_info(
                             &base64_sd_kbt,
                             &group_info_message,
@@ -5824,7 +5816,7 @@ impl NewUserService for Service {
                     ratchet_tree_option.clone(),
                 )
                 .await?;
-            self.http_client
+            self.mls_api
                 .join_group_by_proposal(&base64_sd_kbt, &proposal_message)
                 .await?;
 
@@ -5910,7 +5902,7 @@ impl NewUserService for Service {
                     ratchet_tree_option.clone(),
                 )
                 .await?;
-            self.http_client
+            self.mls_api
                 .update_group_info(
                     &base64_sd_kbt,
                     &group_info_message,
@@ -6023,7 +6015,7 @@ impl Service {
         // write lock.
         let host_sd_kbt = self.get_sd_kbt(user_id).await?;
         let agent_kp = self
-            .http_client
+            .mls_api
             .fetch_agent_keypackage(&host_sd_kbt, &agent_device_id)
             .await?;
         let agent_kp_bytes = agent_kp.key_package;
@@ -6162,7 +6154,7 @@ impl Service {
         // pending commit so the host stays at epoch N. On success, merge and
         // release.
         let upload = self
-            .http_client
+            .mls_api
             .update_group_info(
                 &host_sd_kbt,
                 &group_info_message,
@@ -6200,7 +6192,7 @@ impl Service {
         let ratchet_tree_option_bytes = ratchet_tree_option
             .to_tls_bytes()
             .map_err(|e| anyhow::anyhow!("ratchet_tree_option tls encode: {e:?}"))?;
-        let host = AgentHostService::new(self.http_client.clone(), self.mls_store.clone());
+        let host = AgentHostService::new(self.mls_api.clone(), self.mls_store.clone());
         host.push_bundle(
             &host_sd_kbt,
             AgentBundleForPush {
@@ -6224,10 +6216,7 @@ impl Service {
         user_id: &crate::domain::user::models::UserId,
     ) -> Result<Vec<String>, anyhow::Error> {
         let host_sd_kbt = self.get_sd_kbt(user_id).await?;
-        Ok(self
-            .http_client
-            .list_agent_keypackages(&host_sd_kbt)
-            .await?)
+        Ok(self.mls_api.list_agent_keypackages(&host_sd_kbt).await?)
     }
 
     /// Respond to a server-pushed `AgentLeft` event by removing the agent's
@@ -6324,7 +6313,7 @@ impl Service {
         };
 
         let upload = self
-            .http_client
+            .mls_api
             .update_group_info(
                 &host_sd_kbt,
                 &group_info_message,
@@ -6370,6 +6359,6 @@ pub(crate) mod service_test;
 
 #[cfg(all(test, not(target_family = "wasm")))]
 pub(crate) use service_test::{
-    create_mock_http_client_for_mls, create_test_service, join_switch_service_with_http,
+    create_mock_mls_api, create_test_service, join_switch_service_with_mls_api,
     mls_group_export_snapshot, setup_n_user_group,
 };

@@ -82,7 +82,8 @@ async fn is_websocket_has_reconnected_delegates_to_service() {
 
     use crate::app::test_support::{build_app_with_ws_and_service, test_mls_store};
     use crate::domain::user::ports::{
-        meeting_api::MockMeetingApi, user_api::MockUserApi, MockHttpClient, MockUserRepository,
+        meeting_api::MockMeetingApi, user_api::MockUserApi, MockHttpClient, MockMlsApi,
+        MockUserRepository,
     };
     use crate::service::service::Service;
 
@@ -94,6 +95,7 @@ async fn is_websocket_has_reconnected_delegates_to_service() {
     let ws = Arc::new(ws);
     let service = Service::new(
         Arc::new(MockHttpClient::new()),
+        Arc::new(MockMlsApi::new()),
         Arc::new(MockMeetingApi::new()),
         Arc::new(MockUserApi::new()),
         Arc::new(MockUserRepository::new()),

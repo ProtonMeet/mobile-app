@@ -26,7 +26,7 @@ use crate::infra::dto::realtime::{
     GroupInfoVersion, JoinType, RatchetTreeAndGroupInfo, VersionedGroupInfoData,
 };
 use crate::service::service::{
-    create_test_service, join_switch_service_with_http, mls_group_export_snapshot,
+    create_test_service, join_switch_service_with_mls_api, mls_group_export_snapshot,
     setup_n_user_group,
 };
 use crate::JOIN_TYPE_SWITCH_THRESHOLD;
@@ -407,19 +407,19 @@ async fn join_room_with_switch_join_type_falls_back_to_false_on_retryable_error(
     let external_commit_attempts = Arc::new(AtomicUsize::new(0));
 
     let join_service =
-        join_switch_service_with_http(&joiner_service, "joiner", meet_link_name, |http| {
-            http.expect_get_group_info().returning({
+        join_switch_service_with_mls_api(&joiner_service, "joiner", meet_link_name, |mls| {
+            mls.expect_get_group_info().returning({
                 let v = versioned.clone();
                 move |_| Box::pin(ready(Ok((*v).clone())))
             });
-            http.expect_join_group_by_proposal().returning({
+            mls.expect_join_group_by_proposal().returning({
                 let proposal_attempts = proposal_attempts.clone();
                 move |_, _| {
                     proposal_attempts.fetch_add(1, Ordering::SeqCst);
                     Box::pin(ready(Err(HttpClientError::MlsStatusCode(422))))
                 }
             });
-            http.expect_update_group_info().returning({
+            mls.expect_update_group_info().returning({
                 let external_commit_attempts = external_commit_attempts.clone();
                 move |_, _, _, _, _| {
                     external_commit_attempts.fetch_add(1, Ordering::SeqCst);

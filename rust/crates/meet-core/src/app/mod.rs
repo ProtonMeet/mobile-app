@@ -8,7 +8,7 @@ use crate::domain::user::models::{
 use crate::domain::user::ports::crypto_client::CryptoClient;
 use crate::domain::user::ports::meeting_api::MeetingApi;
 use crate::domain::user::ports::{
-    ArcWebSocketClient, EventApi, HttpClient, UnleashApi, UserService, WebSocketClient,
+    ArcWebSocketClient, EventApi, HttpClient, MlsApi, UnleashApi, UserService, WebSocketClient,
 };
 use crate::errors::core::MeetCoreError;
 use crate::infra::muon::is_prod_environment;
@@ -115,6 +115,7 @@ pub struct App {
     state: Arc<RwLock<AppState>>,
     ws_client: ArcWebSocketClient,
     http_api: Arc<dyn HttpClient>,
+    mls_api: Arc<dyn MlsApi>,
     proton_http: Option<Arc<ProtonHttpClient>>,
     unleash_api: Arc<dyn UnleashApi>,
     meeting_api: Arc<dyn MeetingApi>,
@@ -233,10 +234,10 @@ impl App {
             config: MlsClientConfig::default(),
         }));
         let crypto_client = Arc::new(MeetCryptoClient::new()) as Arc<dyn CryptoClient>;
-        let mls_service: Arc<dyn KeyPackagePort> =
-            Arc::new(MlsService::new(http_client.clone(), mls_store.clone()));
+        let mls_service: Arc<dyn KeyPackagePort> = Arc::new(MlsService::new(mls_store.clone()));
 
         let user_service = Arc::new(RwLock::new(Service::new(
+            http_client.clone(),
             http_client.clone(),
             http_client.clone(),
             http_client.clone(),
@@ -296,6 +297,7 @@ impl App {
             })),
             ws_client,
             http_api: http_client.clone(),
+            mls_api: http_client.clone(),
             proton_http: Some(http_client.clone()),
             unleash_api: http_client.clone(),
             meeting_api: http_client.clone(),
@@ -598,6 +600,7 @@ impl App {
         state: Arc<RwLock<AppState>>,
         ws_client: ArcWebSocketClient,
         http_client: Arc<dyn HttpClient>,
+        mls_api: Arc<dyn MlsApi>,
         unleash_api: Arc<dyn UnleashApi>,
         meeting_api: Arc<dyn MeetingApi>,
         event_api: Arc<dyn EventApi>,
@@ -610,6 +613,7 @@ impl App {
             state,
             ws_client,
             http_api: http_client,
+            mls_api,
             proton_http: None,
             unleash_api,
             meeting_api,
