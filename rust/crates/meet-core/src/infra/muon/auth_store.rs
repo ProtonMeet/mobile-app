@@ -5,11 +5,39 @@
 //! Never hold an async guard across muon/client calls — that can deadlock.
 
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock, RwLock};
 
 use cfg_if::cfg_if;
 use muon::{auth::Auth, store::Store, Environment};
 use tokio::sync::Mutex;
+
+/// Called when muon persists refreshed auth (e.g. after token rotation during API calls).
+pub type AuthPersistCallback = Arc<dyn Fn(Auth) + Send + Sync>;
+
+static AUTH_PERSIST_CALLBACK: OnceLock<RwLock<Option<AuthPersistCallback>>> = OnceLock::new();
+
+fn auth_persist_slot() -> &'static RwLock<Option<AuthPersistCallback>> {
+    AUTH_PERSIST_CALLBACK.get_or_init(|| RwLock::new(None))
+}
+
+/// Register a hook invoked whenever auth is written into the store (native only).
+/// Used by the Flutter bridge to mirror tokens into platform secure storage.
+pub fn set_auth_persist_callback(callback: Option<AuthPersistCallback>) {
+    if let Ok(mut guard) = auth_persist_slot().write() {
+        *guard = callback;
+    }
+}
+
+fn notify_auth_persisted(auth: Auth) {
+    if matches!(auth, Auth::None) {
+        return;
+    }
+    if let Ok(guard) = auth_persist_slot().read() {
+        if let Some(callback) = guard.as_ref() {
+            callback(auth);
+        }
+    }
+}
 
 #[cfg(feature = "allow-dangerous-env")]
 use super::support::MeetCustomEnv;
@@ -99,7 +127,12 @@ impl AuthStore {
 
     /// Write auth into the store the way muon expects (used before rebuilding the client).
     pub fn set_session_auth(&mut self, auth: Auth) {
-        *lock_auth_sync(&self.auth) = auth;
+        if matches!(auth, Auth::None) {
+            *lock_auth_sync(&self.auth) = auth;
+            return;
+        }
+        *lock_auth_sync(&self.auth) = auth.clone();
+        notify_auth_persisted(auth);
     }
 }
 
@@ -111,7 +144,8 @@ impl Store for AuthStore {
         if matches!(auth, Auth::None) {
             return;
         }
-        *lock_auth_sync(&self.auth) = auth;
+        *lock_auth_sync(&self.auth) = auth.clone();
+        notify_auth_persisted(auth);
     }
 
     fn remove_auth(&mut self, _key: &Self::Key) {
