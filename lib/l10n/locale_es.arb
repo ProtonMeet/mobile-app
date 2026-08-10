@@ -105,6 +105,30 @@
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
+  "check_device_clock_title": "Comprueba la fecha y la hora de tu dispositivo",
+  "@check_device_clock_title": {
+    "description": "Title when the device clock skew prevents joining a meeting"
+  },
+  "check_device_clock_description": "No se ha podido conectar a esta reunión porque la fecha y la hora de tu dispositivo no están sincronizadas.\n\nPara solucionarlo:\n• Abre los ajustes de tu dispositivo\n• Activa la opción de ajuste automático para la fecha y la hora\n• Vuelve a Proton Meet y únete de nuevo a la reunión",
+  "@check_device_clock_description": {
+    "description": "Description when the user must fix device clock settings before joining"
+  },
+  "token_is_invalid_title": "No ha sido posible unirse a la reunión",
+  "@token_is_invalid_title": {
+    "description": "Title when the MLS session token is invalid"
+  },
+  "token_is_invalid_description": "Ha ocurrido un error al conectar. Toca Cerrar y vuelve a unirte a la reunión.",
+  "@token_is_invalid_description": {
+    "description": "Description when the MLS session token is invalid"
+  },
+  "token_is_expired_title": "La conexión ha caducado",
+  "@token_is_expired_title": {
+    "description": "Title when the MLS session token has expired"
+  },
+  "token_is_expired_description": "Tu conexión ha caducado antes de que pudieras unirte. Toca Cerrar y vuelve a unirte a la reunión.",
+  "@token_is_expired_description": {
+    "description": "Description when the MLS session token has expired"
+  },
   "meeting_unlocked_notification": "Reunión desbloqueada. Los participantes se pueden volver a unir.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"
@@ -113,19 +137,19 @@
   "picture_in_picture_mode": "Modo pantalla en pantalla",
   "security": "Seguridad",
   "enable_waiting_room": "Habilitar sala de espera",
-  "waiting_room_setting_on_description": "Participants join after you approve them",
+  "waiting_room_setting_on_description": "Los participantes se unen después de que los apruebes",
   "@waiting_room_setting_on_description": {
     "description": "Waiting room switch description when enabled in meeting settings"
   },
-  "waiting_room_setting_off_description": "Anyone with the link can join",
+  "waiting_room_setting_off_description": "Cualquier persona con el enlace puede unirse",
   "@waiting_room_setting_off_description": {
     "description": "Waiting room switch description when disabled in meeting settings"
   },
-  "waiting_room_enabled_notification": "Enabled waiting room, participants join after you approve them.",
+  "waiting_room_enabled_notification": "Se ha activado la sala de espera. Los participantes se unen después de que los apruebes.",
   "@waiting_room_enabled_notification": {
     "description": "Global notification when the host enables waiting room in meeting settings"
   },
-  "waiting_room_disabled_notification": "Disabled waiting room, anyone with the link can join.",
+  "waiting_room_disabled_notification": "Se ha desactivado la sala de espera. Cualquier persona con el enlace puede unirse.",
   "@waiting_room_disabled_notification": {
     "description": "Global notification when the host disables waiting room in meeting settings"
   },
@@ -262,7 +286,7 @@
     "description": "Empty state when the waiting room participant list is empty"
   },
   "join_meeting_button": "Unirte a la reunión",
-  "create_meeting_button": "Create",
+  "create_meeting_button": "Crear",
   "import_meeting_button": "Importar reunión",
   "import_meeting_title": "Importar reunión",
   "import_meeting_hint_text": "Introduce el enlace de la reunión",
@@ -918,11 +942,11 @@
   "@chat_title": {
     "description": "Title for the in-meeting chat panel"
   },
-  "chat_input_hint": "Type an encrypted message…",
+  "chat_input_hint": "Escribe un mensaje cifrado…",
   "@chat_input_hint": {
     "description": "Placeholder for the main chat composer"
   },
-  "chat_new_messages": "{count, plural, =1{1 new message} other{{count} new messages}}",
+  "chat_new_messages": "{count, plural, =1{1 mensaje nuevo} other{{count} mensajes nuevos}}",
   "@chat_new_messages": {
     "description": "Pill shown when new root-level chat messages arrive while scrolled up",
     "placeholders": {
@@ -931,7 +955,7 @@
       }
     }
   },
-  "chat_new_messages_badge": "{count, plural, =1{1 new} other{{count} new}}",
+  "chat_new_messages_badge": "{count, plural, =1{1 nuevo} other{{count} nuevos}}",
   "@chat_new_messages_badge": {
     "description": "Compact floating badge above the composer when new messages arrive while scrolled up",
     "placeholders": {
@@ -940,7 +964,7 @@
       }
     }
   },
-  "chat_thread_view_replies": "{count, plural, =1{View 1 reply} other{View {count} replies}}",
+  "chat_thread_view_replies": "{count, plural, =1{Ver 1 respuesta} other{Ver {count} respuestas}}",
   "@chat_thread_view_replies": {
     "description": "Collapsed thread toggle to expand and view replies",
     "placeholders": {
@@ -949,7 +973,7 @@
       }
     }
   },
-  "chat_thread_replies_count": "{count, plural, =1{1 reply} other{{count} replies}}",
+  "chat_thread_replies_count": "{count, plural, =1{1 respuesta} other{{count} respuestas}}",
   "@chat_thread_replies_count": {
     "description": "Expanded thread toggle showing reply count",
     "placeholders": {
@@ -958,39 +982,39 @@
       }
     }
   },
-  "chat_thread_new_reply": "New reply",
+  "chat_thread_new_reply": "Nueva respuesta",
   "@chat_thread_new_reply": {
     "description": "Badge shown on a collapsed thread when there are unseen replies"
   },
-  "chat_system_joined_prefix": "Joined ",
+  "chat_system_joined_prefix": "Se ha unido a ",
   "@chat_system_joined_prefix": {
     "description": "Prefix before the meeting name in a join system chat notice"
   },
-  "chat_system_left_prefix": "Left ",
+  "chat_system_left_prefix": "Ha abandonado ",
   "@chat_system_left_prefix": {
     "description": "Prefix before the meeting name in a leave system chat notice"
   },
-  "chat_reply_hint": "Reply…",
+  "chat_reply_hint": "Responder…",
   "@chat_reply_hint": {
     "description": "Placeholder for the thread reply composer"
   },
-  "chat_thread_missing_root": "This conversation started before you joined.",
+  "chat_thread_missing_root": "Esta conversación se ha iniciado antes de que te unieras.",
   "@chat_thread_missing_root": {
     "description": "Placeholder when a thread root message is not available locally"
   },
-  "chat_not_delivered": "Not delivered",
+  "chat_not_delivered": "No entregado",
   "@chat_not_delivered": {
     "description": "Status label for a failed outgoing chat message"
   },
-  "chat_discard": "Discard",
+  "chat_discard": "Descartar",
   "@chat_discard": {
     "description": "Action to remove a failed outgoing chat message"
   },
-  "chat_reply": "Reply",
+  "chat_reply": "Responder",
   "@chat_reply": {
     "description": "Action to reply to a chat message in a thread"
   },
-  "chat_copy_text": "Copy text",
+  "chat_copy_text": "Copiar texto",
   "@chat_copy_text": {
     "description": "Action to copy chat message text to clipboard"
   },

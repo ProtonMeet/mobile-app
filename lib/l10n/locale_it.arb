@@ -105,6 +105,30 @@
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
+  "check_device_clock_title": "Controlla la data e l'ora del tuo dispositivo.",
+  "@check_device_clock_title": {
+    "description": "Title when the device clock skew prevents joining a meeting"
+  },
+  "check_device_clock_description": "Non è stato possibile connetterti a questa riunione perché la data e l'ora del tuo dispositivo non sono sincronizzate.\n\nPer risolvere il problema:\n• Apri le Impostazioni del tuo dispositivo\n• Attiva l'opzione \\\"Imposta automaticamente\\\" per data e ora\n• Torna a Proton Meet e partecipa nuovamente alla riunione",
+  "@check_device_clock_description": {
+    "description": "Description when the user must fix device clock settings before joining"
+  },
+  "token_is_invalid_title": "Impossibile partecipare alla riunione",
+  "@token_is_invalid_title": {
+    "description": "Title when the MLS session token is invalid"
+  },
+  "token_is_invalid_description": "Si è verificato un errore durante la connessione. Tocca Chiudi e partecipa nuovamente alla riunione.",
+  "@token_is_invalid_description": {
+    "description": "Description when the MLS session token is invalid"
+  },
+  "token_is_expired_title": "Connessione scaduta",
+  "@token_is_expired_title": {
+    "description": "Title when the MLS session token has expired"
+  },
+  "token_is_expired_description": "La tua connessione è scaduta prima che potessi partecipare. Tocca Chiudi e partecipa nuovamente alla riunione.",
+  "@token_is_expired_description": {
+    "description": "Description when the MLS session token has expired"
+  },
   "meeting_unlocked_notification": "Riunione sbloccata. I partecipanti possono accedere di nuovo.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"

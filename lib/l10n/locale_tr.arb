@@ -105,6 +105,30 @@
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
+  "check_device_clock_title": "Aygıtınızın tarihini ve saatini kontrol edin",
+  "@check_device_clock_title": {
+    "description": "Title when the device clock skew prevents joining a meeting"
+  },
+  "check_device_clock_description": "Aygıtınızın tarihi ve saati yanlış olduğundan için sizi bu toplantıya bağlayamadık.\n\nBunu düzeltmek için:\n• Aygıtınızın ayarlarını açın\n• Tarih ve saat için otomatik olarak ayarla seçeneğini açın\n• Proton Meet uygulamasına dönün ve toplantıya yeniden katılın",
+  "@check_device_clock_description": {
+    "description": "Description when the user must fix device clock settings before joining"
+  },
+  "token_is_invalid_title": "Toplantıya katılınamadı",
+  "@token_is_invalid_title": {
+    "description": "Title when the MLS session token is invalid"
+  },
+  "token_is_invalid_description": "Bağlantı kurulurken bir sorun çıktı. Kapat üzerine dokunun ve toplantıya yeniden katılın.",
+  "@token_is_invalid_description": {
+    "description": "Description when the MLS session token is invalid"
+  },
+  "token_is_expired_title": "Bağlantı kurma süresi doldu",
+  "@token_is_expired_title": {
+    "description": "Title when the MLS session token has expired"
+  },
+  "token_is_expired_description": "Katılmadan önce bağlantı kurma süresi doldu. Kapat üzerine dokunun ve toplantıya yeniden katılın.",
+  "@token_is_expired_description": {
+    "description": "Description when the MLS session token has expired"
+  },
   "meeting_unlocked_notification": "Görüşme kilidi açıldı. Katılımcılar yeniden katılabilir.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"

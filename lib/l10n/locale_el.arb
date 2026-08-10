@@ -105,6 +105,30 @@
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
+  "check_device_clock_title": "Ελέγξτε την ημερομηνία και την ώρα της συσκευής σας",
+  "@check_device_clock_title": {
+    "description": "Title when the device clock skew prevents joining a meeting"
+  },
+  "check_device_clock_description": "Δεν ήταν δυνατή η σύνδεσή σας σε αυτήν τη σύσκεψη επειδή η ημερομηνία και η ώρα της συσκευής σας δεν είναι συγχρονισμένες.",
+  "@check_device_clock_description": {
+    "description": "Description when the user must fix device clock settings before joining"
+  },
+  "token_is_invalid_title": "Δεν είναι δυνατή η συμμετοχή στη σύσκεψη",
+  "@token_is_invalid_title": {
+    "description": "Title when the MLS session token is invalid"
+  },
+  "token_is_invalid_description": "Κάτι πήγε στραβά κατά τη σύνδεση. Πατήστε Κλείσιμο και συμμετάσχετε ξανά στη σύσκεψη.",
+  "@token_is_invalid_description": {
+    "description": "Description when the MLS session token is invalid"
+  },
+  "token_is_expired_title": "Η σύνδεση έληξε",
+  "@token_is_expired_title": {
+    "description": "Title when the MLS session token has expired"
+  },
+  "token_is_expired_description": "Η σύνδεσή σας έληξε πριν μπορέσετε να συμμετάσχετε. Πατήστε Κλείσιμο και συμμετάσχετε ξανά στη σύσκεψη.",
+  "@token_is_expired_description": {
+    "description": "Description when the MLS session token has expired"
+  },
   "meeting_unlocked_notification": "Η σύσκεψη ξεκλειδώθηκε. Οι συμμετέχοντες μπορούν να συμμετάσχουν ξανά.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"

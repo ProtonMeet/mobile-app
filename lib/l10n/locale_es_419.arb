@@ -105,6 +105,30 @@
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
+  "check_device_clock_title": "Check your device's date and time",
+  "@check_device_clock_title": {
+    "description": "Title when the device clock skew prevents joining a meeting"
+  },
+  "check_device_clock_description": "We couldn't connect you to this meeting because your device's date and time are out of sync.\n\nTo fix this:\n• Open your device Settings\n• Turn on Set Automatically for date and time\n• Return to Proton Meet and join the meeting again",
+  "@check_device_clock_description": {
+    "description": "Description when the user must fix device clock settings before joining"
+  },
+  "token_is_invalid_title": "Unable to join meeting",
+  "@token_is_invalid_title": {
+    "description": "Title when the MLS session token is invalid"
+  },
+  "token_is_invalid_description": "Something went wrong while connecting. Tap Close and join the meeting again.",
+  "@token_is_invalid_description": {
+    "description": "Description when the MLS session token is invalid"
+  },
+  "token_is_expired_title": "La conexión ha expirado",
+  "@token_is_expired_title": {
+    "description": "Title when the MLS session token has expired"
+  },
+  "token_is_expired_description": "Your connection expired before you could join. Tap Close and join the meeting again.",
+  "@token_is_expired_description": {
+    "description": "Description when the MLS session token has expired"
+  },
   "meeting_unlocked_notification": "Reunión desbloqueada. Los participantes se pueden unir nuevamente.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"
@@ -117,7 +141,7 @@
   "@waiting_room_setting_on_description": {
     "description": "Waiting room switch description when enabled in meeting settings"
   },
-  "waiting_room_setting_off_description": "Anyone with the link can join",
+  "waiting_room_setting_off_description": "Cualquier persona que tenga el enlace puede unirse",
   "@waiting_room_setting_off_description": {
     "description": "Waiting room switch description when disabled in meeting settings"
   },
@@ -187,11 +211,11 @@
   "enter_display_name": "Ingrese su nombre",
   "display_name_required": "Su nombre es obligatorio",
   "remember_display_name_on_device": "Recordar mi nombre en este dispositivo para futuras reuniones",
-  "use_this_name_next_time": "Use this name next time",
+  "use_this_name_next_time": "Usar este nombre la próxima vez",
   "@use_this_name_next_time": {
     "description": "Toggle label on pre-join screen to remember display name"
   },
-  "prejoin_meeting_has_waiting_room": "This meeting has a waiting room",
+  "prejoin_meeting_has_waiting_room": "Esta reunión tiene una sala de espera",
   "@prejoin_meeting_has_waiting_room": {
     "description": "Informational message on pre-join when waiting room is enabled"
   },
@@ -211,7 +235,7 @@
   "@waiting_room_awaiting_admission_description": {
     "description": "Description when guest waits for host admission"
   },
-  "waiting_room_expires_in": "Expires in {time}",
+  "waiting_room_expires_in": "Expira en {time}",
   "@waiting_room_expires_in": {
     "description": "Countdown pill label while waiting for admission",
     "placeholders": {
@@ -922,7 +946,7 @@
   "@chat_input_hint": {
     "description": "Placeholder for the main chat composer"
   },
-  "chat_new_messages": "{count, plural, =1{1 new message} other{{count} new messages}}",
+  "chat_new_messages": "{count, plural, =1{1 mensaje nuevo} other{{count} mensajes nuevos}}",
   "@chat_new_messages": {
     "description": "Pill shown when new root-level chat messages arrive while scrolled up",
     "placeholders": {
@@ -931,7 +955,7 @@
       }
     }
   },
-  "chat_new_messages_badge": "{count, plural, =1{1 new} other{{count} new}}",
+  "chat_new_messages_badge": "{count, plural, =1{1 nuevo} other{{count} nuevos}}",
   "@chat_new_messages_badge": {
     "description": "Compact floating badge above the composer when new messages arrive while scrolled up",
     "placeholders": {
@@ -982,7 +1006,7 @@
   "@chat_not_delivered": {
     "description": "Status label for a failed outgoing chat message"
   },
-  "chat_discard": "Discard",
+  "chat_discard": "Descartar",
   "@chat_discard": {
     "description": "Action to remove a failed outgoing chat message"
   },
@@ -1477,7 +1501,7 @@
   "@schedule_time_zone_selected": {
     "description": "Label for schedule time zone selected"
   },
-  "schedule_waiting_room": "Waiting room",
+  "schedule_waiting_room": "Sala de espera",
   "@schedule_waiting_room": {
     "description": "Label for waiting room field in schedule meeting dialog"
   },

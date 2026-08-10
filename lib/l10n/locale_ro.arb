@@ -105,6 +105,30 @@
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
+  "check_device_clock_title": "Verificați data și ora sistemului",
+  "@check_device_clock_title": {
+    "description": "Title when the device clock skew prevents joining a meeting"
+  },
+  "check_device_clock_description": "Nu v-am putut conecta la această conferință deoarece data și ora dispozitivului pe care-l utilizați nu sunt sincronizate.",
+  "@check_device_clock_description": {
+    "description": "Description when the user must fix device clock settings before joining"
+  },
+  "token_is_invalid_title": "Conferința nu se poate accesa",
+  "@token_is_invalid_title": {
+    "description": "Title when the MLS session token is invalid"
+  },
+  "token_is_invalid_description": "Ceva nu a funcționat bine pe durata conectării. Atingeți pe „Închidere” și reconectați-vă la conferință.",
+  "@token_is_invalid_description": {
+    "description": "Description when the MLS session token is invalid"
+  },
+  "token_is_expired_title": "Conexiune expirată",
+  "@token_is_expired_title": {
+    "description": "Title when the MLS session token has expired"
+  },
+  "token_is_expired_description": "Conexiunea a expirat înainte de a vă putea alătura. Atingeți pe „Închidere” și reconectați-vă la conferință.",
+  "@token_is_expired_description": {
+    "description": "Description when the MLS session token has expired"
+  },
   "meeting_unlocked_notification": "Conferință deblocată. Se pot alătura participanți.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"

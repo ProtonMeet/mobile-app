@@ -105,6 +105,30 @@
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
+  "check_device_clock_title": "Vérifiez la date et l'heure de votre appareil",
+  "@check_device_clock_title": {
+    "description": "Title when the device clock skew prevents joining a meeting"
+  },
+  "check_device_clock_description": "Nous n'avons pas pu vous connecter à cette réunion car la date et l'heure de votre appareil sont désynchronisées.\n\nPour résoudre ce problème :\n• Ouvrez les paramètres de votre appareil\n• Activez l'option Réglage automatique de la date et de l'heure\n• Retournez dans Proton Meet et rejoignez la réunion",
+  "@check_device_clock_description": {
+    "description": "Description when the user must fix device clock settings before joining"
+  },
+  "token_is_invalid_title": "Impossible de participer à la réunion",
+  "@token_is_invalid_title": {
+    "description": "Title when the MLS session token is invalid"
+  },
+  "token_is_invalid_description": "Une erreur s'est produite lors de la connexion. Appuyez sur Fermer et rejoignez la réunion à nouveau.",
+  "@token_is_invalid_description": {
+    "description": "Description when the MLS session token is invalid"
+  },
+  "token_is_expired_title": "La connexion a expiré",
+  "@token_is_expired_title": {
+    "description": "Title when the MLS session token has expired"
+  },
+  "token_is_expired_description": "Votre connexion a expiré avant que vous puissiez rejoindre la réunion. Appuyez sur Fermer et rejoignez-la à nouveau.",
+  "@token_is_expired_description": {
+    "description": "Description when the MLS session token has expired"
+  },
   "meeting_unlocked_notification": "Réunion déverrouillée. Les participants peuvent de nouveau la rejoindre.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"

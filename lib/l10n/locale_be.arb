@@ -105,6 +105,30 @@
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
+  "check_device_clock_title": "Праверце дату і час на сваёй прыладзе",
+  "@check_device_clock_title": {
+    "description": "Title when the device clock skew prevents joining a meeting"
+  },
+  "check_device_clock_description": "Не ўдалося падключыць вас да гэтай сустрэчы, бо дата і час вашай прылады не сінхранізаваныя.",
+  "@check_device_clock_description": {
+    "description": "Description when the user must fix device clock settings before joining"
+  },
+  "token_is_invalid_title": "Немагчыма падлучыцца да сустрэчы",
+  "@token_is_invalid_title": {
+    "description": "Title when the MLS session token is invalid"
+  },
+  "token_is_invalid_description": "Нешта пайшло не так пры падключэнні. Націсніце кнопку \\\"Закрыць\\\" і зноў далучыцеся да сустрэчы.",
+  "@token_is_invalid_description": {
+    "description": "Description when the MLS session token is invalid"
+  },
+  "token_is_expired_title": "Падключэнне пратэрмінавана",
+  "@token_is_expired_title": {
+    "description": "Title when the MLS session token has expired"
+  },
+  "token_is_expired_description": "Ваша падключэнне пратэрмінавана да таго, як вы змаглі далучыцца да яе. Нешта пайшло не так пры падключэнні. Націсніце кнопку \\\"Закрыць\\\" і зноў далучыцеся да сустрэчы.",
+  "@token_is_expired_description": {
+    "description": "Description when the MLS session token has expired"
+  },
   "meeting_unlocked_notification": "Сустрэча разблакіравана. Удзельнікі зноў могуць далучыцца да яе.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"
@@ -113,19 +137,19 @@
   "picture_in_picture_mode": "Рэжым «відарыс у відарысе»",
   "security": "Бяспека",
   "enable_waiting_room": "Уключыць пакой чакання",
-  "waiting_room_setting_on_description": "Participants join after you approve them",
+  "waiting_room_setting_on_description": "Удзельнікі далучацца пасля вашага ўхвалення",
   "@waiting_room_setting_on_description": {
     "description": "Waiting room switch description when enabled in meeting settings"
   },
-  "waiting_room_setting_off_description": "Anyone with the link can join",
+  "waiting_room_setting_off_description": "Любы карыстальнік са спасылкай зможа далучыцца",
   "@waiting_room_setting_off_description": {
     "description": "Waiting room switch description when disabled in meeting settings"
   },
-  "waiting_room_enabled_notification": "Enabled waiting room, participants join after you approve them.",
+  "waiting_room_enabled_notification": "Пакой чакання ўключаны. Удзельнікі далучацца пасля вашага ўхвалення.",
   "@waiting_room_enabled_notification": {
     "description": "Global notification when the host enables waiting room in meeting settings"
   },
-  "waiting_room_disabled_notification": "Disabled waiting room, anyone with the link can join.",
+  "waiting_room_disabled_notification": "Пакой чакання адключаны. Любы карыстальнік са спасылкай зможа далучыцца",
   "@waiting_room_disabled_notification": {
     "description": "Global notification when the host disables waiting room in meeting settings"
   },
