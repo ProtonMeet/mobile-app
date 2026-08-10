@@ -8,6 +8,7 @@ import 'package:meet/provider/locale.provider.dart';
 import 'package:meet/views/components/alerts/base_bottom_sheet_v2.dart';
 import 'package:meet/views/components/dropdown.button.v3.dart';
 import 'package:meet/views/scenes/settings/debug/debug_sections.dart';
+import 'package:meet/views/scenes/settings/global_waiting_room_setting.dart';
 import 'package:meet/views/scenes/settings/settings_action_item.dart';
 import 'package:meet/views/scenes/settings/settings_section_header.dart';
 import 'package:meet/views/scenes/signin/auth_bloc.dart';
@@ -18,14 +19,20 @@ class AppSettingsBottomSheet extends StatelessWidget {
     required this.maxHeight,
     required this.isLandscape,
     this.authBloc,
+    this.showWaitingRoom = false,
     super.key,
   });
 
   final double maxHeight;
   final bool isLandscape;
   final AuthBloc? authBloc;
+  final bool showWaitingRoom;
 
-  static void show(BuildContext context, {AuthBloc? authBloc}) {
+  static void show(
+    BuildContext context, {
+    AuthBloc? authBloc,
+    bool showWaitingRoom = false,
+  }) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -39,6 +46,7 @@ class AppSettingsBottomSheet extends StatelessWidget {
           maxHeight: maxHeight,
           isLandscape: isLandscape,
           authBloc: authBloc,
+          showWaitingRoom: showWaitingRoom,
         );
       },
     );
@@ -77,6 +85,10 @@ class AppSettingsBottomSheet extends StatelessWidget {
                 title: context.local.settings_section_general,
               ),
               _buildLanguageCard(context),
+              if (isSignedIn && showWaitingRoom) ...[
+                const SizedBox(height: 16),
+                const GlobalWaitingRoomSettingSection(),
+              ],
               const SizedBox(height: 16),
               SettingsSectionHeader(
                 title: context.local.settings_section_support,

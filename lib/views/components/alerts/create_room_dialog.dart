@@ -25,6 +25,7 @@ Future<void> showCreateRoomDialog(
   bool autofocus = true,
   bool isPaidUser = false,
   bool showWaitingRoom = false,
+  bool initialWaitingRoomEnabled = false,
 }) {
   // Block dialog when in force upgrade state
   final appStateManager = ManagerFactory().get<AppStateManager>();
@@ -44,6 +45,7 @@ Future<void> showCreateRoomDialog(
       autofocus: autofocus,
       isPaidUser: isPaidUser,
       showWaitingRoom: showWaitingRoom,
+      initialWaitingRoomEnabled: initialWaitingRoomEnabled,
     ),
   );
 }
@@ -156,7 +158,8 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
   @override
   void initState() {
     super.initState();
-    _waitingRoomEnabled = widget.initialWaitingRoomEnabled;
+    _waitingRoomEnabled =
+        widget.showWaitingRoom && widget.initialWaitingRoomEnabled;
     _focus.addListener(_onFocusChange);
     _ctrl.addListener(_onTextChanged);
     _isButtonEnabled = _ctrl.text.trim().isNotEmpty;
@@ -234,8 +237,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
     }
     widget.onCreateRoom!(
       roomName,
-      waitingRoom:
-          _waitingRoomEnabled, // To-do: check if it's a paid feature; widget.isPaidUser && _waitingRoomEnabled
+      waitingRoom: widget.showWaitingRoom && _waitingRoomEnabled,
     );
   }
 

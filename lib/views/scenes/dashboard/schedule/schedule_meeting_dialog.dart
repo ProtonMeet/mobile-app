@@ -71,6 +71,7 @@ Future<void> showScheduleMeetingDialog(
   ScheduleMeetingData? initialData,
   ParticipantDisplayColors? displayColors,
   bool showWaitingRoom = false,
+  bool initialWaitingRoomEnabled = false,
 }) {
   // Block dialog when in force upgrade state
   final appStateManager = ManagerFactory().get<AppStateManager>();
@@ -91,6 +92,7 @@ Future<void> showScheduleMeetingDialog(
       initialData: initialData,
       displayColors: displayColors,
       showWaitingRoom: showWaitingRoom,
+      initialWaitingRoomEnabled: initialWaitingRoomEnabled,
     ),
   );
 }
@@ -139,6 +141,7 @@ class ScheduleMeetingDialog extends StatefulWidget {
     this.initialData,
     this.displayColors,
     this.showWaitingRoom = false,
+    this.initialWaitingRoomEnabled = false,
     this.meetingLinkName,
     this.onWaitingRoomSettingChanged,
   });
@@ -151,6 +154,7 @@ class ScheduleMeetingDialog extends StatefulWidget {
 
   /// Gates the waiting-room field (MeetWaitingRoom flag, resolved by the dashboard bloc).
   final bool showWaitingRoom;
+  final bool initialWaitingRoomEnabled;
   final String? meetingLinkName;
   final OnWaitingRoomSettingChanged? onWaitingRoomSettingChanged;
 
@@ -320,6 +324,8 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
     if (widget.initialData != null) {
       _applyInitialData(widget.initialData!);
     } else {
+      _waitingRoomEnabled =
+          widget.showWaitingRoom && widget.initialWaitingRoomEnabled;
       _setDefaultStartDateTime();
       _applyDuration();
     }
@@ -920,7 +926,8 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
         timeZone: _selectedTimeZone,
         recurrence: _recurrence,
         showTimeZones: _showTimeZones,
-        waitingRoomEnabled: _waitingRoomEnabled, // To-do: check if it's a paid feature; widget.isPaidUser && _waitingRoomEnabled
+        waitingRoomEnabled:
+            widget.showWaitingRoom && _waitingRoomEnabled,
       ),
     );
   }
