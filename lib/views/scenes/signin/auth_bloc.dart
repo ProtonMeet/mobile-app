@@ -5,6 +5,7 @@ import 'package:meet/helper/extension/bridge_session_check.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/external.url.dart';
 import 'package:meet/helper/logger.dart' as l;
+import 'package:meet/helper/proton_user_settings.dart';
 import 'package:meet/helper/sentry_telemetry.dart';
 import 'package:meet/helper/user.agent.dart';
 import 'package:meet/managers/app.core.manager.dart';
@@ -135,6 +136,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
       if (checkedUser != null) {
         await SentryTelemetry().refreshIfNeeded(appCoreManager);
+        await ProtonUserSettings.instance.refreshIfNeeded(appCoreManager);
       }
     } catch (e) {
       l.logger.e("Error initializing auth: $e");
@@ -182,6 +184,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ),
     );
     await SentryTelemetry().refreshIfNeeded(appCoreManager);
+    await ProtonUserSettings.instance.refreshIfNeeded(appCoreManager);
   }
 
   Future<({bool camera, bool microphone})> _requestPermissions() async {
@@ -240,6 +243,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     await serviceManager.logout();
     SentryTelemetry().resetForGuest();
+    ProtonUserSettings.instance.resetForGuest();
     emit(
       state.copyWith(
         isSignedOut: true,

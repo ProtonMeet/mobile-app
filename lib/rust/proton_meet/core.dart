@@ -29,6 +29,7 @@ import 'models/upcoming_meeting.dart';
 import 'models/user.dart';
 import 'models/user_address.dart';
 import 'models/user_key.dart';
+import 'models/user_settings.dart';
 import 'models/user_state.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'storage/user_key_provider.dart';
@@ -205,6 +206,8 @@ abstract class AppCore implements RustOpaqueInterface {
   Future<ProtonUser> getUser({required String userId});
 
   Future<UserConfig> getUserConfig();
+
+  Future<FrbUserSettings> getUserSettings();
 
   Future<ConnectionState> getWsState();
 
@@ -442,6 +445,8 @@ abstract class AppCore implements RustOpaqueInterface {
   });
 
   Future<void> updateShowSelfTile({required bool showSelfTile});
+
+  Future<FrbUserSettings> updateUserSettingsWaitingRoom({required bool enable});
 
   Future<void> updateWaitingRoomSetting({
     required String meetLinkName,

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:in_app_update/in_app_update.dart';
+import 'package:meet/helper/proton_user_settings.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
@@ -15,6 +16,7 @@ import 'package:meet/constants/test_ids.dart';
 import 'package:meet/views/components/test_id.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/user.agent.dart';
+import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/app.state.manager.dart';
 import 'package:meet/managers/channels/platform_info_channel.dart';
 import 'package:meet/managers/manager.factory.dart';
@@ -265,17 +267,28 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  void _handleCreateRoom() {
+  Future<void> _handleCreateRoom() async {
     final authState = widget.authBloc.state;
     if (authState.isLoading) return;
     if (!authState.isSignedIn) {
       _showSignInRequiredBottomSheet(AlmostThereContext.createRoom);
       return;
     }
+    final appCoreManager = ManagerFactory().get<AppCoreManager>();
+    final showWaitingRoom = widget.dashboardBloc.isMeetWaitingRoomEnabled();
+    final initialWaitingRoomEnabled = showWaitingRoom
+        ? await ProtonUserSettings.instance.resolveWaitingRoomDefault(
+            appCoreManager,
+          )
+        : false;
+    if (!mounted) {
+      return;
+    }
     showCreateRoomDialog(
       context,
       isPaidUser: _isPaidUser(authState),
-      showWaitingRoom: widget.dashboardBloc.isMeetWaitingRoomEnabled(),
+      showWaitingRoom: showWaitingRoom,
+      initialWaitingRoomEnabled: initialWaitingRoomEnabled,
       onCreateRoom: (roomName, {required bool waitingRoom}) {
         widget.dashboardBloc.add(
           CreateMeetingEvent(roomName: roomName, waitingRoom: waitingRoom),
@@ -291,17 +304,28 @@ class _DashboardPageState extends State<DashboardPage> {
     widget.dashboardBloc.add(CreateSecureMeetingEvent(goSecureMeeting: true));
   }
 
-  void _handleSchedule() {
+  Future<void> _handleSchedule() async {
     final authState = widget.authBloc.state;
     if (authState.isLoading) return;
     if (!authState.isSignedIn) {
       _showSignInRequiredBottomSheet(AlmostThereContext.schedule);
       return;
     }
+    final appCoreManager = ManagerFactory().get<AppCoreManager>();
+    final showWaitingRoom = widget.dashboardBloc.isMeetWaitingRoomEnabled();
+    final initialWaitingRoomEnabled = showWaitingRoom
+        ? await ProtonUserSettings.instance.resolveWaitingRoomDefault(
+            appCoreManager,
+          )
+        : false;
+    if (!mounted) {
+      return;
+    }
     showScheduleMeetingDialog(
       context,
       isPaidUser: _isPaidUser(authState),
-      showWaitingRoom: widget.dashboardBloc.isMeetWaitingRoomEnabled(),
+      showWaitingRoom: showWaitingRoom,
+      initialWaitingRoomEnabled: initialWaitingRoomEnabled,
       displayColors: getParticipantDisplayColors(context, 0),
       onSchedule: (data) {
         widget.dashboardBloc.add(ScheduleMeetingEvent(data: data));
@@ -704,6 +728,8 @@ class _DashboardPageState extends State<DashboardPage> {
                           AppSettingsBottomSheet.show(
                             context,
                             authBloc: widget.authBloc,
+                            showWaitingRoom: widget.dashboardBloc
+                                .isMeetWaitingRoomEnabled(),
                           );
                         },
                         onNavBarTitleChanged: (_) {

@@ -40,6 +40,7 @@ import 'proton_meet/models/upcoming_meeting.dart';
 import 'proton_meet/models/user.dart';
 import 'proton_meet/models/user_address.dart';
 import 'proton_meet/models/user_key.dart';
+import 'proton_meet/models/user_settings.dart';
 import 'proton_meet/models/user_state.dart';
 import 'proton_meet/storage/user_key_provider.dart';
 import 'proton_meet/token.dart';
@@ -368,6 +369,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   FrbUserPayload dco_decode_frb_user_payload(dynamic raw);
+
+  @protected
+  FrbUserSettings dco_decode_frb_user_settings(dynamic raw);
 
   @protected
   int dco_decode_i_32(dynamic raw);
@@ -815,6 +819,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   FrbUserPayload sse_decode_frb_user_payload(SseDeserializer deserializer);
+
+  @protected
+  FrbUserSettings sse_decode_frb_user_settings(SseDeserializer deserializer);
 
   @protected
   int sse_decode_i_32(SseDeserializer deserializer);
@@ -1417,6 +1424,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_frb_user_payload(
     FrbUserPayload self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_frb_user_settings(
+    FrbUserSettings self,
     SseSerializer serializer,
   );
 
