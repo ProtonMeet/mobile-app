@@ -14,6 +14,7 @@ import 'package:sentry/sentry.dart';
 import 'room_bloc_participants.dart';
 import 'room_event.dart';
 import 'room_state.dart';
+import 'room_state_exts.dart';
 
 mixin RoomWaitingRoomHandlers
     on Bloc<RoomBlocEvent, RoomState>, RoomParticipantsHandlers {
@@ -446,6 +447,17 @@ mixin RoomWaitingRoomHandlers
         .map((request) => request.requestId)
         .toList(growable: false);
     if (expectedRequestIds.isEmpty) return;
+
+    // Double check if admit all will exceed room capacity
+    if (pruned.wouldAdmitAllExceedMeetingCapacity(expectedRequestIds.length)) {
+      l.logger.w(
+        '[RoomBloc] admit-all skipped: meeting capacity would be exceeded '
+        '(participants=${pruned.currentParticipantCount}, '
+        'waiting=${expectedRequestIds.length}, '
+        'max=${pruned.meetingInfo?.maxParticipants})',
+      );
+      return;
+    }
 
     emit(state.copyWith(isAdmitAllWaitingRoomInProgress: true));
 

@@ -10,6 +10,7 @@ import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 import 'package:meet/views/scenes/room/room_bloc.dart';
 import 'package:meet/views/scenes/room/room_event.dart';
 import 'package:meet/views/scenes/room/room_state.dart';
+import 'package:meet/views/scenes/room/room_state_exts.dart';
 import 'package:meet/views/scenes/utils.dart';
 
 import 'participant_list.dart';
@@ -245,11 +246,18 @@ class _WaitingRoomHostParticipantListState
                       state.rejectingWaitingRoomRequestIds.isNotEmpty,
                 ),
                 builder: (context, admitAllState) {
+                  final roomState = context.read<RoomBloc>().state;
+                  final exceedsCapacity = roomState
+                      .wouldAdmitAllExceedMeetingCapacity(
+                        waitingParticipants.length,
+                      );
+
                   return _AdmitAllButton(
                     onPressed: _onAdmitAll,
                     enabled:
                         waitingParticipants.isNotEmpty &&
-                        !admitAllState.isDisabled,
+                        !admitAllState.isDisabled &&
+                        !exceedsCapacity,
                     isLoading: admitAllState.isLoading,
                   );
                 },

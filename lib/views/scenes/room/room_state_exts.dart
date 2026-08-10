@@ -16,6 +16,17 @@ extension RoomStateExtension on RoomState {
   bool get isFreeMeeting =>
       (meetingInfo?.maxParticipants ?? 0) == guestMeetingRoomSize;
 
+  /// LiveKit participants currently in the meeting (local + remote).
+  int get currentParticipantCount => room.remoteParticipants.length + 1;
+
+  /// Whether admitting all [waitingParticipantCount] waiting-room requests
+  /// would exceed [meetingInfo.maxParticipants].
+  bool wouldAdmitAllExceedMeetingCapacity(int waitingParticipantCount) {
+    final maxParticipants = meetingInfo?.maxParticipants;
+    if (maxParticipants == null) return false;
+    return currentParticipantCount + waitingParticipantCount > maxParticipants;
+  }
+
   /// Parsed local [DateTime] for [meetingInfo.expirationTime], if set.
   DateTime? get meetingExpirationTime {
     final expirationTime = meetingInfo?.expirationTime;
