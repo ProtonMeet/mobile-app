@@ -1,0 +1,95 @@
+// swift-tools-version: 5.9
+// The swift-tools-version declares the minimum version of Swift required to build this package.
+//
+// Sources under Sources/ are symlinks to common/darwin/Classes and common/cpp — the CocoaPods
+// build (macOS) uses the same files via scripts/link_apple_pod_sources.sh.
+// VendoredFrameworks/ and the ONNX model are staged by scripts/spm/prepare_ios_spm.sh.
+
+import Foundation
+import PackageDescription
+
+let packageRoot = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+
+func isStaged(_ path: String) -> Bool {
+    FileManager.default.fileExists(atPath: packageRoot.appendingPathComponent(path).path)
+}
+
+func hasVendoredFramework(_ name: String) -> Bool {
+    isStaged("VendoredFrameworks/\(name).xcframework")
+}
+
+// Same gating as the podspec: DTLN and DeepFilter are optional, RNNoise is always required.
+let dtlnEnabled = hasVendoredFramework("DTLN")
+let deepFilterEnabled =
+    hasVendoredFramework("DeepFilter") && isStaged("Sources/proton_denoise/Resources/DeepFilterNet3_onnx.tar.gz")
+
+var binaryTargets: [Target] = [
+    .binaryTarget(name: "RNNoise", path: "VendoredFrameworks/RNNoise.xcframework"),
+]
+var nativeDependencies: [Target.Dependency] = ["RNNoise"]
+var cppSources = ["proton_rnnoise_c_api.cc", "proton_rnnoise_processor.cc"]
+var swiftSettings: [SwiftSetting] = []
+var resources: [Resource] = [.process("PrivacyInfo.xcprivacy")]
+
+// The podspec force-loaded these for the same reason: the archives sit ahead of the C shims on
+// the link line, so plain -l lookups drop the members that define the native entry points.
+// Xcode extracts the selected xcframework slice into BUILT_PRODUCTS_DIR under this name.
+var forceLoadedArchives = ["librnnoise.a"]
+
+if dtlnEnabled {
+    // Self-contained: prepare_ios_spm.sh prelinks dtln-rs with its own TensorFlow Lite and
+    // exports only the _dtln_* entry points, so it cannot collide with MediaPipe's TFLite.
+    binaryTargets.append(.binaryTarget(name: "DTLN", path: "VendoredFrameworks/DTLN.xcframework"))
+    nativeDependencies.append("DTLN")
+    cppSources.append("proton_dtln_c_api.cc")
+    swiftSettings.append(.define("PROTON_DENOISE_DTLN_IOS"))
+    forceLoadedArchives.append("libdtln.a")
+}
+
+if deepFilterEnabled {
+    binaryTargets.append(
+        .binaryTarget(name: "DeepFilter", path: "VendoredFrameworks/DeepFilter.xcframework"))
+    nativeDependencies.append("DeepFilter")
+    cppSources.append("proton_deepfilter_processor.cc")
+    swiftSettings.append(.define("PROTON_DENOISE_DEEPFILTER"))
+    resources.append(.process("Resources/DeepFilterNet3_onnx.tar.gz"))
+}
+
+let package = Package(
+    name: "proton_denoise",
+    platforms: [
+        .iOS("15.0"),
+    ],
+    products: [
+        .library(name: "proton-denoise", targets: ["proton_denoise"]),
+    ],
+    dependencies: [
+        .package(name: "FlutterFramework", path: "../FlutterFramework"),
+        // Resolved by the Flutter tool to the flutter_webrtc plugin package.
+        .package(name: "flutter_webrtc", path: "../flutter_webrtc-1.6.0"),
+    ],
+    targets: binaryTargets + [
+        .target(
+            name: "proton_denoise_cpp",
+            dependencies: nativeDependencies,
+            sources: cppSources
+        ),
+        .target(
+            name: "proton_denoise",
+            dependencies: [
+                "proton_denoise_cpp",
+                .product(name: "FlutterFramework", package: "FlutterFramework"),
+                .product(name: "flutter-webrtc", package: "flutter_webrtc"),
+            ],
+            resources: resources,
+            swiftSettings: swiftSettings,
+            linkerSettings: [
+                .linkedLibrary("c++"),
+                .linkedFramework("AVFoundation"),
+                .unsafeFlags(
+                    forceLoadedArchives.map { "-Wl,-force_load,${BUILT_PRODUCTS_DIR}/\($0)" }),
+            ]
+        ),
+    ],
+    cxxLanguageStandard: .cxx17
+)

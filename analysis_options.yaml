@@ -14,6 +14,7 @@ analyzer:
   errors:
     comment_references: ignore
   exclude:
+    - build/**
     - lib/generated/**
     - lib/rust/**
     - lib/ffi_golang/**

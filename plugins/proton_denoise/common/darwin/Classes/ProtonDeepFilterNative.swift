@@ -52,8 +52,11 @@ enum ProtonDeepFilterNative {
       }
       bundles.append(bundle)
     }
-    // CocoaPods copies pod resources into a named bundle (static framework on iOS).
-    for bundleName in ["proton_denoise", "proton_denoise_deepfilter"] {
+    // CocoaPods copies pod resources into a named bundle (static framework on iOS);
+    // SwiftPM names it <package>_<target>.
+    for bundleName in [
+      "proton_denoise", "proton_denoise_deepfilter", "proton_denoise_proton_denoise",
+    ] {
       if let url = Bundle.main.url(forResource: bundleName, withExtension: "bundle"),
         let podBundle = Bundle(url: url)
       {

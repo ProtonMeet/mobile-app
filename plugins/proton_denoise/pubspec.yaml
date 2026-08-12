@@ -14,8 +14,8 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  flutter_webrtc: ^1.4.0
-  livekit_client: ^2.7.0
+  flutter_webrtc: ^1.6.0
+  livekit_client: ^2.10.0
   meta: ^1.17.0
 
 dev_dependencies:

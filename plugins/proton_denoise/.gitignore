@@ -14,11 +14,17 @@ ios/Cpp/
 ios/Native/
 ios/Vendored/
 ios/Resources/DeepFilterNet3_onnx.tar.gz
+# Binary inputs staged by scripts/spm/prepare_ios_spm.sh.
+ios/proton_denoise/VendoredFrameworks/
+ios/proton_denoise/Sources/proton_denoise/Resources/DeepFilterNet3_onnx.tar.gz
 macos/Classes/
 macos/Cpp/
 macos/Native/
 macos/Vendored/
 macos/Resources/DeepFilterNet3_onnx.tar.gz
+# Binary inputs staged by scripts/spm/prepare_macos_spm.sh.
+macos/proton_denoise/VendoredFrameworks/
+macos/proton_denoise/Sources/proton_denoise/Resources/DeepFilterNet3_onnx.tar.gz
 
 # Miscellaneous
 *.class

@@ -1,0 +1,1 @@
+../../../Classes/ProtonVideoEffectsPlugin.swift

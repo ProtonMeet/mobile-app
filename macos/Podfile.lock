@@ -1,63 +1,28 @@
 PODS:
-  - flutter_webrtc (1.4.0):
-    - FlutterMacOS
-    - WebRTC-SDK (= 144.7559.09)
   - FlutterMacOS (1.0.0)
-  - livekit_client (2.9.0):
-    - flutter_webrtc
-    - FlutterMacOS
-    - WebRTC-SDK (= 144.7559.09)
-  - proton_denoise (1.0.0):
-    - flutter_webrtc
-    - FlutterMacOS
   - proton_screen_recorder (0.0.1):
-    - FlutterMacOS
-  - proton_video_effects (1.0.0):
-    - flutter_webrtc
     - FlutterMacOS
   - rust_builder (0.0.1):
     - FlutterMacOS
-  - WebRTC-SDK (144.7559.09)
 
 DEPENDENCIES:
-  - flutter_webrtc (from `Flutter/ephemeral/.symlinks/plugins/flutter_webrtc/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
-  - livekit_client (from `Flutter/ephemeral/.symlinks/plugins/livekit_client/macos`)
-  - proton_denoise (from `Flutter/ephemeral/.symlinks/plugins/proton_denoise/macos`)
   - proton_screen_recorder (from `Flutter/ephemeral/.symlinks/plugins/proton_screen_recorder/macos`)
-  - proton_video_effects (from `Flutter/ephemeral/.symlinks/plugins/proton_video_effects/macos`)
   - rust_builder (from `Flutter/ephemeral/.symlinks/plugins/rust_builder/macos`)
 
-SPEC REPOS:
-  trunk:
-    - WebRTC-SDK
-
 EXTERNAL SOURCES:
-  flutter_webrtc:
-    :path: Flutter/ephemeral/.symlinks/plugins/flutter_webrtc/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
-  livekit_client:
-    :path: Flutter/ephemeral/.symlinks/plugins/livekit_client/macos
-  proton_denoise:
-    :path: Flutter/ephemeral/.symlinks/plugins/proton_denoise/macos
   proton_screen_recorder:
     :path: Flutter/ephemeral/.symlinks/plugins/proton_screen_recorder/macos
-  proton_video_effects:
-    :path: Flutter/ephemeral/.symlinks/plugins/proton_video_effects/macos
   rust_builder:
     :path: Flutter/ephemeral/.symlinks/plugins/rust_builder/macos
 
 SPEC CHECKSUMS:
-  flutter_webrtc: fec3dc9284a1f6d21ec2caa91c90bb4c1824eb04
   FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
-  livekit_client: 02cc2700525e41488c0e9d81243ffe657f7c916a
-  proton_denoise: 995d7a1bdd9d6baa15d859fc43f9132f300bffe6
   proton_screen_recorder: 6f9149e3e42d9804f4ead9f1a40961e5af657a9c
-  proton_video_effects: 7519a1fb26e7e794938241ebadae96deee11605d
   rust_builder: 26319731cff3d47ae0b57e7a06c664f9282a1369
-  WebRTC-SDK: e6006119cd730d6315d875e4a421b6cc8bb88833
 
 PODFILE CHECKSUM: 396772b5c9cfc0c2207a68f67855b3b0ff0622cf
 
-COCOAPODS: 1.16.2
+COCOAPODS: 1.17.0

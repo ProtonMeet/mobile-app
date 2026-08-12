@@ -1,3 +1,8 @@
+# Vendored MediaPipe and package inputs staged by scripts/spm/prepare_ios_spm.sh.
+third_party/
+ios/proton_video_effects/VendoredFrameworks/
+ios/proton_video_effects/Sources/proton_video_effects/Resources/
+
 # Miscellaneous
 *.class
 *.log
