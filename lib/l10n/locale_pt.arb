@@ -105,6 +105,30 @@
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
+  "check_device_clock_title": "Check your device's date and time",
+  "@check_device_clock_title": {
+    "description": "Title when the device clock skew prevents joining a meeting"
+  },
+  "check_device_clock_description": "We couldn't connect you to this meeting because your device's date and time are out of sync.\n\nTo fix this:\n• Open your device Settings\n• Turn on Set Automatically for date and time\n• Return to Proton Meet and join the meeting again",
+  "@check_device_clock_description": {
+    "description": "Description when the user must fix device clock settings before joining"
+  },
+  "token_is_invalid_title": "Unable to join meeting",
+  "@token_is_invalid_title": {
+    "description": "Title when the MLS session token is invalid"
+  },
+  "token_is_invalid_description": "Something went wrong while connecting. Tap Close and join the meeting again.",
+  "@token_is_invalid_description": {
+    "description": "Description when the MLS session token is invalid"
+  },
+  "token_is_expired_title": "Connection expired",
+  "@token_is_expired_title": {
+    "description": "Title when the MLS session token has expired"
+  },
+  "token_is_expired_description": "Your connection expired before you could join. Tap Close and join the meeting again.",
+  "@token_is_expired_description": {
+    "description": "Description when the MLS session token has expired"
+  },
   "meeting_unlocked_notification": "Reunião desbloqueada. Os participantes podem entrar novamente.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"
@@ -922,7 +946,7 @@
   "@chat_input_hint": {
     "description": "Placeholder for the main chat composer"
   },
-  "chat_new_messages": "{count, plural, =1{1 new message} other{{count} new messages}}",
+  "chat_new_messages": "{count, plural, =1{1 nova mensagem} other{{count} novas mensagens}}",
   "@chat_new_messages": {
     "description": "Pill shown when new root-level chat messages arrive while scrolled up",
     "placeholders": {
@@ -949,7 +973,7 @@
       }
     }
   },
-  "chat_thread_replies_count": "{count, plural, =1{1 reply} other{{count} replies}}",
+  "chat_thread_replies_count": "{count, plural, =1{1 resposta} other{{count} respostas}}",
   "@chat_thread_replies_count": {
     "description": "Expanded thread toggle showing reply count",
     "placeholders": {
@@ -958,7 +982,7 @@
       }
     }
   },
-  "chat_thread_new_reply": "New reply",
+  "chat_thread_new_reply": "Nova resposta",
   "@chat_thread_new_reply": {
     "description": "Badge shown on a collapsed thread when there are unseen replies"
   },
@@ -970,7 +994,7 @@
   "@chat_system_left_prefix": {
     "description": "Prefix before the meeting name in a leave system chat notice"
   },
-  "chat_reply_hint": "Reply…",
+  "chat_reply_hint": "Responder…",
   "@chat_reply_hint": {
     "description": "Placeholder for the thread reply composer"
   },

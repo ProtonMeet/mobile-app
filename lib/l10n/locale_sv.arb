@@ -105,6 +105,30 @@
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
+  "check_device_clock_title": "Kontrollera din enhets datum och tid",
+  "@check_device_clock_title": {
+    "description": "Title when the device clock skew prevents joining a meeting"
+  },
+  "check_device_clock_description": "We couldn't connect you to this meeting because your device's date and time are out of sync.\n\nTo fix this:\n• Open your device Settings\n• Turn on Set Automatically for date and time\n• Return to Proton Meet and join the meeting again",
+  "@check_device_clock_description": {
+    "description": "Description when the user must fix device clock settings before joining"
+  },
+  "token_is_invalid_title": "Kan inte gå med i möte",
+  "@token_is_invalid_title": {
+    "description": "Title when the MLS session token is invalid"
+  },
+  "token_is_invalid_description": "Something went wrong while connecting. Tap Close and join the meeting again.",
+  "@token_is_invalid_description": {
+    "description": "Description when the MLS session token is invalid"
+  },
+  "token_is_expired_title": "Connection expired",
+  "@token_is_expired_title": {
+    "description": "Title when the MLS session token has expired"
+  },
+  "token_is_expired_description": "Your connection expired before you could join. Tap Close and join the meeting again.",
+  "@token_is_expired_description": {
+    "description": "Description when the MLS session token has expired"
+  },
   "meeting_unlocked_notification": "Möte upplåst. Deltagarna kan gå med igen.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"
@@ -117,7 +141,7 @@
   "@waiting_room_setting_on_description": {
     "description": "Waiting room switch description when enabled in meeting settings"
   },
-  "waiting_room_setting_off_description": "Anyone with the link can join",
+  "waiting_room_setting_off_description": "Vem som helst med länken kan gå med",
   "@waiting_room_setting_off_description": {
     "description": "Waiting room switch description when disabled in meeting settings"
   },
@@ -914,7 +938,7 @@
   "@chat_privacy_message": {
     "description": "Privacy message displayed in chat when there are no messages."
   },
-  "chat_title": "Chat",
+  "chat_title": "Chatt",
   "@chat_title": {
     "description": "Title for the in-meeting chat panel"
   },
@@ -922,7 +946,7 @@
   "@chat_input_hint": {
     "description": "Placeholder for the main chat composer"
   },
-  "chat_new_messages": "{count, plural, =1{1 new message} other{{count} new messages}}",
+  "chat_new_messages": "{count, plural, =1{1 nytt meddelande} other{{count} nya meddelanden}}",
   "@chat_new_messages": {
     "description": "Pill shown when new root-level chat messages arrive while scrolled up",
     "placeholders": {
@@ -931,7 +955,7 @@
       }
     }
   },
-  "chat_new_messages_badge": "{count, plural, =1{1 new} other{{count} new}}",
+  "chat_new_messages_badge": "{count, plural, =1{1 nytt} other{{count} nya}}",
   "@chat_new_messages_badge": {
     "description": "Compact floating badge above the composer when new messages arrive while scrolled up",
     "placeholders": {
@@ -940,7 +964,7 @@
       }
     }
   },
-  "chat_thread_view_replies": "{count, plural, =1{View 1 reply} other{View {count} replies}}",
+  "chat_thread_view_replies": "{count, plural, =1{Visa 1 svar} other{Visa {count} svar}}",
   "@chat_thread_view_replies": {
     "description": "Collapsed thread toggle to expand and view replies",
     "placeholders": {
@@ -949,7 +973,7 @@
       }
     }
   },
-  "chat_thread_replies_count": "{count, plural, =1{1 reply} other{{count} replies}}",
+  "chat_thread_replies_count": "{count, plural, =1{1 svar} other{{count} svar}}",
   "@chat_thread_replies_count": {
     "description": "Expanded thread toggle showing reply count",
     "placeholders": {
@@ -958,7 +982,7 @@
       }
     }
   },
-  "chat_thread_new_reply": "New reply",
+  "chat_thread_new_reply": "Nytt svar",
   "@chat_thread_new_reply": {
     "description": "Badge shown on a collapsed thread when there are unseen replies"
   },
@@ -970,7 +994,7 @@
   "@chat_system_left_prefix": {
     "description": "Prefix before the meeting name in a leave system chat notice"
   },
-  "chat_reply_hint": "Reply…",
+  "chat_reply_hint": "Svara …",
   "@chat_reply_hint": {
     "description": "Placeholder for the thread reply composer"
   },
@@ -978,7 +1002,7 @@
   "@chat_thread_missing_root": {
     "description": "Placeholder when a thread root message is not available locally"
   },
-  "chat_not_delivered": "Not delivered",
+  "chat_not_delivered": "Inte levererad",
   "@chat_not_delivered": {
     "description": "Status label for a failed outgoing chat message"
   },
@@ -986,11 +1010,11 @@
   "@chat_discard": {
     "description": "Action to remove a failed outgoing chat message"
   },
-  "chat_reply": "Reply",
+  "chat_reply": "Svara",
   "@chat_reply": {
     "description": "Action to reply to a chat message in a thread"
   },
-  "chat_copy_text": "Copy text",
+  "chat_copy_text": "Kopiera text",
   "@chat_copy_text": {
     "description": "Action to copy chat message text to clipboard"
   },

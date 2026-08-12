@@ -105,6 +105,30 @@
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
+  "check_device_clock_title": "Bitte Datum und Uhrzeit des Geräts überprüfen",
+  "@check_device_clock_title": {
+    "description": "Title when the device clock skew prevents joining a meeting"
+  },
+  "check_device_clock_description": "Du konntest nicht mit diesem Meeting verbunden werden, da die Datum- und Zeiteinstellungen deines Geräts abweichen.\n\nSo kann das Problem behoben werden:\n• Öffne die Einstellungen deines Geräts.\n• Aktiviere die Option „Datum und Uhrzeit automatisch einstellen“.\n• Kehre zu Proton Meet zurück und verbinde dich erneut mit dem Meeting.",
+  "@check_device_clock_description": {
+    "description": "Description when the user must fix device clock settings before joining"
+  },
+  "token_is_invalid_title": "Beitreten zum Meeting nicht möglich",
+  "@token_is_invalid_title": {
+    "description": "Title when the MLS session token is invalid"
+  },
+  "token_is_invalid_description": "Fehler beim Herstellen der Verbindung. Tippe auf „Schließen“ und tritt dem Meeting erneut bei.",
+  "@token_is_invalid_description": {
+    "description": "Description when the MLS session token is invalid"
+  },
+  "token_is_expired_title": "Verbindung abgelaufen",
+  "@token_is_expired_title": {
+    "description": "Title when the MLS session token has expired"
+  },
+  "token_is_expired_description": "Die Verbindung ist abgelaufen, bevor du dem Meeting beitreten konntest. Tippe auf „Schließen“ und nimm erneut am Meeting teil.",
+  "@token_is_expired_description": {
+    "description": "Description when the MLS session token has expired"
+  },
   "meeting_unlocked_notification": "Meeting entsperrt. Teilnehmer können wieder beitreten.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"

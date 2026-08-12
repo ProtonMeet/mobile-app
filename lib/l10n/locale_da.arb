@@ -105,6 +105,30 @@
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
+  "check_device_clock_title": "Kontroller dato og klokkeslæt på din enhed",
+  "@check_device_clock_title": {
+    "description": "Title when the device clock skew prevents joining a meeting"
+  },
+  "check_device_clock_description": "Vi kunne ikke forbinde dig til dette møde, da dato og klokkeslæt på din enhed ikke er synkroniseret.",
+  "@check_device_clock_description": {
+    "description": "Description when the user must fix device clock settings before joining"
+  },
+  "token_is_invalid_title": "Kan ikke deltage i mødet",
+  "@token_is_invalid_title": {
+    "description": "Title when the MLS session token is invalid"
+  },
+  "token_is_invalid_description": "Der opstod en fejl under oprettelsen af forbindelsen. Tryk på Luk, og tilslut dig mødet igen.",
+  "@token_is_invalid_description": {
+    "description": "Description when the MLS session token is invalid"
+  },
+  "token_is_expired_title": "Forbindelsen er udløbet",
+  "@token_is_expired_title": {
+    "description": "Title when the MLS session token has expired"
+  },
+  "token_is_expired_description": "Din forbindelse udløb, før du kunne tilslutte dig. Tryk på Luk, og tilslut dig mødet igen.",
+  "@token_is_expired_description": {
+    "description": "Description when the MLS session token has expired"
+  },
   "meeting_unlocked_notification": "Møde låst op. Deltagere kan tilslutte sig igen.",
   "@meeting_unlocked_notification": {
     "description": "Toast notification when meeting is unlocked by host"

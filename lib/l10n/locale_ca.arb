@@ -101,9 +101,33 @@
   "@meet_server_version_not_supported_title": {
     "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
   },
-  "meet_server_version_not_supported_description": "La versió de l'aplicació no permet connectar-vos a la reunió. Actualitzeu Proton Meet per continuar.",
+  "meet_server_version_not_supported_description": "La versió de l'aplicació no us permet connectar-vos a aquesta reunió. Actualitzeu el Proton Meet per a continuar.",
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
+  },
+  "check_device_clock_title": "Comproveu la data i l'hora del vostre dispositiu",
+  "@check_device_clock_title": {
+    "description": "Title when the device clock skew prevents joining a meeting"
+  },
+  "check_device_clock_description": "No hem pogut connectar-vos a aquesta reunió perquè la data i l'hora del vostre dispositiu no estan sincronitzades.\n\nPer solucionar-ho:\n• Obriu les Preferències del vostre dispositiu\n• Activeu Ajustar automàticament la data i l'hora\n• Torneu a Proton Meet i uniu-vos a la reunió de nou",
+  "@check_device_clock_description": {
+    "description": "Description when the user must fix device clock settings before joining"
+  },
+  "token_is_invalid_title": "No us podeu unir a la reunió",
+  "@token_is_invalid_title": {
+    "description": "Title when the MLS session token is invalid"
+  },
+  "token_is_invalid_description": "Alguna cosa ha anat malament en connectar-vos. Toqueu Tancar i uniu-vos a la reunió de nou.",
+  "@token_is_invalid_description": {
+    "description": "Description when the MLS session token is invalid"
+  },
+  "token_is_expired_title": "La connexió ha caducat",
+  "@token_is_expired_title": {
+    "description": "Title when the MLS session token has expired"
+  },
+  "token_is_expired_description": "La connexió ha caducat abans que us hi poguéssiu unir. Toqueu Tancar i uniu-vos-hi de nou.",
+  "@token_is_expired_description": {
+    "description": "Description when the MLS session token has expired"
   },
   "meeting_unlocked_notification": "S'ha desbloquejat la reunió. Els participants ja poden tornar a entrar.",
   "@meeting_unlocked_notification": {
@@ -121,11 +145,11 @@
   "@waiting_room_setting_off_description": {
     "description": "Waiting room switch description when disabled in meeting settings"
   },
-  "waiting_room_enabled_notification": "S'ha habilitat la sala d'espera, els participants s'hi afegiran quan els aproveu.",
+  "waiting_room_enabled_notification": "S'ha activat la sala d'espera; els participants s'hi uniran quan els aproveu.",
   "@waiting_room_enabled_notification": {
     "description": "Global notification when the host enables waiting room in meeting settings"
   },
-  "waiting_room_disabled_notification": "S'ha deshabilitat la sala d'espera, qualsevol persona amb l'enllaç s'hi podrà afegir.",
+  "waiting_room_disabled_notification": "S'ha desactivat la sala d'espera; qualsevol persona que tingui l'enllaç s'hi pot unir.",
   "@waiting_room_disabled_notification": {
     "description": "Global notification when the host disables waiting room in meeting settings"
   },
@@ -147,7 +171,7 @@
   "camera_max_bitrate": "Taxa de bits màxima de la càmera",
   "screen_sharing_resolution": "Resolució de la pantalla compartida",
   "screen_sharing_max_bitrate": "Taxa de bits màxima de la pantalla compartida",
-  "export_debug_log": "Exporteu el registre de depuració",
+  "export_debug_log": "Exporta el registre de depuració",
   "type_a_message": "Escriviu un missatge...",
   "search_messages": "Cerqueu missatges...",
   "meeting_chat": "Xat de la reunió",
@@ -199,7 +223,7 @@
   "@waiting_room_host_not_started_title": {
     "description": "Title when guest waits for host to start a meeting with waiting room"
   },
-  "waiting_room_host_not_started_description": "Us hi unireu quan l'amfitrió iniciï la reunió i us admeti.",
+  "waiting_room_host_not_started_description": "Us hi unireu quan l'amfitrió iniciï la reunió i us hi admeti.",
   "@waiting_room_host_not_started_description": {
     "description": "Description when guest waits for host to start"
   },
@@ -224,7 +248,7 @@
   "@waiting_room_join_request_rejected": {
     "description": "Global notification when the host rejects a waiting-room join request"
   },
-  "waiting_room_admission_timed_out": "La vostra sol·licitud d'unió ha expirat. Torneu-ho a provar.",
+  "waiting_room_admission_timed_out": "La sol·licitud per unir-vos-hi ha caducat. Torneu-ho a provar.",
   "@waiting_room_admission_timed_out": {
     "description": "Global notification when the guest waiting room admission countdown reaches zero"
   },
@@ -262,13 +286,13 @@
     "description": "Empty state when the waiting room participant list is empty"
   },
   "join_meeting_button": "Unir-se a la reunió",
-  "create_meeting_button": "Crear",
+  "create_meeting_button": "Crea",
   "import_meeting_button": "Importa la reunió",
   "import_meeting_title": "Importeu la reunió",
   "import_meeting_hint_text": "Introduïu l'enllaç de la reunió",
   "open_home": "Obre l'inici",
   "start_simulation": "Inicia la simulació",
-  "change_layout": "Canviar la disposició",
+  "change_layout": "Canvia el disseny",
   "layout_spaced_grid": "Quadrícula espaiada",
   "layout_compact_grid": "Quadrícula compacta",
   "layout_speaker_view": "Vista de l'orador",
@@ -276,7 +300,7 @@
   "no_active_speaker": "No hi ha cap orador actiu",
   "camera_view": "Vista de la càmera",
   "is_presenting": "està presentant",
-  "stop_presenting": "Deixar de presentar",
+  "stop_presenting": "Atura la presentació",
   "tap_to_stop_sharing": "Toqueu per deixar de compartir",
   "notification_permission_settings_title": "Habiliteu l'accés a les notificacions",
   "@notification_permission_settings_title": {
@@ -371,7 +395,7 @@
   "@delete_meeting": {
     "description": "Title for delete meeting dialog"
   },
-  "delete_meeting_confirmation": "Esteu segurs que voleu eliminar aquesta reunió? Aquesta acció no es pot desfer.",
+  "delete_meeting_confirmation": "Segur que voleu eliminar aquesta reunió? Aquesta acció no es pot desfer.",
   "@delete_meeting_confirmation": {
     "description": "Confirmation message for deleting a meeting"
   },
@@ -580,7 +604,7 @@
   "@continue_button": {
     "description": "Button text to continue in meeting"
   },
-  "allow_subscription": "Permeteu la subscripció",
+  "allow_subscription": "Permet la subscripció",
   "@allow_subscription": {
     "description": "Dialog title for allowing subscription"
   },
@@ -690,11 +714,11 @@
   "@screen_share": {
     "description": "Tooltip and button text for screen sharing"
   },
-  "disable_denoising": "deshabilita la reducció de soroll",
+  "disable_denoising": "desactiva la reducció de soroll",
   "@disable_denoising": {
     "description": "Tooltip for disabling audio denoising"
   },
-  "enable_denoising": "habilita la reducció de soroll",
+  "enable_denoising": "activa la reducció de soroll",
   "@enable_denoising": {
     "description": "Tooltip for enabling audio denoising"
   },
@@ -818,11 +842,11 @@
   "@subscribe_video": {
     "description": "Menu item to subscribe to video"
   },
-  "remote_mute_video": "Silencieu el vídeo remotament",
+  "remote_mute_video": "Silenciament remot del vídeo",
   "@remote_mute_video": {
     "description": "Menu item to remotely mute video"
   },
-  "remote_mute_audio": "Silencieu l'àudio remotament",
+  "remote_mute_audio": "Silenciament remot de l'àudio",
   "@remote_mute_audio": {
     "description": "Menu item to remotely mute audio"
   },
@@ -830,7 +854,7 @@
   "@force_mute": {
     "description": "Menu item to force mute a participant"
   },
-  "force_mute_participant": "Silencieu forçadament a {name}",
+  "force_mute_participant": "Silencia {name} per la força",
   "@force_mute_participant": {
     "description": "Toast message when force muting a participant",
     "placeholders": {
@@ -839,7 +863,7 @@
       }
     }
   },
-  "force_disable_camera": "Desactiveu la càmera forçadament",
+  "force_disable_camera": "Desactiva la càmera per la força",
   "@force_disable_camera": {
     "description": "Menu item to force disable camera"
   },
@@ -856,7 +880,7 @@
   "@kick_out": {
     "description": "Menu item to kick out a participant"
   },
-  "kick_out_participant": "Expulseu a {name}",
+  "kick_out_participant": "Expulsa a {name}",
   "@kick_out_participant": {
     "description": "Toast message when kicking out a participant",
     "placeholders": {
@@ -873,7 +897,7 @@
   "@subscribe": {
     "description": "Menu item to subscribe"
   },
-  "unsubscribe": "Cancel·leu la subscripció",
+  "unsubscribe": "Cancel·la la subscripció",
   "@unsubscribe": {
     "description": "Menu item to unsubscribe"
   },
@@ -974,7 +998,7 @@
   "@chat_reply_hint": {
     "description": "Placeholder for the thread reply composer"
   },
-  "chat_thread_missing_root": "Aquesta conversa havia començat abans que us hi afegíssiu.",
+  "chat_thread_missing_root": "AAquesta conversa va començar abans que us hi uníssiu",
   "@chat_thread_missing_root": {
     "description": "Placeholder when a thread root message is not available locally"
   },
@@ -986,11 +1010,11 @@
   "@chat_discard": {
     "description": "Action to remove a failed outgoing chat message"
   },
-  "chat_reply": "Responeu",
+  "chat_reply": "Respon",
   "@chat_reply": {
     "description": "Action to reply to a chat message in a thread"
   },
-  "chat_copy_text": "Copiar el text",
+  "chat_copy_text": "Copia el text",
   "@chat_copy_text": {
     "description": "Action to copy chat message text to clipboard"
   },
@@ -1313,15 +1337,15 @@
   "@early_access_title_for_login_user": {
     "description": "Message to let user know this is early access feature available for Lifetime and Visionary users"
   },
-  "schedule_a_meeting": "Programeu una reunió",
+  "schedule_a_meeting": "Planifica una reunió",
   "@schedule_a_meeting": {
     "description": "Menu item label to schedule a meeting in Proton Meet app"
   },
-  "create_a_room": "Creeu una sala",
+  "create_a_room": "Crea una sala",
   "@create_a_room": {
     "description": "Menu item label to create a room"
   },
-  "create_new_room": "Creeu una sala nova",
+  "create_new_room": "Crea una sala nova",
   "@create_new_room": {
     "description": "Menu item label to create a new room"
   },
@@ -1337,7 +1361,7 @@
   "@edit_room": {
     "description": "Menu item label to edit a room"
   },
-  "edit_meeting": "Editeu la reunió",
+  "edit_meeting": "Edita la reunió",
   "@edit_meeting": {
     "description": "Menu item label to edit a meeting"
   },
@@ -1361,7 +1385,7 @@
   "@meeting_deleted": {
     "description": "Success message shown after a meeting is deleted"
   },
-  "enter_room_name_hint": "per exemple, Equip de disseny, reunió de seguiment setmanal",
+  "enter_room_name_hint": "p. ex., Equip de disseny, Reunió d'actualització setmanal",
   "@enter_room_name_hint": {
     "description": "Hint text for room name input field"
   },
@@ -1405,7 +1429,7 @@
   "@participants_reached_limit_suffix": {
     "description": "Message suffix after the call reached limit message"
   },
-  "no_more_participants_can_join": "Esborreu a un participant o actualitzeu el vostre pla per a convidar més persones.",
+  "no_more_participants_can_join": "Esborreu un participant o milloreu el pla per a convidar més gent.",
   "@no_more_participants_can_join": {
     "description": "Message shown when the call has reached the maximum number of participants"
   },
@@ -1501,7 +1525,7 @@
   "@switch_off": {
     "description": "Label when switch off"
   },
-  "schedule_waiting_room_off_hint": "Qualsevol persona amb l'enllaç s'hi pot unir immediatament",
+  "schedule_waiting_room_off_hint": "Qualsevol persona que tingui l'enllaç s'hi pot unir immediatament",
   "@schedule_waiting_room_off_hint": {
     "description": "Waiting room disabled option hint"
   },
@@ -1665,7 +1689,7 @@
   "@calendar_google": {
     "description": "Menu label for opening Google Calendar"
   },
-  "calendar_share_ics": "Compartiu el fitxer de l'esdeveniment",
+  "calendar_share_ics": "Comparteix el fitxer de l'esdeveniment",
   "@calendar_share_ics": {
     "description": "Menu label for sharing ICS file"
   },
@@ -1857,7 +1881,7 @@
   "@connection": {
     "description": "Section title for connection settings"
   },
-  "reconnect_meeting": "Torneu a connectar la reunió",
+  "reconnect_meeting": "Torna a connectar a la reunió",
   "@reconnect_meeting": {
     "description": "Button label to reconnect to meeting"
   },
@@ -1989,7 +2013,7 @@
   "@iap_native_test_upgrade": {
     "description": "Button: native.navigation.plan.upgrade"
   },
-  "iap_native_test_sign_in_required": "Inicieu sessió amb un compte de Proton per obrir els pagaments natius.",
+  "iap_native_test_sign_in_required": "Inicieu la sessió amb un compte de Proton per a obrir els pagaments natius.",
   "@iap_native_test_sign_in_required": {
     "description": "Message shown when sign in is required to open native payments"
   }
