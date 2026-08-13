@@ -14,8 +14,9 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  flutter_webrtc: ^1.6.0
-  livekit_client: ^2.10.0
+  # Version pins live in ../../pubspec.yaml; workspace lockfile resolves one copy.
+  flutter_webrtc: any
+  livekit_client: any
   meta: ^1.17.0
 
 dev_dependencies:
