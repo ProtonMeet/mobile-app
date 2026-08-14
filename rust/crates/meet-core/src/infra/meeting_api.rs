@@ -5,6 +5,7 @@ use crate::domain::user::models::meeting::Meeting;
 use crate::domain::user::models::{CreateMeetingParams, MeetingInfo, UpdateMeetingScheduleParams};
 use crate::domain::user::ports::meeting_api::MeetingApi;
 use crate::errors::http_client::HttpClientError;
+use crate::infra::dto::agent::AddAgentRequest;
 use crate::infra::dto::common::ProtonEmptyResponse;
 use crate::infra::dto::end_meeting::EndMeetingRequest;
 use crate::infra::dto::meeting::{
@@ -17,6 +18,9 @@ use crate::infra::group_info_payload::PhpWaitingRoomDataField;
 use crate::infra::http_client::ProtonHttpClient;
 use crate::infra::http_client_util::HttpClientUtil;
 use crate::infra::proton_response_ext::ProtonResponseExt;
+
+/// `AgentType` value meet-server uses for the live-captions agent.
+const CLOSED_CAPTIONS_AGENT_TYPE: u8 = 1;
 
 #[async_trait]
 impl MeetingApi for ProtonHttpClient {
@@ -128,6 +132,29 @@ impl MeetingApi for ProtonHttpClient {
 
     async fn unlock_meeting(&self, meet_link_name: &str) -> Result<(), HttpClientError> {
         let req = self.post(format!("/meet/v1/meetings/links/{meet_link_name}/unlock"));
+        let res = self.send_session_request(req).await?;
+        let _ = res.parse_response::<ProtonEmptyResponse>()?;
+        Ok(())
+    }
+
+    async fn add_closed_captions_agent(&self, meet_link_name: &str) -> Result<(), HttpClientError> {
+        let req = self
+            .post(format!("/meet/v1/meetings/links/{meet_link_name}/agents"))
+            .body_json(AddAgentRequest {
+                agent_type: CLOSED_CAPTIONS_AGENT_TYPE,
+            })?;
+        let res = self.send_session_request(req).await?;
+        let _ = res.parse_response::<ProtonEmptyResponse>()?;
+        Ok(())
+    }
+
+    async fn remove_closed_captions_agent(
+        &self,
+        meet_link_name: &str,
+    ) -> Result<(), HttpClientError> {
+        let req = self.delete(format!(
+            "/meet/v1/meetings/links/{meet_link_name}/agents/{CLOSED_CAPTIONS_AGENT_TYPE}"
+        ));
         let res = self.send_session_request(req).await?;
         let _ = res.parse_response::<ProtonEmptyResponse>()?;
         Ok(())

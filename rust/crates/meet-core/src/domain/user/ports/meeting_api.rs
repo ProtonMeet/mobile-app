@@ -48,6 +48,16 @@ pub trait MeetingApi: Send + Sync {
     /// Unlock a meeting to allow new participants to join (meeting host only)
     async fn unlock_meeting(&self, meet_link_name: &str) -> Result<(), HttpClientError>;
 
+    /// Ask meet-server to add the live-captions agent to a meeting. Any
+    /// participant may call it; the caller does not have to be the host.
+    async fn add_closed_captions_agent(&self, meet_link_name: &str) -> Result<(), HttpClientError>;
+
+    /// Ask meet-server to drop the live-captions agent from a meeting.
+    async fn remove_closed_captions_agent(
+        &self,
+        meet_link_name: &str,
+    ) -> Result<(), HttpClientError>;
+
     /// Submit end-of-call quality feedback for a meeting link.
     async fn send_meeting_feedback(
         &self,
