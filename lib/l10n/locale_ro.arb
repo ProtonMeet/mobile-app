@@ -1949,6 +1949,10 @@
   "@settings_section_general": {
     "description": "Section header in app settings"
   },
+  "settings_section_meetings": "Conferințe",
+  "@settings_section_meetings": {
+    "description": "Section header for meeting-related app settings"
+  },
   "settings_section_support": "Asistență",
   "@settings_section_support": {
     "description": "Section header for support links in app settings"

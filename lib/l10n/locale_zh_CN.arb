@@ -105,27 +105,27 @@
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
-  "check_device_clock_title": "Check your device's date and time",
+  "check_device_clock_title": "查看您的设备日期和时间",
   "@check_device_clock_title": {
     "description": "Title when the device clock skew prevents joining a meeting"
   },
-  "check_device_clock_description": "We couldn't connect you to this meeting because your device's date and time are out of sync.\n\nTo fix this:\n• Open your device Settings\n• Turn on Set Automatically for date and time\n• Return to Proton Meet and join the meeting again",
+  "check_device_clock_description": "我们无法将您连接到该会议，因为您设备的日期和时间不同步。\n\n解决方法：\n• 打开您设备的“设置”\n• 开启日期和时间的“自动设置”\n• 返回 Proton Meet 并重新加入会议",
   "@check_device_clock_description": {
     "description": "Description when the user must fix device clock settings before joining"
   },
-  "token_is_invalid_title": "Unable to join meeting",
+  "token_is_invalid_title": "无法加入会议",
   "@token_is_invalid_title": {
     "description": "Title when the MLS session token is invalid"
   },
-  "token_is_invalid_description": "Something went wrong while connecting. Tap Close and join the meeting again.",
+  "token_is_invalid_description": "连接时出现问题，点击“关闭”并重新加入会议。",
   "@token_is_invalid_description": {
     "description": "Description when the MLS session token is invalid"
   },
-  "token_is_expired_title": "Connection expired",
+  "token_is_expired_title": "连接已过期",
   "@token_is_expired_title": {
     "description": "Title when the MLS session token has expired"
   },
-  "token_is_expired_description": "Your connection expired before you could join. Tap Close and join the meeting again.",
+  "token_is_expired_description": "您在加入之前连接已过期，点击“关闭”并重新加入会议。",
   "@token_is_expired_description": {
     "description": "Description when the MLS session token has expired"
   },
@@ -137,19 +137,19 @@
   "picture_in_picture_mode": "画中画模式",
   "security": "安全",
   "enable_waiting_room": "启用等候室",
-  "waiting_room_setting_on_description": "Participants join after you approve them",
+  "waiting_room_setting_on_description": "参与者需经您批准后方可加入",
   "@waiting_room_setting_on_description": {
     "description": "Waiting room switch description when enabled in meeting settings"
   },
-  "waiting_room_setting_off_description": "Anyone with the link can join",
+  "waiting_room_setting_off_description": "任何拥有链接的人均可加入",
   "@waiting_room_setting_off_description": {
     "description": "Waiting room switch description when disabled in meeting settings"
   },
-  "waiting_room_enabled_notification": "Enabled waiting room, participants join after you approve them.",
+  "waiting_room_enabled_notification": "已启用等候室，参与者需经您批准后方可加入。",
   "@waiting_room_enabled_notification": {
     "description": "Global notification when the host enables waiting room in meeting settings"
   },
-  "waiting_room_disabled_notification": "Disabled waiting room, anyone with the link can join.",
+  "waiting_room_disabled_notification": "已禁用等候室，任何拥有链接的人均可加入。",
   "@waiting_room_disabled_notification": {
     "description": "Global notification when the host disables waiting room in meeting settings"
   },
@@ -1948,6 +1948,10 @@
   "settings_section_general": "常规",
   "@settings_section_general": {
     "description": "Section header in app settings"
+  },
+  "settings_section_meetings": "会议",
+  "@settings_section_meetings": {
+    "description": "Section header for meeting-related app settings"
   },
   "settings_section_support": "支持",
   "@settings_section_support": {
