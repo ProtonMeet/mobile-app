@@ -59,7 +59,7 @@
   "user_name": "Nombre de usuario",
   "account": "Cuenta",
   "password": "Contraseña",
-  "session_expired_content": "Por su seguridad, su sesión ha caducado. Inicie sesión de nuevo para continuar gestionando sus reuniones.",
+  "session_expired_content": "Por su seguridad, la sesión expiró. Inicie sesión de nuevo para continuar gestionando sus reuniones.",
   "session_expired_title": "¡La sesión ha expirado!",
   "session_expired_continue_without_signing_in": "Continuar sin iniciar sesión",
   "@session_expired_continue_without_signing_in": {
@@ -101,23 +101,23 @@
   "@meet_server_version_not_supported_title": {
     "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
   },
-  "meet_server_version_not_supported_description": "La versión instalada de la aplicación no se puede conectar a esta reunión. Por favor actualice Proton Meet para continuar.",
+  "meet_server_version_not_supported_description": "La versión instalada de la aplicación no se puede conectar a esta reunión. Actualice Proton Meet para continuar.",
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
-  "check_device_clock_title": "Check your device's date and time",
+  "check_device_clock_title": "Compruebe la fecha y la hora de su dispositivo",
   "@check_device_clock_title": {
     "description": "Title when the device clock skew prevents joining a meeting"
   },
-  "check_device_clock_description": "We couldn't connect you to this meeting because your device's date and time are out of sync.\n\nTo fix this:\n• Open your device Settings\n• Turn on Set Automatically for date and time\n• Return to Proton Meet and join the meeting again",
+  "check_device_clock_description": "No pudimos conectarle a esta reunión porque la fecha y hora de su dispositivo no están sincronizadas.\n\nPara solucionarlo:\n• Abra los ajustes de su dispositivo\n• Active la opción de ajuste automático para la fecha y hora\n• Vuelva a Proton Meet y únase de nuevo a la reunión",
   "@check_device_clock_description": {
     "description": "Description when the user must fix device clock settings before joining"
   },
-  "token_is_invalid_title": "Unable to join meeting",
+  "token_is_invalid_title": "No se puede unir a la reunión",
   "@token_is_invalid_title": {
     "description": "Title when the MLS session token is invalid"
   },
-  "token_is_invalid_description": "Something went wrong while connecting. Tap Close and join the meeting again.",
+  "token_is_invalid_description": "Algo salió mal al conectar. Pulse Cerrar y únase a la reunión de nuevo.",
   "@token_is_invalid_description": {
     "description": "Description when the MLS session token is invalid"
   },
@@ -125,7 +125,7 @@
   "@token_is_expired_title": {
     "description": "Title when the MLS session token has expired"
   },
-  "token_is_expired_description": "Your connection expired before you could join. Tap Close and join the meeting again.",
+  "token_is_expired_description": "Su conexión expiró antes de que se pudiera unir. Pulse Cerrar y únase a la reunión de nuevo.",
   "@token_is_expired_description": {
     "description": "Description when the MLS session token has expired"
   },
@@ -137,7 +137,7 @@
   "picture_in_picture_mode": "Modo de imagen en imagen",
   "security": "Seguridad",
   "enable_waiting_room": "Activar sala de espera",
-  "waiting_room_setting_on_description": "Participants join after you approve them",
+  "waiting_room_setting_on_description": "Los participantes se unen después de que los apruebe",
   "@waiting_room_setting_on_description": {
     "description": "Waiting room switch description when enabled in meeting settings"
   },
@@ -145,11 +145,11 @@
   "@waiting_room_setting_off_description": {
     "description": "Waiting room switch description when disabled in meeting settings"
   },
-  "waiting_room_enabled_notification": "Enabled waiting room, participants join after you approve them.",
+  "waiting_room_enabled_notification": "Se activó la sala de espera, los participantes se unen después de que los apruebe.",
   "@waiting_room_enabled_notification": {
     "description": "Global notification when the host enables waiting room in meeting settings"
   },
-  "waiting_room_disabled_notification": "Disabled waiting room, anyone with the link can join.",
+  "waiting_room_disabled_notification": "Se desactivó la sala de espera, cualquier persona con el enlace puede unirse.",
   "@waiting_room_disabled_notification": {
     "description": "Global notification when the host disables waiting room in meeting settings"
   },
@@ -219,19 +219,19 @@
   "@prejoin_meeting_has_waiting_room": {
     "description": "Informational message on pre-join when waiting room is enabled"
   },
-  "waiting_room_host_not_started_title": "Waiting for the host to start",
+  "waiting_room_host_not_started_title": "Esperando al anfitrión para comenzar",
   "@waiting_room_host_not_started_title": {
     "description": "Title when guest waits for host to start a meeting with waiting room"
   },
-  "waiting_room_host_not_started_description": "You'll join when the host starts the meeting and admits you.",
+  "waiting_room_host_not_started_description": "Se unirá cuando el anfitrión comience la reunión y le admita en ella.",
   "@waiting_room_host_not_started_description": {
     "description": "Description when guest waits for host to start"
   },
-  "waiting_room_awaiting_admission_title": "Waiting for the host to admit you",
+  "waiting_room_awaiting_admission_title": "Esperando al anfitrión para admitirle",
   "@waiting_room_awaiting_admission_title": {
     "description": "Title when guest waits for host admission"
   },
-  "waiting_room_awaiting_admission_description": "The host has been notified that you're waiting.",
+  "waiting_room_awaiting_admission_description": "Se notificó al anfitrión de que está esperando.",
   "@waiting_room_awaiting_admission_description": {
     "description": "Description when guest waits for host admission"
   },
@@ -244,35 +244,35 @@
       }
     }
   },
-  "waiting_room_join_request_rejected": "The host declined your request to join",
+  "waiting_room_join_request_rejected": "El anfitrión rechazó su solicitud para unirse",
   "@waiting_room_join_request_rejected": {
     "description": "Global notification when the host rejects a waiting-room join request"
   },
-  "waiting_room_admission_timed_out": "Your request to join timed out. Please try again.",
+  "waiting_room_admission_timed_out": "Su solicitud para unirse expiró. Intente de nuevo.",
   "@waiting_room_admission_timed_out": {
     "description": "Global notification when the guest waiting room admission countdown reaches zero"
   },
-  "waiting_room_host_join_request_notification": "Someone is waiting in the waiting room to join",
+  "waiting_room_host_join_request_notification": "Alguien se encuentra en la sala de espera para unirse",
   "@waiting_room_host_join_request_notification": {
     "description": "Global notification shown to the host when a guest submits a waiting-room join request"
   },
-  "waiting_room_join_request_not_found": "This join request is no longer available. It may have expired or already been handled.",
+  "waiting_room_join_request_not_found": "Esta solicitud de unión ya no está disponible. Pudo haber expirado o ya se gestionó.",
   "@waiting_room_join_request_not_found": {
     "description": "Toast shown when the host tries to admit a waiting-room request that is no longer pending"
   },
-  "participant_list_waiting_room_tab": "Waiting Room",
+  "participant_list_waiting_room_tab": "Sala de espera",
   "@participant_list_waiting_room_tab": {
     "description": "Tab label for waiting room participants in host participant list"
   },
-  "participant_list_all_participants_tab": "All participants",
+  "participant_list_all_participants_tab": "Todos los participantes",
   "@participant_list_all_participants_tab": {
     "description": "Tab label for in-meeting participants in host participant list"
   },
-  "participant_list_admit_all": "Admit all",
+  "participant_list_admit_all": "Admitir a todos",
   "@participant_list_admit_all": {
     "description": "Button label to admit all waiting room participants"
   },
-  "participant_list_joined_at": "Joined at {time}",
+  "participant_list_joined_at": "Se unió a las {time}",
   "@participant_list_joined_at": {
     "description": "Subtitle for a waiting room participant row",
     "placeholders": {
@@ -281,12 +281,12 @@
       }
     }
   },
-  "participant_list_no_waiting_participants": "No one is waiting to join",
+  "participant_list_no_waiting_participants": "Nadie espera para unirse",
   "@participant_list_no_waiting_participants": {
     "description": "Empty state when the waiting room participant list is empty"
   },
   "join_meeting_button": "Unirse a la reunión",
-  "create_meeting_button": "Create",
+  "create_meeting_button": "Crear",
   "import_meeting_button": "Importar reunión",
   "import_meeting_title": "Importar reunión",
   "import_meeting_hint_text": "Ingrese el enlace de la reunión",
@@ -366,7 +366,7 @@
   "@meeting_password_incorrect": {
     "description": "Error message when the meeting password embedded in the join link is invalid"
   },
-  "meeting_password_invalid": "La contraseña de la reunión no es válida",
+  "meeting_password_invalid": "La contraseña de la reunión es inválida",
   "link_copied_to_clipboard": "Enlace copiado al portapapeles",
   "@link_copied_to_clipboard": {
     "description": "Success message when meeting link is copied"
@@ -942,7 +942,7 @@
   "@chat_title": {
     "description": "Title for the in-meeting chat panel"
   },
-  "chat_input_hint": "Type an encrypted message…",
+  "chat_input_hint": "Escriba un mensaje cifrado…",
   "@chat_input_hint": {
     "description": "Placeholder for the main chat composer"
   },
@@ -964,7 +964,7 @@
       }
     }
   },
-  "chat_thread_view_replies": "{count, plural, =1{View 1 reply} other{View {count} replies}}",
+  "chat_thread_view_replies": "{count, plural, =1{Ver 1 respuesta} other{Ver {count} respuestas}}",
   "@chat_thread_view_replies": {
     "description": "Collapsed thread toggle to expand and view replies",
     "placeholders": {
@@ -973,7 +973,7 @@
       }
     }
   },
-  "chat_thread_replies_count": "{count, plural, =1{1 reply} other{{count} replies}}",
+  "chat_thread_replies_count": "{count, plural, =1{1 respuesta} other{{count} respuestas}}",
   "@chat_thread_replies_count": {
     "description": "Expanded thread toggle showing reply count",
     "placeholders": {
@@ -982,27 +982,27 @@
       }
     }
   },
-  "chat_thread_new_reply": "New reply",
+  "chat_thread_new_reply": "Respuesta nueva",
   "@chat_thread_new_reply": {
     "description": "Badge shown on a collapsed thread when there are unseen replies"
   },
-  "chat_system_joined_prefix": "Joined ",
+  "chat_system_joined_prefix": "Se unió a ",
   "@chat_system_joined_prefix": {
     "description": "Prefix before the meeting name in a join system chat notice"
   },
-  "chat_system_left_prefix": "Left ",
+  "chat_system_left_prefix": "Abandonó ",
   "@chat_system_left_prefix": {
     "description": "Prefix before the meeting name in a leave system chat notice"
   },
-  "chat_reply_hint": "Reply…",
+  "chat_reply_hint": "Responder…",
   "@chat_reply_hint": {
     "description": "Placeholder for the thread reply composer"
   },
-  "chat_thread_missing_root": "This conversation started before you joined.",
+  "chat_thread_missing_root": "Esta conversación comenzó antes de que se uniera.",
   "@chat_thread_missing_root": {
     "description": "Placeholder when a thread root message is not available locally"
   },
-  "chat_not_delivered": "Not delivered",
+  "chat_not_delivered": "No entregado",
   "@chat_not_delivered": {
     "description": "Status label for a failed outgoing chat message"
   },
@@ -1010,11 +1010,11 @@
   "@chat_discard": {
     "description": "Action to remove a failed outgoing chat message"
   },
-  "chat_reply": "Reply",
+  "chat_reply": "Responder",
   "@chat_reply": {
     "description": "Action to reply to a chat message in a thread"
   },
-  "chat_copy_text": "Copy text",
+  "chat_copy_text": "Copiar texto",
   "@chat_copy_text": {
     "description": "Action to copy chat message text to clipboard"
   },
@@ -1038,11 +1038,11 @@
   "@call_quality_problem_subtitle": {
     "description": "Subtitle under what went wrong on low-rating feedback"
   },
-  "call_quality_add_optional_details": "Añade detalles opcionales",
+  "call_quality_add_optional_details": "Añada detalles opcionales",
   "@call_quality_add_optional_details": {
     "description": "Expand control for free-text feedback"
   },
-  "call_quality_share_more_details": "Comparte más detalles",
+  "call_quality_share_more_details": "Comparta más detalles",
   "@call_quality_share_more_details": {
     "description": "Placeholder for optional feedback text"
   },
@@ -1449,7 +1449,7 @@
   "@kicked_out_bottom_sheet_title": {
     "description": "Title shown in left meeting bottom sheet when current user is removed by host"
   },
-  "kicked_out_bottom_sheet_content": "El anfitrión lo eliminó de la reunión.",
+  "kicked_out_bottom_sheet_content": "El anfitrión le eliminó de la reunión.",
   "@kicked_out_bottom_sheet_content": {
     "description": "Content shown in left meeting bottom sheet when current user is removed by host"
   },
@@ -1505,27 +1505,27 @@
   "@schedule_waiting_room": {
     "description": "Label for waiting room field in schedule meeting dialog"
   },
-  "schedule_waiting_room_on": "Waiting room On",
+  "schedule_waiting_room_on": "Sala de espera activada",
   "@schedule_waiting_room_on": {
     "description": "Waiting room enabled option title"
   },
-  "schedule_waiting_room_on_hint": "Use waiting room with a paid plan",
+  "schedule_waiting_room_on_hint": "Use una sala de espera con un plan de pago",
   "@schedule_waiting_room_on_hint": {
     "description": "Waiting room enabled option hint"
   },
-  "schedule_waiting_room_off": "Waiting room Off",
+  "schedule_waiting_room_off": "Sala de espera desactivada",
   "@schedule_waiting_room_off": {
     "description": "Waiting room disabled option title"
   },
-  "switch_on": "On",
+  "switch_on": "Activado",
   "@switch_on": {
     "description": "Label when switch on"
   },
-  "switch_off": "Off",
+  "switch_off": "Desactivado",
   "@switch_off": {
     "description": "Label when switch off"
   },
-  "schedule_waiting_room_off_hint": "Anyone with the link can join immediately",
+  "schedule_waiting_room_off_hint": "Cualquier persona con el enlace puede unirse inmediatamente",
   "@schedule_waiting_room_off_hint": {
     "description": "Waiting room disabled option hint"
   },
@@ -1577,11 +1577,11 @@
   "@month_dec": {
     "description": "Full month name for December"
   },
-  "month_short_jan": "Ene",
+  "month_short_jan": "ene.",
   "@month_short_jan": {
     "description": "Abbreviated month name January (order Jan–Dec)"
   },
-  "month_short_feb": "Feb",
+  "month_short_feb": "feb.",
   "@month_short_feb": {
     "description": "Abbreviated month name February"
   },
@@ -1681,11 +1681,11 @@
   "@weekday_short_sunday": {
     "description": "Short weekday label Sunday"
   },
-  "calendar_system": "Agregar al calendario del teléfono",
+  "calendar_system": "Añadir al calendario del teléfono",
   "@calendar_system": {
     "description": "Menu label for opening system calendar"
   },
-  "calendar_google": "Agregar a Google Calendar",
+  "calendar_google": "Añadir a Google Calendar",
   "@calendar_google": {
     "description": "Menu label for opening Google Calendar"
   },
@@ -1693,11 +1693,11 @@
   "@calendar_share_ics": {
     "description": "Menu label for sharing ICS file"
   },
-  "calendar_outlook": "Agregar al calendario de Outlook",
+  "calendar_outlook": "Añadir al calendario de Outlook",
   "@calendar_outlook": {
     "description": "Menu label for opening Outlook Calendar"
   },
-  "calendar_proton": "Agregar a Proton Calendar",
+  "calendar_proton": "Añadir a Proton Calendar",
   "@calendar_proton": {
     "description": "Menu label for opening Proton Calendar"
   },
@@ -1913,7 +1913,7 @@
   "@sign_in_card_title": {
     "description": "Title text for the sign-in card displayed on dashboard"
   },
-  "sign_in_card_description": "Programe reuniones, acceda a su sala personal y cree nuevas salas.",
+  "sign_in_card_description": "Programe reuniones, acceda a su sala personal y cree salas.",
   "@sign_in_card_description": {
     "description": "Description text for the sign-in card explaining benefits of signing in"
   },
@@ -1948,6 +1948,10 @@
   "settings_section_general": "General",
   "@settings_section_general": {
     "description": "Section header in app settings"
+  },
+  "settings_section_meetings": "Reuniones",
+  "@settings_section_meetings": {
+    "description": "Section header for meeting-related app settings"
   },
   "settings_section_support": "Soporte",
   "@settings_section_support": {
@@ -2013,7 +2017,7 @@
   "@iap_native_test_upgrade": {
     "description": "Button: native.navigation.plan.upgrade"
   },
-  "iap_native_test_sign_in_required": "Inicia sesión con tu cuenta de Proton para abrir tus pagos nativos.",
+  "iap_native_test_sign_in_required": "Inicie sesión con su cuenta de Proton para abrir sus pagos nativos.",
   "@iap_native_test_sign_in_required": {
     "description": "Message shown when sign in is required to open native payments"
   }
