@@ -403,60 +403,62 @@ class VideoPreviewWithControls extends StatelessWidget {
       id: TestIds.prejoinSpeaker,
       button: true,
       child: GestureDetector(
-      onTap: () {
-        final preJoinBloc = context.read<PreJoinBloc>();
-        showModalBottomSheet(
-          context: context,
-          backgroundColor: Colors.transparent,
-          isScrollControlled: true,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
-          ),
-          builder: (BuildContext context) {
-            return BlocProvider<PreJoinBloc>.value(
-              value: preJoinBloc,
-              child: SafeArea(
-                child: IntrinsicHeight(child: const PreJoinSpeakerPhonePanel()),
-              ),
-            );
-          },
-        );
-      },
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Container(
-          width: buttonSize,
-          height: buttonSize,
-          padding: const EdgeInsets.all(14),
-          decoration: ShapeDecoration(
-            color: context.colors.controlBarBtnBackground,
-            shape: RoundedRectangleBorder(
-              side: BorderSide(
-                width: 0.86,
-                color: context.colors.controlBarBtnBackground,
-              ),
-              borderRadius: BorderRadius.circular(100),
+        onTap: () {
+          final preJoinBloc = context.read<PreJoinBloc>();
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.transparent,
+            isScrollControlled: true,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
             ),
-          ),
-          child: BlocSelector<PreJoinBloc, PreJoinState, (bool, bool, bool)>(
-            selector: (state) => (
-              state.isSpeakerPhoneEnabled,
-              state.hasExternalAudioOutput,
-              state.hasBluetoothAudioOutput,
-            ),
-            builder: (context, data) {
-              final icon = AudioOutputDisplay.icon(
-                context,
-                isSpeakerPhone: data.$1,
-                hasExternalAudioOutput: data.$2,
-                hasBluetoothAudioOutput: data.$3,
+            builder: (BuildContext context) {
+              return BlocProvider<PreJoinBloc>.value(
+                value: preJoinBloc,
+                child: SafeArea(
+                  child: IntrinsicHeight(
+                    child: const PreJoinSpeakerPhonePanel(),
+                  ),
+                ),
               );
-              return icon.svg20(color: context.colors.textNorm);
             },
+          );
+        },
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: Container(
+            width: buttonSize,
+            height: buttonSize,
+            padding: const EdgeInsets.all(14),
+            decoration: ShapeDecoration(
+              color: context.colors.controlBarBtnBackground,
+              shape: RoundedRectangleBorder(
+                side: BorderSide(
+                  width: 0.86,
+                  color: context.colors.controlBarBtnBackground,
+                ),
+                borderRadius: BorderRadius.circular(100),
+              ),
+            ),
+            child: BlocSelector<PreJoinBloc, PreJoinState, (bool, bool, bool)>(
+              selector: (state) => (
+                state.isSpeakerPhoneEnabled,
+                state.hasExternalAudioOutput,
+                state.hasBluetoothAudioOutput,
+              ),
+              builder: (context, data) {
+                final icon = AudioOutputDisplay.icon(
+                  context,
+                  isSpeakerPhone: data.$1,
+                  hasExternalAudioOutput: data.$2,
+                  hasBluetoothAudioOutput: data.$3,
+                );
+                return icon.svg20(color: context.colors.textNorm);
+              },
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 
@@ -547,68 +549,68 @@ class _ControlButton extends StatelessWidget {
     return withTestId(
       testId,
       GestureDetector(
-      onTap: onTap,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            // round button
-            Container(
-              width: 48,
-              height: 48,
-              padding: const EdgeInsets.all(14),
-              decoration: ShapeDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
-                shape: RoundedRectangleBorder(
-                  side: BorderSide(
-                    width: 0.86,
-                    color: Colors.white.withValues(alpha: 0.08),
+        onTap: onTap,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // round button
+              Container(
+                width: 48,
+                height: 48,
+                padding: const EdgeInsets.all(14),
+                decoration: ShapeDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(
+                      width: 0.86,
+                      color: Colors.white.withValues(alpha: 0.08),
+                    ),
+                    borderRadius: BorderRadius.circular(100),
                   ),
-                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: FittedBox(child: icon),
+                  ),
                 ),
               ),
-              child: Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: FittedBox(child: icon),
-                ),
-              ),
-            ),
 
-            // small warning badge (top-right)
-            if (showWarning)
-              Positioned(
-                right: -2, // slightly outside for a clean overlap
-                top: -2,
-                child: Semantics(
-                  label: context.local.permission_required,
-                  child: Container(
-                    width: 18,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      color: Colors.amber, // warning fill
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Theme.of(context).scaffoldBackgroundColor,
-                        width: 2, // ring to separate from button
+              // small warning badge (top-right)
+              if (showWarning)
+                Positioned(
+                  right: -2, // slightly outside for a clean overlap
+                  top: -2,
+                  child: Semantics(
+                    label: context.local.permission_required,
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: Colors.amber, // warning fill
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Theme.of(context).scaffoldBackgroundColor,
+                          width: 2, // ring to separate from button
+                        ),
                       ),
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.priority_high_rounded,
-                        size: 12,
-                        color: Colors.black, // good contrast
+                      child: const Center(
+                        child: Icon(
+                          Icons.priority_high_rounded,
+                          size: 12,
+                          color: Colors.black, // good contrast
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
       button: true,
     );
   }

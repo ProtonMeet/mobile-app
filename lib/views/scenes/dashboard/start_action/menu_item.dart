@@ -24,25 +24,25 @@ class MenuItem extends StatelessWidget {
     return withTestId(
       testId,
       InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Row(
-          children: [
-            icon.svg24(color: context.colors.interActionNorm),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                label,
-                style: ProtonStyles.body1Medium(
-                  color: context.colors.interActionNorm,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Row(
+            children: [
+              icon.svg24(color: context.colors.interActionNorm),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  label,
+                  style: ProtonStyles.body1Medium(
+                    color: context.colors.interActionNorm,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
       button: true,
     );
   }

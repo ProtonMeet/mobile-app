@@ -332,7 +332,8 @@ mixin RoomTracksHandlers
     // Only check video publication signature in small meetings to avoid
     // unnecessary work in large rooms.
     bool videoAvailabilityChanged = false;
-    if (room.remoteParticipants.length < smallMeetingRemoteParticipantThreshold) {
+    if (room.remoteParticipants.length <
+        smallMeetingRemoteParticipantThreshold) {
       final videoPublicationSignature = _computeVideoPublicationSignature();
       videoAvailabilityChanged =
           videoPublicationSignature != _lastVideoPublicationSignature;
@@ -347,9 +348,7 @@ mixin RoomTracksHandlers
     final hasPendingCameraVideo =
         isSmallMeeting && _hasPendingCameraVideoTrackPublication();
     final shouldRefreshParticipantTracks =
-        hasOrderChanged ||
-        videoAvailabilityChanged ||
-        hasPendingCameraVideo;
+        hasOrderChanged || videoAvailabilityChanged || hasPendingCameraVideo;
 
     // Only emit if something actually changed to reduce unnecessary rebuilds
     if (shouldRefreshParticipantTracks ||

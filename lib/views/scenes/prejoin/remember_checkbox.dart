@@ -22,40 +22,40 @@ class RememberCheckbox extends StatelessWidget {
     return withTestId(
       testId,
       Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: InkWell(
-        onTap: () {
-          onChanged(!value);
-        },
-        child: Row(
-          children: [
-            SizedBox(
-              width: height,
-              height: height,
-              child: Checkbox(
-                value: value,
-                onChanged: (newValue) {
-                  if (newValue != null) {
-                    onChanged(newValue);
-                  }
-                },
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                context.local.remember_display_name_on_device,
-                style: ProtonStyles.bodySmallSemibold(
-                  color: context.colors.textWeak,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: InkWell(
+          onTap: () {
+            onChanged(!value);
+          },
+          child: Row(
+            children: [
+              SizedBox(
+                width: height,
+                height: height,
+                child: Checkbox(
+                  value: value,
+                  onChanged: (newValue) {
+                    if (newValue != null) {
+                      onChanged(newValue);
+                    }
+                  },
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  context.local.remember_display_name_on_device,
+                  style: ProtonStyles.bodySmallSemibold(
+                    color: context.colors.textWeak,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
       button: true,
     );
   }

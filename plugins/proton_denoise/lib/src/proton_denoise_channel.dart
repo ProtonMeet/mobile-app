@@ -189,7 +189,9 @@ class ProtonDenoiseChannel {
           if (entry is! Map) {
             continue;
           }
-          final map = entry.map((key, value) => MapEntry(key.toString(), value));
+          final map = entry.map(
+            (key, value) => MapEntry(key.toString(), value),
+          );
           final parsed = _parseWarmUpMap(map);
           if (parsed != null) {
             out.add(parsed);

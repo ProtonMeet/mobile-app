@@ -67,156 +67,157 @@ class UpcomingMeetingListItem extends StatelessWidget {
       id: TestIds.upcomingMeetingItem(index),
       button: true,
       child: Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onJoin,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              if (meeting.isPersonalMeeting) ...[
-                context.images.iconPersonalMeeting.svg40(),
-              ] else ...[
-                // meeting type icon
-                Container(
-                  width: 40,
-                  height: 40,
-                  padding: const EdgeInsets.all(12),
-                  decoration: ShapeDecoration(
-                    color: displayColors.backgroundColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: currentTab == MeetUpcomingTab.myRooms
-                      ? context.images.iconMeetingPerson.svg(
-                          colorFilter: ColorFilter.mode(
-                            displayColors.profileColor,
-                            BlendMode.srcIn,
-                          ),
-                        )
-                      : context.images.iconMeetingCalendar.svg(
-                          colorFilter: ColorFilter.mode(
-                            displayColors.profileColor,
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                ),
-              ],
-
-              const SizedBox(width: 16),
-
-              /// meeting name and time range
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // first line
-                    Opacity(
-                      opacity: 0.90,
-                      child: BlocSelector<AuthBloc, AuthState, bool>(
-                        selector: (state) {
-                          final user = state.user;
-                          return user != null && user_sub.isPaid(user: user);
-                        },
-                        builder: (context, isPaidUser) {
-                          return Text(
-                            _resolveDisplayName(
-                              context,
-                              isPaidUser: isPaidUser,
-                            ),
-                            style: ProtonStyles.body1Semibold(
-                              color: meeting.isPersonalMeeting
-                                  ? context.colors.interActionNorm
-                                  : context.colors.textNorm,
-                            ),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          );
-                        },
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onJoin,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                if (meeting.isPersonalMeeting) ...[
+                  context.images.iconPersonalMeeting.svg40(),
+                ] else ...[
+                  // meeting type icon
+                  Container(
+                    width: 40,
+                    height: 40,
+                    padding: const EdgeInsets.all(12),
+                    decoration: ShapeDecoration(
+                      color: displayColors.backgroundColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    // second line
-                    if (sortOption == SortOptionMyMeetings.upcoming &&
-                        fullTimeRange.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (meeting.meetingType == MeetingType.recurring) ...[
-                            context.images.iconMeetingRecurring.svg12(
-                              color: context.colors.textHint,
+                    child: currentTab == MeetUpcomingTab.myRooms
+                        ? context.images.iconMeetingPerson.svg(
+                            colorFilter: ColorFilter.mode(
+                              displayColors.profileColor,
+                              BlendMode.srcIn,
                             ),
-                            const SizedBox(width: 4),
-                          ],
-                          Flexible(
-                            child: Text(
-                              fullTimeRange,
-                              style: ProtonStyles.body2Medium(
+                          )
+                        : context.images.iconMeetingCalendar.svg(
+                            colorFilter: ColorFilter.mode(
+                              displayColors.profileColor,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                  ),
+                ],
+
+                const SizedBox(width: 16),
+
+                /// meeting name and time range
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // first line
+                      Opacity(
+                        opacity: 0.90,
+                        child: BlocSelector<AuthBloc, AuthState, bool>(
+                          selector: (state) {
+                            final user = state.user;
+                            return user != null && user_sub.isPaid(user: user);
+                          },
+                          builder: (context, isPaidUser) {
+                            return Text(
+                              _resolveDisplayName(
+                                context,
+                                isPaidUser: isPaidUser,
+                              ),
+                              style: ProtonStyles.body1Semibold(
+                                color: meeting.isPersonalMeeting
+                                    ? context.colors.interActionNorm
+                                    : context.colors.textNorm,
+                              ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            );
+                          },
+                        ),
+                      ),
+                      // second line
+                      if (sortOption == SortOptionMyMeetings.upcoming &&
+                          fullTimeRange.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (meeting.meetingType ==
+                                MeetingType.recurring) ...[
+                              context.images.iconMeetingRecurring.svg12(
                                 color: context.colors.textHint,
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                              const SizedBox(width: 4),
+                            ],
+                            Flexible(
+                              child: Text(
+                                fullTimeRange,
+                                style: ProtonStyles.body2Medium(
+                                  color: context.colors.textHint,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
+                          ],
+                        ),
+                      ] else if (meeting.isPersonalMeeting) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          context.local.personal_meeting_description,
+                          style: ProtonStyles.body2Medium(
+                            color: context.colors.textHint,
                           ),
-                        ],
-                      ),
-                    ] else if (meeting.isPersonalMeeting) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        context.local.personal_meeting_description,
-                        style: ProtonStyles.body2Medium(
-                          color: context.colors.textHint,
                         ),
-                      ),
-                    ] else if (sortOptionMyRooms ==
-                            SortOptionMyRooms.lastUsed &&
-                        currentTab == MeetUpcomingTab.myRooms &&
-                        lastUsedTime.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        lastUsedTime,
-                        style: ProtonStyles.body2Medium(
-                          color: context.colors.textHint,
+                      ] else if (sortOptionMyRooms ==
+                              SortOptionMyRooms.lastUsed &&
+                          currentTab == MeetUpcomingTab.myRooms &&
+                          lastUsedTime.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          lastUsedTime,
+                          style: ProtonStyles.body2Medium(
+                            color: context.colors.textHint,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ] else if (sortOption == SortOptionMyMeetings.past &&
-                        currentTab == MeetUpcomingTab.myMeetings &&
-                        lastUsedTime.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        pastTime,
-                        style: ProtonStyles.body2Medium(
-                          color: context.colors.textHint,
+                      ] else if (sortOption == SortOptionMyMeetings.past &&
+                          currentTab == MeetUpcomingTab.myMeetings &&
+                          lastUsedTime.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          pastTime,
+                          style: ProtonStyles.body2Medium(
+                            color: context.colors.textHint,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ] else if (timeCreated.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        timeCreated,
-                        style: ProtonStyles.body2Medium(
-                          color: context.colors.textHint,
+                      ] else if (timeCreated.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          timeCreated,
+                          style: ProtonStyles.body2Medium(
+                            color: context.colors.textHint,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              _buildTrailingAction(context),
-            ],
+                _buildTrailingAction(context),
+              ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 

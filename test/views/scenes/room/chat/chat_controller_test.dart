@@ -74,10 +74,7 @@ void main() {
         inReplyToId: topicId,
       );
 
-      expect(
-        isRelevantThreadMessage(reply, chatMessages, localId),
-        isTrue,
-      );
+      expect(isRelevantThreadMessage(reply, chatMessages, localId), isTrue);
     });
 
     test('notifies thread reply when local user has replied in thread', () {
@@ -98,34 +95,31 @@ void main() {
         inReplyToId: topicId,
       );
 
-      expect(
-        isRelevantThreadMessage(reply, chatMessages, localId),
-        isTrue,
-      );
+      expect(isRelevantThreadMessage(reply, chatMessages, localId), isTrue);
     });
 
-    test('does not notify thread reply when local user is not a participant', () {
-      const topicId = 'root-1';
-      final chatMessages = [
-        _msg(id: topicId, identity: otherId, topicId: topicId),
-        _msg(
-          id: 'reply-a',
-          identity: 'user-a',
+    test(
+      'does not notify thread reply when local user is not a participant',
+      () {
+        const topicId = 'root-1';
+        final chatMessages = [
+          _msg(id: topicId, identity: otherId, topicId: topicId),
+          _msg(
+            id: 'reply-a',
+            identity: 'user-a',
+            topicId: topicId,
+            inReplyToId: topicId,
+          ),
+        ];
+        final reply = _msg(
+          id: 'reply-b',
+          identity: 'user-b',
           topicId: topicId,
           inReplyToId: topicId,
-        ),
-      ];
-      final reply = _msg(
-        id: 'reply-b',
-        identity: 'user-b',
-        topicId: topicId,
-        inReplyToId: topicId,
-      );
+        );
 
-      expect(
-        isRelevantThreadMessage(reply, chatMessages, localId),
-        isFalse,
-      );
-    });
+        expect(isRelevantThreadMessage(reply, chatMessages, localId), isFalse);
+      },
+    );
   });
 }

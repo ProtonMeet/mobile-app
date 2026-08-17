@@ -24,10 +24,7 @@ class DesktopLoginBrowser {
         'Desktop login WebView cookies cleared (hadCookies: $hadCookies)',
       );
     } catch (e, st) {
-      logger.w(
-        'Desktop login WebView cookie clear failed: $e',
-        stackTrace: st,
-      );
+      logger.w('Desktop login WebView cookie clear failed: $e', stackTrace: st);
     }
   }
 

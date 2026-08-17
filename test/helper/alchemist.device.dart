@@ -15,20 +15,28 @@ class Device {
   });
 
   /// [phoneLandscape] example of phone that in landscape mode
-  static const Device phoneLandscape =
-      Device(name: 'phone_landscape', size: Size(667, 375));
+  static const Device phoneLandscape = Device(
+    name: 'phone_landscape',
+    size: Size(667, 375),
+  );
 
   /// [phonePortrait] example of phone that in portrait mode
-  static const Device phonePortrait =
-      Device(name: 'phone_portrait', size: Size(375, 667));
+  static const Device phonePortrait = Device(
+    name: 'phone_portrait',
+    size: Size(375, 667),
+  );
 
   /// [tabletLandscape] example of tablet that in landscape mode
-  static const Device tabletLandscape =
-      Device(name: 'tablet_landscape', size: Size(1366, 1024));
+  static const Device tabletLandscape = Device(
+    name: 'tablet_landscape',
+    size: Size(1366, 1024),
+  );
 
   /// [tabletPortrait] example of tablet that in portrait mode
-  static const Device tabletPortrait =
-      Device(name: 'tablet_portrait', size: Size(1024, 1366));
+  static const Device tabletPortrait = Device(
+    name: 'tablet_portrait',
+    size: Size(1024, 1366),
+  );
 
   static List<Device> all = [
     phonePortrait,

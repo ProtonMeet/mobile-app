@@ -61,61 +61,61 @@ class ControlIconButton extends StatelessWidget {
     return withTestId(
       testId,
       Container(
-      width: size,
-      height: size,
-      decoration: ShapeDecoration(
-        color: isActive
-            ? backgroundColor ?? context.colors.controlButtonBackground
-            : inactiveBackgroundColor ??
-                  backgroundColor ??
-                  context.colors.controlButtonBackground,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(9000),
+        width: size,
+        height: size,
+        decoration: ShapeDecoration(
+          color: isActive
+              ? backgroundColor ?? context.colors.controlButtonBackground
+              : inactiveBackgroundColor ??
+                    backgroundColor ??
+                    context.colors.controlButtonBackground,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(9000),
+          ),
+        ),
+        child: Stack(
+          children: [
+            Center(
+              child: CustomTooltip(
+                message: tooltip ?? "",
+                child: IconButton(
+                  icon: isActive ? (activeIcon ?? icon) : icon,
+                  color: isActive
+                      ? (activeColor ?? context.colors.textInverted)
+                      : (inactiveColor ?? context.colors.white),
+                  onPressed: onPressed,
+                ),
+              ),
+            ),
+            if (badge != null)
+              Positioned(
+                left: 38,
+                top: 0,
+                child: Container(
+                  width: 18,
+                  height: 18,
+                  // padding: const EdgeInsets.all(8),
+                  decoration: ShapeDecoration(
+                    color: const Color(0xFF5E5F66),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(200000),
+                    ),
+                  ),
+                  child: Text(
+                    badge!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
-      child: Stack(
-        children: [
-          Center(
-            child: CustomTooltip(
-              message: tooltip ?? "",
-              child: IconButton(
-                icon: isActive ? (activeIcon ?? icon) : icon,
-                color: isActive
-                    ? (activeColor ?? context.colors.textInverted)
-                    : (inactiveColor ?? context.colors.white),
-                onPressed: onPressed,
-              ),
-            ),
-          ),
-          if (badge != null)
-            Positioned(
-              left: 38,
-              top: 0,
-              child: Container(
-                width: 18,
-                height: 18,
-                // padding: const EdgeInsets.all(8),
-                decoration: ShapeDecoration(
-                  color: const Color(0xFF5E5F66),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(200000),
-                  ),
-                ),
-                child: Text(
-                  badge!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    ),
       button: true,
     );
   }

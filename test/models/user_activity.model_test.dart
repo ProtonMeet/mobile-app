@@ -488,20 +488,17 @@ void main() {
     },
   );
 
-  testUnit(
-    'withFeedback with no completion synthesises a completion row',
-    () {
-      const s = UserActivityPersistedV1();
-      final next = s.withFeedback(epochSec: 100, score: 4);
-      expect(next.hasSubmittedFeedbackBelow5Stars, true);
-      expect(next.completedAtEpochSec, [100]);
-      expect(next.completedFeedbackScores, [4]);
-      expect(next.completedHadBadConnection, [0]);
-      expect(next.completedWasInterrupted, [0]);
-      expect(next.feedbackScores, isEmpty);
-      expect(next.feedbackAtEpochSec, isEmpty);
-    },
-  );
+  testUnit('withFeedback with no completion synthesises a completion row', () {
+    const s = UserActivityPersistedV1();
+    final next = s.withFeedback(epochSec: 100, score: 4);
+    expect(next.hasSubmittedFeedbackBelow5Stars, true);
+    expect(next.completedAtEpochSec, [100]);
+    expect(next.completedFeedbackScores, [4]);
+    expect(next.completedHadBadConnection, [0]);
+    expect(next.completedWasInterrupted, [0]);
+    expect(next.feedbackScores, isEmpty);
+    expect(next.feedbackAtEpochSec, isEmpty);
+  });
 
   testUnit('withFeedback score 5 does not set below-5 flag', () {
     const s = UserActivityPersistedV1();

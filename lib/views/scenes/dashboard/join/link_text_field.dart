@@ -75,25 +75,25 @@ class LinkTextField extends StatelessWidget {
                     id: TestIds.joinDialogLinkField,
                     textField: true,
                     child: TextField(
-                    enabled: editable,
-                    controller: controller,
-                    focusNode: focusNode,
-                    autofocus: autofocus,
-                    keyboardType: TextInputType.url,
-                    textInputAction: TextInputAction.done,
-                    minLines: 1,
-                    maxLines: 4,
-                    onSubmitted: (_) => onSubmitted(),
-                    decoration: InputDecoration(
-                      hintText: hintText,
-                      isDense: true,
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
+                      enabled: editable,
+                      controller: controller,
+                      focusNode: focusNode,
+                      autofocus: autofocus,
+                      keyboardType: TextInputType.url,
+                      textInputAction: TextInputAction.done,
+                      minLines: 1,
+                      maxLines: 4,
+                      onSubmitted: (_) => onSubmitted(),
+                      decoration: InputDecoration(
+                        hintText: hintText,
+                        isDense: true,
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      style: ProtonStyles.body2Regular(
+                        color: context.colors.textNorm,
+                      ),
                     ),
-                    style: ProtonStyles.body2Regular(
-                      color: context.colors.textNorm,
-                    ),
-                  ),
                   ),
                 ),
 
@@ -104,20 +104,20 @@ class LinkTextField extends StatelessWidget {
                     id: TestIds.joinDialogCopy,
                     button: true,
                     child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: onCopy,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: context.images.iconCopy.svg20(
-                          color:
-                              displayColors?.profileTextColor ??
-                              context.colors.textNorm,
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: onCopy,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: context.images.iconCopy.svg20(
+                            color:
+                                displayColors?.profileTextColor ??
+                                context.colors.textNorm,
+                          ),
                         ),
                       ),
                     ),
-                  ),
                   ),
                 ],
               ],

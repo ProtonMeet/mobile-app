@@ -6,10 +6,10 @@ class Devices {
 
   // iPhone 13 normal variant
   static toolkit.Device get iphone13 => const toolkit.Device(
-        size: Size(390.0, 844.0), // Placeholder dimensions
-        name: 'iphone_13__text_scale_1_0',
-        safeArea: EdgeInsets.only(top: 44.0, bottom: 34.0),
-      );
+    size: Size(390.0, 844.0), // Placeholder dimensions
+    name: 'iphone_13__text_scale_1_0',
+    safeArea: EdgeInsets.only(top: 44.0, bottom: 34.0),
+  );
   static toolkit.Device iphone13WithTextScale(double textScale) =>
       iphone13.copyWith(
         name: 'iphone_13__text_scale_${textScale.title()}',
@@ -18,10 +18,10 @@ class Devices {
 
   // iPhone 13 Pro variant
   static toolkit.Device get iphone13Pro => const toolkit.Device(
-        size: Size(390.0, 844.0), // Placeholder dimensions
-        name: 'iphone_13_pro__text_scale_1_0',
-        safeArea: EdgeInsets.only(top: 44.0, bottom: 34.0),
-      );
+    size: Size(390.0, 844.0), // Placeholder dimensions
+    name: 'iphone_13_pro__text_scale_1_0',
+    safeArea: EdgeInsets.only(top: 44.0, bottom: 34.0),
+  );
   static toolkit.Device iphone13ProWithTextScale(double textScale) =>
       iphone13Pro.copyWith(
         name: 'iphone_13_pro__text_scale_${textScale.title()}',
@@ -30,10 +30,10 @@ class Devices {
 
   // iPhone 14 Plus variant
   static toolkit.Device get iphone14Plus => const toolkit.Device(
-        size: Size(428.0, 926.0), // Placeholder dimensions
-        name: 'iphone_14_plus__text_scale_1_0',
-        safeArea: EdgeInsets.only(top: 47.0, bottom: 34.0),
-      );
+    size: Size(428.0, 926.0), // Placeholder dimensions
+    name: 'iphone_14_plus__text_scale_1_0',
+    safeArea: EdgeInsets.only(top: 47.0, bottom: 34.0),
+  );
   static toolkit.Device iphone14PlusWithTextScale(double textScale) =>
       iphone14Plus.copyWith(
         name: 'iphone_14_plus__text_scale_${textScale.title()}',

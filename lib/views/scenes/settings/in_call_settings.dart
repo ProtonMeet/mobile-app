@@ -81,15 +81,12 @@ class _MeetingSettingsContentState extends State<MeetingSettingsContent> {
 
           // Audio section
           _buildSectionHeader('Audio'),
-          _buildToggleItem(
-            'Noise cancellation',
-            _noiseCancellation,
-            (value) async {
-              setState(() => _noiseCancellation = value);
-              await DenoiseAudioService.instance.setEnabled(enabled: value);
-            },
-            isFirst: true,
-          ),
+          _buildToggleItem('Noise cancellation', _noiseCancellation, (
+            value,
+          ) async {
+            setState(() => _noiseCancellation = value);
+            await DenoiseAudioService.instance.setEnabled(enabled: value);
+          }, isFirst: true),
           _buildToggleItem(
             'Turn off incoming audio',
             _turnOffIncomingAudio,

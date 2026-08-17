@@ -55,16 +55,8 @@ OverlayPlacement computeOverlayPlacement({
   final preferAbove = anchor != OverlayAnchor.below;
 
   final bool showsBelow = preferAbove
-      ? _shouldShowBelowWhenAbovePreferred(
-          spaceAbove,
-          spaceBelow,
-          heightNeeded,
-        )
-      : _preferBelowWhenBelowPreferred(
-          spaceAbove,
-          spaceBelow,
-          heightNeeded,
-        );
+      ? _shouldShowBelowWhenAbovePreferred(spaceAbove, spaceBelow, heightNeeded)
+      : _preferBelowWhenBelowPreferred(spaceAbove, spaceBelow, heightNeeded);
 
   final maxHeight = min(preferredHeight, showsBelow ? spaceBelow : spaceAbove);
 
@@ -75,7 +67,10 @@ OverlayPlacement computeOverlayPlacement({
   return OverlayPlacement(
     top: top.clamp(
       safeTop + minMargin,
-      max(safeTop + minMargin, screenHeight - safeBottom - minMargin - maxHeight),
+      max(
+        safeTop + minMargin,
+        screenHeight - safeBottom - minMargin - maxHeight,
+      ),
     ),
     maxHeight: maxHeight,
     showsBelow: showsBelow,

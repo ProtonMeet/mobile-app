@@ -92,7 +92,9 @@ class DenoiseAudioLifecycle {
 
     cancelPendingAttach();
     final gen = _generation;
-    l.logger.d('[AudioDenoise] schedule attach delay=${delay.inMilliseconds}ms');
+    l.logger.d(
+      '[AudioDenoise] schedule attach delay=${delay.inMilliseconds}ms',
+    );
     final completer = Completer<void>();
     _pendingAttach = Timer(delay, () async {
       _pendingAttach = null;
@@ -123,9 +125,7 @@ class DenoiseAudioLifecycle {
     }
     final mic = _findLocalMic(room);
     final trackId = mic?.mediaStreamTrack.id;
-    if (trackId != null &&
-        trackId.isNotEmpty &&
-        trackId == _attachedTrackId) {
+    if (trackId != null && trackId.isNotEmpty && trackId == _attachedTrackId) {
       l.logger.d('[AudioDenoise] processor survived trackId=$trackId');
       return;
     }
@@ -247,8 +247,7 @@ class DenoiseAudioLifecycle {
     }
     for (final pub in lp.audioTrackPublications) {
       final t = pub.track;
-      if (t is LocalAudioTrack &&
-          t.source != TrackSource.screenShareAudio) {
+      if (t is LocalAudioTrack && t.source != TrackSource.screenShareAudio) {
         return t;
       }
     }
@@ -265,11 +264,7 @@ class DenoiseAudioLifecycle {
       }
       return _isTypeAllowedByFlags(unleash, type);
     } catch (e, st) {
-      l.logger.w(
-        '[AudioDenoise] flag lookup failed',
-        error: e,
-        stackTrace: st,
-      );
+      l.logger.w('[AudioDenoise] flag lookup failed', error: e, stackTrace: st);
       return false;
     }
   }

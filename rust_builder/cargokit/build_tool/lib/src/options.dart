@@ -123,17 +123,20 @@ class CargoBuildOptions {
           continue;
         }
         throw SourceSpanException(
-            'Invalid value for "use_locked". Must be a boolean.',
-            value.span);
+            'Invalid value for "use_locked". Must be a boolean.', value.span);
       } else {
         throw SourceSpanException(
             'Unknown cargo option type. Must be "toolchain", "extra_flags", or "use_locked".',
             key.span);
       }
     }
-    _log.info('Parsed cargo options: $toolchain, $flags, $customVersion, useLocked: $useLocked');
+    _log.info(
+        'Parsed cargo options: $toolchain, $flags, $customVersion, useLocked: $useLocked');
     return CargoBuildOptions(
-        toolchain: toolchain, flags: flags, customVersion: customVersion, useLocked: useLocked);
+        toolchain: toolchain,
+        flags: flags,
+        customVersion: customVersion,
+        useLocked: useLocked);
   }
 }
 

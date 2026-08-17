@@ -24,6 +24,5 @@ extension RemoteAudioTrackPublicationExtension
     on RemoteTrackPublication<RemoteAudioTrack> {
   Future<bool> waitForAudioTrackBound({
     Duration timeout = delaySubscriptionUpdate,
-  }) =>
-      waitForTrackBound(timeout: timeout);
+  }) => waitForTrackBound(timeout: timeout);
 }

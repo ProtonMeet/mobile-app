@@ -63,8 +63,7 @@ class JoinArgs {
   final bool waitingRoomEnabled;
 
   /// True when the host joins with waiting room enabled for MLS join.
-  bool get enableWaitingRoomForJoin =>
-      isMeetingHost && waitingRoomEnabled;
+  bool get enableWaitingRoomForJoin => isMeetingHost && waitingRoomEnabled;
 
   /// Meeting limits fetched during pre-join; avoids a second fetch in room.
   final FrbMeetingInfo? prefetchedMeetingInfo;

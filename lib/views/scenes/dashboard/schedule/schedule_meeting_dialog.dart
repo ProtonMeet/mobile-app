@@ -607,8 +607,9 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
     required TimeOfDay initialTime,
   }) async {
     // Get minimum time if selected date is today in the selected timezone
-    final minimumDateTime =
-        _startDate.getMinimumScheduleTimeIfToday(_selectedTimeZone);
+    final minimumDateTime = _startDate.getMinimumScheduleTimeIfToday(
+      _selectedTimeZone,
+    );
 
     final initialDateTime = DateTime(
       _startDate.year,
@@ -926,8 +927,7 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
         timeZone: _selectedTimeZone,
         recurrence: _recurrence,
         showTimeZones: _showTimeZones,
-        waitingRoomEnabled:
-            widget.showWaitingRoom && _waitingRoomEnabled,
+        waitingRoomEnabled: widget.showWaitingRoom && _waitingRoomEnabled,
       ),
     );
   }

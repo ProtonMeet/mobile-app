@@ -165,8 +165,7 @@ Future<void> _showPermissionInformSheet(
                                       Navigator.of(dialogContext).maybePop(),
                                   style: OutlinedButton.styleFrom(
                                     side: BorderSide(
-                                      color:
-                                          dialogContext.colors.appBorderNorm,
+                                      color: dialogContext.colors.appBorderNorm,
                                     ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(200),
@@ -189,8 +188,9 @@ Future<void> _showPermissionInformSheet(
                                   onPressed: () async {
                                     await openAppSettings();
                                     if (dialogContext.mounted) {
-                                      if (Navigator.of(dialogContext)
-                                          .canPop()) {
+                                      if (Navigator.of(
+                                        dialogContext,
+                                      ).canPop()) {
                                         Navigator.of(dialogContext).pop();
                                       }
                                     }

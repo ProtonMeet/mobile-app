@@ -30,31 +30,31 @@ class DashboardSearchBar extends StatelessWidget {
               id: TestIds.dashboardSearchBar,
               button: true,
               child: InkWell(
-              onTap: onTap,
-              borderRadius: BorderRadius.circular(200),
-              child: Container(
-                height: 40,
-                padding: const EdgeInsets.only(top: 10, bottom: 10, left: 12),
-                decoration: ShapeDecoration(
-                  color: context.colors.backgroundCard,
-                  shape: RoundedRectangleBorder(
-                    side: BorderSide(color: context.colors.borderCard),
-                    borderRadius: BorderRadius.circular(200),
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(200),
+                child: Container(
+                  height: 40,
+                  padding: const EdgeInsets.only(top: 10, bottom: 10, left: 12),
+                  decoration: ShapeDecoration(
+                    color: context.colors.backgroundCard,
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(color: context.colors.borderCard),
+                      borderRadius: BorderRadius.circular(200),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Opacity(
+                        opacity: 0.80,
+                        child: context.images.iconChatSearch.svg20(
+                          color: context.colors.textWeak,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Opacity(
-                      opacity: 0.80,
-                      child: context.images.iconChatSearch.svg20(
-                        color: context.colors.textWeak,
-                      ),
-                    ),
-                  ],
-                ),
               ),
-            ),
             ),
           ),
           if (onSortTap != null) ...[

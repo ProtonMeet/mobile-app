@@ -73,9 +73,9 @@ class _ChatEmojiPickerState extends State<_ChatEmojiPicker> {
   }
 
   void _persistCategory() {
-    ManagerFactory()
-        .get<PreferencesManager>()
-        .setChatEmojiPickerCategory(_pickerController.currentCategory.name);
+    ManagerFactory().get<PreferencesManager>().setChatEmojiPickerCategory(
+      _pickerController.currentCategory.name,
+    );
   }
 
   Category? _categoryFromStoredName(String? name) {
@@ -149,9 +149,7 @@ class _ChatEmojiPickerState extends State<_ChatEmojiPicker> {
         noRecents: Center(
           child: Text(
             '—',
-            style: ProtonStyles.body2Medium(
-              color: context.colors.textDisable,
-            ),
+            style: ProtonStyles.body2Medium(color: context.colors.textDisable),
           ),
         ),
         loadingIndicator: Center(
@@ -205,7 +203,10 @@ class _ChatEmojiPickerState extends State<_ChatEmojiPicker> {
               ),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: context.colors.white.withAlpha(15),
                   borderRadius: BorderRadius.circular(20),
@@ -247,12 +248,12 @@ class _ChatEmojiPickerState extends State<_ChatEmojiPicker> {
                               config: config,
                               customWidget:
                                   (pickerConfig, state, showSearchBar) {
-                                return _ChatCategoryEmojiGrid(
-                                  pickerConfig,
-                                  state,
-                                  showSearchBar,
-                                );
-                              },
+                                    return _ChatCategoryEmojiGrid(
+                                      pickerConfig,
+                                      state,
+                                      showSearchBar,
+                                    );
+                                  },
                             )
                           : _ChatEmojiSearchGrid(
                               config: config,
@@ -354,13 +355,18 @@ class _ChatCategoryTabBarState extends State<_ChatCategoryTabBar> {
             physics: const BouncingScrollPhysics(),
             child: Row(
               children: [
-                for (var index = 0; index < widget.categories.length; index++) ...[
+                for (
+                  var index = 0;
+                  index < widget.categories.length;
+                  index++
+                ) ...[
                   if (index > 0) const SizedBox(width: 4),
                   KeyedSubtree(
                     key: _tabKeys[index],
                     child: _ChatCategoryTab(
                       category: widget.categories[index].category,
-                      selected: widget.controller.currentCategory ==
+                      selected:
+                          widget.controller.currentCategory ==
                           widget.categories[index].category,
                       config: widget.config,
                       onTap: () => widget.controller.setCategory(
@@ -437,10 +443,12 @@ class _ChatCategoryEmojiGridState extends State<_ChatCategoryEmojiGrid>
 
   @override
   void initState() {
-    final targetCategory = widget.state.currentCategory ??
+    final targetCategory =
+        widget.state.currentCategory ??
         widget.config.categoryViewConfig.initCategory;
-    var initIndex = widget.state.categoryEmoji
-        .indexWhere((entry) => entry.category == targetCategory);
+    var initIndex = widget.state.categoryEmoji.indexWhere(
+      (entry) => entry.category == targetCategory,
+    );
     if (initIndex == -1) {
       initIndex = 0;
     }
@@ -452,8 +460,9 @@ class _ChatCategoryEmojiGridState extends State<_ChatCategoryEmojiGrid>
     _pageController = PageController(initialPage: initIndex)
       ..addListener(closeSkinToneOverlay);
     _scrollController.addListener(closeSkinToneOverlay);
-    widget.state.categoryNavigationNotifier
-        .addListener(_onCategoryNavigationChanged);
+    widget.state.categoryNavigationNotifier.addListener(
+      _onCategoryNavigationChanged,
+    );
     super.initState();
   }
 
@@ -461,8 +470,9 @@ class _ChatCategoryEmojiGridState extends State<_ChatCategoryEmojiGrid>
     final targetCategory = widget.state.categoryNavigationNotifier.value;
     if (targetCategory == null) return;
 
-    final index = widget.state.categoryEmoji
-        .indexWhere((entry) => entry.category == targetCategory);
+    final index = widget.state.categoryEmoji.indexWhere(
+      (entry) => entry.category == targetCategory,
+    );
     if (index == -1) return;
 
     final currentPage = _pageController.page?.round();
@@ -476,8 +486,9 @@ class _ChatCategoryEmojiGridState extends State<_ChatCategoryEmojiGrid>
 
   @override
   void dispose() {
-    widget.state.categoryNavigationNotifier
-        .removeListener(_onCategoryNavigationChanged);
+    widget.state.categoryNavigationNotifier.removeListener(
+      _onCategoryNavigationChanged,
+    );
     closeSkinToneOverlay();
     _tabController.dispose();
     _pageController.dispose();
@@ -489,10 +500,12 @@ class _ChatCategoryEmojiGridState extends State<_ChatCategoryEmojiGrid>
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final emojiSize =
-            widget.config.emojiViewConfig.getEmojiSize(constraints.maxWidth);
-        final emojiBoxSize =
-            widget.config.emojiViewConfig.getEmojiBoxSize(constraints.maxWidth);
+        final emojiSize = widget.config.emojiViewConfig.getEmojiSize(
+          constraints.maxWidth,
+        );
+        final emojiBoxSize = widget.config.emojiViewConfig.getEmojiBoxSize(
+          constraints.maxWidth,
+        );
 
         return EmojiContainer(
           color: widget.config.emojiViewConfig.backgroundColor,
@@ -615,10 +628,12 @@ class _ChatEmojiSearchGridState extends State<_ChatEmojiSearchGrid>
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final emojiSize =
-            widget.config.emojiViewConfig.getEmojiSize(constraints.maxWidth);
-        final emojiBoxSize =
-            widget.config.emojiViewConfig.getEmojiBoxSize(constraints.maxWidth);
+        final emojiSize = widget.config.emojiViewConfig.getEmojiSize(
+          constraints.maxWidth,
+        );
+        final emojiBoxSize = widget.config.emojiViewConfig.getEmojiBoxSize(
+          constraints.maxWidth,
+        );
 
         return EmojiContainer(
           color: widget.config.emojiViewConfig.backgroundColor,
@@ -645,27 +660,28 @@ class _ChatEmojiSearchGridState extends State<_ChatEmojiSearchGrid>
                     widget.onEmojiSelected(selected);
                   },
                   config: widget.config,
-                  onSkinToneDialogRequested: (
-                    emojiBoxPosition,
-                    selectedEmoji,
-                    selectedEmojiSize,
-                    categoryEmoji,
-                  ) {
-                    closeSkinToneOverlay();
-                    if (!selectedEmoji.hasSkinTone ||
-                        !widget.config.skinToneConfig.enabled) {
-                      return;
-                    }
-                    showSkinToneOverlay(
-                      emojiBoxPosition,
-                      selectedEmoji,
-                      selectedEmojiSize,
-                      categoryEmoji,
-                      widget.config,
-                      (_, selected) => widget.onEmojiSelected(selected),
-                      links['search_${selectedEmoji.emoji}']!,
-                    );
-                  },
+                  onSkinToneDialogRequested:
+                      (
+                        emojiBoxPosition,
+                        selectedEmoji,
+                        selectedEmojiSize,
+                        categoryEmoji,
+                      ) {
+                        closeSkinToneOverlay();
+                        if (!selectedEmoji.hasSkinTone ||
+                            !widget.config.skinToneConfig.enabled) {
+                          return;
+                        }
+                        showSkinToneOverlay(
+                          emojiBoxPosition,
+                          selectedEmoji,
+                          selectedEmojiSize,
+                          categoryEmoji,
+                          widget.config,
+                          (_, selected) => widget.onEmojiSelected(selected),
+                          links['search_${selectedEmoji.emoji}']!,
+                        );
+                      },
                 ),
               );
             },

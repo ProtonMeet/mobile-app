@@ -85,7 +85,13 @@ DateTime earliestScheduleDateTime({
     }
   } catch (_) {
     final local = DateTime.now();
-    now = DateTime(local.year, local.month, local.day, local.hour, local.minute);
+    now = DateTime(
+      local.year,
+      local.month,
+      local.day,
+      local.hour,
+      local.minute,
+    );
   }
 
   var target = now.add(Duration(minutes: leadMinutes));

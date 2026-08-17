@@ -22,22 +22,22 @@ class SearchButton extends StatelessWidget {
     return withTestId(
       testId,
       Container(
-      width: width,
-      height: height,
-      decoration: ShapeDecoration(
-        color: context.colors.backgroundCard,
-        shape: RoundedRectangleBorder(
-          side: BorderSide(color: context.colors.borderCard),
-          borderRadius: BorderRadius.circular(200),
+        width: width,
+        height: height,
+        decoration: ShapeDecoration(
+          color: context.colors.backgroundCard,
+          shape: RoundedRectangleBorder(
+            side: BorderSide(color: context.colors.borderCard),
+            borderRadius: BorderRadius.circular(200),
+          ),
+        ),
+        child: IconButton(
+          onPressed: onTap,
+          icon: context.images.iconChatSearch.svg20(
+            color: context.colors.textWeak,
+          ),
         ),
       ),
-      child: IconButton(
-        onPressed: onTap,
-        icon: context.images.iconChatSearch.svg20(
-          color: context.colors.textWeak,
-        ),
-      ),
-    ),
       button: true,
     );
   }

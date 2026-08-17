@@ -29,7 +29,10 @@ class PictureInPictureChannel {
   }
 
   Future<void> attachPipForPresentation(IosPipPresentation presentation) async {
-    await _pipChannel.invokeMethod('attachPiP', presentation.toMethodChannelArgs());
+    await _pipChannel.invokeMethod(
+      'attachPiP',
+      presentation.toMethodChannelArgs(),
+    );
   }
 
   Future<void> startPipWindow() async {
@@ -42,7 +45,10 @@ class PictureInPictureChannel {
   }
 
   Future<void> updatePipForPresentation(IosPipPresentation presentation) async {
-    await _pipChannel.invokeMethod('updatePiP', presentation.toMethodChannelArgs());
+    await _pipChannel.invokeMethod(
+      'updatePiP',
+      presentation.toMethodChannelArgs(),
+    );
   }
 
   Future<void> preparePip() async {

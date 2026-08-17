@@ -80,60 +80,60 @@ class ButtonV6State extends State<ButtonV6>
     return withTestId(
       widget.testId,
       Align(
-      alignment: widget.alignment,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              maximumSize: widget.maximumSize,
-              fixedSize: Size(widget.width, widget.height),
-              backgroundColor: widget.backgroundColor,
-              disabledBackgroundColor: disabledBackgroundColor,
-              disabledForegroundColor: disabledTextColor,
-              // foreground
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(widget.radius),
-                side: BorderSide(color: widget.borderColor),
+        alignment: widget.alignment,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                maximumSize: widget.maximumSize,
+                fixedSize: Size(widget.width, widget.height),
+                backgroundColor: widget.backgroundColor,
+                disabledBackgroundColor: disabledBackgroundColor,
+                disabledForegroundColor: disabledTextColor,
+                // foreground
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(widget.radius),
+                  side: BorderSide(color: widget.borderColor),
+                ),
+                elevation: 0.0,
               ),
-              elevation: 0.0,
-            ),
-            onPressed: enable
-                ? () async {
-                    if (!enable) return;
-                    setState(() {
-                      isLoading = true;
-                      enable = false;
-                    });
-                    await widget.onPressed?.call();
-                    if (mounted) {
+              onPressed: enable
+                  ? () async {
+                      if (!enable) return;
                       setState(() {
-                        isLoading = false;
-                        enable = widget.enable;
+                        isLoading = true;
+                        enable = false;
                       });
+                      await widget.onPressed?.call();
+                      if (mounted) {
+                        setState(() {
+                          isLoading = false;
+                          enable = widget.enable;
+                        });
+                      }
                     }
-                  }
-                : null,
-            child: Text(
-              widget.text,
-              style: enable
-                  ? widget.textStyle
-                  : widget.textStyle.copyWith(color: disabledTextColor),
-            ),
-          ),
-          if (isLoading)
-            Positioned(
-              right: 20,
-              top: widget.height / 2 - 10,
-              child: CustomLoading(
-                color: Colors.white,
-                durationInMilliSeconds: 1400,
-                size: 20,
+                  : null,
+              child: Text(
+                widget.text,
+                style: enable
+                    ? widget.textStyle
+                    : widget.textStyle.copyWith(color: disabledTextColor),
               ),
             ),
-        ],
+            if (isLoading)
+              Positioned(
+                right: 20,
+                top: widget.height / 2 - 10,
+                child: CustomLoading(
+                  color: Colors.white,
+                  durationInMilliSeconds: 1400,
+                  size: 20,
+                ),
+              ),
+          ],
+        ),
       ),
-    ),
       button: true,
     );
   }

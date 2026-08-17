@@ -53,7 +53,8 @@ abstract final class TestIds {
   static const joinDialogCopy = 'meet.dashboard.join_dialog.copy';
   static const joinDialogRegenerate = 'meet.dashboard.join_dialog.regenerate';
   static const joinDialogDone = 'meet.dashboard.join_dialog.done';
-  static const joinDialogAddCalendar = 'meet.dashboard.join_dialog.add_calendar';
+  static const joinDialogAddCalendar =
+      'meet.dashboard.join_dialog.add_calendar';
 
   // ── Prejoin ─────────────────────────────────────────────────────────────
 

@@ -5,10 +5,7 @@ import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/helper/extension/media_device_list_ext.dart';
 import 'package:meet/helper/logger.dart' as l;
 
-typedef AudioOutputCapabilities = ({
-  bool hasExternal,
-  bool hasBluetooth,
-});
+typedef AudioOutputCapabilities = ({bool hasExternal, bool hasBluetooth});
 
 /// Detects external and Bluetooth audio outputs from hardware labels and
 /// [AudioSession] device types.
@@ -41,8 +38,9 @@ class AudioOutputProbe {
       final devices = await audioSession.getDevices();
       return (
         hasExternal: devices.any((device) => device.type.isExternalAudioOutput),
-        hasBluetooth:
-            devices.any((device) => device.type.isBluetoothAudioOutput),
+        hasBluetooth: devices.any(
+          (device) => device.type.isBluetoothAudioOutput,
+        ),
       );
     } catch (e) {
       l.logger.w('[AudioOutputProbe] Error checking audio session: $e');

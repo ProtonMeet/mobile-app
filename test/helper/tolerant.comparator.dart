@@ -6,10 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 @isTest
 class TolerantGoldenFileComparator extends LocalFileComparator {
-  TolerantGoldenFileComparator(
-    super.testFile,
-    this.threshold,
-  );
+  TolerantGoldenFileComparator(super.testFile, this.threshold);
 
   /// How much the golden image can differ from the test image.
   ///

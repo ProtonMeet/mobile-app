@@ -22,22 +22,24 @@ class SortButton extends StatelessWidget {
     return withTestId(
       testId,
       InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(200),
-      child: Container(
-        width: 40,
-        height: 40,
-        padding: const EdgeInsets.all(12),
-        decoration: ShapeDecoration(
-          color: context.colors.backgroundCard,
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: context.colors.borderCard),
-            borderRadius: BorderRadius.circular(200),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(200),
+        child: Container(
+          width: 40,
+          height: 40,
+          padding: const EdgeInsets.all(12),
+          decoration: ShapeDecoration(
+            color: context.colors.backgroundCard,
+            shape: RoundedRectangleBorder(
+              side: BorderSide(color: context.colors.borderCard),
+              borderRadius: BorderRadius.circular(200),
+            ),
+          ),
+          child: context.images.iconSorting.svg16(
+            color: context.colors.textWeak,
           ),
         ),
-        child: context.images.iconSorting.svg16(color: context.colors.textWeak),
       ),
-    ),
       button: true,
     );
   }

@@ -46,11 +46,7 @@ class ProtonUserSettings {
       );
       return _settings;
     } catch (e, st) {
-      logger.w(
-        'Failed to load Proton user settings',
-        error: e,
-        stackTrace: st,
-      );
+      logger.w('Failed to load Proton user settings', error: e, stackTrace: st);
       return _settings;
     }
   }

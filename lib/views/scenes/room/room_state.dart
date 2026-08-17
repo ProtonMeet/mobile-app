@@ -183,8 +183,13 @@ class WaitingRoomJoinRequest extends Equatable {
   bool get isActive => !isExpired;
 
   @override
-  List<Object?> get props =>
-      [requestId, participantUid, displayName, receivedAt, expiresAt];
+  List<Object?> get props => [
+    requestId,
+    participantUid,
+    displayName,
+    receivedAt,
+    expiresAt,
+  ];
 }
 
 class RoomState extends Equatable {
@@ -632,7 +637,8 @@ class RoomState extends Equatable {
           admittingWaitingRoomRequestIds ?? this.admittingWaitingRoomRequestIds,
       rejectingWaitingRoomRequestIds:
           rejectingWaitingRoomRequestIds ?? this.rejectingWaitingRoomRequestIds,
-      isAdmitAllWaitingRoomInProgress: isAdmitAllWaitingRoomInProgress ??
+      isAdmitAllWaitingRoomInProgress:
+          isAdmitAllWaitingRoomInProgress ??
           this.isAdmitAllWaitingRoomInProgress,
       showChatBubble: showChatBubble ?? this.showChatBubble,
       showParticipantList: showParticipantList ?? this.showParticipantList,
