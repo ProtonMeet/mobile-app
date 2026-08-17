@@ -9,6 +9,5 @@ extension RemoteVideoTrackPublicationExtension
   /// Returns `true` when [track] is non-null before [timeout], else `false`.
   Future<bool> waitForVideoTrackBound({
     Duration timeout = delaySubscriptionUpdate,
-  }) =>
-      waitForTrackBound(timeout: timeout);
+  }) => waitForTrackBound(timeout: timeout);
 }

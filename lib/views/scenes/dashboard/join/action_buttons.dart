@@ -64,35 +64,35 @@ class ActionButtons extends StatelessWidget {
                 id: TestIds.joinDialogAddCalendar,
                 button: true,
                 child: InkWell(
-                onTap: () {
-                  showAddToCalendarSheet(
-                    context,
-                    onAdd: onAdd ?? () {},
-                    onShare: onShare ?? () {},
-                    onOpenOutlook: onOpenOutlook ?? () {},
-                    onOpenGoogle: onOpenGoogle ?? () {},
-                    onOpenProton: onOpenProton ?? () {},
-                    showOutlookCalendar: showOutlookCalendar,
-                    showProtonCalendar: showProtonCalendar,
-                  );
-                },
-                borderRadius: BorderRadius.circular(40),
-                child: Container(
-                  height: 60,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: context.colors.interActionWeak,
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-                  child: Text(
-                    context.local.add_to_calendar,
-                    style: ProtonStyles.body1Semibold(
-                      color: context.colors.textNorm,
+                  onTap: () {
+                    showAddToCalendarSheet(
+                      context,
+                      onAdd: onAdd ?? () {},
+                      onShare: onShare ?? () {},
+                      onOpenOutlook: onOpenOutlook ?? () {},
+                      onOpenGoogle: onOpenGoogle ?? () {},
+                      onOpenProton: onOpenProton ?? () {},
+                      showOutlookCalendar: showOutlookCalendar,
+                      showProtonCalendar: showProtonCalendar,
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(40),
+                  child: Container(
+                    height: 60,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: context.colors.interActionWeak,
+                      borderRadius: BorderRadius.circular(40),
+                    ),
+                    child: Text(
+                      context.local.add_to_calendar,
+                      style: ProtonStyles.body1Semibold(
+                        color: context.colors.textNorm,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
             ),
           ),
         ],
@@ -111,25 +111,25 @@ class ActionButtons extends StatelessWidget {
                     id: TestIds.joinDialogJoin,
                     button: true,
                     child: ElevatedButton(
-                    onPressed: status.canSubmit ? onSubmit : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: status.canSubmit
-                          ? displayColors?.actionBackgroundColor ??
-                                context.colors.protonBlue
-                          : context.colors.interActionWeekMinor1,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(200),
+                      onPressed: status.canSubmit ? onSubmit : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: status.canSubmit
+                            ? displayColors?.actionBackgroundColor ??
+                                  context.colors.protonBlue
+                            : context.colors.interActionWeekMinor1,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(200),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      context.local.join_meeting_button,
-                      style: ProtonStyles.body1Semibold(
+                      child: Text(
+                        context.local.join_meeting_button,
+                        style: ProtonStyles.body1Semibold(
                           color: status.canSubmit
-                            ? context.colors.textInverted
-                            : context.colors.textDisable,
+                              ? context.colors.textInverted
+                              : context.colors.textDisable,
+                        ),
                       ),
                     ),
-                  ),
                   ),
                 ),
               ],
@@ -147,51 +147,51 @@ class ActionButtons extends StatelessWidget {
                 id: TestIds.joinDialogRegenerate,
                 button: true,
                 child: InkWell(
-                onTap: isRegenerating ? null : onRegenerateLink,
-                borderRadius: BorderRadius.circular(200),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: ShapeDecoration(
-                    color: isRegenerating
-                        ? context.colors.interActionWeekMinor1
-                        : context.colors.interActionWeak,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(200),
+                  onTap: isRegenerating ? null : onRegenerateLink,
+                  borderRadius: BorderRadius.circular(200),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: ShapeDecoration(
+                      color: isRegenerating
+                          ? context.colors.interActionWeekMinor1
+                          : context.colors.interActionWeak,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(200),
+                      ),
                     ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (isRegenerating) ...[
-                        SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              context.colors.textDisable,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (isRegenerating) ...[
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                context.colors.textDisable,
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 8),
+                        ],
+                        Text(
+                          isRegenerating
+                              ? context.local.regenerating
+                              : context.local.regenerate_link,
+                          textAlign: TextAlign.center,
+                          style: ProtonStyles.body1Semibold(
+                            color: isRegenerating
+                                ? context.colors.textDisable
+                                : context.colors.textNorm,
+                          ),
                         ),
-                        const SizedBox(width: 8),
                       ],
-                      Text(
-                        isRegenerating
-                            ? context.local.regenerating
-                            : context.local.regenerate_link,
-                        textAlign: TextAlign.center,
-                        style: ProtonStyles.body1Semibold(
-                          color: isRegenerating
-                              ? context.colors.textDisable
-                              : context.colors.textNorm,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
               ),
             ),
           ),
@@ -214,20 +214,20 @@ class ActionButtons extends StatelessWidget {
                 id: TestIds.joinDialogDone,
                 button: true,
                 child: ElevatedButton(
-                onPressed: onDone,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: context.colors.interActionPurpleMinor1,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(40),
+                  onPressed: onDone,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: context.colors.interActionPurpleMinor1,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(40),
+                    ),
+                  ),
+                  child: Text(
+                    context.local.scheduled_meeting_done,
+                    style: ProtonStyles.body1Semibold(
+                      color: context.colors.textInverted,
+                    ),
                   ),
                 ),
-                child: Text(
-                  context.local.scheduled_meeting_done,
-                  style: ProtonStyles.body1Semibold(
-                    color: context.colors.textInverted,
-                  ),
-                ),
-              ),
               ),
             ),
           ),

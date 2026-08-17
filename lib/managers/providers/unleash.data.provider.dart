@@ -59,6 +59,7 @@ enum UnleashFeature {
   /// Controls visibility of waiting-room switch UI (schedule / create / prejoin / in-room).
   /// The join flow is still driven by the server meeting info, independent of this flag.
   meetWaitingRoom,
+
   /// MimiV1 chat handling: threads + event-based emoji reactions.
   /// When disabled, chat falls back to the legacy encrypt/decrypt path
   /// (no threads, no MimiV1 reactions).
@@ -417,6 +418,7 @@ class UnleashDataProvider extends DataProvider {
   /// Controls whether waiting-room switch UI is shown. Does not affect the
   /// server-driven waiting-room join flow.
   bool isMeetWaitingRoom() => isFeatureEnabled(UnleashFeature.meetWaitingRoom);
+
   /// MimiV1 chat: threads + event-based emoji reactions.
   bool isMeetNewChatHandling() =>
       isFeatureEnabled(UnleashFeature.meetNewChatHandling);

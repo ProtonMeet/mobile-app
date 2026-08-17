@@ -227,7 +227,10 @@ class LocalToast {
                   ),
                   GestureDetector(
                     onTap: () {
-                      toastification.dismiss(holder, showRemoveAnimation: false);
+                      toastification.dismiss(
+                        holder,
+                        showRemoveAnimation: false,
+                      );
                       _clearActiveToastification(item: holder);
                     },
                     child: Icon(

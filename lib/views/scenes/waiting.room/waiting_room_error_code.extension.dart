@@ -35,10 +35,7 @@ extension WaitingRoomErrorCodeExtension on WaitingRoomErrorCode {
   }
 
   /// Shows a dedicated bottom sheet when this error has one. Returns true if shown.
-  bool showDedicatedBottomSheet(
-    BuildContext context, {
-    String? meetingLink,
-  }) {
+  bool showDedicatedBottomSheet(BuildContext context, {String? meetingLink}) {
     switch (this) {
       case WaitingRoomErrorCode.meetingLocked:
         showMeetingLockedBottomSheet(context, meetingLink: meetingLink);

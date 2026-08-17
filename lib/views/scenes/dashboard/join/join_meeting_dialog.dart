@@ -455,73 +455,73 @@ class _JoinMeetingModelState extends State<JoinMeetingModel> {
         child: TestId(
           id: TestIds.joinDialog,
           child: BaseBottomSheet(
-          onBackdropTap: () => Navigator.of(context).maybePop(),
-          borderRadius: BorderRadius.circular(40),
-          borderSide: BorderSide(
-            color: context.colors.white.withValues(alpha: 0.04),
-          ),
-          scrollController: _scrollController,
-          child: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                BottomSheetHandleBar(),
-                const SizedBox(height: 32),
+            onBackdropTap: () => Navigator.of(context).maybePop(),
+            borderRadius: BorderRadius.circular(40),
+            borderSide: BorderSide(
+              color: context.colors.white.withValues(alpha: 0.04),
+            ),
+            scrollController: _scrollController,
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  BottomSheetHandleBar(),
+                  const SizedBox(height: 32),
 
-                /// Icon above title
-                meetingLogo.svg56(),
-                const SizedBox(height: 24),
+                  /// Icon above title
+                  meetingLogo.svg56(),
+                  const SizedBox(height: 24),
 
-                /// Title & subtitle
-                HeaderTitle(
-                  title: _title ?? '',
-                  subtitle: _subtitle ?? '',
-                  isPersonalMeeting: widget.isPersonalMeeting,
-                  recurrenceFrequency: _getRecurrenceFrequency(),
-                ),
-                const SizedBox(height: 32),
+                  /// Title & subtitle
+                  HeaderTitle(
+                    title: _title ?? '',
+                    subtitle: _subtitle ?? '',
+                    isPersonalMeeting: widget.isPersonalMeeting,
+                    recurrenceFrequency: _getRecurrenceFrequency(),
+                  ),
+                  const SizedBox(height: 32),
 
-                /// Field card with validation states
-                LinkTextField(
-                  controller: _ctrl,
-                  focusNode: _focus,
-                  status: _status,
-                  message: _message,
-                  hintText: hintText,
-                  editable: widget.editable,
-                  autofocus: widget.autofocus,
-                  displayColors: _displayColors,
-                  onSubmitted: _submit,
-                  onCopy: _onCopy,
-                ),
-                const SizedBox(height: 24),
+                  /// Field card with validation states
+                  LinkTextField(
+                    controller: _ctrl,
+                    focusNode: _focus,
+                    status: _status,
+                    message: _message,
+                    hintText: hintText,
+                    editable: widget.editable,
+                    autofocus: widget.autofocus,
+                    displayColors: _displayColors,
+                    onSubmitted: _submit,
+                    onCopy: _onCopy,
+                  ),
+                  const SizedBox(height: 24),
 
-                /// Action buttons (calendar, join, regenerate, copy, done)
-                ActionButtons(
-                  status: _status,
-                  isRegenerating: isRegenerating,
-                  showCalendarButton: showCalendarButton,
-                  onSubmit: _submit,
-                  onCopy: _onCopy,
-                  onRegenerateLink: widget.onRegenerateLink,
-                  onDone: widget.onDone,
-                  onAdd: widget.onAdd,
-                  onShare: widget.onShare,
-                  onOpenOutlook: widget.onOpenOutlook,
-                  onOpenGoogle: widget.onOpenGoogle,
-                  onOpenProton: widget.onOpenProton,
-                  showProtonCalendar: widget.showProtonCalendar,
-                  showOutlookCalendar: widget.showOutlookCalendar,
-                  isPersonalMeeting: widget.isPersonalMeeting,
-                  tab: _tab,
-                  displayColors: _displayColors,
-                ),
-                const SizedBox(height: 24),
-              ],
+                  /// Action buttons (calendar, join, regenerate, copy, done)
+                  ActionButtons(
+                    status: _status,
+                    isRegenerating: isRegenerating,
+                    showCalendarButton: showCalendarButton,
+                    onSubmit: _submit,
+                    onCopy: _onCopy,
+                    onRegenerateLink: widget.onRegenerateLink,
+                    onDone: widget.onDone,
+                    onAdd: widget.onAdd,
+                    onShare: widget.onShare,
+                    onOpenOutlook: widget.onOpenOutlook,
+                    onOpenGoogle: widget.onOpenGoogle,
+                    onOpenProton: widget.onOpenProton,
+                    showProtonCalendar: widget.showProtonCalendar,
+                    showOutlookCalendar: widget.showOutlookCalendar,
+                    isPersonalMeeting: widget.isPersonalMeeting,
+                    tab: _tab,
+                    displayColors: _displayColors,
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
           ),
-        ),
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:livekit_client/livekit_client.dart';
+
 /// IDs passed to iOS native PiP (`FlutterWebRTCPlugin` track lookup).
 class IosPipTrackIds {
   const IosPipTrackIds({
@@ -23,7 +24,8 @@ class IosPipTrackIds {
   }
 
   @override
-  int get hashCode => Object.hash(peerConnectionId, remoteStreamId, videoTrackId);
+  int get hashCode =>
+      Object.hash(peerConnectionId, remoteStreamId, videoTrackId);
 }
 
 /// Resolves a camera, screen-share, or local `VideoTrack` media stream for PiP on iOS.

@@ -9,9 +9,6 @@ void testUI(String description, WidgetTesterCallback callback) {
 
 /// A wrapper around [test] that sets the tags to ['unit'].
 @isTest
-void testUnit(
-  Object description,
-  dynamic Function() body,
-) {
+void testUnit(Object description, dynamic Function() body) {
   test(description, body, tags: ['unit']);
 }

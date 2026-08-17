@@ -96,10 +96,8 @@ class ProtonDenoiseEffects {
   Future<void> setDeepFilterAttenLim({
     required String trackId,
     required double attenLimDb,
-  }) => _channel.setDeepFilterAttenLim(
-    trackId: trackId,
-    attenLimDb: attenLimDb,
-  );
+  }) =>
+      _channel.setDeepFilterAttenLim(trackId: trackId, attenLimDb: attenLimDb);
 
   Future<void> detachDenoise({required String trackId}) =>
       _channel.detachDenoise(trackId: trackId);

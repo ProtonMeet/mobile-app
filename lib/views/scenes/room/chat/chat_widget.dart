@@ -94,7 +94,6 @@ class _ChatWidgetConstants {
   static const Color reactionPillActiveColor = Color(0xFF3D3A5C);
   static const Color missingRootAvatarColor = Color(0xFF393B51);
   static const Color joinLeaveMeetingNameColor = Color(0xFF968AEF);
-  static const double borderColorAlpha = 0.03;
   static const double threadLineWidth = 2.0;
 
   /// Left offset so the thread line is centered under the root avatar.
@@ -491,9 +490,7 @@ class _ChatWidgetState extends State<ChatWidget> {
                     RepaintBoundary(
                       child: _buildInputField(context, inputBottomPadding),
                     ),
-                    const SizedBox(
-                      height: _ChatWidgetConstants.spacingMedium,
-                    ),
+                    const SizedBox(height: _ChatWidgetConstants.spacingMedium),
                   ],
                 ),
               ),
@@ -1090,7 +1087,8 @@ class _ChatWidgetState extends State<ChatWidget> {
     }
 
     final showControls =
-        widget.chatThreadsEnabled && message.status != ChatMessageStatus.pending;
+        widget.chatThreadsEnabled &&
+        message.status != ChatMessageStatus.pending;
 
     final row = Padding(
       padding: EdgeInsets.symmetric(vertical: isReply ? 6 : 8),

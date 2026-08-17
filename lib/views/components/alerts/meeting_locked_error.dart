@@ -13,10 +13,7 @@ class _MeetingLockedDialogConstants {
   static const double borderColorAlpha = 0.03;
 }
 
-void showMeetingLockedBottomSheet(
-  BuildContext context, {
-  String? meetingLink,
-}) {
+void showMeetingLockedBottomSheet(BuildContext context, {String? meetingLink}) {
   // Navigate back to dashboard first
   Navigator.of(context).popUntil(
     (route) => route.settings.name == DashboardPage.routeName || route.isFirst,

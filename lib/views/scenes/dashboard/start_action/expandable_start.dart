@@ -26,7 +26,9 @@ class ExpandableStart extends StatelessWidget {
     final sigma = 3.0;
     final bgColor = Colors.white.withValues(alpha: 0.18);
     final borderColor = Colors.white.withValues(alpha: 0.04);
-    final testId = t < 0.5 ? TestIds.dashboardStartFab : TestIds.dashboardStartInstant;
+    final testId = t < 0.5
+        ? TestIds.dashboardStartFab
+        : TestIds.dashboardStartInstant;
     return Align(
       alignment: Alignment.bottomCenter,
       child: Padding(
@@ -35,51 +37,51 @@ class ExpandableStart extends StatelessWidget {
           id: testId,
           button: true,
           child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: t < 0.5 ? onToggle : onInstant,
-          child: Material(
-            color: Colors.transparent,
-            child: t < 0.2
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(40),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-                      child: Container(
-                        height: pillH,
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        decoration: BoxDecoration(
-                          color: bgColor,
-                          border: Border.all(color: borderColor),
-                          borderRadius: BorderRadius.circular(40),
-                        ),
-                        child: Center(
-                          child: AnimatedSwitcher(
-                            duration: defaultAnimationDuration,
-                            child: const StartActionText(),
+            behavior: HitTestBehavior.opaque,
+            onTap: t < 0.5 ? onToggle : onInstant,
+            child: Material(
+              color: Colors.transparent,
+              child: t < 0.2
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(40),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+                        child: Container(
+                          height: pillH,
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          decoration: BoxDecoration(
+                            color: bgColor,
+                            border: Border.all(color: borderColor),
+                            borderRadius: BorderRadius.circular(40),
+                          ),
+                          child: Center(
+                            child: AnimatedSwitcher(
+                              duration: defaultAnimationDuration,
+                              child: const StartActionText(),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  )
-                : Container(
-                    height: pillH,
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: borderColor),
-                      borderRadius: BorderRadius.circular(40),
-                      color: bgColor,
-                    ),
-                    child: Center(
-                      child: AnimatedSwitcher(
-                        duration: defaultAnimationDuration,
-                        child: const StartActionTextLong(),
+                    )
+                  : Container(
+                      height: pillH,
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: borderColor),
+                        borderRadius: BorderRadius.circular(40),
+                        color: bgColor,
+                      ),
+                      child: Center(
+                        child: AnimatedSwitcher(
+                          duration: defaultAnimationDuration,
+                          child: const StartActionTextLong(),
+                        ),
                       ),
                     ),
-                  ),
+            ),
           ),
-        ),
         ),
       ),
     );

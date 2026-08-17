@@ -75,6 +75,7 @@ class DashboardErrorModal extends StatefulWidget {
 
   final String errorMessage;
   final String? errorDetails;
+
   /// When set, shows a primary "Retry" action (e.g. re-run dashboard load).
   final VoidCallback? onRetry;
 
@@ -311,6 +312,7 @@ class _DashboardErrorModalState extends State<DashboardErrorModal> {
                                   ),
                                   const SizedBox(height: 12),
                                 ],
+
                                 /// Copy button
                                 SizedBox(
                                   width: double.infinity,

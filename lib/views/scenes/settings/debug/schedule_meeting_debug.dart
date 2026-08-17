@@ -13,10 +13,7 @@ import 'package:meet/views/scenes/signin/auth_bloc.dart';
 final class ScheduleMeetingDebugMenu {
   ScheduleMeetingDebugMenu._();
 
-  static void openFromSettings(
-    BuildContext context, {
-    AuthBloc? authBloc,
-  }) {
+  static void openFromSettings(BuildContext context, {AuthBloc? authBloc}) {
     if (!kDebugMode) {
       return;
     }

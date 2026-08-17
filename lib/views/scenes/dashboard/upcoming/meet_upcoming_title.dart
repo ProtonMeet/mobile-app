@@ -23,6 +23,7 @@ class MeetUpcomingTitle extends StatefulWidget {
     this.onButtonTap,
     this.buttonIcon,
     this.isLoading = false,
+
     /// When non-null and [isLoading] is false, shows a reload icon (e.g. after fetch failure).
     this.onFetchReloadTap,
     super.key,
@@ -33,6 +34,7 @@ class MeetUpcomingTitle extends StatefulWidget {
   final ValueChanged<MeetUpcomingTab>? onTabChanged;
   final MeetUpcomingTab selectedTab;
   final MeetUpcomingTabStyle tabStyle;
+
   /// Defaults to true if there is a loading indicator, reload, or custom action.
   final bool? showButton;
   final VoidCallback? onButtonTap;
@@ -120,20 +122,20 @@ class _MeetUpcomingTitleState extends State<MeetUpcomingTitle>
                 id: TestIds.dashboardTabMyMeetings,
                 button: true,
                 child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(context.local.my_meetings_count),
-                    const SizedBox(width: 6),
-                    _CountBadge(
-                      count: widget.myMeetingsCount,
-                      isSelected:
-                          widget.selectedTab == MeetUpcomingTab.myMeetings,
-                    ),
-                  ],
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(context.local.my_meetings_count),
+                      const SizedBox(width: 6),
+                      _CountBadge(
+                        count: widget.myMeetingsCount,
+                        isSelected:
+                            widget.selectedTab == MeetUpcomingTab.myMeetings,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
               ),
             ),
             Tab(
@@ -141,19 +143,20 @@ class _MeetUpcomingTitleState extends State<MeetUpcomingTitle>
                 id: TestIds.dashboardTabMyRooms,
                 button: true,
                 child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(context.local.my_rooms_count),
-                    const SizedBox(width: 6),
-                    _CountBadge(
-                      count: widget.myRoomsCount,
-                      isSelected: widget.selectedTab == MeetUpcomingTab.myRooms,
-                    ),
-                  ],
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(context.local.my_rooms_count),
+                      const SizedBox(width: 6),
+                      _CountBadge(
+                        count: widget.myRoomsCount,
+                        isSelected:
+                            widget.selectedTab == MeetUpcomingTab.myRooms,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
               ),
             ),
           ],
@@ -205,8 +208,8 @@ class _MeetUpcomingTitleState extends State<MeetUpcomingTitle>
         !widget.isLoading &&
         widget.onButtonTap != null &&
         widget.buttonIcon != null;
-    final effectiveShowButton = widget.showButton ??
-        (widget.isLoading || hasReload || hasCustomAction);
+    final effectiveShowButton =
+        widget.showButton ?? (widget.isLoading || hasReload || hasCustomAction);
 
     return Container(
       padding: const EdgeInsets.only(top: 12, left: 12, right: 12, bottom: 12),
@@ -273,23 +276,23 @@ class _TextTab extends StatelessWidget {
     return withTestId(
       testId,
       Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(label, style: textStyle),
-              const SizedBox(width: 6),
-              _CountBadge(count: count, isSelected: selected),
-            ],
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(label, style: textStyle),
+                const SizedBox(width: 6),
+                _CountBadge(count: count, isSelected: selected),
+              ],
+            ),
           ),
         ),
       ),
-    ),
       button: true,
     );
   }
@@ -334,38 +337,38 @@ class _ActionButton extends StatelessWidget {
     return withTestId(
       testId,
       Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(200),
-        child: Container(
-          width: 40,
-          height: 40,
-          padding: const EdgeInsets.all(6),
-          decoration: ShapeDecoration(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(200),
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(200),
+          child: Container(
+            width: 40,
+            height: 40,
+            padding: const EdgeInsets.all(6),
+            decoration: ShapeDecoration(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(200),
+              ),
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (icon != null)
-                SizedBox(width: 16, height: 16, child: icon)
-              else
-                Container(
-                  width: 16,
-                  height: 16,
-                  clipBehavior: Clip.antiAlias,
-                  decoration: const BoxDecoration(),
-                  child: const Stack(),
-                ),
-            ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (icon != null)
+                  SizedBox(width: 16, height: 16, child: icon)
+                else
+                  Container(
+                    width: 16,
+                    height: 16,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: const BoxDecoration(),
+                    child: const Stack(),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
       button: true,
     );
   }

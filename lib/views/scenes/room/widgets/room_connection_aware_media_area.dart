@@ -16,9 +16,7 @@ class RoomConnectionAwareMediaArea extends StatelessWidget {
     return Column(
       children: [
         const ConnectionStatusBanner(),
-        Expanded(
-          child: RoomReconnectingGate(child: child),
-        ),
+        Expanded(child: RoomReconnectingGate(child: child)),
       ],
     );
   }

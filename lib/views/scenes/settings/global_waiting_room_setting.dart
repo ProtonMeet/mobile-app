@@ -162,8 +162,7 @@ class _GlobalWaitingRoomSettingSectionState
                             onChanged: _onToggle,
                             activeTrackColor: context.colors.backgroundNorm,
                             inactiveTrackColor: context.colors.backgroundNorm,
-                            inactiveThumbColor:
-                                context.colors.interActionWeak,
+                            inactiveThumbColor: context.colors.interActionWeak,
                             thumbColor: context.colors.protonBlue,
                           ),
                         ),

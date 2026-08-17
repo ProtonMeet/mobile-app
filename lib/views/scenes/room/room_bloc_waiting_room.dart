@@ -77,7 +77,9 @@ mixin RoomWaitingRoomHandlers
     );
     emit(nextState);
     _syncWaitingRoomExpirationTimer(nextState.waitingRoomParticipants);
-    if (_hasUnresolvedWaitingRoomDisplayNames(nextState.waitingRoomParticipants)) {
+    if (_hasUnresolvedWaitingRoomDisplayNames(
+      nextState.waitingRoomParticipants,
+    )) {
       _waitingRoomDisplayNameRetryAttempts = 0;
       _scheduleWaitingRoomDisplayNameRetry();
     }
@@ -165,7 +167,8 @@ mixin RoomWaitingRoomHandlers
     List<WaitingRoomJoinRequest> requests,
   ) {
     return requests.any(
-      (request) => request.isActive && _isMissingWaitingRoomDisplayName(request),
+      (request) =>
+          request.isActive && _isMissingWaitingRoomDisplayName(request),
     );
   }
 
@@ -198,9 +201,7 @@ mixin RoomWaitingRoomHandlers
   ) async {
     _waitingRoomDisplayNameRetryTimer = null;
 
-    if (!_hasUnresolvedWaitingRoomDisplayNames(
-      state.waitingRoomParticipants,
-    )) {
+    if (!_hasUnresolvedWaitingRoomDisplayNames(state.waitingRoomParticipants)) {
       _waitingRoomDisplayNameRetryAttempts = 0;
       return;
     }
@@ -224,23 +225,26 @@ mixin RoomWaitingRoomHandlers
     }
 
     var changed = false;
-    final next = state.waitingRoomParticipants.map((request) {
-      if (!request.isActive || !_isMissingWaitingRoomDisplayName(request)) {
-        return request;
-      }
-      final name = participants[request.participantUid]?.displayName?.trim();
-      if (name == null || name.isEmpty) {
-        return request;
-      }
-      changed = true;
-      return WaitingRoomJoinRequest(
-        requestId: request.requestId,
-        participantUid: request.participantUid,
-        displayName: name,
-        receivedAt: request.receivedAt,
-        expiresAt: request.expiresAt,
-      );
-    }).toList(growable: false);
+    final next = state.waitingRoomParticipants
+        .map((request) {
+          if (!request.isActive || !_isMissingWaitingRoomDisplayName(request)) {
+            return request;
+          }
+          final name = participants[request.participantUid]?.displayName
+              ?.trim();
+          if (name == null || name.isEmpty) {
+            return request;
+          }
+          changed = true;
+          return WaitingRoomJoinRequest(
+            requestId: request.requestId,
+            participantUid: request.participantUid,
+            displayName: name,
+            receivedAt: request.receivedAt,
+            expiresAt: request.expiresAt,
+          );
+        })
+        .toList(growable: false);
 
     if (changed) {
       emit(

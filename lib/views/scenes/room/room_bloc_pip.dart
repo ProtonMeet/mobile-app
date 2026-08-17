@@ -160,7 +160,9 @@ mixin RoomPipHandlers on Bloc<RoomBlocEvent, RoomState> {
     }
 
     try {
-      final pipPresentation = await _applyIosPipPresentationIfNeeded(force: true);
+      final pipPresentation = await _applyIosPipPresentationIfNeeded(
+        force: true,
+      );
       if (pipPresentation == null) {
         if (iOS) {
           l.logger.w('[RoomBloc] iOS PiP: no participant for PiP content');
@@ -171,7 +173,10 @@ mixin RoomPipHandlers on Bloc<RoomBlocEvent, RoomState> {
       if (_pipManager != null && state.pipAvailable == true) {
         final success = await _pipManager!.enterPipMode();
         if (success) {
-          final subId = _iosPipCameraSubscriptionIdentity(state, pipPresentation);
+          final subId = _iosPipCameraSubscriptionIdentity(
+            state,
+            pipPresentation,
+          );
           emit(
             state.copyWith(
               isPipMode: true,

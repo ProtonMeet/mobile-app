@@ -1401,12 +1401,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     final message = event.error is BridgeError
         ? (event.error as BridgeError).userMessage
         : extractErrorMessage(event.error);
-    emit(
-      state.copyWith(
-        isLoadingMeetingContext: false,
-        error: message,
-      ),
-    );
+    emit(state.copyWith(isLoadingMeetingContext: false, error: message));
   }
 
   Future<void> _onWaitingRoomChanged(
@@ -1520,7 +1515,8 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     final serverWaitingRoomEnabled = auth.serverWaitingRoomEnabled;
     final canManageWaitingRoom = auth.canManageWaitingRoom;
 
-    final waitingRoomEnabled = canManageWaitingRoom &&
+    final waitingRoomEnabled =
+        canManageWaitingRoom &&
             state.isWaitingRoomFeatureEnabled &&
             useLocalWaitingRoomPreference
         ? state.waitingRoomEnabled
@@ -1611,11 +1607,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         final needsWaitingRoomAdmission =
             !state.isMeetingHost && serverWaitingRoomEnabled;
 
-        emit(
-          state.copyWith(
-            isJoinAuthenticating: needsWaitingRoomAdmission,
-          ),
-        );
+        emit(state.copyWith(isJoinAuthenticating: needsWaitingRoomAdmission));
 
         if (needsWaitingRoomAdmission) {
           add(PreJoinStartWaitingRoomAdmission(displayName));

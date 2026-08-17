@@ -18,7 +18,6 @@ import 'package:meet/managers/room.manager.dart';
 import 'package:meet/managers/services/force_upgrade.dart';
 import 'package:meet/managers/user_activity.manager.dart';
 import 'package:meet/rust/errors.dart';
-import 'package:meet/rust/proton_meet/core.dart';
 import 'package:meet/rust/proton_meet/models/meeting_type.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/rust/proton_meet/user_subscription.dart';

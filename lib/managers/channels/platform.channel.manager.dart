@@ -87,7 +87,9 @@ class PlatformChannelManager extends Bloc<ChannelEvent, NativeLoginState>
   @override
   Future<void> switchToSubscription(FlutterSession session) async {
     if (!_isInAppPurchaseEnabled()) {
-      return logger.i('switchToSubscription skipped: MeetInAppPurchase disabled');
+      return logger.i(
+        'switchToSubscription skipped: MeetInAppPurchase disabled',
+      );
     }
     if (desktop) {
       return logger.i("switchToSubscription is mobile only feature");

@@ -80,7 +80,10 @@ void main() {
           return null;
         });
 
-    const config = BackgroundBlurConfig(blurSigma: 64, backgroundObscureOpacity: 0.5);
+    const config = BackgroundBlurConfig(
+      blurSigma: 64,
+      backgroundObscureOpacity: 0.5,
+    );
     await plugin.attachBackgroundBlur(trackId: 'track-3', config: config);
 
     expect(captured?.method, 'attach');

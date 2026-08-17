@@ -47,17 +47,17 @@ class SignInCard extends StatelessWidget {
                     id: TestIds.dashboardSignInCard,
                     button: true,
                     child: GestureDetector(
-                    onTap: () {
-                      onDismiss();
-                      onSignInTap();
-                    },
-                    child: Text(
-                      context.local.sign_in_card_title,
-                      style: ProtonStyles.body1Medium(
-                        color: context.colors.interActionNorm,
+                      onTap: () {
+                        onDismiss();
+                        onSignInTap();
+                      },
+                      child: Text(
+                        context.local.sign_in_card_title,
+                        style: ProtonStyles.body1Medium(
+                          color: context.colors.interActionNorm,
+                        ),
                       ),
                     ),
-                  ),
                   ),
                 ),
                 const SizedBox(height: 2),

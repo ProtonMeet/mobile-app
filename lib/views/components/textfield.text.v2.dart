@@ -87,10 +87,8 @@ class TextFieldTextV2State extends State<TextFieldTextV2> {
   @override
   void didUpdateWidget(TextFieldTextV2 oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final hadOverride =
-        (oldWidget.errorMessageOverride ?? '').isNotEmpty;
-    final hasOverride =
-        (widget.errorMessageOverride ?? '').isNotEmpty;
+    final hadOverride = (oldWidget.errorMessageOverride ?? '').isNotEmpty;
+    final hasOverride = (widget.errorMessageOverride ?? '').isNotEmpty;
     if (hadOverride && !hasOverride) {
       setState(() {
         isError = false;
@@ -116,8 +114,9 @@ class TextFieldTextV2State extends State<TextFieldTextV2> {
             widget.errorMessageOverride != null &&
             widget.errorMessageOverride!.isNotEmpty;
         final showError = hasOverrideError || isError;
-        final bottomErrorText =
-            hasOverrideError ? widget.errorMessageOverride! : errorString;
+        final bottomErrorText = hasOverrideError
+            ? widget.errorMessageOverride!
+            : errorString;
         return SizedBox(
           width: constraints.maxWidth, // 或 double.infinity
           child: Column(

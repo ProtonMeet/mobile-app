@@ -347,7 +347,10 @@ class _NormalModeContent extends StatelessWidget {
           if (searchBarReachedNavBar &&
               (onSearchTap != null || onSortTap != null)) ...[
             if (onSearchTap != null)
-              SearchButton(onTap: onSearchTap!, testId: TestIds.dashboardNavSearch),
+              SearchButton(
+                onTap: onSearchTap!,
+                testId: TestIds.dashboardNavSearch,
+              ),
             if (onSearchTap != null && onSortTap != null)
               const SizedBox(width: 6),
             if (onSortTap != null)
@@ -392,37 +395,39 @@ class _SearchModeContent extends StatelessWidget {
             id: TestIds.dashboardSearchField,
             textField: true,
             child: Container(
-            height: 40,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: ShapeDecoration(
-              color: context.colors.backgroundCard,
-              shape: RoundedRectangleBorder(
-                side: BorderSide(color: context.colors.borderCard),
-                borderRadius: BorderRadius.circular(200),
-              ),
-            ),
-            child: Align(
-              child: TextField(
-                key: ValueKey('search_$searchQuery'),
-                controller: TextEditingController(text: searchQuery)
-                  ..selection = TextSelection.collapsed(
-                    offset: searchQuery.length,
-                  ),
-                autofocus: true,
-                style: ProtonStyles.body2Medium(color: context.colors.textNorm),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  hintText: context.local.search,
-                  hintStyle: ProtonStyles.body2Medium(
-                    color: context.colors.textHint,
-                  ),
-                  contentPadding: EdgeInsets.zero,
-                  isDense: true,
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: ShapeDecoration(
+                color: context.colors.backgroundCard,
+                shape: RoundedRectangleBorder(
+                  side: BorderSide(color: context.colors.borderCard),
+                  borderRadius: BorderRadius.circular(200),
                 ),
-                onChanged: onSearchQueryChanged,
+              ),
+              child: Align(
+                child: TextField(
+                  key: ValueKey('search_$searchQuery'),
+                  controller: TextEditingController(text: searchQuery)
+                    ..selection = TextSelection.collapsed(
+                      offset: searchQuery.length,
+                    ),
+                  autofocus: true,
+                  style: ProtonStyles.body2Medium(
+                    color: context.colors.textNorm,
+                  ),
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    hintText: context.local.search,
+                    hintStyle: ProtonStyles.body2Medium(
+                      color: context.colors.textHint,
+                    ),
+                    contentPadding: EdgeInsets.zero,
+                    isDense: true,
+                  ),
+                  onChanged: onSearchQueryChanged,
+                ),
               ),
             ),
-          ),
           ),
         ),
         const SizedBox(width: 8),
@@ -430,12 +435,12 @@ class _SearchModeContent extends StatelessWidget {
           id: TestIds.dashboardSearchCancel,
           button: true,
           child: TextButton(
-          onPressed: onCancelSearch,
-          child: Text(
-            context.local.cancel,
-            style: ProtonStyles.body2Medium(color: context.colors.textNorm),
+            onPressed: onCancelSearch,
+            child: Text(
+              context.local.cancel,
+              style: ProtonStyles.body2Medium(color: context.colors.textNorm),
+            ),
           ),
-        ),
         ),
       ],
     );
@@ -482,20 +487,22 @@ class _SettingsButton extends StatelessWidget {
     return withTestId(
       TestIds.dashboardSettings,
       Container(
-      width: 40,
-      height: 40,
-      decoration: ShapeDecoration(
-        color: context.colors.backgroundCard,
-        shape: RoundedRectangleBorder(
-          side: BorderSide(color: context.colors.borderCard),
-          borderRadius: BorderRadius.circular(200),
+        width: 40,
+        height: 40,
+        decoration: ShapeDecoration(
+          color: context.colors.backgroundCard,
+          shape: RoundedRectangleBorder(
+            side: BorderSide(color: context.colors.borderCard),
+            borderRadius: BorderRadius.circular(200),
+          ),
+        ),
+        child: IconButton(
+          onPressed: onTap,
+          icon: context.images.iconSettings.svg20(
+            color: context.colors.textWeak,
+          ),
         ),
       ),
-      child: IconButton(
-        onPressed: onTap,
-        icon: context.images.iconSettings.svg20(color: context.colors.textWeak),
-      ),
-    ),
       button: true,
     );
   }
@@ -513,21 +520,21 @@ class _SignInButton extends StatelessWidget {
     return withTestId(
       TestIds.dashboardSignIn,
       Container(
-      height: 40,
-      constraints: const BoxConstraints(minWidth: 75),
-      decoration: BoxDecoration(
-        color: colors.backgroundCard,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: colors.appBorderNorm),
-      ),
-      child: TextButton(
-        onPressed: onTap,
-        child: Text(
-          context.local.sign_in,
-          style: ProtonStyles.body2Medium(color: colors.textWeak),
+        height: 40,
+        constraints: const BoxConstraints(minWidth: 75),
+        decoration: BoxDecoration(
+          color: colors.backgroundCard,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: colors.appBorderNorm),
+        ),
+        child: TextButton(
+          onPressed: onTap,
+          child: Text(
+            context.local.sign_in,
+            style: ProtonStyles.body2Medium(color: colors.textWeak),
+          ),
         ),
       ),
-    ),
       button: true,
     );
   }

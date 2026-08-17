@@ -31,11 +31,7 @@ enum VideoCodec {
 }
 
 /// Guest waiting-room admission phases on the pre-join screen.
-enum WaitingRoomAdmissionPhase {
-  inactive,
-  hostNotStarted,
-  awaitingAdmission,
-}
+enum WaitingRoomAdmissionPhase { inactive, hostNotStarted, awaitingAdmission }
 
 class PreJoinState {
   final String roomName;
@@ -339,8 +335,7 @@ class PreJoinState {
           isLoadingHostMeetingContext ?? this.isLoadingHostMeetingContext,
       isLoadingMeetingContext:
           isLoadingMeetingContext ?? this.isLoadingMeetingContext,
-      isJoinAuthenticating:
-          isJoinAuthenticating ?? this.isJoinAuthenticating,
+      isJoinAuthenticating: isJoinAuthenticating ?? this.isJoinAuthenticating,
       shouldNavigateToWaitingRoom:
           shouldNavigateToWaitingRoom ?? this.shouldNavigateToWaitingRoom,
       isUpdatingWaitingRoomSetting:

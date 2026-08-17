@@ -48,43 +48,43 @@ class ButtonV5 extends StatelessWidget {
     return withTestId(
       testId,
       Center(
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              maximumSize: maximumSize,
-              fixedSize: Size(width, height),
-              backgroundColor: enable
-                  ? backgroundColor
-                  : context.colors.interActionWeak,
-              // foreground
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(radius),
-                side: BorderSide(color: borderColor),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                maximumSize: maximumSize,
+                fixedSize: Size(width, height),
+                backgroundColor: enable
+                    ? backgroundColor
+                    : context.colors.interActionWeak,
+                // foreground
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(radius),
+                  side: BorderSide(color: borderColor),
+                ),
+                elevation: elevation,
               ),
-              elevation: elevation,
+              onPressed: enable
+                  ? (disableWithAction ? onDisablePressed : onPressed)
+                  : () {},
+              child: Text(
+                text,
+                style: disableWithAction
+                    ? textDisableStyle
+                    : enable
+                    ? textStyle
+                    : TextStyle(
+                        color: context.colors.textDisable,
+                        fontSize: 14,
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w400,
+                      ),
+              ),
             ),
-            onPressed: enable
-                ? (disableWithAction ? onDisablePressed : onPressed)
-                : () {},
-            child: Text(
-              text,
-              style: disableWithAction
-                  ? textDisableStyle
-                  : enable
-                  ? textStyle
-                  : TextStyle(
-                      color: context.colors.textDisable,
-                      fontSize: 14,
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w400,
-                    ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
       button: true,
     );
   }

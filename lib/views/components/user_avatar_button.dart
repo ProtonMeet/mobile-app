@@ -28,21 +28,21 @@ class UserAvatarButton extends StatelessWidget {
     return withTestId(
       testId,
       Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: colors.avatarPurple1Background,
-        shape: BoxShape.circle,
-      ),
-      alignment: Alignment.center,
-      child: TextButton(
-        onPressed: onTap,
-        child: Text(
-          initial,
-          style: ProtonStyles.body2Semibold(color: colors.avatarPurple1Text),
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: colors.avatarPurple1Background,
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: TextButton(
+          onPressed: onTap,
+          child: Text(
+            initial,
+            style: ProtonStyles.body2Semibold(color: colors.avatarPurple1Text),
+          ),
         ),
       ),
-    ),
       button: true,
     );
   }

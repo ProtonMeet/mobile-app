@@ -58,10 +58,7 @@ class CreateMeetingEvent extends DashboardBlocEvent {
   final String roomName;
   final bool waitingRoom;
 
-  CreateMeetingEvent({
-    required this.roomName,
-    this.waitingRoom = false,
-  });
+  CreateMeetingEvent({required this.roomName, this.waitingRoom = false});
 }
 
 class DeleteMeetingEvent extends DashboardBlocEvent {

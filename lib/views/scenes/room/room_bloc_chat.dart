@@ -45,12 +45,7 @@ mixin RoomChatHandlers on Bloc<RoomBlocEvent, RoomState> {
     Emitter<RoomState> emit,
   ) {
     if (state.chatEffects.isEmpty && state.chatSystemNotices.isEmpty) return;
-    emit(
-      state.copyWith(
-        chatEffects: const [],
-        chatSystemNotices: const [],
-      ),
-    );
+    emit(state.copyWith(chatEffects: const [], chatSystemNotices: const []));
   }
 
   Future<bool> _publishWithRetry(List<int> payload) async {
@@ -313,10 +308,7 @@ mixin RoomChatHandlers on Bloc<RoomBlocEvent, RoomState> {
     );
   }
 
-  void _onRemoveChatMessage(
-    RemoveChatMessage event,
-    Emitter<RoomState> emit,
-  ) {
+  void _onRemoveChatMessage(RemoveChatMessage event, Emitter<RoomState> emit) {
     _appendChatEffect(
       RoomChatEffect(
         kind: RoomChatEffectKind.removeMessage,

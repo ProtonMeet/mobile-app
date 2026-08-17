@@ -15,36 +15,23 @@ void main() {
     });
 
     test('returns null when timestamp suffix does not match id', () {
-      expectClaimed({
-        'id': 'user-abc-1730000000123',
-        'timestamp': 999,
-      }, isNull);
+      expectClaimed({'id': 'user-abc-1730000000123', 'timestamp': 999}, isNull);
     });
 
     test('returns null when id is missing', () {
-      expectClaimed({
-        'timestamp': 1730000000123,
-      }, isNull);
+      expectClaimed({'timestamp': 1730000000123}, isNull);
     });
 
     test('returns null when timestamp is missing', () {
-      expectClaimed({
-        'id': 'x-1',
-      }, isNull);
+      expectClaimed({'id': 'x-1'}, isNull);
     });
 
     test('accepts timestamp as string of int', () {
-      expectClaimed({
-        'id': 'pid-42',
-        'timestamp': '42',
-      }, 'pid');
+      expectClaimed({'id': 'pid-42', 'timestamp': '42'}, 'pid');
     });
 
     test('returns null when id is not a string', () {
-      expectClaimed({
-        'id': 123,
-        'timestamp': 1,
-      }, isNull);
+      expectClaimed({'id': 123, 'timestamp': 1}, isNull);
     });
 
     test('returns null when claimed identity would be empty', () {
@@ -55,10 +42,7 @@ void main() {
     });
 
     test('uses truncated millis for num timestamp', () {
-      expectClaimed({
-        'id': 'x-100',
-        'timestamp': 100.9,
-      }, 'x');
+      expectClaimed({'id': 'x-100', 'timestamp': 100.9}, 'x');
     });
   });
 }

@@ -6,14 +6,13 @@ import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/strings.dart';
-import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/helper/local_toast.dart';
 import 'package:meet/managers/channels/platform_info_channel.dart';
 import 'package:meet/views/components/button.v5.dart';
 import 'package:meet/views/components/button.v6.dart';
 import 'package:meet/views/components/custom.loading.dart';
-import 'package:meet/views/components/textfield.text.v2.dart';
 import 'package:meet/views/components/test_id.dart';
+import 'package:meet/views/components/textfield.text.v2.dart';
 import 'package:meet/views/scenes/dashboard/schedule/waiting_room_sheet.dart';
 import 'package:meet/views/scenes/prejoin/remember_checkbox.dart';
 import 'package:meet/views/scenes/signin/auth_bloc.dart';
@@ -119,243 +118,250 @@ class PreJoinScreen extends StatelessWidget {
           await _proceedToJoinAfterHostAccept(context, state);
         },
         child: BlocSelector<PreJoinBloc, PreJoinState, PreJoinState>(
-        selector: (PreJoinState state) => state,
-        builder: (context, state) {
-          final screenWidth = MediaQuery.of(context).size.width;
-          final padding = 16.0;
-          const buttonHeight = 60.0;
+          selector: (PreJoinState state) => state,
+          builder: (context, state) {
+            final screenWidth = MediaQuery.of(context).size.width;
+            final padding = 16.0;
+            const buttonHeight = 60.0;
 
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              final viewportHeight = constraints.maxHeight;
-              final bottomSectionHeight = _bottomSectionHeight(state);
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final viewportHeight = constraints.maxHeight;
+                final bottomSectionHeight = _bottomSectionHeight(state);
 
-              // Calculate available preview height:
-              // Top chrome: spacer (56) + preview bottom gap (20) = 76
-              //
-              // Bottom section (_bottomSectionHeight), kept fixed so preview does not
-              // resize when switching between join form and waiting-room admission:
-              //   Create: form body (245) + action block (92) = 337
-              //     display name field + remember checkbox + spacing
-              //   Join: form body (180) + action block (92) = 272
-              //     display name card + remember-display-name switch row
-              //   Join (host + waiting-room feature): + notice row (28) = 300
-              //   Join (guest + waiting room): max(join section, admission section)
-              //     admission body (180) + action block (92) = 272
-              // Action block: gap (16) + button (60) + bottom padding (16) = 92
-              //
-              // previewHeight = viewportHeight - top chrome (76) - bottom section
-              final previewHeight =
-                  (viewportHeight - _topChromeHeight - bottomSectionHeight)
-                      .clamp(300.0, double.infinity);
+                // Calculate available preview height:
+                // Top chrome: spacer (56) + preview bottom gap (20) = 76
+                //
+                // Bottom section (_bottomSectionHeight), kept fixed so preview does not
+                // resize when switching between join form and waiting-room admission:
+                //   Create: form body (245) + action block (92) = 337
+                //     display name field + remember checkbox + spacing
+                //   Join: form body (180) + action block (92) = 272
+                //     display name card + remember-display-name switch row
+                //   Join (host + waiting-room feature): + notice row (28) = 300
+                //   Join (guest + waiting room): max(join section, admission section)
+                //     admission body (180) + action block (92) = 272
+                // Action block: gap (16) + button (60) + bottom padding (16) = 92
+                //
+                // previewHeight = viewportHeight - top chrome (76) - bottom section
+                final previewHeight =
+                    (viewportHeight - _topChromeHeight - bottomSectionHeight)
+                        .clamp(300.0, double.infinity);
 
-              return SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                child: Column(
-                  children: [
-                    const SizedBox(height: _topSpacerHeight),
+                return SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: Column(
+                    children: [
+                      const SizedBox(height: _topSpacerHeight),
 
-                    // Video preview - fixed height shared across join and waiting-room admission.
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: padding),
-                      child: Container(
-                        decoration: BoxDecoration(color: context.colors.clear),
-                        height: previewHeight,
-                        child: TestId(
-                        id: TestIds.prejoinPreview,
-                        child: VideoPreviewWithControls(
-                          width: screenWidth - (padding * 2),
+                      // Video preview - fixed height shared across join and waiting-room admission.
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: padding),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: context.colors.clear,
+                          ),
                           height: previewHeight,
-                          isVideoEnabled: state.isVideoEnabled,
-                          isAudioEnabled: state.isAudioEnabled,
-                          isCameraPermissionGranted:
-                              state.isCameraPermissionGranted,
-                          isMicrophonePermissionGranted:
-                              state.isMicrophonePermissionGranted,
-                          videoTrack: state.videoTrack,
-                          audioTrack: state.audioTrack,
-                          displayName: state.displayName,
-                          isCameraBackgroundBlurFeatureEnabled:
-                              state.isCameraBackgroundBlurFeatureEnabled,
-                          cameraBackgroundBlurEnabled:
-                              state.cameraBackgroundBlurEnabled,
-                          onCameraBackgroundBlurToggle: () =>
-                              bloc.add(PreJoinToggleCameraBackgroundBlur()),
-                          onVideoToggle: () => bloc.add(PreJoinToggleVideo()),
-                          onAudioToggle: () => bloc.add(PreJoinToggleAudio()),
-                          onSwapVideo: () => bloc.add(SwapVideo()),
-                          videoDevices: state.videoDevices,
-                          speakerDevices: state.speakerDevices,
-                          selectedVideoDevice: state.selectedVideoDevice,
-                          audioDevices: state.audioDevices,
-                          selectedAudioDevice: state.selectedAudioDevice,
-                          selectedSpeakerDevice: state.selectedSpeakerDevice,
-                          onCameraPermissionRequest: () =>
-                              bloc.add(RequestCameraPermission()),
-                          onMicrophonePermissionRequest: () =>
-                              bloc.add(RequestMicrophonePermission()),
-                          onVideoDeviceChanged: (device) {
-                            if (device != null) {
-                              bloc.add(SelectVideoDevice(device));
-                            }
-                          },
-                          onAudioDeviceChanged: (device) {
-                            if (device != null) {
-                              bloc.add(SelectAudioDevice(device));
-                            }
-                          },
-                          onSpeakerDeviceChanged: (device) {
-                            if (device != null) {
-                              bloc.add(SelectSpeakerDevice(device));
-                            }
-                          },
-                        ),
+                          child: TestId(
+                            id: TestIds.prejoinPreview,
+                            child: VideoPreviewWithControls(
+                              width: screenWidth - (padding * 2),
+                              height: previewHeight,
+                              isVideoEnabled: state.isVideoEnabled,
+                              isAudioEnabled: state.isAudioEnabled,
+                              isCameraPermissionGranted:
+                                  state.isCameraPermissionGranted,
+                              isMicrophonePermissionGranted:
+                                  state.isMicrophonePermissionGranted,
+                              videoTrack: state.videoTrack,
+                              audioTrack: state.audioTrack,
+                              displayName: state.displayName,
+                              isCameraBackgroundBlurFeatureEnabled:
+                                  state.isCameraBackgroundBlurFeatureEnabled,
+                              cameraBackgroundBlurEnabled:
+                                  state.cameraBackgroundBlurEnabled,
+                              onCameraBackgroundBlurToggle: () =>
+                                  bloc.add(PreJoinToggleCameraBackgroundBlur()),
+                              onVideoToggle: () =>
+                                  bloc.add(PreJoinToggleVideo()),
+                              onAudioToggle: () =>
+                                  bloc.add(PreJoinToggleAudio()),
+                              onSwapVideo: () => bloc.add(SwapVideo()),
+                              videoDevices: state.videoDevices,
+                              speakerDevices: state.speakerDevices,
+                              selectedVideoDevice: state.selectedVideoDevice,
+                              audioDevices: state.audioDevices,
+                              selectedAudioDevice: state.selectedAudioDevice,
+                              selectedSpeakerDevice:
+                                  state.selectedSpeakerDevice,
+                              onCameraPermissionRequest: () =>
+                                  bloc.add(RequestCameraPermission()),
+                              onMicrophonePermissionRequest: () =>
+                                  bloc.add(RequestMicrophonePermission()),
+                              onVideoDeviceChanged: (device) {
+                                if (device != null) {
+                                  bloc.add(SelectVideoDevice(device));
+                                }
+                              },
+                              onAudioDeviceChanged: (device) {
+                                if (device != null) {
+                                  bloc.add(SelectAudioDevice(device));
+                                }
+                              },
+                              onSpeakerDeviceChanged: (device) {
+                                if (device != null) {
+                                  bloc.add(SelectSpeakerDevice(device));
+                                }
+                              },
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: _previewBottomGap),
+                      const SizedBox(height: _previewBottomGap),
 
-                    // Fixed-height bottom slot so preview size stays stable across states.
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: padding),
-                      child: SizedBox(
-                        height: bottomSectionHeight,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (state.isInWaitingRoomAdmission)
-                              BlocSelector<
-                                PreJoinBloc,
-                                PreJoinState,
-                                ({
-                                  WaitingRoomAdmissionPhase phase,
-                                  int countdownSeconds,
-                                  String joinRequestId,
-                                })
-                              >(
-                                bloc: bloc,
-                                selector: (s) => (
-                                  phase: s.waitingRoomAdmissionPhase,
-                                  countdownSeconds:
-                                      s.waitingRoomCountdownSeconds,
-                                  joinRequestId: s.waitingRoomJoinRequestId,
-                                ),
-                                builder: (context, admission) =>
-                                    _buildWaitingRoomAdmissionContent(
-                                      context,
-                                      admission,
-                                      screenWidth - (padding * 2),
-                                      buttonHeight,
-                                    ),
-                              )
-                            else ...[
-                              if (state.preJoinType == PreJoinType.join)
-                                _buildMeetingIDForJoin(context, state),
-                              if (state.preJoinType == PreJoinType.create)
-                                _buildMeetingIDForCreate(context, state),
-                              const SizedBox(height: 16),
-                              if (state.preJoinType == PreJoinType.join)
-                                ButtonV6(
-                                  testId: TestIds.prejoinJoin,
-                                  onPressed: () =>
-                                      _onJoinPressed(context, state),
-                                  enable:
-                                      !state.isJoinAuthenticating &&
-                                      !state.isLoadingHostMeetingContext &&
-                                      !state.isLoadingMeetingContext &&
-                                      !state.isInWaitingRoomAdmission &&
-                                      !PlatformInfoChannel.isInForceUpgradeState(),
-                                  isLoading: state.isJoinAuthenticating,
-                                  text: context.local.join_meeting_button,
-                                  width: screenWidth - (padding * 2),
-                                  backgroundColor:
-                                      context.colors.interActionNormMajor1,
-                                  borderColor: context.colors.clear,
-                                  textStyle: ProtonStyles.body1Medium(
-                                    color: context.colors.textInverted,
+                      // Fixed-height bottom slot so preview size stays stable across states.
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: padding),
+                        child: SizedBox(
+                          height: bottomSectionHeight,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (state.isInWaitingRoomAdmission)
+                                BlocSelector<
+                                  PreJoinBloc,
+                                  PreJoinState,
+                                  ({
+                                    WaitingRoomAdmissionPhase phase,
+                                    int countdownSeconds,
+                                    String joinRequestId,
+                                  })
+                                >(
+                                  bloc: bloc,
+                                  selector: (s) => (
+                                    phase: s.waitingRoomAdmissionPhase,
+                                    countdownSeconds:
+                                        s.waitingRoomCountdownSeconds,
+                                    joinRequestId: s.waitingRoomJoinRequestId,
                                   ),
-                                  height: buttonHeight,
-                                ),
-                              if (state.preJoinType == PreJoinType.create)
-                                ButtonV5(
-                                  testId: TestIds.prejoinCreate,
-                                  onPressed: () async {
-                                    if (PlatformInfoChannel.isInForceUpgradeState()) {
-                                      return;
-                                    }
-                                    final sanitizedDisplayName =
-                                        displayNameController.text.sanitize(
-                                          maxLength: maxDisplayNameLength,
+                                  builder: (context, admission) =>
+                                      _buildWaitingRoomAdmissionContent(
+                                        context,
+                                        admission,
+                                        screenWidth - (padding * 2),
+                                        buttonHeight,
+                                      ),
+                                )
+                              else ...[
+                                if (state.preJoinType == PreJoinType.join)
+                                  _buildMeetingIDForJoin(context, state),
+                                if (state.preJoinType == PreJoinType.create)
+                                  _buildMeetingIDForCreate(context, state),
+                                const SizedBox(height: 16),
+                                if (state.preJoinType == PreJoinType.join)
+                                  ButtonV6(
+                                    testId: TestIds.prejoinJoin,
+                                    onPressed: () =>
+                                        _onJoinPressed(context, state),
+                                    enable:
+                                        !state.isJoinAuthenticating &&
+                                        !state.isLoadingHostMeetingContext &&
+                                        !state.isLoadingMeetingContext &&
+                                        !state.isInWaitingRoomAdmission &&
+                                        !PlatformInfoChannel.isInForceUpgradeState(),
+                                    isLoading: state.isJoinAuthenticating,
+                                    text: context.local.join_meeting_button,
+                                    width: screenWidth - (padding * 2),
+                                    backgroundColor:
+                                        context.colors.interActionNormMajor1,
+                                    borderColor: context.colors.clear,
+                                    textStyle: ProtonStyles.body1Medium(
+                                      color: context.colors.textInverted,
+                                    ),
+                                    height: buttonHeight,
+                                  ),
+                                if (state.preJoinType == PreJoinType.create)
+                                  ButtonV5(
+                                    testId: TestIds.prejoinCreate,
+                                    onPressed: () async {
+                                      if (PlatformInfoChannel.isInForceUpgradeState()) {
+                                        return;
+                                      }
+                                      final sanitizedDisplayName =
+                                          displayNameController.text.sanitize(
+                                            maxLength: maxDisplayNameLength,
+                                          );
+                                      if (sanitizedDisplayName == null) {
+                                        bloc.add(
+                                          SetDisplayNameFieldError(
+                                            context.local.display_name_required,
+                                          ),
                                         );
-                                    if (sanitizedDisplayName == null) {
+                                        displayNameFocusNode.requestFocus();
+                                        return;
+                                      }
+
+                                      final args = state.buildJoinLoaderArgs(
+                                        authBloc: authBloc,
+                                        displayName: sanitizedDisplayName,
+                                      );
                                       bloc.add(
-                                        SetDisplayNameFieldError(
-                                          context.local.display_name_required,
+                                        UpdateDisplayName(sanitizedDisplayName),
+                                      );
+                                      await Navigator.push<void>(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => WaitingRoomPage(
+                                            args,
+                                            preJoinType: PreJoinType.create,
+                                            isVideoEnabled:
+                                                state.isVideoEnabled,
+                                            isAudioEnabled:
+                                                state.isAudioEnabled,
+                                            enableE2EE: true,
+                                            selectedVideoDevice:
+                                                state.selectedVideoDevice,
+                                            selectedAudioDevice:
+                                                state.selectedAudioDevice,
+                                            selectedSpeakerDevice:
+                                                state.selectedSpeakerDevice,
+                                            selectedVideoPosition:
+                                                state.selectedVideoPosition,
+                                            selectedVideoParameters:
+                                                state.selectedVideoParameters,
+                                            cameraBackgroundBlurEnabled: state
+                                                .cameraBackgroundBlurEnabled,
+                                          ),
                                         ),
                                       );
-                                      displayNameFocusNode.requestFocus();
-                                      return;
-                                    }
-
-                                    final args = state.buildJoinLoaderArgs(
-                                      authBloc: authBloc,
-                                      displayName: sanitizedDisplayName,
-                                    );
-                                    bloc.add(
-                                      UpdateDisplayName(sanitizedDisplayName),
-                                    );
-                                    await Navigator.push<void>(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => WaitingRoomPage(
-                                          args,
-                                          preJoinType: PreJoinType.create,
-                                          isVideoEnabled: state.isVideoEnabled,
-                                          isAudioEnabled: state.isAudioEnabled,
-                                          enableE2EE: true,
-                                          selectedVideoDevice:
-                                              state.selectedVideoDevice,
-                                          selectedAudioDevice:
-                                              state.selectedAudioDevice,
-                                          selectedSpeakerDevice:
-                                              state.selectedSpeakerDevice,
-                                          selectedVideoPosition:
-                                              state.selectedVideoPosition,
-                                          selectedVideoParameters:
-                                              state.selectedVideoParameters,
-                                          cameraBackgroundBlurEnabled:
-                                              state.cameraBackgroundBlurEnabled,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  enable:
-                                      !PlatformInfoChannel.isInForceUpgradeState(),
-                                  text: context.local.create_meeting_button,
-                                  width: screenWidth - (padding * 2),
-                                  backgroundColor: context.colors.protonBlue,
-                                  borderColor: context.colors.clear,
-                                  textStyle: ProtonStyles.body1Medium(
-                                    color: context.colors.textInverted,
+                                    },
+                                    enable:
+                                        !PlatformInfoChannel.isInForceUpgradeState(),
+                                    text: context.local.create_meeting_button,
+                                    width: screenWidth - (padding * 2),
+                                    backgroundColor: context.colors.protonBlue,
+                                    borderColor: context.colors.clear,
+                                    textStyle: ProtonStyles.body1Medium(
+                                      color: context.colors.textInverted,
+                                    ),
+                                    height: buttonHeight,
                                   ),
-                                  height: buttonHeight,
-                                ),
-                              const SizedBox(height: 16),
+                                const SizedBox(height: 16),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ),
-    ),
     );
   }
 
@@ -395,26 +401,26 @@ class PreJoinScreen extends StatelessWidget {
                         id: TestIds.prejoinDisplayNameField,
                         textField: true,
                         child: TextField(
-                        controller: displayNameController,
-                        focusNode: displayNameFocusNode,
-                        maxLength: maxDisplayNameLength,
-                        style: ProtonStyles.body1Medium(
-                          color: context.colors.textNorm,
-                        ),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                          border: InputBorder.none,
-                          counterText: '',
-                          errorText: state.displayNameFieldError,
-                          errorStyle: ProtonStyles.bodySmallSemibold(
-                            color: context.colors.notificationError,
+                          controller: displayNameController,
+                          focusNode: displayNameFocusNode,
+                          maxLength: maxDisplayNameLength,
+                          style: ProtonStyles.body1Medium(
+                            color: context.colors.textNorm,
                           ),
-                        ),
-                        textInputAction: TextInputAction.done,
-                        onChanged: (value) {
-                          bloc.add(UpdateDisplayName(value));
-                        },
+                          decoration: InputDecoration(
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                            border: InputBorder.none,
+                            counterText: '',
+                            errorText: state.displayNameFieldError,
+                            errorStyle: ProtonStyles.bodySmallSemibold(
+                              color: context.colors.notificationError,
+                            ),
+                          ),
+                          textInputAction: TextInputAction.done,
+                          onChanged: (value) {
+                            bloc.add(UpdateDisplayName(value));
+                          },
                         ),
                       ),
                     ],
@@ -444,10 +450,10 @@ class PreJoinScreen extends StatelessWidget {
                         id: TestIds.prejoinRememberName,
                         button: true,
                         child: Switch.adaptive(
-                        value: state.keepDisplayNameOnDevice,
-                        onChanged: (value) {
-                          bloc.add(ToggleKeepDisplayName(keep: value));
-                        },
+                          value: state.keepDisplayNameOnDevice,
+                          onChanged: (value) {
+                            bloc.add(ToggleKeepDisplayName(keep: value));
+                          },
                         ),
                       ),
                     ],
@@ -466,7 +472,8 @@ class PreJoinScreen extends StatelessWidget {
   }
 
   Widget _buildWaitingRoomStatus(BuildContext context, PreJoinState state) {
-    if (state.isLoadingHostMeetingContext || state.isUpdatingWaitingRoomSetting) {
+    if (state.isLoadingHostMeetingContext ||
+        state.isUpdatingWaitingRoomSetting) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Align(
@@ -506,20 +513,20 @@ class PreJoinScreen extends StatelessWidget {
       id: TestIds.prejoinWaitingRoomStatus,
       button: state.canManageWaitingRoom && state.isWaitingRoomFeatureEnabled,
       child: GestureDetector(
-      onTap: state.isUpdatingWaitingRoomSetting
-          ? null
-          : () {
-        showWaitingRoomSheet(
-          context,
-          selected: state.waitingRoomEnabled,
-          isOnOptionEnabled: state.canManageWaitingRoom,
-          onSelect: (enabled) {
-            bloc.add(WaitingRoomChanged(enabled));
-          },
-        );
-      },
-      child: label,
-    ),
+        onTap: state.isUpdatingWaitingRoomSetting
+            ? null
+            : () {
+                showWaitingRoomSheet(
+                  context,
+                  selected: state.waitingRoomEnabled,
+                  isOnOptionEnabled: state.canManageWaitingRoom,
+                  onSelect: (enabled) {
+                    bloc.add(WaitingRoomChanged(enabled));
+                  },
+                );
+              },
+        child: label,
+      ),
     );
   }
 

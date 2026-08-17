@@ -23,7 +23,6 @@ import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/managers/services/force_upgrade.dart';
 import 'package:meet/managers/user_activity.manager.dart';
 import 'package:meet/rust/errors.dart';
-import 'package:meet/rust/proton_meet/core.dart';
 import 'package:meet/rust/proton_meet/models/meeting_type.dart';
 import 'package:meet/rust/proton_meet/models/recurrence_frequency.dart'
     as frb_recurrence_frequency;
@@ -2480,7 +2479,9 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
 
     FrbUpcomingMeeting? personalMeeting = state.personalMeeting;
     if (personalMeeting?.meetingLinkName == linkName) {
-      personalMeeting = personalMeeting!.withWaitingRoom(enabled: event.enabled);
+      personalMeeting = personalMeeting!.withWaitingRoom(
+        enabled: event.enabled,
+      );
       didPatch = true;
     }
 

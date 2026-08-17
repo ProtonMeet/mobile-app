@@ -103,7 +103,15 @@ const bool showExpandableErrorDetails = true;
 
 /// Emoji reactions
 const int reactionDisplayDurationMs = 3000;
-const List<String> availableEmojiReactions = ['👍', '👎', '👏', '😁', '❤️', '🎉', '🙌'];
+const List<String> availableEmojiReactions = [
+  '👍',
+  '👎',
+  '👏',
+  '😁',
+  '❤️',
+  '🎉',
+  '🙌',
+];
 const String raisedHandEmoji = '🤚';
 
 /// Valid IANA timezone identifiers for timezone selection.

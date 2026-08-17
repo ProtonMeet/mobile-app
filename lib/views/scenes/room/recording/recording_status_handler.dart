@@ -93,8 +93,7 @@ class RecordingStatusReceiver {
 
     // 4. The envelope `id` must be `${senderId}-${timestamp}`.
     final claimedFromEnvelope = claimedParticipantIdFromEnvelope(envelope);
-    if (claimedFromEnvelope == null ||
-        claimedFromEnvelope != mlsSenderId) {
+    if (claimedFromEnvelope == null || claimedFromEnvelope != mlsSenderId) {
       l.logger.e(
         '[RecordingStatusReceiver] envelope id prefix mismatch '
         '(claimed=$claimedFromEnvelope mls=$mlsSenderId)',
@@ -147,11 +146,10 @@ class RecordingStatusReceiver {
     return _drop(liveKitSenderIdentity);
   }
 
-  static RecordingStatusInbound _drop(String? sender) =>
-      RecordingStatusInbound(
-        decision: RecordingStatusDecision.drop,
-        senderIdentity: sender ?? '',
-      );
+  static RecordingStatusInbound _drop(String? sender) => RecordingStatusInbound(
+    decision: RecordingStatusDecision.drop,
+    senderIdentity: sender ?? '',
+  );
 
   /// Mirrors web's `isValidMessageString`. Length-bounded + printable.
   /// Control characters other than common whitespace are rejected.

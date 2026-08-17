@@ -684,87 +684,88 @@ class _DashboardPageState extends State<DashboardPage> {
             child: TestId(
               id: TestIds.dashboardScreen,
               child: Scaffold(
-              resizeToAvoidBottomInset: false,
-              backgroundColor: context.colors.backgroundDark,
-              body: Stack(
-                children: [
-                  Positioned.fill(
-                    child: SafeArea(
-                      child: DashboardScreen(
-                        bloc: widget.dashboardBloc,
-                        authBloc: widget.authBloc,
-                        onJoinMeetingWithLink: joinMeetingWithLink,
-                        onStartSecureMeeting: startSecureMeeting,
-                        onScheduleMeeting: _handleSchedule,
-                        onPersonalMeeting: _handlePersonalMeeting,
-                        onCreateRoom: _handleCreateRoom,
-                        onShowFlutterSignIn: () => unawaited(_startSignInFlow()),
-                        scrollController: _dashboardScrollController,
-                        displayName: state.displayName,
-                        isSignedIn: state.isSignedIn,
-                        onSignInTap: () {
-                          showSignInIntroSheet(
-                            context,
-                            versionDisplay: _versionDisplay,
-                            onSignIn: () => unawaited(_startSignInFlow()),
-                            onSignUp: () => unawaited(_startSignUpFlow()),
-                          );
-                        },
-                        onLogoutTap: () {
-                          showAccountSwitcherBottomSheet(
-                            context,
-                            displayName: state.displayName,
-                            email: state.email,
-                            initials: state.initials,
-                            versionDisplay: _versionDisplay,
-                            onLogout: () {
-                              widget.authBloc.add(SignOutUser());
-                            },
-                            onDeleteAccount: () =>
-                                mobile ? _deleteAccount(context) : null,
-                          );
-                        },
-                        onSettingsTap: () {
-                          AppSettingsBottomSheet.show(
-                            context,
-                            authBloc: widget.authBloc,
-                            showWaitingRoom: widget.dashboardBloc
-                                .isMeetWaitingRoomEnabled(),
-                          );
-                        },
-                        onNavBarTitleChanged: (_) {
-                          // Title is managed internally by DashboardScreen
-                        },
-                        onNativePlansTestTap:
-                            !kIsWeb &&
-                                (android || iOS) &&
-                                _isNativeInAppPurchaseEnabled()
-                            ? _handleNativePlansTest
-                            : null,
+                resizeToAvoidBottomInset: false,
+                backgroundColor: context.colors.backgroundDark,
+                body: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: SafeArea(
+                        child: DashboardScreen(
+                          bloc: widget.dashboardBloc,
+                          authBloc: widget.authBloc,
+                          onJoinMeetingWithLink: joinMeetingWithLink,
+                          onStartSecureMeeting: startSecureMeeting,
+                          onScheduleMeeting: _handleSchedule,
+                          onPersonalMeeting: _handlePersonalMeeting,
+                          onCreateRoom: _handleCreateRoom,
+                          onShowFlutterSignIn: () =>
+                              unawaited(_startSignInFlow()),
+                          scrollController: _dashboardScrollController,
+                          displayName: state.displayName,
+                          isSignedIn: state.isSignedIn,
+                          onSignInTap: () {
+                            showSignInIntroSheet(
+                              context,
+                              versionDisplay: _versionDisplay,
+                              onSignIn: () => unawaited(_startSignInFlow()),
+                              onSignUp: () => unawaited(_startSignUpFlow()),
+                            );
+                          },
+                          onLogoutTap: () {
+                            showAccountSwitcherBottomSheet(
+                              context,
+                              displayName: state.displayName,
+                              email: state.email,
+                              initials: state.initials,
+                              versionDisplay: _versionDisplay,
+                              onLogout: () {
+                                widget.authBloc.add(SignOutUser());
+                              },
+                              onDeleteAccount: () =>
+                                  mobile ? _deleteAccount(context) : null,
+                            );
+                          },
+                          onSettingsTap: () {
+                            AppSettingsBottomSheet.show(
+                              context,
+                              authBloc: widget.authBloc,
+                              showWaitingRoom: widget.dashboardBloc
+                                  .isMeetWaitingRoomEnabled(),
+                            );
+                          },
+                          onNavBarTitleChanged: (_) {
+                            // Title is managed internally by DashboardScreen
+                          },
+                          onNativePlansTestTap:
+                              !kIsWeb &&
+                                  (android || iOS) &&
+                                  _isNativeInAppPurchaseEnabled()
+                              ? _handleNativePlansTest
+                              : null,
+                        ),
                       ),
                     ),
-                  ),
-                  BlocBuilder<DashboardBloc, DashboardState>(
-                    bloc: widget.dashboardBloc,
-                    builder: (context, dashboardState) {
-                      return SafeArea(
-                        top: false,
-                        left: false,
-                        right: false,
-                        child: FloatingStartButton(
-                          onSchedule: _handleSchedule,
-                          onCreateRoom: _handleCreateRoom,
-                          onJoinLink: _handleJoinMeeting,
-                          onInstant: _handleSecureMeetingPress,
-                          onPersonalMeeting: _handlePersonalMeeting,
-                          isScheduleInAdvanceEnabled: true,
-                        ),
-                      );
-                    },
-                  ),
-                ],
+                    BlocBuilder<DashboardBloc, DashboardState>(
+                      bloc: widget.dashboardBloc,
+                      builder: (context, dashboardState) {
+                        return SafeArea(
+                          top: false,
+                          left: false,
+                          right: false,
+                          child: FloatingStartButton(
+                            onSchedule: _handleSchedule,
+                            onCreateRoom: _handleCreateRoom,
+                            onJoinLink: _handleJoinMeeting,
+                            onInstant: _handleSecureMeetingPress,
+                            onPersonalMeeting: _handlePersonalMeeting,
+                            isScheduleInAdvanceEnabled: true,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
-            ),
             ),
           );
         },

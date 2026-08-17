@@ -38,18 +38,13 @@ void _attachWaitingRoomErrorContexts(dynamic scope, Object error) {
     final raw = error.field0;
     scope.setContexts('meet_core_error', {
       'message': meetCoreServiceMessageLine(raw),
-      'details':
-          parseMeetCoreServiceErrorDetails(raw) ?? '(no parsed details)',
+      'details': parseMeetCoreServiceErrorDetails(raw) ?? '(no parsed details)',
       'raw': raw,
     });
   } else if (error is BridgeError_WaitingRoomJoinRequestNotFound) {
-    scope.setContexts('waiting_room_error', {
-      'kind': 'join_request_not_found',
-    });
+    scope.setContexts('waiting_room_error', {'kind': 'join_request_not_found'});
   } else if (error is BridgeError_WaitingRoomJoinCancelled) {
-    scope.setContexts('waiting_room_error', {
-      'kind': 'join_cancelled',
-    });
+    scope.setContexts('waiting_room_error', {'kind': 'join_cancelled'});
   } else if (error is BridgeError_MeetCoreAny) {
     scope.setContexts('meet_core_any_error', {'message': error.field0});
   }
@@ -126,7 +121,8 @@ void captureWaitingRoomFailureToSentry({
           if (phase != null) 'phase': phase,
           'error_runtime_type': error.runtimeType.toString(),
           'error_message': extractErrorMessage(error),
-          if (requestId != null && requestId.isNotEmpty) 'request_id': requestId,
+          if (requestId != null && requestId.isNotEmpty)
+            'request_id': requestId,
           if (participantUid != null && participantUid.isNotEmpty)
             'participant_uid': participantUid,
         });
@@ -163,7 +159,8 @@ void captureWaitingRoomTimeoutToSentry({
           'flow': flow,
           'kind': 'client_timeout',
           'timeout_sec': timeout.inSeconds.toString(),
-          if (requestId != null && requestId.isNotEmpty) 'request_id': requestId,
+          if (requestId != null && requestId.isNotEmpty)
+            'request_id': requestId,
         });
       },
     ),
@@ -221,8 +218,14 @@ void captureExpiredWaitingRoomJoinRequestsThresholdToSentry({
       '(threshold: $threshold)',
       level: SentryLevel.warning,
       withScope: (scope) {
-        scope.setTag('error_type', kSentryErrorTypeWaitingRoomExpiredJoinRequests);
-        scope.setTag('waiting_room_flow', 'host_expired_join_request_threshold');
+        scope.setTag(
+          'error_type',
+          kSentryErrorTypeWaitingRoomExpiredJoinRequests,
+        );
+        scope.setTag(
+          'waiting_room_flow',
+          'host_expired_join_request_threshold',
+        );
         scope.setTag('expired_count', expiredCount.toString());
         scope.setTag('expired_threshold', threshold.toString());
         if (meetLinkName != null && meetLinkName.isNotEmpty) {
