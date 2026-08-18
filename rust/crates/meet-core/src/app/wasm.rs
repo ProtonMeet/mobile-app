@@ -1017,6 +1017,26 @@ impl App {
             .map_err(|e| e.into())
     }
 
+    #[wasm_bindgen(js_name = requestClosedCaptions)]
+    pub async fn request_closed_captions_wasm(
+        &self,
+        meeting_link_name: String,
+    ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
+        self.request_closed_captions(meeting_link_name)
+            .await
+            .map_err(|e| e.into())
+    }
+
+    #[wasm_bindgen(js_name = stopClosedCaptions)]
+    pub async fn stop_closed_captions_wasm(
+        &self,
+        meeting_link_name: String,
+    ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
+        self.stop_closed_captions(meeting_link_name)
+            .await
+            .map_err(|e| e.into())
+    }
+
     #[wasm_bindgen(js_name = listPendingAgents)]
     pub async fn list_pending_agents_wasm(
         &self,

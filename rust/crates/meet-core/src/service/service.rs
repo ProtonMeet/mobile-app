@@ -342,12 +342,18 @@ pub(super) fn psk_id_for_commit(meeting_link_name: &str, has_agent: bool) -> Ext
     }
 }
 
-/// Stagger return: caller proceeds with the commit, or bails because another
-/// participant already advanced the epoch during the wait.
+/// Stagger return: caller proceeds, or bails because another participant
+/// already did the work during the wait.
 enum StaggerOutcome {
     Proceed,
-    EpochAdvanced,
+    HandledElsewhere,
 }
+
+/// How long each rank group waits before it will summon or dismiss the captions
+/// agent itself. Longer than the MLS stagger: the wait has to cover the round
+/// trip of another participant's request plus the agent joining the group,
+/// otherwise every rank asks for an agent that is already on its way.
+const AGENT_REQUEST_RANK_GROUP_DELAY_MS: u64 = 8000;
 
 /// Shared rank-staggered wait used by `admit_agent` and `remove_agent`.
 /// Sleeps for `jitter * DELAY_PER_RANK_MS + (rank / RANK_GROUP_SIZE) * RANK_GROUP_DELAY_MS`
@@ -383,7 +389,7 @@ async fn stagger_then_check_epoch(
                 current,
                 "epoch advanced during stagger, another participant handled it, skipping"
             );
-            StaggerOutcome::EpochAdvanced
+            StaggerOutcome::HandledElsewhere
         }
         Ok(_) => StaggerOutcome::Proceed,
         Err(e) => {
@@ -394,6 +400,43 @@ async fn stagger_then_check_epoch(
             StaggerOutcome::Proceed
         }
     }
+}
+
+/// Same rank-staggered wait for the captions-agent requests, which are HTTP
+/// calls rather than commits: asking meet-server for an agent doesn't advance
+/// the group's epoch, so what tells us another participant already handled it is
+/// the agent turning up in (or disappearing from) the group.
+async fn stagger_then_check_agent(
+    service: &Service,
+    room_id: &str,
+    rank: u64,
+    want_agent: bool,
+    op_name: &str,
+) -> StaggerOutcome {
+    use rand::Rng as _;
+    let rank_group = rank / RANK_GROUP_SIZE;
+    let random_jitter = rand::thread_rng().gen_range(0..=20);
+    let delay_ms =
+        random_jitter * DELAY_PER_RANK_MS + rank_group * AGENT_REQUEST_RANK_GROUP_DELAY_MS;
+    tracing::info!(
+        op = op_name,
+        rank,
+        rank_group,
+        delay_ms,
+        want_agent,
+        "designated-committer stagger"
+    );
+    sleep(Duration::from_millis(delay_ms)).await;
+
+    if service.captions_agent_in_group(room_id).await == want_agent {
+        tracing::info!(
+            op = op_name,
+            "another participant handled it during the stagger, skipping"
+        );
+        return StaggerOutcome::HandledElsewhere;
+    }
+
+    StaggerOutcome::Proceed
 }
 
 /// Calculate retry delay with exponential backoff and jitter
@@ -1038,6 +1081,31 @@ impl Service {
     /// The roster is sorted and shuffled using `epoch_at` as seed.
     /// Returns the position of `own_leaf_index` in the shuffled list.
     /// The deterministic rank is used purely for commit scheduling and does not participate in any cryptographic operation or entropy generation.
+    /// Rank for the designated-committer stagger, with the group's epoch it was
+    /// read at: room admins go first, everyone else takes a deterministic
+    /// per-epoch position among the candidates.
+    async fn committer_rank(
+        &self,
+        mls_group: &MlsGroup<MemKv>,
+    ) -> Result<(u64, u64), anyhow::Error> {
+        let self_leaf_index = mls_group.own_leaf_index()?;
+        let epoch_at = *mls_group.epoch();
+        let authorizer = mls_group.authorizer()?;
+        let own_role = authorizer.own_role(epoch_at)?;
+        let rank = if own_role.role_index == UserRole::RoomAdmin as u32 {
+            0
+        } else {
+            self.get_deterministic_random_rank(
+                *self_leaf_index,
+                epoch_at,
+                mls_group.roster().collect::<Vec<_>>(),
+            )
+            .await?
+        };
+
+        Ok((epoch_at, rank))
+    }
+
     async fn get_deterministic_random_rank(
         &self,
         own_leaf_index: u32,
@@ -5973,24 +6041,10 @@ impl Service {
 
         let (epoch_at_start, rank) = {
             let mls_group = group_arc.read().await;
-            let self_leaf_index = mls_group.own_leaf_index()?;
-            let epoch_at = *mls_group.epoch();
-            let authorizer = mls_group.authorizer()?;
-            let own_role = authorizer.own_role(epoch_at)?;
-            let rank = if own_role.role_index == UserRole::RoomAdmin as u32 {
-                0
-            } else {
-                self.get_deterministic_random_rank(
-                    *self_leaf_index,
-                    epoch_at,
-                    mls_group.roster().collect::<Vec<_>>(),
-                )
-                .await?
-            };
-            (epoch_at, rank)
+            self.committer_rank(&mls_group).await?
         };
 
-        if let StaggerOutcome::EpochAdvanced =
+        if let StaggerOutcome::HandledElsewhere =
             stagger_then_check_epoch(self, &room_id, rank, epoch_at_start, "admit_agent").await
         {
             return Ok(());
@@ -6194,6 +6248,122 @@ impl Service {
         Ok(())
     }
 
+    /// True while a captions agent holds a leaf in the group. This is what the
+    /// stagger below treats as "somebody already asked", so it doubles as the
+    /// answer to whether there is anything left to do.
+    async fn captions_agent_in_group(&self, room_id: &str) -> bool {
+        let store_lock = self.mls_store.read().await;
+        match store_lock.group_map.get(room_id) {
+            Some(group_arc) => {
+                let mls_group = group_arc.read().await;
+                group_has_agent(&mls_group)
+            }
+            None => false,
+        }
+    }
+
+    /// Ask meet-server for the live-captions agent.
+    ///
+    /// Every participant that wants captions can call this. The rank-staggered
+    /// wait means the request is normally made once, by the lowest-ranked
+    /// participant, and the others take over in turn if the agent never turns
+    /// up — so a wedged or slow participant can't keep captions from starting.
+    /// Whether captions are wanted at all stays with the caller.
+    pub async fn request_closed_captions(
+        &self,
+        meeting_link_name: &crate::domain::user::models::meeting_link_name::MeetingLinkName,
+    ) -> Result<(), anyhow::Error> {
+        self.settle_closed_captions(meeting_link_name, true).await
+    }
+
+    /// Ask meet-server to drop the live-captions agent, arbitrated the same way
+    /// as [`Service::request_closed_captions`].
+    pub async fn stop_closed_captions(
+        &self,
+        meeting_link_name: &crate::domain::user::models::meeting_link_name::MeetingLinkName,
+    ) -> Result<(), anyhow::Error> {
+        self.settle_closed_captions(meeting_link_name, false).await
+    }
+
+    async fn settle_closed_captions(
+        &self,
+        meeting_link_name: &crate::domain::user::models::meeting_link_name::MeetingLinkName,
+        want_agent: bool,
+    ) -> Result<(), anyhow::Error> {
+        let room_id = meeting_link_name.as_str().to_string();
+        let op_name = if want_agent {
+            "request_closed_captions"
+        } else {
+            "stop_closed_captions"
+        };
+
+        let agent_in_group = self.captions_agent_in_group(&room_id).await;
+
+        if want_agent && agent_in_group {
+            self.state
+                .lock()
+                .await
+                .set_awaiting_captions_agent(&room_id, false);
+            tracing::info!(op = op_name, "agent already in the group, skipping");
+            return Ok(());
+        }
+
+        if !want_agent && !agent_in_group {
+            // An agent we asked for that hasn't turned up yet is invisible to
+            // everyone else, so cancelling it is ours to do, and without the
+            // wait: staggering would only let the agent join a meeting nobody
+            // wants it in.
+            if self.state.lock().await.is_awaiting_captions_agent(&room_id) {
+                self.meeting_api
+                    .remove_closed_captions_agent(&room_id)
+                    .await?;
+                self.state
+                    .lock()
+                    .await
+                    .set_awaiting_captions_agent(&room_id, false);
+                tracing::info!(op = op_name, "cancelled our own request");
+            } else {
+                tracing::info!(op = op_name, "no agent to remove, skipping");
+            }
+
+            return Ok(());
+        }
+
+        let group_arc = {
+            let store_lock = self.mls_store.read().await;
+            store_lock
+                .group_map
+                .get(&room_id)
+                .ok_or_else(|| anyhow::anyhow!("group not loaded for meeting"))?
+                .clone()
+        };
+        let rank = {
+            let mls_group = group_arc.read().await;
+            self.committer_rank(&mls_group).await?.1
+        };
+
+        if let StaggerOutcome::HandledElsewhere =
+            stagger_then_check_agent(self, &room_id, rank, want_agent, op_name).await
+        {
+            return Ok(());
+        }
+
+        if want_agent {
+            self.meeting_api.add_closed_captions_agent(&room_id).await?;
+        } else {
+            self.meeting_api
+                .remove_closed_captions_agent(&room_id)
+                .await?;
+        }
+        self.state
+            .lock()
+            .await
+            .set_awaiting_captions_agent(&room_id, want_agent);
+        tracing::info!(op = op_name, rank, "asked meet-server");
+
+        Ok(())
+    }
+
     /// `GET /v1/agent/keypackages`: list the `mimi_device_id`s of every agent
     /// whose KeyPackage is currently uploaded for the host's meeting.
     pub async fn list_pending_agents(
@@ -6258,7 +6428,7 @@ impl Service {
                 .await?
         };
 
-        if let StaggerOutcome::EpochAdvanced =
+        if let StaggerOutcome::HandledElsewhere =
             stagger_then_check_epoch(self, &room_id, rank, epoch_at_start, "remove_agent").await
         {
             return Ok(());

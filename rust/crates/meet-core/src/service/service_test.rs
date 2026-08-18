@@ -8021,6 +8021,128 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
              gates the agent decrypting the SFrame'd meeting audio"
         );
     }
+
+    /// A solo caller is a room admin, so it ranks first and only waits out the
+    /// stagger's jitter (up to 2s) before asking.
+    #[tokio::test]
+    async fn request_closed_captions_asks_meet_server_when_no_agent_in_group() {
+        let room_id = "captions_request_no_agent";
+        let (mut service, _group, _cs, _user_key) = setup_single_user_group(room_id).await;
+
+        let mut meeting_api = MockMeetingApi::new();
+        meeting_api
+            .expect_add_closed_captions_agent()
+            .times(1)
+            .withf(move |link| link == room_id)
+            .returning(|_| Box::pin(ready(Ok(()))));
+        service.meeting_api = Arc::new(meeting_api);
+
+        service
+            .request_closed_captions(&MeetingLinkName::from(room_id))
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn stop_closed_captions_is_a_no_op_without_an_agent_in_group() {
+        let room_id = "captions_stop_no_agent";
+        let (mut service, _group, _cs, _user_key) = setup_single_user_group(room_id).await;
+
+        let mut meeting_api = MockMeetingApi::new();
+        meeting_api
+            .expect_remove_closed_captions_agent()
+            .times(0)
+            .returning(|_| Box::pin(ready(Ok(()))));
+        service.meeting_api = Arc::new(meeting_api);
+
+        service
+            .stop_closed_captions(&MeetingLinkName::from(room_id))
+            .await
+            .unwrap();
+    }
+
+    /// The web client cancels a summon the moment demand disappears, before the
+    /// agent has joined — the state nobody else can see.
+    #[tokio::test]
+    async fn stop_closed_captions_cancels_our_own_request_before_the_agent_arrives() {
+        let room_id = "captions_cancel_in_flight";
+        let (mut service, _group, _cs, _user_key) = setup_single_user_group(room_id).await;
+
+        let mut meeting_api = MockMeetingApi::new();
+        meeting_api
+            .expect_add_closed_captions_agent()
+            .times(1)
+            .returning(|_| Box::pin(ready(Ok(()))));
+        meeting_api
+            .expect_remove_closed_captions_agent()
+            .times(1)
+            .withf(move |link| link == room_id)
+            .returning(|_| Box::pin(ready(Ok(()))));
+        service.meeting_api = Arc::new(meeting_api);
+
+        let meeting_name = MeetingLinkName::from(room_id);
+        service
+            .request_closed_captions(&meeting_name)
+            .await
+            .unwrap();
+        assert!(
+            service
+                .state
+                .lock()
+                .await
+                .is_awaiting_captions_agent(room_id),
+            "the request should be remembered until the agent arrives"
+        );
+
+        service.stop_closed_captions(&meeting_name).await.unwrap();
+        assert!(
+            !service
+                .state
+                .lock()
+                .await
+                .is_awaiting_captions_agent(room_id),
+            "cancelling should clear the outstanding request"
+        );
+    }
+
+    #[tokio::test]
+    async fn request_closed_captions_reports_a_failed_request() {
+        let room_id = "captions_request_http_error";
+        let (mut service, _group, _cs, _user_key) = setup_single_user_group(room_id).await;
+
+        let mut meeting_api = MockMeetingApi::new();
+        meeting_api
+            .expect_add_closed_captions_agent()
+            .times(1)
+            .returning(|_| {
+                Box::pin(ready(Err(HttpClientError::MlsHttpError {
+                    message: "server down".to_string(),
+                })))
+            });
+        service.meeting_api = Arc::new(meeting_api);
+
+        let result = service
+            .request_closed_captions(&MeetingLinkName::from(room_id))
+            .await;
+
+        assert!(result.is_err(), "a failed request must reach the caller");
+    }
+
+    #[tokio::test]
+    async fn request_closed_captions_needs_a_loaded_group_to_rank_itself() {
+        let room_id = "captions_request_no_group";
+        let mut service = create_test_service("captions-no-group", room_id).await;
+        service.meeting_api = Arc::new(MockMeetingApi::new());
+
+        let result = service
+            .request_closed_captions(&MeetingLinkName::from(room_id))
+            .await;
+
+        assert!(
+            result.is_err(),
+            "without a group there is no rank, so nothing should be sent"
+        );
+    }
 }
 
 #[cfg(test)]

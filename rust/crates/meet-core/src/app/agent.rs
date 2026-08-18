@@ -41,6 +41,35 @@ impl App {
             .map_err(MeetCoreError::from)
     }
 
+    /// Ask meet-server for the live-captions agent. Safe to call from every
+    /// client that wants captions: the service arbitrates who actually asks.
+    pub async fn request_closed_captions(
+        &self,
+        meeting_link_name: String,
+    ) -> Result<(), MeetCoreError> {
+        let meeting = Self::parse_meeting_link_name(&meeting_link_name)?;
+        self.user_service
+            .read()
+            .await
+            .request_closed_captions(&meeting)
+            .await
+            .map_err(MeetCoreError::from)
+    }
+
+    /// Ask meet-server to drop the live-captions agent, arbitrated the same way.
+    pub async fn stop_closed_captions(
+        &self,
+        meeting_link_name: String,
+    ) -> Result<(), MeetCoreError> {
+        let meeting = Self::parse_meeting_link_name(&meeting_link_name)?;
+        self.user_service
+            .read()
+            .await
+            .stop_closed_captions(&meeting)
+            .await
+            .map_err(MeetCoreError::from)
+    }
+
     pub async fn list_pending_agents(
         &self,
         meeting_link_name: String,
