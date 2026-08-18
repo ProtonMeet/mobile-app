@@ -165,7 +165,7 @@ impl MeetingApi for ProtonHttpClient {
             .header(("X-PM-MEET-MLS-SD-KBT", format!("Bearer {base64_sd_kbt}")))
             .body(request_body_json.as_bytes())
             .header(ContentType::JSON);
-        let res = self.get_session().send(req).await?;
+        let res = self.send_on_session(&self.get_session(), req).await?;
         let _ = res.parse_response::<ProtonEmptyResponse>()?;
         Ok(())
     }

@@ -43,11 +43,16 @@ impl DesktopWebLoginManager {
             env: Some(env),
             proxy: None,
         };
-        let login_http = ProtonHttpClient::new(config, AuthStore::new(environment), http_host)
-            .await
-            .map_err(|e| MeetCoreError::AuthenticationFailed {
-                message: format!("Failed to create desktop login HTTP client: {e}"),
-            })?;
+        let login_http = ProtonHttpClient::new_with_server_time(
+            config,
+            AuthStore::new(environment),
+            http_host,
+            main_http.server_time_tracker(),
+        )
+        .await
+        .map_err(|e| MeetCoreError::AuthenticationFailed {
+            message: format!("Failed to create desktop login HTTP client: {e}"),
+        })?;
 
         Ok(Self {
             login_http,
