@@ -88,6 +88,8 @@ class DashboardState extends Equatable {
   /// Must not be set for other operations (create room, calendar, etc.).
   final bool offerFetchUserStateRetry;
 
+  final bool inAppUpdateDownloaded;
+
   const DashboardState({
     this.upcomingTab = MeetUpcomingTab.myMeetings,
     this.myMeetingsCount = 0,
@@ -127,6 +129,7 @@ class DashboardState extends Equatable {
     this.showSignInCard = false,
     this.isAnonymousUser = false,
     this.offerFetchUserStateRetry = false,
+    this.inAppUpdateDownloaded = false,
   });
 
   /// Spinner in the upcoming tabs header: main dashboard fetch or list refresh.
@@ -187,6 +190,7 @@ class DashboardState extends Equatable {
     bool? showSignInCard,
     bool? isAnonymousUser,
     bool? offerFetchUserStateRetry,
+    bool? inAppUpdateDownloaded,
   }) {
     return DashboardState(
       isLoading: isLoading ?? this.isLoading,
@@ -247,6 +251,8 @@ class DashboardState extends Equatable {
       offerFetchUserStateRetry:
           offerFetchUserStateRetry ??
           (resetError ? false : this.offerFetchUserStateRetry),
+      inAppUpdateDownloaded:
+          inAppUpdateDownloaded ?? this.inAppUpdateDownloaded,
     );
   }
 
@@ -290,5 +296,6 @@ class DashboardState extends Equatable {
     showSignInCard,
     isAnonymousUser,
     offerFetchUserStateRetry,
+    inAppUpdateDownloaded,
   ];
 }

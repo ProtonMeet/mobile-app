@@ -6,15 +6,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:in_app_update/in_app_update.dart';
-import 'package:meet/helper/proton_user_settings.dart';
+import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/extension/response_error.extension.dart';
+import 'package:meet/helper/global_notification.dart';
 import 'package:meet/helper/local_toast.dart';
-import 'package:meet/constants/test_ids.dart';
-import 'package:meet/views/components/test_id.dart';
 import 'package:meet/helper/logger.dart' as l;
+import 'package:meet/helper/proton_user_settings.dart';
 import 'package:meet/helper/user.agent.dart';
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/app.state.manager.dart';
@@ -33,6 +33,7 @@ import 'package:meet/views/components/bottom.sheets/almost_there_bottom_sheet.da
     show AlmostThereContext, showAlmostThereBottomSheet;
 import 'package:meet/views/components/iap/native_plans_test_sheet.dart';
 import 'package:meet/views/components/local.toast.view.dart';
+import 'package:meet/views/components/test_id.dart';
 import 'package:meet/views/scenes/account_deletion/account_deletion_view.dart';
 import 'package:meet/views/scenes/app/app.router.dart';
 import 'package:meet/views/scenes/core/coordinator.dart';
@@ -114,7 +115,11 @@ class _DashboardPageState extends State<DashboardPage> {
       try {
         InAppUpdate.checkForUpdate().then((value) {
           if (value.flexibleUpdateAllowed) {
-            InAppUpdate.startFlexibleUpdate();
+            InAppUpdate.startFlexibleUpdate().then((value) {
+              if (value == AppUpdateResult.success && mounted) {
+                widget.dashboardBloc.add(InAppUpdateDownloadedEvent());
+              }
+            });
           }
         });
       } catch (e) {
@@ -128,6 +133,16 @@ class _DashboardPageState extends State<DashboardPage> {
     _appStateSubscription?.cancel();
     _dashboardScrollController.dispose();
     super.dispose();
+  }
+
+  /// Installs the already downloaded update, otherwise the app stays stuck in
+  /// the flexible update flow.
+  Future<void> _completeFlexibleUpdate() async {
+    try {
+      await InAppUpdate.completeFlexibleUpdate();
+    } on Object catch (e) {
+      l.logger.e('Error completing in app update: $e');
+    }
   }
 
   bool _isNativeInAppPurchaseEnabled() {
@@ -678,6 +693,18 @@ class _DashboardPageState extends State<DashboardPage> {
                     // Clear the created meeting link
                     widget.dashboardBloc.add(ClearCreatedMeetingLinkEvent());
                   }
+                },
+              ),
+              BlocListener<DashboardBloc, DashboardState>(
+                listenWhen: (previous, current) =>
+                    !previous.inAppUpdateDownloaded &&
+                    current.inAppUpdateDownloaded,
+                listener: (context, state) {
+                  GlobalNotification.show(
+                    content: context.local.in_app_update_downloaded,
+                  );
+                  widget.dashboardBloc.add(ClearInAppUpdateDownloadedEvent());
+                  unawaited(_completeFlexibleUpdate());
                 },
               ),
             ],

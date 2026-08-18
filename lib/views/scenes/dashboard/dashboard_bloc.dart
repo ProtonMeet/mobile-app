@@ -80,6 +80,8 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
     on<DismissSignInCardEvent>(_onDismissSignInCardEvent);
     on<MeetingUpdateEvent>(_onMeetingUpdateEvent);
     on<PatchMeetingWaitingRoomEvent>(_onPatchMeetingWaitingRoomEvent);
+    on<InAppUpdateDownloadedEvent>(_onInAppUpdateDownloadedEvent);
+    on<ClearInAppUpdateDownloadedEvent>(_onClearInAppUpdateDownloadedEvent);
 
     // Connect to meeting event loop manager
     _connectToMeetingEventLoop();
@@ -2496,6 +2498,20 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       ),
     );
     add(UpdateUpcomingStateEvent(upcomingTab: state.upcomingTab));
+  }
+
+  void _onInAppUpdateDownloadedEvent(
+    InAppUpdateDownloadedEvent event,
+    Emitter<DashboardState> emit,
+  ) {
+    emit(state.copyWith(inAppUpdateDownloaded: true));
+  }
+
+  void _onClearInAppUpdateDownloadedEvent(
+    ClearInAppUpdateDownloadedEvent event,
+    Emitter<DashboardState> emit,
+  ) {
+    emit(state.copyWith(inAppUpdateDownloaded: false));
   }
 }
 
