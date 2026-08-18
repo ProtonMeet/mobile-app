@@ -3491,7 +3491,7 @@ dependencies = [
 [[package]]
 name = "meet-type"
 version = "0.0.1"
-source = "git+https://github.com/ProtonMeet/meet-type.git?branch=main#71223e1de2a092216607f5d52fe1934ff0d4585f"
+source = "git+https://github.com/ProtonMeet/meet-type.git?branch=main#6b0df05b6b81c6ad59225c17881aef5088cd9090"
 dependencies = [
  "mls-spec",
  "serde",
