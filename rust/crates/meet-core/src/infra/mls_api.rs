@@ -26,10 +26,7 @@ impl MlsApi for ProtonHttpClient {
     ) -> Result<VersionedGroupInfoData, HttpClientError> {
         let url = self.build_http_url("v1/groupInfo")?;
         let response = self
-            .mls_session()
-            .get(url)
-            .bearer_auth(base64_sd_kbt)
-            .send()
+            .send_mls(self.mls_session().get(url).bearer_auth(base64_sd_kbt))
             .await?;
 
         let response = response.parse_response::<GroupInfoResponse>().await?;
@@ -54,10 +51,7 @@ impl MlsApi for ProtonHttpClient {
         url.query_pairs_mut().append_pair("summary", "true");
 
         let response = self
-            .mls_session()
-            .get(url)
-            .bearer_auth(base64_sd_kbt)
-            .send()
+            .send_mls(self.mls_session().get(url).bearer_auth(base64_sd_kbt))
             .await?;
 
         let response = response.parse_response::<GroupInfoResponse>().await?;
@@ -142,13 +136,14 @@ impl MlsApi for ProtonHttpClient {
         }
 
         let response = self
-            .mls_session()
-            .post(url)
-            .header("Content-Type", "application/json")
-            .header("Content-Encoding", "zstd; q=3")
-            .body(compressed_data)
-            .bearer_auth(base64_sd_kbt)
-            .send()
+            .send_mls(
+                self.mls_session()
+                    .post(url)
+                    .header("Content-Type", "application/json")
+                    .header("Content-Encoding", "zstd; q=3")
+                    .body(compressed_data)
+                    .bearer_auth(base64_sd_kbt),
+            )
             .await?;
 
         response.ensure_success().await?;
@@ -171,11 +166,12 @@ impl MlsApi for ProtonHttpClient {
         };
         let url = self.build_http_url("v1/join")?;
         let response = self
-            .mls_session()
-            .post(url)
-            .json(&join_group_by_proposal_request)
-            .bearer_auth(base64_sd_kbt)
-            .send()
+            .send_mls(
+                self.mls_session()
+                    .post(url)
+                    .json(&join_group_by_proposal_request)
+                    .bearer_auth(base64_sd_kbt),
+            )
             .await
             .inspect_err(|e| {
                 #[cfg(target_family = "wasm")]
@@ -202,12 +198,13 @@ impl MlsApi for ProtonHttpClient {
         }
 
         let response = self
-            .mls_session()
-            .post(url)
-            .header("Content-Type", "application/octet-stream")
-            .bearer_auth(base64_sd_kbt)
-            .body(encrypted_key_package.to_vec())
-            .send()
+            .send_mls(
+                self.mls_session()
+                    .post(url)
+                    .header("Content-Type", "application/octet-stream")
+                    .bearer_auth(base64_sd_kbt)
+                    .body(encrypted_key_package.to_vec()),
+            )
             .await?;
 
         let status = response.status();
@@ -267,18 +264,19 @@ impl MlsApi for ProtonHttpClient {
         };
 
         let response = self
-            .mls_session()
-            .post(url)
-            .header("Content-Type", "application/json")
-            .bearer_auth(base64_sd_kbt)
-            .body(
-                serde_json::to_vec(&body).map_err(|e| HttpClientError::MlsDeserializeError {
-                    status: reqwest::StatusCode::INTERNAL_SERVER_ERROR,
-                    details: None,
-                    message: e.to_string(),
-                })?,
+            .send_mls(
+                self.mls_session()
+                    .post(url)
+                    .header("Content-Type", "application/json")
+                    .bearer_auth(base64_sd_kbt)
+                    .body(serde_json::to_vec(&body).map_err(|e| {
+                        HttpClientError::MlsDeserializeError {
+                            status: reqwest::StatusCode::INTERNAL_SERVER_ERROR,
+                            details: None,
+                            message: e.to_string(),
+                        }
+                    })?),
             )
-            .send()
             .await?;
 
         response.ensure_success().await?;
@@ -293,10 +291,7 @@ impl MlsApi for ProtonHttpClient {
         let url = self.build_http_url(&format!("v1/joinRequest/{meeting_link_name}"))?;
 
         let response = self
-            .mls_session()
-            .delete(url)
-            .bearer_auth(base64_sd_kbt)
-            .send()
+            .send_mls(self.mls_session().delete(url).bearer_auth(base64_sd_kbt))
             .await?;
 
         if response.status() == reqwest::StatusCode::NOT_FOUND {
@@ -316,15 +311,16 @@ impl MlsApi for ProtonHttpClient {
     ) -> Result<String, HttpClientError> {
         let url = self.build_http_url("v1/session")?;
         let response = self
-            .mls_session()
-            .post(url)
-            .json(&GetSdCwtRequest {
-                meet_link_name,
-                holder_confirmation_key: base64_holder_confirmation_key,
-                session_id,
-            })
-            .bearer_auth(access_token)
-            .send()
+            .send_mls(
+                self.mls_session()
+                    .post(url)
+                    .json(&GetSdCwtRequest {
+                        meet_link_name,
+                        holder_confirmation_key: base64_holder_confirmation_key,
+                        session_id,
+                    })
+                    .bearer_auth(access_token),
+            )
             .await?;
         let response = response.parse_response::<GetSdCwtResponse>().await?;
         Ok(response.token)
@@ -363,11 +359,12 @@ impl MlsApi for ProtonHttpClient {
         };
 
         let response = self
-            .mls_session()
-            .post(url)
-            .bearer_auth(base64_sd_kbt)
-            .json(&body)
-            .send()
+            .send_mls(
+                self.mls_session()
+                    .post(url)
+                    .bearer_auth(base64_sd_kbt)
+                    .json(&body),
+            )
             .await?;
         response.ensure_success().await?;
         Ok(())
@@ -393,10 +390,7 @@ impl MlsApi for ProtonHttpClient {
         }
 
         let response = self
-            .mls_session()
-            .get(url)
-            .bearer_auth(base64_sd_kbt)
-            .send()
+            .send_mls(self.mls_session().get(url).bearer_auth(base64_sd_kbt))
             .await?;
         let resp = response.parse_api_response::<KpResp>().await?;
 
@@ -425,10 +419,7 @@ impl MlsApi for ProtonHttpClient {
         }
 
         let response = self
-            .mls_session()
-            .get(url)
-            .bearer_auth(base64_sd_kbt)
-            .send()
+            .send_mls(self.mls_session().get(url).bearer_auth(base64_sd_kbt))
             .await?;
         let resp = response.parse_api_response::<ListResp>().await?;
         Ok(resp.device_ids)
@@ -440,10 +431,13 @@ impl MlsApi for ProtonHttpClient {
         }
 
         let url = self.build_http_url(".well-known/external-sender")?;
-        let response = self.mls_session().get(url).send().await.map_err(|e| {
-            tracing::info!("Failed to fetch external sender inside: {:?}\n", e);
-            e
-        })?;
+        let response = self
+            .send_mls(self.mls_session().get(url))
+            .await
+            .map_err(|e| {
+                tracing::info!("Failed to fetch external sender inside: {:?}\n", e);
+                e
+            })?;
         let external_sender_certs = response.success_bytes().await?;
 
         if external_sender_certs.is_empty() {
@@ -462,10 +456,13 @@ impl MlsApi for ProtonHttpClient {
         }
 
         let url = self.build_http_url(".well-known/cks")?;
-        let response = self.mls_session().get(url).send().await.map_err(|e| {
-            tracing::info!("Failed to fetch cose key set inside: {:?}\n", e);
-            e
-        })?;
+        let response = self
+            .send_mls(self.mls_session().get(url))
+            .await
+            .map_err(|e| {
+                tracing::info!("Failed to fetch cose key set inside: {:?}\n", e);
+                e
+            })?;
         let cks_bytes = response.success_bytes().await?;
 
         *self.cks_cache().write().await = Some(cks_bytes.clone());
@@ -482,11 +479,12 @@ impl MlsApi for ProtonHttpClient {
     ) -> Result<(), HttpClientError> {
         let url = self.build_http_url("v1/metrics")?;
         let response = self
-            .mls_session()
-            .post(url)
-            .json(metrics_request)
-            .bearer_auth(base64_sd_kbt)
-            .send()
+            .send_mls(
+                self.mls_session()
+                    .post(url)
+                    .json(metrics_request)
+                    .bearer_auth(base64_sd_kbt),
+            )
             .await?;
         response.ensure_success().await?;
         Ok(())

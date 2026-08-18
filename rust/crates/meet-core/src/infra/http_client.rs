@@ -38,6 +38,7 @@ use crate::infra::muon::{
 #[cfg(not(target_arch = "wasm32"))]
 use crate::infra::muon::{AuthStore, SharedAuth};
 use crate::infra::proton_response_ext::ProtonResponseExt;
+use crate::utils::server_time::ServerTimeTracker;
 use proton_meet_macro::async_trait;
 use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
 use std::sync::{Arc, Mutex};
@@ -50,6 +51,16 @@ const MEETING_LOCKED_ERROR_CODE: u16 = 2502;
 /// Error code returned by the API when SRP parameters are invalid — i.e. the
 /// URL/custom password the caller supplied does not match the meeting link.
 const INVALID_SRP_PARAMS_ERROR_CODE: u16 = 2026;
+
+fn single_header<'a>(headers: &'a HeaderMap, name: &str) -> Option<&'a str> {
+    let mut values = headers.get_all(name).iter();
+    let value = values.next()?;
+    if values.next().is_some() {
+        tracing::debug!("Ignoring ambiguous {name} server time response header");
+        return None;
+    }
+    value.to_str().ok()
+}
 
 #[derive(Debug)]
 pub struct ApiConfig {
@@ -85,6 +96,7 @@ pub struct ProtonHttpClient {
     meet_sdk: Option<Sdk>,
     cks_cache: Arc<RwLock<Option<Vec<u8>>>>,
     external_sender_cache: Arc<RwLock<Option<Vec<u8>>>>,
+    server_time: ServerTimeTracker,
 }
 
 impl ProtonHttpClient {
@@ -109,6 +121,23 @@ impl ProtonHttpClient {
 
     pub(crate) fn mls_session(&self) -> &reqwest::Client {
         &self.mls_session
+    }
+
+    pub(crate) fn server_timestamp(&self) -> Option<i64> {
+        self.server_time.timestamp()
+    }
+
+    pub(crate) fn server_time_tracker(&self) -> ServerTimeTracker {
+        self.server_time.clone()
+    }
+
+    pub(crate) async fn send_mls(
+        &self,
+        request: reqwest::RequestBuilder,
+    ) -> Result<reqwest::Response, HttpClientError> {
+        let response = request.send().await?;
+        self.observe_server_time_headers(response.headers());
+        Ok(response)
     }
 
     pub(crate) fn cks_cache(&self) -> &RwLock<Option<Vec<u8>>> {
@@ -152,7 +181,43 @@ impl ProtonHttpClient {
             #[allow(deprecated)]
             session.send(req).await
         };
-        res.map_err(HttpClientError::from)
+        match res {
+            Ok(response) => {
+                self.observe_server_time_headers(response.headers());
+                Ok(response)
+            }
+            Err(error) => {
+                self.observe_muon_error(&error);
+                Err(HttpClientError::from(error))
+            }
+        }
+    }
+
+    fn observe_muon_error(&self, error: &muon::Error) {
+        let mut source: Option<&(dyn std::error::Error + 'static)> = Some(error);
+        while let Some(source_error) = source {
+            if let Some(status_error) = source_error.downcast_ref::<muon::http::StatusErr>() {
+                self.observe_server_time_headers(status_error.1.headers());
+            }
+            if let Some(auth_error) = source_error.downcast_ref::<muon::common::AuthErr>() {
+                match auth_error {
+                    muon::common::AuthErr::Refresh(Some(status_error))
+                    | muon::common::AuthErr::Session(Some(status_error)) => {
+                        self.observe_server_time_headers(status_error.1.headers());
+                    }
+                    muon::common::AuthErr::Refresh(None) | muon::common::AuthErr::Session(None) => {
+                    }
+                }
+            }
+            source = source_error.source();
+        }
+    }
+
+    fn observe_server_time_headers(&self, headers: &HeaderMap) {
+        self.server_time.observe_header_values(
+            single_header(headers, "x-pm-date"),
+            single_header(headers, "date"),
+        );
     }
 
     /// Rebuild the muon client from `auth_store` and swap in a fresh session.
@@ -275,6 +340,18 @@ impl ProtonHttpClient {
         .await
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
+    pub(crate) async fn new_with_server_time(
+        config: ApiConfig,
+        auth_store: AuthStore,
+        http_host: String,
+        server_time: ServerTimeTracker,
+    ) -> Result<Self, anyhow::Error> {
+        let mut client = Self::new(config, auth_store, http_host).await?;
+        client.server_time = server_time;
+        Ok(client)
+    }
+
     /// Build a proton HTTP client without muon persistence (WASM).
     #[cfg(target_arch = "wasm32")]
     pub async fn new(config: ApiConfig, http_host: String) -> Result<Self, anyhow::Error> {
@@ -374,6 +451,7 @@ impl ProtonHttpClient {
             meet_sdk,
             cks_cache: Arc::new(RwLock::new(None)),
             external_sender_cache: Arc::new(RwLock::new(None)),
+            server_time: ServerTimeTracker::new(),
         })
     }
 }
@@ -607,6 +685,21 @@ mod tests {
         ProtonHttpClient::new(config, AuthStore::prod(), http_host.to_string())
             .await
             .unwrap()
+    }
+
+    #[test]
+    fn single_header_rejects_ambiguous_values() {
+        let mut headers = HeaderMap::new();
+        headers.append(
+            "date",
+            HeaderValue::from_static("Mon, 17 Aug 2026 09:49:56 GMT"),
+        );
+        headers.append(
+            "date",
+            HeaderValue::from_static("Mon, 17 Aug 2026 09:49:57 GMT"),
+        );
+
+        assert_eq!(single_header(&headers, "date"), None);
     }
 
     #[unified_test]
