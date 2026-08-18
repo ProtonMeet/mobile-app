@@ -174,3 +174,12 @@ class PatchMeetingWaitingRoomEvent extends DashboardBlocEvent {
   final String meetingLinkName;
   final bool enabled;
 }
+
+/// Android flexible in-app update finished downloading and is ready to install.
+class InAppUpdateDownloadedEvent extends DashboardBlocEvent {
+  InAppUpdateDownloadedEvent();
+}
+
+class ClearInAppUpdateDownloadedEvent extends DashboardBlocEvent {
+  ClearInAppUpdateDownloadedEvent();
+}

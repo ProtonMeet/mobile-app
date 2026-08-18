@@ -2023,5 +2023,9 @@
   "iap_native_test_sign_in_required": "Sign in with a Proton account to open native payments.",
   "@iap_native_test_sign_in_required": {
     "description": "Message shown when sign in is required to open native payments"
+  },
+  "in_app_update_downloaded": "The new app version has been downloaded and will be installed automatically.",
+  "@in_app_update_downloaded": {
+    "description": "Notification shown when a Play Store flexible update finished downloading and will be installed"
   }
 }
