@@ -1,3 +1,4 @@
+use meet_type::agent::AgentType;
 use muon::common::ContentType;
 use proton_meet_macro::async_trait;
 
@@ -18,9 +19,6 @@ use crate::infra::group_info_payload::PhpWaitingRoomDataField;
 use crate::infra::http_client::ProtonHttpClient;
 use crate::infra::http_client_util::HttpClientUtil;
 use crate::infra::proton_response_ext::ProtonResponseExt;
-
-/// `AgentType` value meet-server uses for the live-captions agent.
-const CLOSED_CAPTIONS_AGENT_TYPE: u8 = 1;
 
 #[async_trait]
 impl MeetingApi for ProtonHttpClient {
@@ -141,7 +139,7 @@ impl MeetingApi for ProtonHttpClient {
         let req = self
             .post(format!("/meet/v1/meetings/links/{meet_link_name}/agents"))
             .body_json(AddAgentRequest {
-                agent_type: CLOSED_CAPTIONS_AGENT_TYPE,
+                agent_type: AgentType::SttAgent as u8,
             })?;
         let res = self.send_session_request(req).await?;
         let _ = res.parse_response::<ProtonEmptyResponse>()?;
@@ -152,8 +150,9 @@ impl MeetingApi for ProtonHttpClient {
         &self,
         meet_link_name: &str,
     ) -> Result<(), HttpClientError> {
+        let agent_type = AgentType::SttAgent as u8;
         let req = self.delete(format!(
-            "/meet/v1/meetings/links/{meet_link_name}/agents/{CLOSED_CAPTIONS_AGENT_TYPE}"
+            "/meet/v1/meetings/links/{meet_link_name}/agents/{agent_type}"
         ));
         let res = self.send_session_request(req).await?;
         let _ = res.parse_response::<ProtonEmptyResponse>()?;
