@@ -4759,7 +4759,7 @@ dependencies = [
 
 [[package]]
 name = "proton-meet-core"
-version = "1.3.2"
+version = "1.3.4"
 dependencies = [
  "aes",
  "aes-gcm",
