@@ -1,1 +1,9 @@
 * text=auto eol=lf
+
+# Plugin build-time dependency cache (see scripts/prefetch_plugin_cache.sh)
+plugins/plugin-cache/downloads/** filter=lfs diff=lfs merge=lfs -text
+
+# Large vendored plugin binaries already in git
+plugins/proton_denoise/third_party/deepfilter/** filter=lfs diff=lfs merge=lfs -text
+plugins/proton_denoise/third_party/dtln-rs/lib/** filter=lfs diff=lfs merge=lfs -text
+plugins/proton_video_effects/**/*.tflite filter=lfs diff=lfs merge=lfs -text

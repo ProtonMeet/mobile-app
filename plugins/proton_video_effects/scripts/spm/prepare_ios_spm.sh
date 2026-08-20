@@ -7,6 +7,9 @@
 # simulator archives are merged into one xcframework under a single library name and force-loaded
 # from ${BUILT_PRODUCTS_DIR} (see Package.swift).
 #
+# MediaPipe is not stored in plugins/plugin-cache — reuse CocoaPods cache or download the pod
+# release tarball when staging (same source as `pod install`).
+#
 # Usage: sh plugins/proton_video_effects/scripts/spm/prepare_ios_spm.sh
 set -eu
 
@@ -23,18 +26,25 @@ POD_CACHE="${HOME}/Library/Caches/CocoaPods/Pods/Release"
 
 mkdir -p "${OUT_DIR}" "${RESOURCE_DIR}" "${VENDOR_DIR}"
 
-# Reuse the CocoaPods download if this machine has one, otherwise fetch the release tarball.
+copy_pod_frameworks() {
+  src="$1"
+  dest="$2"
+  mkdir -p "${dest}"
+  cp -Rc "${src}/." "${dest}/" 2>/dev/null || cp -R "${src}/." "${dest}/"
+}
+
+# CocoaPods cache → remote pod tarball (not committed in plugin-cache).
 fetch_pod() {
   pod_name="$1"
   dest="${VENDOR_DIR}/${pod_name}"
-  [ -d "${dest}" ] && return 0
+  if [ -d "${dest}/${pod_name}.xcframework" ]; then
+    return 0
+  fi
 
   cached=$(find "${POD_CACHE}/${pod_name}" -maxdepth 1 -type d -name "${MEDIAPIPE_VERSION}-*" 2>/dev/null | head -1)
   if [ -n "${cached}" ]; then
     echo "proton_video_effects: using CocoaPods cache for ${pod_name}"
-    mkdir -p "${dest}"
-    # -c clones on APFS; the graph archives are ~260 MB.
-    cp -Rc "${cached}/frameworks/." "${dest}/" 2>/dev/null || cp -R "${cached}/frameworks/." "${dest}/"
+    copy_pod_frameworks "${cached}/frameworks" "${dest}"
     return 0
   fi
 
@@ -42,14 +52,14 @@ fetch_pod() {
     sed -n 's/.*"http": "\(.*\)".*/\1/p' | head -1)
   if [ -z "${url}" ]; then
     echo "proton_video_effects: cannot resolve a download URL for ${pod_name} ${MEDIAPIPE_VERSION}" >&2
+    echo "  Run: cd ios && pod install   (or ensure network access for pod download)" >&2
     exit 1
   fi
   echo "proton_video_effects: downloading ${pod_name} ${MEDIAPIPE_VERSION}"
   tmp=$(mktemp -d)
   curl -fsSL "${url}" -o "${tmp}/pod.tar.gz"
   tar -xzf "${tmp}/pod.tar.gz" -C "${tmp}"
-  mkdir -p "${dest}"
-  cp -R "${tmp}/frameworks/." "${dest}/"
+  copy_pod_frameworks "${tmp}/frameworks" "${dest}"
   rm -rf "${tmp}"
 }
 
