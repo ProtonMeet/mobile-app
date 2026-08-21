@@ -275,7 +275,6 @@ bool _isTypeAllowedByFlags(UnleashDataProvider unleash, DenoiseType type) {
     case DenoiseType.rnnoise:
       return unleash.isMeetAudioDenoiseRnnoise();
     case DenoiseType.deepfilter:
-    case DenoiseType.deepfilter2:
       return unleash.isMeetAudioDenoiseDeepfilter();
     case DenoiseType.dtlnRs:
       return unleash.isMeetAudioDenoiseDtlnRs();

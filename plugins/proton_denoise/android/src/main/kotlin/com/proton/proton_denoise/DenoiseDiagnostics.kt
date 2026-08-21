@@ -13,7 +13,6 @@ internal object DenoiseDiagnostics {
             listOf(
                     DenoiseKind.RNNOISE.id,
                     DenoiseKind.DEEPFILTER.id,
-                    DenoiseKind.DEEPFILTER2.id,
                     DenoiseKind.DTLN_RS.id,
             )
 
@@ -26,14 +25,6 @@ internal object DenoiseDiagnostics {
             when (DenoiseKind.fromId(typeId)) {
                 DenoiseKind.RNNOISE -> warmUpRnnoise()
                 DenoiseKind.DEEPFILTER -> warmUpDeepFilter(context)
-                DenoiseKind.DEEPFILTER2 ->
-                        withPlatform(
-                                mapOf(
-                                        "warmUpOk" to false,
-                                        "warmUpMs" to 0,
-                                        "error" to "Not shipped on Android",
-                                ),
-                        )
                 DenoiseKind.DTLN_RS -> warmUpDtln()
                 null ->
                         withPlatform(
@@ -49,7 +40,6 @@ internal object DenoiseDiagnostics {
             listOf(
                     rnnoiseEntry(),
                     deepfilterEntry(context),
-                    deepfilter2Entry(),
                     dtlnEntry(),
             )
 
@@ -110,20 +100,6 @@ internal object DenoiseDiagnostics {
                         ),
         )
     }
-
-    private fun deepfilter2Entry(): Map<String, Any> =
-            mapOf(
-                    "id" to DenoiseKind.DEEPFILTER2.id,
-                    "displayName" to "DeepFilter 2",
-                    "isReady" to false,
-                    "details" to
-                            withPlatform(
-                                    mapOf(
-                                            "runtimeAvailable" to false,
-                                            "note" to "Not shipped on Android",
-                                    ),
-                            ),
-            )
 
     private fun warmUpRnnoise(): Map<String, Any> {
         val start = System.nanoTime()

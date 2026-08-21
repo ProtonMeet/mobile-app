@@ -132,7 +132,6 @@ DesktopMethodResult DesktopAudioDenoise::HandleEffectsChannel(
         R"([{"id":"rnnoise","displayName":"RNNoise","isReady":)"
         + std::string(rnnoise_ready ? "true" : "false") +
         R"(},{"id":"deepfilter","displayName":"DeepFilter 3","isReady":false})"
-        R"(,{"id":"deepfilter2","displayName":"DeepFilter 2","isReady":false})"
         R"(,{"id":"dtln-rs","displayName":"DTLN","isReady":false}])";
     return result;
   }
@@ -157,7 +156,7 @@ DesktopMethodResult DesktopAudioDenoise::HandleEffectsChannel(
       result.error_message = "trackId and type required";
       return result;
     }
-    if (type_id == "deepfilter" || type_id == "deepfilter2") {
+    if (type_id == "deepfilter") {
       result.success = false;
       result.error_code = "NOT_READY";
       result.error_message = "DeepFilter is not available on desktop yet";

@@ -126,11 +126,6 @@ class AudioDenoiseChannel(
                 "isReady" to MeetAudioDeepFilterProcessor.isNativeReady(appContext),
             ),
             mapOf(
-                "id" to DenoiseKind.DEEPFILTER2.id,
-                "displayName" to "DeepFilter 2",
-                "isReady" to false,
-            ),
-            mapOf(
                 "id" to DenoiseKind.DTLN_RS.id,
                 "displayName" to "DTLN",
                 "isReady" to MeetAudioDtlnRsProcessor.isNativeReady,
@@ -141,7 +136,6 @@ class AudioDenoiseChannel(
         when (DenoiseKind.fromId(typeId)) {
             DenoiseKind.RNNOISE -> MeetAudioRnnoiseProcessor.isNativeReady
             DenoiseKind.DEEPFILTER -> MeetAudioDeepFilterProcessor.isNativeReady(appContext)
-            DenoiseKind.DEEPFILTER2 -> false
             DenoiseKind.DTLN_RS -> MeetAudioDtlnRsProcessor.isNativeReady
             null -> false
         }
@@ -398,9 +392,8 @@ class AudioDenoiseChannel(
         val processor: MeetAudioCaptureProcessor =
             when (kind) {
                 DenoiseKind.RNNOISE -> MeetAudioRnnoiseProcessor()
-                DenoiseKind.DEEPFILTER,
-                DenoiseKind.DEEPFILTER2,
-                -> MeetAudioDeepFilterProcessor(appContext, deepFilterAttenLimDb)
+                DenoiseKind.DEEPFILTER ->
+                    MeetAudioDeepFilterProcessor(appContext, deepFilterAttenLimDb)
                 DenoiseKind.DTLN_RS -> MeetAudioDtlnRsProcessor()
             }
 

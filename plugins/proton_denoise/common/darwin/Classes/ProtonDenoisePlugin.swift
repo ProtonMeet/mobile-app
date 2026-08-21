@@ -30,14 +30,12 @@ public class ProtonDenoisePlugin: NSObject, FlutterPlugin {
 private enum DenoiseKind: String, CaseIterable {
   case rnnoise
   case deepfilter
-  case deepfilter2
   case dtlnRs = "dtln-rs"
 
   var displayName: String {
     switch self {
     case .rnnoise: return "RNNoise"
     case .deepfilter: return "DeepFilter 3"
-    case .deepfilter2: return "DeepFilter 2"
     case .dtlnRs: return "DTLN"
     }
   }
@@ -88,11 +86,6 @@ extension DtlnRsProcessor: DenoiseCaptureProcessor {
     case .deepfilter:
       return DeepFilterProcessor(
         modelResourceName: ProtonDeepFilterNative.ModelResource.net3,
-        attenLimDb: deepFilterAttenLimDb
-      )
-    case .deepfilter2:
-      return DeepFilterProcessor(
-        modelResourceName: ProtonDeepFilterNative.ModelResource.net2,
         attenLimDb: deepFilterAttenLimDb
       )
     case .dtlnRs:
@@ -174,11 +167,6 @@ extension DtlnRsProcessor: DenoiseCaptureProcessor {
       return DeepFilterProcessor.isNativeReady(
         modelResourceName: ProtonDeepFilterNative.ModelResource.net3
       )
-    case .deepfilter2:
-      return ProtonDeepFilterNative.isNet2RuntimeSupported &&
-        DeepFilterProcessor.isNativeReady(
-          modelResourceName: ProtonDeepFilterNative.ModelResource.net2
-        )
     case .dtlnRs:
       return DtlnRsProcessor.isNativeReady
     }
@@ -242,15 +230,6 @@ extension DtlnRsProcessor: DenoiseCaptureProcessor {
         guard let local = plugin.localTracks?[trackId] as? LocalAudioTrack else {
           result(
             FlutterError(code: "TRACK", message: "Local audio track not found", details: trackId))
-          return
-        }
-        if kind == .deepfilter2 && !ProtonDeepFilterNative.isNet2RuntimeSupported {
-          result(
-            FlutterError(
-              code: "UNSUPPORTED",
-              message: "DeepFilter 2 is not supported by the bundled libDF runtime",
-              details: nil
-            ))
           return
         }
         let deepFilterAttenLimDb = parseDeepFilterAttenLimDb(args)

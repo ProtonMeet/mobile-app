@@ -9,9 +9,6 @@ enum DenoiseType {
   /// DeepFilterNet3 — iOS when prebuilt framework is vendored.
   deepfilter('deepfilter', 'DeepFilter 3'),
 
-  /// DeepFilterNet2 — requires libDF v0.3.1; not shipped on iOS yet.
-  deepfilter2('deepfilter2', 'DeepFilter 2'),
-
   /// DTLN (dtln-rs) — TFLite model; native lib must be linked per platform.
   dtlnRs('dtln-rs', 'DTLN');
 

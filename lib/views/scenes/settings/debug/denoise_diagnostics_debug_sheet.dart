@@ -66,7 +66,6 @@ const _denoiseFlagRows = <_DenoiseFlagRow>[
     label: 'MeetAudioDenoiseDeepfilter',
     linkedLibs: [
       _LinkedLib(label: 'DeepFilter 3', type: DenoiseType.deepfilter),
-      _LinkedLib(label: 'DeepFilter 2', type: DenoiseType.deepfilter2),
     ],
   ),
   _DenoiseFlagRow(
@@ -233,8 +232,7 @@ class _DenoiseDiagnosticsDebugBodyState
     }
     return switch (type) {
       DenoiseType.rnnoise => _unleash.isMeetAudioDenoiseRnnoise(),
-      DenoiseType.deepfilter ||
-      DenoiseType.deepfilter2 => _unleash.isMeetAudioDenoiseDeepfilter(),
+      DenoiseType.deepfilter => _unleash.isMeetAudioDenoiseDeepfilter(),
       DenoiseType.dtlnRs => _unleash.isMeetAudioDenoiseDtlnRs(),
       DenoiseType.none => false,
     };
@@ -301,7 +299,7 @@ class _DenoiseDiagnosticsDebugBodyState
       DenoiseType.rnnoise => _unleash.isFeatureEnabled(
         UnleashFeature.meetAudioDenoiseRnnoise,
       ),
-      DenoiseType.deepfilter || DenoiseType.deepfilter2 =>
+      DenoiseType.deepfilter =>
         _unleash.isFeatureEnabled(UnleashFeature.meetAudioDenoiseDeepfilter),
       DenoiseType.dtlnRs => _unleash.isFeatureEnabled(
         UnleashFeature.meetAudioDenoiseDtlnRs,

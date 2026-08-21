@@ -2,7 +2,7 @@ import Foundation
 
 /// Per-backend readiness probes for debug settings UI.
 enum DenoiseDiagnostics {
-  private static let allTypeIds = ["rnnoise", "deepfilter", "deepfilter2", "dtln-rs"]
+  private static let allTypeIds = ["rnnoise", "deepfilter", "dtln-rs"]
 
   private static var platformName: String {
     #if os(iOS)
@@ -34,15 +34,6 @@ enum DenoiseDiagnostics {
       return warmUpRnnoise()
     case "deepfilter":
       return warmUpDeepFilter(modelResourceName: ProtonDeepFilterNative.ModelResource.net3)
-    case "deepfilter2":
-      if !ProtonDeepFilterNative.isNet2RuntimeSupported {
-        return withPlatform([
-          "warmUpOk": false,
-          "warmUpMs": 0,
-          "error": "libDF runtime does not support DF2 on this build",
-        ])
-      }
-      return warmUpDeepFilter(modelResourceName: ProtonDeepFilterNative.ModelResource.net2)
     case "dtln-rs":
       return warmUpDtln()
     default:
@@ -64,18 +55,6 @@ enum DenoiseDiagnostics {
         isReady: DeepFilterProcessor.isNativeReady(
           modelResourceName: ProtonDeepFilterNative.ModelResource.net3
         ),
-      ),
-      deepfilterEntry(
-        id: "deepfilter2",
-        displayName: "DeepFilter 2",
-        modelResourceName: ProtonDeepFilterNative.ModelResource.net2,
-        isReady: ProtonDeepFilterNative.isNet2RuntimeSupported &&
-          DeepFilterProcessor.isNativeReady(
-            modelResourceName: ProtonDeepFilterNative.ModelResource.net2
-          ),
-        note: ProtonDeepFilterNative.isNet2RuntimeSupported
-          ? nil
-          : "libDF runtime does not support DF2 on this build",
       ),
       dtlnEntry(),
     ]
