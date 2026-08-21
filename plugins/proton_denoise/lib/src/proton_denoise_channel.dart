@@ -280,8 +280,7 @@ class ProtonDenoiseChannel {
     if (type != null) {
       args['type'] = type.id;
     }
-    if (deepFilterAttenLimDb != null &&
-        (type == DenoiseType.deepfilter || type == DenoiseType.deepfilter2)) {
+    if (deepFilterAttenLimDb != null && type == DenoiseType.deepfilter) {
       args['deepFilterAttenLimDb'] = deepFilterAttenLimDb.clamp(
         kDeepFilterMinAttenLimDb,
         kDeepFilterMaxAttenLimDb,

@@ -4,11 +4,7 @@ import Foundation
 enum ProtonDeepFilterNative {
   enum ModelResource {
     static let net3 = "DeepFilterNet3_onnx"
-    static let net2 = "DeepFilterNet2_onnx"
   }
-
-  /// DF2 ONNX panics in tract 0.21.x (main libDF); needs a separate v0.3.1 build.
-  static let isNet2RuntimeSupported = false
 
   /// Voice-call default — caps suppression depth (dB). 100 ≈ unlimited.
   static let defaultAttenLimDb: Float = 30

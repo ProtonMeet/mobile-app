@@ -42,7 +42,6 @@ class DenoiseAudioService {
         case DenoiseType.rnnoise:
           return _unleash.isMeetAudioDenoiseRnnoise();
         case DenoiseType.deepfilter:
-        case DenoiseType.deepfilter2:
           return _unleash.isMeetAudioDenoiseDeepfilter();
         case DenoiseType.dtlnRs:
           return _unleash.isMeetAudioDenoiseDtlnRs();
@@ -53,7 +52,7 @@ class DenoiseAudioService {
   }
 
   static bool isDeepFilterType(DenoiseType type) =>
-      type == DenoiseType.deepfilter || type == DenoiseType.deepfilter2;
+      type == DenoiseType.deepfilter;
 
   /// Loads DeepFilter ONNX + runs df_create off the mic-attach critical path.
   /// Coalesces concurrent callers and skips if a recent warmup already succeeded.
@@ -126,6 +125,20 @@ class DenoiseAudioService {
         );
       }
     }
+  }
+
+  /// Default in-call preference: enabled with [DenoiseType.rnnoise] when Unleash + native allow it.
+  Future<({bool enabled, DenoiseType type})>
+  resolveDefaultInCallPreference() async {
+    const preferred = DenoiseType.rnnoise;
+    if (!isAvailable) {
+      return (enabled: false, type: preferred);
+    }
+    final resolved = await resolveTypeForAttach(preferred);
+    if (resolved == null) {
+      return (enabled: false, type: preferred);
+    }
+    return (enabled: true, type: resolved);
   }
 
   /// Picks [preferred] when allowed + ready, otherwise the first UI-visible type.
@@ -206,7 +219,6 @@ class DenoiseAudioService {
       case DenoiseType.rnnoise:
         return _unleash.isMeetAudioDenoiseRnnoise();
       case DenoiseType.deepfilter:
-      case DenoiseType.deepfilter2:
         return _unleash.isMeetAudioDenoiseDeepfilter();
       case DenoiseType.dtlnRs:
         return _unleash.isMeetAudioDenoiseDtlnRs();

@@ -26,26 +26,21 @@ internal object OfflineFileDenoiser {
         val denoised = when (kind) {
             DenoiseKind.RNNOISE -> denoiseRnnoise(pcm, captureRate)
             DenoiseKind.DTLN_RS -> denoiseDtln(pcm, captureRate)
-            DenoiseKind.DEEPFILTER,
-            DenoiseKind.DEEPFILTER2,
-            -> throw UnsupportedOperationException(
-                "DeepFilter offline debug not implemented",
-            )
+            DenoiseKind.DEEPFILTER ->
+                throw UnsupportedOperationException(
+                    "DeepFilter offline debug not implemented",
+                )
         }
 
         val cacheSubdir = when (kind) {
             DenoiseKind.RNNOISE -> "rnnoise_denoise"
             DenoiseKind.DTLN_RS -> "dtln_denoise"
-            DenoiseKind.DEEPFILTER,
-            DenoiseKind.DEEPFILTER2,
-            -> "deepfilter_denoise"
+            DenoiseKind.DEEPFILTER -> "deepfilter_denoise"
         }
         val suffix = when (kind) {
             DenoiseKind.RNNOISE -> "rnnoise"
             DenoiseKind.DTLN_RS -> "denoised"
-            DenoiseKind.DEEPFILTER,
-            DenoiseKind.DEEPFILTER2,
-            -> "deepfilter"
+            DenoiseKind.DEEPFILTER -> "deepfilter"
         }
 
         val outDir = File(context.cacheDir, cacheSubdir).apply { mkdirs() }

@@ -677,10 +677,17 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     final ffBlurEnabled = isMeetCameraBackgroundBlurEnabled();
     final effectiveBlurEnabled =
         event.cameraBackgroundBlurEnabled && ffBlurEnabled;
+    // Default mic denoise: RNNoise when Unleash + native allow it (see
+    // `resolveDefaultInCallPreference`). Applied here so settings and attach
+    // stay in sync at room init, same as background blur.
+    final denoiseDefault = await DenoiseAudioService.instance
+        .resolveDefaultInCallPreference();
     emit(
       state.copyWith(
         isRoomInitialized: true,
         cameraBackgroundBlurEnabled: effectiveBlurEnabled,
+        audioDenoiseEnabled: denoiseDefault.enabled,
+        audioDenoiseType: denoiseDefault.type,
       ),
     );
 
@@ -694,6 +701,17 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     // failures here only delay the visual blur without leaving state stale.
     if (effectiveBlurEnabled) {
       unawaited(syncLocalCameraBackgroundBlur(room: state.room, enabled: true));
+    }
+
+    if (denoiseDefault.enabled) {
+      unawaited(
+        syncLocalAudioDenoise(
+          room: state.room,
+          enabled: true,
+          type: denoiseDefault.type,
+          reason: DenoiseAttachReason.toggle,
+        ),
+      );
     }
 
     // Late-join recording sync.

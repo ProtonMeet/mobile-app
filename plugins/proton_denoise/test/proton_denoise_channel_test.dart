@@ -22,11 +22,6 @@ void main() {
                   'displayName': 'DeepFilter 3',
                   'isReady': true,
                 },
-                {
-                  'id': 'deepfilter2',
-                  'displayName': 'DeepFilter 2',
-                  'isReady': true,
-                },
                 {'id': 'dtln-rs', 'displayName': 'DTLN', 'isReady': false},
               ];
             case 'isTypeReady':
@@ -44,11 +39,10 @@ void main() {
 
   test('listDenoiseTypes parses native payload', () async {
     final types = await ProtonDenoiseEffects.instance.listDenoiseTypes();
-    expect(types, hasLength(4));
+    expect(types, hasLength(3));
     expect(types[0].type, DenoiseType.rnnoise);
     expect(types[1].type, DenoiseType.deepfilter);
-    expect(types[2].type, DenoiseType.deepfilter2);
-    expect(types[3].type, DenoiseType.dtlnRs);
+    expect(types[2].type, DenoiseType.dtlnRs);
   });
 
   test('attachDenoise sends trackId and type', () async {
