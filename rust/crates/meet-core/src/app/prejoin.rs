@@ -95,7 +95,7 @@ impl App {
             disconnect_ws = disconnect_ws,
             "refresh_waiting_room_guest_session"
         );
-        if (disconnect_ws) {
+        if disconnect_ws {
             if let Err(error) = self.disconnect_from_ws().await {
                 tracing::debug!(
                     meet_link_name,

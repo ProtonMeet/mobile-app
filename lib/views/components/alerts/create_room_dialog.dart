@@ -264,11 +264,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 if (_isUpdatingWaitingRoom) ...[
-                  CustomLoading(
-                    size: 16,
-                    strokeWidth: 2,
-                    color: context.colors.protonBlue,
-                  ),
+                  CustomLoading(size: 16, color: context.colors.protonBlue),
                   const SizedBox(width: 8),
                 ],
                 Text(

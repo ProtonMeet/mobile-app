@@ -250,7 +250,7 @@ class _DenoiseMicPreviewDebugScreenState
       await rtc.Helper.ensureAudioSession();
     }
     if (iOS || android) {
-      await Hardware.instance.setSpeakerphoneOn(true);
+      await AudioManager.instance.setSpeakerOutputPreferred(true);
     }
   }
 

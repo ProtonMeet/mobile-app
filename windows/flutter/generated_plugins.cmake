@@ -6,6 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   app_links
   connectivity_plus
   emoji_picker_flutter
+  file_selector_windows
   flutter_secure_storage_windows
   flutter_timezone
   flutter_webrtc
@@ -13,6 +14,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   local_auth_windows
   permission_handler_windows
   proton_denoise
+  proton_screen_recorder
   proton_video_effects
   share_plus
   url_launcher_windows

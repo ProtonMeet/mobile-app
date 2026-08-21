@@ -431,16 +431,20 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
                 await Hardware.instance.selectAudioOutput(oldAudioOutputDevice);
                 // workaround to refresh speakerphone state on the new device (need to set it to the opposite state first or it cannot load bluetooth device correctly), didn't find a proper way to fix this after few tries
                 // To-do: improve this
-                Hardware.instance.setSpeakerphoneOn(!state.isSpeakerPhone);
+                AudioManager.instance.setSpeakerOutputPreferred(
+                  !state.isSpeakerPhone,
+                );
                 await Future.delayed(
                   const Duration(milliseconds: 100),
                 ); // delay to ensure speakerphone state is applied
-                Hardware.instance.setSpeakerphoneOn(state.isSpeakerPhone);
-                await Future.delayed(
-                  const Duration(milliseconds: 100),
-                ); // delay to ensure speakerphone state is applied
+                AudioManager.instance.setSpeakerOutputPreferred(
+                  state.isSpeakerPhone,
+                );
               } else {
                 await Hardware.instance.selectAudioOutput(oldAudioOutputDevice);
+                AudioManager.instance.setSpeakerOutputPreferred(
+                  state.isSpeakerPhone,
+                );
               }
               l.logger.i(
                 '[RoomRejoin] Audio output device set: ${oldAudioOutputDevice.deviceId}',

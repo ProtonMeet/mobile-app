@@ -42,6 +42,7 @@ import 'package:meet/views/scenes/dashboard/upcoming/meet_upcoming_title.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 import 'package:meet/views/scenes/settings/app_settings.dart';
+import 'package:meet/views/scenes/settings/app_settings_bloc.dart';
 import 'package:meet/views/scenes/signin/auth_bloc.dart';
 import 'package:meet/views/scenes/signin/auth_event.dart';
 import 'package:meet/views/scenes/signin/auth_state.dart';
@@ -63,12 +64,14 @@ class DashboardPage extends StatefulWidget {
   const DashboardPage({
     required this.dashboardBloc,
     required this.authBloc,
+    required this.appSettingsBloc,
     super.key,
   });
   static const String routeName = '/dashboard';
 
   final DashboardBloc dashboardBloc;
   final AuthBloc authBloc;
+  final AppSettingsBloc appSettingsBloc;
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -454,6 +457,7 @@ class _DashboardPageState extends State<DashboardPage> {
       providers: [
         BlocProvider(create: (context) => widget.authBloc),
         BlocProvider(create: (context) => widget.dashboardBloc),
+        BlocProvider(create: (context) => widget.appSettingsBloc),
       ],
       child: BlocSelector<AuthBloc, AuthState, AuthState>(
         selector: (state) => state,
@@ -755,6 +759,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           onSettingsTap: () {
                             AppSettingsBottomSheet.show(
                               context,
+                              appSettingsBloc: widget.appSettingsBloc,
                               authBloc: widget.authBloc,
                               showWaitingRoom: widget.dashboardBloc
                                   .isMeetWaitingRoomEnabled(),

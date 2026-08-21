@@ -4,12 +4,14 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   emoji_picker_flutter
+  file_selector_linux
   flutter_secure_storage_linux
   flutter_timezone
   flutter_webrtc
   gtk
   livekit_client
   proton_denoise
+  proton_screen_recorder
   proton_video_effects
   url_launcher_linux
 )

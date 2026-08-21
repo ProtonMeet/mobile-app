@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
-import 'package:meet/helper/pre_meeting_waiting_room.dart';
 import 'package:meet/helper/audio_output_probe.dart';
 import 'package:meet/helper/denoise/denoise_audio_capture_options.dart';
 import 'package:meet/helper/extension/bridge_error.extension.dart';
@@ -12,6 +11,7 @@ import 'package:meet/helper/extension/local_video_track_extension.dart';
 import 'package:meet/helper/extension/media_device_list_ext.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/logger.dart' as l;
+import 'package:meet/helper/pre_meeting_waiting_room.dart';
 import 'package:meet/helper/sentry_waiting_room.dart';
 import 'package:meet/helper/user.agent.dart';
 import 'package:meet/managers/app.core.manager.dart';
@@ -166,7 +166,6 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         waitingRoomJoinRequestId: '',
         isJoinAuthenticating: false,
         shouldShowMeetingLockedBottomSheet: true,
-        error: null,
       ),
     );
     return true;
@@ -1595,7 +1594,6 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         isJoinAuthenticating: true,
         shouldNavigateToWaitingRoom: false,
         resetDisplayNameFieldError: true,
-        error: null,
         displayName: displayName,
       ),
     );

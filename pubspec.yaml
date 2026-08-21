@@ -130,6 +130,7 @@ dependencies:
     path: plugins/proton_denoise
   # File picker for audio processing example
   # file_picker: 10.2.0
+  file_selector: ^1.0.3
   # unleash proxy client for feature flags
   # google_mlkit_selfie_segmentation: ^0.10.0
   # livekit_noise_filter: ^0.2.1

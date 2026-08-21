@@ -9,6 +9,7 @@ import 'package:meet/helper/extension/bridge_error.extension.dart';
 import 'package:meet/helper/extension/bridge_session_check.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/frb_upcoming_meetings.dart';
+import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/extension/response_error.extension.dart';
 import 'package:meet/helper/external.url.dart';
 import 'package:meet/helper/logger.dart' as l;
@@ -30,6 +31,7 @@ import 'package:meet/rust/proton_meet/models/schedule_meeting.dart'
     as rust_schedule;
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/rust/proton_meet/models/user_state.dart';
+import 'package:meet/views/scenes/room/recording/recording_storage.dart';
 import 'package:meet/views/scenes/utils.dart' as utils;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:url_launcher/url_launcher.dart';
@@ -96,6 +98,10 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
         }
         return;
       }
+      // Desktop browser login callback — handled by DesktopWebLoginSheet.
+      if (uri.scheme == 'protonmeet' && uri.host == 'login') {
+        return;
+      }
       if (kDebugMode) {
         l.logger.i('onAppLink: ${uri.scheme}://${uri.host}${uri.path}-xxxxxxx');
       }
@@ -113,6 +119,43 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       l.logger.w('[DashboardBloc] Error checking MeetWaitingRoom flag: $e');
       return false;
     }
+  }
+
+  bool isMeetMeetingRecordingNativeEnabled() {
+    try {
+      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
+      return dataProviderManager.unleashDataProvider
+          .isMeetMeetingRecordingNative();
+    } catch (e) {
+      l.logger.w(
+        '[DashboardBloc] Error checking MeetingRecordingNative flag: $e',
+      );
+      return false;
+    }
+  }
+
+  void _reconcileNativeRecordingsAfterDashboardLoad() {
+    if (kIsWeb || !(iOS || macOS || android)) {
+      return;
+    }
+    if (!isMeetMeetingRecordingNativeEnabled()) {
+      return;
+    }
+
+    unawaited(
+      RecordingStorage()
+          .reconcileAll()
+          .then((saved) {
+            if (saved.isNotEmpty) {
+              l.logger.i(
+                '[RecordingStorage] dashboard reconcile: ${saved.length} saved file(s)',
+              );
+            }
+          })
+          .catchError((Object e) {
+            l.logger.w('[RecordingStorage] dashboard reconcile failed: $e');
+          }),
+    );
   }
 
   void _connectToMeetingEventLoop() {
@@ -183,6 +226,7 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       // Check force upgrade feature flag after unleash provider starts
       final appStateManager = ManagerFactory().get<AppStateManager>();
       appStateManager.checkForceUpgradeFeatureFlag();
+      _reconcileNativeRecordingsAfterDashboardLoad();
     } catch (e) {
       l.logger.e('Error InitDashboardEvent: $e');
     }

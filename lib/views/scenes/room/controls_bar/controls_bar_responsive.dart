@@ -43,6 +43,7 @@ class ResponsiveControlsBar extends StatefulWidget {
     this.buttonWidth = 56,
     this.buttonGap = 6,
     this.trailing,
+    this.recordingControls,
     this.cameraResolution,
     this.cameraMaxBitrate,
     this.currentCameraPosition,
@@ -61,6 +62,9 @@ class ResponsiveControlsBar extends StatefulWidget {
   /// Optional widget rendered as the second-to-last control, right before the
   /// leave button. Used e.g. for the "stop sharing" button while presenting.
   final Widget? trailing;
+
+  /// Optional local recording controls (host/admin only).
+  final Widget? recordingControls;
   final VideoResolution? cameraResolution;
   final VideoMaxBitrate? cameraMaxBitrate;
   final CameraPosition? currentCameraPosition;
@@ -351,6 +355,10 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
             final trailingReserve = widget.trailing != null
                 ? widget.buttonGap + widget.buttonWidth
                 : 0.0;
+            // Space reserved for recording controls (wider stop button).
+            final recordingReserve = widget.recordingControls != null
+                ? widget.buttonGap + 140.0
+                : 0.0;
             // Space reserved for the leave button (same size as a control button).
             final endReserve = widget.buttonGap + widget.buttonWidth;
             // Start with required: mic + video
@@ -369,6 +377,7 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
                   widget
                       .buttonWidth // this optional
                       +
+                  recordingReserve +
                   trailingReserve +
                   endReserve;
               if (used + need <= maxW) {
@@ -387,6 +396,7 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
                   used +
                           widget.buttonGap +
                           moreW +
+                          recordingReserve +
                           trailingReserve +
                           endReserve >
                       maxW) {
@@ -398,7 +408,7 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
 
             // Finally check (no overflow case): we must ensure Trailing + END fit even if we filled all optionals
             while (!hasOverflow &&
-                used + trailingReserve + endReserve > maxW &&
+                used + recordingReserve + trailingReserve + endReserve > maxW &&
                 visible.isNotEmpty) {
               used -= (widget.buttonGap + widget.buttonWidth);
               visible.removeLast();
@@ -454,6 +464,11 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
                     // Visible optionals
                     for (final a in visible) ...[
                       buildIcon(a),
+                      SizedBox(width: widget.buttonGap),
+                    ],
+
+                    if (widget.recordingControls != null) ...[
+                      widget.recordingControls!,
                       SizedBox(width: widget.buttonGap),
                     ],
 

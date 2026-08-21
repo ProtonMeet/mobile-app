@@ -218,6 +218,41 @@ class PreferencesManager implements Manager {
     await storage.write(PreferenceKeys.chatEmojiPickerCategory, categoryName);
   }
 
+  Future<String?> getRecordingSaveLocationKindName() async {
+    try {
+      final value = await storage.read(PreferenceKeys.recordingSaveLocationKind);
+      if (value is String && value.isNotEmpty) return value;
+      return null;
+    } catch (e) {
+      logger.e('error getting recording save location kind: $e');
+      return null;
+    }
+  }
+
+  Future<void> setRecordingSaveLocationKind(String kindName) async {
+    await storage.write(PreferenceKeys.recordingSaveLocationKind, kindName);
+  }
+
+  Future<String?> getRecordingSaveLocationCustomPath() async {
+    try {
+      final value =
+          await storage.read(PreferenceKeys.recordingSaveLocationCustomPath);
+      if (value is String && value.isNotEmpty) return value;
+      return null;
+    } catch (e) {
+      logger.e('error getting recording save location custom path: $e');
+      return null;
+    }
+  }
+
+  Future<void> setRecordingSaveLocationCustomPath(String? path) async {
+    if (path == null || path.isEmpty) {
+      await storage.delete(PreferenceKeys.recordingSaveLocationCustomPath);
+      return;
+    }
+    await storage.write(PreferenceKeys.recordingSaveLocationCustomPath, path);
+  }
+
   @override
   Future<void> reload() async {}
 

@@ -39,5 +39,14 @@
 	<string>This app needs access to microphone for audio calls</string>
 	<key>NSCameraUseContinuityCameraDeviceType</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>protonmeet</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

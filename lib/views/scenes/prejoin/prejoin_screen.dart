@@ -478,11 +478,7 @@ class PreJoinScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Align(
           alignment: Alignment.centerRight,
-          child: CustomLoading(
-            size: 16,
-            strokeWidth: 2,
-            color: context.colors.protonBlue,
-          ),
+          child: CustomLoading(size: 16, color: context.colors.protonBlue),
         ),
       );
     }
@@ -670,11 +666,7 @@ class PreJoinScreen extends StatelessWidget {
     return Column(
       children: [
         if (isHostNotStarted) ...[
-          CustomLoading(
-            size: 24,
-            strokeWidth: 2,
-            color: context.colors.textNorm,
-          ),
+          CustomLoading(size: 24, color: context.colors.textNorm),
           const SizedBox(height: 20),
           Text(
             context.local.waiting_room_host_not_started_title,

@@ -7,9 +7,9 @@ import '../errors.dart';
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `from_auth`, `refresh_auth_credential`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `MEET_AUTH_STORE_DART_CALLBACK`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `deref`, `fmt`, `fmt`, `initialize`
+// These functions are ignored because they are not marked as `pub`: `child_session_from_auth`, `clear_auth_persist_hook`, `from_auth`, `persist_auth_to_dart`, `register_auth_persist_hook`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `LAST_PERSISTED_AUTH`, `MEET_AUTH_STORE_DART_CALLBACK`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `deref`, `deref`, `eq`, `fmt`, `fmt`, `initialize`, `initialize`
 // These functions are ignored (category: IgnoreBecauseExplicitAttribute): `environment`, `get_auth`, `logout`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<ProtonMeetAuthStore>>

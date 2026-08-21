@@ -135,8 +135,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         ),
       );
       if (checkedUser != null) {
+        // After getUser succeeds the Proton HTTP client/session is ready for
+        // GET /core/v4/settings (see SentryTelemetry).
         await SentryTelemetry().refreshIfNeeded(appCoreManager);
         await ProtonUserSettings.instance.refreshIfNeeded(appCoreManager);
+      } else {
+        SentryTelemetry().resetForGuest();
       }
     } catch (e) {
       l.logger.e("Error initializing auth: $e");

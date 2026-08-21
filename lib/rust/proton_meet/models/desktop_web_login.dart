@@ -10,16 +10,21 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 class DesktopWebLoginStart {
   final String loginUrl;
+  final String browserRedirectState;
 
-  const DesktopWebLoginStart({required this.loginUrl});
+  const DesktopWebLoginStart({
+    required this.loginUrl,
+    required this.browserRedirectState,
+  });
 
   @override
-  int get hashCode => loginUrl.hashCode;
+  int get hashCode => loginUrl.hashCode ^ browserRedirectState.hashCode;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is DesktopWebLoginStart &&
           runtimeType == other.runtimeType &&
-          loginUrl == other.loginUrl;
+          loginUrl == other.loginUrl &&
+          browserRedirectState == other.browserRedirectState;
 }

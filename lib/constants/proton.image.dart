@@ -128,8 +128,8 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
   /// icons for session expired dialog
   final SvgGenImage iconSessionExpired;
 
-  /// icons for recording top banner
-  final SvgGenImage iconRecordingFilled;
+  /// icons for recording controls and dialogs
+  final SvgGenImage iconRecording;
 
   const ProtonImages({
     required this.protonMeetBarLogo,
@@ -216,7 +216,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
     required this.iconFeedbackStar,
     required this.iconFeedbackStarBorder,
     required this.iconSessionExpired,
-    required this.iconRecordingFilled,
+    required this.iconRecording,
   });
 
   @override
@@ -305,7 +305,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
     SvgGenImage? iconFeedbackStar,
     SvgGenImage? iconFeedbackStarBorder,
     SvgGenImage? iconSessionExpired,
-    SvgGenImage? iconRecordingFilled,
+    SvgGenImage? iconRecording,
   }) {
     return ProtonImages(
       protonMeetBarLogo: protonMeetBarLogo ?? this.protonMeetBarLogo,
@@ -401,7 +401,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
       iconFeedbackStarBorder:
           iconFeedbackStarBorder ?? this.iconFeedbackStarBorder,
       iconSessionExpired: iconSessionExpired ?? this.iconSessionExpired,
-      iconRecordingFilled: iconRecordingFilled ?? this.iconRecordingFilled,
+      iconRecording: iconRecording ?? this.iconRecording,
     );
   }
 
@@ -495,7 +495,7 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
       iconFeedbackStar: other.iconFeedbackStar,
       iconFeedbackStarBorder: other.iconFeedbackStarBorder,
       iconSessionExpired: other.iconSessionExpired,
-      iconRecordingFilled: other.iconRecordingFilled,
+      iconRecording: other.iconRecording,
     );
   }
 }
@@ -585,7 +585,7 @@ final lightImageExtension = ProtonImages(
   iconFeedbackStar: Assets.images.icon.icStarRateFilled,
   iconFeedbackStarBorder: Assets.images.icon.icStarRateEmpty,
   iconSessionExpired: Assets.images.icon.icSessionExpired,
-  iconRecordingFilled: Assets.images.icon.icRecordingFilled,
+  iconRecording: Assets.images.icon.icRecording,
 );
 
 final darkImageExtension = ProtonImages(
@@ -673,5 +673,5 @@ final darkImageExtension = ProtonImages(
   iconFeedbackStar: Assets.images.icon.icStarRateFilled,
   iconFeedbackStarBorder: Assets.images.icon.icStarRateEmpty,
   iconSessionExpired: Assets.images.icon.icSessionExpired,
-  iconRecordingFilled: Assets.images.icon.icRecordingFilled,
+  iconRecording: Assets.images.icon.icRecording,
 );

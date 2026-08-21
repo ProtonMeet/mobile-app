@@ -34,6 +34,14 @@ class PreferenceKeys {
   /// Last selected emoji category in the chat emoji picker (`Category.name`).
   static const String chatEmojiPickerCategory =
       "proton_meet_app_k_chat_emoji_picker_category";
+
+  /// RecordingSaveLocationKind.name (`appDocuments`, `downloads`, …).
+  static const String recordingSaveLocationKind =
+      "proton_meet_app_k_recording_save_location_kind";
+
+  /// Absolute path when [recordingSaveLocationKind] is `custom`.
+  static const String recordingSaveLocationCustomPath =
+      "proton_meet_app_k_recording_save_location_custom_path";
 }
 
 /// Keys that persist across logout and should only reset on reinstall

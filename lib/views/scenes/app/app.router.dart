@@ -13,6 +13,8 @@ import 'package:meet/views/scenes/dashboard/dashboard_page.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_bloc.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_page.dart';
+import 'package:meet/views/scenes/settings/app_settings_bloc.dart';
+import 'package:meet/views/scenes/settings/app_settings_event.dart';
 import 'package:meet/views/scenes/signin/auth_bloc.dart';
 import 'package:meet/views/scenes/signin/auth_event.dart';
 import 'package:meet/views/scenes/simulation/simulation.bloc.dart';
@@ -40,9 +42,13 @@ class AppRouter {
           serviceManager,
         )..add(AuthInitialized());
         final dashboardBloc = DashboardBloc()..add(InitDashboardEvent());
+        final appSettingsBloc = AppSettingsBloc()..add(AppSettingsInitialized());
         return MaterialPageRoute(
-          builder: (_) =>
-              DashboardPage(dashboardBloc: dashboardBloc, authBloc: authBloc),
+          builder: (_) => DashboardPage(
+            dashboardBloc: dashboardBloc,
+            authBloc: authBloc,
+            appSettingsBloc: appSettingsBloc,
+          ),
         );
       case PreJoinPage.routeName:
         final args = settings.arguments;

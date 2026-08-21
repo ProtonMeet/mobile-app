@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/external.url.dart';
@@ -7,6 +8,11 @@ import 'package:meet/l10n/generated/locale.dart';
 import 'package:meet/provider/locale.provider.dart';
 import 'package:meet/views/components/alerts/base_bottom_sheet_v2.dart';
 import 'package:meet/views/components/dropdown.button.v3.dart';
+import 'package:meet/views/scenes/room/recording/recording_save_location.dart';
+import 'package:meet/views/scenes/room/recording/recording_save_location_setting.dart';
+import 'package:meet/views/scenes/room/recording/saved_recordings_sheet.dart';
+import 'package:meet/views/scenes/settings/app_settings_bloc.dart';
+import 'package:meet/views/scenes/settings/app_settings_state.dart';
 import 'package:meet/views/scenes/settings/debug/debug_sections.dart';
 import 'package:meet/views/scenes/settings/global_waiting_room_setting.dart';
 import 'package:meet/views/scenes/settings/settings_action_item.dart';
@@ -18,6 +24,7 @@ class AppSettingsBottomSheet extends StatelessWidget {
   const AppSettingsBottomSheet({
     required this.maxHeight,
     required this.isLandscape,
+    required this.appSettingsBloc,
     this.authBloc,
     this.showWaitingRoom = false,
     super.key,
@@ -25,13 +32,15 @@ class AppSettingsBottomSheet extends StatelessWidget {
 
   final double maxHeight;
   final bool isLandscape;
+  final AppSettingsBloc appSettingsBloc;
   final AuthBloc? authBloc;
   final bool showWaitingRoom;
 
   static void show(
     BuildContext context, {
-    AuthBloc? authBloc,
+    required AppSettingsBloc appSettingsBloc,
     bool showWaitingRoom = false,
+    AuthBloc? authBloc,
   }) {
     showModalBottomSheet<void>(
       context: context,
@@ -45,6 +54,7 @@ class AppSettingsBottomSheet extends StatelessWidget {
         return AppSettingsBottomSheet(
           maxHeight: maxHeight,
           isLandscape: isLandscape,
+          appSettingsBloc: appSettingsBloc,
           authBloc: authBloc,
           showWaitingRoom: showWaitingRoom,
         );
@@ -65,76 +75,104 @@ class AppSettingsBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final isSignedIn = authBloc?.state.isSignedIn ?? false;
 
-    return BaseBottomSheetV2.withPinnedSliverScroll(
-      isLandscape: isLandscape,
-      modalOnBackdropTap: () => Navigator.of(context).maybePop(),
-      modalMaxHeight: maxHeight,
-      innerEnableHandleDragPassthrough: false,
-      outerEnableHandleDragPassthrough: true,
-      borderSideAlpha: 0.04,
-      sheetBackgroundColor: context.colors.interActionWeakMinor3.withValues(
-        alpha: 0.8,
-      ),
-      slivers: [
-        SliverToBoxAdapter(child: _buildTitle(context)),
-        SliverPadding(
-          padding: const EdgeInsets.only(bottom: 24),
-          sliver: SliverList(
-            delegate: SliverChildListDelegate([
-              SettingsSectionHeader(
-                title: context.local.settings_section_general,
-              ),
-              _buildLanguageCard(context),
-              if (isSignedIn && showWaitingRoom) ...[
-                const SizedBox(height: 16),
-                const GlobalWaitingRoomSettingSection(),
-              ],
-              const SizedBox(height: 16),
-              SettingsSectionHeader(
-                title: context.local.settings_section_support,
-              ),
-              if (isSignedIn) ...[
-                SettingsActionItem(
-                  title: context.local.report_a_problem,
-                  onTap: () => _onReportProblem(context),
-                  isFirst: true,
-                  suffix: Icon(
-                    Icons.bug_report_outlined,
-                    color: context.colors.textNorm.withValues(alpha: 0.5),
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(height: 1),
-              ],
-              SettingsActionItem(
-                title: context.local.knowledge_base,
-                onTap: () => ExternalUrl.shared.launchProtonHelpCenter(),
-                isFirst: !isSignedIn,
-                isLast: true,
-              ),
-              const SizedBox(height: 16),
-              SettingsSectionHeader(
-                title: context.local.settings_section_legal,
-              ),
-              SettingsActionItem(
-                title: context.local.privacy_policy,
-                onTap: () => ExternalUrl.shared.lanuchPrivacy(),
-                isFirst: true,
-              ),
-              const SizedBox(height: 1),
-              SettingsActionItem(
-                title: context.local.terms_and_conditions,
-                onTap: () => ExternalUrl.shared.lanuchTerms(),
-                isLast: true,
-              ),
-
-              if (kDebugMode) ...[
-                ...AppSettingsDebugSection.items(context, authBloc),
-              ],
-            ]),
+    return BlocBuilder<AppSettingsBloc, AppSettingsState>(
+      bloc: appSettingsBloc,
+      builder: (context, settingsState) {
+        return BaseBottomSheetV2.withPinnedSliverScroll(
+          isLandscape: isLandscape,
+          modalOnBackdropTap: () => Navigator.of(context).maybePop(),
+          modalMaxHeight: maxHeight,
+          innerEnableHandleDragPassthrough: false,
+          outerEnableHandleDragPassthrough: true,
+          borderSideAlpha: 0.04,
+          sheetBackgroundColor: context.colors.interActionWeakMinor3.withValues(
+            alpha: 0.8,
           ),
-        ),
-      ],
+          slivers: [
+            SliverToBoxAdapter(child: _buildTitle(context)),
+            SliverPadding(
+              padding: const EdgeInsets.only(bottom: 24),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  SettingsSectionHeader(
+                    title: context.local.settings_section_general,
+                  ),
+                  _buildLanguageCard(context),
+                  if (isSignedIn && showWaitingRoom) ...[
+                    const SizedBox(height: 16),
+                    const GlobalWaitingRoomSettingSection(),
+                  ],
+                  const SizedBox(height: 16),
+                  SettingsSectionHeader(
+                    title: context.local.settings_section_support,
+                  ),
+                  if (isSignedIn) ...[
+                    SettingsActionItem(
+                      title: context.local.report_a_problem,
+                      onTap: () => _onReportProblem(context),
+                      isFirst: true,
+                      suffix: Icon(
+                        Icons.bug_report_outlined,
+                        color: context.colors.textNorm.withValues(alpha: 0.5),
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                  ],
+                  SettingsActionItem(
+                    title: context.local.knowledge_base,
+                    onTap: () => ExternalUrl.shared.launchProtonHelpCenter(),
+                    isFirst: !isSignedIn,
+                    isLast: !settingsState.showRecordingSettings,
+                  ),
+                  if (settingsState.showRecordingSettings) ...[
+                    const SizedBox(height: 16),
+                    SettingsSectionHeader(
+                      title: context.local.recording_save_location_section,
+                    ),
+                    if (RecordingSaveLocationConfig
+                        .supportsSaveLocationPicker) ...[
+                      const RecordingSaveLocationAppSettingsCard(),
+                      const SizedBox(height: 8),
+                    ],
+                    SettingsActionItem(
+                      title: context.local.saved_recordings_title,
+                      onTap: () => SavedRecordingsSheet.show(context),
+                      isFirst: !RecordingSaveLocationConfig
+                          .supportsSaveLocationPicker,
+                      isLast: true,
+                      suffix: Icon(
+                        Icons.video_library_outlined,
+                        color: context.colors.textNorm.withValues(alpha: 0.5),
+                        size: 22,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  SettingsSectionHeader(
+                    title: context.local.settings_section_legal,
+                  ),
+                  SettingsActionItem(
+                    title: context.local.privacy_policy,
+                    onTap: () => ExternalUrl.shared.lanuchPrivacy(),
+                    isFirst: true,
+                  ),
+                  const SizedBox(height: 1),
+                  SettingsActionItem(
+                    title: context.local.terms_and_conditions,
+                    onTap: () => ExternalUrl.shared.lanuchTerms(),
+                    isLast: true,
+                  ),
+
+                  if (kDebugMode) ...[
+                    ...AppSettingsDebugSection.items(context, authBloc),
+                  ],
+                ]),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

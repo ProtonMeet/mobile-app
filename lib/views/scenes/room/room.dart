@@ -17,8 +17,8 @@ import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
-import 'package:meet/helper/global_notification.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
+import 'package:meet/helper/global_notification.dart';
 import 'package:meet/helper/local_toast.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/user.agent.dart';
@@ -48,10 +48,10 @@ import 'package:meet/rust/proton_meet/user_config.dart';
 import 'package:meet/views/components/alerts/media_permission_dialog.dart';
 import 'package:meet/views/components/alerts/meeting_will_end_dialog.dart';
 import 'package:meet/views/components/alerts/session_expired_dialog.dart';
-import 'package:meet/views/components/test_id.dart';
 import 'package:meet/views/components/bottom.sheets/leave_room_bottom_sheet.dart';
 import 'package:meet/views/components/custom.tooltip.dart';
 import 'package:meet/views/components/loading_view.dart';
+import 'package:meet/views/components/test_id.dart';
 import 'package:meet/views/scenes/app/app.router.dart';
 import 'package:meet/views/scenes/core/coordinator.dart';
 import 'package:meet/views/scenes/core/responsive_v2.dart';
@@ -87,6 +87,8 @@ import 'envelope_sender.dart';
 import 'info/meeting_info_panel.dart';
 import 'message_topic.dart';
 import 'pip_view.dart';
+import 'recording/meeting_recorder.dart';
+import 'recording/recording_controls.dart';
 import 'recording/recording_status_handler.dart';
 import 'recording/recording_top_banner.dart';
 import 'room_bloc.dart';
@@ -152,7 +154,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   /// Keeps [ChatController.isChatOpen] aligned with the visible chat panel so
   /// unread badge / seen state stay correct (replaces legacy lastOpenChatTime).
   void _syncChatOpenWithSidePanel() {
-    _chatController.setChatOpen(_isSidePanelOpen(RoomSidePanel.chat));
+    _chatController.setChatOpen(open: _isSidePanelOpen(RoomSidePanel.chat));
   }
 
   void _closeSidePanel() {
@@ -259,6 +261,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   _pendingRecordingStatuses = [];
   Timer? _pendingRecordingStatusTimer;
 
+  late final MeetingRecorder? _meetingRecorder;
+
   final JustTheController _stopSharingTooltipController = JustTheController();
 
   static const EdgeInsets _screenSharePanelPadding = EdgeInsets.all(4);
@@ -288,6 +292,42 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           prefetchedMeetingInfo: widget.prefetchedMeetingInfo,
         ),
       );
+
+    if (_bloc.isMeetMeetingRecordingNativeEnabled()) {
+      _meetingRecorder = MeetingRecorder(
+        room: widget.room,
+        bloc: _bloc,
+        publishRecordingStatus: _publishRecordingStatus,
+        onError: (message) {
+          if (mounted) {
+            LocalToast.showToastification(
+              context,
+              context.local.error,
+              message,
+            );
+          }
+        },
+        onRecoverableRecordings: (sessions) {
+          if (!mounted || sessions.isEmpty) return;
+          LocalToast.showToastification(
+            context,
+            context.local.recording_in_progress,
+            context.local.recording_recovered_message,
+          );
+        },
+        onRecordingInterrupted: () {
+          if (!mounted) return;
+          LocalToast.showToastification(
+            context,
+            context.local.recording_in_progress,
+            context.local.recording_interrupted_background,
+          );
+        },
+      );
+      unawaited(_meetingRecorder!.init());
+    } else {
+      _meetingRecorder = null;
+    }
 
     if (widget.meetInfo.isLocked) {
       setState(() {
@@ -408,6 +448,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     _pendingRecordingStatusTimer?.cancel();
     _pendingRecordingStatusTimer = null;
     _pendingRecordingStatuses.clear();
+
+    unawaited(_meetingRecorder?.dispose());
 
     // Dispose call activity action channel
     //TODO(fix): move to room_bloc.dart
@@ -580,6 +622,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         _bloc.isPictureInPictureFeatureEnabled() &&
         _bloc.state.isPipMode) {
       _bloc.add(ExitPipMode());
+    }
+
+    if ((iOS || android) &&
+        state == AppLifecycleState.resumed &&
+        _meetingRecorder != null) {
+      unawaited(_meetingRecorder.syncNativeRecordingState());
     }
   }
 
@@ -1182,6 +1230,39 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
+  /// Publishes MLS-encrypted recording status to peers (web-compatible envelope).
+  Future<void> _publishRecordingStatus(
+    RecordingStatus status, {
+    String? targetParticipantIdentity,
+  }) async {
+    final room = _bloc.state.room;
+    final identity = room.localParticipant?.identity;
+    if (identity == null) {
+      l.logger.w(
+        '[RoomPage] Cannot publish recording status: localParticipant is null',
+      );
+      return;
+    }
+
+    final message = jsonEncode({'status': status.name});
+    final encryptedMessage = await encryptMessage(message);
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final envelope = jsonEncode({
+      'type': PublishableDataType.recordingStatus.value,
+      'id': '$identity-$now',
+      'message': encryptedMessage,
+      'timestamp': now,
+    });
+
+    await room.localParticipant!.publishData(
+      utf8.encode(envelope),
+      reliable: true,
+      destinationIdentities: targetParticipantIdentity != null
+          ? [targetParticipantIdentity]
+          : null,
+    );
+  }
+
   /// Mirrors pending [RoomState] chat outputs into [ChatController], then clears
   /// the bloc buffers so they do not accumulate across the meeting.
   void _syncChatFromBloc(RoomState state) {
@@ -1361,6 +1442,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         '[RoomPage] MimiV1 sender mismatch: livekit=$liveKitId '
         'mls=${decoded.senderParticipantId}',
       );
+      return;
+    }
+
+    if (!mounted || !context.mounted) {
+      l.logger.w('[RoomPage] Cannot handle MimiV1 chat: not mounted');
       return;
     }
 
@@ -1995,6 +2081,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     String? leftMeetingBottomSheetContent,
   }) async {
     _isLeavingByUser = true;
+
+    if (_meetingRecorder?.isActive ?? false) {
+      await _meetingRecorder!.finishRecording();
+    }
+
     final meetingLink = widget.meetLink;
     final isHost = _bloc.state.isHost;
     final isPaidUser = _bloc.state.isPaidUser;
@@ -2639,7 +2730,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           // on the *edge*.
           BlocListener<RoomBloc, RoomState>(
             listenWhen: (prev, curr) =>
-                !prev.isRecordingInProgress && curr.isRecordingInProgress,
+                !prev.isRecordingInProgress &&
+                curr.isRecordingInProgress &&
+                !curr.isLocalParticipantRecording,
             listener: (context, state) {
               context.showRecordingStatusChangedDialog(
                 onLeaveMeeting: () async {
@@ -3111,6 +3204,32 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
+  Widget? _buildRecordingControls(RoomState state) {
+    if (!_bloc.isMeetMeetingRecordingNativeEnabled()) {
+      return null;
+    }
+
+    if (!state.isLocalParticipantAdminOrHost) {
+      return null;
+    }
+
+    VoidCallback? upsellTap;
+    if (!state.isPaidUser) {
+      upsellTap = () {
+        LocalToast.showToastification(
+          context,
+          context.local.start_recording,
+          context.local.recording_paid_feature,
+        );
+      };
+    }
+
+    return RecordingControls(
+      meetingRecorder: _meetingRecorder!,
+      showUpsellOnTap: state.isPaidUser ? null : upsellTap,
+    );
+  }
+
   Widget buildControlsBar() {
     return BlocSelector<RoomBloc, RoomState, RoomState>(
       selector: (state) {
@@ -3149,6 +3268,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         currentCameraPosition: state.currentCameraPosition,
         applyCameraBackgroundBlur: state.cameraBackgroundBlurEnabled,
         applyAudioDenoise: state.audioDenoiseEnabled,
+        recordingControls: _buildRecordingControls(state),
         trailing: state.isLocalScreenSharing
             ? CustomTooltip(
                 controller: _stopSharingTooltipController,
@@ -3726,6 +3846,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                       _bloc.add(SetAudioDenoiseType(type: type));
                     }
                   : null,
+              showRecordingSaveLocation:
+                  isHost && _bloc.isMeetMeetingRecordingNativeEnabled(),
               onHideSelfViewChanged: ({required bool value}) {
                 _bloc.add(SetHideSelfView(hideSelfView: value));
                 setState(() {

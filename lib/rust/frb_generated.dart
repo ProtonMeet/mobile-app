@@ -7280,9 +7280,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   DesktopWebLoginStart dco_decode_desktop_web_login_start(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 1)
-      throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
-    return DesktopWebLoginStart(loginUrl: dco_decode_String(arr[0]));
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return DesktopWebLoginStart(
+      loginUrl: dco_decode_String(arr[0]),
+      browserRedirectState: dco_decode_String(arr[1]),
+    );
   }
 
   @protected
@@ -8514,7 +8517,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_loginUrl = sse_decode_String(deserializer);
-    return DesktopWebLoginStart(loginUrl: var_loginUrl);
+    var var_browserRedirectState = sse_decode_String(deserializer);
+    return DesktopWebLoginStart(
+      loginUrl: var_loginUrl,
+      browserRedirectState: var_browserRedirectState,
+    );
   }
 
   @protected
@@ -10140,6 +10147,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.loginUrl, serializer);
+    sse_encode_String(self.browserRedirectState, serializer);
   }
 
   @protected

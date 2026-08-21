@@ -712,3 +712,18 @@ class ParticipantRecordingStopped extends RoomBlocEvent {
   @override
   List<Object?> get props => [identity];
 }
+
+/// Start the local recording duration timer (1 Hz).
+class StartLocalRecordingTimer extends RoomBlocEvent {
+  const StartLocalRecordingTimer();
+}
+
+/// Stop and reset the local recording duration timer.
+class StopLocalRecordingTimer extends RoomBlocEvent {
+  const StopLocalRecordingTimer();
+}
+
+/// Tick the local recording duration counter.
+class LocalRecordingTimerTick extends RoomBlocEvent {
+  const LocalRecordingTimerTick();
+}

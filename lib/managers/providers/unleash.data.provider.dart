@@ -36,6 +36,9 @@ enum UnleashFeature {
   meetFeedbackOnSkip,
   meetInAppStoreReview,
   meetMultipleRecording,
+
+  /// Native local meeting recording (ReplayKit / ScreenCaptureKit controls).
+  meetMeetingRecordingNative,
   meetInAppPurchase,
 
   /// Experimental: in app update (currently only support android)
@@ -121,6 +124,8 @@ extension UnleashFeatureExt on UnleashFeature {
         return "MeetNewSwitchJoinType";
       case UnleashFeature.meetMultipleRecording:
         return "MeetMultipleRecording";
+      case UnleashFeature.meetMeetingRecordingNative:
+        return "MeetingRecordingNative";
       case UnleashFeature.meetMobileInAppUpdate:
         return "MeetMobileInAppUpdate";
       case UnleashFeature.meetCameraBackgroundBlur:
@@ -389,6 +394,10 @@ class UnleashDataProvider extends DataProvider {
 
   bool isMeetMultipleRecording() =>
       isFeatureEnabled(UnleashFeature.meetMultipleRecording);
+
+  /// Native local recording controls (host/admin start/stop in room UI).
+  bool isMeetMeetingRecordingNative() =>
+      isFeatureEnabled(UnleashFeature.meetMeetingRecordingNative);
 
   /// Native subscription / upgrade (StoreKit / Play Billing) via method channel.
   bool isMeetInAppPurchaseEnabled() =>
