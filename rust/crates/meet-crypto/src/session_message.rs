@@ -47,7 +47,7 @@ pub fn encrypt_message(message: &str, base64_session_key: &str, aad: &str) -> Re
         aad: aad.as_bytes(),
     };
     let ciphertext = cipher
-        .encrypt(&nonce, payload)
+        .encrypt(nonce, payload)
         .map_err(|e| CryptoError::FailedToEncryptMessage(e.to_string()))?;
 
     let mut encoded = Vec::with_capacity(AES_GCM_256_IV_SIZE + ciphertext.len());

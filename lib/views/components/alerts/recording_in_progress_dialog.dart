@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:meet/constants/constants.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
+import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/views/components/close_button_v1.dart';
 
 typedef OnLeaveMeeting = void Function();
@@ -86,11 +87,7 @@ class RecordingInProgressDialog extends StatelessWidget {
                           height: 64,
                           clipBehavior: Clip.antiAlias,
                           decoration: const BoxDecoration(),
-                          child: context.images.iconRecordingFilled.svg(
-                            width: 64,
-                            height: 64,
-                            fit: BoxFit.fitWidth,
-                          ),
+                          child: context.images.iconRecording.svg64(),
                         ),
                       ),
 

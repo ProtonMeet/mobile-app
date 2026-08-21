@@ -55,6 +55,7 @@ impl DesktopWebLogin {
             .map_err(|e| BridgeError::Login(e.to_string()))?;
         Ok(DesktopWebLoginStart {
             login_url: start.login_url,
+            browser_redirect_state: start.browser_redirect_state,
         })
     }
 

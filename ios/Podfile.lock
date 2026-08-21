@@ -1,26 +1,20 @@
 PODS:
   - Flutter (1.0.0)
-  - proton_screen_recorder (0.0.1):
-    - Flutter
   - rust_builder (0.0.1):
     - Flutter
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
-  - proton_screen_recorder (from `.symlinks/plugins/proton_screen_recorder/ios`)
   - rust_builder (from `.symlinks/plugins/rust_builder/ios`)
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
-  proton_screen_recorder:
-    :path: ".symlinks/plugins/proton_screen_recorder/ios"
   rust_builder:
     :path: ".symlinks/plugins/rust_builder/ios"
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  proton_screen_recorder: 86a2cace4e5522337dfdc1c6be6ad8c2d848e0ee
   rust_builder: e5e181121263dc90680706deeeb4621278fa7d17
 
 PODFILE CHECKSUM: d1c20b3ad7f7d25b9a0f363b8951a93ec8fba663

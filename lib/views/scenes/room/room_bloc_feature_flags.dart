@@ -92,6 +92,21 @@ mixin RoomFeatureFlagsHandlers on Bloc<RoomBlocEvent, RoomState> {
     }
   }
 
+  /// Native local recording (controls bar start/stop). Server egress banner
+  /// and peer recording status are unaffected.
+  bool isMeetMeetingRecordingNativeEnabled() {
+    try {
+      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
+      return dataProviderManager.unleashDataProvider
+          .isMeetMeetingRecordingNative();
+    } catch (e) {
+      l.logger.w(
+        '[RoomBloc] Error checking MeetingRecordingNative flag: $e',
+      );
+      return false;
+    }
+  }
+
   /// Check if native mic denoise is enabled via feature flag.
   bool isMeetAudioDenoiseEnabled() {
     try {

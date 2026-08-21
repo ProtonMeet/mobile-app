@@ -96,7 +96,7 @@ class ChatController extends ChangeNotifier {
     if (identity.isNotEmpty) localIdentity = identity;
   }
 
-  void setChatOpen(bool open) {
+  void setChatOpen({required bool open}) {
     if (isChatOpen == open) return;
     isChatOpen = open;
     if (open) {
@@ -247,7 +247,7 @@ class ChatController extends ChangeNotifier {
     }
   }
 
-  void setThreadExpanded(String rootId, bool expanded) {
+  void setThreadExpanded(String rootId, {required bool expanded}) {
     _setThreadExpanded(rootId, expanded: expanded);
   }
 

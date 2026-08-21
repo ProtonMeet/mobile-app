@@ -1,5 +1,7 @@
+import 'package:meet/helper/extension/bridge_error_session.extension.dart';
 import 'package:meet/helper/logger.dart';
 import 'package:meet/managers/app.core.manager.dart';
+import 'package:meet/rust/errors.dart';
 
 /// Gates Sentry uploads on Proton account `UserSettings.Telemetry` (`GET /core/v4/settings`).
 ///
@@ -46,13 +48,22 @@ class SentryTelemetry {
       _initialized = true;
       logger.i('Proton telemetry setting loaded: enabled=$_telemetryEnabled');
     } catch (e, st) {
-      logger.w(
-        'Failed to load Proton telemetry setting; blocking Sentry',
-        error: e,
-        stackTrace: st,
-      );
       _telemetryEnabled = false;
       _initialized = true;
+      if (e is BridgeError) {
+        logger.w(
+          'Failed to load Proton telemetry setting; blocking Sentry',
+          error: e.apiResponseError,
+          stackTrace: st,
+        );
+        return;
+      } else {
+        logger.w(
+          'Failed to load Proton telemetry setting; blocking Sentry',
+          error: e,
+          stackTrace: st,
+        );
+      }
     }
   }
 }

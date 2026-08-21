@@ -72,6 +72,11 @@ impl DesktopWebLoginManager {
     }
 
     pub async fn poll(&mut self) -> Result<DesktopWebLoginPoll, MeetCoreError> {
+        if self.pending.is_none() {
+            // Another poll call already holds the pending state, or login was cancelled.
+            return Ok(DesktopWebLoginPoll::Pending);
+        }
+
         let pending = self
             .pending
             .take()

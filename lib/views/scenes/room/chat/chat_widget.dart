@@ -397,7 +397,7 @@ class _ChatWidgetState extends State<ChatWidget> {
       (thread) => thread.root.id == root.id && thread.hasReplies,
     );
     if (current != null && !threadHasReplies && !current.hasReactions) {
-      _controller.setThreadExpanded(root.id, false);
+      _controller.setThreadExpanded(root.id, expanded: false);
     }
     _replyFocus(root.id).unfocus();
   }
@@ -891,7 +891,8 @@ class _ChatWidgetState extends State<ChatWidget> {
         vertical: _ChatWidgetConstants.spacingSmall,
       ),
       child: InkWell(
-        onTap: () => _controller.setThreadExpanded(root.id, !expanded),
+        onTap: () =>
+            _controller.setThreadExpanded(root.id, expanded: !expanded),
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 2),
@@ -1462,7 +1463,10 @@ class _ChatWidgetState extends State<ChatWidget> {
                           label: context.local.chat_reply,
                           onTap: () {
                             Navigator.of(sheetContext).pop();
-                            _controller.setThreadExpanded(message.id, true);
+                            _controller.setThreadExpanded(
+                              message.id,
+                              expanded: true,
+                            );
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               _replyFocus(message.id).requestFocus();
                             });

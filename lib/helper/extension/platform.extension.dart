@@ -8,6 +8,8 @@ bool get android => defaultTargetPlatform == TargetPlatform.android;
 bool get iOS => defaultTargetPlatform == TargetPlatform.iOS;
 bool get macOS => defaultTargetPlatform == TargetPlatform.macOS;
 bool get linux => defaultTargetPlatform == TargetPlatform.linux;
+bool get windows => defaultTargetPlatform == TargetPlatform.windows;
+bool get web => kIsWeb;
 
 bool isM1Simulator() {
   if (Platform.isIOS) {

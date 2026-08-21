@@ -118,7 +118,7 @@ void captureWaitingRoomFailureToSentry({
 
         scope.setContexts('waiting_room_details', {
           'flow': flow,
-          if (phase != null) 'phase': phase,
+          'phase': ?phase,
           'error_runtime_type': error.runtimeType.toString(),
           'error_message': extractErrorMessage(error),
           if (requestId != null && requestId.isNotEmpty)

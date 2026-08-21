@@ -8266,8 +8266,10 @@ impl SseDecode for crate::proton_meet::models::desktop_web_login::DesktopWebLogi
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_loginUrl = <String>::sse_decode(deserializer);
+        let mut var_browserRedirectState = <String>::sse_decode(deserializer);
         return crate::proton_meet::models::desktop_web_login::DesktopWebLoginStart {
             login_url: var_loginUrl,
+            browser_redirect_state: var_browserRedirectState,
         };
     }
 }
@@ -9835,7 +9837,11 @@ impl flutter_rust_bridge::IntoDart
     for crate::proton_meet::models::desktop_web_login::DesktopWebLoginStart
 {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
-        [self.login_url.into_into_dart().into_dart()].into_dart()
+        [
+            self.login_url.into_into_dart().into_dart(),
+            self.browser_redirect_state.into_into_dart().into_dart(),
+        ]
+        .into_dart()
     }
 }
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
@@ -11193,6 +11199,7 @@ impl SseEncode for crate::proton_meet::models::desktop_web_login::DesktopWebLogi
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.login_url, serializer);
+        <String>::sse_encode(self.browser_redirect_state, serializer);
     }
 }
 

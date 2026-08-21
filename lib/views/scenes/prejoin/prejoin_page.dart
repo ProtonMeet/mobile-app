@@ -451,11 +451,7 @@ class _PreJoinLoadingTitle extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          CustomLoading(
-            size: 16,
-            strokeWidth: 2,
-            color: context.colors.protonBlue,
-          ),
+          CustomLoading(size: 16, color: context.colors.protonBlue),
         ],
       ),
     );

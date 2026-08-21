@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/logger.dart';
 import 'package:meet/managers/manager.dart';
 
@@ -15,9 +16,7 @@ class LocalAuthManager implements Manager {
   String? userID;
 
   static bool isPlatformSupported() {
-    if (defaultTargetPlatform == TargetPlatform.android ||
-        defaultTargetPlatform == TargetPlatform.iOS ||
-        defaultTargetPlatform == TargetPlatform.windows) {
+    if (android || iOS || windows) {
       return true;
     }
     logger.i(

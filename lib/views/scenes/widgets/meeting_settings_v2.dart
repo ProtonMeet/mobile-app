@@ -4,6 +4,9 @@ import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/local_toast.dart';
+import 'package:meet/views/scenes/room/recording/recording_save_location.dart';
+import 'package:meet/views/scenes/room/recording/recording_save_location_setting.dart';
+import 'package:meet/views/scenes/room/recording/saved_recordings_sheet.dart';
 import 'package:meet/views/scenes/room/side_panel_widget.dart';
 import 'package:proton_denoise/proton_denoise.dart';
 
@@ -38,6 +41,7 @@ class MeetingSettingsV2 extends StatefulWidget {
   final List<DenoiseTypeUiOption> audioDenoiseTypeOptions;
   final DenoiseType? selectedAudioDenoiseType;
   final void Function(DenoiseType type)? onAudioDenoiseTypeSelected;
+  final bool showRecordingSaveLocation;
 
   const MeetingSettingsV2({
     required this.hideSelfView,
@@ -66,6 +70,7 @@ class MeetingSettingsV2 extends StatefulWidget {
     this.audioDenoiseTypeOptions = const [],
     this.selectedAudioDenoiseType,
     this.onAudioDenoiseTypeSelected,
+    this.showRecordingSaveLocation = false,
     super.key,
   });
 
@@ -223,6 +228,20 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
                         }
                       : null,
                 ),
+            ],
+          ),
+        ],
+        if (widget.showRecordingSaveLocation) ...[
+          const SizedBox(height: 6),
+          _buildSection(
+            context,
+            title: context.local.recording_save_location_section,
+            children: [
+              if (RecordingSaveLocationConfig.supportsSaveLocationPicker) ...[
+                const RecordingSaveLocationSettingRow(),
+                const SizedBox(height: 12),
+              ],
+              const SavedRecordingsSettingRow(),
             ],
           ),
         ],

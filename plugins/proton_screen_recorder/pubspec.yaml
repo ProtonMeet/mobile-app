@@ -1,5 +1,5 @@
 name: proton_screen_recorder
-description: A Flutter plugin for screen recording on iOS and macOS
+description: Screen recording for Proton Meet on iOS, macOS (ReplayKit), and Android (MediaProjection).
 version: 0.0.1
 homepage: https://github.com/ProtonMail/ProtonMeet
 
@@ -33,10 +33,17 @@ flutter:
   # adding or updating assets for this project.
   plugin:
     platforms:
+      android:
+        package: com.proton.proton_screen_recorder
+        pluginClass: ProtonScreenRecorderPlugin
       ios:
+        pluginClass: ProtonScreenRecorderPlugin
+      linux:
         pluginClass: ProtonScreenRecorderPlugin
       macos:
         pluginClass: ProtonScreenRecorderPlugin
+      windows:
+        pluginClass: ProtonScreenRecorderPluginCApi
 
   # To add assets to your plugin package, add an assets section, like this:
   # assets:

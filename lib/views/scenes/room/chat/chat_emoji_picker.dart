@@ -138,10 +138,8 @@ class _ChatEmojiPickerState extends State<_ChatEmojiPicker> {
     return Config(
       height: maxHeight,
       locale: Localizations.localeOf(context),
-      checkPlatformCompatibility: true,
       emojiViewConfig: EmojiViewConfig(
         columns: 7,
-        emojiSizeMax: 28,
         backgroundColor: background,
         verticalSpacing: 8,
         horizontalSpacing: 8,
@@ -165,7 +163,6 @@ class _ChatEmojiPickerState extends State<_ChatEmojiPicker> {
       ),
       categoryViewConfig: CategoryViewConfig(
         initCategory: _pickerController.currentCategory,
-        recentTabBehavior: RecentTabBehavior.RECENT,
         backgroundColor: background,
         indicatorColor: context.colors.textNorm,
         iconColor: context.colors.textWeak,
@@ -550,12 +547,10 @@ class _ChatCategoryEmojiGridState extends State<_ChatCategoryEmojiGrid>
     }
 
     return GridView.builder(
-      scrollDirection: Axis.vertical,
       controller: _scrollController,
       primary: false,
       padding: widget.config.emojiViewConfig.gridPadding,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        childAspectRatio: 1,
         crossAxisCount: widget.config.emojiViewConfig.columns,
         mainAxisSpacing: widget.config.emojiViewConfig.verticalSpacing,
         crossAxisSpacing: widget.config.emojiViewConfig.horizontalSpacing,
@@ -641,7 +636,6 @@ class _ChatEmojiSearchGridState extends State<_ChatEmojiSearchGrid>
           child: GridView.builder(
             padding: widget.config.emojiViewConfig.gridPadding,
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              childAspectRatio: 1,
               crossAxisCount: widget.config.emojiViewConfig.columns,
               mainAxisSpacing: widget.config.emojiViewConfig.verticalSpacing,
               crossAxisSpacing: widget.config.emojiViewConfig.horizontalSpacing,

@@ -85,6 +85,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
 
   // Auto fullscreen timer for screenshare
   Timer? _autoFullScreenTimer;
+  Timer? _localRecordingTimer;
 
   /// Room manager for handling room connection logic
   RoomManager? roomManager;
@@ -177,6 +178,8 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     cancelWaitingRoomExpirationTimer();
     cancelWaitingRoomDisplayNameRetryTimer();
     _cancelFullScreenTimer();
+    _localRecordingTimer?.cancel();
+    _localRecordingTimer = null;
     _deviceChangeSub?.cancel();
     _audioSessionDevicesSub?.cancel();
     disposeReconnectionListeners();
@@ -303,6 +306,9 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
 
     on<ParticipantRecordingStarted>(_onParticipantRecordingStarted);
     on<ParticipantRecordingStopped>(_onParticipantRecordingStopped);
+    on<StartLocalRecordingTimer>(_onStartLocalRecordingTimer);
+    on<StopLocalRecordingTimer>(_onStopLocalRecordingTimer);
+    on<LocalRecordingTimerTick>(_onLocalRecordingTimerTick);
     registerWaitingRoomHandlers();
 
     /// register system message handlers
@@ -379,6 +385,39 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
         .where((id) => id != event.identity)
         .toList(growable: false);
     emit(state.copyWith(participantsRecording: next));
+  }
+
+  void _onStartLocalRecordingTimer(
+    StartLocalRecordingTimer event,
+    Emitter<RoomState> emit,
+  ) {
+    _localRecordingTimer?.cancel();
+    emit(state.copyWith(localRecordingElapsedSeconds: 0));
+    _localRecordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!isClosed) {
+        add(const LocalRecordingTimerTick());
+      }
+    });
+  }
+
+  void _onStopLocalRecordingTimer(
+    StopLocalRecordingTimer event,
+    Emitter<RoomState> emit,
+  ) {
+    _localRecordingTimer?.cancel();
+    _localRecordingTimer = null;
+    emit(state.copyWith(localRecordingElapsedSeconds: 0));
+  }
+
+  void _onLocalRecordingTimerTick(
+    LocalRecordingTimerTick event,
+    Emitter<RoomState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        localRecordingElapsedSeconds: state.localRecordingElapsedSeconds + 1,
+      ),
+    );
   }
 
   void _onSetParticipantRaisedHand(
@@ -1119,7 +1158,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       final currentState = state.isSpeakerPhone;
       final newState = !currentState;
 
-      await Hardware.instance.setSpeakerphoneOn(newState);
+      await AudioManager.instance.setSpeakerOutputPreferred(newState);
       emit(state.copyWith(isSpeakerPhone: newState));
       await _persistSpeakerPhonePreference(newState);
 
@@ -1148,7 +1187,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     }
 
     try {
-      await Hardware.instance.setSpeakerphoneOn(event.enabled);
+      await AudioManager.instance.setSpeakerOutputPreferred(event.enabled);
       emit(state.copyWith(isSpeakerPhone: event.enabled));
       await _persistSpeakerPhonePreference(event.enabled);
 
@@ -1168,9 +1207,11 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
 
     final nextCount = event.audioDeviceCount;
     if (nextCount != null && nextCount != state.audioDeviceCount && android) {
-      Hardware.instance.setSpeakerphoneOn(state.isSpeakerPhone).catchError((e) {
-        l.logger.e('[RoomBloc] Error reapplying speakerphone state: $e');
-      });
+      AudioManager.instance
+          .setSpeakerOutputPreferred(state.isSpeakerPhone)
+          .catchError((e) {
+            l.logger.e('[RoomBloc] Error reapplying speakerphone state: $e');
+          });
     }
 
     emit(

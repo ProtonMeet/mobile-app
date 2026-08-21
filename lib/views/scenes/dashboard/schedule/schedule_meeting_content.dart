@@ -209,11 +209,7 @@ class ScheduleMeetingContent extends StatelessWidget {
             onTap: isWaitingRoomUpdating ? () {} : onSelectWaitingRoom,
             validationError: waitingRoomError,
             trailing: isWaitingRoomUpdating
-                ? CustomLoading(
-                    size: 16,
-                    strokeWidth: 2,
-                    color: context.colors.protonBlue,
-                  )
+                ? CustomLoading(size: 16, color: context.colors.protonBlue)
                 : null,
           ),
 

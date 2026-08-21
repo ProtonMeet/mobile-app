@@ -394,6 +394,15 @@ class RoomState extends Equatable {
   bool isParticipantRecording(String identity) =>
       participantsRecording.contains(identity);
 
+  /// True when the local participant is actively recording.
+  bool get isLocalParticipantRecording {
+    final identity = room.localParticipant?.identity;
+    return identity != null && isParticipantRecording(identity);
+  }
+
+  /// Elapsed seconds for the local recorder UI timer.
+  final int localRecordingElapsedSeconds;
+
   /// Check if the local participant is the host/admin using API data
   /// This matches the WebApp approach which checks IsAdmin or IsHost from the backend
   bool get isHost {
@@ -528,6 +537,7 @@ class RoomState extends Equatable {
     this.currentVideoInputDeviceId,
     this.currentAudioOutputDeviceId,
     this.participantsRecording = const [],
+    this.localRecordingElapsedSeconds = 0,
   });
 
   RoomState copyWith({
@@ -608,6 +618,7 @@ class RoomState extends Equatable {
     String? currentVideoInputDeviceId,
     String? currentAudioOutputDeviceId,
     List<String>? participantsRecording,
+    int? localRecordingElapsedSeconds,
   }) {
     return RoomState(
       room: room,
@@ -720,6 +731,8 @@ class RoomState extends Equatable {
           currentAudioOutputDeviceId ?? this.currentAudioOutputDeviceId,
       participantsRecording:
           participantsRecording ?? this.participantsRecording,
+      localRecordingElapsedSeconds:
+          localRecordingElapsedSeconds ?? this.localRecordingElapsedSeconds,
     );
   }
 
@@ -808,5 +821,6 @@ class RoomState extends Equatable {
     currentVideoInputDeviceId,
     currentAudioOutputDeviceId,
     participantsRecording,
+    localRecordingElapsedSeconds,
   ];
 }
