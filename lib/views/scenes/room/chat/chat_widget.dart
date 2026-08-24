@@ -52,6 +52,9 @@ class ChatWidget extends StatefulWidget {
 }
 
 class _ChatWidgetConstants {
+  /// Maximum number of characters accepted in a single chat message or reply.
+  static const int maxMessageLength = 2048;
+
   static const double inputButtonSize = 54.0;
   static const double sendIconSize = 24.0;
   static const double avatarSize = 40.0;
@@ -123,6 +126,7 @@ class _ChatWidgetState extends State<ChatWidget> {
 
   bool _isAtBottom = true;
   bool _isScrollingToBottom = false;
+  bool _isReplyFieldFocused = false;
   int _newMessagesOverlayCount = 0;
   final Set<String> _trackedMessageIds = {};
   final Set<String> _handledLocalRootScrollIds = {};
@@ -260,6 +264,7 @@ class _ChatWidgetState extends State<ChatWidget> {
   }
 
   void _onFocusChanged() {
+    setState(() {});
     if (!_inputFocusNode.hasFocus || !_isAtBottom) return;
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted && _inputFocusNode.hasFocus && _isAtBottom) {
@@ -319,6 +324,17 @@ class _ChatWidgetState extends State<ChatWidget> {
     }
   }
 
+  bool _exceedsMessageLimit(String text) =>
+      text.trim().length > _ChatWidgetConstants.maxMessageLength;
+
+  void _notifyMessageTooLong() {
+    if (!mounted) return;
+    context.showGlobalNotification(
+      context.local.chat_message_too_long,
+      backgroundColor: context.colors.notificationError,
+    );
+  }
+
   void _onTextChanged() {
     _controller.setDraftMessage(_textController.text);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -354,6 +370,7 @@ class _ChatWidgetState extends State<ChatWidget> {
       c.dispose();
     }
     for (final f in _replyFocusNodes.values) {
+      f.removeListener(_onReplyFocusChanged);
       f.dispose();
     }
     super.dispose();
@@ -362,6 +379,10 @@ class _ChatWidgetState extends State<ChatWidget> {
   void _handleSendPressed() {
     final text = _textController.text.trim();
     if (text.isEmpty) return;
+    if (_exceedsMessageLimit(text)) {
+      _notifyMessageTooLong();
+      return;
+    }
     widget.onSend(text);
     _textController.clear();
     _controller.setDraftMessage('');
@@ -376,13 +397,27 @@ class _ChatWidgetState extends State<ChatWidget> {
   }
 
   FocusNode _replyFocus(String rootId) {
-    return _replyFocusNodes.putIfAbsent(rootId, FocusNode.new);
+    return _replyFocusNodes.putIfAbsent(rootId, () {
+      final node = FocusNode();
+      node.addListener(_onReplyFocusChanged);
+      return node;
+    });
+  }
+
+  void _onReplyFocusChanged() {
+    if (!mounted) return;
+    final focused = _replyFocusNodes.values.any((node) => node.hasFocus);
+    setState(() => _isReplyFieldFocused = focused);
   }
 
   void _handleReplySend(RoomChatMessage root) {
     final controller = _replyController(root);
     final text = controller.text.trim();
     if (text.isEmpty) return;
+    if (_exceedsMessageLimit(text)) {
+      _notifyMessageTooLong();
+      return;
+    }
     final topicId = root.topicId ?? root.id;
     widget.onSend(text, replyToId: root.id, topicId: topicId);
     controller.clear();
@@ -603,15 +638,19 @@ class _ChatWidgetState extends State<ChatWidget> {
           left: RoomSidePanelLayout.horizontalPadding,
           right: RoomSidePanelLayout.horizontalPadding,
           bottom: bottomPadding,
-          top: _ChatWidgetConstants.inputPadding,
+          top: _isReplyFieldFocused ? 0 : _ChatWidgetConstants.inputPadding,
         ),
-        child: Row(
-          children: [
-            Expanded(child: _buildTextField(context)),
-            const SizedBox(width: _ChatWidgetConstants.spacingMedium),
-            _buildSendButton(context),
-          ],
-        ),
+        // The padding is kept even when hidden so the reply composer still
+        // clears the keyboard.
+        child: _isReplyFieldFocused
+            ? const SizedBox(width: double.infinity)
+            : Row(
+                children: [
+                  Expanded(child: _buildTextField(context)),
+                  const SizedBox(width: _ChatWidgetConstants.spacingMedium),
+                  _buildSendButton(context),
+                ],
+              ),
       ),
     );
   }
@@ -665,8 +704,10 @@ class _ChatWidgetState extends State<ChatWidget> {
           decoration: ShapeDecoration(
             color: _ChatWidgetConstants.inputBackgroundColor,
             shape: RoundedRectangleBorder(
-              side: const BorderSide(
-                color: _ChatWidgetConstants.missingRootAvatarColor,
+              side: BorderSide(
+                color: _inputFocusNode.hasFocus
+                    ? _ChatWidgetConstants.sendButtonColor
+                    : _ChatWidgetConstants.missingRootAvatarColor,
               ),
               borderRadius: BorderRadius.circular(
                 _ChatWidgetConstants.borderRadiusXLarge,
@@ -974,7 +1015,11 @@ class _ChatWidgetState extends State<ChatWidget> {
       decoration: ShapeDecoration(
         color: Colors.transparent,
         shape: RoundedRectangleBorder(
-          side: BorderSide(color: _ChatWidgetConstants.missingRootAvatarColor),
+          side: BorderSide(
+            color: focus.hasFocus
+                ? _ChatWidgetConstants.sendButtonColor
+                : _ChatWidgetConstants.missingRootAvatarColor,
+          ),
           borderRadius: BorderRadius.circular(999),
         ),
       ),
@@ -1005,6 +1050,7 @@ class _ChatWidgetState extends State<ChatWidget> {
               root.id,
               isReaction: false,
               insertInto: controller,
+              restoreFocus: focus,
             ),
             child: Icon(
               Icons.emoji_emotions_outlined,
@@ -1572,8 +1618,11 @@ class _ChatWidgetState extends State<ChatWidget> {
     String id, {
     required bool isReaction,
     TextEditingController? insertInto,
+    FocusNode? restoreFocus,
   }) async {
     final emoji = await showChatEmojiPicker(context);
+    if (!mounted) return;
+    restoreFocus?.requestFocus();
     if (emoji == null) return;
     if (isReaction) {
       await widget.onToggleReaction(id, emoji);

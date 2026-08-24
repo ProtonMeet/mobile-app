@@ -1144,6 +1144,10 @@
   "@chat_copy_text": {
     "description": "Action to copy chat message text to clipboard"
   },
+  "chat_message_too_long": "Your message exceeds the chat character limit. Please split it into shorter messages, thank you.",
+  "@chat_message_too_long": {
+    "description": "Error notification shown when a composed chat message is longer than the allowed character limit"
+  },
   "meeting_quality_feedback": "Meeting Quality Feedback",
   "@meeting_quality_feedback": {
     "description": "Title for meeting quality feedback form"
