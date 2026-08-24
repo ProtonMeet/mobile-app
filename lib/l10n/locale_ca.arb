@@ -26,6 +26,18 @@
   "report_a_problem": "Informa d'un problema",
   "sign_in_to_proton_title": "Inicieu la sessió a Proton",
   "sign_in_to_proton_subtitle": "Introduïu les dades del vostre compte de Proton.",
+  "desktop_login_use_browser_for_security_key": "Utilitzeu el navegador per a la clau de seguretat",
+  "@desktop_login_use_browser_for_security_key": {
+    "description": "Opens desktop sign-in in the system browser so USB security keys (WebAuthn) work on macOS"
+  },
+  "desktop_login_open_browser_again": "Torneu a obrir el navegador",
+  "@desktop_login_open_browser_again": {
+    "description": "Re-opens the desktop sign-in page in the system browser"
+  },
+  "desktop_login_complete_in_browser": "Inicieu sessió al navegador i després torneu a Meet.",
+  "@desktop_login_complete_in_browser": {
+    "description": "Shown while polling for session after user signs in via external browser"
+  },
   "options": "Opcions",
   "@options": {
     "description": "Title for options dialog"
@@ -431,7 +443,7 @@
   "@already_have_account": {
     "description": "Text before login link for existing users"
   },
-  "we_hope_you_enjoyed_meeting": "Esperem que hagueu gaudit de la vostra reunió segura! ",
+  "we_hope_you_enjoyed_meeting": "Esperem que hàgiu gaudit d'una reunió segura. ",
   "@we_hope_you_enjoyed_meeting": {
     "description": "Message shown after user leaves meeting"
   },
@@ -563,7 +575,7 @@
   "@meeting_being_recorded": {
     "description": "Title for recording in progress dialog"
   },
-  "recording_consent_message": "En continuar a la reunió, reconeixeu i accepteu que se us registri.",
+  "recording_consent_message": "En continuar a la reunió, reconeixeu i accepteu ser enregistrats.",
   "@recording_consent_message": {
     "description": "Message about recording consent"
   },
@@ -595,6 +607,116 @@
   "recording_label": "S'està enregistrant…",
   "@recording_label": {
     "description": "Chip shown next to participants currently recording the meeting"
+  },
+  "record_this_meeting": "Enregistrar aquesta reunió",
+  "@record_this_meeting": {
+    "description": "Title for start recording confirmation dialog"
+  },
+  "recording_will_begin_attendees_notified": "S'iniciarà la gravació i es notificarà els assistents.",
+  "@recording_will_begin_attendees_notified": {
+    "description": "Message in start recording confirmation dialog"
+  },
+  "start_recording": "Iniciar l'enregistrament",
+  "@start_recording": {
+    "description": "Button to start local meeting recording"
+  },
+  "stop_recording": "Aturar l'enregistrament",
+  "@stop_recording": {
+    "description": "Button to stop local meeting recording"
+  },
+  "stop_recording_title": "Aturar l'enregistrament",
+  "@stop_recording_title": {
+    "description": "Title for stop recording confirmation dialog"
+  },
+  "stop_recording_confirm_message": "Segur que voleu aturar la gravació?",
+  "@stop_recording_confirm_message": {
+    "description": "Message in stop recording confirmation dialog"
+  },
+  "stop_recording_and_save": "Atura la gravació i desa el vídeo",
+  "@stop_recording_and_save": {
+    "description": "Primary action in stop recording dialog"
+  },
+  "failed_to_start_recording": "No s'ha pogut iniciar l'enregistrament",
+  "@failed_to_start_recording": {
+    "description": "Error toast when recording could not start"
+  },
+  "recording_not_supported": "Els enregistraments de reunions no són compatibles amb aquest dispositiu.",
+  "@recording_not_supported": {},
+  "recording_simulator_not_supported": "L'enregistrament local de reunions no està disponible al Simulador d'iOS. Feu proves en un iPhone o iPad físic.",
+  "@recording_simulator_not_supported": {
+    "description": "Shown when screen recording is unavailable on the platform"
+  },
+  "recording_paid_feature": "L'enregistrament local de reunions està disponible en els plans de pagament.",
+  "@recording_paid_feature": {
+    "description": "Shown when a free user taps the record button"
+  },
+  "recording_recovered_message": "S'ha recuperat una gravació d'una reunió anterior i s'ha desat en aquest dispositiu.",
+  "@recording_recovered_message": {
+    "description": "Toast when orphaned recording files are found after app restart"
+  },
+  "recording_interrupted_background": "S'ha aturat l'enregistrament perquè l'aplicació ha passat en segon pla. La part desada és a Enregistraments desats.",
+  "@recording_interrupted_background": {
+    "description": "Toast when iOS stops ReplayKit capture after backgrounding"
+  },
+  "recording_save_location_section": "S'està enregistrant…",
+  "@recording_save_location_section": {
+    "description": "Section title in meeting settings for local recording folder"
+  },
+  "recording_save_location": "Deseu els enregistraments a",
+  "@recording_save_location": {
+    "description": "Label for local recording save folder setting"
+  },
+  "recording_save_location_app_documents": "Carpeta de Proton Meet (emmagatzematge de l'aplicació)",
+  "@recording_save_location_app_documents": {
+    "description": "Preset: app documents recordings folder"
+  },
+  "recording_save_location_downloads": "Descàrregues/Proton Meet",
+  "@recording_save_location_downloads": {
+    "description": "Preset: downloads folder"
+  },
+  "recording_save_location_movies": "Pel·licules/Proton Meet",
+  "@recording_save_location_movies": {
+    "description": "Preset: macOS Movies folder"
+  },
+  "recording_save_location_custom": "Carpeta personalitzada…",
+  "@recording_save_location_custom": {
+    "description": "Preset: user-selected custom folder"
+  },
+  "recording_save_location_updated": "S'ha actualitzat la ubicació on es desen els enregistraments",
+  "@recording_save_location_updated": {
+    "description": "Toast after changing recording save folder"
+  },
+  "recording_save_location_unavailable": "No s'ha pogut utilitzar aquesta carpeta. Proveu-ho en una altra ubicació.",
+  "@recording_save_location_unavailable": {
+    "description": "Error when selected recording folder is not writable"
+  },
+  "saved_recordings_title": "Enregistraments desats",
+  "@saved_recordings_title": {
+    "description": "Title for the list of local meeting recordings"
+  },
+  "saved_recordings_empty": "Encara no hi ha cap enregistrament desat. Enregistreu una reunió per veure els fitxers aquí.",
+  "@saved_recordings_empty": {
+    "description": "Empty state when no local recordings exist"
+  },
+  "saved_recordings_share": "Compartir",
+  "@saved_recordings_share": {
+    "description": "Share action for a saved recording"
+  },
+  "saved_recordings_share_failed": "No s'ha pogut obrir el full per a compartir. Torneu-ho a provar.",
+  "@saved_recordings_share_failed": {
+    "description": "Error when the system share sheet fails to open"
+  },
+  "saved_recordings_folder": "S'ha desat a",
+  "@saved_recordings_folder": {
+    "description": "Label above the folder path in saved recordings sheet"
+  },
+  "saved_recordings_recovered": "S'ha recuperat després de reiniciar l'aplicació",
+  "@saved_recordings_recovered": {
+    "description": "Badge for recordings recovered from a crash"
+  },
+  "saved_recordings_missing_file": "Aquest fitxer d'enregistrament ja no és en aquest dispositiu.",
+  "@saved_recordings_missing_file": {
+    "description": "Snackbar when a listed recording file was deleted"
   },
   "agree_and_continue": "Accepta i continua",
   "@agree_and_continue": {
@@ -986,7 +1108,7 @@
   "@chat_thread_new_reply": {
     "description": "Badge shown on a collapsed thread when there are unseen replies"
   },
-  "chat_system_joined_prefix": "Us hi heu afegit ",
+  "chat_system_joined_prefix": "Us hi heu unit ",
   "@chat_system_joined_prefix": {
     "description": "Prefix before the meeting name in a join system chat notice"
   },
@@ -998,7 +1120,7 @@
   "@chat_reply_hint": {
     "description": "Placeholder for the thread reply composer"
   },
-  "chat_thread_missing_root": "AAquesta conversa va començar abans que us hi uníssiu",
+  "chat_thread_missing_root": "Aquesta conversa va començar abans que us hi uníssiu",
   "@chat_thread_missing_root": {
     "description": "Placeholder when a thread root message is not available locally"
   },
@@ -1897,7 +2019,7 @@
   "@connection_issue_restoring": {
     "description": "Message shown when connection issue is being resolved"
   },
-  "connection_check_mls_failed": "La comprovació de l'estat de l'MLS ha fallat; s'està reintentant la unió...",
+  "connection_check_mls_failed": "Comprovació de la connexió\nS'ha produït un error en comprovar l'estat de l'MLS; s'està iniciant la reincorporació...",
   "@connection_check_mls_failed": {
     "description": "Message shown when MLS sync check fails"
   },
@@ -2020,5 +2142,9 @@
   "iap_native_test_sign_in_required": "Inicieu la sessió amb un compte de Proton per a obrir els pagaments natius.",
   "@iap_native_test_sign_in_required": {
     "description": "Message shown when sign in is required to open native payments"
+  },
+  "in_app_update_downloaded": "S'ha descarregat la nova versió de l'aplicació i s'instal·larà automàticament.",
+  "@in_app_update_downloaded": {
+    "description": "Notification shown when a Play Store flexible update finished downloading and will be installed"
   }
 }

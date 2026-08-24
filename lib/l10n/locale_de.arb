@@ -26,6 +26,18 @@
   "report_a_problem": "Problem melden",
   "sign_in_to_proton_title": "Bei Proton anmelden",
   "sign_in_to_proton_subtitle": "Gib deine Proton-Kontodaten ein.",
+  "desktop_login_use_browser_for_security_key": "Browser für Sicherheitsschlüssel verwenden",
+  "@desktop_login_use_browser_for_security_key": {
+    "description": "Opens desktop sign-in in the system browser so USB security keys (WebAuthn) work on macOS"
+  },
+  "desktop_login_open_browser_again": "Browser erneut öffnen",
+  "@desktop_login_open_browser_again": {
+    "description": "Re-opens the desktop sign-in page in the system browser"
+  },
+  "desktop_login_complete_in_browser": "Schließe das Anmelden in deinem Browser ab und kehre anschließend zu Meet zurück.",
+  "@desktop_login_complete_in_browser": {
+    "description": "Shown while polling for session after user signs in via external browser"
+  },
   "options": "Optionen",
   "@options": {
     "description": "Title for options dialog"
@@ -595,6 +607,116 @@
   "recording_label": "Aufzeichnung",
   "@recording_label": {
     "description": "Chip shown next to participants currently recording the meeting"
+  },
+  "record_this_meeting": "Diese Sitzung aufzeichnen",
+  "@record_this_meeting": {
+    "description": "Title for start recording confirmation dialog"
+  },
+  "recording_will_begin_attendees_notified": "Die Aufzeichnung beginnt, und die Teilnehmer werden darüber informiert.",
+  "@recording_will_begin_attendees_notified": {
+    "description": "Message in start recording confirmation dialog"
+  },
+  "start_recording": "Aufnahme starten",
+  "@start_recording": {
+    "description": "Button to start local meeting recording"
+  },
+  "stop_recording": "Aufnahme beenden",
+  "@stop_recording": {
+    "description": "Button to stop local meeting recording"
+  },
+  "stop_recording_title": "Aufnahme beenden",
+  "@stop_recording_title": {
+    "description": "Title for stop recording confirmation dialog"
+  },
+  "stop_recording_confirm_message": "Soll die Aufnahme wirklich beendet werden?",
+  "@stop_recording_confirm_message": {
+    "description": "Message in stop recording confirmation dialog"
+  },
+  "stop_recording_and_save": "Aufnahme beenden und Video speichern",
+  "@stop_recording_and_save": {
+    "description": "Primary action in stop recording dialog"
+  },
+  "failed_to_start_recording": "Starten der Aufnahme fehlgeschlagen",
+  "@failed_to_start_recording": {
+    "description": "Error toast when recording could not start"
+  },
+  "recording_not_supported": "Dieses Gerät unterstützt kein Aufzeichnen von Sitzungen.",
+  "@recording_not_supported": {},
+  "recording_simulator_not_supported": "Das Aufzeichnen lokaler Sitzungen ist im iOS-Simulator nicht möglich. Führe den Test auf einem echten iPhone oder iPad durch.",
+  "@recording_simulator_not_supported": {
+    "description": "Shown when screen recording is unavailable on the platform"
+  },
+  "recording_paid_feature": "Das Aufzeichnen von lokalen Sitzungen ist in den kostenpflichtigen Tarifen verfügbar.",
+  "@recording_paid_feature": {
+    "description": "Shown when a free user taps the record button"
+  },
+  "recording_recovered_message": "Eine Aufzeichnung einer früheren Sitzung wurde wiederhergestellt und auf diesem Gerät gespeichert.",
+  "@recording_recovered_message": {
+    "description": "Toast when orphaned recording files are found after app restart"
+  },
+  "recording_interrupted_background": "Die Aufnahme wurde unterbrochen, weil die App in den Hintergrund gefallen ist. Der gespeicherte Teil befindet sich unter „Gespeicherte Aufnahmen“.",
+  "@recording_interrupted_background": {
+    "description": "Toast when iOS stops ReplayKit capture after backgrounding"
+  },
+  "recording_save_location_section": "Aufzeichnung",
+  "@recording_save_location_section": {
+    "description": "Section title in meeting settings for local recording folder"
+  },
+  "recording_save_location": "Aufzeichnungen speichern unter",
+  "@recording_save_location": {
+    "description": "Label for local recording save folder setting"
+  },
+  "recording_save_location_app_documents": "Ordner „Proton Meet“ (App-Speicher)",
+  "@recording_save_location_app_documents": {
+    "description": "Preset: app documents recordings folder"
+  },
+  "recording_save_location_downloads": "Downloads/Proton Meet",
+  "@recording_save_location_downloads": {
+    "description": "Preset: downloads folder"
+  },
+  "recording_save_location_movies": "Filme/Proton Meet",
+  "@recording_save_location_movies": {
+    "description": "Preset: macOS Movies folder"
+  },
+  "recording_save_location_custom": "Benutzerdefinierter Ordner …",
+  "@recording_save_location_custom": {
+    "description": "Preset: user-selected custom folder"
+  },
+  "recording_save_location_updated": "Speicherort für Aufzeichnungen aktualisiert",
+  "@recording_save_location_updated": {
+    "description": "Toast after changing recording save folder"
+  },
+  "recording_save_location_unavailable": "Dieser Ordner kann nicht verwendet werden. Versuchen Sie es mit einem anderen Speicherort.",
+  "@recording_save_location_unavailable": {
+    "description": "Error when selected recording folder is not writable"
+  },
+  "saved_recordings_title": "Gespeicherte Aufzeichnungen",
+  "@saved_recordings_title": {
+    "description": "Title for the list of local meeting recordings"
+  },
+  "saved_recordings_empty": "Es wurden noch keine Aufzeichnungen gespeichert. Nimm eine Sitzung auf, um Dateien hier anzuzeigen.",
+  "@saved_recordings_empty": {
+    "description": "Empty state when no local recordings exist"
+  },
+  "saved_recordings_share": "Teilen",
+  "@saved_recordings_share": {
+    "description": "Share action for a saved recording"
+  },
+  "saved_recordings_share_failed": "Das Freigabefenster konnte nicht geöffnet werden. Bitte versuche es erneut.",
+  "@saved_recordings_share_failed": {
+    "description": "Error when the system share sheet fails to open"
+  },
+  "saved_recordings_folder": "Gespeichert unter",
+  "@saved_recordings_folder": {
+    "description": "Label above the folder path in saved recordings sheet"
+  },
+  "saved_recordings_recovered": "Nach dem Neustart der App wiederhergestellt",
+  "@saved_recordings_recovered": {
+    "description": "Badge for recordings recovered from a crash"
+  },
+  "saved_recordings_missing_file": "Diese Aufzeichnungen befinden sich nicht mehr auf diesem Gerät.",
+  "@saved_recordings_missing_file": {
+    "description": "Snackbar when a listed recording file was deleted"
   },
   "agree_and_continue": "Zustimmen und fortfahren",
   "@agree_and_continue": {
@@ -2020,5 +2142,9 @@
   "iap_native_test_sign_in_required": "Mit dem Proton-Konto anmelden, um die plattformeigenen Zahlungen zu öffnen.",
   "@iap_native_test_sign_in_required": {
     "description": "Message shown when sign in is required to open native payments"
+  },
+  "in_app_update_downloaded": "Die neue App-Version wurde heruntergeladen und wird automatisch installiert.",
+  "@in_app_update_downloaded": {
+    "description": "Notification shown when a Play Store flexible update finished downloading and will be installed"
   }
 }
