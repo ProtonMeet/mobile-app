@@ -4159,18 +4159,14 @@ impl Service {
 
             let elapsed = start_time.elapsed();
             if elapsed >= join_deadline {
-                return Err(MeetCoreError::RoomJoinFailed {
+                return Err(MeetCoreError::RoomJoinRequestTimeout {
                     room_id: meeting_link_name.as_str().to_string(),
-                    reason: "Join proposal timeout, didn't receive the welcome message from the server, please try again"
-                        .to_string(),
                 });
             }
             let remaining = join_deadline.saturating_sub(elapsed);
             if timeout(remaining, welcome_notify).await.is_err() {
-                return Err(MeetCoreError::RoomJoinFailed {
+                return Err(MeetCoreError::RoomJoinRequestTimeout {
                     room_id: meeting_link_name.as_str().to_string(),
-                    reason: "Join proposal timeout, didn't receive the welcome message from the server, please try again"
-                        .to_string(),
                 });
             }
         }

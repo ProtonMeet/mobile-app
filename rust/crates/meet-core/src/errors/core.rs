@@ -74,6 +74,9 @@ pub enum MeetCoreError {
     #[error("Failed to join room: {room_id}, reason: {reason}")]
     RoomJoinFailed { room_id: String, reason: String },
 
+    #[error("Join request timed out for room {room_id}: didn't receive welcome message")]
+    RoomJoinRequestTimeout { room_id: String },
+
     #[error("Waiting-room join request not found")]
     WaitingRoomJoinRequestNotFound,
 
@@ -590,6 +593,7 @@ pub enum MeetCoreErrorEnum {
     MlsSpecError,
     ParticipantNotFound,
     RoomJoinFailed,
+    RoomJoinRequestTimeout,
     WaitingRoomJoinRequestNotFound,
     WaitingRoomJoinCancelled,
     DatabaseError,
@@ -639,6 +643,7 @@ impl From<MeetCoreError> for MeetCoreErrorEnum {
             MeetCoreError::MlsSpecError { .. } => Self::MlsSpecError,
             MeetCoreError::ParticipantNotFound => Self::ParticipantNotFound,
             MeetCoreError::RoomJoinFailed { .. } => Self::RoomJoinFailed,
+            MeetCoreError::RoomJoinRequestTimeout { .. } => Self::RoomJoinRequestTimeout,
             MeetCoreError::WaitingRoomJoinRequestNotFound => Self::WaitingRoomJoinRequestNotFound,
             MeetCoreError::WaitingRoomJoinCancelled => Self::WaitingRoomJoinCancelled,
             MeetCoreError::DatabaseError { .. } => Self::DatabaseError,
