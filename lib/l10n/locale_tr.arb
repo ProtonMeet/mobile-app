@@ -26,6 +26,18 @@
   "report_a_problem": "Sorun bildireceğim",
   "sign_in_to_proton_title": "Proton oturumu aç",
   "sign_in_to_proton_subtitle": "Proton hesabınızın bilgilerini yazın.",
+  "desktop_login_use_browser_for_security_key": "Güvenlik anahtarı için tarayıcıyı kullanın",
+  "@desktop_login_use_browser_for_security_key": {
+    "description": "Opens desktop sign-in in the system browser so USB security keys (WebAuthn) work on macOS"
+  },
+  "desktop_login_open_browser_again": "Tarayıcıyı yeniden açın",
+  "@desktop_login_open_browser_again": {
+    "description": "Re-opens the desktop sign-in page in the system browser"
+  },
+  "desktop_login_complete_in_browser": "Tarayıcınızda oturum açma işlemini tamamlayın ve Meet uygulamasına dönün.",
+  "@desktop_login_complete_in_browser": {
+    "description": "Shown while polling for session after user signs in via external browser"
+  },
   "options": "Seçenekler",
   "@options": {
     "description": "Title for options dialog"
@@ -595,6 +607,116 @@
   "recording_label": "Kaydediliyor",
   "@recording_label": {
     "description": "Chip shown next to participants currently recording the meeting"
+  },
+  "record_this_meeting": "Bu görüşmeyi kaydet",
+  "@record_this_meeting": {
+    "description": "Title for start recording confirmation dialog"
+  },
+  "recording_will_begin_attendees_notified": "Kayıt başlayacak ve katılımcılar bilgilendirilecek.",
+  "@recording_will_begin_attendees_notified": {
+    "description": "Message in start recording confirmation dialog"
+  },
+  "start_recording": "Kaydı başlat",
+  "@start_recording": {
+    "description": "Button to start local meeting recording"
+  },
+  "stop_recording": "Kaydı durdur",
+  "@stop_recording": {
+    "description": "Button to stop local meeting recording"
+  },
+  "stop_recording_title": "Kaydı durdur",
+  "@stop_recording_title": {
+    "description": "Title for stop recording confirmation dialog"
+  },
+  "stop_recording_confirm_message": "Kaydı durdurmak istediğinize emin misiniz?",
+  "@stop_recording_confirm_message": {
+    "description": "Message in stop recording confirmation dialog"
+  },
+  "stop_recording_and_save": "Kaydı durdur ve videoyu kaydet",
+  "@stop_recording_and_save": {
+    "description": "Primary action in stop recording dialog"
+  },
+  "failed_to_start_recording": "Kayıt başlatılamadı",
+  "@failed_to_start_recording": {
+    "description": "Error toast when recording could not start"
+  },
+  "recording_not_supported": "Görüşme kaydı bu aygıtta desteklenmiyor.",
+  "@recording_not_supported": {},
+  "recording_simulator_not_supported": "Yerel görüşme kaydı iOS Simulator ile kullanılamaz. Fiziksel bir iPhone veya iPad üzerinde deneyin.",
+  "@recording_simulator_not_supported": {
+    "description": "Shown when screen recording is unavailable on the platform"
+  },
+  "recording_paid_feature": "Yerel görüşme kaydı özelliği ücretli tarifelerde bulunur.",
+  "@recording_paid_feature": {
+    "description": "Shown when a free user taps the record button"
+  },
+  "recording_recovered_message": "Önceki bir toplantı kaydı kurtarıldı ve bu aygıta kaydedildi.",
+  "@recording_recovered_message": {
+    "description": "Toast when orphaned recording files are found after app restart"
+  },
+  "recording_interrupted_background": "Uygulama arka plana geçtiği için kayıt durduruldu. Kaydedilen bölüm Kaydedilmiş kayıtlar altında bulunabilir.",
+  "@recording_interrupted_background": {
+    "description": "Toast when iOS stops ReplayKit capture after backgrounding"
+  },
+  "recording_save_location_section": "Kaydediliyor",
+  "@recording_save_location_section": {
+    "description": "Section title in meeting settings for local recording folder"
+  },
+  "recording_save_location": "Kayıtlar şuraya yapılsın",
+  "@recording_save_location": {
+    "description": "Label for local recording save folder setting"
+  },
+  "recording_save_location_app_documents": "Proton Meet klasörü (uygulama depolama alanı)",
+  "@recording_save_location_app_documents": {
+    "description": "Preset: app documents recordings folder"
+  },
+  "recording_save_location_downloads": "İndirmeler/Proton Meet",
+  "@recording_save_location_downloads": {
+    "description": "Preset: downloads folder"
+  },
+  "recording_save_location_movies": "Filmler/Proton Meet",
+  "@recording_save_location_movies": {
+    "description": "Preset: macOS Movies folder"
+  },
+  "recording_save_location_custom": "Özel klasör…",
+  "@recording_save_location_custom": {
+    "description": "Preset: user-selected custom folder"
+  },
+  "recording_save_location_updated": "Kayıt konumu güncellendi",
+  "@recording_save_location_updated": {
+    "description": "Toast after changing recording save folder"
+  },
+  "recording_save_location_unavailable": "Bu klasör kullanılamıyor. Başka bir konum deneyin.",
+  "@recording_save_location_unavailable": {
+    "description": "Error when selected recording folder is not writable"
+  },
+  "saved_recordings_title": "Görüşme kayıtları",
+  "@saved_recordings_title": {
+    "description": "Title for the list of local meeting recordings"
+  },
+  "saved_recordings_empty": "Henüz bir görüşme kaydı yok. Burada dosyalar görmek için bir görüşmeyi kaydedin.",
+  "@saved_recordings_empty": {
+    "description": "Empty state when no local recordings exist"
+  },
+  "saved_recordings_share": "Paylaş",
+  "@saved_recordings_share": {
+    "description": "Share action for a saved recording"
+  },
+  "saved_recordings_share_failed": "Paylaşım sayfası açılamadı. Yeniden deneyin.",
+  "@saved_recordings_share_failed": {
+    "description": "Error when the system share sheet fails to open"
+  },
+  "saved_recordings_folder": "Şuraya kaydedildi",
+  "@saved_recordings_folder": {
+    "description": "Label above the folder path in saved recordings sheet"
+  },
+  "saved_recordings_recovered": "Uygulama yeniden başlatıldıktan sonra kurtarıldı",
+  "@saved_recordings_recovered": {
+    "description": "Badge for recordings recovered from a crash"
+  },
+  "saved_recordings_missing_file": "Bu kayıt dosyası artık bu aygıtta bulunmuyor.",
+  "@saved_recordings_missing_file": {
+    "description": "Snackbar when a listed recording file was deleted"
   },
   "agree_and_continue": "Kabul et ve ilerle",
   "@agree_and_continue": {
@@ -2020,5 +2142,9 @@
   "iap_native_test_sign_in_required": "Yerel ödemeleri açmak için Proton hesabıyla oturum açın.",
   "@iap_native_test_sign_in_required": {
     "description": "Message shown when sign in is required to open native payments"
+  },
+  "in_app_update_downloaded": "Uygulamanın yeni sürümü indirildi ve otomatik olarak kurulacak.",
+  "@in_app_update_downloaded": {
+    "description": "Notification shown when a Play Store flexible update finished downloading and will be installed"
   }
 }

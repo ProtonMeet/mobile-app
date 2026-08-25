@@ -26,6 +26,18 @@
   "report_a_problem": "Raportare problemă",
   "sign_in_to_proton_title": "Conectare în Proton",
   "sign_in_to_proton_subtitle": "Introduceți detaliile contului Proton.",
+  "desktop_login_use_browser_for_security_key": "Folosiți navigatorul web pentru cheia de securitate",
+  "@desktop_login_use_browser_for_security_key": {
+    "description": "Opens desktop sign-in in the system browser so USB security keys (WebAuthn) work on macOS"
+  },
+  "desktop_login_open_browser_again": "Redeschidere navigator web",
+  "@desktop_login_open_browser_again": {
+    "description": "Re-opens the desktop sign-in page in the system browser"
+  },
+  "desktop_login_complete_in_browser": "Finalizați conectarea în navigatorul web, apoi reveniți la Meet.",
+  "@desktop_login_complete_in_browser": {
+    "description": "Shown while polling for session after user signs in via external browser"
+  },
   "options": "Opțiuni",
   "@options": {
     "description": "Title for options dialog"
@@ -595,6 +607,116 @@
   "recording_label": "Se înregistrează",
   "@recording_label": {
     "description": "Chip shown next to participants currently recording the meeting"
+  },
+  "record_this_meeting": "Înregistrare această conferință",
+  "@record_this_meeting": {
+    "description": "Title for start recording confirmation dialog"
+  },
+  "recording_will_begin_attendees_notified": "Înregistrarea va începe, iar participanții vor fi anunțați.",
+  "@recording_will_begin_attendees_notified": {
+    "description": "Message in start recording confirmation dialog"
+  },
+  "start_recording": "Pornire înregistrare",
+  "@start_recording": {
+    "description": "Button to start local meeting recording"
+  },
+  "stop_recording": "Oprire înregistrare",
+  "@stop_recording": {
+    "description": "Button to stop local meeting recording"
+  },
+  "stop_recording_title": "Oprire înregistrare",
+  "@stop_recording_title": {
+    "description": "Title for stop recording confirmation dialog"
+  },
+  "stop_recording_confirm_message": "Sigur opriți înregistrarea?",
+  "@stop_recording_confirm_message": {
+    "description": "Message in stop recording confirmation dialog"
+  },
+  "stop_recording_and_save": "Oprire înregistrare și salvare videoclip",
+  "@stop_recording_and_save": {
+    "description": "Primary action in stop recording dialog"
+  },
+  "failed_to_start_recording": "Pornirea înregistrării a eșuat",
+  "@failed_to_start_recording": {
+    "description": "Error toast when recording could not start"
+  },
+  "recording_not_supported": "Înregistrările conferințelor nu sunt acceptate pe acest dispozitiv.",
+  "@recording_not_supported": {},
+  "recording_simulator_not_supported": "Înregistrarea conferințelor locale nu este disponibilă în Simulatorul iOS. Testați pe un iPhone sau iPad fizic.",
+  "@recording_simulator_not_supported": {
+    "description": "Shown when screen recording is unavailable on the platform"
+  },
+  "recording_paid_feature": "Înregistrarea conferințelor locale este disponibilă pentru abonamentele cu plată.",
+  "@recording_paid_feature": {
+    "description": "Shown when a free user taps the record button"
+  },
+  "recording_recovered_message": "O înregistrare a unei conferințe anterioare a fost recuperată și salvată pe acest dispozitiv.",
+  "@recording_recovered_message": {
+    "description": "Toast when orphaned recording files are found after app restart"
+  },
+  "recording_interrupted_background": "Înregistrarea s-a oprit deoarece aplicația a trecut în fundal. Porțiunea salvată se află în „Înregistrări salvate”.",
+  "@recording_interrupted_background": {
+    "description": "Toast when iOS stops ReplayKit capture after backgrounding"
+  },
+  "recording_save_location_section": "Se înregistrează",
+  "@recording_save_location_section": {
+    "description": "Section title in meeting settings for local recording folder"
+  },
+  "recording_save_location": "Salvare înregistrări în",
+  "@recording_save_location": {
+    "description": "Label for local recording save folder setting"
+  },
+  "recording_save_location_app_documents": "Folder Proton Meet (stocare aplicație)",
+  "@recording_save_location_app_documents": {
+    "description": "Preset: app documents recordings folder"
+  },
+  "recording_save_location_downloads": "Descărcări/Proton Meet",
+  "@recording_save_location_downloads": {
+    "description": "Preset: downloads folder"
+  },
+  "recording_save_location_movies": "Filme/Proton Meet",
+  "@recording_save_location_movies": {
+    "description": "Preset: macOS Movies folder"
+  },
+  "recording_save_location_custom": "Folder personal…",
+  "@recording_save_location_custom": {
+    "description": "Preset: user-selected custom folder"
+  },
+  "recording_save_location_updated": "Locul de salvare a înregistrării a fost actualizat",
+  "@recording_save_location_updated": {
+    "description": "Toast after changing recording save folder"
+  },
+  "recording_save_location_unavailable": "Folderul respectiv nu a putut fi utilizat. Încercați un alt loc.",
+  "@recording_save_location_unavailable": {
+    "description": "Error when selected recording folder is not writable"
+  },
+  "saved_recordings_title": "Înregistrări salvate",
+  "@saved_recordings_title": {
+    "description": "Title for the list of local meeting recordings"
+  },
+  "saved_recordings_empty": "Încă nu există înregistrări salvate. Înregistrați o conferință pentru a vedea fișierele aici.",
+  "@saved_recordings_empty": {
+    "description": "Empty state when no local recordings exist"
+  },
+  "saved_recordings_share": "Partajare",
+  "@saved_recordings_share": {
+    "description": "Share action for a saved recording"
+  },
+  "saved_recordings_share_failed": "Nu s-a putut deschide foaia de partajare. Reîncercați.",
+  "@saved_recordings_share_failed": {
+    "description": "Error when the system share sheet fails to open"
+  },
+  "saved_recordings_folder": "Salvat în",
+  "@saved_recordings_folder": {
+    "description": "Label above the folder path in saved recordings sheet"
+  },
+  "saved_recordings_recovered": "Recuperat după repornirea aplicației",
+  "@saved_recordings_recovered": {
+    "description": "Badge for recordings recovered from a crash"
+  },
+  "saved_recordings_missing_file": "Acest fișier de înregistrare nu se mai află pe acest dispozitiv.",
+  "@saved_recordings_missing_file": {
+    "description": "Snackbar when a listed recording file was deleted"
   },
   "agree_and_continue": "Acceptare și continuare",
   "@agree_and_continue": {
@@ -2020,5 +2142,9 @@
   "iap_native_test_sign_in_required": "Conectați-vă cu un cont Proton pentru a accesa plățile native.",
   "@iap_native_test_sign_in_required": {
     "description": "Message shown when sign in is required to open native payments"
+  },
+  "in_app_update_downloaded": "Noua versiune a aplicației a fost descărcată și va fi instalată automat.",
+  "@in_app_update_downloaded": {
+    "description": "Notification shown when a Play Store flexible update finished downloading and will be installed"
   }
 }

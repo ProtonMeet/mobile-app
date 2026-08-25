@@ -26,6 +26,18 @@
   "report_a_problem": "Αναφορά προβλήματος",
   "sign_in_to_proton_title": "Συνδεθείτε στο Proton",
   "sign_in_to_proton_subtitle": "Εισαγάγετε τα στοιχεία του λογαριασμού Proton σας.",
+  "desktop_login_use_browser_for_security_key": "Χρήση προγράμματος περιήγησης για κλειδί ασφαλείας",
+  "@desktop_login_use_browser_for_security_key": {
+    "description": "Opens desktop sign-in in the system browser so USB security keys (WebAuthn) work on macOS"
+  },
+  "desktop_login_open_browser_again": "Άνοιγμα προγράμματος περιήγησης ξανά",
+  "@desktop_login_open_browser_again": {
+    "description": "Re-opens the desktop sign-in page in the system browser"
+  },
+  "desktop_login_complete_in_browser": "Ολοκληρώστε τη σύνδεση στο πρόγραμμα περιήγησής σας και, στη συνέχεια, επιστρέψτε στο Meet.",
+  "@desktop_login_complete_in_browser": {
+    "description": "Shown while polling for session after user signs in via external browser"
+  },
   "options": "Επιλογές",
   "@options": {
     "description": "Title for options dialog"
@@ -595,6 +607,116 @@
   "recording_label": "Ηχογράφηση",
   "@recording_label": {
     "description": "Chip shown next to participants currently recording the meeting"
+  },
+  "record_this_meeting": "Ηχογραφήστε αυτήν τη συνάντηση",
+  "@record_this_meeting": {
+    "description": "Title for start recording confirmation dialog"
+  },
+  "recording_will_begin_attendees_notified": "Η ηχογράφηση θα ξεκινήσει και οι συμμετέχοντες θα ειδοποιηθούν.",
+  "@recording_will_begin_attendees_notified": {
+    "description": "Message in start recording confirmation dialog"
+  },
+  "start_recording": "Έναρξη ηχογράφησης",
+  "@start_recording": {
+    "description": "Button to start local meeting recording"
+  },
+  "stop_recording": "Διακοπή ηχογράφησης",
+  "@stop_recording": {
+    "description": "Button to stop local meeting recording"
+  },
+  "stop_recording_title": "Διακοπή ηχογράφησης",
+  "@stop_recording_title": {
+    "description": "Title for stop recording confirmation dialog"
+  },
+  "stop_recording_confirm_message": "Είστε σίγουροι ότι θέλετε να διακόψετε την εγγραφή;",
+  "@stop_recording_confirm_message": {
+    "description": "Message in stop recording confirmation dialog"
+  },
+  "stop_recording_and_save": "Διακοπή εγγραφής και αποθήκευση βίντεο",
+  "@stop_recording_and_save": {
+    "description": "Primary action in stop recording dialog"
+  },
+  "failed_to_start_recording": "Αποτυχία εκκίνησης ηχογράφησης",
+  "@failed_to_start_recording": {
+    "description": "Error toast when recording could not start"
+  },
+  "recording_not_supported": "Οι ηχογραφήσεις συσκέψεων δεν υποστηρίζονται σε αυτήν τη συσκευή.",
+  "@recording_not_supported": {},
+  "recording_simulator_not_supported": "Η εγγραφή τοπικής σύσκεψης δεν είναι διαθέσιμη στον Προσομοιωτή iOS. Δοκιμάστε σε ένα φυσικό iPhone ή iPad.",
+  "@recording_simulator_not_supported": {
+    "description": "Shown when screen recording is unavailable on the platform"
+  },
+  "recording_paid_feature": "Η ηχογράφηση τοπικών συναντήσεων είναι διαθέσιμη σε προγράμματα επί πληρωμή.",
+  "@recording_paid_feature": {
+    "description": "Shown when a free user taps the record button"
+  },
+  "recording_recovered_message": "Μια προηγούμενη εγγραφή σύσκεψης ανακτήθηκε και αποθηκεύτηκε σε αυτήν τη συσκευή.",
+  "@recording_recovered_message": {
+    "description": "Toast when orphaned recording files are found after app restart"
+  },
+  "recording_interrupted_background": "Η ηχογράφηση σταμάτησε επειδή η εφαρμογή μεταβήκε στο παρασκήνιο. Το αποθηκευμένο τμήμα βρίσκεται στις Αποθηκευμένες εγγραφές.",
+  "@recording_interrupted_background": {
+    "description": "Toast when iOS stops ReplayKit capture after backgrounding"
+  },
+  "recording_save_location_section": "Ηχογράφηση",
+  "@recording_save_location_section": {
+    "description": "Section title in meeting settings for local recording folder"
+  },
+  "recording_save_location": "Αποθήκευση εγγραφών σε",
+  "@recording_save_location": {
+    "description": "Label for local recording save folder setting"
+  },
+  "recording_save_location_app_documents": "Φάκελος Proton Meet (αποθηκευτικός χώρος εφαρμογής)",
+  "@recording_save_location_app_documents": {
+    "description": "Preset: app documents recordings folder"
+  },
+  "recording_save_location_downloads": "Λήψεις/Proton Meet",
+  "@recording_save_location_downloads": {
+    "description": "Preset: downloads folder"
+  },
+  "recording_save_location_movies": "Ταινίες/Proton Meet",
+  "@recording_save_location_movies": {
+    "description": "Preset: macOS Movies folder"
+  },
+  "recording_save_location_custom": "Προσαρμοσμένος φάκελος…",
+  "@recording_save_location_custom": {
+    "description": "Preset: user-selected custom folder"
+  },
+  "recording_save_location_updated": "Η τοποθεσία αποθήκευσης εγγραφής ενημερώθηκε.",
+  "@recording_save_location_updated": {
+    "description": "Toast after changing recording save folder"
+  },
+  "recording_save_location_unavailable": "Δεν ήταν δυνατή η χρήση αυτού του φακέλου. Δοκιμάστε μια άλλη τοποθεσία.",
+  "@recording_save_location_unavailable": {
+    "description": "Error when selected recording folder is not writable"
+  },
+  "saved_recordings_title": "Αποθηκευμένες ηχογραφήσεις",
+  "@saved_recordings_title": {
+    "description": "Title for the list of local meeting recordings"
+  },
+  "saved_recordings_empty": "Δεν υπάρχουν ακόμη αποθηκευμένες εγγραφές. Εγγράψτε μια σύσκεψη για να δείτε τα αρχεία εδώ.",
+  "@saved_recordings_empty": {
+    "description": "Empty state when no local recordings exist"
+  },
+  "saved_recordings_share": "Κοινοποίηση",
+  "@saved_recordings_share": {
+    "description": "Share action for a saved recording"
+  },
+  "saved_recordings_share_failed": "Δεν ήταν δυνατό το άνοιγμα του φύλλου κοινής χρήσης. Δοκιμάστε ξανά.",
+  "@saved_recordings_share_failed": {
+    "description": "Error when the system share sheet fails to open"
+  },
+  "saved_recordings_folder": "Αποθηκεύτηκε στο",
+  "@saved_recordings_folder": {
+    "description": "Label above the folder path in saved recordings sheet"
+  },
+  "saved_recordings_recovered": "Ανακτήθηκε μετά την επανεκκίνηση της εφαρμογής",
+  "@saved_recordings_recovered": {
+    "description": "Badge for recordings recovered from a crash"
+  },
+  "saved_recordings_missing_file": "Αυτό το αρχείο ηχογράφησης δεν υπάρχει πλέον σε αυτήν τη συσκευή.",
+  "@saved_recordings_missing_file": {
+    "description": "Snackbar when a listed recording file was deleted"
   },
   "agree_and_continue": "Αποδοχή και συνέχεια",
   "@agree_and_continue": {
@@ -2020,5 +2142,9 @@
   "iap_native_test_sign_in_required": "Συνδεθείτε με έναν λογαριασμό Proton για να ανοίξετε εγγενείς πληρωμές.",
   "@iap_native_test_sign_in_required": {
     "description": "Message shown when sign in is required to open native payments"
+  },
+  "in_app_update_downloaded": "Η νέα έκδοση της εφαρμογής έχει ληφθεί και θα εγκατασταθεί αυτόματα.",
+  "@in_app_update_downloaded": {
+    "description": "Notification shown when a Play Store flexible update finished downloading and will be installed"
   }
 }
