@@ -68,6 +68,10 @@ sealed class BridgeError with _$BridgeError implements FrbException {
   const factory BridgeError.waitingRoomJoinRequestNotFound() =
       BridgeError_WaitingRoomJoinRequestNotFound;
 
+  /// Join proposal timed out waiting for welcome message.
+  const factory BridgeError.roomJoinRequestTimeout() =
+      BridgeError_RoomJoinRequestTimeout;
+
   /// Guest cancelled an outstanding waiting-room join request.
   const factory BridgeError.waitingRoomJoinCancelled() =
       BridgeError_WaitingRoomJoinCancelled;

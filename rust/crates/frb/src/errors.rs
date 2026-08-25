@@ -90,6 +90,10 @@ pub enum BridgeError {
     #[error("Waiting-room join request not found")]
     WaitingRoomJoinRequestNotFound,
 
+    /// Join proposal timed out waiting for welcome message.
+    #[error("Join request timed out waiting for welcome message")]
+    RoomJoinRequestTimeout,
+
     /// Guest cancelled an outstanding waiting-room join request.
     #[error("Waiting room join cancelled")]
     WaitingRoomJoinCancelled,
@@ -185,6 +189,7 @@ impl From<MeetCoreError> for BridgeError {
             MeetCoreError::WaitingRoomJoinRequestNotFound => {
                 BridgeError::WaitingRoomJoinRequestNotFound
             }
+            MeetCoreError::RoomJoinRequestTimeout { .. } => BridgeError::RoomJoinRequestTimeout,
             MeetCoreError::WaitingRoomJoinCancelled => BridgeError::WaitingRoomJoinCancelled,
             MeetCoreError::HttpClientError {
                 status,

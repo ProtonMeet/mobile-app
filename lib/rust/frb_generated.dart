@@ -7243,12 +7243,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case 23:
         return BridgeError_WaitingRoomJoinRequestNotFound();
       case 24:
-        return BridgeError_WaitingRoomJoinCancelled();
+        return BridgeError_RoomJoinRequestTimeout();
       case 25:
-        return BridgeError_TokenIsInvalid();
+        return BridgeError_WaitingRoomJoinCancelled();
       case 26:
-        return BridgeError_TokenIsExpired();
+        return BridgeError_TokenIsInvalid();
       case 27:
+        return BridgeError_TokenIsExpired();
+      case 28:
         return BridgeError_CheckDeviceClock();
       default:
         throw Exception("unreachable");
@@ -8475,12 +8477,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case 23:
         return BridgeError_WaitingRoomJoinRequestNotFound();
       case 24:
-        return BridgeError_WaitingRoomJoinCancelled();
+        return BridgeError_RoomJoinRequestTimeout();
       case 25:
-        return BridgeError_TokenIsInvalid();
+        return BridgeError_WaitingRoomJoinCancelled();
       case 26:
-        return BridgeError_TokenIsExpired();
+        return BridgeError_TokenIsInvalid();
       case 27:
+        return BridgeError_TokenIsExpired();
+      case 28:
         return BridgeError_CheckDeviceClock();
       default:
         throw UnimplementedError('');
@@ -10107,14 +10111,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_i_32(22, serializer);
       case BridgeError_WaitingRoomJoinRequestNotFound():
         sse_encode_i_32(23, serializer);
-      case BridgeError_WaitingRoomJoinCancelled():
+      case BridgeError_RoomJoinRequestTimeout():
         sse_encode_i_32(24, serializer);
-      case BridgeError_TokenIsInvalid():
+      case BridgeError_WaitingRoomJoinCancelled():
         sse_encode_i_32(25, serializer);
-      case BridgeError_TokenIsExpired():
+      case BridgeError_TokenIsInvalid():
         sse_encode_i_32(26, serializer);
-      case BridgeError_CheckDeviceClock():
+      case BridgeError_TokenIsExpired():
         sse_encode_i_32(27, serializer);
+      case BridgeError_CheckDeviceClock():
+        sse_encode_i_32(28, serializer);
     }
   }
 
