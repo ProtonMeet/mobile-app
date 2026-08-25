@@ -58,6 +58,13 @@ pub trait MeetingApi: Send + Sync {
         meet_link_name: &str,
     ) -> Result<(), HttpClientError>;
 
+    /// Make live captions available or not in a given meeting. Host-only.
+    async fn set_closed_captions_agent_availability(
+        &self,
+        meet_link_name: &str,
+        available: bool,
+    ) -> Result<(), HttpClientError>;
+
     /// Submit end-of-call quality feedback for a meeting link.
     async fn send_meeting_feedback(
         &self,
