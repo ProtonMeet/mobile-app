@@ -1021,20 +1021,31 @@ impl App {
     pub async fn request_closed_captions_wasm(
         &self,
         meeting_link_name: String,
-    ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
+    ) -> Result<(), wasm_bindgen::JsValue> {
         self.request_closed_captions(meeting_link_name)
             .await
-            .map_err(|e| e.into())
+            .map_err(MeetCoreError::into_js_error)
     }
 
     #[wasm_bindgen(js_name = stopClosedCaptions)]
     pub async fn stop_closed_captions_wasm(
         &self,
         meeting_link_name: String,
-    ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
+    ) -> Result<(), wasm_bindgen::JsValue> {
         self.stop_closed_captions(meeting_link_name)
             .await
-            .map_err(|e| e.into())
+            .map_err(MeetCoreError::into_js_error)
+    }
+
+    #[wasm_bindgen(js_name = setClosedCaptionsAvailabilityAsHost)]
+    pub async fn set_closed_captions_availability_as_host_wasm(
+        &self,
+        meeting_link_name: String,
+        available: bool,
+    ) -> Result<(), wasm_bindgen::JsValue> {
+        self.set_closed_captions_availability_as_host(meeting_link_name, available)
+            .await
+            .map_err(MeetCoreError::into_js_error)
     }
 
     #[wasm_bindgen(js_name = listPendingAgents)]

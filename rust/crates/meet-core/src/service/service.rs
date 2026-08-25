@@ -6364,6 +6364,18 @@ impl Service {
         Ok(())
     }
 
+    pub async fn set_closed_captions_availability_as_host(
+        &self,
+        meeting_link_name: &crate::domain::user::models::meeting_link_name::MeetingLinkName,
+        available: bool,
+    ) -> Result<(), anyhow::Error> {
+        let room_id = meeting_link_name.as_str().to_string();
+        self.meeting_api
+            .set_closed_captions_agent_availability(&room_id, available)
+            .await?;
+        Ok(())
+    }
+
     /// `GET /v1/agent/keypackages`: list the `mimi_device_id`s of every agent
     /// whose KeyPackage is currently uploaded for the host's meeting.
     pub async fn list_pending_agents(

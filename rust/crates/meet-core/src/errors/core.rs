@@ -679,6 +679,36 @@ impl From<MeetCoreError> for JsValue {
     }
 }
 
+#[cfg(target_family = "wasm")]
+impl MeetCoreError {
+    pub fn into_js_error(self) -> JsValue {
+        let (message, code) = match &self {
+            MeetCoreError::HttpClientError {
+                message, status, ..
+            } => (message.clone(), Some(*status)),
+            other => (other.to_string(), None),
+        };
+        let kind = MeetCoreErrorEnum::from(self) as u32;
+
+        let js_err = js_sys::Error::new(&message);
+        js_err.set_name("MeetCoreError");
+        let js_val: JsValue = js_err.into();
+        let _ = js_sys::Reflect::set(
+            &js_val,
+            &JsValue::from_str("kind"),
+            &JsValue::from_f64(kind as f64),
+        );
+        if let Some(code) = code {
+            let _ = js_sys::Reflect::set(
+                &js_val,
+                &JsValue::from_str("code"),
+                &JsValue::from_f64(code as f64),
+            );
+        }
+        js_val
+    }
+}
+
 // Type alias for non-WASM environments
 #[cfg(not(target_family = "wasm"))]
 pub type MeetCoreErrorEnum = MeetCoreError;

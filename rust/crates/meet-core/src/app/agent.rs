@@ -70,6 +70,20 @@ impl App {
             .map_err(MeetCoreError::from)
     }
 
+    pub async fn set_closed_captions_availability_as_host(
+        &self,
+        meeting_link_name: String,
+        available: bool,
+    ) -> Result<(), MeetCoreError> {
+        let meeting = Self::parse_meeting_link_name(&meeting_link_name)?;
+        self.user_service
+            .read()
+            .await
+            .set_closed_captions_availability_as_host(&meeting, available)
+            .await
+            .map_err(MeetCoreError::from)
+    }
+
     pub async fn list_pending_agents(
         &self,
         meeting_link_name: String,

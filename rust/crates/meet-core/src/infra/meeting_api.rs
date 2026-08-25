@@ -6,7 +6,7 @@ use crate::domain::user::models::meeting::Meeting;
 use crate::domain::user::models::{CreateMeetingParams, MeetingInfo, UpdateMeetingScheduleParams};
 use crate::domain::user::ports::meeting_api::MeetingApi;
 use crate::errors::http_client::HttpClientError;
-use crate::infra::dto::agent::AddAgentRequest;
+use crate::infra::dto::agent::{AddAgentRequest, SetAgentAvailabilityRequest};
 use crate::infra::dto::common::ProtonEmptyResponse;
 use crate::infra::dto::end_meeting::EndMeetingRequest;
 use crate::infra::dto::meeting::{
@@ -154,6 +154,24 @@ impl MeetingApi for ProtonHttpClient {
         let req = self.delete(format!(
             "/meet/v1/meetings/links/{meet_link_name}/agents/{agent_type}"
         ));
+        let res = self.send_session_request(req).await?;
+        let _ = res.parse_response::<ProtonEmptyResponse>()?;
+        Ok(())
+    }
+
+    async fn set_closed_captions_agent_availability(
+        &self,
+        meet_link_name: &str,
+        available: bool,
+    ) -> Result<(), HttpClientError> {
+        let agent_type = AgentType::SttAgent as u8;
+        let req = self
+            .put(format!(
+                "/meet/v1/meetings/links/{meet_link_name}/agents/{agent_type}/available"
+            ))
+            .body_json(SetAgentAvailabilityRequest {
+                available: u8::from(available),
+            })?;
         let res = self.send_session_request(req).await?;
         let _ = res.parse_response::<ProtonEmptyResponse>()?;
         Ok(())
