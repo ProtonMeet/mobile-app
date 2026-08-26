@@ -9,7 +9,6 @@ import 'package:meet/constants/constants.dart';
 import 'package:meet/helper/audio_output_probe.dart';
 import 'package:meet/helper/background_blur/camera_background_blur_sync.dart';
 import 'package:meet/helper/denoise/denoise_audio_sync.dart';
-import 'package:meet/helper/extension/bridge_error.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/media_device_list_ext.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
@@ -534,6 +533,35 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     // Track call start time for accurate elapsed time calculation
     _callStartTime = DateTime.now();
 
+    final local = await buildLocalFrbParticipant();
+    emit(state.copyWith(frbParticipantsMap: local));
+
+    // Remote display names load asynchronously — must not block track grid.
+    add(const BackgroundRefreshFrbParticipants());
+
+    // Run the first sort inline: queued [SortParticipants] cannot execute until
+    // this handler finishes, so add() at the tail would sit behind slow I/O and
+    // duplicate FRB refresh events in the queue.
+    final ffBlurEnabled = isMeetCameraBackgroundBlurEnabled();
+    final effectiveBlurEnabled =
+        event.cameraBackgroundBlurEnabled && ffBlurEnabled;
+    await sortParticipantsNow(emit);
+
+    final denoiseDefault = await DenoiseAudioService.instance
+        .resolveDefaultInCallPreference();
+    emit(
+      state.copyWith(
+        isRoomInitialized: true,
+        cameraBackgroundBlurEnabled: effectiveBlurEnabled,
+        audioDenoiseEnabled: denoiseDefault.enabled,
+        audioDenoiseType: denoiseDefault.type,
+      ),
+    );
+
+    if (event.preJoinType == PreJoinType.create) {
+      emit(state.copyWith(showMeetingIsReady: true));
+    }
+
     final mediaStates = _getLocalParticipantMediaStates(
       state.room.localParticipant,
     );
@@ -544,23 +572,6 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       isMuted: mediaStates.isMuted,
       isVideoEnabled: mediaStates.isVideoEnabled,
     );
-
-    final local = await buildLocalFrbParticipant();
-    emit(state.copyWith(frbParticipantsMap: local));
-
-    try {
-      final updated = await loadFrbParticipants();
-      emit(state.copyWith(frbParticipantsMap: updated));
-    } catch (e, stackTrace) {
-      logBridgeError(
-        'RoomBloc',
-        'Error loading FRB participants',
-        e,
-        stackTrace: stackTrace,
-      );
-      // Retry loading participants (will retry up to 2 times)
-      add(const RetryLoadParticipants());
-    }
 
     // Log joined room if feature flag is enabled
     try {
@@ -668,32 +679,6 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
         isVideoEnabled: mediaStates.isVideoEnabled,
       );
     });
-
-    // Carry over the prejoin camera background blur preference. We gate on the
-    // FF here (matching `_onSetCameraBackgroundBlurEnabled`'s logic) and emit
-    // `cameraBackgroundBlurEnabled` together with `isRoomInitialized: true` so
-    // the meeting settings toggle reflects the preference atomically — no
-    // flash of an "off" state between mount and a queued event handler.
-    final ffBlurEnabled = isMeetCameraBackgroundBlurEnabled();
-    final effectiveBlurEnabled =
-        event.cameraBackgroundBlurEnabled && ffBlurEnabled;
-    // Default mic denoise: RNNoise when Unleash + native allow it (see
-    // `resolveDefaultInCallPreference`). Applied here so settings and attach
-    // stay in sync at room init, same as background blur.
-    final denoiseDefault = await DenoiseAudioService.instance
-        .resolveDefaultInCallPreference();
-    emit(
-      state.copyWith(
-        isRoomInitialized: true,
-        cameraBackgroundBlurEnabled: effectiveBlurEnabled,
-        audioDenoiseEnabled: denoiseDefault.enabled,
-        audioDenoiseType: denoiseDefault.type,
-      ),
-    );
-
-    if (event.preJoinType == PreJoinType.create) {
-      emit(state.copyWith(showMeetingIsReady: true));
-    }
 
     // Attach the native processor onto the already-published local video
     // track. Fire-and-forget: the toggle state is already correct in the

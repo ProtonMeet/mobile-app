@@ -36,6 +36,14 @@ mixin RoomTracksHandlers
     on<RefreshParticipantDisplayNames>(_onRefreshParticipantDisplayNames);
   }
 
+  /// Runs [SortParticipants] synchronously within the current event handler.
+  ///
+  /// Use during room init so the first track grid is ready before slow tail
+  /// work finishes — queued [SortParticipants] events cannot run until the
+  /// handler that [add]s them returns.
+  Future<void> sortParticipantsNow(Emitter<RoomState> emit) =>
+      _onSortParticipants(SortParticipants(), emit);
+
   /// Whether any remote participant has a camera publication enabled but the
   /// track is not attached yet (common between publish and subscribe settle).
   bool _hasPendingCameraVideoTrackPublication() {
@@ -350,15 +358,21 @@ mixin RoomTracksHandlers
     final shouldRefreshParticipantTracks =
         hasOrderChanged || videoAvailabilityChanged || hasPendingCameraVideo;
 
+    final isFirstTrackSort = !state.isTrackInitialized;
     // Only emit if something actually changed to reduce unnecessary rebuilds
-    if (shouldRefreshParticipantTracks ||
+    final shouldEmit =
+        isFirstTrackSort ||
+        shouldRefreshParticipantTracks ||
         screenTracksChanged ||
         speakerTracksChanged ||
         screenSharingChanged ||
-        cameraEnabledChanged) {
+        cameraEnabledChanged;
+
+    if (shouldEmit) {
       emit(
         state.copyWith(
-          participantTracks: shouldRefreshParticipantTracks
+          participantTracks:
+              (shouldRefreshParticipantTracks || isFirstTrackSort)
               ? newParticipantTracks
               : state.participantTracks,
           screenSharingTracks: screenTracksChanged

@@ -335,7 +335,8 @@ class RoomState extends Equatable {
   /// Room initialized state - true when initial setup is complete and room is ready to display
   final bool isRoomInitialized;
 
-  /// Track initialized state - true when tracks are initialized and ready
+  /// True when participant track lists are built from the LiveKit roster at
+  /// least once. Does not wait for meet-api display names ([frbParticipantsMap]).
   final bool isTrackInitialized;
 
   /// Rejoining state - true when room is being rejoined after connection loss
