@@ -10,6 +10,7 @@ library;
 export 'background_blur_config.dart';
 export 'background_blur_track_processor.dart';
 export 'camera_background_mode.dart';
+export 'mask_edge_tuning.dart';
 export 'segmentation_model_debug_info.dart';
 export 'segmentation_model_preference.dart';
 

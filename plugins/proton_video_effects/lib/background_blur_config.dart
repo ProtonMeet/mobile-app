@@ -1,4 +1,5 @@
 import 'camera_background_mode.dart';
+import 'mask_edge_tuning.dart';
 
 /// Tunable parameters for native camera background blur.
 ///
@@ -8,6 +9,8 @@ class BackgroundBlurConfig {
     this.mode = CameraBackgroundMode.blur,
     this.blurSigma = defaultBlurSigma,
     this.backgroundObscureOpacity = defaultObscureOpacity,
+    this.maskEdge = MaskEdgeTuning.standard,
+    this.synchronousSegmentation = false,
     this.replacementImagePath,
   });
 
@@ -22,6 +25,18 @@ class BackgroundBlurConfig {
   final CameraBackgroundMode mode;
   final double blurSigma;
   final double backgroundObscureOpacity;
+
+  /// How the segmentation mask is shaped before blending. Apple platforms only.
+  final MaskEdgeTuning maskEdge;
+
+  /// Segment inline on the capture thread so each frame gets its own mask. Apple platforms only.
+  ///
+  /// Removes the roughly one-frame lag that makes a waving arm tear a hole in the background,
+  /// because the mask no longer describes an older frame. In exchange, inference blocks video
+  /// capture, so any spike past the frame period drops captured frames. Debug/experimental —
+  /// leave off in production until the latency headroom is proven on the slowest target device.
+  final bool synchronousSegmentation;
+
   final String? replacementImagePath;
 
   static double clampBlurSigma(double sigma) =>
@@ -33,6 +48,8 @@ class BackgroundBlurConfig {
     CameraBackgroundMode? mode,
     double? blurSigma,
     double? backgroundObscureOpacity,
+    MaskEdgeTuning? maskEdge,
+    bool? synchronousSegmentation,
     String? replacementImagePath,
     bool clearReplacementImagePath = false,
   }) {
@@ -41,6 +58,9 @@ class BackgroundBlurConfig {
       blurSigma: blurSigma ?? this.blurSigma,
       backgroundObscureOpacity:
           backgroundObscureOpacity ?? this.backgroundObscureOpacity,
+      maskEdge: maskEdge ?? this.maskEdge,
+      synchronousSegmentation:
+          synchronousSegmentation ?? this.synchronousSegmentation,
       replacementImagePath: clearReplacementImagePath
           ? null
           : replacementImagePath ?? this.replacementImagePath,
@@ -55,6 +75,8 @@ class BackgroundBlurConfig {
       'blurSigma': clampBlurSigma(blurSigma),
       'backgroundObscureOpacity': clampObscureOpacity(backgroundObscureOpacity),
       'backgroundMode': effectiveMode.channelId,
+      'synchronousSegmentation': synchronousSegmentation,
+      ...maskEdge.toMethodChannelArgs(),
     };
     final path = replacementImagePath;
     if (effectiveMode == CameraBackgroundMode.replacementImage &&
@@ -87,6 +109,8 @@ class BackgroundBlurConfig {
       backgroundObscureOpacity: obscure is num
           ? clampObscureOpacity(obscure.toDouble())
           : defaultObscureOpacity,
+      maskEdge: MaskEdgeTuning.fromMethodChannelArgs(args),
+      synchronousSegmentation: args['synchronousSegmentation'] == true,
       replacementImagePath: path is String && path.isNotEmpty ? path : null,
     );
   }

@@ -12,6 +12,7 @@ import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/views/components/bottom.sheets/virtual_background_sheet.dart';
 import 'package:meet/views/components/safe_video_track_renderer.dart';
+import 'package:meet/views/scenes/settings/debug/mask_edge_sliders.dart';
 import 'package:proton_video_effects/proton_video_effects.dart';
 
 /// Debug screen: live camera preview + production virtual background sheet.
@@ -37,6 +38,7 @@ class VirtualBackgroundDebugScreen extends StatefulWidget {
 class _VirtualBackgroundDebugScreenState
     extends State<VirtualBackgroundDebugScreen> {
   LocalVideoTrack? _videoTrack;
+  BackgroundBlurTrackProcessor? _blurProcessor;
   CameraPosition? _cameraPosition;
   CameraBackgroundSelection _selection = const CameraBackgroundSelection.none();
   bool _effectsReady = false;
@@ -44,6 +46,8 @@ class _VirtualBackgroundDebugScreenState
   bool _starting = true;
   bool _applyingSelection = false;
   String? _error;
+  MaskEdgeTuning _maskEdge = MaskEdgeTuning.standard;
+  bool _synchronousSegmentation = false;
 
   bool get _canFlipCamera => iOS || android;
 
@@ -110,6 +114,7 @@ class _VirtualBackgroundDebugScreenState
     } catch (_) {}
     final track = _videoTrack;
     _videoTrack = null;
+    _blurProcessor = null;
     if (track != null) {
       final trackId = track.mediaStreamTrack.id;
       if (trackId != null && trackId.isNotEmpty) {
@@ -125,10 +130,36 @@ class _VirtualBackgroundDebugScreenState
     }
   }
 
+  /// Production config for [selection], with the debug-only mask edge overrides layered on.
   BackgroundBlurConfig _configForSelection(
     CameraBackgroundSelection selection,
   ) {
-    return resolveCameraBackgroundBlurConfig(selection);
+    return resolveCameraBackgroundBlurConfig(selection).copyWith(
+      maskEdge: _maskEdge,
+      synchronousSegmentation: _synchronousSegmentation,
+    );
+  }
+
+  /// Mask edge changes reshape the composite only, so they apply without rebuilding the track.
+  Future<void> _applyMaskEdgeLive() async {
+    if (!_selection.isEffectActive) {
+      return;
+    }
+    final config = _configForSelection(_selection);
+    _blurProcessor?.setBackgroundBlurConfig(config);
+    try {
+      await ProtonVideoEffects.instance.setBackgroundBlurConfig(config);
+    } catch (_) {}
+  }
+
+  void _onMaskEdgeChanged(MaskEdgeTuning tuning) {
+    setState(() => _maskEdge = tuning);
+    unawaited(_applyMaskEdgeLive());
+  }
+
+  void _onSynchronousSegmentationChanged(bool enabled) {
+    setState(() => _synchronousSegmentation = enabled);
+    unawaited(_applyMaskEdgeLive());
   }
 
   Future<void> _startCamera() async {
@@ -145,6 +176,7 @@ class _VirtualBackgroundDebugScreenState
       );
       await prepareCameraBackgroundSelectionForTrackCreation(_selection);
     }
+    _blurProcessor = processor;
 
     final track = await LocalVideoTrackHelper.cameraTrack(
       parameters: VideoParametersPresets.h720_169,
@@ -352,6 +384,15 @@ class _VirtualBackgroundDebugScreenState
                     )
                   : Text(context.local.virtual_backgrounds_title),
             ),
+            if (maskEdgeTuningSupported && _selection.isEffectActive) ...[
+              const SizedBox(height: 24),
+              MaskEdgeSliders(tuning: _maskEdge, onChanged: _onMaskEdgeChanged),
+              const SizedBox(height: 8),
+              SynchronousSegmentationSwitch(
+                value: _synchronousSegmentation,
+                onChanged: _onSynchronousSegmentationChanged,
+              ),
+            ],
             const SizedBox(height: 16),
             Text(
               'Current selection',
