@@ -207,9 +207,9 @@ pub enum GroupKeyUpdateReasonInfo {
 }
 
 #[cfg(target_family = "wasm")]
-impl From<crate::service::service::GroupKeyUpdateReason> for GroupKeyUpdateReasonInfo {
-    fn from(reason: crate::service::service::GroupKeyUpdateReason) -> Self {
-        use crate::service::service::GroupKeyUpdateReason;
+impl From<crate::service::user_service::GroupKeyUpdateReason> for GroupKeyUpdateReasonInfo {
+    fn from(reason: crate::service::user_service::GroupKeyUpdateReason) -> Self {
+        use crate::service::user_service::GroupKeyUpdateReason;
         match reason {
             GroupKeyUpdateReason::Join => GroupKeyUpdateReasonInfo::Join,
             GroupKeyUpdateReason::Leave => GroupKeyUpdateReasonInfo::Leave,

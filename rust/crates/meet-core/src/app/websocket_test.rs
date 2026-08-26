@@ -88,7 +88,7 @@ async fn is_websocket_has_reconnected_delegates_to_service() {
         meeting_api::MockMeetingApi, user_api::MockUserApi, MockHttpClient, MockMlsApi,
         MockUserRepository,
     };
-    use crate::service::service::Service;
+    use crate::service::user_service::Service;
 
     let mut ws = MockWebSocketClient::new();
     ws.expect_get_has_reconnected()

@@ -40,3 +40,8 @@ pub fn unix_timestamp_ms() -> u64 {
             .as_millis() as u64
     }
 }
+
+#[cfg(not(target_family = "wasm"))]
+pub use tokio::time::{sleep, timeout};
+#[cfg(target_family = "wasm")]
+pub use wasmtimer::tokio::{sleep, timeout};

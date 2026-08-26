@@ -23,8 +23,7 @@ use crate::infra::{
     muon::AuthStore,
     ports::user_key_provider::{MockUserKeyProvider, UserKeyProvider},
 };
-use crate::service::service::create_mock_mls_api;
-use crate::service::service::Service;
+use crate::service::user_service::{create_mock_mls_api, Service};
 use crate::utils::server_time::ServerTimeTracker;
 
 pub fn test_user_key(id: &str, primary: u32, active: u32) -> ProtonUserKey {

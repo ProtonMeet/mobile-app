@@ -20,11 +20,13 @@ use proton_meet_mls::{MlsStore, MlsStoreError};
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-use crate::domain::user::models::{meeting_link_name::MeetingLinkName, UserId};
-use crate::service::service::{psk_id_for_commit, public_ratchet_tree_has_agent};
 use crate::{
     domain::mls::ports::{KeyPackageError, KeyPackagePort},
     utils::server_time::ServerTimeTracker,
+};
+use crate::{
+    domain::user::models::{meeting_link_name::MeetingLinkName, UserId},
+    service::user_service::{psk_id_for_commit, public_ratchet_tree_has_agent},
 };
 
 #[derive(Clone)]

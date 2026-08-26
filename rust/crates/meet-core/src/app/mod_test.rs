@@ -9,7 +9,7 @@ use crate::app::test_support::{
 use crate::domain::user::ports::meeting_api::MockMeetingApi;
 use crate::domain::user::ports::{MockHttpClient, MockMlsApi};
 use crate::errors::{core::MeetCoreError, http_client::HttpClientError};
-use crate::service::service::Service;
+use crate::service::user_service::Service;
 
 #[tokio::test]
 async fn ping_propagates_http_error_without_network() {

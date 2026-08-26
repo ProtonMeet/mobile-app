@@ -25,7 +25,7 @@ use crate::errors::{core::MeetCoreError, http_client::HttpClientError};
 use crate::infra::dto::realtime::{
     GroupInfoVersion, JoinType, RatchetTreeAndGroupInfo, VersionedGroupInfoData,
 };
-use crate::service::service::{
+use crate::service::user_service::{
     create_test_service, join_switch_service_with_mls_api, mls_group_export_snapshot,
     setup_n_user_group,
 };

@@ -561,7 +561,7 @@ impl App {
         enable_join_type_switch: bool,
         current_participant_count: u32,
     ) -> JoinType {
-        debug!("get_join_type(), is_new_join_type={}, enable_join_type_switch={}, current_participant_count={}, threshold={}", 
+        debug!("get_join_type(), is_new_join_type={}, enable_join_type_switch={}, current_participant_count={}, threshold={}",
             is_new_join_type, enable_join_type_switch, current_participant_count, crate::JOIN_TYPE_SWITCH_THRESHOLD);
         if is_new_join_type && enable_join_type_switch {
             if current_participant_count >= crate::JOIN_TYPE_SWITCH_THRESHOLD {
