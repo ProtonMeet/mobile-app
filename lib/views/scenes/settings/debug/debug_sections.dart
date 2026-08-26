@@ -9,6 +9,7 @@ import 'package:meet/views/scenes/settings/debug/background_blur_debug_screen.da
 import 'package:meet/views/scenes/settings/debug/denoise_debug_menu.dart';
 import 'package:meet/views/scenes/settings/debug/left_meeting_sheet_menu.dart';
 import 'package:meet/views/scenes/settings/debug/schedule_meeting_debug.dart';
+import 'package:meet/views/scenes/settings/debug/virtual_background_debug_screen.dart';
 import 'package:meet/views/scenes/settings/settings_action_item.dart';
 import 'package:meet/views/scenes/settings/settings_section_header.dart';
 import 'package:meet/views/scenes/signin/auth_bloc.dart';
@@ -44,6 +45,11 @@ final class AppSettingsDebugSection {
         SettingsActionItem(
           title: 'Background blur preview',
           onTap: () => BackgroundBlurDebugScreen.show(context),
+        ),
+        const SizedBox(height: 1),
+        SettingsActionItem(
+          title: 'Virtual backgrounds',
+          onTap: () => VirtualBackgroundDebugScreen.show(context),
         ),
       ],
       const SizedBox(height: 1),

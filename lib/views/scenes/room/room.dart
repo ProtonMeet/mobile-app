@@ -14,6 +14,7 @@ import 'package:logger/logger.dart';
 import 'package:meet/constants/constants.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/constants/test_ids.dart';
+import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
@@ -41,6 +42,7 @@ import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/platform/html.window.dart';
 import 'package:meet/rust/errors.dart';
 import 'package:meet/rust/proton_meet/models/chat_event.dart';
+import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/rust/proton_meet/models/meet_info.dart';
 import 'package:meet/rust/proton_meet/models/meeting_info.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
@@ -112,10 +114,9 @@ class RoomPage extends StatefulWidget {
   final PreJoinType preJoinType;
   final AuthBloc? authBloc;
 
-  /// User preference for camera background blur carried over from the prejoin
-  /// screen. Forwarded to [RoomBloc] via [RoomInitialized] which re-applies
-  /// the native processor onto the already-published video track.
+  /// User preference for camera background effects carried over from prejoin.
   final bool cameraBackgroundBlurEnabled;
+  final CameraBackgroundSelection cameraBackgroundSelection;
 
   /// Meeting limits resolved during pre-join; skips getMeetingInfo in room.
   final FrbMeetingInfo? prefetchedMeetingInfo;
@@ -131,6 +132,7 @@ class RoomPage extends StatefulWidget {
     this.preJoinType, {
     this.authBloc,
     this.cameraBackgroundBlurEnabled = false,
+    this.cameraBackgroundSelection = const CameraBackgroundSelection.none(),
     this.prefetchedMeetingInfo,
     super.key,
   });
@@ -292,6 +294,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           preJoinType: widget.preJoinType,
           meetingLink: widget.meetLink,
           cameraBackgroundBlurEnabled: widget.cameraBackgroundBlurEnabled,
+          cameraBackgroundSelection: widget.cameraBackgroundSelection,
           prefetchedMeetingInfo: widget.prefetchedMeetingInfo,
         ),
       );

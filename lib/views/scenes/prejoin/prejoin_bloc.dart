@@ -7,6 +7,7 @@ import 'package:meet/helper/audio_output_probe.dart';
 import 'package:meet/helper/denoise/denoise_audio_capture_options.dart';
 import 'package:meet/helper/extension/bridge_error.extension.dart';
 import 'package:meet/helper/extension/bridge_session_check.extension.dart';
+import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/helper/extension/local_video_track_extension.dart';
 import 'package:meet/helper/extension/media_device_list_ext.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
@@ -28,8 +29,6 @@ import 'package:meet/rust/proton_meet/user_subscription.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_event.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_meeting_preview.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:proton_video_effects/proton_video_effects.dart'
-    show ProtonVideoEffects;
 
 import 'prejoin_arguments.dart';
 import 'prejoin_state.dart';
@@ -125,6 +124,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     );
     on<PreJoinRestorePreviewVideoTrack>(_onRestorePreviewVideoTrack);
     on<PreJoinToggleCameraBackgroundBlur>(_onToggleCameraBackgroundBlur);
+    on<PreJoinSetCameraBackgroundSelection>(_onSetCameraBackgroundSelection);
     on<PreJoinStartWaitingRoomAdmission>(_onStartWaitingRoomAdmission);
     on<PreJoinPollGroupInfo>(_onPollGroupInfo);
     on<PreJoinWaitingRoomCountdownTick>(
@@ -1074,7 +1074,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
           parameters: state.selectedVideoParameters,
           device: videoDevice,
           position: videoPosition,
-          applyBackgroundBlur: state.cameraBackgroundBlurEnabled,
+          backgroundSelection: state.cameraBackgroundSelection,
         );
         await videoTrack.start();
       }
@@ -1182,7 +1182,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         parameters: state.selectedVideoParameters,
         device: state.selectedVideoDevice,
         position: state.selectedVideoPosition,
-        applyBackgroundBlur: state.cameraBackgroundBlurEnabled,
+        backgroundSelection: state.cameraBackgroundSelection,
       );
       await videoTrack.start();
       emit(state.copyWith(isVideoEnabled: true, videoTrack: videoTrack));
@@ -1266,7 +1266,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       videoTrack = await LocalVideoTrackHelper.cameraTrack(
         parameters: state.selectedVideoParameters,
         device: event.device,
-        applyBackgroundBlur: state.cameraBackgroundBlurEnabled,
+        backgroundSelection: state.cameraBackgroundSelection,
       );
       await videoTrack.start();
     }
@@ -1293,7 +1293,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       videoTrack = await LocalVideoTrackHelper.cameraTrack(
         parameters: state.selectedVideoParameters,
         device: state.selectedVideoDevice,
-        applyBackgroundBlur: state.cameraBackgroundBlurEnabled,
+        backgroundSelection: state.cameraBackgroundSelection,
       );
       await videoTrack.start();
       final appCoreManager = ManagerFactory().get<AppCoreManager>();
@@ -1317,7 +1317,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       videoTrack = await LocalVideoTrackHelper.cameraTrack(
         parameters: state.selectedVideoParameters,
         position: newPosition,
-        applyBackgroundBlur: state.cameraBackgroundBlurEnabled,
+        backgroundSelection: state.cameraBackgroundSelection,
       );
       await videoTrack.start();
     }
@@ -1346,40 +1346,52 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     if (!state.isCameraBackgroundBlurFeatureEnabled) {
       return;
     }
-    final nextEnabled = !state.cameraBackgroundBlurEnabled;
+    final nextSelection = state.cameraBackgroundSelection.isEffectActive
+        ? const CameraBackgroundSelection.none()
+        : const CameraBackgroundSelection.blur();
+    await _onSetCameraBackgroundSelection(
+      PreJoinSetCameraBackgroundSelection(nextSelection),
+      emit,
+    );
+  }
+
+  Future<void> _onSetCameraBackgroundSelection(
+    PreJoinSetCameraBackgroundSelection event,
+    Emitter<PreJoinState> emit,
+  ) async {
+    if (!state.isCameraBackgroundBlurFeatureEnabled) {
+      return;
+    }
+    final selection = event.selection;
 
     if (!state.isVideoEnabled || !state.isCameraPermissionGranted) {
-      emit(state.copyWith(cameraBackgroundBlurEnabled: nextEnabled));
+      emit(
+        state.copyWith(
+          cameraBackgroundSelection: selection,
+          cameraBackgroundBlurEnabled: selection.isEffectActive,
+        ),
+      );
       return;
     }
 
     try {
-      if (nextEnabled) {
-        await state.videoTrack?.stop();
-        final videoTrack = await LocalVideoTrackHelper.cameraTrack(
-          parameters: state.selectedVideoParameters,
-          device: state.selectedVideoDevice,
-          position: state.selectedVideoPosition,
-          applyBackgroundBlur: true,
-        );
-        await videoTrack.start();
-        emit(
-          state.copyWith(
-            cameraBackgroundBlurEnabled: true,
-            videoTrack: videoTrack,
-          ),
-        );
-      } else {
-        final trackId = state.videoTrack?.mediaStreamTrack.id;
-        if (trackId != null && trackId.isNotEmpty) {
-          await ProtonVideoEffects.instance.detachBackgroundBlur(
-            trackId: trackId,
-          );
-        }
-        emit(state.copyWith(cameraBackgroundBlurEnabled: false));
-      }
+      await state.videoTrack?.stop();
+      final videoTrack = await LocalVideoTrackHelper.cameraTrack(
+        parameters: state.selectedVideoParameters,
+        device: state.selectedVideoDevice,
+        position: state.selectedVideoPosition,
+        backgroundSelection: selection,
+      );
+      await videoTrack.start();
+      emit(
+        state.copyWith(
+          cameraBackgroundSelection: selection,
+          cameraBackgroundBlurEnabled: selection.isEffectActive,
+          videoTrack: videoTrack,
+        ),
+      );
     } catch (e) {
-      l.logger.e('[PreJoinBloc] Error toggling camera background blur: $e');
+      l.logger.e('[PreJoinBloc] Error applying camera background: $e');
     }
   }
 

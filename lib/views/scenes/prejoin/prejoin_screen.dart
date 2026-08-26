@@ -9,6 +9,7 @@ import 'package:meet/helper/extension/strings.dart';
 import 'package:meet/helper/local_toast.dart';
 import 'package:meet/managers/channels/platform_info_channel.dart';
 import 'package:meet/views/components/button.v5.dart';
+import 'package:meet/views/components/bottom.sheets/virtual_background_sheet.dart';
 import 'package:meet/views/components/button.v6.dart';
 import 'package:meet/views/components/custom.loading.dart';
 import 'package:meet/views/components/test_id.dart';
@@ -181,6 +182,22 @@ class PreJoinScreen extends StatelessWidget {
                                   state.isCameraBackgroundBlurFeatureEnabled,
                               cameraBackgroundBlurEnabled:
                                   state.cameraBackgroundBlurEnabled,
+                              onOpenVirtualBackgrounds: () async {
+                                final selection =
+                                    await VirtualBackgroundSheet.show(
+                                      context,
+                                      initialSelection:
+                                          state.cameraBackgroundSelection,
+                                      previewTrack: state.videoTrack,
+                                    );
+                                if (selection != null && context.mounted) {
+                                  bloc.add(
+                                    PreJoinSetCameraBackgroundSelection(
+                                      selection,
+                                    ),
+                                  );
+                                }
+                              },
                               onCameraBackgroundBlurToggle: () =>
                                   bloc.add(PreJoinToggleCameraBackgroundBlur()),
                               onVideoToggle: () =>
@@ -337,6 +354,8 @@ class PreJoinScreen extends StatelessWidget {
                                                 .cameraBackgroundBlurEnabled,
                                             handedOverVideoTrack:
                                                 handedOverVideoTrack,
+                                            cameraBackgroundSelection:
+                                                state.cameraBackgroundSelection,
                                           ),
                                         ),
                                       );
@@ -655,6 +674,7 @@ class PreJoinScreen extends StatelessWidget {
           selectedVideoParameters: state.selectedVideoParameters,
           cameraBackgroundBlurEnabled: state.cameraBackgroundBlurEnabled,
           handedOverVideoTrack: handedOverVideoTrack,
+          cameraBackgroundSelection: state.cameraBackgroundSelection,
         ),
       ),
     );

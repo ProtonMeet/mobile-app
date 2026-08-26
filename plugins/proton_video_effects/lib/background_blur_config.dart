@@ -16,8 +16,8 @@ class BackgroundBlurConfig {
   static const double minBlurSigma = 4;
   static const double maxBlurSigma = 256;
 
-  /// Still-image virtual backgrounds are not enabled yet.
-  static const bool replacementBackgroundEnabled = false;
+  /// Still-image virtual backgrounds (bundled presets + user gallery).
+  static const bool replacementBackgroundEnabled = true;
 
   final CameraBackgroundMode mode;
   final double blurSigma;

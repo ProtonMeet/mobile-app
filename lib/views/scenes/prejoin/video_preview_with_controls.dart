@@ -45,6 +45,7 @@ class VideoPreviewWithControls extends StatelessWidget {
   final bool isCameraBackgroundBlurFeatureEnabled;
   final bool cameraBackgroundBlurEnabled;
   final VoidCallback? onCameraBackgroundBlurToggle;
+  final VoidCallback? onOpenVirtualBackgrounds;
   final bool showWaveform;
   final String? displayName;
 
@@ -66,6 +67,7 @@ class VideoPreviewWithControls extends StatelessWidget {
     this.isCameraBackgroundBlurFeatureEnabled = false,
     this.cameraBackgroundBlurEnabled = false,
     this.onCameraBackgroundBlurToggle,
+    this.onOpenVirtualBackgrounds,
     this.showSelectVideoButtons = false,
     this.showSelectAudioButtons = false,
     super.key,
@@ -328,7 +330,7 @@ class VideoPreviewWithControls extends StatelessWidget {
       id: TestIds.prejoinBackgroundBlur,
       button: true,
       child: GestureDetector(
-        onTap: onCameraBackgroundBlurToggle,
+        onTap: onOpenVirtualBackgrounds ?? onCameraBackgroundBlurToggle,
         child: MouseRegion(
           cursor: SystemMouseCursors.click,
           child: Container(
@@ -347,7 +349,7 @@ class VideoPreviewWithControls extends StatelessWidget {
               height: 20,
               child: FittedBox(
                 child: Icon(
-                  cameraBackgroundBlurEnabled ? Icons.blur_on : Icons.blur_off,
+                  cameraBackgroundBlurEnabled ? Icons.wallpaper : Icons.wallpaper_outlined,
                   color: context.colors.textNorm,
                   semanticLabel: context.local.camera_background_blur,
                 ),

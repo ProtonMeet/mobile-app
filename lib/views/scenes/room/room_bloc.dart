@@ -680,12 +680,51 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       );
     });
 
+    // Carry over the prejoin camera background blur preference. We gate on the
+    // FF here (matching `_onSetCameraBackgroundBlurEnabled`'s logic) and emit
+    // `cameraBackgroundBlurEnabled` together with `isRoomInitialized: true` so
+    // the meeting settings toggle reflects the preference atomically — no
+    // flash of an "off" state between mount and a queued event handler.
+    final ffBlurEnabled = isMeetCameraBackgroundBlurEnabled();
+    final carriedSelection = event.cameraBackgroundSelection.isEffectActive
+        ? event.cameraBackgroundSelection
+        : (event.cameraBackgroundBlurEnabled
+              ? const CameraBackgroundSelection.blur()
+              : const CameraBackgroundSelection.none());
+    final effectiveSelection = ffBlurEnabled
+        ? carriedSelection
+        : const CameraBackgroundSelection.none();
+    final effectiveBlurEnabled = effectiveSelection.isEffectActive;
+    // Default mic denoise: RNNoise when Unleash + native allow it (see
+    // `resolveDefaultInCallPreference`). Applied here so settings and attach
+    // stay in sync at room init, same as background blur.
+    final denoiseDefault = await DenoiseAudioService.instance
+        .resolveDefaultInCallPreference();
+    emit(
+      state.copyWith(
+        isRoomInitialized: true,
+        cameraBackgroundBlurEnabled: effectiveBlurEnabled,
+        cameraBackgroundSelection: effectiveSelection,
+        audioDenoiseEnabled: denoiseDefault.enabled,
+        audioDenoiseType: denoiseDefault.type,
+      ),
+    );
+
+    if (event.preJoinType == PreJoinType.create) {
+      emit(state.copyWith(showMeetingIsReady: true));
+    }
+
     // Attach the native processor onto the already-published local video
     // track. Fire-and-forget: the toggle state is already correct in the
     // bloc, and `syncLocalCameraBackgroundBlur` is idempotent + FF-gated, so
     // failures here only delay the visual blur without leaving state stale.
     if (effectiveBlurEnabled) {
-      unawaited(syncLocalCameraBackgroundBlur(room: state.room, enabled: true));
+      unawaited(
+        syncLocalCameraBackgroundEffect(
+          room: state.room,
+          selection: effectiveSelection,
+        ),
+      );
     }
 
     if (denoiseDefault.enabled) {
@@ -1330,9 +1369,9 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
   ) async {
     try {
       await state.room.setVideoInputDevice(event.device);
-      await syncLocalCameraBackgroundBlur(
+      await syncLocalCameraBackgroundEffect(
         room: state.room,
-        enabled: state.cameraBackgroundBlurEnabled,
+        selection: state.cameraBackgroundSelection,
       );
       emit(state.copyWith(currentVideoInputDeviceId: event.device.deviceId));
       l.logger.d('Video input device set: ${event.device.deviceId}');
@@ -1474,7 +1513,10 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       try {
         if (track != null) {
           await track.setCameraPosition(newCameraPosition);
-          await syncLocalCameraBackgroundBlur(room: state.room, enabled: true);
+          await syncLocalCameraBackgroundEffect(
+            room: state.room,
+            selection: state.cameraBackgroundSelection,
+          );
         }
         emit(state.copyWith(currentCameraPosition: newCameraPosition));
       } catch (e) {

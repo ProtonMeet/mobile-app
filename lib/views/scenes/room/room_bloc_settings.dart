@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/helper/background_blur/camera_background_blur_sync.dart';
+import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/helper/denoise/denoise_audio_sync.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/sentry_waiting_room.dart';
@@ -172,10 +173,18 @@ mixin RoomSettingsHandlers
     // native processor in agreement on a single source of truth.
     final ffEnabled = isMeetCameraBackgroundBlurEnabled();
     final effectiveEnabled = event.enabled && ffEnabled;
-    emit(state.copyWith(cameraBackgroundBlurEnabled: effectiveEnabled));
-    await syncLocalCameraBackgroundBlur(
+    final selection = effectiveEnabled
+        ? const CameraBackgroundSelection.blur()
+        : const CameraBackgroundSelection.none();
+    emit(
+      state.copyWith(
+        cameraBackgroundBlurEnabled: effectiveEnabled,
+        cameraBackgroundSelection: selection,
+      ),
+    );
+    await syncLocalCameraBackgroundEffect(
       room: state.room,
-      enabled: effectiveEnabled,
+      selection: selection,
     );
     l.logger.d(
       'Camera background blur enabled: $effectiveEnabled '
