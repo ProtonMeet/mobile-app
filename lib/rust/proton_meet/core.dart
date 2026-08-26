@@ -372,6 +372,10 @@ abstract class AppCore implements RustOpaqueInterface {
     required FutureOr<void> Function(MlsSyncState, RejoinReason?) callback,
   });
 
+  /// When disabled, MLS operations fall back to the local clock instead of cached
+  /// server time from HTTP response headers.
+  Future<void> setUseCachedServerTime({required bool enabled});
+
   /// Set WebSocket max ping failures (None to use default)
   /// This is particularly useful for Safari when it goes to background, allowing more tolerance
   Future<void> setWebsocketMaxPingFailures({int? failures});

@@ -25,6 +25,7 @@ use crate::infra::{
 };
 use crate::service::service::create_mock_mls_api;
 use crate::service::service::Service;
+use crate::utils::server_time::ServerTimeTracker;
 
 pub fn test_user_key(id: &str, primary: u32, active: u32) -> ProtonUserKey {
     ProtonUserKey {
@@ -76,6 +77,10 @@ pub fn test_mls_store() -> Arc<RwLock<MlsStore>> {
         group_map: HashMap::new(),
         config: MlsClientConfig::default(),
     }))
+}
+
+pub fn test_server_time_tracker() -> ServerTimeTracker {
+    ServerTimeTracker::new()
 }
 
 pub fn default_app_state() -> AppState {
@@ -167,6 +172,7 @@ pub async fn minimal_service() -> Service {
         Arc::new(MockUserRepository::new()),
         Arc::new(minimal_ws_mock()),
         test_mls_store(),
+        test_server_time_tracker(),
     )
 }
 
@@ -181,7 +187,7 @@ pub fn minimal_room_service() -> Arc<RoomService> {
 pub fn minimal_waiting_room_service() -> Arc<WaitingRoomService> {
     let crypto_client = Arc::new(MeetCryptoClient::new());
     let mls_service: Arc<dyn crate::domain::mls::ports::KeyPackagePort> = Arc::new(
-        crate::service::mls_service::MlsService::new(test_mls_store()),
+        crate::service::mls_service::MlsService::new(test_mls_store(), test_server_time_tracker()),
     );
     Arc::new(WaitingRoomService::new(crypto_client, mls_service))
 }
@@ -293,6 +299,7 @@ pub fn auth_service(user_api: MockUserApi, user_repository: MockUserRepository) 
         Arc::new(user_repository),
         Arc::new(minimal_ws_mock()),
         test_mls_store(),
+        test_server_time_tracker(),
     )
 }
 
@@ -572,6 +579,7 @@ pub async fn join_test_service_with_mls_client(
         Arc::new(MockUserRepository::new()),
         Arc::new(minimal_ws_mock()),
         mls_store.clone(),
+        test_server_time_tracker(),
     );
     let user_info = service
         .create_mls_client("access-token", meet_link, "meet-password", None)
@@ -606,6 +614,7 @@ async fn mls_test_service(user_id: &str, meet_link: &str) -> (Service, Arc<RwLoc
         Arc::new(MockUserRepository::new()),
         Arc::new(minimal_ws_mock()),
         mls_store.clone(),
+        test_server_time_tracker(),
     );
     (service, mls_store)
 }

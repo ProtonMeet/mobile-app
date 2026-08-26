@@ -81,6 +81,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             holder_confirmation_key,
             issuer: "mimi://i/proton.me",
             leeway: Default::default(),
+            artificial_time: None,
         };
 
         let sd_cwt = issuer.issue_cwt(&mut rand::thread_rng(), params).unwrap();
@@ -98,6 +99,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 &group_id,
                 Disclosure::Full,
                 MlsGroupConfig::default(user_id.clone(), false),
+                None,
             )
             .await
             .unwrap()

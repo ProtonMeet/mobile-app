@@ -3,7 +3,8 @@ use std::sync::Arc;
 
 use crate::app::test_support::{
     build_app, build_app_with_http, build_app_with_service, default_app_state,
-    state_with_participant_only, test_mls_store, unreachable_test_proton_http_client,
+    state_with_participant_only, test_mls_store, test_server_time_tracker,
+    unreachable_test_proton_http_client,
 };
 use crate::domain::user::ports::meeting_api::MockMeetingApi;
 use crate::domain::user::ports::{MockHttpClient, MockMlsApi};
@@ -131,6 +132,7 @@ async fn get_user_settings_propagates_service_error() {
         Arc::new(MockUserRepository::new()),
         Arc::new(crate::app::test_support::minimal_ws_mock()),
         test_mls_store(),
+        test_server_time_tracker(),
     );
 
     let app = build_app_with_service(default_app_state(), service).await;

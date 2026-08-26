@@ -123,10 +123,6 @@ impl ProtonHttpClient {
         &self.mls_session
     }
 
-    pub(crate) fn server_timestamp(&self) -> Option<i64> {
-        self.server_time.timestamp()
-    }
-
     pub(crate) fn server_time_tracker(&self) -> ServerTimeTracker {
         self.server_time.clone()
     }

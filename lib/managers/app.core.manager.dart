@@ -29,6 +29,7 @@ class AppCoreManager implements Manager {
   String? mailboxPassword;
   final ApiEnv env;
   final userAgent = UserAgent();
+  bool _useCachedServerTime = false;
 
   final _mlsGroupKeyStreamController =
       StreamController<(String, BigInt)?>.broadcast();
@@ -100,6 +101,7 @@ class AppCoreManager implements Manager {
     await appCore.setMlsSyncStateUpdateCallback(
       callback: mlsSyncStateUpdateCallback,
     );
+    await appCore.setUseCachedServerTime(enabled: _useCachedServerTime);
     // appCore.subscribeEvents().listen((event) {
     //   logger.i("App event: $event");
     // });
@@ -240,7 +242,13 @@ class AppCoreManager implements Manager {
     await appCore.setMlsSyncStateUpdateCallback(
       callback: mlsSyncStateUpdateCallback,
     );
+    await appCore.setUseCachedServerTime(enabled: _useCachedServerTime);
     _resetMeetApiWarmupState();
+  }
+
+  Future<void> setUseCachedServerTime({required bool enabled}) async {
+    _useCachedServerTime = enabled;
+    await appCore.setUseCachedServerTime(enabled: enabled);
   }
 
   Future<void> loadSession() async {

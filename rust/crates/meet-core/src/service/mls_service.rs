@@ -20,18 +20,25 @@ use proton_meet_mls::{MlsStore, MlsStoreError};
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-use crate::domain::mls::ports::{KeyPackageError, KeyPackagePort};
 use crate::domain::user::models::{meeting_link_name::MeetingLinkName, UserId};
 use crate::service::service::{psk_id_for_commit, public_ratchet_tree_has_agent};
+use crate::{
+    domain::mls::ports::{KeyPackageError, KeyPackagePort},
+    utils::server_time::ServerTimeTracker,
+};
 
 #[derive(Clone)]
 pub struct MlsService {
     mls_store: Arc<RwLock<MlsStore>>,
+    server_time_tracker: ServerTimeTracker,
 }
 
 impl MlsService {
-    pub fn new(mls_store: Arc<RwLock<MlsStore>>) -> Self {
-        Self { mls_store }
+    pub fn new(mls_store: Arc<RwLock<MlsStore>>, server_time_tracker: ServerTimeTracker) -> Self {
+        Self {
+            mls_store,
+            server_time_tracker,
+        }
     }
 
     pub async fn create_mls_group(
@@ -51,7 +58,12 @@ impl MlsService {
         };
 
         let is_host = client
-            .new_sd_kbt(Disclosure::Full, None, &PresentationContext::Default)?
+            .new_sd_kbt(
+                Disclosure::Full,
+                None,
+                &PresentationContext::Default,
+                self.server_time_tracker.server_time_as_duration(),
+            )?
             .0
             .sd_cwt_payload()?
             .inner
@@ -72,7 +84,12 @@ impl MlsService {
             None => MlsGroupConfig::default(user_id.clone(), is_host),
         };
         let mut group = client
-            .new_group(&group_id, Disclosure::Full, group_config)
+            .new_group(
+                &group_id,
+                Disclosure::Full,
+                group_config,
+                self.server_time_tracker.server_time_as_duration(),
+            )
             .await?
             .store()
             .await?;
@@ -134,6 +151,7 @@ impl MlsService {
                 ratchet_tree,
                 Disclosure::Full,
                 vec![psk_id],
+                self.server_time_tracker.server_time_as_duration(),
             )
             .await;
         let (mls_group, commit_bundle) = match result {
@@ -185,7 +203,12 @@ impl MlsService {
         let group_info_msg = Self::convert_mls_spec_to_types(&group_info_msg)?;
         let ratchet_tree: PublicRatchetTree = ratchet_tree_option.try_into()?;
         let add_proposal = client
-            .join_via_external_proposal(group_info_msg, ratchet_tree, Disclosure::Full)
+            .join_via_external_proposal(
+                group_info_msg,
+                ratchet_tree,
+                Disclosure::Full,
+                self.server_time_tracker.server_time_as_duration(),
+            )
             .await?;
         let proposal_message = Self::convert_mls_types_to_spec(&add_proposal)?;
         Ok(proposal_message)
@@ -248,7 +271,13 @@ impl KeyPackagePort for MlsService {
                 MlsStoreError::MlsClientNotFound => KeyPackageError::MlsClientNotFound,
             })?;
 
-        let (key_packages, _expiration) = client.new_key_packages(1, Disclosure::Full).await?;
+        let (key_packages, _expiration) = client
+            .new_key_packages(
+                1,
+                Disclosure::Full,
+                self.server_time_tracker.server_time_as_duration(),
+            )
+            .await?;
         let key_package = key_packages
             .first()
             .ok_or(KeyPackageError::FailedToGenerateKeyPackage)?;
@@ -315,8 +344,10 @@ mod tests {
     use super::MlsService;
     use crate::{
         domain::user::models::{meeting_link_name::MeetingLinkName, UserId},
-        infra::crypto_client::derive_external_psk,
-        infra::mimi_subject_parser::ANONYMOUS_USER_IDENTIFIER,
+        infra::{
+            crypto_client::derive_external_psk, mimi_subject_parser::ANONYMOUS_USER_IDENTIFIER,
+        },
+        utils::server_time::ServerTimeTracker,
     };
 
     #[test]
@@ -373,7 +404,7 @@ mod tests {
             group_map: HashMap::new(),
             config,
         }));
-        let service = MlsService::new(mls_store);
+        let service = MlsService::new(mls_store, ServerTimeTracker::new());
 
         let (group_info_spec, _) = service
             .create_mls_group(&meeting_link_name, &user_id, None)
@@ -446,7 +477,7 @@ mod tests {
             group_map: HashMap::new(),
             config,
         }));
-        let service = MlsService::new(mls_store.clone());
+        let service = MlsService::new(mls_store.clone(), ServerTimeTracker::new());
 
         let (group_info_msg, ratchet_tree_option) = service
             .create_mls_group(&meeting_link_name, &host_user_id, None)
@@ -559,7 +590,7 @@ mod tests {
             group_map: HashMap::new(),
             config,
         }));
-        let service = MlsService::new(mls_store);
+        let service = MlsService::new(mls_store, ServerTimeTracker::new());
 
         let (group_info_msg, ratchet_tree_option) = service
             .create_mls_group(&meeting_link_name, &host_user_id, None)
@@ -642,7 +673,7 @@ mod tests {
             group_map: HashMap::new(),
             config,
         }));
-        let service = MlsService::new(mls_store.clone());
+        let service = MlsService::new(mls_store.clone(), ServerTimeTracker::new());
 
         let (group_info_msg, ratchet_tree_option_initial) = service
             .create_mls_group(&meeting_link_name, &host_user_id, None)
@@ -772,7 +803,7 @@ mod tests {
             group_map: HashMap::new(),
             config,
         }));
-        let service = MlsService::new(mls_store.clone());
+        let service = MlsService::new(mls_store.clone(), ServerTimeTracker::new());
 
         let _ = service
             .create_mls_group(&meeting_link_name, &user_id, None)
@@ -865,6 +896,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             holder_confirmation_key,
             issuer: "mimi://i/proton.me",
             leeway: Default::default(),
+            artificial_time: None,
         };
 
         let sd_cwt = issuer.issue_cwt(&mut rand::thread_rng(), params).unwrap();

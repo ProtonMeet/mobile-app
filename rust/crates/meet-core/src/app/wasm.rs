@@ -360,6 +360,11 @@ impl App {
         self.ws_client.set_worker_cookie_bridge_enabled(enabled);
     }
 
+    #[wasm_bindgen(js_name = setUseCachedServerTime)]
+    pub fn set_use_cached_server_time_wasm(&self, enabled: bool) {
+        self.set_use_cached_server_time(enabled);
+    }
+
     #[wasm_bindgen(js_name = setWebsocketPingInterval)]
     pub async fn set_websocket_ping_interval_wasm(
         &self,
