@@ -8,7 +8,7 @@ use crate::domain::user::models::{
 use crate::domain::user::ports::UserService;
 use crate::errors::core::MeetCoreError;
 use crate::infra::dto::realtime::JoinType;
-use crate::service::service::Service;
+use crate::service::user_service::Service;
 use crate::utils::spawn_detached;
 
 impl App {
@@ -80,7 +80,7 @@ impl App {
             .wait_for_join_proposal_welcome_and_join(
                 &user_id,
                 meet_link_name.as_str(),
-                Some(crate::service::service::WAITING_ROOM_WELCOME_TIMEOUT),
+                Some(crate::service::user_service::WAITING_ROOM_WELCOME_TIMEOUT),
             )
             .await?;
 

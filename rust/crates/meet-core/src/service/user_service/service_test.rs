@@ -40,8 +40,8 @@ pub(crate) mod tests {
             mimi_subject_parser::ANONYMOUS_USER_IDENTIFIER,
         },
         service::{
-            service::{ProposalType, QueuedProposal, Service},
             service_state::MlsGroupState,
+            user_service::{ProposalType, QueuedProposal, Service},
             utils::convert_mls_spec_to_types,
             waiting_room_setting::{
                 abort_waiting_room_policy_commit, build_waiting_room_policy_commit,
@@ -2592,7 +2592,7 @@ pub(crate) mod tests {
         assert!(group2_roster_size == 2, "Group2 roster size should be 2");
     }
 
-    /// Matches [`Service::decrypt_application_message`](crate::service::service::Service::decrypt_application_message):
+    /// Matches [`Service::decrypt_application_message`](crate::service::user_service::Service::decrypt_application_message):
     /// sender id is `ProtonMeetClaims.uuid` on the MLS credential.
     fn proton_claims_uuid_from_member(member: &mls_types::Member) -> Uuid {
         match member.credential() {

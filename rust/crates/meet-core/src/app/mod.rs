@@ -22,7 +22,7 @@ use crate::infra::{
     ws_client::WsClient,
 };
 use crate::service::mls_service::MlsService;
-use crate::service::service::Service;
+use crate::service::user_service::Service;
 use proton_meet_mls::{MlsClientConfig, MlsStore};
 use std::{collections::HashMap, future::Future, sync::Arc};
 use tokio::sync::RwLock;
@@ -553,7 +553,7 @@ impl App {
 
     pub async fn set_mls_group_update_handler<F, Fut>(&self, callback: F)
     where
-        F: Fn(String, crate::service::service::GroupKeyUpdateReason) -> Fut + Send + 'static,
+        F: Fn(String, crate::service::user_service::GroupKeyUpdateReason) -> Fut + Send + 'static,
         Fut: Future<Output = ()> + Unpin + Send + 'static,
     {
         self.user_service

@@ -16,7 +16,7 @@ use crate::{
         MlsCommitInfo, RTCMessageIn, RTCMessageInContent, RatchetTreeAndGroupInfo,
     },
     service::{
-        service::Service,
+        user_service::Service,
         utils::{convert_mls_types_to_spec, ensure_room_admin},
     },
 };
