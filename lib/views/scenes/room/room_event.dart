@@ -502,12 +502,17 @@ class RetryLoadParticipants extends RoomBlocEvent {
   const RetryLoadParticipants();
 }
 
-/// Loads decrypted display names from meet-api and re-sorts participant tiles.
-///
-/// Used on room init (existing roster), MLS sync success, and when a remote
-/// participant connects. Unlike [SortParticipants], this fetches names first.
+/// Loads decrypted display names from meet-api asynchronously and re-sorts
+/// participant tiles when names arrive.
 class RefreshParticipantDisplayNames extends RoomBlocEvent {
   const RefreshParticipantDisplayNames();
+}
+
+/// Async meet-api participant load after room init (non-blocking).
+///
+/// On failure, forwards to [RetryLoadParticipants].
+class BackgroundRefreshFrbParticipants extends RoomBlocEvent {
+  const BackgroundRefreshFrbParticipants();
 }
 
 class SetHideSelfView extends RoomBlocEvent {

@@ -30,6 +30,25 @@ mixin RoomParticipantsHandlers on Bloc<RoomBlocEvent, RoomState> {
     /// livekit events
     on<BridgeParticipantConnected>(_onParticipantConnected);
     on<BridgeParticipantDisconnected>(_onParticipantDisconnected);
+    on<BackgroundRefreshFrbParticipants>(_onBackgroundRefreshFrbParticipants);
+  }
+
+  Future<void> _onBackgroundRefreshFrbParticipants(
+    BackgroundRefreshFrbParticipants event,
+    Emitter<RoomState> emit,
+  ) async {
+    try {
+      final updated = await loadFrbParticipants();
+      emit(state.copyWith(frbParticipantsMap: updated));
+      add(SortParticipants());
+    } catch (e, stackTrace) {
+      l.logger.e(
+        '[RoomParticipantsHandlers] Background FRB participant load failed: $e',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      add(const RetryLoadParticipants());
+    }
   }
 
   /// Handles the event when a participant connects to the room.

@@ -603,8 +603,9 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
     // demand (ResponsiveCameraLayout._updateVideoSubscriptions).
     _subscribeExistingAudioAndScreenShare();
     // Existing roster: ParticipantConnected is not replayed for remotes already
-    // in the room when listeners attach, so refresh display names explicitly.
-    add(const RefreshParticipantDisplayNames());
+    // in the room when listeners attach. Init queues
+    // [BackgroundRefreshFrbParticipants] for display names; reconnect still
+    // refreshes via [RefreshParticipantDisplayNames] below.
     // add more mappings as needed...
   }
 
