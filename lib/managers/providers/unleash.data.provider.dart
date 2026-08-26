@@ -445,8 +445,8 @@ class UnleashDataProvider extends DataProvider {
       isFeatureEnabled(UnleashFeature.meetInAppPurchase);
 
   /// Native pipeline for camera background blur (pass-through until ML / Vision ship).
-  bool isMeetCameraBackgroundBlur() =>
-      isFeatureEnabled(UnleashFeature.meetCameraBackgroundBlur);
+  bool isMeetCameraBackgroundBlur() => true;
+  // isFeatureEnabled(UnleashFeature.meetCameraBackgroundBlur);
 
   /// Experimental: in app update (currently only support android)
   bool isMeetMobileInAppUpdate() =>

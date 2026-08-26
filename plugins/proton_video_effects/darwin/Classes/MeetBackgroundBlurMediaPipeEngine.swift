@@ -111,6 +111,13 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
   /// Its coarser 256x192 mask costs silhouette fidelity, but the feather is wide enough to hide
   /// that, so the finer mask is not worth the latency.
   private static let visionUsesFastQuality = true
+  /// `VNGeneratePersonSegmentationRequest` is a `VNStatefulRequest`: reusing one instance lets it
+  /// "hold on to previous masks to improve temporal stability". That prior is self-reinforcing, so
+  /// a fast limb sweep writes a false-positive blob into it that keeps re-asserting itself and only
+  /// clears once a real person stands in that region — the background stays torn open indefinitely.
+  /// A per-frame request trades Vision's edge smoothing (which the feather already provides) for a
+  /// mask that can never disagree with the current frame for more than one frame.
+  private static let visionReusesStatefulRequest = false
   /// Recover if Vision stalls (WebRTC capture thread stops dispatching when stuck).
   private static let visionInferenceTimeoutMs: Int = 750
   /// Beyond this the mask describes a scene that has moved on, so it is dropped in favour of
@@ -873,13 +880,15 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
 
   @available(iOS 15.0, macOS 12.0, *)
   private func visionRequest() -> VNGeneratePersonSegmentationRequest {
-    if let request = visionSegmentationRequest {
+    if Self.visionReusesStatefulRequest, let request = visionSegmentationRequest {
       return request
     }
     let request = VNGeneratePersonSegmentationRequest()
     request.qualityLevel = Self.visionUsesFastQuality ? .fast : .balanced
     request.outputPixelFormat = kCVPixelFormatType_OneComponent8
-    visionSegmentationRequest = request
+    if Self.visionReusesStatefulRequest {
+      visionSegmentationRequest = request
+    }
     return request
   }
 
@@ -1279,10 +1288,12 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
     let backend = usesAppleVision ? activeSegmenterBackend : activeModelKey
     let quality = Self.visionUsesFastQuality ? "fast" : "balanced"
     let mode = useSynchronousVisionSegmentation() ? "sync" : "async"
+    let state = Self.visionReusesStatefulRequest ? "stateful" : "stateless"
 
     print(
       """
-      [MeetBlurPerf] \(backend)/\(quality)/\(mode) mask=\(window.maskWidth)x\(window.maskHeight) \
+      [MeetBlurPerf] \(backend)/\(quality)/\(mode)/\(state) \
+      mask=\(window.maskWidth)x\(window.maskHeight) \
       frameFps=\(String(format: "%.1f", frameFps)) \
       maskFps=\(String(format: "%.1f", maskFps)) | \
       maskAge avg=\(ms(window.maskAgeNs, window.composites))ms max=\(ms(window.maxMaskAgeNs))ms | \
