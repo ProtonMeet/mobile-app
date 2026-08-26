@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.styles.dart';
+import 'package:meet/helper/background_blur/camera_background_selection.dart';
+import 'package:meet/helper/background_blur/virtual_background_presets.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/local_toast.dart';
@@ -33,8 +37,8 @@ class MeetingSettingsV2 extends StatefulWidget {
   final bool forceShowConnectionStatusBanner;
   final bool showConnectionSettings;
   final bool showCameraBackgroundBlur;
-  final bool cameraBackgroundBlurEnabled;
-  final void Function({required bool value})? onCameraBackgroundBlurChanged;
+  final CameraBackgroundSelection cameraBackgroundSelection;
+  final VoidCallback? onCameraBackgroundTap;
   final bool showAudioDenoise;
   final bool audioDenoiseEnabled;
   final void Function({required bool value})? onAudioDenoiseChanged;
@@ -62,8 +66,8 @@ class MeetingSettingsV2 extends StatefulWidget {
     this.forceShowConnectionStatusBanner = false,
     this.showConnectionSettings = false,
     this.showCameraBackgroundBlur = false,
-    this.cameraBackgroundBlurEnabled = false,
-    this.onCameraBackgroundBlurChanged,
+    this.cameraBackgroundSelection = const CameraBackgroundSelection.none(),
+    this.onCameraBackgroundTap,
     this.showAudioDenoise = false,
     this.audioDenoiseEnabled = false,
     this.onAudioDenoiseChanged,
@@ -98,7 +102,6 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
   bool lockMeeting = false;
   bool waitingRoomEnabled = false;
   bool forceShowConnectionStatusBanner = false;
-  bool cameraBackgroundBlurEnabled = false;
   bool audioDenoiseEnabled = false;
 
   // Loading states
@@ -115,7 +118,6 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
     lockMeeting = widget.lockMeeting;
     waitingRoomEnabled = widget.waitingRoomEnabled;
     forceShowConnectionStatusBanner = widget.forceShowConnectionStatusBanner;
-    cameraBackgroundBlurEnabled = widget.cameraBackgroundBlurEnabled;
     audioDenoiseEnabled = widget.audioDenoiseEnabled;
   }
 
@@ -128,10 +130,6 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
   @override
   void didUpdateWidget(MeetingSettingsV2 oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.cameraBackgroundBlurEnabled !=
-        oldWidget.cameraBackgroundBlurEnabled) {
-      cameraBackgroundBlurEnabled = widget.cameraBackgroundBlurEnabled;
-    }
     if (widget.audioDenoiseEnabled != oldWidget.audioDenoiseEnabled) {
       audioDenoiseEnabled = widget.audioDenoiseEnabled;
     }
@@ -264,16 +262,10 @@ class _MeetingSettingsV2State extends State<MeetingSettingsV2> {
                   : null,
             ),
             if (widget.showCameraBackgroundBlur &&
-                widget.onCameraBackgroundBlurChanged != null)
-              _SettingSwitch(
-                title: context.local.camera_background_blur,
-                value: cameraBackgroundBlurEnabled,
-                onChanged: (value) {
-                  setState(() {
-                    cameraBackgroundBlurEnabled = value;
-                    widget.onCameraBackgroundBlurChanged?.call(value: value);
-                  });
-                },
+                widget.onCameraBackgroundTap != null)
+              _CameraBackgroundRow(
+                selection: widget.cameraBackgroundSelection,
+                onTap: widget.onCameraBackgroundTap!,
               ),
             if (widget.showAudioDenoise && widget.onAudioDenoiseChanged != null)
               _SettingSwitch(
@@ -505,6 +497,96 @@ class _SettingSwitch extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Decode width for the 28pt background swatch at 3x.
+const int _backgroundSwatchCacheWidth = 84;
+
+/// Opens the shared virtual background sheet and previews the active choice.
+class _CameraBackgroundRow extends StatelessWidget {
+  const _CameraBackgroundRow({required this.selection, required this.onTap});
+
+  final CameraBackgroundSelection selection;
+  final VoidCallback onTap;
+
+  /// Null for presets — the thumbnail already identifies the image.
+  String? _label(BuildContext context) {
+    switch (selection.kind) {
+      case CameraBackgroundEffectKind.none:
+        return context.local.virtual_background_none;
+      case CameraBackgroundEffectKind.blur:
+        return context.local.camera_background_blur;
+      case CameraBackgroundEffectKind.preset:
+        return null;
+      case CameraBackgroundEffectKind.custom:
+        return context.local.virtual_background_custom;
+    }
+  }
+
+  Widget _thumbnail(BuildContext context) {
+    const size = 28.0;
+    Widget? image;
+    switch (selection.kind) {
+      case CameraBackgroundEffectKind.preset:
+        final preset = VirtualBackgroundPresets.byId(selection.presetId);
+        if (preset != null) {
+          // Preset artwork is multi-megapixel; decode it at swatch size.
+          image = preset.asset.image(
+            fit: BoxFit.cover,
+            cacheWidth: _backgroundSwatchCacheWidth,
+          );
+        }
+      case CameraBackgroundEffectKind.custom:
+        final path = selection.customImagePath;
+        if (path != null && path.isNotEmpty) {
+          image = Image.file(
+            File(path),
+            fit: BoxFit.cover,
+            cacheWidth: _backgroundSwatchCacheWidth,
+            errorBuilder: (_, _, _) => const SizedBox.shrink(),
+          );
+        }
+      case CameraBackgroundEffectKind.none:
+      case CameraBackgroundEffectKind.blur:
+        image = null;
+    }
+    if (image == null) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(left: 8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: SizedBox(width: size, height: size, child: image),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final label = _label(context);
+    return InkWell(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              context.local.virtual_backgrounds_title,
+              style: ProtonStyles.body1Medium(color: context.colors.textNorm),
+            ),
+          ),
+          if (label != null)
+            Text(
+              label,
+              style: ProtonStyles.body2Regular(color: context.colors.textWeak),
+            ),
+          _thumbnail(context),
+          const SizedBox(width: 4),
+          Icon(Icons.chevron_right, color: context.colors.textWeak, size: 22),
+        ],
+      ),
     );
   }
 }

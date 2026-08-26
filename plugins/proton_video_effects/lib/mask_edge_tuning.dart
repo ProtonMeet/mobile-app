@@ -20,8 +20,8 @@ class MaskEdgeTuning {
 
   static const MaskEdgeTuning standard = MaskEdgeTuning();
 
-  static const double defaultFeatherHeightFraction = 0.014;
-  static const double defaultErodeHeightFraction = 0.014;
+  static const double defaultFeatherHeightFraction = 0.005;
+  static const double defaultErodeHeightFraction = 0.002;
   static const double defaultSolidifySlope = 6;
   static const double defaultSolidifyMidpoint = 0.55;
   static const double defaultForegroundGamma = 1;
@@ -60,7 +60,8 @@ class MaskEdgeTuning {
   /// leak in less, at the cost of steepening the ramp and eating some of the feather's softness.
   final double foregroundGamma;
 
-  static double _clamp(double value, double min, double max) => value.clamp(min, max);
+  static double _clamp(double value, double min, double max) =>
+      value.clamp(min, max);
 
   MaskEdgeTuning copyWith({
     double? featherHeightFraction,
@@ -81,9 +82,21 @@ class MaskEdgeTuning {
 
   Map<String, dynamic> toMethodChannelArgs() {
     return <String, dynamic>{
-      'maskFeatherHeightFraction': _clamp(featherHeightFraction, 0, maxEdgeFraction),
-      'maskErodeHeightFraction': _clamp(erodeHeightFraction, 0, maxEdgeFraction),
-      'maskSolidifySlope': _clamp(solidifySlope, minSolidifySlope, maxSolidifySlope),
+      'maskFeatherHeightFraction': _clamp(
+        featherHeightFraction,
+        0,
+        maxEdgeFraction,
+      ),
+      'maskErodeHeightFraction': _clamp(
+        erodeHeightFraction,
+        0,
+        maxEdgeFraction,
+      ),
+      'maskSolidifySlope': _clamp(
+        solidifySlope,
+        minSolidifySlope,
+        maxSolidifySlope,
+      ),
       'maskSolidifyMidpoint': _clamp(
         solidifyMidpoint,
         minSolidifyMidpoint,

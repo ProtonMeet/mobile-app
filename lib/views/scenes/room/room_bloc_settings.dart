@@ -38,6 +38,7 @@ mixin RoomSettingsHandlers
     on<SetUnsubscribeVideoByDefault>(_onSetUnsubscribeVideoByDefault);
     on<MeetingInfoWaitingRoomUpdated>(_onMeetingInfoWaitingRoomUpdated);
     on<SetCameraBackgroundBlurEnabled>(_onSetCameraBackgroundBlurEnabled);
+    on<SetCameraBackgroundSelection>(_onSetCameraBackgroundSelection);
     on<SetAudioDenoiseEnabled>(_onSetAudioDenoiseEnabled);
     on<SetAudioDenoiseType>(_onSetAudioDenoiseType);
   }
@@ -189,6 +190,34 @@ mixin RoomSettingsHandlers
     l.logger.d(
       'Camera background blur enabled: $effectiveEnabled '
       '(requested=${event.enabled}, ff=$ffEnabled)',
+    );
+  }
+
+  Future<void> _onSetCameraBackgroundSelection(
+    SetCameraBackgroundSelection event,
+    Emitter<RoomState> emit,
+  ) async {
+    // Same single-source-of-truth rule as the blur toggle: with the FF off the
+    // state must read "no effect", never a preset the native side never got.
+    final ffEnabled = isMeetCameraBackgroundBlurEnabled();
+    final selection = ffEnabled
+        ? event.selection
+        : const CameraBackgroundSelection.none();
+    emit(
+      state.copyWith(
+        cameraBackgroundBlurEnabled: selection.isEffectActive,
+        cameraBackgroundSelection: selection,
+      ),
+    );
+    // Hot-swaps the native processor on the existing track — no republish, so
+    // remote participants never see the video drop while the user browses.
+    await syncLocalCameraBackgroundEffect(
+      room: state.room,
+      selection: selection,
+    );
+    l.logger.d(
+      'Camera background selection: ${selection.kind.name} '
+      '(preset=${selection.presetId}, ff=$ffEnabled)',
     );
   }
 

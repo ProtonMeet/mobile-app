@@ -557,6 +557,17 @@ class SetCameraBackgroundBlurEnabled extends RoomBlocEvent {
   List<Object?> get props => [enabled];
 }
 
+/// Switches the local camera background to blur, a bundled preset, a custom
+/// image, or none while already in the meeting.
+class SetCameraBackgroundSelection extends RoomBlocEvent {
+  final CameraBackgroundSelection selection;
+
+  const SetCameraBackgroundSelection(this.selection);
+
+  @override
+  List<Object?> get props => [selection];
+}
+
 class SetAudioDenoiseEnabled extends RoomBlocEvent {
   final bool enabled;
 

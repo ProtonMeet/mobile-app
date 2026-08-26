@@ -22,6 +22,10 @@ class $AssetsImagesGen {
 
   /// Directory path: assets/images/logos
   $AssetsImagesLogosGen get logos => const $AssetsImagesLogosGen();
+
+  /// Directory path: assets/images/virtual_backgrounds
+  $AssetsImagesVirtualBackgroundsGen get virtualBackgrounds =>
+      const $AssetsImagesVirtualBackgroundsGen();
 }
 
 class $AssetsJsonGen {
@@ -489,6 +493,49 @@ class $AssetsImagesLogosGen {
     protonMeetBarLogo,
     protonMeetBarLogoClean,
     protonPLogo,
+  ];
+}
+
+class $AssetsImagesVirtualBackgroundsGen {
+  const $AssetsImagesVirtualBackgroundsGen();
+
+  /// File path: assets/images/virtual_backgrounds/00-Proton.png
+  AssetGenImage get a00Proton =>
+      const AssetGenImage('assets/images/virtual_backgrounds/00-Proton.png');
+
+  /// File path: assets/images/virtual_backgrounds/01-modern-office-v2-working-office.png
+  AssetGenImage get a01ModernOfficeV2WorkingOffice => const AssetGenImage(
+    'assets/images/virtual_backgrounds/01-modern-office-v2-working-office.png',
+  );
+
+  /// File path: assets/images/virtual_backgrounds/02-mountain-landscape.png
+  AssetGenImage get a02MountainLandscape => const AssetGenImage(
+    'assets/images/virtual_backgrounds/02-mountain-landscape.png',
+  );
+
+  /// File path: assets/images/virtual_backgrounds/03-abstract-natural-texture.png
+  AssetGenImage get a03AbstractNaturalTexture => const AssetGenImage(
+    'assets/images/virtual_backgrounds/03-abstract-natural-texture.png',
+  );
+
+  /// File path: assets/images/virtual_backgrounds/04-beach-landscape-v2-happy.png
+  AssetGenImage get a04BeachLandscapeV2Happy => const AssetGenImage(
+    'assets/images/virtual_backgrounds/04-beach-landscape-v2-happy.png',
+  );
+
+  /// File path: assets/images/virtual_backgrounds/05-coffee-place-v2-furnished.png
+  AssetGenImage get a05CoffeePlaceV2Furnished => const AssetGenImage(
+    'assets/images/virtual_backgrounds/05-coffee-place-v2-furnished.png',
+  );
+
+  /// List of all assets
+  List<AssetGenImage> get values => [
+    a00Proton,
+    a01ModernOfficeV2WorkingOffice,
+    a02MountainLandscape,
+    a03AbstractNaturalTexture,
+    a04BeachLandscapeV2Happy,
+    a05CoffeePlaceV2Furnished,
   ];
 }
 

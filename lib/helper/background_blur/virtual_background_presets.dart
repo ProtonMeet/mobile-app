@@ -1,41 +1,44 @@
 import 'package:flutter/services.dart';
+import 'package:meet/constants/assets.gen.dart';
 
 /// Bundled still-image virtual backgrounds shipped with the app.
 class VirtualBackgroundPreset {
-  const VirtualBackgroundPreset({required this.id, required this.assetPath});
+  const VirtualBackgroundPreset({required this.id, required this.asset});
 
   final String id;
-  final String assetPath;
+  final AssetGenImage asset;
+
+  String get assetPath => asset.path;
 }
 
-/// Preset thumbnails and replacement images loaded from [VirtualBackgroundPreset.assetPath].
+/// Preset thumbnails and replacement images loaded from [VirtualBackgroundPreset.asset].
 class VirtualBackgroundPresets {
   VirtualBackgroundPresets._();
 
-  static const List<VirtualBackgroundPreset> all = [
+  static final List<VirtualBackgroundPreset> all = [
     VirtualBackgroundPreset(
-      id: 'office',
-      assetPath: 'assets/images/virtual_backgrounds/office.jpg',
+      id: 'proton',
+      asset: Assets.images.virtualBackgrounds.a00Proton,
     ),
     VirtualBackgroundPreset(
-      id: 'nature',
-      assetPath: 'assets/images/virtual_backgrounds/nature.jpg',
+      id: 'office',
+      asset: Assets.images.virtualBackgrounds.a01ModernOfficeV2WorkingOffice,
+    ),
+    VirtualBackgroundPreset(
+      id: 'mountain',
+      asset: Assets.images.virtualBackgrounds.a02MountainLandscape,
     ),
     VirtualBackgroundPreset(
       id: 'abstract',
-      assetPath: 'assets/images/virtual_backgrounds/abstract.jpg',
+      asset: Assets.images.virtualBackgrounds.a03AbstractNaturalTexture,
     ),
     VirtualBackgroundPreset(
-      id: 'sky',
-      assetPath: 'assets/images/virtual_backgrounds/sky.jpg',
+      id: 'beach',
+      asset: Assets.images.virtualBackgrounds.a04BeachLandscapeV2Happy,
     ),
     VirtualBackgroundPreset(
-      id: 'warm',
-      assetPath: 'assets/images/virtual_backgrounds/warm.jpg',
-    ),
-    VirtualBackgroundPreset(
-      id: 'cool',
-      assetPath: 'assets/images/virtual_backgrounds/cool.jpg',
+      id: 'coffee',
+      asset: Assets.images.virtualBackgrounds.a05CoffeePlaceV2Furnished,
     ),
   ];
 

@@ -50,6 +50,9 @@ class _VirtualBackgroundSheetBody extends StatefulWidget {
       _VirtualBackgroundSheetBodyState();
 }
 
+/// Decode width for preset tiles, sized for a third-of-sheet tile at 3x.
+const int _presetThumbnailCacheWidth = 360;
+
 class _VirtualBackgroundSheetBodyState
     extends State<_VirtualBackgroundSheetBody> {
   late CameraBackgroundSelection _selection;
@@ -108,6 +111,20 @@ class _VirtualBackgroundSheetBodyState
       return _selection.customImagePath != null;
     }
     return true;
+  }
+
+  /// Full-size preset artwork is multi-megapixel, so decode it down to tile
+  /// size — six full decodes would otherwise sit in the image cache.
+  Widget _presetThumbnail(VirtualBackgroundPreset preset) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: preset.asset.image(
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        cacheWidth: _presetThumbnailCacheWidth,
+      ),
+    );
   }
 
   @override
@@ -232,15 +249,7 @@ class _VirtualBackgroundSheetBodyState
                             onTap: () => _commitSelection(
                               CameraBackgroundSelection.preset(preset.id),
                             ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(14),
-                              child: Image.asset(
-                                preset.assetPath,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: double.infinity,
-                              ),
-                            ),
+                            child: _presetThumbnail(preset),
                           ),
                       ],
                     ),
@@ -256,15 +265,7 @@ class _VirtualBackgroundSheetBodyState
                             onTap: () => _commitSelection(
                               CameraBackgroundSelection.preset(preset.id),
                             ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(14),
-                              child: Image.asset(
-                                preset.assetPath,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: double.infinity,
-                              ),
-                            ),
+                            child: _presetThumbnail(preset),
                           ),
                       ],
                     ),

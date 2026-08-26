@@ -42,7 +42,6 @@ import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/platform/html.window.dart';
 import 'package:meet/rust/errors.dart';
 import 'package:meet/rust/proton_meet/models/chat_event.dart';
-import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/rust/proton_meet/models/meet_info.dart';
 import 'package:meet/rust/proton_meet/models/meeting_info.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
@@ -52,6 +51,7 @@ import 'package:meet/views/components/alerts/media_permission_dialog.dart';
 import 'package:meet/views/components/alerts/meeting_will_end_dialog.dart';
 import 'package:meet/views/components/alerts/session_expired_dialog.dart';
 import 'package:meet/views/components/bottom.sheets/leave_room_bottom_sheet.dart';
+import 'package:meet/views/components/bottom.sheets/virtual_background_sheet.dart';
 import 'package:meet/views/components/custom.tooltip.dart';
 import 'package:meet/views/components/loading_view.dart';
 import 'package:meet/views/components/test_id.dart';
@@ -3289,7 +3289,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         cameraResolution: _cameraResolution,
         cameraMaxBitrate: _cameraMaxBitrate,
         currentCameraPosition: state.currentCameraPosition,
-        applyCameraBackgroundBlur: state.cameraBackgroundBlurEnabled,
+        cameraBackgroundSelection: state.cameraBackgroundSelection,
         applyAudioDenoise: state.audioDenoiseEnabled,
         recordingControls: _buildRecordingControls(state),
         trailing: state.isLocalScreenSharing
@@ -3785,12 +3785,44 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
+  /// Local camera feed used to preview background choices inside the sheet.
+  VideoTrack? get _localCameraTrack {
+    final lp = _bloc.state.room.localParticipant;
+    if (lp == null) {
+      return null;
+    }
+    for (final pub in lp.videoTrackPublications) {
+      if (pub.isScreenShare) {
+        continue;
+      }
+      final track = pub.track;
+      if (track is LocalVideoTrack) {
+        return track;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _openVirtualBackgroundSheet(
+    BuildContext context,
+    CameraBackgroundSelection current,
+  ) async {
+    final selection = await VirtualBackgroundSheet.show(
+      context,
+      initialSelection: current,
+      previewTrack: _localCameraTrack,
+    );
+    if (selection == null || selection == current) {
+      return;
+    }
+    _bloc.add(SetCameraBackgroundSelection(selection));
+  }
+
   Widget buildMeetingSettingsContent(
     BuildContext context, {
     bool isHost = false,
   }) {
     final showCameraBackgroundBlur =
-        mobile &&
         !kIsWeb &&
         ManagerFactory()
             .get<DataProviderManager>()
@@ -3812,19 +3844,19 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         return BlocSelector<
           RoomBloc,
           RoomState,
-          (bool, bool, bool, bool, DenoiseType)
+          (bool, bool, CameraBackgroundSelection, bool, DenoiseType)
         >(
           selector: (state) => (
             state.isRejoining,
             state.forceShowConnectionStatusBanner,
-            state.cameraBackgroundBlurEnabled,
+            state.cameraBackgroundSelection,
             state.audioDenoiseEnabled,
             state.audioDenoiseType,
           ),
           builder: (context, data) {
             final isRejoining = data.$1;
             final forceShowConnectionStatusBanner = data.$2;
-            final cameraBackgroundBlurEnabled = data.$3;
+            final cameraBackgroundSelection = data.$3;
             final audioDenoiseEnabled = data.$4;
             final storedAudioDenoiseType = data.$5;
             final selectedAudioDenoiseType =
@@ -3848,11 +3880,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               showConnectionSettings:
                   isAutoReconnectionEnabled && isNetworkToolEnabled,
               showCameraBackgroundBlur: showCameraBackgroundBlur,
-              cameraBackgroundBlurEnabled: cameraBackgroundBlurEnabled,
-              onCameraBackgroundBlurChanged: showCameraBackgroundBlur
-                  ? ({required bool value}) {
-                      _bloc.add(SetCameraBackgroundBlurEnabled(enabled: value));
-                    }
+              cameraBackgroundSelection: cameraBackgroundSelection,
+              onCameraBackgroundTap: showCameraBackgroundBlur
+                  ? () => _openVirtualBackgroundSheet(
+                      context,
+                      cameraBackgroundSelection,
+                    )
                   : null,
               showAudioDenoise: showAudioDenoise,
               audioDenoiseEnabled: audioDenoiseEnabled,
