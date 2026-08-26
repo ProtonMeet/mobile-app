@@ -497,7 +497,7 @@ version = "3.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6dee98b0db6a962de883bf5d20362dee4d7ca0d12fe39a7c6c73c844e1cd7c1f"
 dependencies = [
- "darling 0.20.11",
+ "darling 0.23.0",
  "ident_case",
  "prettyplease",
  "proc-macro2",
@@ -1077,7 +1077,7 @@ checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 [[package]]
 name = "cose-key"
 version = "0.8.0"
-source = "git+https://github.com/beltram/esdicawt.git?tag=v0.8.0#cebb9c0c5204aa4e7b9fe0f8776dd4c074d00973"
+source = "git+https://github.com/ProtonMeet/esdicawt.git?rev=3437489578d53ae842f9ad4a6706cf2c0befd546#3437489578d53ae842f9ad4a6706cf2c0befd546"
 dependencies = [
  "ciborium",
  "coset",
@@ -1089,23 +1089,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "cose-key"
-version = "0.8.0"
-source = "git+https://github.com/beltram/esdicawt.git?rev=v0.8.0#cebb9c0c5204aa4e7b9fe0f8776dd4c074d00973"
-dependencies = [
- "ciborium",
- "coset",
- "serde",
- "thiserror 2.0.18",
-]
-
-[[package]]
 name = "cose-key-confirmation"
 version = "0.8.0"
-source = "git+https://github.com/beltram/esdicawt.git?tag=v0.8.0#cebb9c0c5204aa4e7b9fe0f8776dd4c074d00973"
+source = "git+https://github.com/ProtonMeet/esdicawt.git?rev=3437489578d53ae842f9ad4a6706cf2c0befd546#3437489578d53ae842f9ad4a6706cf2c0befd546"
 dependencies = [
  "ciborium",
- "cose-key 0.8.0 (git+https://github.com/beltram/esdicawt.git?tag=v0.8.0)",
+ "cose-key",
  "coset",
  "ed25519-dalek",
  "p256",
@@ -1116,36 +1105,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "cose-key-confirmation"
-version = "0.8.0"
-source = "git+https://github.com/beltram/esdicawt.git?rev=v0.8.0#cebb9c0c5204aa4e7b9fe0f8776dd4c074d00973"
-dependencies = [
- "ciborium",
- "cose-key 0.8.0 (git+https://github.com/beltram/esdicawt.git?rev=v0.8.0)",
- "coset",
- "serde",
- "serde_bytes",
- "thiserror 2.0.18",
-]
-
-[[package]]
 name = "cose-key-set"
 version = "0.8.0"
-source = "git+https://github.com/beltram/esdicawt.git?tag=v0.8.0#cebb9c0c5204aa4e7b9fe0f8776dd4c074d00973"
+source = "git+https://github.com/ProtonMeet/esdicawt.git?rev=3437489578d53ae842f9ad4a6706cf2c0befd546#3437489578d53ae842f9ad4a6706cf2c0befd546"
 dependencies = [
- "cose-key 0.8.0 (git+https://github.com/beltram/esdicawt.git?tag=v0.8.0)",
- "coset",
- "indexmap 2.14.0",
- "serde",
- "thiserror 2.0.18",
-]
-
-[[package]]
-name = "cose-key-set"
-version = "0.8.0"
-source = "git+https://github.com/beltram/esdicawt.git?rev=v0.8.0#cebb9c0c5204aa4e7b9fe0f8776dd4c074d00973"
-dependencies = [
- "cose-key 0.8.0 (git+https://github.com/beltram/esdicawt.git?rev=v0.8.0)",
+ "cose-key",
  "coset",
  "indexmap 2.14.0",
  "serde",
@@ -1155,10 +1119,10 @@ dependencies = [
 [[package]]
 name = "cose-key-thumbprint"
 version = "0.8.0"
-source = "git+https://github.com/beltram/esdicawt.git?tag=v0.8.0#cebb9c0c5204aa4e7b9fe0f8776dd4c074d00973"
+source = "git+https://github.com/ProtonMeet/esdicawt.git?rev=3437489578d53ae842f9ad4a6706cf2c0befd546#3437489578d53ae842f9ad4a6706cf2c0befd546"
 dependencies = [
  "ciborium",
- "cose-key 0.8.0 (git+https://github.com/beltram/esdicawt.git?tag=v0.8.0)",
+ "cose-key",
  "coset",
  "digest 0.10.7",
  "hex",
@@ -1900,16 +1864,16 @@ dependencies = [
 [[package]]
 name = "esdicawt"
 version = "0.8.0"
-source = "git+https://github.com/beltram/esdicawt.git?tag=v0.8.0#cebb9c0c5204aa4e7b9fe0f8776dd4c074d00973"
+source = "git+https://github.com/ProtonMeet/esdicawt.git?rev=3437489578d53ae842f9ad4a6706cf2c0befd546#3437489578d53ae842f9ad4a6706cf2c0befd546"
 dependencies = [
  "ciborium",
- "cose-key 0.8.0 (git+https://github.com/beltram/esdicawt.git?tag=v0.8.0)",
- "cose-key-confirmation 0.8.0 (git+https://github.com/beltram/esdicawt.git?tag=v0.8.0)",
- "cose-key-set 0.8.0 (git+https://github.com/beltram/esdicawt.git?tag=v0.8.0)",
+ "cose-key",
+ "cose-key-confirmation",
+ "cose-key-set",
  "digest 0.10.7",
  "ed25519-dalek",
  "enum-variants-strings",
- "esdicawt-spec 0.8.0 (git+https://github.com/beltram/esdicawt.git?tag=v0.8.0)",
+ "esdicawt-spec",
  "getrandom 0.2.17",
  "js-sys",
  "p256",
@@ -1925,53 +1889,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "esdicawt"
-version = "0.8.0"
-source = "git+https://github.com/beltram/esdicawt.git?rev=v0.8.0#cebb9c0c5204aa4e7b9fe0f8776dd4c074d00973"
-dependencies = [
- "ciborium",
- "cose-key 0.8.0 (git+https://github.com/beltram/esdicawt.git?rev=v0.8.0)",
- "cose-key-confirmation 0.8.0 (git+https://github.com/beltram/esdicawt.git?rev=v0.8.0)",
- "cose-key-set 0.8.0 (git+https://github.com/beltram/esdicawt.git?rev=v0.8.0)",
- "digest 0.10.7",
- "enum-variants-strings",
- "esdicawt-spec 0.8.0 (git+https://github.com/beltram/esdicawt.git?rev=v0.8.0)",
- "getrandom 0.2.17",
- "js-sys",
- "rand_core 0.6.4",
- "serde",
- "serde_repr",
- "signature",
- "tailcall",
- "thiserror 2.0.18",
- "url",
-]
-
-[[package]]
 name = "esdicawt-spec"
 version = "0.8.0"
-source = "git+https://github.com/beltram/esdicawt.git?tag=v0.8.0#cebb9c0c5204aa4e7b9fe0f8776dd4c074d00973"
+source = "git+https://github.com/ProtonMeet/esdicawt.git?rev=3437489578d53ae842f9ad4a6706cf2c0befd546#3437489578d53ae842f9ad4a6706cf2c0befd546"
 dependencies = [
  "ciborium",
- "cose-key-confirmation 0.8.0 (git+https://github.com/beltram/esdicawt.git?tag=v0.8.0)",
- "coset",
- "derive_builder",
- "digest 0.10.7",
- "hex",
- "serde",
- "serde_bytes",
- "serde_repr",
- "serde_tuple",
- "thiserror 2.0.18",
-]
-
-[[package]]
-name = "esdicawt-spec"
-version = "0.8.0"
-source = "git+https://github.com/beltram/esdicawt.git?rev=v0.8.0#cebb9c0c5204aa4e7b9fe0f8776dd4c074d00973"
-dependencies = [
- "ciborium",
- "cose-key-confirmation 0.8.0 (git+https://github.com/beltram/esdicawt.git?rev=v0.8.0)",
+ "cose-key-confirmation",
  "coset",
  "derive_builder",
  "digest 0.10.7",
@@ -3438,7 +3361,7 @@ dependencies = [
 [[package]]
 name = "meet-identifiers"
 version = "0.1.0"
-source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#508ae2be6a74a3d1b7cbdb5439a70dfe58246e76"
+source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#37f4b951b718e687b9eef0e6c2c0c79a59b91714"
 dependencies = [
  "base64",
  "email_address",
@@ -3460,7 +3383,7 @@ dependencies = [
 [[package]]
 name = "meet-mls"
 version = "0.1.0"
-source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#508ae2be6a74a3d1b7cbdb5439a70dfe58246e76"
+source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#37f4b951b718e687b9eef0e6c2c0c79a59b91714"
 dependencies = [
  "meet-identifiers",
  "meet-policy",
@@ -3476,7 +3399,7 @@ dependencies = [
 [[package]]
 name = "meet-policy"
 version = "0.1.0"
-source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#508ae2be6a74a3d1b7cbdb5439a70dfe58246e76"
+source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#37f4b951b718e687b9eef0e6c2c0c79a59b91714"
 dependencies = [
  "fwd-comp",
  "meet-identifiers",
@@ -3870,7 +3793,7 @@ dependencies = [
 [[package]]
 name = "mls-utils"
 version = "0.1.0"
-source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#508ae2be6a74a3d1b7cbdb5439a70dfe58246e76"
+source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#37f4b951b718e687b9eef0e6c2c0c79a59b91714"
 dependencies = [
  "base64",
  "bs58",
@@ -4651,12 +4574,12 @@ dependencies = [
 [[package]]
 name = "proton-claims"
 version = "0.1.0"
-source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#508ae2be6a74a3d1b7cbdb5439a70dfe58246e76"
+source = "git+https://github.com/ProtonMeet/meet-common.git?branch=main#37f4b951b718e687b9eef0e6c2c0c79a59b91714"
 dependencies = [
  "derive_builder",
  "digest 0.10.7",
  "enum-variants-strings",
- "esdicawt 0.8.0 (git+https://github.com/beltram/esdicawt.git?tag=v0.8.0)",
+ "esdicawt",
  "meet-identifiers",
  "serde",
  "serde_repr",
@@ -4776,7 +4699,7 @@ dependencies = [
  "console_log",
  "cose-key-thumbprint",
  "ed25519-dalek",
- "esdicawt 0.8.0 (git+https://github.com/beltram/esdicawt.git?rev=v0.8.0)",
+ "esdicawt",
  "futures",
  "getrandom 0.3.4",
  "gloo-timers",
@@ -6035,13 +5958,13 @@ dependencies = [
 [[package]]
 name = "spice-oidc-cwt"
 version = "0.8.0"
-source = "git+https://github.com/beltram/esdicawt.git?tag=v0.8.0#cebb9c0c5204aa4e7b9fe0f8776dd4c074d00973"
+source = "git+https://github.com/ProtonMeet/esdicawt.git?rev=3437489578d53ae842f9ad4a6706cf2c0befd546#3437489578d53ae842f9ad4a6706cf2c0befd546"
 dependencies = [
  "ciborium",
  "digest 0.10.7",
  "enum-variants-strings",
- "esdicawt 0.8.0 (git+https://github.com/beltram/esdicawt.git?tag=v0.8.0)",
- "esdicawt-spec 0.8.0 (git+https://github.com/beltram/esdicawt.git?tag=v0.8.0)",
+ "esdicawt",
+ "esdicawt-spec",
  "serde",
  "serde_repr",
  "url",

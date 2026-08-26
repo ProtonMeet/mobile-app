@@ -37,7 +37,7 @@ ignored = ["serde_bytes"]
 anyhow = { version = "1.0.103" }
 thiserror = { version = "2.0.18" }
 base64 = { version = "0.22.1" }
-sha2 = { version = "0.10"}
+sha2 = { version = "0.10" }
 
 # other proton internal dependencies
 proton-srp = { version = "0.8.0", default-features = false, registry = "proton_public" }
@@ -87,13 +87,13 @@ git = "https://github.com/ProtonMeet/meet-type.git"
 branch = "main"
 
 [workspace.dependencies.esdicawt]
-git = "https://github.com/beltram/esdicawt.git"
-rev = "v0.8.0"
-package = "esdicawt"
+git = "https://github.com/ProtonMeet/esdicawt.git"
+rev = "3437489578d53ae842f9ad4a6706cf2c0befd546"
+features = ["artificial-time"]
 
 [workspace.dependencies.cose-key-thumbprint]
-git = "https://github.com/beltram/esdicawt.git"
-tag = "v0.8.0"
+git = "https://github.com/ProtonMeet/esdicawt.git"
+rev = "3437489578d53ae842f9ad4a6706cf2c0befd546"
 package = "cose-key-thumbprint"
 
 # Proton Claims

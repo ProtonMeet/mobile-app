@@ -48,6 +48,7 @@ pub(crate) mod tests {
                 merge_waiting_room_policy_commit,
             },
         },
+        utils::server_time::ServerTimeTracker,
     };
 
     use base64::{prelude::BASE64_STANDARD, Engine};
@@ -167,6 +168,7 @@ pub(crate) mod tests {
             Arc::new(user_repository),
             ws_client,
             mls_store,
+            ServerTimeTracker::new(),
         );
 
         let result = service.login(TEST_USERNAME, TEST_PASSWORD).await;
@@ -209,6 +211,7 @@ pub(crate) mod tests {
             Arc::new(user_repository),
             ws_client,
             mls_store,
+            ServerTimeTracker::new(),
         );
 
         let result = service.login(TEST_USERNAME, TEST_PASSWORD).await;
@@ -250,6 +253,7 @@ pub(crate) mod tests {
             Arc::new(user_repository),
             ws_client,
             mls_store,
+            ServerTimeTracker::new(),
         );
 
         let result = service.logout(&UserId::new(user_id)).await;
@@ -2634,7 +2638,7 @@ pub(crate) mod tests {
         let group_config = MlsGroupConfig::new(creator, room_kind, is_host);
 
         let mut group = client
-            .new_group(&group_id, Disclosure::Full, group_config)
+            .new_group(&group_id, Disclosure::Full, group_config, None)
             .await
             .expect("waiting-room group should be created")
             .store()
@@ -3940,6 +3944,7 @@ pub(crate) mod tests {
             user_repository,
             Arc::new(ws_client_mock),
             mls_store,
+            ServerTimeTracker::new(),
         )
     }
 
@@ -3959,7 +3964,7 @@ pub(crate) mod tests {
         let client = store.find_client(&participant_id.to_string(), &ciphersuite)?;
 
         let signing_identity =
-            client.new_signing_identity(Disclosure::Full, &PresentationContext::Default)?;
+            client.new_signing_identity(Disclosure::Full, &PresentationContext::Default, None)?;
         let ext_client = mls_rs::external_client::ExternalClient::builder()
             .signer(client.signature_sk.clone(), signing_identity)
             .identity_provider(client.identity_provider()?)
@@ -4042,6 +4047,7 @@ pub(crate) mod tests {
                 &group_id,
                 Disclosure::Full,
                 MlsGroupConfig::default(user_id.clone(), true),
+                None,
             )
             .await
             .unwrap()
@@ -4081,6 +4087,7 @@ pub(crate) mod tests {
                 ratchet_tree_mls_types,
                 Disclosure::Full,
                 vec![],
+                None,
             )
             .await
             .expect("external join should succeed");
@@ -4191,7 +4198,7 @@ pub(crate) mod tests {
         use identity::{Disclosure, PresentationContext};
 
         let signing_identity =
-            client.new_signing_identity(Disclosure::Full, &PresentationContext::Default)?;
+            client.new_signing_identity(Disclosure::Full, &PresentationContext::Default, None)?;
         let ext_client = mls_rs::external_client::ExternalClient::builder()
             .signer(client.signature_sk.clone(), signing_identity)
             .identity_provider(client.identity_provider()?)
@@ -4230,6 +4237,7 @@ pub(crate) mod tests {
                 ratchet_tree_mls_types,
                 Disclosure::Full,
                 vec![],
+                None,
             )
             .await
             .expect("external join commit should succeed");
@@ -4306,7 +4314,7 @@ pub(crate) mod tests {
         use mls_trait::{MlsClientTrait, MlsGroupTrait};
 
         let (key_packages, _) = joiner
-            .new_key_packages(1, Disclosure::Full)
+            .new_key_packages(1, Disclosure::Full, None)
             .await
             .expect("joiner should generate a key package");
         let key_package = key_packages
@@ -4406,6 +4414,7 @@ pub(crate) mod tests {
                     group_info_message.clone(),
                     ratchet_tree.clone(),
                     Disclosure::Full,
+                    None,
                 )
                 .await
                 .expect("external add proposal should succeed");
@@ -4484,6 +4493,7 @@ pub(crate) mod tests {
                 &group_id,
                 Disclosure::Full,
                 MlsGroupConfig::default(user_id1.clone(), true),
+                None,
             )
             .await
             .unwrap()
@@ -4514,6 +4524,7 @@ pub(crate) mod tests {
                 ratchet_tree_mls_types,
                 Disclosure::Full,
                 vec![],
+                None,
             )
             .await
             .unwrap();
@@ -4551,6 +4562,7 @@ pub(crate) mod tests {
                 ratchet_tree_mls_types,
                 Disclosure::Full,
                 vec![],
+                None,
             )
             .await
             .unwrap();
@@ -5153,6 +5165,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             holder_confirmation_key,
             issuer: "mimi://i/proton.me",
             leeway: Default::default(),
+            artificial_time: None,
         };
 
         let sd_cwt = issuer.issue_cwt(&mut rand::thread_rng(), params).unwrap();
@@ -5500,6 +5513,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             user_repository,
             Arc::new(MockWebSocketClient::new()),
             mls_store,
+            ServerTimeTracker::new(),
         );
 
         // Copy proposal queue manually
@@ -5695,6 +5709,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             user_repository,
             Arc::new(ws_client_mock),
             mls_store,
+            ServerTimeTracker::new(),
         );
 
         // Test is_mls_up_to_date - should return true for same group
@@ -5808,6 +5823,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             user_repository,
             Arc::new(ws_client_mock),
             mls_store,
+            ServerTimeTracker::new(),
         );
 
         // Test is_mls_up_to_date - should return false because user1 is not in group2's roster
@@ -7039,6 +7055,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             user_repository,
             Arc::new(join_switch_ws_client_mock()),
             mls_store,
+            ServerTimeTracker::new(),
         )
     }
 
@@ -7924,6 +7941,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 &group_id,
                 Disclosure::Full,
                 MlsGroupConfig::default(host_user_id.clone(), true),
+                None,
             )
             .await
             .unwrap()
@@ -7935,7 +7953,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         host_group.merge_pending_commit().await.unwrap();
 
         let (mut agent_kps, _) = agent_client
-            .new_key_packages(1, Disclosure::Full)
+            .new_key_packages(1, Disclosure::Full, None)
             .await
             .unwrap();
         let agent_kp = agent_kps.pop().unwrap();

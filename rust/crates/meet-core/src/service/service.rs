@@ -8,14 +8,16 @@ use std::{
 };
 
 use crate::{
-    domain::room::JoinRequestChange,
-    domain::user::{
-        models::meeting_link_name::MeetingLinkName,
-        ports::{new_user_service::NewUserService, ArcWebSocketClient},
+    domain::{
+        room::JoinRequestChange,
+        user::{
+            models::meeting_link_name::MeetingLinkName,
+            ports::{new_user_service::NewUserService, ArcWebSocketClient},
+        },
     },
     infra::crypto_client::derive_external_psk,
     service::service_state::{MlsSyncState, PendingWaitingRoomJoinRequest},
-    utils::{instant, spawn, spawn_detached},
+    utils::{instant, server_time::ServerTimeTracker, spawn, spawn_detached},
 };
 use crate::{infra::dto::realtime::VersionedGroupInfoData, utils::join};
 use base64::{engine::general_purpose, Engine};
@@ -270,6 +272,7 @@ pub struct Service {
     mls_service: Arc<MlsService>,
     /// Wakes tasks waiting on a join-proposal `Welcome` after `welcome_info` is stored.
     join_proposal_welcome_notify: Arc<Notify>,
+    server_time_tracker: ServerTimeTracker,
 }
 
 fn mimi_sub_from_credential(credential: &Credential) -> Result<String, anyhow::Error> {
@@ -498,6 +501,7 @@ impl Service {
         user_repository: ArcUserRepository,
         ws_client: ArcWebSocketClient,
         mls_store: Arc<RwLock<MlsStore>>,
+        server_time_tracker: ServerTimeTracker,
     ) -> Self {
         let state = Arc::new(Mutex::new(ServiceState::new()));
         let message_cache = Arc::new(Mutex::new(MlsMessageCache::new()));
@@ -526,7 +530,10 @@ impl Service {
             ),
         );
 
-        let mls_service = Arc::new(MlsService::new(mls_store.clone()));
+        let mls_service = Arc::new(MlsService::new(
+            mls_store.clone(),
+            server_time_tracker.clone(),
+        ));
         let join_proposal_welcome_notify = Arc::new(Notify::new());
 
         Self {
@@ -553,6 +560,7 @@ impl Service {
             handling_offline_members: Arc::new(Mutex::new(false)),
             mls_service,
             join_proposal_welcome_notify,
+            server_time_tracker,
         }
     }
 }
@@ -1762,7 +1770,12 @@ impl UserService for Service {
         };
 
         let is_host = client
-            .new_sd_kbt(Disclosure::Full, None, &PresentationContext::Default)?
+            .new_sd_kbt(
+                Disclosure::Full,
+                None,
+                &PresentationContext::Default,
+                self.server_time_tracker.server_time_as_duration(),
+            )?
             .0
             .sd_cwt_payload()?
             .inner
@@ -1783,7 +1796,12 @@ impl UserService for Service {
         // }
 
         let mut group = client
-            .new_group(&group_id, Disclosure::Full, group_config)
+            .new_group(
+                &group_id,
+                Disclosure::Full,
+                group_config,
+                self.server_time_tracker.server_time_as_duration(),
+            )
             .await?
             .store()
             .await?;
@@ -1829,7 +1847,12 @@ impl UserService for Service {
         })?;
 
         let mls_message = client
-            .join_via_external_proposal(gi_mls_message, ratchet_tree, Disclosure::Full)
+            .join_via_external_proposal(
+                gi_mls_message,
+                ratchet_tree,
+                Disclosure::Full,
+                self.server_time_tracker.server_time_as_duration(),
+            )
             .await?;
 
         Ok(mls_message)
@@ -1892,7 +1915,13 @@ impl UserService for Service {
         })?;
 
         let result = client
-            .join_group_via_external_commit(mls_message, ratchet_tree, Disclosure::Full, vec![])
+            .join_group_via_external_commit(
+                mls_message,
+                ratchet_tree,
+                Disclosure::Full,
+                vec![],
+                self.server_time_tracker.server_time_as_duration(),
+            )
             .await;
         let (mls_group, commit) = match result {
             Ok((mls_group, commit)) => (mls_group, commit),
@@ -1942,6 +1971,7 @@ impl UserService for Service {
                 ratchet_tree,
                 Disclosure::Full,
                 external_psks,
+                self.server_time_tracker.server_time_as_duration(),
             )
             .await;
         let (mls_group, commit) = match result {
@@ -3686,6 +3716,7 @@ impl UserService for Service {
             Disclosure::Full,
             None,
             &PresentationContext::Default,
+            self.server_time_tracker.server_time_as_duration(),
         )?;
         let base64_sd_kbt = general_purpose::STANDARD.encode(sd_kbt);
 

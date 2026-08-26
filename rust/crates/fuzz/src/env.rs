@@ -148,7 +148,7 @@ impl TestMlsEnv {
             };
             let cfg = MlsGroupConfig::default(user_id, true);
             let g = client
-                .new_group(&group_id, Disclosure::Full, cfg)
+                .new_group(&group_id, Disclosure::Full, cfg, None)
                 .await
                 .ok()?
                 .store()
@@ -216,6 +216,7 @@ impl TestMlsEnv {
                         ratchet_tree,
                         Disclosure::Full,
                         vec![],
+                        None,
                     )
                     .await
                     .ok()?;
@@ -259,7 +260,10 @@ impl TestMlsEnv {
         let kp = {
             let client = &self.clients[addee];
             self.rt.block_on(async {
-                let (kps, _) = client.new_key_packages(1, Disclosure::Full).await.ok()?;
+                let (kps, _) = client
+                    .new_key_packages(1, Disclosure::Full, None)
+                    .await
+                    .ok()?;
                 kps.into_iter().next()
             })
         };
@@ -810,6 +814,7 @@ fn mock_issuance(
         holder_confirmation_key,
         issuer: "mimi://i/proton.me",
         leeway: Default::default(),
+        artificial_time: None,
     };
 
     let sd_cwt = issuer

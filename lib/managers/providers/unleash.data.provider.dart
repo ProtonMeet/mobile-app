@@ -70,6 +70,10 @@ enum UnleashFeature {
 
   /// Long-press message actions: quick reactions + thread reply bottom sheet.
   meetChatThreads,
+
+  /// When enabled, MLS operations use cached server time from HTTP response headers.
+  /// When disabled, they fall back to the local clock.
+  meetUseCachedServerTime,
 }
 
 /// Function to retrieve all default toggles
@@ -144,6 +148,8 @@ extension UnleashFeatureExt on UnleashFeature {
         return "MeetNewChatHandling";
       case UnleashFeature.meetChatThreads:
         return "MeetChatThreads";
+      case UnleashFeature.meetUseCachedServerTime:
+        return "MeetUseCachedServerTime";
     }
   }
 
@@ -186,6 +192,12 @@ extension UnleashFeatureExt on UnleashFeature {
           impressionData: false,
           variant: Variant(enabled: false, name: 'disabled'),
         );
+      case UnleashFeature.meetUseCachedServerTime:
+        return ToggleConfig(
+          enabled: false,
+          impressionData: false,
+          variant: Variant(enabled: false, name: 'disabled'),
+        );
       default:
         return null;
     }
@@ -209,6 +221,7 @@ class UnleashDataProvider extends DataProvider {
 
   /// Timer for periodic refresh
   Timer? refreshTimer;
+  Future<void> _serverTimeFlagSync = Future.value();
 
   UnleashDataProvider(
     this.apiEnv,
@@ -245,6 +258,7 @@ class UnleashDataProvider extends DataProvider {
   /// Sets up Unleash event listeners
   void setupUnleashListeners() {
     unleashClient.on('ready', (value) {
+      _syncUseCachedServerTimeFlag();
       if (unleashClient.isEnabled('MeetFirstFlag')) {
         logger.i('MeetFirstFlag is enabled');
       } else {
@@ -268,6 +282,7 @@ class UnleashDataProvider extends DataProvider {
 
     unleashClient.on('update', (value) {
       logger.i('UnleashClient update: $value');
+      _syncUseCachedServerTimeFlag();
     });
 
     unleashClient.on('impression', (value) {
@@ -337,9 +352,30 @@ class UnleashDataProvider extends DataProvider {
     return unleashClient.isEnabled(feature.name);
   }
 
+  void _syncUseCachedServerTimeFlag() {
+    final enabled = isMeetUseCachedServerTime();
+    logger.d('isMeetUseCachedServerTime: $enabled');
+
+    _serverTimeFlagSync = _serverTimeFlagSync.then((_) async {
+      try {
+        await appCoreManager.setUseCachedServerTime(enabled: enabled);
+      } catch (e, stackTrace) {
+        logger.w(
+          '[Unleash] Error syncing MeetUseCachedServerTime flag: $e',
+          error: e,
+          stackTrace: stackTrace,
+        );
+      }
+    });
+    unawaited(_serverTimeFlagSync);
+  }
+
   /// Check specific feature flags
   bool isMeetSeamlessKeyRotationEnabled() =>
       isFeatureEnabled(UnleashFeature.meetSeamlessKeyRotationEnabled);
+
+  bool isMeetUseCachedServerTime() =>
+      isFeatureEnabled(UnleashFeature.meetUseCachedServerTime);
 
   bool isMeetNewJoinType() => isFeatureEnabled(UnleashFeature.meetNewJoinType);
 

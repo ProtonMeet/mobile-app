@@ -1194,6 +1194,12 @@ impl AppCore {
         Ok(has_reconnected)
     }
 
+    /// When disabled, MLS operations fall back to the local clock instead of cached
+    /// server time from HTTP response headers.
+    pub fn set_use_cached_server_time(&self, enabled: bool) {
+        self.inner.set_use_cached_server_time(enabled);
+    }
+
     /// Set WebSocket ping interval in seconds (None to use default)
     pub async fn set_websocket_ping_interval(
         &self,

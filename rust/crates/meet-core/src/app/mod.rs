@@ -40,6 +40,7 @@ mod join;
 mod meetings;
 mod metrics;
 mod prejoin;
+mod server_time;
 mod user_state;
 mod waiting_room;
 mod websocket;
@@ -234,7 +235,10 @@ impl App {
             config: MlsClientConfig::default(),
         }));
         let crypto_client = Arc::new(MeetCryptoClient::new()) as Arc<dyn CryptoClient>;
-        let mls_service: Arc<dyn KeyPackagePort> = Arc::new(MlsService::new(mls_store.clone()));
+        let mls_service: Arc<dyn KeyPackagePort> = Arc::new(MlsService::new(
+            mls_store.clone(),
+            http_client.server_time_tracker(),
+        ));
 
         let user_service = Arc::new(RwLock::new(Service::new(
             http_client.clone(),
@@ -244,6 +248,7 @@ impl App {
             Arc::new(persister),
             ws_client.clone(),
             mls_store.clone(),
+            http_client.server_time_tracker(),
         )));
 
         let room_service = Arc::new(RoomService::new(
