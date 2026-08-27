@@ -191,24 +191,30 @@ class VideoPreviewWithControls extends StatelessWidget {
                         ),
                       ),
                     ),
-                  BlocSelector<PreJoinBloc, PreJoinState, bool>(
-                    selector: (state) => state.isMeetMobileSpeakerToggleEnabled,
-                    builder: (context, isEnabled) {
-                      if (!isEnabled) {
-                        return Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          child: const SizedBox.shrink(),
-                        );
-                      }
-                      return Positioned(
-                        right: 24,
-                        top: 24,
-                        child: _buildSpeakerPhoneButton(context),
-                      );
-                    },
+                  // Vertical rail of secondary controls. These share the
+                  // top-right corner, so they live in one column to keep them
+                  // from stacking on top of each other when several are shown.
+                  Positioned(
+                    right: 16,
+                    top: 16,
+                    child: BlocSelector<PreJoinBloc, PreJoinState, bool>(
+                      selector: (state) =>
+                          state.isMeetMobileSpeakerToggleEnabled,
+                      builder: (context, isSpeakerToggleEnabled) => Column(
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: 10,
+                        children: [
+                          if (isVideoEnabled &&
+                              isBlurSupported &&
+                              isCameraBackgroundBlurFeatureEnabled)
+                            _buildCameraBackgroundBlurButton(context),
+                          if (isVideoEnabled && mobile)
+                            _buildSwapVideoButton(context),
+                          if (isSpeakerToggleEnabled)
+                            _buildSpeakerPhoneButton(context),
+                        ],
+                      ),
+                    ),
                   ),
                   Positioned(
                     left: 0,
@@ -223,18 +229,6 @@ class VideoPreviewWithControls extends StatelessWidget {
 
                         /// Video toggle
                         _buildVideoButton(context),
-
-                        if (isVideoEnabled && mobile) ...[
-                          const SizedBox(width: 12),
-                          // swape video button
-                          _buildSwapVideoButton(context),
-                        ],
-                        if (isVideoEnabled &&
-                            isBlurSupported &&
-                            isCameraBackgroundBlurFeatureEnabled) ...[
-                          const SizedBox(width: 12),
-                          _buildCameraBackgroundBlurButton(context),
-                        ],
                       ],
                     ),
                   ),
@@ -348,10 +342,8 @@ class VideoPreviewWithControls extends StatelessWidget {
               width: 20,
               height: 20,
               child: FittedBox(
-                child: Icon(
-                  cameraBackgroundBlurEnabled ? Icons.wallpaper : Icons.wallpaper_outlined,
+                child: context.images.iconVirtualBackground.svg20(
                   color: context.colors.textNorm,
-                  semanticLabel: context.local.camera_background_blur,
                 ),
               ),
             ),
