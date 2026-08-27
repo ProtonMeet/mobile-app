@@ -101,8 +101,8 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         /** Pushes uncertain mask values toward background so objects leak less. */
         private const val MASK_FOREGROUND_GAMMA = 1.35f
 
-        /** Desaturate blurred plate (0 = full color, 1 = grayscale). */
-        private const val BACKGROUND_DESATURATION = 0.35f
+        /** Desaturate blurred plate (0 = full color, 1 = grayscale). Matches iOS `backgroundDesaturation`. */
+        private const val BACKGROUND_DESATURATION = 0.5f
 
         /**
          * σ for the mask feather, run on the 256² mask before upscale. After upscale to the
@@ -220,6 +220,15 @@ internal class MeetBackgroundBlurMediaPipeEngine(
     private val replacementLock = Any()
     private var replacementBackgroundBitmap: Bitmap? = null
 
+    /**
+     * Replacement scaled and pre-rotated for one (width, height, rotation) triple. Without this the
+     * cover-scale plus the quarter turn would rebuild a full-frame bitmap on every frame.
+     */
+    private var orientedReplacementBitmap: Bitmap? = null
+    private var orientedReplacementWidth: Int = 0
+    private var orientedReplacementHeight: Int = 0
+    private var orientedReplacementRotation: Int = -1
+
     fun setBlurConfig(blurSigma: Float, backgroundObscureOpacity: Float) {
         this.blurSigma = blurSigma.coerceIn(MIN_BLUR_SIGMA, MAX_BLUR_SIGMA)
         this.backgroundObscureOpacity = backgroundObscureOpacity.coerceIn(0f, 1f)
@@ -247,6 +256,7 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         synchronized(replacementLock) {
             replacementBackgroundBitmap?.recycle()
             replacementBackgroundBitmap = null
+            invalidateOrientedReplacementLocked()
         }
     }
 
@@ -254,8 +264,22 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         synchronized(replacementLock) {
             replacementBackgroundBitmap?.recycle()
             replacementBackgroundBitmap = bitmap
+            invalidateOrientedReplacementLocked()
         }
         return true
+    }
+
+    /**
+     * Drops the reference without recycling: compositing hands this bitmap out and then draws it
+     * outside [replacementLock], so picking a new background mid-call could otherwise recycle a
+     * bitmap the WebRTC thread is still reading. Letting GC reclaim it costs one frame-sized
+     * allocation and cannot crash.
+     */
+    private fun invalidateOrientedReplacementLocked() {
+        orientedReplacementBitmap = null
+        orientedReplacementWidth = 0
+        orientedReplacementHeight = 0
+        orientedReplacementRotation = -1
     }
 
     /** BitmapFactory ignores JPEG/HEIC EXIF rotation — upright the pixels for display. */
@@ -1143,7 +1167,7 @@ internal class MeetBackgroundBlurMediaPipeEngine(
 
         // Stage 3: composite the input frame with the latest mask + blurred background.
         val composed = try {
-            composeWithMask(inputBitmap, snapshot)
+            composeWithMask(inputBitmap, snapshot, frame.rotation)
         } catch (oom: OutOfMemoryError) {
             Log.e(TAG, "process[composeWithMask]: OOM at frame=$frameId — passthrough", oom)
             return frame
@@ -1448,7 +1472,11 @@ internal class MeetBackgroundBlurMediaPipeEngine(
      *   4. Composite via `Canvas` + `PorterDuff.SRC_IN`: keep the sharp `input` where the mask
      *      is foreground, fall back to `blurred` elsewhere.
      */
-    private fun composeWithMask(input: Bitmap, snapshot: MaskSnapshot): Bitmap? {
+    private fun composeWithMask(
+        input: Bitmap,
+        snapshot: MaskSnapshot,
+        rotationDegrees: Int,
+    ): Bitmap? {
         val w = input.width
         val h = input.height
 
@@ -1467,15 +1495,16 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         val maskBitmap = upscaleAlphaToBitmap(featheredAlpha, snapshot.width, snapshot.height, w, h)
             ?: return null
 
-        val blurred = makeBackgroundPlate(input, w, h)
+        val plate = makeBackgroundPlate(input, w, h, rotationDegrees)
             ?: return null
+        val blurred = plate.bitmap
 
         val out = ensureComposedBitmap(w, h)
         val canvas = Canvas(out)
 
-        // 1) Fill output with the blurred background, optionally veiled for extra privacy.
+        // 1) Fill output with the background plate, optionally veiled for extra privacy.
         canvas.drawBitmap(blurred, 0f, 0f, null)
-        if (backgroundObscureOpacity > 0f) {
+        if (plate.wantsObscureVeil && backgroundObscureOpacity > 0f) {
             val alpha = (backgroundObscureOpacity * 255f).toInt().coerceIn(0, 255)
             val veilPaint = Paint().apply {
                 color = android.graphics.Color.argb(alpha, 115, 115, 122)
@@ -1498,7 +1527,9 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         canvas.restoreToCount(sc)
 
         maskBitmap.recycle()
-        blurred.recycle()
+        if (plate.recyclable) {
+            blurred.recycle()
+        }
         return out
     }
 
@@ -1598,12 +1629,82 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         return scaled
     }
 
-    private fun makeBackgroundPlate(input: Bitmap, dstW: Int, dstH: Int): Bitmap? {
-        val replacement = synchronized(replacementLock) { replacementBackgroundBitmap }
-        if (replacement != null && !replacement.isRecycled) {
-            return scaleBitmapCover(replacement, dstW, dstH)
+    /**
+     * [wantsObscureVeil] is false for replacement images: the veil hides the real room, so tinting
+     * a picture the user deliberately chose only mutes it. Mirrors iOS `makeBackgroundPlate`,
+     * which returns the replacement before `applyObscureVeil` runs.
+     */
+    /** [recyclable] is false for the cached oriented replacement, which outlives the frame. */
+    private class BackgroundPlate(
+        val bitmap: Bitmap,
+        val wantsObscureVeil: Boolean,
+        val recyclable: Boolean,
+    )
+
+    private fun makeBackgroundPlate(
+        input: Bitmap,
+        dstW: Int,
+        dstH: Int,
+        rotationDegrees: Int,
+    ): BackgroundPlate? {
+        val oriented = orientedReplacement(dstW, dstH, rotationDegrees)
+        if (oriented != null) {
+            return BackgroundPlate(oriented, wantsObscureVeil = false, recyclable = false)
         }
-        return makeBlurredBackgroundPlate(input)
+        val blurred = makeBlurredBackgroundPlate(input) ?: return null
+        return BackgroundPlate(blurred, wantsObscureVeil = true, recyclable = true)
+    }
+
+    /**
+     * Fits the replacement into the buffer so it reads upright *after* the renderer applies
+     * `rotationDegrees`.
+     *
+     * The capture buffer is landscape even when the phone is portrait; the frame carries the
+     * rotation and the renderer applies it downstream. Camera pixels are authored in that rotated
+     * space, so they come out right, but a still image is authored the way the user saw it in the
+     * picker. Cover-fitting it to the raw buffer therefore hands the renderer an upright image and
+     * gets a sideways one back. Fitting in display space and pre-rotating by the inverse cancels
+     * out. Aspect is preserved by cover-cropping — the image never stretches to the frame.
+     */
+    private fun orientedReplacement(dstW: Int, dstH: Int, rotationDegrees: Int): Bitmap? {
+        val rotation = ((rotationDegrees % 360) + 360) % 360
+        synchronized(replacementLock) {
+            val source = replacementBackgroundBitmap
+            if (source == null || source.isRecycled) {
+                return null
+            }
+            val cached = orientedReplacementBitmap
+            if (cached != null && !cached.isRecycled &&
+                orientedReplacementWidth == dstW &&
+                orientedReplacementHeight == dstH &&
+                orientedReplacementRotation == rotation
+            ) {
+                return cached
+            }
+
+            // Quarter turns swap which buffer axis the viewer perceives as width.
+            val quarterTurned = rotation == 90 || rotation == 270
+            val displayW = if (quarterTurned) dstH else dstW
+            val displayH = if (quarterTurned) dstW else dstH
+            val covered = scaleBitmapCover(source, displayW, displayH)
+            val result = if (rotation == 0) {
+                covered
+            } else {
+                val matrix = Matrix().apply { postRotate(-rotation.toFloat()) }
+                val rotated = Bitmap.createBitmap(
+                    covered, 0, 0, covered.width, covered.height, matrix, true,
+                )
+                if (rotated !== covered) covered.recycle()
+                rotated
+            }
+
+            invalidateOrientedReplacementLocked()
+            orientedReplacementBitmap = result
+            orientedReplacementWidth = dstW
+            orientedReplacementHeight = dstH
+            orientedReplacementRotation = rotation
+            return result
+        }
     }
 
     private fun scaleBitmapCover(source: Bitmap, dstW: Int, dstH: Int): Bitmap {
@@ -1623,6 +1724,14 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         val cropped = Bitmap.createBitmap(scaled, x, y, cropW, cropH)
         if (scaled !== cropped && scaled !== source) {
             scaled.recycle()
+        }
+        // Both createScaledBitmap and createBitmap hand back the source itself when the requested
+        // subset already matches it, so an image that happens to be exactly the processing size
+        // would alias the cached replacement — which the caller then recycles, permanently
+        // dropping the user's background. Hand back a copy the caller can own.
+        if (cropped === source) {
+            return source.copy(source.config ?: Bitmap.Config.ARGB_8888, /* isMutable = */ false)
+                ?: source
         }
         return cropped
     }

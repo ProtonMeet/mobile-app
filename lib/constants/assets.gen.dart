@@ -72,6 +72,22 @@ class $AssetsImagesIconGen {
   SvgGenImage get icAudioWave =>
       const SvgGenImage('assets/images/icon/ic-audio-wave.svg');
 
+  /// File path: assets/images/icon/ic-backgrounds-add-image.svg
+  SvgGenImage get icBackgroundsAddImage =>
+      const SvgGenImage('assets/images/icon/ic-backgrounds-add-image.svg');
+
+  /// File path: assets/images/icon/ic-backgrounds-ban.svg
+  SvgGenImage get icBackgroundsBan =>
+      const SvgGenImage('assets/images/icon/ic-backgrounds-ban.svg');
+
+  /// File path: assets/images/icon/ic-backgrounds-blur.svg
+  SvgGenImage get icBackgroundsBlur =>
+      const SvgGenImage('assets/images/icon/ic-backgrounds-blur.svg');
+
+  /// File path: assets/images/icon/ic-backgrounds-btn.svg
+  SvgGenImage get icBackgroundsBtn =>
+      const SvgGenImage('assets/images/icon/ic-backgrounds-btn.svg');
+
   /// File path: assets/images/icon/ic-calendar-modal-header.svg
   SvgGenImage get icCalendarModalHeader =>
       const SvgGenImage('assets/images/icon/ic-calendar-modal-header.svg');
@@ -347,6 +363,10 @@ class $AssetsImagesIconGen {
     icAudioOutputPhone,
     icAudioOutputSpeakerphone,
     icAudioWave,
+    icBackgroundsAddImage,
+    icBackgroundsBan,
+    icBackgroundsBlur,
+    icBackgroundsBtn,
     icCalendarModalHeader,
     icCalendarTitle,
     icCalendarToday,

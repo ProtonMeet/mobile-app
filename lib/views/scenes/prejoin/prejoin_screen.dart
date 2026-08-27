@@ -189,6 +189,7 @@ class PreJoinScreen extends StatelessWidget {
                                       initialSelection:
                                           state.cameraBackgroundSelection,
                                       previewTrack: state.videoTrack,
+                                      hidePreview: true,
                                     );
                                 if (selection != null && context.mounted) {
                                   bloc.add(

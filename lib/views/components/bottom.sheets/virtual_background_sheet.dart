@@ -9,6 +9,7 @@ import 'package:meet/helper/background_blur/virtual_background_image_picker.dart
 import 'package:meet/helper/background_blur/virtual_background_presets.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
+import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/views/components/alerts/base_bottom_sheet_v2.dart';
 import 'package:meet/views/components/safe_video_track_renderer.dart';
 import 'package:path_provider/path_provider.dart';
@@ -21,6 +22,7 @@ class VirtualBackgroundSheet {
     BuildContext context, {
     required CameraBackgroundSelection initialSelection,
     VideoTrack? previewTrack,
+    bool hidePreview = false,
   }) {
     return showModalBottomSheet<CameraBackgroundSelection>(
       context: context,
@@ -31,6 +33,7 @@ class VirtualBackgroundSheet {
       builder: (ctx) => _VirtualBackgroundSheetBody(
         initialSelection: initialSelection,
         previewTrack: previewTrack,
+        hidePreview: hidePreview,
       ),
     );
   }
@@ -40,10 +43,12 @@ class _VirtualBackgroundSheetBody extends StatefulWidget {
   const _VirtualBackgroundSheetBody({
     required this.initialSelection,
     this.previewTrack,
+    this.hidePreview = false,
   });
 
   final CameraBackgroundSelection initialSelection;
   final VideoTrack? previewTrack;
+  final bool hidePreview;
 
   @override
   State<_VirtualBackgroundSheetBody> createState() =>
@@ -57,11 +62,15 @@ class _VirtualBackgroundSheetBodyState
     extends State<_VirtualBackgroundSheetBody> {
   late CameraBackgroundSelection _selection;
   bool _pickingImage = false;
+  bool _hidePreview = false;
+  bool _hideSelBg = false;
 
   @override
   void initState() {
     super.initState();
     _selection = widget.initialSelection;
+    _hidePreview = widget.hidePreview;
+    _hideSelBg = _hidePreview;
   }
 
   Future<void> _pickCustomImage() async {
@@ -144,7 +153,7 @@ class _VirtualBackgroundSheetBodyState
       slivers: [
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 18),
             child: Text(
               context.local.virtual_backgrounds_title,
               style: ProtonStyles.headline(
@@ -154,26 +163,31 @@ class _VirtualBackgroundSheetBodyState
             ),
           ),
         ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _PreviewCard(
-              height: previewHeight,
-              previewTrack: widget.previewTrack,
+        if (!_hidePreview)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _PreviewCard(
+                height: previewHeight,
+                previewTrack: widget.previewTrack,
+              ),
             ),
           ),
-        ),
         SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            child: DecoratedBox(
-              decoration: ShapeDecoration(
-                color: Colors.white.withValues(alpha: 0.04),
-                shape: RoundedRectangleBorder(
-                  side: BorderSide(color: Colors.white.withValues(alpha: 0.04)),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-              ),
+          child: SafeArea(
+            child: Container(
+              margin: EdgeInsets.symmetric(horizontal: _hideSelBg ? 0 : 16),
+              decoration: _hideSelBg
+                  ? null
+                  : ShapeDecoration(
+                      color: Colors.white.withValues(alpha: 0.04),
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.04),
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -184,6 +198,7 @@ class _VirtualBackgroundSheetBodyState
                   children: [
                     _EffectRow(
                       children: [
+                        // none
                         _EffectTile(
                           label: context.local.virtual_background_none,
                           selected: _isSelectedEffect(
@@ -192,12 +207,11 @@ class _VirtualBackgroundSheetBodyState
                           onTap: () => _commitSelection(
                             const CameraBackgroundSelection.none(),
                           ),
-                          child: Icon(
-                            Icons.block,
+                          child: context.images.iconVirtualBackgroundNone.svg20(
                             color: context.colors.textNorm,
-                            size: 20,
                           ),
                         ),
+                        // blur
                         _EffectTile(
                           label: context.local.camera_background_blur,
                           selected: _isSelectedEffect(
@@ -206,12 +220,11 @@ class _VirtualBackgroundSheetBodyState
                           onTap: () => _commitSelection(
                             const CameraBackgroundSelection.blur(),
                           ),
-                          child: Icon(
-                            Icons.blur_on,
+                          child: context.images.iconVirtualBackgroundBlur.svg20(
                             color: context.colors.textNorm,
-                            size: 20,
                           ),
                         ),
+                        // custom
                         _EffectTile(
                           label: context.local.virtual_background_custom,
                           selected: _isSelectedEffect(
@@ -229,15 +242,12 @@ class _VirtualBackgroundSheetBodyState
                                     color: context.colors.textNorm,
                                   ),
                                 )
-                              : Icon(
-                                  Icons.add_photo_alternate_outlined,
-                                  color: context.colors.textNorm,
-                                  size: 20,
-                                ),
+                              : context.images.iconVirtualBackgroundCustom
+                                    .svg20(color: context.colors.textNorm),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                     _EffectRow(
                       children: [
                         for (final preset in presets.take(3))

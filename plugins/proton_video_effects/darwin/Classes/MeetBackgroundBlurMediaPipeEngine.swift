@@ -17,6 +17,7 @@ import CoreGraphics
 import CoreImage
 import CoreVideo
 import Foundation
+import ImageIO
 import Metal
 import Vision
 
@@ -134,6 +135,7 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
   private var synchronousSegmentation = false
   private var replacementBackgroundImage: CIImage?
   private var cachedReplacementExtent: CGRect = .zero
+  private var cachedReplacementRotation: Int = -1
   private var cachedScaledReplacement: CIImage?
 
   private struct MaskSnapshot {
@@ -351,6 +353,7 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
 
   private func invalidateReplacementCacheLocked() {
     cachedReplacementExtent = .zero
+    cachedReplacementRotation = -1
     cachedScaledReplacement = nil
   }
 
@@ -845,6 +848,51 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
   #endif
 
   @available(iOS 15.0, macOS 12.0, *)
+  /// How Vision must turn the capture buffer to see an upright person.
+  ///
+  /// The buffer stays landscape no matter how the phone is held; the frame carries the rotation
+  /// the renderer will apply. Without this Vision analyses a person lying on their side, and
+  /// `VNGeneratePersonSegmentationRequest` is trained on upright people — the mask holds up while
+  /// you are still and breaks down exactly when a pose gets unusual, which is what fast movement
+  /// produces. macOS webcams report no rotation, so only handheld capture is affected.
+  private static func visionOrientation(forRotationDegrees degrees: Int32)
+    -> CGImagePropertyOrientation
+  {
+    switch ((Int(degrees) % 360) + 360) % 360 {
+    case 90: return .right
+    case 180: return .down
+    case 270: return .left
+    default: return .up
+    }
+  }
+
+  /// Turns a mask Vision produced in upright space back into the buffer space we composite in.
+  ///
+  /// Vision reports results in the oriented space it analysed, so a quarter-turned frame yields a
+  /// portrait mask against a landscape buffer. The aspect comparison rather than an unconditional
+  /// rotation keeps this correct either way, so a mask already in buffer space is left alone.
+  private func orientMaskToBuffer(
+    _ mask: CIImage,
+    frameExtent: CGRect,
+    rotationDegrees: Int32
+  ) -> CIImage {
+    let rotation = ((Int(rotationDegrees) % 360) + 360) % 360
+    guard rotation == 90 || rotation == 270 else { return mask }
+    let me = mask.extent
+    guard me.width >= 1, me.height >= 1, frameExtent.height >= 1 else { return mask }
+
+    let frameAspect = frameExtent.width / frameExtent.height
+    let asIsError = abs(me.width / me.height - frameAspect)
+    let rotatedError = abs(me.height / me.width - frameAspect)
+    guard rotatedError < asIsError else { return mask }
+
+    let turned = mask.transformed(
+      by: CGAffineTransform(rotationAngle: CGFloat(rotation) * .pi / 180)
+    )
+    let te = turned.extent
+    return turned.transformed(by: CGAffineTransform(translationX: -te.minX, y: -te.minY))
+  }
+
   private func makeVisionMaskSnapshot(
     from pixelBuffer: CVPixelBuffer,
     capturedAtNs: UInt64
@@ -894,7 +942,6 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
 
   @objc
   public func applyPersonBackgroundBlur(to pixelBuffer: CVPixelBuffer, rotationDegrees: Int32) {
-    _ = rotationDegrees
     let frameStartNs = Self.nowNs()
 
     maskLock.lock()
@@ -910,11 +957,15 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
     if canDispatch {
       if useSynchronousVisionSegmentation(), #available(iOS 15.0, macOS 12.0, *) {
         // Blocks until this frame's own mask exists, so the read below picks it up.
-        performVisionSegmentationInline(on: pixelBuffer, capturedAtNs: frameStartNs)
+        performVisionSegmentationInline(
+          on: pixelBuffer,
+          capturedAtNs: frameStartNs,
+          rotationDegrees: rotationDegrees
+        )
       } else {
         // Times the synchronous capture-thread work only; inference itself runs async.
         let copyStartNs = Self.nowNs()
-        dispatchAsyncSegmentation(on: pixelBuffer)
+        dispatchAsyncSegmentation(on: pixelBuffer, rotationDegrees: rotationDegrees)
         recordCaptureCopy(ns: Self.nowNs() &- copyStartNs)
       }
     }
@@ -936,7 +987,7 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
     // No usable mask still composites: passing the frame through untouched would publish the
     // real room. Without a mask the plate covers everything, so the subject is hidden too.
     let compositeStartNs = Self.nowNs()
-    composite(pixelBuffer: pixelBuffer, mask: snapshot)
+    composite(pixelBuffer: pixelBuffer, mask: snapshot, rotationDegrees: rotationDegrees)
     let compositeEndNs = Self.nowNs()
     recordComposite(
       ns: compositeEndNs &- compositeStartNs,
@@ -947,20 +998,33 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
   }
 
   /// Composites `snapshot` over the background plate, or hides the whole frame when it is nil.
-  private func composite(pixelBuffer: CVPixelBuffer, mask snapshot: MaskSnapshot?) {
+  private func composite(
+    pixelBuffer: CVPixelBuffer,
+    mask snapshot: MaskSnapshot?,
+    rotationDegrees: Int32
+  ) {
     let input = CIImage(cvPixelBuffer: pixelBuffer)
     let ire = input.extent
     guard ire.width >= 1, ire.height >= 1 else { return }
 
     let config = currentBlurConfig()
-    let backgroundPlate = makeBackgroundPlate(from: input, extent: ire, config: config)
+    let backgroundPlate = makeBackgroundPlate(
+      from: input,
+      extent: ire,
+      config: config,
+      rotationDegrees: rotationDegrees
+    )
 
     guard let snapshot else {
       renderComposite(backgroundPlate, to: pixelBuffer, extent: ire)
       return
     }
 
-    let maskImage = snapshot.image
+    let maskImage = orientMaskToBuffer(
+      snapshot.image,
+      frameExtent: ire,
+      rotationDegrees: rotationDegrees
+    )
     let mre = maskImage.extent
     guard mre.width >= 1, mre.height >= 1 else {
       renderComposite(backgroundPlate, to: pixelBuffer, extent: ire)
@@ -1007,9 +1071,13 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
   private func makeBackgroundPlate(
     from input: CIImage,
     extent: CGRect,
-    config: (sigma: CGFloat, obscureOpacity: CGFloat, maskEdge: MaskEdgeTuning)
+    config: (sigma: CGFloat, obscureOpacity: CGFloat, maskEdge: MaskEdgeTuning),
+    rotationDegrees: Int32
   ) -> CIImage {
-    if let replacement = scaledReplacementBackground(extent: extent) {
+    if let replacement = scaledReplacementBackground(
+      extent: extent,
+      rotationDegrees: rotationDegrees
+    ) {
       return replacement
     }
     let blurredBackground = makeBlurredBackgroundPlate(
@@ -1036,10 +1104,10 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
     ciContext.render(out, to: pixelBuffer, bounds: extent, colorSpace: outCS)
   }
 
-  private func dispatchAsyncSegmentation(on pixelBuffer: CVPixelBuffer) {
+  private func dispatchAsyncSegmentation(on pixelBuffer: CVPixelBuffer, rotationDegrees: Int32) {
     if usesAppleVision {
       if #available(iOS 15.0, macOS 12.0, *) {
-        dispatchVisionSegmentation(on: pixelBuffer)
+        dispatchVisionSegmentation(on: pixelBuffer, rotationDegrees: rotationDegrees)
       } else {
         clearInferenceInFlight()
       }
@@ -1098,7 +1166,8 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
   @available(iOS 15.0, macOS 12.0, *)
   private func performVisionSegmentationInline(
     on pixelBuffer: CVPixelBuffer,
-    capturedAtNs: UInt64
+    capturedAtNs: UInt64,
+    rotationDegrees: Int32
   ) {
     defer { clearInferenceInFlight() }
 
@@ -1108,7 +1177,11 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
 
     let generation = segmentationGeneration
     let request = visionRequest()
-    let handler = VNImageRequestHandler(cvPixelBuffer: inferenceBuffer, options: [:])
+    let handler = VNImageRequestHandler(
+      cvPixelBuffer: inferenceBuffer,
+      orientation: Self.visionOrientation(forRotationDegrees: rotationDegrees),
+      options: [:]
+    )
     do {
       let inferenceStartNs = Self.nowNs()
       try handler.perform([request])
@@ -1133,7 +1206,7 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
   }
 
   @available(iOS 15.0, macOS 12.0, *)
-  private func dispatchVisionSegmentation(on pixelBuffer: CVPixelBuffer) {
+  private func dispatchVisionSegmentation(on pixelBuffer: CVPixelBuffer, rotationDegrees: Int32) {
     // Copy on the capture thread: WebRTC recycles `pixelBuffer` once onFrame returns.
     guard let inferenceBuffer = copyForVisionInference(from: pixelBuffer) else {
       clearInferenceInFlight()
@@ -1166,7 +1239,11 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
       guard generation == self.segmentationGeneration else { return }
 
       let request = self.visionRequest()
-      let handler = VNImageRequestHandler(cvPixelBuffer: inferenceBuffer, options: [:])
+      let handler = VNImageRequestHandler(
+        cvPixelBuffer: inferenceBuffer,
+        orientation: Self.visionOrientation(forRotationDegrees: rotationDegrees),
+        options: [:]
+      )
       do {
         let inferenceStartNs = Self.nowNs()
         try handler.perform([request])
@@ -1419,9 +1496,21 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
     }
   #endif
 
-  private func scaledReplacementBackground(extent: CGRect) -> CIImage? {
+  /// Fits the replacement into the buffer so it reads upright *after* the renderer applies
+  /// `rotationDegrees`.
+  ///
+  /// The capture buffer is landscape even when the phone is portrait; the frame carries the
+  /// rotation and the renderer applies it downstream. Camera pixels are authored in that rotated
+  /// space, so they come out right, but a still image is authored the way the user saw it in the
+  /// picker. Cover-fitting it to the raw buffer therefore hands the renderer an upright image and
+  /// gets a sideways one back. Fitting in display space and pre-rotating by the inverse cancels
+  /// out. Aspect is preserved by cover-cropping — the image never stretches to the frame.
+  private func scaledReplacementBackground(extent: CGRect, rotationDegrees: Int32) -> CIImage? {
+    let rotation = ((Int(rotationDegrees) % 360) + 360) % 360
     configLock.lock()
-    if extent == cachedReplacementExtent, let cached = cachedScaledReplacement {
+    if extent == cachedReplacementExtent, rotation == cachedReplacementRotation,
+      let cached = cachedScaledReplacement
+    {
       configLock.unlock()
       return cached
     }
@@ -1430,17 +1519,50 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
     guard let source else { return nil }
     let srcExtent = source.extent
     guard srcExtent.width >= 1, srcExtent.height >= 1 else { return nil }
-    let scale = max(extent.width / srcExtent.width, extent.height / srcExtent.height)
-    let scaled = source.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
-    let scaledExtent = scaled.extent
-    let tx = extent.midX - scaledExtent.midX
-    let ty = extent.midY - scaledExtent.midY
+
+    // Quarter turns swap which buffer axis the viewer perceives as width.
+    let quarterTurned = rotation == 90 || rotation == 270
+    let displaySize =
+      quarterTurned
+      ? CGSize(width: extent.height, height: extent.width)
+      : CGSize(width: extent.width, height: extent.height)
+
+    let scale = max(
+      displaySize.width / srcExtent.width,
+      displaySize.height / srcExtent.height
+    )
+    var image = source.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+    let scaledExtent = image.extent
+    image = image.cropped(
+      to: CGRect(
+        x: scaledExtent.midX - displaySize.width / 2,
+        y: scaledExtent.midY - displaySize.height / 2,
+        width: displaySize.width,
+        height: displaySize.height
+      )
+    )
+
+    // Core Image's y-up space makes a positive angle read counter-clockwise on screen, which is
+    // the inverse of the renderer's clockwise rotation — so the angle goes in unnegated.
+    if rotation != 0 {
+      image = image.transformed(
+        by: CGAffineTransform(rotationAngle: CGFloat(rotation) * .pi / 180)
+      )
+    }
+    let rotatedExtent = image.extent
     let result =
-      scaled
-      .transformed(by: CGAffineTransform(translationX: tx, y: ty))
+      image
+      .transformed(
+        by: CGAffineTransform(
+          translationX: extent.midX - rotatedExtent.midX,
+          y: extent.midY - rotatedExtent.midY
+        )
+      )
       .cropped(to: extent)
+
     configLock.lock()
     cachedReplacementExtent = extent
+    cachedReplacementRotation = rotation
     cachedScaledReplacement = result
     configLock.unlock()
     return result
