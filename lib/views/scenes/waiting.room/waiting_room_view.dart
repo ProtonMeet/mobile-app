@@ -29,6 +29,11 @@ class WaitingRoomPage extends StatefulWidget {
   /// background blur preference onto its published video track.
   final bool cameraBackgroundBlurEnabled;
 
+  /// Preview camera track handed over by pre-join, reused instead of opening
+  /// the same physical camera a second time. Ownership moves to
+  /// [WaitingRoomBloc], which publishes or stops it.
+  final LocalVideoTrack? handedOverVideoTrack;
+
   const WaitingRoomPage(
     this.args, {
     required this.preJoinType,
@@ -41,6 +46,7 @@ class WaitingRoomPage extends StatefulWidget {
     this.selectedVideoPosition,
     this.selectedVideoParameters = VideoParametersPresets.h720_169,
     this.cameraBackgroundBlurEnabled = false,
+    this.handedOverVideoTrack,
     super.key,
   });
 
@@ -91,6 +97,7 @@ class _WaitingRoomPageState extends State<WaitingRoomPage>
             selectedSpeakerDevice: widget.selectedSpeakerDevice,
             selectedVideoPosition: widget.selectedVideoPosition,
             selectedVideoParameters: widget.selectedVideoParameters,
+            handedOverVideoTrack: widget.handedOverVideoTrack,
           ),
         ),
       child: MultiBlocListener(

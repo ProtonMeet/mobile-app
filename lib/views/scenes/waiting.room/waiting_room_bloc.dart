@@ -35,6 +35,12 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
   // Subscription from RoomConnectionHelper for key rotation handling
   StreamSubscription<(String, BigInt)?>? _keyRotationHandlingSubscription;
 
+  /// Preview camera track handed over by pre-join, not yet adopted by
+  /// [_createLocalVideoTrack]. This bloc owns it, so every path out of
+  /// [_onInitialized] must either adopt or stop it, otherwise the camera stays
+  /// open with nothing rendering it.
+  LocalVideoTrack? _pendingHandedOverVideoTrack;
+
   WaitingRoomBloc()
     : super(
         WaitingRoomState(
@@ -65,11 +71,30 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
     _keyRotationHandlingSubscription = null;
   }
 
+  /// Stops a handed-over preview track that was never adopted, so pre-join's
+  /// camera is not left capturing after this bloc gives up on it.
+  Future<void> _stopPendingHandedOverVideoTrack() async {
+    final track = _pendingHandedOverVideoTrack;
+    _pendingHandedOverVideoTrack = null;
+    if (track == null) {
+      return;
+    }
+    try {
+      await track.stop();
+    } catch (e) {
+      l.logger.e(
+        '[WaitingRoomBloc] Error stopping handed over video track: $e',
+      );
+    }
+  }
+
   Future<void> _onInitialized(
     WaitingRoomInitialized event,
     Emitter<WaitingRoomState> emit,
   ) async {
+    _pendingHandedOverVideoTrack = event.handedOverVideoTrack;
     if (PlatformInfoChannel.isInForceUpgradeState()) {
+      await _stopPendingHandedOverVideoTrack();
       emit(
         state.copyWith(
           isLoading: false,
@@ -588,6 +613,10 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
           '[WaitingRoomBloc] Error logging join room failed: $logError',
         );
       }
+    } finally {
+      // This handler has many early returns; catch every path that bailed out
+      // before the handed-over track could be adopted.
+      await _stopPendingHandedOverVideoTrack();
     }
   }
 
@@ -604,9 +633,25 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
     await _setupWithRoomKey(emit);
   }
 
+  /// Reuses the track handed over by pre-join when possible, so the physical
+  /// camera is opened once across pre-join → waiting room → room. Opening a
+  /// second capturer for the same camera evicts the first one into a retry
+  /// loop, which deadlocks the next `stopCapture()` on the platform thread.
+  ///
+  /// Only the first call can adopt it; the codec-fallback retry has to build a
+  /// fresh track anyway.
   Future<LocalVideoTrack?> _createLocalVideoTrack(
     WaitingRoomInitialized event,
   ) async {
+    final handedOver = _pendingHandedOverVideoTrack;
+    _pendingHandedOverVideoTrack = null;
+    if (handedOver != null) {
+      if (event.isVideoEnabled && handedOver.isActive) {
+        return handedOver;
+      }
+      await handedOver.stop();
+    }
+
     if (!event.isVideoEnabled) {
       return null;
     }
@@ -779,9 +824,10 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
   }
 
   @override
-  Future<void> close() {
+  Future<void> close() async {
     // Cancel all key rotation subscriptions
     _cancelKeyRotationSubscriptions();
+    await _stopPendingHandedOverVideoTrack();
     state.listener?.dispose();
     state.room?.dispose();
     return super.close();

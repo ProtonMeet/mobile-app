@@ -143,6 +143,10 @@ class PreJoinMeetingContextFailed extends PreJoinEvent {
 
 class PreJoinNavigateToWaitingRoomConsumed extends PreJoinEvent {}
 
+/// Dispatched when the user comes back to pre-join after the preview camera
+/// track was handed over to the waiting room, which owns and stops it.
+class PreJoinRestorePreviewVideoTrack extends PreJoinEvent {}
+
 class PreJoinStartWaitingRoomAdmission extends PreJoinEvent {
   final String displayName;
   PreJoinStartWaitingRoomAdmission(this.displayName);
