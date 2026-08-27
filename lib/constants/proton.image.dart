@@ -151,6 +151,15 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
   /// icons for recording controls and dialogs
   SvgGenImage get iconRecording => Assets.images.icon.icRecording;
 
+  /// icons for virtual backgrounds
+  SvgGenImage get iconVirtualBackgroundNone =>
+      Assets.images.icon.icBackgroundsBan;
+  SvgGenImage get iconVirtualBackgroundBlur =>
+      Assets.images.icon.icBackgroundsBlur;
+  SvgGenImage get iconVirtualBackgroundCustom =>
+      Assets.images.icon.icBackgroundsAddImage;
+  SvgGenImage get iconVirtualBackground => Assets.images.icon.icBackgroundsBtn;
+
   @override
   ProtonImages copyWith({bool? isDark}) =>
       ProtonImages(isDark: isDark ?? this.isDark);
