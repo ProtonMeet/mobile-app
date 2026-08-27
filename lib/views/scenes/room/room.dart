@@ -17,6 +17,7 @@ import 'package:meet/constants/test_ids.dart';
 import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
+import 'package:meet/helper/extension/local_video_track_extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/helper/global_notification.dart';
@@ -81,6 +82,7 @@ import 'package:meet/views/scenes/utils.dart';
 import 'package:meet/views/scenes/widgets/meeting_settings_v2.dart';
 import 'package:meet/views/scenes/widgets/statistics_dialog.dart';
 import 'package:proton_denoise/proton_denoise.dart';
+import 'package:proton_video_effects/proton_video_effects.dart';
 import 'package:sentry/sentry.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -3678,11 +3680,15 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   }
 
   Widget _wrapSidePanel({required RoomSidePanel panel, required Widget child}) {
+    final maxWidth =
+        roomSidePanelUsesSideRail(MediaQuery.of(context).size.width)
+        ? roomSidePanelWidth
+        : double.infinity;
     return SidePanelOrSheet(
       key: ValueKey(panel),
       isScreenSharing: _isScreenSharing,
       isCameraView: _isCameraView,
-      maxWidth: roomSidePanelWidth,
+      maxWidth: maxWidth,
       child: child,
       onDismissed: () {
         if (_openSidePanel != panel) return;
@@ -3786,13 +3792,17 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   }
 
   /// Local camera feed used to preview background choices inside the sheet.
+  ///
+  /// Null while the camera is off: muting leaves the publication and its track
+  /// in place, so without the mute check the sheet would render a live-looking
+  /// preview from a camera the user has already turned off.
   VideoTrack? get _localCameraTrack {
     final lp = _bloc.state.room.localParticipant;
     if (lp == null) {
       return null;
     }
     for (final pub in lp.videoTrackPublications) {
-      if (pub.isScreenShare) {
+      if (pub.isScreenShare || pub.muted) {
         continue;
       }
       final track = pub.track;
@@ -3803,19 +3813,71 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     return null;
   }
 
+  /// Camera feed shown only inside the background sheet, while the in-room
+  /// camera is off.
+  ///
+  /// Deliberately never published: unmuting to get a preview would light up the
+  /// user's tile for everyone else and flip room state that they did not ask to
+  /// change. This track is created when the sheet opens, rendered locally, and
+  /// stopped again on close, so nothing reaches remote participants.
+  Future<LocalVideoTrack?> _createSheetPreviewTrack(
+    CameraBackgroundSelection selection,
+  ) async {
+    try {
+      final track = await LocalVideoTrackHelper.cameraTrack(
+        parameters: VideoParametersPresets.h720_169,
+        backgroundSelection: selection,
+      );
+      await track.start();
+      return track;
+    } catch (e) {
+      l.logger.w('[RoomPage] preview-only camera track failed: $e');
+      return null;
+    }
+  }
+
+  Future<void> _stopSheetPreviewTrack(LocalVideoTrack track) async {
+    final trackId = track.mediaStreamTrack.id;
+    if (trackId != null && trackId.isNotEmpty) {
+      try {
+        await ProtonVideoEffects.instance.detachBackgroundBlur(
+          trackId: trackId,
+        );
+      } catch (_) {}
+    }
+    try {
+      await track.stop();
+    } catch (_) {}
+  }
+
   Future<void> _openVirtualBackgroundSheet(
     BuildContext context,
     CameraBackgroundSelection current,
   ) async {
-    final selection = await VirtualBackgroundSheet.show(
-      context,
-      initialSelection: current,
-      previewTrack: _localCameraTrack,
-    );
-    if (selection == null || selection == current) {
-      return;
+    final published = _localCameraTrack;
+    // Null means the camera is muted, so borrow an unpublished one purely for
+    // the preview rather than leaving the sheet blank.
+    final previewOnly = published == null
+        ? await _createSheetPreviewTrack(current)
+        : null;
+    try {
+      if (!context.mounted) {
+        return;
+      }
+      final selection = await VirtualBackgroundSheet.show(
+        context,
+        initialSelection: current,
+        previewTrack: published ?? previewOnly,
+      );
+      if (selection == null || selection == current) {
+        return;
+      }
+      _bloc.add(SetCameraBackgroundSelection(selection));
+    } finally {
+      if (previewOnly != null) {
+        await _stopSheetPreviewTrack(previewOnly);
+      }
     }
-    _bloc.add(SetCameraBackgroundSelection(selection));
   }
 
   Widget buildMeetingSettingsContent(
@@ -3882,10 +3944,20 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               showCameraBackgroundBlur: showCameraBackgroundBlur,
               cameraBackgroundSelection: cameraBackgroundSelection,
               onCameraBackgroundTap: showCameraBackgroundBlur
-                  ? () => _openVirtualBackgroundSheet(
-                      context,
-                      cameraBackgroundSelection,
-                    )
+                  ? () {
+                      // Settings closes first so the background sheet replaces
+                      // it instead of stacking. That tears down this builder's
+                      // context along with the panel, so the sheet is opened
+                      // from the page context, which outlives it.
+                      dismissRoomPanelBottomSheetIfPresent();
+                      _closeSidePanel();
+                      unawaited(
+                        _openVirtualBackgroundSheet(
+                          this.context,
+                          cameraBackgroundSelection,
+                        ),
+                      );
+                    }
                   : null,
               showAudioDenoise: showAudioDenoise,
               audioDenoiseEnabled: audioDenoiseEnabled,

@@ -8,7 +8,6 @@ import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/helper/background_blur/virtual_background_image_picker.dart';
 import 'package:meet/helper/background_blur/virtual_background_presets.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
-import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/views/components/alerts/base_bottom_sheet_v2.dart';
 import 'package:meet/views/components/safe_video_track_renderer.dart';
@@ -139,9 +138,6 @@ class _VirtualBackgroundSheetBodyState
   @override
   Widget build(BuildContext context) {
     final presets = VirtualBackgroundPresets.all;
-    final previewHeight = macOS
-        ? (context.isLandscape ? 220.0 : 280.0)
-        : (context.isLandscape ? 160.0 : 198.0);
 
     return BaseBottomSheetV2.withPinnedSliverScroll(
       isLandscape: context.isLandscape,
@@ -166,121 +162,114 @@ class _VirtualBackgroundSheetBodyState
         if (!_hidePreview)
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _PreviewCard(
-                height: previewHeight,
-                previewTrack: widget.previewTrack,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: _PreviewCard(previewTrack: widget.previewTrack),
             ),
           ),
         SliverToBoxAdapter(
-          child: SafeArea(
-            child: Container(
-              margin: EdgeInsets.symmetric(horizontal: _hideSelBg ? 0 : 16),
-              decoration: _hideSelBg
-                  ? null
-                  : ShapeDecoration(
-                      color: Colors.white.withValues(alpha: 0.04),
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.04),
-                        ),
-                        borderRadius: BorderRadius.circular(24),
+          child: Container(
+            margin: EdgeInsets.symmetric(horizontal: _hideSelBg ? 0 : 16),
+            decoration: _hideSelBg
+                ? null
+                : ShapeDecoration(
+                    color: Colors.white.withValues(alpha: 0.04),
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.04),
                       ),
+                      borderRadius: BorderRadius.circular(24),
                     ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 24,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _EffectRow(
-                      children: [
-                        // none
+                  ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _EffectRow(
+                    children: [
+                      // none
+                      _EffectTile(
+                        label: context.local.virtual_background_none,
+                        selected: _isSelectedEffect(
+                          CameraBackgroundEffectKind.none,
+                        ),
+                        onTap: () => _commitSelection(
+                          const CameraBackgroundSelection.none(),
+                        ),
+                        child: context.images.iconVirtualBackgroundNone.svg20(
+                          color: context.colors.textNorm,
+                        ),
+                      ),
+                      // blur
+                      _EffectTile(
+                        label: context.local.camera_background_blur,
+                        selected: _isSelectedEffect(
+                          CameraBackgroundEffectKind.blur,
+                        ),
+                        onTap: () => _commitSelection(
+                          const CameraBackgroundSelection.blur(),
+                        ),
+                        child: context.images.iconVirtualBackgroundBlur.svg20(
+                          color: context.colors.textNorm,
+                        ),
+                      ),
+                      // custom
+                      _EffectTile(
+                        label: context.local.virtual_background_custom,
+                        selected: _isSelectedEffect(
+                          CameraBackgroundEffectKind.custom,
+                        ),
+                        onTap: _pickingImage
+                            ? null
+                            : () => unawaited(_pickCustomImage()),
+                        child: _pickingImage
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: context.colors.textNorm,
+                                ),
+                              )
+                            : context.images.iconVirtualBackgroundCustom.svg20(
+                                color: context.colors.textNorm,
+                              ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  _EffectRow(
+                    children: [
+                      for (final preset in presets.take(3))
                         _EffectTile(
-                          label: context.local.virtual_background_none,
                           selected: _isSelectedEffect(
-                            CameraBackgroundEffectKind.none,
+                            CameraBackgroundEffectKind.preset,
+                            presetId: preset.id,
                           ),
                           onTap: () => _commitSelection(
-                            const CameraBackgroundSelection.none(),
+                            CameraBackgroundSelection.preset(preset.id),
                           ),
-                          child: context.images.iconVirtualBackgroundNone.svg20(
-                            color: context.colors.textNorm,
-                          ),
+                          child: _presetThumbnail(preset),
                         ),
-                        // blur
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  _EffectRow(
+                    children: [
+                      for (final preset in presets.skip(3).take(3))
                         _EffectTile(
-                          label: context.local.camera_background_blur,
                           selected: _isSelectedEffect(
-                            CameraBackgroundEffectKind.blur,
+                            CameraBackgroundEffectKind.preset,
+                            presetId: preset.id,
                           ),
                           onTap: () => _commitSelection(
-                            const CameraBackgroundSelection.blur(),
+                            CameraBackgroundSelection.preset(preset.id),
                           ),
-                          child: context.images.iconVirtualBackgroundBlur.svg20(
-                            color: context.colors.textNorm,
-                          ),
+                          child: _presetThumbnail(preset),
                         ),
-                        // custom
-                        _EffectTile(
-                          label: context.local.virtual_background_custom,
-                          selected: _isSelectedEffect(
-                            CameraBackgroundEffectKind.custom,
-                          ),
-                          onTap: _pickingImage
-                              ? null
-                              : () => unawaited(_pickCustomImage()),
-                          child: _pickingImage
-                              ? SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: context.colors.textNorm,
-                                  ),
-                                )
-                              : context.images.iconVirtualBackgroundCustom
-                                    .svg20(color: context.colors.textNorm),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _EffectRow(
-                      children: [
-                        for (final preset in presets.take(3))
-                          _EffectTile(
-                            selected: _isSelectedEffect(
-                              CameraBackgroundEffectKind.preset,
-                              presetId: preset.id,
-                            ),
-                            onTap: () => _commitSelection(
-                              CameraBackgroundSelection.preset(preset.id),
-                            ),
-                            child: _presetThumbnail(preset),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _EffectRow(
-                      children: [
-                        for (final preset in presets.skip(3).take(3))
-                          _EffectTile(
-                            selected: _isSelectedEffect(
-                              CameraBackgroundEffectKind.preset,
-                              presetId: preset.id,
-                            ),
-                            onTap: () => _commitSelection(
-                              CameraBackgroundSelection.preset(preset.id),
-                            ),
-                            child: _presetThumbnail(preset),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
@@ -291,39 +280,40 @@ class _VirtualBackgroundSheetBodyState
 }
 
 class _PreviewCard extends StatelessWidget {
-  const _PreviewCard({required this.height, this.previewTrack});
+  const _PreviewCard({this.previewTrack});
 
-  final double height;
   final VideoTrack? previewTrack;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: SizedBox(
-          width: height * 16 / 9,
-          height: height,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              ColoredBox(color: context.colors.interActionPurpleMinor3),
-              if (previewTrack != null)
-                SafeVideoTrackRenderer(videoTrack: previewTrack!),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0),
-                      Colors.black.withValues(alpha: 0.65),
-                    ],
-                  ),
+    final track = previewTrack;
+    // A muted camera keeps its track alive, so render only an unmuted one —
+    // otherwise the sheet previews a camera the user has turned off.
+    final showTrack = track != null && !track.muted;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      // Fills the sheet width; the ratio then drives the height, so the card
+      // matches the camera's own framing instead of letter-boxing it.
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ColoredBox(color: context.colors.interActionPurpleMinor3),
+            if (showTrack) SafeVideoTrackRenderer(videoTrack: track),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0),
+                    Colors.black.withValues(alpha: 0.65),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -377,7 +367,7 @@ class _EffectTile extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Ink(
-            height: 84,
+            height: 80,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: borderColor, width: 2),

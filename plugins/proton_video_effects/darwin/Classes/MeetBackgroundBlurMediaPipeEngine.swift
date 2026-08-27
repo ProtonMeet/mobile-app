@@ -868,23 +868,28 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
 
   /// Turns a mask Vision produced in upright space back into the buffer space we composite in.
   ///
-  /// Vision reports results in the oriented space it analysed, so a quarter-turned frame yields a
-  /// portrait mask against a landscape buffer. The aspect comparison rather than an unconditional
-  /// rotation keeps this correct either way, so a mask already in buffer space is left alone.
+  /// Vision reports results in the space it analysed, so the mask comes back turned by whatever
+  /// angle `visionOrientation` handed the request. A quarter turn announces itself — a portrait
+  /// mask against a landscape buffer — so the aspect comparison confirms the turn is really needed
+  /// and leaves a mask already in buffer space alone. A half turn preserves the aspect ratio and
+  /// so cannot be recognised that way; it has to be undone on the rotation alone, which is why a
+  /// landscape frame reported as 180 used to composite upside down.
   private func orientMaskToBuffer(
     _ mask: CIImage,
     frameExtent: CGRect,
     rotationDegrees: Int32
   ) -> CIImage {
     let rotation = ((Int(rotationDegrees) % 360) + 360) % 360
-    guard rotation == 90 || rotation == 270 else { return mask }
+    guard rotation != 0 else { return mask }
     let me = mask.extent
     guard me.width >= 1, me.height >= 1, frameExtent.height >= 1 else { return mask }
 
-    let frameAspect = frameExtent.width / frameExtent.height
-    let asIsError = abs(me.width / me.height - frameAspect)
-    let rotatedError = abs(me.height / me.width - frameAspect)
-    guard rotatedError < asIsError else { return mask }
+    if rotation == 90 || rotation == 270 {
+      let frameAspect = frameExtent.width / frameExtent.height
+      let asIsError = abs(me.width / me.height - frameAspect)
+      let rotatedError = abs(me.height / me.width - frameAspect)
+      guard rotatedError < asIsError else { return mask }
+    }
 
     let turned = mask.transformed(
       by: CGAffineTransform(rotationAngle: CGFloat(rotation) * .pi / 180)

@@ -7,6 +7,7 @@ import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/helper/background_blur/virtual_background_presets.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
+import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/helper/local_toast.dart';
 import 'package:meet/views/scenes/room/recording/recording_save_location.dart';
 import 'package:meet/views/scenes/room/recording/recording_save_location_setting.dart';
@@ -517,7 +518,6 @@ class _CameraBackgroundRow extends StatelessWidget {
       case CameraBackgroundEffectKind.none:
         return context.local.virtual_background_none;
       case CameraBackgroundEffectKind.blur:
-        return context.local.camera_background_blur;
       case CameraBackgroundEffectKind.preset:
         return null;
       case CameraBackgroundEffectKind.custom:
@@ -549,8 +549,12 @@ class _CameraBackgroundRow extends StatelessWidget {
           );
         }
       case CameraBackgroundEffectKind.none:
-      case CameraBackgroundEffectKind.blur:
         image = null;
+      case CameraBackgroundEffectKind.blur:
+        image = context.images.iconVirtualBackgroundBlur.svgSize(
+          color: context.colors.textNorm,
+          size: _backgroundSwatchCacheWidth.toDouble(),
+        );
     }
     if (image == null) {
       return const SizedBox.shrink();
