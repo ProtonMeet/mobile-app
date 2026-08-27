@@ -175,7 +175,13 @@
   "unsubscribe_video_by_default": "Turn off incoming video",
   "camera_background_blur": "Background blur",
   "virtual_backgrounds_title": "Virtual backgrounds",
+  "@virtual_backgrounds_title": {
+    "description": "Title for virtual backgrounds in meeting settings"
+  },
   "backgrounds_title": "Backgrounds",
+  "@backgrounds_title": {
+    "description": "Title for backgrounds dialog"
+  },
   "virtual_background_none": "None",
   "virtual_background_custom": "Custom",
   "audio_noise_cancellation": "Noise cancellation",

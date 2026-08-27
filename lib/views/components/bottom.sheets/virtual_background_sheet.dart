@@ -151,7 +151,7 @@ class _VirtualBackgroundSheetBodyState
           child: Padding(
             padding: const EdgeInsets.fromLTRB(24, 8, 24, 18),
             child: Text(
-              context.local.virtual_backgrounds_title,
+              context.local.backgrounds_title,
               style: ProtonStyles.headline(
                 fontSize: 18,
                 color: context.colors.textNorm,
