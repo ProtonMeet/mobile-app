@@ -12,6 +12,7 @@ import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/meet_join_link_parser.dart';
 import 'package:meet/managers/app.state.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
+import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/views/components/alerts/early_access_dialog.dart';
 import 'package:meet/views/components/app_nav_bar.dart';
 import 'package:meet/views/components/test_id.dart';
@@ -25,6 +26,7 @@ import 'dashboard_bloc.dart';
 import 'dashboard_cards.dart';
 import 'dashboard_event.dart';
 import 'dashboard_state.dart';
+import 'mobile_upgrade_warning_card.dart';
 import 'search/sort_sheet.dart';
 import 'search_results_view.dart';
 import 'sign_in_card.dart';
@@ -77,6 +79,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class DashboardScreenState extends State<DashboardScreen> {
+  bool _mobileUpgradeWarningCardDismissed = false;
   bool _handledInitialLink = false;
   final GlobalKey _upcomingTitleKey = GlobalKey();
   final GlobalKey _searchBarKey = GlobalKey();
@@ -203,6 +206,17 @@ class DashboardScreenState extends State<DashboardScreen> {
     // if my rooms tab, show search bar if there are any rooms (except personal meeting room)
     return state.meetinsDisplay.isNotEmpty &&
         !state.meetinsDisplay.every((meeting) => meeting.isPersonalMeeting);
+  }
+
+  bool _isMeetMobileUpgradeWarningEnabled() {
+    try {
+      return ManagerFactory()
+          .get<DataProviderManager>()
+          .unleashDataProvider
+          .isMeetMobileUpgradeWarning();
+    } on Object {
+      return false;
+    }
   }
 
   void _onScroll() {
@@ -480,6 +494,17 @@ class DashboardScreenState extends State<DashboardScreen> {
                   sliver: const SliverToBoxAdapter(child: SizedBox.shrink()),
                 ),
               ] else ...[
+                if (_isMeetMobileUpgradeWarningEnabled() &&
+                    !_mobileUpgradeWarningCardDismissed)
+                  SliverToBoxAdapter(
+                    child: MobileUpgradeWarningCard(
+                      onDismiss: () {
+                        setState(() {
+                          _mobileUpgradeWarningCardDismissed = true;
+                        });
+                      },
+                    ),
+                  ),
                 if (currentState.showSignInCard && !widget.isSignedIn)
                   SliverToBoxAdapter(
                     child: SignInCard(

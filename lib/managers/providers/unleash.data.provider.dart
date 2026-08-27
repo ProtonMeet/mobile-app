@@ -44,6 +44,9 @@ enum UnleashFeature {
   /// Experimental: in app update (currently only support android)
   meetMobileInAppUpdate,
 
+  /// When enabled, show a warning banner on join for outdated mobile clients.
+  meetMobileUpgradeWarning,
+
   // Native camera background blur (iOS / Android / macOS).
   meetCameraBackgroundBlur,
 
@@ -132,6 +135,8 @@ extension UnleashFeatureExt on UnleashFeature {
         return "MeetingRecordingNative";
       case UnleashFeature.meetMobileInAppUpdate:
         return "MeetMobileInAppUpdate";
+      case UnleashFeature.meetMobileUpgradeWarning:
+        return "MeetMobileUpgradeWarning";
       case UnleashFeature.meetCameraBackgroundBlur:
         return "MeetCameraBackgroundBlur";
       case UnleashFeature.meetAudioDenoise:
@@ -446,6 +451,10 @@ class UnleashDataProvider extends DataProvider {
   /// Experimental: in app update (currently only support android)
   bool isMeetMobileInAppUpdate() =>
       isFeatureEnabled(UnleashFeature.meetMobileInAppUpdate);
+
+  /// Warning banner for outdated mobile clients when joining a meeting.
+  bool isMeetMobileUpgradeWarning() =>
+      isFeatureEnabled(UnleashFeature.meetMobileUpgradeWarning);
 
   /// Parent flag for native mic denoise (RNNoise / DTLN / DeepFilter).
   bool isMeetAudioDenoise() =>

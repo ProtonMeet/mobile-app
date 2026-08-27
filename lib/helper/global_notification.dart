@@ -6,13 +6,18 @@ import 'package:flutter/material.dart';
 @immutable
 class GlobalNotificationData {
   const GlobalNotificationData({
-    required this.content,
+    this.content,
+    this.contentWidget,
     this.backgroundColor,
     this.showCloseButton = true,
     this.onTap,
-  });
+  }) : assert(
+         content != null || contentWidget != null,
+         'Either content or contentWidget must be provided',
+       );
 
-  final String content;
+  final String? content;
+  final Widget? contentWidget;
   final Color? backgroundColor;
   final bool showCloseButton;
   final VoidCallback? onTap;
@@ -21,12 +26,14 @@ class GlobalNotificationData {
   bool operator ==(Object other) {
     return other is GlobalNotificationData &&
         other.content == content &&
+        other.contentWidget == contentWidget &&
         other.backgroundColor == backgroundColor &&
         other.showCloseButton == showCloseButton;
   }
 
   @override
-  int get hashCode => Object.hash(content, backgroundColor, showCloseButton);
+  int get hashCode =>
+      Object.hash(content, contentWidget, backgroundColor, showCloseButton);
 }
 
 /// Controller that owns the currently visible global notification.
@@ -43,7 +50,8 @@ class GlobalNotificationController extends ChangeNotifier {
   bool get isVisible => _current != null;
 
   void show({
-    required String content,
+    String? content,
+    Widget? contentWidget,
     Color? backgroundColor,
     Duration duration = const Duration(seconds: 5),
     bool showCloseButton = true,
@@ -52,6 +60,7 @@ class GlobalNotificationController extends ChangeNotifier {
     _autoDismissTimer?.cancel();
     _current = GlobalNotificationData(
       content: content,
+      contentWidget: contentWidget,
       backgroundColor: backgroundColor,
       showCloseButton: showCloseButton,
       onTap: onTap,
@@ -81,7 +90,8 @@ class GlobalNotification {
   GlobalNotification._();
 
   static void show({
-    required String content,
+    String? content,
+    Widget? contentWidget,
     Color? backgroundColor,
     Duration duration = const Duration(seconds: 5),
     bool showCloseButton = true,
@@ -89,6 +99,7 @@ class GlobalNotification {
   }) {
     GlobalNotificationController.instance.show(
       content: content,
+      contentWidget: contentWidget,
       backgroundColor: backgroundColor,
       duration: duration,
       showCloseButton: showCloseButton,
