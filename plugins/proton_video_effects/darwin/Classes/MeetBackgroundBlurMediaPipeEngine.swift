@@ -152,7 +152,10 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
   private var segmentationGeneration: UInt64 = 0
 
   private var preferredModel: String?
-  private var activeModelKey = "vision"
+  /// Which segmentation model is live, surfaced as the `model` field in debug
+  /// info. Named "name" rather than "key" so secret scanners stop reading
+  /// `activeModelName = "vision"` as a hardcoded credential.
+  private var activeModelName = "vision"
   private var activeSegmenterBackend = "apple_vision"
   private var usesAppleVision = false
 
@@ -377,7 +380,7 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
   public func segmentationModelDebugInfo() -> [String: Any] {
     #if os(iOS) || os(macOS)
       return [
-        "model": activeModelKey,
+        "model": activeModelName,
         "backend": activeSegmenterBackend,
         "forced": preferredModel != nil,
         "supported": true,
@@ -395,7 +398,7 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
   @available(iOS 15.0, macOS 12.0, *)
   private func configureAppleVision() {
     usesAppleVision = true
-    activeModelKey = "vision"
+    activeModelName = "vision"
     activeSegmenterBackend = "apple_vision"
     #if os(iOS)
       usesLandscapeCropPreprocess = false
@@ -447,7 +450,7 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
 
     private struct ResolvedSegmenterModel {
       let path: String
-      let key: String
+      let name: String
       let isMulticlass: Bool
       let inputWidth: Int
       let inputHeight: Int
@@ -460,7 +463,7 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
       let landscapePath = Self.modelPath(named: Self.landscapeModelName)
 
       func pick(
-        _ key: String,
+        _ name: String,
         path: String?,
         isMulticlass: Bool,
         width: Int,
@@ -469,7 +472,7 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
         guard let path else { return nil }
         return ResolvedSegmenterModel(
           path: path,
-          key: key,
+          name: name,
           isMulticlass: isMulticlass,
           inputWidth: width,
           inputHeight: height
@@ -561,7 +564,7 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
       }
       let path = resolved.path
       isMulticlassModel = resolved.isMulticlass
-      activeModelKey = resolved.key
+      activeModelName = resolved.name
       segmenterInputWidth = resolved.inputWidth
       segmenterInputHeight = resolved.inputHeight
 
@@ -570,7 +573,7 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
         delegatesToTry = [.CPU]
       #else
         // Multiclass + landscape-crop paths use CPU (GPU delegate is unstable on iOS).
-        if usesLandscapeCropPreprocess || resolved.key == "multiclass" {
+        if usesLandscapeCropPreprocess || resolved.name == "multiclass" {
           delegatesToTry = [.CPU]
         } else {
           delegatesToTry = [.GPU, .CPU]
@@ -600,7 +603,7 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
       if segmenter == nil, let singlePath = Self.modelPath(named: Self.singleClassModelName) {
         usesLandscapeCropPreprocess = false
         isMulticlassModel = false
-        activeModelKey = "single"
+        activeModelName = "single"
         segmenterInputWidth = Self.squareSegmenterSize
         segmenterInputHeight = Self.squareSegmenterSize
         for delegate in [Delegate.CPU] {
@@ -1367,7 +1370,7 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
 
     let frameFps = Double(window.frames) / elapsedS
     let maskFps = Double(window.maskUpdates) / elapsedS
-    let backend = usesAppleVision ? activeSegmenterBackend : activeModelKey
+    let backend = usesAppleVision ? activeSegmenterBackend : activeModelName
     let quality = Self.visionUsesFastQuality ? "fast" : "balanced"
     let mode = useSynchronousVisionSegmentation() ? "sync" : "async"
     let state = Self.visionReusesStatefulRequest ? "stateful" : "stateless"
