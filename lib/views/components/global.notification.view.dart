@@ -33,20 +33,22 @@ class GlobalNotificationView extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: GestureDetector(
-                onTap: data.onTap,
-                child: Center(
-                  child: Text(
-                    data.content,
-                    style: ProtonStyles.body2Medium(
-                      color: context.colors.textInverted,
+              child: data.contentWidget != null
+                  ? Center(child: data.contentWidget)
+                  : GestureDetector(
+                      onTap: data.onTap,
+                      child: Center(
+                        child: Text(
+                          data.content!,
+                          style: ProtonStyles.body2Medium(
+                            color: context.colors.textInverted,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
             ),
             if (data.showCloseButton) ...[
               const SizedBox(width: 8),

@@ -2154,5 +2154,13 @@
   "in_app_update_downloaded": "The new app version has been downloaded and will be installed automatically.",
   "@in_app_update_downloaded": {
     "description": "Notification shown when a Play Store flexible update finished downloading and will be installed"
+  },
+  "mobile_upgrade_warning_prefix": "You’re using an older version of the app. Some features may not work as expected. Please ",
+  "@mobile_upgrade_warning_prefix": {
+    "description": "Prefix for the outdated mobile client warning shown when joining a meeting"
+  },
+  "mobile_upgrade_warning_link": "upgrade to the latest version",
+  "@mobile_upgrade_warning_link": {
+    "description": "Tappable link text in the outdated mobile client warning; opens the app store"
   }
 }

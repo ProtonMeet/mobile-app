@@ -65,6 +65,20 @@ mixin RoomFeatureFlagsHandlers on Bloc<RoomBlocEvent, RoomState> {
     }
   }
 
+  /// Check if mobile upgrade warning banner is enabled via feature flag.
+  bool isMeetMobileUpgradeWarningEnabled() {
+    try {
+      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
+      return dataProviderManager.unleashDataProvider
+          .isMeetMobileUpgradeWarning();
+    } catch (e) {
+      l.logger.w(
+        '[RoomBloc] Error checking MeetMobileUpgradeWarning flag: $e',
+      );
+      return false;
+    }
+  }
+
   /// Check if Mobile Enable Network Tool feature is enabled via feature flag
   bool isMeetMobileEnableNetworkToolEnabled() {
     try {

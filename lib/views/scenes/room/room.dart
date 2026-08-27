@@ -21,6 +21,7 @@ import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/helper/global_notification.dart';
 import 'package:meet/helper/local_toast.dart';
 import 'package:meet/helper/logger.dart' as l;
+import 'package:meet/helper/mobile_upgrade_warning_notification.dart';
 import 'package:meet/helper/user.agent.dart';
 import 'package:meet/managers/android_notification_service.dart';
 import 'package:meet/managers/app.core.manager.dart';
@@ -269,6 +270,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
   /// Mirror of `state.isLocalScreenSharing` for tooltip show/hide edges.
   bool _wasLocalScreenSharing = false;
+
+  bool _mobileUpgradeWarningShown = false;
 
   @override
   void initState() {
@@ -2525,6 +2528,23 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       create: (context) => _bloc,
       child: MultiBlocListener(
         listeners: [
+          BlocListener<RoomBloc, RoomState>(
+            listenWhen: (prev, curr) {
+              final wasReady =
+                  prev.isRoomInitialized && prev.isTrackInitialized;
+              final isReady =
+                  curr.isRoomInitialized && curr.isTrackInitialized;
+              return !wasReady && isReady;
+            },
+            listener: (context, state) {
+              if (_mobileUpgradeWarningShown ||
+                  !_bloc.isMeetMobileUpgradeWarningEnabled()) {
+                return;
+              }
+              _mobileUpgradeWarningShown = true;
+              showMobileUpgradeWarningNotification(context);
+            },
+          ),
           BlocListener<RoomBloc, RoomState>(
             // Show when both are true and at least one just became true. If
             // showMeetingIsReady is set in _onRoomInitialized before tracks are
