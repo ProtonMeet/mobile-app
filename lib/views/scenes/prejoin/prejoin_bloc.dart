@@ -48,6 +48,12 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
   Completer<void>? _waitingRoomAdmissionCompleter;
   Completer<void>? _leaveWaitingRoomAdmissionCompleter;
 
+  /// Preview camera track whose ownership was transferred to the waiting room.
+  /// While set, this bloc must not stop it: the waiting room publishes it to
+  /// the room, so the same physical camera is opened only once across
+  /// pre-join → waiting room → room.
+  LocalVideoTrack? _handedOverVideoTrack;
+
   PreJoinBloc(this.userAgent, this.serviceManager) : super(PreJoinState()) {
     on<PreJoinInitialized>(_onInitialized);
     on<PreJoinToggleAudio>(_onToggleAudio);
@@ -117,6 +123,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     on<PreJoinNavigateToWaitingRoomConsumed>(
       (_, emit) => emit(state.copyWith(shouldNavigateToWaitingRoom: false)),
     );
+    on<PreJoinRestorePreviewVideoTrack>(_onRestorePreviewVideoTrack);
     on<PreJoinToggleCameraBackgroundBlur>(_onToggleCameraBackgroundBlur);
     on<PreJoinStartWaitingRoomAdmission>(_onStartWaitingRoomAdmission);
     on<PreJoinPollGroupInfo>(_onPollGroupInfo);
@@ -182,10 +189,56 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     // callback and would deadlock the FRB/Dart call stack.
     _clearJoinDecisionCallback();
     await state.audioTrack?.stop();
-    await state.videoTrack?.stop();
+    final videoTrack = state.videoTrack;
+    if (videoTrack != null && !identical(videoTrack, _handedOverVideoTrack)) {
+      await videoTrack.stop();
+    }
     await _deviceChangeSub?.cancel();
     await _audioSessionDevicesSub?.cancel();
     return super.close();
+  }
+
+  /// Transfers the running preview camera track to the waiting room, which
+  /// becomes responsible for stopping it.
+  ///
+  /// Synchronous on purpose: callers invoke this immediately before
+  /// [Navigator.push], so routing an event through the bloc would land after
+  /// the waiting room has already started creating its own track.
+  ///
+  /// Returns null when there is nothing usable to hand over. [Track.isActive]
+  /// is required because [PreJoinToggleVideo] stops the track without clearing
+  /// [PreJoinState.videoTrack], leaving a stopped track behind.
+  LocalVideoTrack? handOverPreviewVideoTrack() {
+    final track = state.videoTrack;
+    if (track == null || !state.isVideoEnabled || !track.isActive) {
+      return null;
+    }
+    _handedOverVideoTrack = track;
+    return track;
+  }
+
+  /// Cleans up after the user pops back from the waiting room to PreJoin.
+  ///
+  /// Callers dispatch this only when [handOverPreviewVideoTrack] returned a
+  /// track before [Navigator.push]. If [PreJoinState.videoTrack] is still that
+  /// handed-over instance, stops it, clears [_handedOverVideoTrack], and turns the preview off so PreJoin
+  /// does not keep a stale reference. The user re-opens the camera via
+  /// [PreJoinToggleVideo], which creates a fresh track.
+  Future<void> _onRestorePreviewVideoTrack(
+    PreJoinRestorePreviewVideoTrack event,
+    Emitter<PreJoinState> emit,
+  ) async {
+    final track = state.videoTrack;
+    if (track == null || !identical(track, _handedOverVideoTrack)) {
+      return;
+    }
+    _handedOverVideoTrack = null;
+    try {
+      await track.stop();
+    } catch (e) {
+      l.logger.w('[PreJoinBloc] Failed to stop preview video track: $e');
+    }
+    emit(state.copyWith(isVideoEnabled: false));
   }
 
   /// Cancels an in-flight waiting-room admission on the server (when a join

@@ -15,6 +15,10 @@ class WaitingRoomInitialized extends WaitingRoomEvent {
   final CameraPosition? selectedVideoPosition;
   final VideoParameters selectedVideoParameters;
 
+  /// Still-capturing preview camera track handed over by pre-join. When set,
+  /// this bloc owns it: it is either published as-is or stopped.
+  final LocalVideoTrack? handedOverVideoTrack;
+
   WaitingRoomInitialized({
     required this.args,
     required this.preJoinType,
@@ -26,6 +30,7 @@ class WaitingRoomInitialized extends WaitingRoomEvent {
     this.selectedSpeakerDevice,
     this.selectedVideoPosition,
     this.selectedVideoParameters = VideoParametersPresets.h720_169,
+    this.handedOverVideoTrack,
   });
 }
 

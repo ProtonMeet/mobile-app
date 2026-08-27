@@ -310,6 +310,8 @@ class PreJoinScreen extends StatelessWidget {
                                       bloc.add(
                                         UpdateDisplayName(sanitizedDisplayName),
                                       );
+                                      final handedOverVideoTrack = bloc
+                                          .handOverPreviewVideoTrack();
                                       await Navigator.push<void>(
                                         context,
                                         MaterialPageRoute(
@@ -333,9 +335,16 @@ class PreJoinScreen extends StatelessWidget {
                                                 state.selectedVideoParameters,
                                             cameraBackgroundBlurEnabled: state
                                                 .cameraBackgroundBlurEnabled,
+                                            handedOverVideoTrack:
+                                                handedOverVideoTrack,
                                           ),
                                         ),
                                       );
+                                      if (handedOverVideoTrack != null) {
+                                        bloc.add(
+                                          PreJoinRestorePreviewVideoTrack(),
+                                        );
+                                      }
                                     },
                                     enable:
                                         !PlatformInfoChannel.isInForceUpgradeState(),
@@ -629,6 +638,7 @@ class PreJoinScreen extends StatelessWidget {
       reuseMlsJoin: reuseMlsJoin,
     );
 
+    final handedOverVideoTrack = bloc.handOverPreviewVideoTrack();
     await Navigator.push<void>(
       context,
       MaterialPageRoute(
@@ -644,9 +654,13 @@ class PreJoinScreen extends StatelessWidget {
           selectedVideoPosition: state.selectedVideoPosition,
           selectedVideoParameters: state.selectedVideoParameters,
           cameraBackgroundBlurEnabled: state.cameraBackgroundBlurEnabled,
+          handedOverVideoTrack: handedOverVideoTrack,
         ),
       ),
     );
+    if (handedOverVideoTrack != null) {
+      bloc.add(PreJoinRestorePreviewVideoTrack());
+    }
   }
 
   Widget _buildWaitingRoomAdmissionContent(
