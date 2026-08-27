@@ -1,11 +1,9 @@
 pub use proton_meet_core::infra::dto::proton_user::UserData;
 use proton_meet_core::{
-    domain::user::models::{MeetParticipant, MeetingType},
-    errors::login::LoginError,
+    domain::user::models::{compute_mailbox_password, MeetParticipant, MeetingType},
     muon::{Auth, Tokens},
     ProtonUser,
 };
-use proton_meet_crypto::MeetCrypto;
 use std::sync::Arc;
 use std::sync::OnceLock;
 use tokio::runtime::{Handle, Runtime};
@@ -239,34 +237,6 @@ impl AppCore {
     //     let _ = self.event_tx.send(ev);
     // }
 
-    /// Helper function to compute mailbox password from user data and password
-    #[frb(ignore)]
-    async fn compute_mailbox_password(
-        user_data: &UserData,
-        password: &str,
-    ) -> Result<String, BridgeError> {
-        let user_key = user_data
-            .user
-            .keys
-            .as_ref()
-            .and_then(|keys| keys.first())
-            .ok_or(LoginError::NoUserKeys)?;
-
-        let key_id = user_key.id.clone();
-        let encoded_salt = user_data
-            .key_salts
-            .iter()
-            .find(|key_salt| key_salt.id == key_id)
-            .ok_or(LoginError::NoKeySalt)?
-            .key_salt
-            .as_ref()
-            .ok_or(LoginError::NoKeySalt)?;
-
-        MeetCrypto::compute_key_password(password, encoded_salt)
-            .await
-            .map_err(|e| BridgeError::from(LoginError::SrpHashError(e)))
-    }
-
     pub async fn login(
         &self,
         username: String,
@@ -275,7 +245,7 @@ impl AppCore {
         let user_data = self.inner.login(username, password.clone()).await?;
 
         // Compute mailbox password
-        let mailbox_password = Self::compute_mailbox_password(&user_data, &password).await?;
+        let mailbox_password = compute_mailbox_password(&user_data, &password).await?;
 
         // Get auth information from auth store
         let auth = self.auth_store.get_auth().await;
@@ -290,7 +260,7 @@ impl AppCore {
         let user_data = self.inner.login_with_two_factor(two_factor_code).await?;
 
         // Compute mailbox password
-        let mailbox_password = Self::compute_mailbox_password(&user_data, &password).await?;
+        let mailbox_password = compute_mailbox_password(&user_data, &password).await?;
 
         // Get auth information from auth store
         let auth = self.auth_store.get_auth().await;

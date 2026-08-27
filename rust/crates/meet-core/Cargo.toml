@@ -164,6 +164,8 @@ rand.workspace = true
 mockall = { workspace = true }
 wasm-bindgen-test = { workspace = true }
 spki = { version = "0.7.3", features = ["pem"] }
+scraper = "0.27.0"
+hex = "0.4.3"
 
 [features]
 allow-dangerous-env = ["muon/unsealed"]
@@ -172,4 +174,9 @@ dev = ["insecure-tls"]
 insecure-tls = []
 # Used to be able to use a non-standard api (no atlas or prod)
 default = ["allow-dangerous-env"]
+
 test = ["dev"]
+test-prod = []
+test-load = []
+test-logging = []
+test-e2e = []
