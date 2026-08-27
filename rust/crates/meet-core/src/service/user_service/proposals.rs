@@ -363,10 +363,9 @@ impl Service {
                 _ => GroupKeyUpdateReason::Unknown,
             }
         };
-        if let Some(handler) = self.mls_group_update_handler.as_ref() {
-            let mut handler = handler.lock().await;
-            handler(room_id.to_string(), key_update_reason).await;
-        }
+        self.handlers
+            .call_mls_group_update_handler(room_id.to_string(), key_update_reason)
+            .await;
         Ok(())
     }
 

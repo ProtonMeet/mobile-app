@@ -4865,6 +4865,7 @@ dependencies = [
  "muon",
  "native-tls",
  "openssl",
+ "paste",
  "proton-claims",
  "proton-meet-chat",
  "proton-meet-common",

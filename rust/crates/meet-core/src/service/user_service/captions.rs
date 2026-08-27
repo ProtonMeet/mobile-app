@@ -258,10 +258,9 @@ impl Service {
 
         drop(mls_group);
 
-        if let Some(handler) = self.mls_group_update_handler.as_ref() {
-            let mut handler = handler.lock().await;
-            handler(room_id.clone(), GroupKeyUpdateReason::Join).await;
-        }
+        self.handlers
+            .call_mls_group_update_handler(room_id.clone(), GroupKeyUpdateReason::Join)
+            .await;
 
         // push_bundle after the merge — server has already accepted the commit
         // and other members will process it via fanout, so the group has moved
@@ -538,10 +537,9 @@ impl Service {
                 mls_group.merge_pending_commit().await?;
                 drop(mls_group);
 
-                if let Some(handler) = self.mls_group_update_handler.as_ref() {
-                    let mut handler = handler.lock().await;
-                    handler(room_id, GroupKeyUpdateReason::Leave).await;
-                }
+                self.handlers
+                    .call_mls_group_update_handler(room_id, GroupKeyUpdateReason::Leave)
+                    .await;
                 Ok(())
             }
             Err(e) => {

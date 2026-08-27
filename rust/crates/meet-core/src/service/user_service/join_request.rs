@@ -1,4 +1,4 @@
-use std::{collections::HashSet, sync::Arc, time::Duration};
+use std::{collections::HashSet, time::Duration};
 
 use crate::{
     domain::{
@@ -14,7 +14,7 @@ use crate::{
         user_service::{credential_is_agent, GroupKeyUpdateReason, Service, JOIN_PROPOSAL_TIMEOUT},
         utils::convert_mls_types_to_spec,
     },
-    utils::{instant, spawn_detached, timeout},
+    utils::{instant, timeout},
 };
 use meet_identifiers::AsOwned;
 use meet_mls::reexports::meet_policy::UserRole;
@@ -52,33 +52,27 @@ impl Service {
             );
         }
 
-        if let Some(handler) = self.join_request_handler.as_ref() {
-            // Dispatch off the WS path: handlers may call App APIs that take
-            // `user_service.write()`, which deadlocks while `read()` is held here.
-            let handler = Arc::clone(handler);
-            let request_id_for_cb = request_id.clone();
-            let participant_uid_for_cb = participant_uid.clone();
-            let expires_at = info.expires_at;
-            spawn_detached(async move {
-                let mut handler = handler.lock().await;
-                handler(
-                    JoinRequestChange::Added,
-                    request_id_for_cb,
-                    participant_uid_for_cb,
-                    expires_at,
-                )
-                .await;
-            });
-        }
+        // Dispatch off the WS path: handlers may call App APIs that take
+        // `user_service.write()`, which deadlocks while `read()` is held here.
+        let request_id_for_cb = request_id.clone();
+        let participant_uid_for_cb = participant_uid.clone();
+        let expires_at = info.expires_at;
+
+        self.handlers.call_detached_join_request_handler(
+            JoinRequestChange::Added,
+            request_id_for_cb,
+            participant_uid_for_cb,
+            expires_at,
+        );
 
         Ok(())
     }
 
     /// Replays join requests that arrived before the host registered a handler.
     pub async fn notify_pending_waiting_room_join_requests(&self) {
-        let Some(handler) = self.join_request_handler.as_ref() else {
+        if !self.handlers.has_join_request_handler() {
             return;
-        };
+        }
 
         let pending: Vec<PendingWaitingRoomJoinRequest> = {
             let state = self.state.lock().await;
@@ -93,27 +87,22 @@ impl Service {
             return;
         }
 
-        let handler = Arc::clone(handler);
         for request in pending {
             tracing::info!(
                 request_id = %request.request_id,
                 participant_uid = %request.participant_uid,
                 "Replaying pending waiting-room join request"
             );
-            let handler = Arc::clone(&handler);
             let request_id = request.request_id.clone();
             let participant_uid = request.participant_uid.clone();
             let expires_at = request.expires_at;
-            spawn_detached(async move {
-                let mut handler = handler.lock().await;
-                handler(
-                    JoinRequestChange::Added,
-                    request_id,
-                    participant_uid,
-                    expires_at,
-                )
-                .await;
-            });
+
+            self.handlers.call_detached_join_request_handler(
+                JoinRequestChange::Added,
+                request_id,
+                participant_uid,
+                expires_at,
+            );
         }
     }
 
@@ -122,14 +111,12 @@ impl Service {
         request_id: String,
         participant_uid: String,
     ) {
-        let Some(handler) = self.join_request_handler.as_ref() else {
-            return;
-        };
-        let handler = Arc::clone(handler);
-        spawn_detached(async move {
-            let mut handler = handler.lock().await;
-            handler(JoinRequestChange::Removed, request_id, participant_uid, 0).await;
-        });
+        self.handlers.call_detached_join_request_handler(
+            JoinRequestChange::Removed,
+            request_id,
+            participant_uid,
+            0,
+        );
     }
 
     pub(super) async fn handle_join_request_removed(
@@ -178,13 +165,8 @@ impl Service {
         );
 
         if admitted {
-            if let Some(handler) = self.join_decision_handler.as_ref() {
-                let handler = Arc::clone(handler);
-                spawn_detached(async move {
-                    let mut handler = handler.lock().await;
-                    handler(request_id, admitted).await;
-                });
-            }
+            self.handlers
+                .call_detached_join_decision_handler(request_id, admitted);
             return Ok(());
         }
 
@@ -222,13 +204,8 @@ impl Service {
             }
         }
 
-        if let Some(handler) = self.join_decision_handler.as_ref() {
-            let handler = Arc::clone(handler);
-            spawn_detached(async move {
-                let mut handler = handler.lock().await;
-                handler(pending_id, false).await;
-            });
-        }
+        self.handlers
+            .call_detached_join_decision_handler(pending_id, false);
 
         Ok(())
     }
@@ -641,10 +618,9 @@ impl Service {
             }
         }
 
-        if let Some(handler) = self.mls_group_update_handler.as_ref() {
-            let mut handler = handler.lock().await;
-            handler(room_id.to_string(), GroupKeyUpdateReason::Join).await;
-        }
+        self.handlers
+            .call_mls_group_update_handler(room_id.to_string(), GroupKeyUpdateReason::Join)
+            .await;
 
         Ok(admitted_request_ids)
     }

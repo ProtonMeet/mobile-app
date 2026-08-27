@@ -180,6 +180,7 @@ impl App {
         self.user_service
             .write()
             .await
+            .handlers
             .set_join_decision_handler(callback);
     }
 
@@ -187,6 +188,7 @@ impl App {
         self.user_service
             .write()
             .await
+            .handlers
             .clear_join_decision_handler();
     }
 
@@ -198,6 +200,7 @@ impl App {
         self.user_service
             .write()
             .await
+            .handlers
             .set_join_request_handler(callback);
 
         let user_service = self.user_service.clone();
@@ -211,7 +214,11 @@ impl App {
     }
 
     pub async fn clear_join_request_handler(&self) {
-        self.user_service.write().await.clear_join_request_handler();
+        self.user_service
+            .write()
+            .await
+            .handlers
+            .clear_join_request_handler();
     }
 
     pub async fn reject_waiting_room_join_request(

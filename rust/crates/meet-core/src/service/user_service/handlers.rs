@@ -1,4 +1,3 @@
-use crate::service::user_service::Service;
 use crate::{
     domain::room::JoinRequestChange,
     service::{service_state::MlsSyncState, user_service::GroupKeyUpdateReason},
@@ -7,202 +6,109 @@ use meet_type::RejoinReason;
 use std::{future::Future, sync::Arc};
 use tokio::sync::Mutex;
 
-impl Service {
-    #[cfg(not(target_family = "wasm"))]
-    pub fn set_join_decision_handler<F, Fut>(&mut self, callback: F)
-    where
-        F: Fn(String, bool) -> Fut + Send + 'static,
-        Fut: Future<Output = ()> + Unpin + Send + 'static,
-    {
-        tracing::info!("Service set join decision handler");
-        self.join_decision_handler = Some(Arc::new(Mutex::new(Box::new({
-            move |request_id, admitted| {
-                Box::new(callback(request_id, admitted))
-                    as Box<dyn Future<Output = ()> + Send + Unpin>
+macro_rules! gen_set_clear {
+    ($name:ident, ($($arg:ident: $t:ty),*), noclear) => {
+        paste::paste! {
+            #[cfg(not(target_family = "wasm"))]
+            pub fn [<set_ $name>]<F, Fut>(&mut self, callback: F)
+            where
+                F: Fn($($t),*) -> Fut + Send + 'static,
+                Fut: Future<Output = ()> + Unpin + Send + 'static,
+            {
+                tracing::info!(concat!("Service set ", stringify!($name)));
+                self.$name = Some(Arc::new(Mutex::new(Box::new({
+                    move |$($arg:$t),*| Box::new(callback($($arg),*))
+                            as Box<dyn Future<Output = ()> + Send + Unpin>
+                    }))))
             }
-        }))));
-    }
 
-    #[cfg(target_family = "wasm")]
-    pub fn set_join_decision_handler<F, Fut>(&mut self, callback: F)
-    where
-        F: Fn(String, bool) -> Fut + 'static,
-        Fut: Future<Output = ()> + Unpin + 'static,
-    {
-        self.join_decision_handler = Some(Arc::new(Mutex::new(Box::new({
-            move |request_id, admitted| {
-                Box::new(callback(request_id, admitted)) as Box<dyn Future<Output = ()> + Unpin>
+            #[cfg(target_family = "wasm")]
+            pub fn [<set_ $name>]<F, Fut>(&mut self, callback: F)
+            where
+                F: Fn($($t),*) -> Fut + 'static,
+                Fut: Future<Output = ()> + Unpin + 'static,
+            {
+                self.$name = Some(Arc::new(Mutex::new(Box::new({
+                    move |$($arg:$t),*| {
+                        Box::new(callback($($arg),*)) as Box<dyn Future<Output = ()> + Unpin>
+                    }
+                }))));
             }
-        }))));
-    }
 
-    pub fn clear_join_decision_handler(&mut self) {
-        self.join_decision_handler = None;
-    }
-
-    #[cfg(not(target_family = "wasm"))]
-    pub fn set_join_request_handler<F, Fut>(&mut self, callback: F)
-    where
-        F: Fn(JoinRequestChange, String, String, u64) -> Fut + Send + 'static,
-        Fut: Future<Output = ()> + Unpin + Send + 'static,
-    {
-        tracing::info!("Service set join request handler");
-        self.join_request_handler = Some(Arc::new(Mutex::new(Box::new({
-            move |change, request_id, participant_uid, expires_at| {
-                Box::new(callback(change, request_id, participant_uid, expires_at))
-                    as Box<dyn Future<Output = ()> + Send + Unpin>
+            pub fn [<has_ $name>](&self) -> bool {
+                self.$name.is_some()
             }
-        }))));
-    }
 
-    #[cfg(target_family = "wasm")]
-    pub fn set_join_request_handler<F, Fut>(&mut self, callback: F)
-    where
-        F: Fn(JoinRequestChange, String, String, u64) -> Fut + 'static,
-        Fut: Future<Output = ()> + Unpin + 'static,
-    {
-        self.join_request_handler = Some(Arc::new(Mutex::new(Box::new({
-            move |change, request_id, participant_uid, expires_at| {
-                Box::new(callback(change, request_id, participant_uid, expires_at))
-                    as Box<dyn Future<Output = ()> + Unpin>
+            #[allow(unused)]
+            #[doc = "Calls the "]
+            #[doc = stringify!($name)]
+            #[doc = " handler with the provided arguments, returning `false` if it is not set."]
+            pub async fn [<call_ $name>](&self, $($arg: $t),*) -> bool {
+                let Some(handler) = self.$name.as_ref() else { return false };
+
+                let mut handler = handler.lock().await;
+                handler($($arg),*).await;
+
+                true
             }
-        }))));
-    }
 
-    pub fn clear_join_request_handler(&mut self) {
-        self.join_request_handler = None;
-    }
+            #[allow(unused)]
+            #[doc = "Calls the "]
+            #[doc = stringify!($name)]
+            #[doc = " handler with the provided arguments in a detached future using [`spawn_detached`][crate::utils::spawn_detached], returning `false` if it is not set."]
+            pub fn [<call_detached_ $name>](&self, $($arg: $t),*) -> bool {
+                let Some(handler) = self.$name.as_ref() else { return false };
 
-    #[cfg(not(target_family = "wasm"))]
-    pub fn set_mls_group_update_handler<F, Fut>(&mut self, callback: F)
-    where
-        F: Fn(String, GroupKeyUpdateReason) -> Fut + Send + 'static,
-        Fut: Future<Output = ()> + Unpin + Send + 'static,
-    {
-        tracing::info!("Service set mls group update handler");
-        self.mls_group_update_handler = Some(Arc::new(Mutex::new(Box::new({
-            move |room_id, reason| {
-                Box::new(callback(room_id, reason)) as Box<dyn Future<Output = ()> + Send + Unpin>
+                let handler = Arc::clone(handler);
+                crate::utils::spawn_detached(async move {
+                    let mut handler = handler.lock().await;
+                    handler($($arg),*);
+                });
+
+                true
             }
-        }))));
-    }
+        }
+    };
+    ($name:ident, ($($arg:ident: $t:ty),*)) => {
+        gen_set_clear!($name, ($($arg:$t),*), noclear);
 
-    #[cfg(target_family = "wasm")]
-    pub fn set_mls_group_update_handler<F, Fut>(&mut self, callback: F)
-    where
-        F: Fn(String, GroupKeyUpdateReason) -> Fut + 'static,
-        Fut: Future<Output = ()> + Unpin + 'static,
-    {
-        self.mls_group_update_handler = Some(Arc::new(Mutex::new(Box::new({
-            move |room_id, reason| {
-                Box::new(callback(room_id, reason)) as Box<dyn Future<Output = ()> + Unpin>
+        paste::paste! {
+            pub fn [<clear_ $name>](&mut self) {
+                self.$name = None;
             }
-        }))));
-    }
+        }
+    };
+}
 
-    #[cfg(not(target_family = "wasm"))]
-    pub fn set_mls_sync_state_update_handler<F, Fut>(&mut self, callback: F)
-    where
-        F: Fn(MlsSyncState, Option<RejoinReason>) -> Fut + Send + 'static,
-        Fut: Future<Output = ()> + Unpin + Send + 'static,
-    {
-        tracing::info!("Service set mls sync state update handler");
-        self.mls_sync_state_update_handler = Some(Arc::new(Mutex::new(Box::new({
-            move |state, reason| {
-                Box::new(callback(state, reason)) as Box<dyn Future<Output = ()> + Send + Unpin>
-            }
-        }))));
-    }
+macro_rules! gen_handlers_struct {
+    ($(#[$metas:meta])* $vis:vis struct $struct_name:ident {$(($handler_name:ident: $handler_type:ident, ($($arg:ident: $t:ty),*)$(, $clear:tt)?)),* }) => {
+        $(
+            #[cfg(not(target_family = "wasm"))]
+            pub type $handler_type = Box<dyn FnMut($($t),*) -> Box<dyn Future<Output = ()> + Unpin + Send> + Send + 'static>;
 
-    #[cfg(target_family = "wasm")]
-    pub fn set_mls_sync_state_update_handler<F, Fut>(&mut self, callback: F)
-    where
-        F: Fn(MlsSyncState, Option<RejoinReason>) -> Fut + 'static,
-        Fut: Future<Output = ()> + Unpin + 'static,
-    {
-        self.mls_sync_state_update_handler = Some(Arc::new(Mutex::new(Box::new({
-            move |state, reason| {
-                Box::new(callback(state, reason)) as Box<dyn Future<Output = ()> + Unpin>
-            }
-        }))));
-    }
+            #[cfg(target_family = "wasm")]
+            pub type $handler_type = Box<dyn FnMut($($t),*) -> Box<dyn Future<Output = ()> + Unpin> + 'static>;
+        )*
 
-    #[cfg(not(target_family = "wasm"))]
-    pub fn set_agent_pending_handler<F, Fut>(&mut self, callback: F)
-    where
-        F: Fn(String) -> Fut + Send + 'static,
-        Fut: Future<Output = ()> + Unpin + Send + 'static,
-    {
-        tracing::info!("Service set agent pending handler");
-        self.agent_pending_handler = Some(Arc::new(Mutex::new(Box::new({
-            move |device_id| {
-                Box::new(callback(device_id)) as Box<dyn Future<Output = ()> + Send + Unpin>
-            }
-        }))));
-    }
+        $(#[$metas])* $vis struct $struct_name {
+            $($handler_name: Option<Arc<Mutex<$handler_type>>>),*
+        }
 
-    #[cfg(target_family = "wasm")]
-    pub fn set_agent_pending_handler<F, Fut>(&mut self, callback: F)
-    where
-        F: Fn(String) -> Fut + 'static,
-        Fut: Future<Output = ()> + Unpin + 'static,
-    {
-        self.agent_pending_handler = Some(Arc::new(Mutex::new(Box::new({
-            move |device_id| Box::new(callback(device_id)) as Box<dyn Future<Output = ()> + Unpin>
-        }))));
-    }
+        impl $struct_name {
+            $(gen_set_clear!($handler_name, ($($arg: $t),*)$(, $clear)?);)*
+        }
+    };
+}
 
-    #[cfg(not(target_family = "wasm"))]
-    pub fn set_agent_left_handler<F, Fut>(&mut self, callback: F)
-    where
-        F: Fn(String) -> Fut + Send + 'static,
-        Fut: Future<Output = ()> + Unpin + Send + 'static,
-    {
-        tracing::info!("Service set agent left handler");
-        self.agent_left_handler = Some(Arc::new(Mutex::new(Box::new({
-            move |device_id| {
-                Box::new(callback(device_id)) as Box<dyn Future<Output = ()> + Send + Unpin>
-            }
-        }))));
-    }
-
-    #[cfg(target_family = "wasm")]
-    pub fn set_agent_left_handler<F, Fut>(&mut self, callback: F)
-    where
-        F: Fn(String) -> Fut + 'static,
-        Fut: Future<Output = ()> + Unpin + 'static,
-    {
-        self.agent_left_handler = Some(Arc::new(Mutex::new(Box::new({
-            move |device_id| Box::new(callback(device_id)) as Box<dyn Future<Output = ()> + Unpin>
-        }))));
-    }
-
-    #[cfg(not(target_family = "wasm"))]
-    pub fn set_livekit_admin_change_handler<F, Fut>(&mut self, callback: F)
-    where
-        F: Fn(String, String, u32) -> Fut + Send + 'static,
-        Fut: Future<Output = ()> + Unpin + Send + 'static,
-    {
-        tracing::info!("Service set livekit admin change handler");
-        self.livekit_admin_change_handler = Some(Arc::new(Mutex::new(Box::new({
-            move |room_id, participant_uid, participant_type| {
-                Box::new(callback(room_id, participant_uid, participant_type))
-                    as Box<dyn Future<Output = ()> + Send + Unpin>
-            }
-        }))));
-    }
-
-    #[cfg(target_family = "wasm")]
-    pub fn set_livekit_admin_change_handler<F, Fut>(&mut self, callback: F)
-    where
-        F: Fn(String, String, u32) -> Fut + 'static,
-        Fut: Future<Output = ()> + Unpin + 'static,
-    {
-        self.livekit_admin_change_handler = Some(Arc::new(Mutex::new(Box::new({
-            move |room_id, participant_uid, participant_type| {
-                Box::new(callback(room_id, participant_uid, participant_type))
-                    as Box<dyn Future<Output = ()> + Unpin>
-            }
-        }))));
+gen_handlers_struct! {
+    #[derive(Clone, Default)]
+    pub struct Handlers {
+        (join_decision_handler: JoinDecisionHandler, (request_id: String, admitted: bool)),
+        (join_request_handler: JoinRequestHandler, (change: JoinRequestChange, request_id: String, participant_uid: String, expires_at: u64)),
+        (mls_group_update_handler: MlsGroupUpdateHandler, (room_id: String, reason: GroupKeyUpdateReason), noclear),
+        (mls_sync_state_update_handler: MlsSyncStateUpdateHandler , (state: MlsSyncState, reason: Option<RejoinReason>), noclear),
+        (agent_left_handler: AgentLeftHandler, (device_id: String), noclear),
+        (agent_pending_handler: AgentPendingHandler, (device_id: String), noclear),
+        (livekit_admin_change_handler: LiveKitAdminChangeHandler, (room_id: String, participant_uid: String, participant_type: u32), noclear)
     }
 }
