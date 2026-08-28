@@ -83,7 +83,13 @@ impl App {
         let total_join_time_ms = total_join_start_time.elapsed().as_millis() as u64;
 
         // Get MLS retry count from Service
-        let mls_retry_count = self.user_service.read().await.get_mls_retry_count().await;
+        let mls_retry_count = self
+            .services
+            .user_service
+            .read()
+            .await
+            .get_mls_retry_count()
+            .await;
 
         // Get user_id and room_id
         let app_state = self.state.read().await;
@@ -96,6 +102,7 @@ impl App {
 
         // Get base64_sd_kbt for authorization
         let base64_sd_kbt = self
+            .services
             .user_service
             .read()
             .await
@@ -191,7 +198,13 @@ impl App {
         drop(state);
 
         // Get MLS retry count from Service
-        let mls_retry_count = self.user_service.read().await.get_mls_retry_count().await;
+        let mls_retry_count = self
+            .services
+            .user_service
+            .read()
+            .await
+            .get_mls_retry_count()
+            .await;
 
         // Get user_id and room_id
         let app_state = self.state.read().await;
@@ -206,6 +219,7 @@ impl App {
 
         // Get base64_sd_kbt for authorization
         let base64_sd_kbt = self
+            .services
             .user_service
             .read()
             .await
@@ -265,6 +279,7 @@ impl App {
         drop(app_state);
         // Get base64_sd_kbt for authorization
         let base64_sd_kbt = self
+            .services
             .user_service
             .read()
             .await
@@ -278,6 +293,7 @@ impl App {
 
         // Get metrics from ServiceState (recorded by is_mls_up_to_date)
         let mls_sync_metrics = self
+            .services
             .user_service
             .read()
             .await
@@ -362,6 +378,7 @@ impl App {
 
         // Get base64_sd_kbt for authorization
         let base64_sd_kbt = self
+            .services
             .user_service
             .read()
             .await
@@ -419,6 +436,7 @@ impl App {
         drop(app_state);
 
         let mls_designated_committer_metrics = self
+            .services
             .user_service
             .read()
             .await
@@ -435,6 +453,7 @@ impl App {
 
         // Get base64_sd_kbt for authorization
         let base64_sd_kbt = self
+            .services
             .user_service
             .read()
             .await
@@ -516,6 +535,7 @@ impl App {
 
         // Get base64_sd_kbt for authorization
         let base64_sd_kbt = self
+            .services
             .user_service
             .read()
             .await

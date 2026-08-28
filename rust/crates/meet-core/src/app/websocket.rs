@@ -45,6 +45,7 @@ impl App {
 
     pub async fn is_websocket_has_reconnected(&self) -> Result<bool, MeetCoreError> {
         let has_reconnected = self
+            .services
             .user_service
             .read()
             .await

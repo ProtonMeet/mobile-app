@@ -30,12 +30,16 @@ impl App {
             }
         })?;
         let join_request = self
+            .services
             .waiting_room_service
+            .read()
+            .await
             .create_join_request(&meet_link_name.into(), &user_id, &meeting_session_key)
             .await
             .map_err(MeetCoreError::from)?;
         let meet_link_name = join_request.meeting_link_name.as_str().to_string();
         let request_id = self
+            .services
             .user_service
             .read()
             .await
@@ -74,7 +78,8 @@ impl App {
                 .or_else(|| Some(crate::utils::instant::now()));
         }
 
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .wait_for_join_proposal_welcome_and_join(
@@ -107,7 +112,8 @@ impl App {
     /// cancel endpoint or disconnect the MLS websocket. Use after host reject/admit when
     /// the server has already purged the join request.
     pub async fn clear_waiting_room_join_request(&self) {
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .reset_waiting_room_guest_join_state()
@@ -134,13 +140,15 @@ impl App {
                 "cancel_waiting_room_join_request start meet_link_name={}",
                 meet_link_name
             );
-            self.user_service
+            self.services
+                .user_service
                 .read()
                 .await
                 .cancel_join_request(&user_id, &meet_link_name)
                 .await?;
         } else {
-            self.user_service
+            self.services
+                .user_service
                 .read()
                 .await
                 .reset_waiting_room_guest_join_state()
@@ -169,7 +177,12 @@ impl App {
     }
 
     pub async fn is_mls_group_joined(&self) -> bool {
-        self.user_service.read().await.is_mls_group_joined().await
+        self.services
+            .user_service
+            .read()
+            .await
+            .is_mls_group_joined()
+            .await
     }
 
     pub async fn set_join_decision_handler<F, Fut>(&self, callback: F)
@@ -177,7 +190,8 @@ impl App {
         F: Fn(String, bool) -> Fut + Send + 'static,
         Fut: Future<Output = ()> + Unpin + Send + 'static,
     {
-        self.user_service
+        self.services
+            .user_service
             .write()
             .await
             .handlers
@@ -185,7 +199,8 @@ impl App {
     }
 
     pub async fn clear_join_decision_handler(&self) {
-        self.user_service
+        self.services
+            .user_service
             .write()
             .await
             .handlers
@@ -197,15 +212,17 @@ impl App {
         F: Fn(JoinRequestChange, String, String, u64) -> Fut + Send + 'static,
         Fut: Future<Output = ()> + Unpin + Send + 'static,
     {
-        self.user_service
+        self.services
+            .user_service
             .write()
             .await
             .handlers
             .set_join_request_handler(callback);
 
-        let user_service = self.user_service.clone();
+        let services = self.services.clone();
         spawn_detached(async move {
-            user_service
+            services
+                .user_service
                 .read()
                 .await
                 .notify_pending_waiting_room_join_requests()
@@ -214,7 +231,8 @@ impl App {
     }
 
     pub async fn clear_join_request_handler(&self) {
-        self.user_service
+        self.services
+            .user_service
             .write()
             .await
             .handlers
@@ -233,7 +251,8 @@ impl App {
         );
         let user_id = self.current_user_id().await?;
 
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .reject_waiting_room_join_request(
@@ -288,7 +307,8 @@ impl App {
             }
         }
         let user_id = self.current_user_id().await?;
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .update_waiting_room_setting_policy(&user_id, &meet_link_name, enable)
@@ -330,6 +350,7 @@ impl App {
         };
         let meeting_link_name = MeetingLinkName::from(meet_link_name.as_str());
         let pending = self
+            .services
             .user_service
             .read()
             .await
@@ -359,8 +380,11 @@ impl App {
         let mut key_packages = Vec::with_capacity(pending.len());
         let mut admitted_request_ids = Vec::with_capacity(pending.len());
         for request in &pending {
-            let serialized = self
+            let serialized = &self
+                .services
                 .waiting_room_service
+                .read()
+                .await
                 .decrypt_key_package(
                     &request.encrypted_key_package,
                     &meeting_link_name,
@@ -372,6 +396,7 @@ impl App {
             admitted_request_ids.push(request.request_id.clone());
         }
         let admitted_request_ids = self
+            .services
             .user_service
             .write()
             .await

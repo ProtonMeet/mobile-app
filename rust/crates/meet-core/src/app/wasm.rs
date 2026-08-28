@@ -630,7 +630,8 @@ impl App {
     #[cfg(all(target_family = "wasm", not(test)))]
     #[wasm_bindgen(js_name = setMlsGroupUpdateHandler)]
     pub async fn set_mls_group_update_handler_wasm(&self) -> Result<(), JsValue> {
-        self.user_service
+        self.services
+            .user_service
             .write()
             .await
             .handlers
@@ -646,7 +647,8 @@ impl App {
     #[cfg(all(target_family = "wasm", not(test)))]
     #[wasm_bindgen(js_name = setMlsSyncStateUpdateHandler)]
     pub async fn set_mls_sync_state_update_handler_wasm(&self) -> Result<(), JsValue> {
-        self.user_service
+        self.services
+            .user_service
             .write()
             .await
             .handlers
@@ -663,7 +665,8 @@ impl App {
     #[cfg(all(target_family = "wasm", not(test)))]
     #[wasm_bindgen(js_name = setLiveKitAdminChangeHandler)]
     pub async fn set_livekit_admin_change_handler_wasm(&self) -> Result<(), JsValue> {
-        self.user_service
+        self.services
+            .user_service
             .write()
             .await
             .handlers
@@ -977,7 +980,8 @@ impl App {
     #[cfg(all(target_family = "wasm", not(test)))]
     #[wasm_bindgen(js_name = setAgentPendingHandler)]
     pub async fn set_agent_pending_handler_wasm(&self) -> Result<(), JsValue> {
-        self.user_service
+        self.services
+            .user_service
             .write()
             .await
             .handlers
@@ -992,7 +996,8 @@ impl App {
     #[cfg(all(target_family = "wasm", not(test)))]
     #[wasm_bindgen(js_name = setAgentLeftHandler)]
     pub async fn set_agent_left_handler_wasm(&self) -> Result<(), JsValue> {
-        self.user_service
+        self.services
+            .user_service
             .write()
             .await
             .handlers
