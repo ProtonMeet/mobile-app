@@ -475,6 +475,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         // NotificationService might not be registered on non-Android platforms
       }
     }
+    // Drop the decoded background image the native engine is holding so the
+    // user's photo does not stay resident after the meeting. Track creation
+    // re-supplies it via `prepareCameraBackgroundSelectionForTrackCreation`,
+    // so a later prejoin or rejoin still gets its background.
+    unawaited(_clearNativeReplacementBackground());
+
     // PIP cleanup is handled by bloc
     _bloc.close();
     disableWakelock();
@@ -3834,6 +3840,15 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       l.logger.w('[RoomPage] preview-only camera track failed: $e');
       return null;
     }
+  }
+
+  Future<void> _clearNativeReplacementBackground() async {
+    if (kIsWeb) {
+      return;
+    }
+    try {
+      await ProtonVideoEffects.instance.clearReplacementBackground();
+    } catch (_) {}
   }
 
   Future<void> _stopSheetPreviewTrack(LocalVideoTrack track) async {

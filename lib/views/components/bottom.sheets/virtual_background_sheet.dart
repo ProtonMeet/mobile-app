@@ -7,11 +7,11 @@ import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/helper/background_blur/virtual_background_image_picker.dart';
 import 'package:meet/helper/background_blur/virtual_background_presets.dart';
+import 'package:meet/helper/background_blur/virtual_background_store.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/views/components/alerts/base_bottom_sheet_v2.dart';
 import 'package:meet/views/components/safe_video_track_renderer.dart';
-import 'package:path_provider/path_provider.dart';
 
 /// Bottom sheet for choosing blur, bundled presets, or a custom image background.
 class VirtualBackgroundSheet {
@@ -82,18 +82,29 @@ class _VirtualBackgroundSheetBodyState
       if (!mounted || picked == null || picked.isEmpty) {
         return;
       }
+      // Both branches go through the store so only one copy of the user's
+      // photo is ever on disk, under a path we control and can clear.
       final path = picked.filePath;
       if (path != null && path.isNotEmpty) {
-        _commitSelection(CameraBackgroundSelection.custom(path));
+        final file = await VirtualBackgroundStore.storeFile(
+          File(path),
+          displayName: picked.displayName,
+        );
+        if (!mounted) {
+          return;
+        }
+        _commitSelection(CameraBackgroundSelection.custom(file.path));
         return;
       }
       final bytes = picked.bytes;
       if (bytes != null && bytes.isNotEmpty) {
-        final tempDir = await getTemporaryDirectory();
-        final file = File(
-          '${tempDir.path}/virtual_background_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        final file = await VirtualBackgroundStore.store(
+          bytes,
+          displayName: picked.displayName,
         );
-        await file.writeAsBytes(bytes, flush: true);
+        if (!mounted) {
+          return;
+        }
         _commitSelection(CameraBackgroundSelection.custom(file.path));
       }
     } finally {

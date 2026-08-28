@@ -30,9 +30,6 @@ class CameraBackgroundSelection extends Equatable {
 
   bool get isEffectActive => kind != CameraBackgroundEffectKind.none;
 
-  /// Legacy toggle used by room state and feature-flag wiring.
-  bool get isBlurOrReplacementActive => isEffectActive;
-
   BackgroundBlurConfig toBlurConfig({String? replacementImagePath}) {
     switch (kind) {
       case CameraBackgroundEffectKind.none:

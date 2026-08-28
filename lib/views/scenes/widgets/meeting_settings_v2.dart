@@ -553,7 +553,8 @@ class _CameraBackgroundRow extends StatelessWidget {
       case CameraBackgroundEffectKind.blur:
         image = context.images.iconVirtualBackgroundBlur.svgSize(
           color: context.colors.textNorm,
-          size: _backgroundSwatchCacheWidth.toDouble(),
+          // Rendered size, not the decode budget the raster branches use.
+          size: size,
         );
     }
     if (image == null) {

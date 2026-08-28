@@ -86,12 +86,16 @@ private final class MeetBackgroundBlurProcessor: NSObject, ExternalVideoProcessi
       )
     }
     framesReceived += 1
-    if framesReceived == 1 || framesReceived % kLogEveryNthFrame == 0 {
-      print(
-        "[MeetBackgroundBlur] onFrame #\(framesReceived) width=\(frame.width) "
-          + "height=\(frame.height) rotation=\(frame.rotation.rawValue) ts=\(frame.timeStamp)"
-      )
-    }
+    #if DEBUG
+      // Release builds would stream camera geometry to the device console for
+      // every call, where it is readable in Console.app and sysdiagnose.
+      if framesReceived == 1 || framesReceived % kLogEveryNthFrame == 0 {
+        print(
+          "[MeetBackgroundBlur] onFrame #\(framesReceived) width=\(frame.width) "
+            + "height=\(frame.height) rotation=\(frame.rotation.rawValue) ts=\(frame.timeStamp)"
+        )
+      }
+    #endif
     return frame
   }
 }

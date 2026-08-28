@@ -38,11 +38,29 @@ Future<void> applyCameraBackgroundSelectionToTrack({
       return;
     }
 
-    await _applyReplacementImageIfNeeded(effects, selection);
+    // A rejected image must not take the attach down with it: the caller has
+    // already committed the selection to state, so bailing here would leave the
+    // track on its previous effect while the UI claims the new one is live.
+    // Degrading to blur keeps the camera covered, which is the point of the
+    // feature, and matches what the native side falls back to.
+    var effectiveSelection = selection;
+    try {
+      await _applyReplacementImageIfNeeded(effects, selection);
+    } catch (e, st) {
+      l.logger.e(
+        '[CameraBackgroundEffect] replacement image rejected, '
+        'falling back to blur: $e',
+        error: e,
+        stackTrace: st,
+      );
+      await effects.clearReplacementBackground();
+      effectiveSelection = const CameraBackgroundSelection.blur();
+    }
 
-    final config = selection.toBlurConfig(
-      replacementImagePath: selection.kind == CameraBackgroundEffectKind.custom
-          ? selection.customImagePath
+    final config = effectiveSelection.toBlurConfig(
+      replacementImagePath:
+          effectiveSelection.kind == CameraBackgroundEffectKind.custom
+          ? effectiveSelection.customImagePath
           : null,
     );
     await effects.setBackgroundBlurConfig(config);
@@ -127,21 +145,17 @@ Future<void> _applyReplacementImageIfNeeded(
       if (bytes == null) {
         return;
       }
-      await effects.setReplacementBackgroundImageBytes(
-        bytes.buffer.asUint8List(),
-      );
+      await effects.setReplacementBackgroundImageBytes(_viewOf(bytes));
       return;
   }
 }
 
-/// Loads preset bytes for track processor creation when a bundled image is selected.
-Future<Uint8List?> presetReplacementBytes(String? presetId) async {
-  if (presetId == null || presetId.isEmpty) {
-    return null;
-  }
-  final bytes = await VirtualBackgroundPresets.loadPresetBytes(presetId);
-  return bytes?.buffer.asUint8List();
-}
+/// Bytes actually covered by [data].
+///
+/// `rootBundle.load` may hand back a window onto a larger buffer, so reading
+/// the whole backing store would ship neighbouring assets to the decoder.
+Uint8List _viewOf(ByteData data) =>
+    data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
 
 /// Ensures native replacement image state matches [selection] before track attach.
 Future<void> prepareCameraBackgroundSelectionForTrackCreation(

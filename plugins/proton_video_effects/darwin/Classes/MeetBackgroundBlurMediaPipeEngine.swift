@@ -891,7 +891,12 @@ public final class MeetBackgroundBlurMediaPipeEngine: NSObject {
       let frameAspect = frameExtent.width / frameExtent.height
       let asIsError = abs(me.width / me.height - frameAspect)
       let rotatedError = abs(me.height / me.width - frameAspect)
-      guard rotatedError < asIsError else { return mask }
+      // Ties rotate. A square buffer scores both options identically, so a
+      // strict comparison would skip the turn and land the silhouette 90° off —
+      // the very case this function exists to fix. The rotation is known from
+      // `rotationDegrees`; the aspect check only vetoes it when leaving the mask
+      // alone is a strictly better fit.
+      guard rotatedError <= asIsError else { return mask }
     }
 
     let turned = mask.transformed(

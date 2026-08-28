@@ -13,6 +13,7 @@ import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/views/components/bottom.sheets/virtual_background_sheet.dart';
 import 'package:meet/views/components/safe_video_track_renderer.dart';
 import 'package:meet/views/scenes/settings/debug/mask_edge_sliders.dart';
+import 'package:path/path.dart' as p;
 import 'package:proton_video_effects/proton_video_effects.dart';
 
 /// Debug screen: live camera preview + production virtual background sheet.
@@ -260,8 +261,10 @@ class _VirtualBackgroundDebugScreenState
       CameraBackgroundEffectKind.none => 'None',
       CameraBackgroundEffectKind.blur => 'Blur',
       CameraBackgroundEffectKind.preset => 'Preset: ${selection.presetId}',
+      // Basename only: the full path leaks the account username on macOS, and
+      // this screen gets screenshotted into bug reports.
       CameraBackgroundEffectKind.custom =>
-        'Custom: ${selection.customImagePath}',
+        'Custom: ${p.basename(selection.customImagePath ?? '')}',
     };
   }
 

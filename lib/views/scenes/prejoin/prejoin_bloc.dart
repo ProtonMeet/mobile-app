@@ -123,8 +123,17 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       (_, emit) => emit(state.copyWith(shouldNavigateToWaitingRoom: false)),
     );
     on<PreJoinRestorePreviewVideoTrack>(_onRestorePreviewVideoTrack);
-    on<PreJoinToggleCameraBackgroundBlur>(_onToggleCameraBackgroundBlur);
-    on<PreJoinSetCameraBackgroundSelection>(_onSetCameraBackgroundSelection);
+    // Each of these stops the preview track and builds a new one. Run them one
+    // at a time: a double tap would otherwise race two camera opens against one
+    // stop and leak the loser.
+    on<PreJoinToggleCameraBackgroundBlur>(
+      _onToggleCameraBackgroundBlur,
+      transformer: (events, mapper) => events.asyncExpand(mapper),
+    );
+    on<PreJoinSetCameraBackgroundSelection>(
+      _onSetCameraBackgroundSelection,
+      transformer: (events, mapper) => events.asyncExpand(mapper),
+    );
     on<PreJoinStartWaitingRoomAdmission>(_onStartWaitingRoomAdmission);
     on<PreJoinPollGroupInfo>(_onPollGroupInfo);
     on<PreJoinWaitingRoomCountdownTick>(

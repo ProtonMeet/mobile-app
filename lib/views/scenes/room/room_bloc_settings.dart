@@ -37,8 +37,18 @@ mixin RoomSettingsHandlers
   void registerSettingsHandlers() {
     on<SetUnsubscribeVideoByDefault>(_onSetUnsubscribeVideoByDefault);
     on<MeetingInfoWaitingRoomUpdated>(_onMeetingInfoWaitingRoomUpdated);
-    on<SetCameraBackgroundBlurEnabled>(_onSetCameraBackgroundBlurEnabled);
-    on<SetCameraBackgroundSelection>(_onSetCameraBackgroundSelection);
+    // Both handlers emit immediately and then run a multi-hop native
+    // round-trip (clear -> set image -> set config -> attach). Run one at a
+    // time: interleaved calls let the pipeline settle on an earlier selection
+    // than the one the state reports, and nothing reconciles that afterwards.
+    on<SetCameraBackgroundBlurEnabled>(
+      _onSetCameraBackgroundBlurEnabled,
+      transformer: (events, mapper) => events.asyncExpand(mapper),
+    );
+    on<SetCameraBackgroundSelection>(
+      _onSetCameraBackgroundSelection,
+      transformer: (events, mapper) => events.asyncExpand(mapper),
+    );
     on<SetAudioDenoiseEnabled>(_onSetAudioDenoiseEnabled);
     on<SetAudioDenoiseType>(_onSetAudioDenoiseType);
   }

@@ -1686,7 +1686,7 @@ internal class MeetBackgroundBlurMediaPipeEngine(
             val quarterTurned = rotation == 90 || rotation == 270
             val displayW = if (quarterTurned) dstH else dstW
             val displayH = if (quarterTurned) dstW else dstH
-            val covered = scaleBitmapCover(source, displayW, displayH)
+            val covered = scaleBitmapCover(source, displayW, displayH) ?: return null
             val result = if (rotation == 0) {
                 covered
             } else {
@@ -1707,7 +1707,8 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         }
     }
 
-    private fun scaleBitmapCover(source: Bitmap, dstW: Int, dstH: Int): Bitmap {
+    /** Null when the cover-scaled copy cannot be allocated; the caller falls back to blur. */
+    private fun scaleBitmapCover(source: Bitmap, dstW: Int, dstH: Int): Bitmap? {
         val srcW = source.width
         val srcH = source.height
         if (srcW <= 0 || srcH <= 0) {
@@ -1729,9 +1730,12 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         // subset already matches it, so an image that happens to be exactly the processing size
         // would alias the cached replacement — which the caller then recycles, permanently
         // dropping the user's background. Hand back a copy the caller can own.
+        //
+        // Failing the copy must not fall back to the source: that is the alias this guard exists
+        // to prevent, and it ends in the render thread drawing a bitmap the platform thread has
+        // already recycled. Report failure and let the caller use the blurred plate instead.
         if (cropped === source) {
             return source.copy(source.config ?: Bitmap.Config.ARGB_8888, /* isMutable = */ false)
-                ?: source
         }
         return cropped
     }

@@ -27,6 +27,12 @@ class VirtualBackgroundImagePicker {
   VirtualBackgroundImagePicker._();
 
   static final ImagePicker _imagePicker = ImagePicker();
+
+  /// Long-edge cap applied to gallery picks before the image reaches the
+  /// compositor. Comfortably above 1080p capture, so no visible quality loss.
+  static const double _maxDimension = 1920;
+  static const int _jpegQuality = 90;
+
   static const _imageTypeGroup = XTypeGroup(
     label: 'images',
     extensions: ['jpg', 'jpeg', 'png', 'webp', 'heic'],
@@ -44,7 +50,19 @@ class VirtualBackgroundImagePicker {
 
   static Future<VirtualBackgroundPickResult?> _pickWithImagePicker() async {
     try {
-      final picked = await _imagePicker.pickImage(source: ImageSource.gallery);
+      final picked = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        // Keeps iOS on the out-of-process PHPicker: the user hands us one
+        // image and the app never needs photo-library authorization. Reading
+        // full metadata would force the permission prompt and copy the
+        // original asset's EXIF — including GPS — into the background image.
+        requestFullMetadata: false,
+        // Backgrounds are composited at camera resolution, so a multi-megapixel
+        // original buys nothing. Re-encoding also drops any residual metadata.
+        maxWidth: _maxDimension,
+        maxHeight: _maxDimension,
+        imageQuality: _jpegQuality,
+      );
       if (picked == null) {
         return null;
       }
