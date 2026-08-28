@@ -85,8 +85,6 @@ impl App {
             .ok_or(MeetCoreError::LivekitAccessTokenNotFound)?;
         self.services
             .room_service
-            .read()
-            .await
             .end_meeting(&meeting_id, livekit_access_token)
             .await?;
 
@@ -563,15 +561,11 @@ impl App {
         let participants = self
             .services
             .room_service
-            .read()
-            .await
             .get_participants(&meet_link_name)
             .await?;
         let participants = self
             .services
             .room_service
-            .read()
-            .await
             .decrypt_participant_display_names(participants, session_key.as_ref())
             .await;
         Ok(participants)
@@ -584,8 +578,6 @@ impl App {
         let count = self
             .services
             .room_service
-            .read()
-            .await
             .get_participants_count(&meet_link_name)
             .await?;
         Ok(count)
@@ -594,8 +586,6 @@ impl App {
     pub async fn lock_meeting(&self, meet_link_name: String) -> Result<(), MeetCoreError> {
         self.services
             .room_service
-            .read()
-            .await
             .lock_meeting(&meet_link_name)
             .await?;
         Ok(())
@@ -604,8 +594,6 @@ impl App {
     pub async fn unlock_meeting(&self, meet_link_name: String) -> Result<(), MeetCoreError> {
         self.services
             .room_service
-            .read()
-            .await
             .unlock_meeting(&meet_link_name)
             .await?;
         Ok(())

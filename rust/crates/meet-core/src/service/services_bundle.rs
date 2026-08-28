@@ -7,10 +7,9 @@ use crate::{
 
 /// Services bundle for the meet application
 ///  will use in the future to bundle all services together during refactor
-#[allow(unused)]
 pub struct ServicesBundle {
-    pub room_service: RwLock<RoomService>,
-    pub waiting_room_service: RwLock<WaitingRoomService>,
+    pub room_service: RoomService,
+    pub waiting_room_service: WaitingRoomService,
     pub user_service: RwLock<Service>,
     // pub message_service: Arc<MessageService>,
     // pub user_service: Arc<UserService>,
@@ -20,8 +19,8 @@ pub struct ServicesBundle {
 
 impl ServicesBundle {
     pub fn new(
-        room_service: RwLock<RoomService>,
-        waiting_room_service: RwLock<WaitingRoomService>,
+        room_service: RoomService,
+        waiting_room_service: WaitingRoomService,
         user_service: RwLock<Service>,
         // message_service: Arc<MessageService>,
         // user_service: Arc<UserService>,

@@ -32,8 +32,6 @@ impl App {
         let join_request = self
             .services
             .waiting_room_service
-            .read()
-            .await
             .create_join_request(&meet_link_name.into(), &user_id, &meeting_session_key)
             .await
             .map_err(MeetCoreError::from)?;
@@ -383,8 +381,6 @@ impl App {
             let serialized = &self
                 .services
                 .waiting_room_service
-                .read()
-                .await
                 .decrypt_key_package(
                     &request.encrypted_key_package,
                     &meeting_link_name,

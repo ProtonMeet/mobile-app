@@ -27,7 +27,7 @@ impl App {
     ) -> Result<MeetInfo, MeetCoreError> {
         let (meet_info, session_key) = self
             .services
-            .room_service.read().await
+            .room_service
             .join_meeting(&meet_link_name, &meet_link_password, &display_name)
             .await?;
 
@@ -83,7 +83,7 @@ impl App {
                 signing_key_active: key.active != 0,
             };
             self.services
-                .room_service.read().await
+                .room_service
                 .create_meeting(
                     &meeting_name,
                     custom_password,
@@ -110,7 +110,7 @@ impl App {
                 signing_key_active: false,
             };
             self.services
-                .room_service.read().await
+                .room_service
                 .create_meeting(
                     &meeting_name,
                     custom_password,
@@ -152,7 +152,7 @@ impl App {
         let _ = self.get_user_state_info().await?;
         let updated_meeting = self
             .services
-            .room_service.read().await
+            .room_service
             .edit_meeting_name(&meeting_id, &new_meeting_name, &meeting_password)
             .await?;
         Ok(updated_meeting)
@@ -185,7 +185,7 @@ impl App {
         };
         let updated_meeting = self
             .services
-            .room_service.read().await
+            .room_service
             .update_meeting_schedule(&meeting_id, &meeting_name, &meeting_password, params)
             .await?;
         Ok(updated_meeting)
@@ -215,7 +215,7 @@ impl App {
 
         let upcoming_meetings = self
             .services
-            .room_service.read().await
+            .room_service
             .get_upcoming_meetings(&user_private_keys, &all_address_keys, &mailbox_password)
             .await?;
         Ok(upcoming_meetings)
@@ -249,7 +249,7 @@ impl App {
         };
         let meeting = self
             .services
-            .room_service.read().await
+            .room_service
             .create_meeting(
                 &meeting_name,
                 custom_password,
@@ -271,7 +271,7 @@ impl App {
     }
 
     pub async fn get_active_meetings(&self) -> Result<Vec<Meeting>, MeetCoreError> {
-        let active_meetings = self.services.room_service.read().await.get_active_meetings().await?;
+        let active_meetings = self.services.room_service.get_active_meetings().await?;
         Ok(active_meetings)
     }
 
@@ -281,7 +281,7 @@ impl App {
     ) -> Result<MeetingInfo, MeetCoreError> {
         let mut meeting_info = self
             .services
-            .room_service.read().await
+            .room_service
             .get_meeting_info(meeting_link_name)
             .await?;
         meeting_info.meeting_name = self
@@ -318,7 +318,7 @@ impl App {
         if let Some(session_key) = session_key {
             return self
                 .services
-                .room_service.read().await
+                .room_service
                 .decrypt_meeting_metadata_name(encrypted_meeting_name, &session_key)
                 .await
                 .map_err(|e| MeetCoreError::CryptographicError {

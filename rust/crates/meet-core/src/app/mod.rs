@@ -258,8 +258,8 @@ impl App {
         let waiting_room_service = WaitingRoomService::new(crypto_client, mls_service);
 
         let services = Arc::new(ServicesBundle::new(
-            RwLock::new(room_service),
-            RwLock::new(waiting_room_service),
+            room_service,
+            waiting_room_service,
             user_service,
         ));
 
@@ -424,8 +424,6 @@ impl App {
         let participant_track_settings = self
             .services
             .room_service
-            .read()
-            .await
             .update_participant_track_settings(
                 meeting_id.as_str(),
                 livekit_access_token,
@@ -485,8 +483,6 @@ impl App {
             .await?;
         self.services
             .room_service
-            .read()
-            .await
             .remove_participant(
                 meeting_id.as_str(),
                 livekit_access_token,
@@ -680,8 +676,8 @@ impl App {
             event_api,
             user_key_provider,
             services: Arc::new(ServicesBundle::new(
-                RwLock::new(room_service),
-                RwLock::new(waiting_room_service),
+                room_service,
+                waiting_room_service,
                 RwLock::new(user_service),
             )),
         }
