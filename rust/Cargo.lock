@@ -4863,6 +4863,7 @@ dependencies = [
  "mls-types",
  "mockall",
  "muon",
+ "native-tls",
  "openssl",
  "proton-claims",
  "proton-meet-chat",

@@ -584,8 +584,7 @@ impl WebSocketClient for WsClient {
             let url = self.build_ws_url("v1/ws")?;
             #[cfg(feature = "insecure-tls")]
             let ws_stream = {
-                let cfg = crate::utils::reqwest::dev_rustls_client_config();
-                let connector = Connector::Rustls(Arc::new(cfg));
+                let connector = ws_connect::insecure_native_tls_connector()?;
                 ws_connect::connect_with_tls_auth(url.as_str(), base64_sd_kbt, Some(connector))
                     .await?
             };

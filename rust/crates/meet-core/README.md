@@ -9,7 +9,7 @@ This crate contains tests for both native and WASM platforms. Follow the instruc
 - `test-load` enables load testing tests (e.g. connecting 500 participants to a meeting)
 - `test-prod` switches the tests to run on production environment (WIP)
 - `test-logging` enables tracing in the tests for more verbose outputs
-- `test-e2e` enables end to end tests
+- `test-e2e` enables end to end tests. Requires the `ATLAS_ENV` environment variable to be set
 
 ### Native Platform Tests
 
@@ -22,8 +22,8 @@ cd rust/crates/meet-core
 # Run all unit tests
 cargo test
 
-# Run all unit and end-to-end tests
-cargo test --features test-e2e
+# Run all end-to-end tests against ferris.proton.black
+ATLAS_ENV=ferris cargo test --features test-e2e e2e
 
 # Run tests with output
 cargo test -- --nocapture
