@@ -149,6 +149,7 @@ tokio-tungstenite-wasm = { path = "../../vendor/tokio-tungstenite-wasm", feature
 ] }
 
 uuid = { version = "1.17.0", features = ["v4", "serde"] }
+native-tls = "0.2.18"
 rustls = { version = "0.23", default-features = false, features = [
     "ring",
     "std",
