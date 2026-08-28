@@ -364,7 +364,7 @@ impl Service {
             }
         };
         self.handlers
-            .call_mls_group_update_handler(room_id.to_string(), key_update_reason)
+            .call_mls_group_update_handler(room_id, key_update_reason)
             .await;
         Ok(())
     }

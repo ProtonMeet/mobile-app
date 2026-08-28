@@ -52,17 +52,11 @@ impl Service {
             );
         }
 
-        // Dispatch off the WS path: handlers may call App APIs that take
-        // `user_service.write()`, which deadlocks while `read()` is held here.
-        let request_id_for_cb = request_id.clone();
-        let participant_uid_for_cb = participant_uid.clone();
-        let expires_at = info.expires_at;
-
         self.handlers.call_detached_join_request_handler(
             JoinRequestChange::Added,
-            request_id_for_cb,
-            participant_uid_for_cb,
-            expires_at,
+            request_id,
+            participant_uid,
+            info.expires_at,
         );
 
         Ok(())
@@ -93,15 +87,12 @@ impl Service {
                 participant_uid = %request.participant_uid,
                 "Replaying pending waiting-room join request"
             );
-            let request_id = request.request_id.clone();
-            let participant_uid = request.participant_uid.clone();
-            let expires_at = request.expires_at;
 
             self.handlers.call_detached_join_request_handler(
                 JoinRequestChange::Added,
-                request_id,
-                participant_uid,
-                expires_at,
+                request.request_id,
+                request.participant_uid,
+                request.expires_at,
             );
         }
     }
@@ -115,7 +106,7 @@ impl Service {
             JoinRequestChange::Removed,
             request_id,
             participant_uid,
-            0,
+            0u64,
         );
     }
 

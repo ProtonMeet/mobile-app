@@ -259,7 +259,7 @@ impl Service {
         drop(mls_group);
 
         self.handlers
-            .call_mls_group_update_handler(room_id.clone(), GroupKeyUpdateReason::Join)
+            .call_mls_group_update_handler(room_id, GroupKeyUpdateReason::Join)
             .await;
 
         // push_bundle after the merge — server has already accepted the commit

@@ -481,7 +481,7 @@ impl Service {
 
         // trigger the group update callback outside of locks to prevent lock inversion
         self.handlers
-            .call_mls_group_update_handler(room_id.to_string(), key_update_reason)
+            .call_mls_group_update_handler(room_id, key_update_reason)
             .await;
 
         let _unused_proposals = match received_message {
@@ -672,26 +672,30 @@ impl Service {
         match message {
             WebSocketMessage::Text(text) => {
                 if let Ok(envelope) = serde_json::from_str::<WebSocketTextResponse>(&text) {
-                    'call_handler: {
-                        let device_id = match envelope.command {
-                            WebSocketTextResponseCommand::AgentPending(notification) => {
-                                notification.device_id.clone()
+                    match envelope.command {
+                        WebSocketTextResponseCommand::AgentPending(notification) => {
+                            let device_id = notification.device_id;
+                            if !self
+                                .handlers
+                                .call_agent_pending_handler(device_id.clone())
+                                .await
+                            {
+                                tracing::debug!("AgentPending received but no handler registered: device_id={device_id}");
                             }
-                            WebSocketTextResponseCommand::AgentLeft(notification) => {
-                                notification.device_id.clone()
-                            }
-                            _ => break 'call_handler,
-                        };
-
-                        if !self
-                            .handlers
-                            .call_agent_left_handler(device_id.clone())
-                            .await
-                        {
-                            tracing::debug!("AgentPending received but no handler registered: device_id={device_id}");
+                            return Ok(());
                         }
-
-                        return Ok(());
+                        WebSocketTextResponseCommand::AgentLeft(notification) => {
+                            let device_id = notification.device_id;
+                            if !self
+                                .handlers
+                                .call_agent_left_handler(device_id.clone())
+                                .await
+                            {
+                                tracing::debug!("AgentLeft received but no handler registered: device_id={device_id}");
+                            }
+                            return Ok(());
+                        }
+                        _ => {}
                     }
                 }
 
