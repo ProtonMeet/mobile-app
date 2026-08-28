@@ -2,7 +2,8 @@ import 'package:equatable/equatable.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:logger/logger.dart';
 import 'package:meet/helper/background_blur/camera_background_blur_sync.dart'
-    show syncLocalCameraBackgroundBlur;
+    show syncLocalCameraBackgroundEffect;
+import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/rust/proton_meet/models/meeting_info.dart';
 import 'package:meet/rust/proton_meet/models/mls_sync_state.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
@@ -31,8 +32,11 @@ class RoomInitialized extends RoomBlocEvent {
 
   /// User preference for camera background blur carried over from the prejoin
   /// screen. The bloc still gates the actual attach through the feature flag
-  /// and the published track lookup in [syncLocalCameraBackgroundBlur].
+  /// and the published track lookup in [syncLocalCameraBackgroundEffect].
   final bool cameraBackgroundBlurEnabled;
+
+  /// Full background selection (blur, preset, or custom image) from prejoin.
+  final CameraBackgroundSelection cameraBackgroundSelection;
 
   /// Populated during pre-join to skip a redundant getMeetingInfo call.
   final FrbMeetingInfo? prefetchedMeetingInfo;
@@ -46,6 +50,7 @@ class RoomInitialized extends RoomBlocEvent {
     required this.preJoinType,
     required this.meetingLink,
     this.cameraBackgroundBlurEnabled = false,
+    this.cameraBackgroundSelection = const CameraBackgroundSelection.none(),
     this.prefetchedMeetingInfo,
   });
 
@@ -59,6 +64,7 @@ class RoomInitialized extends RoomBlocEvent {
     preJoinType,
     meetingLink,
     cameraBackgroundBlurEnabled,
+    cameraBackgroundSelection,
     prefetchedMeetingInfo,
   ];
 }
@@ -549,6 +555,17 @@ class SetCameraBackgroundBlurEnabled extends RoomBlocEvent {
 
   @override
   List<Object?> get props => [enabled];
+}
+
+/// Switches the local camera background to blur, a bundled preset, a custom
+/// image, or none while already in the meeting.
+class SetCameraBackgroundSelection extends RoomBlocEvent {
+  final CameraBackgroundSelection selection;
+
+  const SetCameraBackgroundSelection(this.selection);
+
+  @override
+  List<Object?> get props => [selection];
 }
 
 class SetAudioDenoiseEnabled extends RoomBlocEvent {

@@ -24,7 +24,6 @@ private let kLogEveryNthFrame: UInt = 30
 /// Until Dart sends setBackgroundBlurConfig, matches [BackgroundBlurConfig] production defaults.
 private let kPendingDefaultBlurSigma: CGFloat = 128.0
 private let kPendingDefaultObscureOpacity: CGFloat = 0.1
-
 private final class MeetBackgroundBlurProcessor: NSObject, ExternalVideoProcessingDelegate {
   private var framesReceived: UInt = 0
   private var isEnabled = true
@@ -34,10 +33,23 @@ private final class MeetBackgroundBlurProcessor: NSObject, ExternalVideoProcessi
     isEnabled = enabled
   }
 
-  func applyBlurConfig(blurSigma: CGFloat, backgroundObscureOpacity: CGFloat) {
+  func resetSegmentationState() {
+    mediaPipe.resetSegmentationState()
+  }
+
+  func applySynchronousSegmentation(_ enabled: Bool) {
+    mediaPipe.setSynchronousSegmentation(enabled)
+  }
+
+  func applyBlurConfig(
+    blurSigma: CGFloat,
+    backgroundObscureOpacity: CGFloat,
+    maskEdge: MeetBackgroundBlurMediaPipeEngine.MaskEdgeTuning
+  ) {
     mediaPipe.setBlurConfig(
       blurSigma: blurSigma,
-      backgroundObscureOpacity: backgroundObscureOpacity
+      backgroundObscureOpacity: backgroundObscureOpacity,
+      maskEdge: maskEdge
     )
   }
 
@@ -74,12 +86,16 @@ private final class MeetBackgroundBlurProcessor: NSObject, ExternalVideoProcessi
       )
     }
     framesReceived += 1
-    if framesReceived == 1 || framesReceived % kLogEveryNthFrame == 0 {
-      print(
-        "[MeetBackgroundBlur] onFrame #\(framesReceived) width=\(frame.width) "
-          + "height=\(frame.height) rotation=\(frame.rotation.rawValue) ts=\(frame.timeStamp)"
-      )
-    }
+    #if DEBUG
+      // Release builds would stream camera geometry to the device console for
+      // every call, where it is readable in Console.app and sysdiagnose.
+      if framesReceived == 1 || framesReceived % kLogEveryNthFrame == 0 {
+        print(
+          "[MeetBackgroundBlur] onFrame #\(framesReceived) width=\(frame.width) "
+            + "height=\(frame.height) rotation=\(frame.rotation.rawValue) ts=\(frame.timeStamp)"
+        )
+      }
+    #endif
     return frame
   }
 }
@@ -91,6 +107,8 @@ private final class MeetBackgroundBlurProcessor: NSObject, ExternalVideoProcessi
   private static var attachedTrackId: String?
   private static var pendingBlurSigma: CGFloat = kPendingDefaultBlurSigma
   private static var pendingObscureOpacity: CGFloat = kPendingDefaultObscureOpacity
+  private static var pendingMaskEdge = MeetBackgroundBlurMediaPipeEngine.MaskEdgeTuning()
+  private static var pendingSynchronousSegmentation = false
   private static var pendingReplacementPath: String?
   private static var pendingReplacementData: Data?
 
@@ -101,13 +119,34 @@ private final class MeetBackgroundBlurProcessor: NSObject, ExternalVideoProcessi
     if let obscure = (args["backgroundObscureOpacity"] as? NSNumber)?.doubleValue {
       pendingObscureOpacity = CGFloat(obscure)
     }
+    // Each key is optional so a caller can send a partial config without resetting the rest.
+    if let feather = (args["maskFeatherHeightFraction"] as? NSNumber)?.doubleValue {
+      pendingMaskEdge.featherHeightFraction = CGFloat(feather)
+    }
+    if let erode = (args["maskErodeHeightFraction"] as? NSNumber)?.doubleValue {
+      pendingMaskEdge.erodeHeightFraction = CGFloat(erode)
+    }
+    if let slope = (args["maskSolidifySlope"] as? NSNumber)?.doubleValue {
+      pendingMaskEdge.solidifySlope = CGFloat(slope)
+    }
+    if let midpoint = (args["maskSolidifyMidpoint"] as? NSNumber)?.doubleValue {
+      pendingMaskEdge.solidifyMidpoint = CGFloat(midpoint)
+    }
+    if let gamma = (args["maskForegroundGamma"] as? NSNumber)?.doubleValue {
+      pendingMaskEdge.foregroundGamma = CGFloat(gamma)
+    }
+    if let sync = (args["synchronousSegmentation"] as? NSNumber)?.boolValue {
+      pendingSynchronousSegmentation = sync
+    }
   }
 
   private static func applyPendingBlurConfig(to proc: MeetBackgroundBlurProcessor) {
     proc.applyBlurConfig(
       blurSigma: pendingBlurSigma,
-      backgroundObscureOpacity: pendingObscureOpacity
+      backgroundObscureOpacity: pendingObscureOpacity,
+      maskEdge: pendingMaskEdge
     )
+    proc.applySynchronousSegmentation(pendingSynchronousSegmentation)
   }
 
   /// Active per-track processors plus the shared instance (if not already in the map).
@@ -302,6 +341,9 @@ private final class MeetBackgroundBlurProcessor: NSObject, ExternalVideoProcessi
           proc = created
         }
         proc.setEnabled(true)
+        // Processors are static and reused across tracks, so clear any mask the previous
+        // attachment stranded rather than compositing it over the new one's first frames.
+        proc.resetSegmentationState()
         if let args = call.arguments as? [String: Any] {
           storePendingBlurConfig(from: args)
         }

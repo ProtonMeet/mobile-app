@@ -1,21 +1,34 @@
 import 'package:flutter/foundation.dart';
 import 'package:livekit_client/livekit_client.dart';
-import 'package:meet/helper/background_blur/camera_background_blur_sync.dart';
+import 'package:meet/helper/background_blur/camera_background_effect_service.dart';
+import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:proton_video_effects/proton_video_effects.dart';
 
 /// Helper class for creating LocalVideoTrack instances
 class LocalVideoTrackHelper {
-  static TrackProcessor<VideoProcessorOptions>?
-  _processorWithOptionalUnleashBlur(
-    TrackProcessor<VideoProcessorOptions>? processor, {
+  static CameraBackgroundSelection _effectiveSelection({
     required bool applyBackgroundBlur,
+    required CameraBackgroundSelection backgroundSelection,
+  }) {
+    if (backgroundSelection.isEffectActive) {
+      return backgroundSelection;
+    }
+    if (applyBackgroundBlur) {
+      return const CameraBackgroundSelection.blur();
+    }
+    return const CameraBackgroundSelection.none();
+  }
+
+  static TrackProcessor<VideoProcessorOptions>? _processorWithOptionalUnleashBlur(
+    TrackProcessor<VideoProcessorOptions>? processor, {
+    required CameraBackgroundSelection selection,
   }) {
     if (processor != null) {
       return processor;
     }
-    if (!applyBackgroundBlur || kIsWeb) {
+    if (!selection.isEffectActive || kIsWeb) {
       return null;
     }
     try {
@@ -24,31 +37,36 @@ class LocalVideoTrackHelper {
           .unleashDataProvider;
       if (unleash.isMeetCameraBackgroundBlur()) {
         return ProtonVideoEffects.instance.createBlurTrackProcessor(
-          config: resolveCameraBackgroundBlurConfig(),
+          config: resolveCameraBackgroundBlurConfig(selection),
         );
       }
     } catch (_) {}
     return null;
   }
 
-  /// Creates a camera track with optional device or position
+  /// Creates a camera track with optional device or position.
   ///
-  /// If [device] is provided, uses that device.
-  /// If [position] is provided (and device is null), uses that camera position.
-  /// Otherwise, uses the default camera.
-  ///
-  /// When [processor] is null, [applyBackgroundBlur] is true, and Unleash toggle
-  /// MeetCameraBackgroundBlur is on (non-web), attaches blur via [ProtonVideoEffects.createBlurTrackProcessor].
+  /// When [processor] is null, [backgroundSelection] or legacy [applyBackgroundBlur]
+  /// controls native background effects when MeetCameraBackgroundBlur is enabled.
   static Future<LocalVideoTrack> cameraTrack({
     required VideoParameters parameters,
     MediaDevice? device,
     CameraPosition? position,
     TrackProcessor<VideoProcessorOptions>? processor,
     bool applyBackgroundBlur = false,
+    CameraBackgroundSelection backgroundSelection =
+        const CameraBackgroundSelection.none(),
   }) async {
+    final selection = _effectiveSelection(
+      applyBackgroundBlur: applyBackgroundBlur,
+      backgroundSelection: backgroundSelection,
+    );
+    if (selection.isEffectActive) {
+      await prepareCameraBackgroundSelectionForTrackCreation(selection);
+    }
     final effectiveProcessor = _processorWithOptionalUnleashBlur(
       processor,
-      applyBackgroundBlur: applyBackgroundBlur,
+      selection: selection,
     );
     if (device != null) {
       return LocalVideoTrack.createCameraTrack(
