@@ -423,7 +423,9 @@ impl App {
             .await?;
         let participant_track_settings = self
             .services
-            .room_service.read().await
+            .room_service
+            .read()
+            .await
             .update_participant_track_settings(
                 meeting_id.as_str(),
                 livekit_access_token,
@@ -482,7 +484,9 @@ impl App {
             .get_meeting_id(&user_id)
             .await?;
         self.services
-            .room_service.read().await
+            .room_service
+            .read()
+            .await
             .remove_participant(
                 meeting_id.as_str(),
                 livekit_access_token,
@@ -659,10 +663,12 @@ impl App {
         meeting_api: Arc<dyn MeetingApi>,
         event_api: Arc<dyn EventApi>,
         user_key_provider: Arc<dyn UserKeyProvider>,
-        user_service: Arc<RwLock<Service>>,
-        room_service: Arc<RoomService>,
-        waiting_room_service: Arc<WaitingRoomService>,
+        user_service: Service,
+        room_service: RoomService,
+        waiting_room_service: WaitingRoomService,
     ) -> Self {
+        use std::sync::Arc;
+
         Self {
             state,
             ws_client,
@@ -673,9 +679,11 @@ impl App {
             meeting_api,
             event_api,
             user_key_provider,
-            user_service,
-            room_service,
-            waiting_room_service,
+            services: Arc::new(ServicesBundle::new(
+                RwLock::new(room_service),
+                RwLock::new(waiting_room_service),
+                RwLock::new(user_service),
+            )),
         }
     }
 }
