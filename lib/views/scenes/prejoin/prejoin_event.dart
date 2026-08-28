@@ -1,4 +1,5 @@
 import 'package:livekit_client/livekit_client.dart';
+import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/rust/proton_meet/user_config.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_meeting_preview.dart';
@@ -96,6 +97,12 @@ class PreJoinAudioOutputDevicesChanged extends PreJoinEvent {
 class SwapVideo extends PreJoinEvent {}
 
 class PreJoinToggleCameraBackgroundBlur extends PreJoinEvent {}
+
+class PreJoinSetCameraBackgroundSelection extends PreJoinEvent {
+  final CameraBackgroundSelection selection;
+
+  PreJoinSetCameraBackgroundSelection(this.selection);
+}
 
 class ToggleKeepDisplayName extends PreJoinEvent {
   final bool keep;

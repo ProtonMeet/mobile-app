@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:livekit_client/livekit_client.dart';
+import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/rust/proton_meet/models/meet_info.dart';
 import 'package:meet/rust/proton_meet/models/meet_participant.dart';
@@ -256,6 +257,9 @@ class RoomState extends Equatable {
   /// In-room preference: native camera background blur (MeetCameraBackgroundBlur).
   final bool cameraBackgroundBlurEnabled;
 
+  /// Full camera background selection (none, blur, preset, custom image).
+  final CameraBackgroundSelection cameraBackgroundSelection;
+
   /// In-room preference: native mic denoise (MeetAudioDenoise).
   final bool audioDenoiseEnabled;
 
@@ -496,6 +500,7 @@ class RoomState extends Equatable {
     this.screenSharingIndex = 0,
     this.unsubscribeVideoByDefault = false,
     this.cameraBackgroundBlurEnabled = false,
+    this.cameraBackgroundSelection = const CameraBackgroundSelection.none(),
     this.audioDenoiseEnabled = false,
     this.audioDenoiseType = DenoiseType.rnnoise,
     this.showMeetingIsReady = false,
@@ -575,6 +580,7 @@ class RoomState extends Equatable {
     int? screenSharingIndex,
     bool? unsubscribeVideoByDefault,
     bool? cameraBackgroundBlurEnabled,
+    CameraBackgroundSelection? cameraBackgroundSelection,
     bool? audioDenoiseEnabled,
     DenoiseType? audioDenoiseType,
     bool? showMeetingIsReady,
@@ -665,8 +671,11 @@ class RoomState extends Equatable {
       screenSharingIndex: screenSharingIndex ?? this.screenSharingIndex,
       unsubscribeVideoByDefault:
           unsubscribeVideoByDefault ?? this.unsubscribeVideoByDefault,
-      cameraBackgroundBlurEnabled:
-          cameraBackgroundBlurEnabled ?? this.cameraBackgroundBlurEnabled,
+      cameraBackgroundBlurEnabled: cameraBackgroundBlurEnabled ??
+          (cameraBackgroundSelection?.isEffectActive ??
+              this.cameraBackgroundBlurEnabled),
+      cameraBackgroundSelection:
+          cameraBackgroundSelection ?? this.cameraBackgroundSelection,
       audioDenoiseEnabled: audioDenoiseEnabled ?? this.audioDenoiseEnabled,
       audioDenoiseType: audioDenoiseType ?? this.audioDenoiseType,
       meetingLink: meetingLink ?? this.meetingLink,
@@ -777,6 +786,7 @@ class RoomState extends Equatable {
     screenSharingIndex,
     unsubscribeVideoByDefault,
     cameraBackgroundBlurEnabled,
+    cameraBackgroundSelection,
     audioDenoiseEnabled,
     audioDenoiseType,
     meetingLink,
