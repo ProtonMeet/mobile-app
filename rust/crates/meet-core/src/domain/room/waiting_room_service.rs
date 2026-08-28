@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use base64::{engine::general_purpose, Engine};
 use proton_meet_crypto::MEET_KEY_PACKAGE_AAD;
@@ -9,6 +9,7 @@ use crate::domain::user::{
     models::{meeting_link_name::MeetingLinkName, meeting_session_key::MeetingSessionKey, UserId},
     ports::crypto_client::CryptoClient,
 };
+use crate::service::services_bundle::{derive_bundled_service, ServicesBundle};
 
 #[derive(Debug, thiserror::Error)]
 pub enum WaitingRoomError {
@@ -24,7 +25,10 @@ pub enum WaitingRoomError {
 pub struct WaitingRoomService {
     crypto_client: Arc<dyn CryptoClient>,
     key_packages: Arc<dyn KeyPackagePort>,
+    services: Weak<ServicesBundle>,
 }
+
+derive_bundled_service!(WaitingRoomService, services);
 
 impl WaitingRoomService {
     pub fn new(
@@ -34,6 +38,7 @@ impl WaitingRoomService {
         Self {
             crypto_client,
             key_packages,
+            services: Weak::new(),
         }
     }
 
