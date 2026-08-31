@@ -2,13 +2,14 @@ use std::future::ready;
 use std::sync::Arc;
 
 use crate::app::test_support::{
-    build_app, build_app_with_http, build_app_with_service, default_app_state,
-    state_with_participant_only, test_mls_store, test_server_time_tracker,
+    build_app, build_app_with_auth_service, build_app_with_http, build_app_with_service,
+    default_app_state, state_with_participant_only, test_mls_store, test_server_time_tracker,
     unreachable_test_proton_http_client,
 };
 use crate::domain::user::ports::meeting_api::MockMeetingApi;
 use crate::domain::user::ports::{MockHttpClient, MockMlsApi};
 use crate::errors::{core::MeetCoreError, http_client::HttpClientError};
+use crate::service::auth::MockAuthService;
 use crate::service::user_service::Service;
 
 #[tokio::test]
@@ -115,28 +116,15 @@ async fn remove_participant_errors_without_livekit_token() {
 
 #[tokio::test]
 async fn get_user_settings_propagates_service_error() {
-    use crate::domain::user::ports::{user_api::MockUserApi, MockUserRepository};
+    let mut auth = MockAuthService::with_bundled_service_setup();
+    auth.expect_get_user_settings()
+        .once()
+        .returning(|| Err(HttpClientError::Deserialize("offline".to_string()).into()));
 
-    let mut http = MockHttpClient::new();
-    http.expect_get_user_settings().once().returning(|| {
-        Box::pin(ready(Err(HttpClientError::Deserialize(
-            "offline".to_string(),
-        ))))
-    });
-
-    let service = Service::new(
-        Arc::new(http),
-        Arc::new(MockMlsApi::new()),
-        Arc::new(MockMeetingApi::new()),
-        Arc::new(MockUserApi::new()),
-        Arc::new(MockUserRepository::new()),
-        Arc::new(crate::app::test_support::minimal_ws_mock()),
-        test_mls_store(),
-        test_server_time_tracker(),
-    );
-
-    let app = build_app_with_service(default_app_state(), service).await;
-    assert!(app.get_user_settings().await.is_err());
+    let app = build_app_with_auth_service(default_app_state(), Box::new(auth)).await;
+    let settings = app.get_user_settings().await;
+    dbg!(&settings);
+    assert!(settings.is_err());
 }
 
 #[tokio::test]
@@ -145,7 +133,7 @@ async fn set_mls_group_update_handler_registers_on_service() {
     use crate::domain::user::ports::{user_api::MockUserApi, MockUserRepository};
 
     let service = auth_service(MockUserApi::new(), MockUserRepository::new());
-    let app = build_app_with_service(default_app_state(), service).await;
+    let app = build_app_with_auth_service(default_app_state(), service).await;
 
     app.set_mls_group_update_handler(|_meeting_id, _reason| Box::pin(async {}))
         .await;
@@ -157,7 +145,7 @@ async fn set_mls_sync_state_update_handler_registers_on_service() {
     use crate::domain::user::ports::{user_api::MockUserApi, MockUserRepository};
 
     let service = auth_service(MockUserApi::new(), MockUserRepository::new());
-    let app = build_app_with_service(default_app_state(), service).await;
+    let app = build_app_with_auth_service(default_app_state(), service).await;
 
     app.set_mls_sync_state_update_handler(|_state, _reason| Box::pin(async {}))
         .await;
@@ -169,7 +157,7 @@ async fn set_livekit_admin_change_handler_registers_on_service() {
     use crate::domain::user::ports::{user_api::MockUserApi, MockUserRepository};
 
     let service = auth_service(MockUserApi::new(), MockUserRepository::new());
-    let app = build_app_with_service(default_app_state(), service).await;
+    let app = build_app_with_auth_service(default_app_state(), service).await;
 
     app.set_livekit_admin_change_handler(|_room, _uid, _role| Box::pin(async {}))
         .await;

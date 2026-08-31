@@ -26,7 +26,8 @@ use crate::service::mls_service::MlsService;
 use crate::service::services_bundle::ServicesBundle;
 use crate::service::user_service::Service;
 use proton_meet_mls::{MlsClientConfig, MlsStore};
-use std::{collections::HashMap, future::Future, sync::Arc};
+use std::sync::Arc;
+use std::{collections::HashMap, future::Future};
 use tokio::sync::RwLock;
 use tracing::error;
 
@@ -656,9 +657,7 @@ impl App {
         meeting_api: Arc<dyn MeetingApi>,
         event_api: Arc<dyn EventApi>,
         user_key_provider: Arc<dyn UserKeyProvider>,
-        user_service: Service,
-        room_service: RoomService,
-        waiting_room_service: WaitingRoomService,
+        services: Arc<ServicesBundle>,
     ) -> Self {
         Self {
             state,
@@ -670,11 +669,7 @@ impl App {
             meeting_api,
             event_api,
             user_key_provider,
-            services: ServicesBundle::new(
-                room_service,
-                waiting_room_service,
-                RwLock::new(user_service),
-            ),
+            services,
         }
     }
 }

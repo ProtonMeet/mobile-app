@@ -2,7 +2,7 @@ use std::sync::{Arc, Weak};
 
 #[cfg(not(target_arch = "wasm32"))]
 use proton_meet_common::models::{ProtonUser, ProtonUserKey};
-use proton_meet_macro::{async_trait, async_trait_with_mock, BundledService};
+use proton_meet_macro::{async_trait, bundled_service, BundledService};
 
 #[cfg(not(target_arch = "wasm32"))]
 use crate::{
@@ -42,7 +42,7 @@ impl AuthServiceImpl {
     }
 }
 
-#[async_trait_with_mock]
+#[bundled_service]
 pub trait AuthService: Send + Sync + BundledService {
     async fn login(
         &self,
