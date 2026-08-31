@@ -21,6 +21,7 @@ use crate::infra::{
     storage::persister::Persister,
     ws_client::WsClient,
 };
+use crate::service::auth::AuthServiceImpl;
 use crate::service::mls_service::MlsService;
 use crate::service::services_bundle::ServicesBundle;
 use crate::service::user_service::Service;
@@ -243,8 +244,6 @@ impl App {
             http_client.clone(),
             http_client.clone(),
             http_client.clone(),
-            http_client.clone(),
-            Arc::new(persister),
             ws_client.clone(),
             mls_store.clone(),
             http_client.server_time_tracker(),
@@ -256,8 +255,18 @@ impl App {
             crypto_client.clone(),
         );
         let waiting_room_service = WaitingRoomService::new(crypto_client, mls_service);
+        let auth_service = Box::new(AuthServiceImpl::new(
+            http_client.clone(),
+            http_client.clone(),
+            Arc::new(persister),
+        ));
 
-        let services = ServicesBundle::new(room_service, waiting_room_service, user_service);
+        let services = ServicesBundle::new(
+            room_service,
+            waiting_room_service,
+            auth_service,
+            user_service,
+        );
 
         let services_cloned = services.clone();
         ws_client
@@ -432,13 +441,7 @@ impl App {
     }
 
     pub async fn get_user_settings(&self) -> Result<UserSettings, MeetCoreError> {
-        let user_settings = self
-            .services
-            .user_service
-            .read()
-            .await
-            .get_user_settings()
-            .await?;
+        let user_settings = self.services.auth_service.get_user_settings().await?;
         Ok(user_settings)
     }
 
@@ -448,9 +451,7 @@ impl App {
     ) -> Result<UserSettings, MeetCoreError> {
         let user_settings = self
             .services
-            .user_service
-            .read()
-            .await
+            .auth_service
             .update_user_settings_waiting_room(enable)
             .await?;
         Ok(user_settings)

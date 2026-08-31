@@ -34,7 +34,6 @@ use mls_spec::{
 use mls_trait::{types::ReceivedMessage, AuthorizerExt, ProposalArg, ProtonMeetIdentityProvider};
 use mls_types::{ContentType, Credential, ExternalPskId, MediaType, Member};
 use proton_claims::reexports::{cose_key_set::CoseKeySet, CwtAny};
-use proton_meet_common::models::{ProtonUser, ProtonUserKey};
 use proton_meet_macro::async_trait;
 use proton_meet_mls::{
     kv::MemKv, CipherSuite, CommitBundle, MlsClient, MlsClientConfig, MlsClientTrait, MlsGroup,
@@ -51,18 +50,14 @@ use crate::service::mls_service::MlsService;
 //TODO:(fix) the whole file need to be refactored, there are too many code duplication and not enough abstraction
 use crate::{
     domain::user::{
-        models::{user_settings::UserSettings, Address, UserId, UserTokenInfo},
+        models::{user_settings::UserSettings, UserId, UserTokenInfo},
         ports::{
-            meeting_api::MeetingApi, mls_api::MlsApi, user_api::UserApi, ArcUserRepository,
-            ConnectionState, HttpClient, UserService,
+            meeting_api::MeetingApi, mls_api::MlsApi, ConnectionState, HttpClient, UserService,
         },
     },
-    errors::{
-        core::MeetCoreError, http_client::HttpClientError, login::LoginError, service::ServiceError,
-    },
+    errors::{core::MeetCoreError, http_client::HttpClientError},
     infra::{
         dto::{
-            proton_user::UserData,
             realtime::{
                 ConnectionLostType, LeaveRoomMessage, MlsCommitInfo, MlsProposalInfo, RTCMessageIn,
                 RTCMessageInContent,
@@ -156,8 +151,6 @@ pub struct Service {
     http_client: Arc<dyn HttpClient>,
     mls_api: Arc<dyn MlsApi>,
     meeting_api: Arc<dyn MeetingApi>,
-    user_api: Arc<dyn UserApi>,
-    user_repository: ArcUserRepository,
     ws_client: ArcWebSocketClient,
     mls_store: Arc<RwLock<MlsStore>>,
     state: Arc<Mutex<ServiceState>>,
@@ -181,8 +174,6 @@ impl Service {
         http_client: Arc<dyn HttpClient>,
         mls_api: Arc<dyn MlsApi>,
         meeting_api: Arc<dyn MeetingApi>,
-        user_api: Arc<dyn UserApi>,
-        user_repository: ArcUserRepository,
         ws_client: ArcWebSocketClient,
         mls_store: Arc<RwLock<MlsStore>>,
         server_time_tracker: ServerTimeTracker,
@@ -224,8 +215,6 @@ impl Service {
             http_client,
             mls_api,
             meeting_api,
-            user_api,
-            user_repository,
             ws_client,
             mls_store,
             state,
@@ -648,26 +637,6 @@ impl Service {
         let mut state = self.state.lock().await;
         state.reset();
         drop(state);
-    }
-
-    /// Clears the persisted Proton user row and keys so [`UserService::get_user`] /
-    /// [`UserService::get_user_keys`] load from the API again (meet-server may have
-    /// changed user data when the event stream sets `refresh`).
-    pub async fn clear_local_user_profile_cache(
-        &self,
-        user_id: &UserId,
-    ) -> Result<(), MeetCoreError> {
-        // On native, `delete_user` removes the whole per-user DB bundle; clear keys first
-        // so `delete_user_keys` can still open the DB. On WASM, order is harmless.
-        self.user_repository
-            .delete_user_keys(user_id.as_str())
-            .await
-            .map_err(MeetCoreError::from)?;
-        self.user_repository
-            .delete_user(user_id.as_str())
-            .await
-            .map_err(MeetCoreError::from)?;
-        Ok(())
     }
 
     /// Returns whether MLS group info exists on the server (host has started the meeting).
@@ -1132,118 +1101,6 @@ impl Service {
 
 #[async_trait]
 impl UserService for Service {
-    #[cfg(not(target_arch = "wasm32"))]
-    async fn login(
-        &self,
-        username: &str,
-        password: &str,
-    ) -> Result<(UserData, ProtonUser, Vec<ProtonUserKey>, Vec<Address>), LoginError> {
-        let login_response = self.user_api.login(username, password).await?;
-
-        self.user_repository
-            .init_tables(&login_response.user.id)
-            .await?;
-
-        let user = login_response.user.clone();
-        self.user_repository.save_user(&user).await?;
-
-        let user_keys: Vec<ProtonUserKey> = login_response.user.keys.clone().unwrap_or_default();
-
-        self.user_repository
-            .save_user_keys(&user.id, &user_keys)
-            .await?;
-
-        let user_addresses = self.user_api.get_user_addresses().await?;
-
-        Ok((login_response, user, user_keys, user_addresses))
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    async fn login(
-        &self,
-        _username: &str,
-        _password: &str,
-    ) -> Result<(UserData, ProtonUser, Vec<ProtonUserKey>, Vec<Address>), LoginError> {
-        Err(LoginError::LoginFailed(
-            "password login is not available on web".into(),
-        ))
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    async fn login_with_two_factor(&self, two_factor_code: &str) -> Result<UserData, LoginError> {
-        let user_data = self.user_api.login_with_two_factor(two_factor_code).await?;
-        self.user_repository.init_tables(&user_data.user.id).await?;
-        let user = user_data.user.clone();
-        self.user_repository.save_user(&user).await?;
-        Ok(user_data)
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    async fn login_with_two_factor(&self, _two_factor_code: &str) -> Result<UserData, LoginError> {
-        Err(LoginError::LoginFailed(
-            "password login is not available on web".into(),
-        ))
-    }
-
-    async fn get_user_with_policy(
-        &self,
-        user_id: &UserId,
-        force_remote: bool,
-    ) -> Result<ProtonUser, ServiceError> {
-        if !force_remote {
-            let user = self.user_repository.get_user(user_id.as_str()).await?;
-            if let Some(local_user) = user {
-                return Ok(local_user);
-            }
-        }
-
-        // Force remote (or local miss): fetch fresh profile, then persist.
-        let proton_user = self.user_api.get_user_info().await?;
-        self.user_repository.save_user(&proton_user).await?;
-
-        // Keep key cache in sync with the latest user profile payload.
-        let user_keys = proton_user.keys.clone().unwrap_or_default();
-        self.user_repository
-            .save_user_keys(&proton_user.id, &user_keys)
-            .await?;
-
-        Ok(proton_user)
-    }
-
-    async fn get_user_keys_with_policy(
-        &self,
-        user_id: &UserId,
-        force_remote: bool,
-    ) -> Result<Vec<ProtonUserKey>, anyhow::Error> {
-        if !force_remote {
-            let user_keys = self.user_repository.get_user_keys(user_id.as_str()).await?;
-            if !user_keys.is_empty() {
-                return Ok(user_keys);
-            }
-        }
-
-        // Force remote (or local miss): fetch user profile, then persist user + keys.
-        let proton_user = self.user_api.get_user_info().await?;
-        self.user_repository.save_user(&proton_user).await?;
-
-        let proton_keys: Vec<ProtonUserKey> = proton_user.keys.unwrap_or_default();
-        self.user_repository
-            .save_user_keys(user_id.as_str(), &proton_keys)
-            .await?;
-        Ok(proton_keys)
-    }
-
-    async fn get_user_addresses(&self) -> Result<Vec<Address>, anyhow::Error> {
-        let user_addresses = self.user_api.get_user_addresses().await?;
-        Ok(user_addresses)
-    }
-
-    async fn logout(&self, user_id: &UserId) -> Result<(), anyhow::Error> {
-        self.user_api.logout().await;
-        self.user_repository.delete_user(user_id.as_str()).await?;
-        Ok(())
-    }
-
     async fn create_mls_client(
         &self,
         access_token: &str,
@@ -2245,22 +2102,6 @@ impl UserService for Service {
         state.reset();
 
         Ok(())
-    }
-
-    async fn get_user_settings(&self) -> Result<UserSettings, anyhow::Error> {
-        let user_settings = self.http_client.get_user_settings().await?;
-        Ok(user_settings)
-    }
-
-    async fn update_user_settings_waiting_room(
-        &self,
-        enable: bool,
-    ) -> Result<UserSettings, anyhow::Error> {
-        let user_settings = self
-            .http_client
-            .update_user_settings_waiting_room(enable)
-            .await?;
-        Ok(user_settings)
     }
 
     async fn get_sd_kbt(&self, user_identifier: &UserId) -> Result<String, anyhow::Error> {

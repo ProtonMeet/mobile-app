@@ -13,14 +13,6 @@ use tokio::sync::RwLock;
 
 #[async_trait_with_mock]
 pub trait UserService {
-    async fn login(
-        &self,
-        username: &str,
-        password: &str,
-    ) -> Result<(UserData, ProtonUser, Vec<ProtonUserKey>, Vec<Address>), LoginError>;
-
-    async fn logout(&self, user_id: &UserId) -> Result<(), anyhow::Error>;
-
     async fn create_mls_client(
         &self,
         access_token: &str,
@@ -138,37 +130,6 @@ pub trait UserService {
     async fn get_sd_kbt(&self, participant_id: &UserId) -> Result<String, anyhow::Error>;
 
     async fn get_meeting_id(&self, user_identifier: &UserId) -> Result<String, anyhow::Error>;
-
-    async fn login_with_two_factor(&self, two_factor_code: &str) -> Result<UserData, LoginError>;
-
-    async fn get_user(&self, user_id: &UserId) -> Result<ProtonUser, ServiceError> {
-        self.get_user_with_policy(user_id, false).await
-    }
-
-    async fn get_user_with_policy(
-        &self,
-        user_id: &UserId,
-        force_remote: bool,
-    ) -> Result<ProtonUser, ServiceError>;
-
-    async fn get_user_keys(&self, user_id: &UserId) -> Result<Vec<ProtonUserKey>, anyhow::Error> {
-        self.get_user_keys_with_policy(user_id, false).await
-    }
-
-    async fn get_user_keys_with_policy(
-        &self,
-        user_id: &UserId,
-        force_remote: bool,
-    ) -> Result<Vec<ProtonUserKey>, anyhow::Error>;
-
-    async fn get_user_addresses(&self) -> Result<Vec<Address>, anyhow::Error>;
-
-    async fn get_user_settings(&self) -> Result<UserSettings, anyhow::Error>;
-
-    async fn update_user_settings_waiting_room(
-        &self,
-        enable: bool,
-    ) -> Result<UserSettings, anyhow::Error>;
 
     async fn handle_livekit_admin_change(
         &self,
