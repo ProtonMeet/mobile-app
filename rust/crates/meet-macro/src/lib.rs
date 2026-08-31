@@ -136,11 +136,41 @@ pub fn async_trait_with_mock(_attr: TokenStream, item: TokenStream) -> TokenStre
     result.into()
 }
 
+/// Generate mocking types for a trait requiring `BundledService`.
+///
+/// Similarly to [`async_trait_with_mock`], adds platform-unified [`async_trait`]
+/// attributes and manually generates a `mock!` call that generates the
+/// type and functions to mock this trait. This `mock!` will generate mocking methods for
+/// `BundledService` as well as the trait this macro is applied on.
+///
+/// On the side, it will generate an associated method `with_bundled_service_setup` on the
+/// mocking type that sets up expectations for the `set_service_bundle()` and `services()`
+/// functions of the `BundledService` providing the same functionality as `bundled_service_derive`
+/// without the need of a dedicated field.
+///
+/// ### Example
+/// ```ignore
+/// #[bundled_service]
+/// pub trait MyService: BundledService + Send + Sync {
+///     async fn perform(&self) -> Result<(), MyError>;
+/// }
+///
+/// let mut mock = MockMyService::with_bundled_service_setup();
+/// mock.expect_perform().return_const(Ok(()));
+/// mock.set_service_bundle(Weak::null());
+///
+/// assert!(mock.services().is_ok());
+/// assert!(mock.perform().is_ok());
+/// ```
 #[proc_macro_attribute]
 pub fn bundled_service(_attr: TokenStream, item: TokenStream) -> TokenStream {
     bundled_service_inner(parse_macro_input!(item as ItemTrait))
 }
 
+/// Automatically derives the `BundledService` trait for this struct.
+///
+/// The helper attribute `#[service_bundle]` must be applied exactly once to a field
+/// of type `std::sync::Weak<proton_meet_core::service::services_bundle::ServicesBundle`.
 #[proc_macro_error]
 #[proc_macro_derive(BundledService, attributes(service_bundle))]
 pub fn bundled_service_derive(item: TokenStream) -> TokenStream {
