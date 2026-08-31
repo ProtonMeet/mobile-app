@@ -16,8 +16,13 @@
 //!
 //! These macros are designed to work across both native and WebAssembly targets seamlessly.
 use proc_macro::TokenStream;
+use proc_macro_error::proc_macro_error;
 use quote::quote;
-use syn::{parse_macro_input, ItemFn, ItemImpl, ItemTrait};
+use syn::{parse_macro_input, ItemFn, ItemImpl, ItemStruct, ItemTrait};
+
+use crate::bundled_service::{bundled_service_derive_inner, bundled_service_inner};
+
+mod bundled_service;
 
 /// Platform-unified test macro for async tests.
 ///
@@ -129,4 +134,15 @@ pub fn async_trait_with_mock(_attr: TokenStream, item: TokenStream) -> TokenStre
     };
 
     result.into()
+}
+
+#[proc_macro_attribute]
+pub fn bundled_service(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    bundled_service_inner(parse_macro_input!(item as ItemTrait))
+}
+
+#[proc_macro_error]
+#[proc_macro_derive(BundledService, attributes(service_bundle))]
+pub fn bundled_service_derive(item: TokenStream) -> TokenStream {
+    bundled_service_derive_inner(parse_macro_input!(item as ItemStruct))
 }

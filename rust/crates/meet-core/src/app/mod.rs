@@ -257,11 +257,7 @@ impl App {
         );
         let waiting_room_service = WaitingRoomService::new(crypto_client, mls_service);
 
-        let services = Arc::new(ServicesBundle::new(
-            room_service,
-            waiting_room_service,
-            user_service,
-        ));
+        let services = ServicesBundle::new(room_service, waiting_room_service, user_service);
 
         let services_cloned = services.clone();
         ws_client
@@ -663,8 +659,6 @@ impl App {
         room_service: RoomService,
         waiting_room_service: WaitingRoomService,
     ) -> Self {
-        use std::sync::Arc;
-
         Self {
             state,
             ws_client,
@@ -675,11 +669,11 @@ impl App {
             meeting_api,
             event_api,
             user_key_provider,
-            services: Arc::new(ServicesBundle::new(
+            services: ServicesBundle::new(
                 room_service,
                 waiting_room_service,
                 RwLock::new(user_service),
-            )),
+            ),
         }
     }
 }

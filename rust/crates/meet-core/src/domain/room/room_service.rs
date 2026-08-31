@@ -1,11 +1,10 @@
 use std::sync::{Arc, Weak};
 
 use crate::{
-    domain::user::models::meeting_session_key::MeetingSessionKey,
-    errors::service::ServiceError,
-    service::services_bundle::{derive_bundled_service, ServicesBundle},
-    utils::instant,
+    domain::user::models::meeting_session_key::MeetingSessionKey, errors::service::ServiceError,
+    service::services_bundle::ServicesBundle, utils::instant,
 };
+use proton_meet_macro::BundledService;
 use tracing::info;
 
 use crate::domain::user::{
@@ -29,14 +28,14 @@ use proton_meet_crypto::{MEET_DISPLAY_NAME_AAD, MEET_METADATA_AAD};
 /// including creating meetings, joining meetings, decrypting meeting data,
 /// and managing participants. It depends only on ports (traits), not concrete
 /// infrastructure implementations.
+#[derive(BundledService)]
 pub struct RoomService {
     http_client: Arc<dyn HttpClient>,
     meeting_api: Arc<dyn MeetingApi>,
     crypto_client: Arc<dyn CryptoClient>,
+    #[service_bundle]
     services: Weak<ServicesBundle>,
 }
-
-derive_bundled_service!(RoomService, services);
 
 impl RoomService {
     /// Creates a new RoomService instance
