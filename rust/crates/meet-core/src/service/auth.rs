@@ -19,7 +19,7 @@ use crate::{
 };
 
 #[derive(BundledService)]
-pub struct AuthServiceImpl {
+pub(crate) struct AuthServiceImpl {
     http_client: Arc<dyn HttpClient>,
     user_api: Arc<dyn UserApi>,
     user_repository: ArcUserRepository,
@@ -43,7 +43,7 @@ impl AuthServiceImpl {
 }
 
 #[bundled_service]
-pub trait AuthService: Send + Sync + BundledService {
+pub(crate) trait AuthService: Send + Sync + BundledService {
     async fn login(
         &self,
         username: &str,
@@ -72,8 +72,8 @@ pub trait AuthService: Send + Sync + BundledService {
 
     async fn get_user_addresses(&self) -> Result<Vec<Address>, anyhow::Error>;
 
-    /// Clears the persisted Proton user row and keys so [`UserService::get_user`] /
-    /// [`UserService::get_user_keys`] load from the API again (meet-server may have
+    /// Clears the persisted Proton user row and keys so [`get_user`][Self::get_user] /
+    /// [`get_user_keys``][Self::get_user_keys] load from the API again (meet-server may have
     /// changed user data when the event stream sets `refresh`).
     async fn clear_local_user_profile_cache(&self, user_id: &UserId) -> Result<(), StorageError>;
 

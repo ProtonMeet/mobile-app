@@ -18,21 +18,17 @@ pub(crate) mod tests {
         domain::user::{
             models::{meeting_link_name::MeetingLinkName, UserId},
             ports::{
-                meeting_api::MockMeetingApi, new_user_service::NewUserService,
-                MockHttpClient, MockMlsApi, MockWebSocketClient,
+                meeting_api::MockMeetingApi, new_user_service::NewUserService, MockHttpClient,
+                MockMlsApi, MockWebSocketClient,
             },
         },
-        errors::{
-            core::MeetCoreError, http_client::HttpClientError, service::ServiceError,
-        },
+        errors::{core::MeetCoreError, http_client::HttpClientError, service::ServiceError},
         infra::{
             crypto_client::derive_external_psk,
-            dto::
-                realtime::{
-                    GroupInfoVersion, MlsCommitInfo, MlsProposalInfo, MlsWelcomeInfo, RTCMessageIn,
-                    RTCMessageInContent, RatchetTreeAndGroupInfo, VersionedGroupInfoData,
-                }
-            ,
+            dto::realtime::{
+                GroupInfoVersion, MlsCommitInfo, MlsProposalInfo, MlsWelcomeInfo, RTCMessageIn,
+                RTCMessageInContent, RatchetTreeAndGroupInfo, VersionedGroupInfoData,
+            },
             message_cache::CachedMessageType,
             mimi_subject_parser::ANONYMOUS_USER_IDENTIFIER,
         },

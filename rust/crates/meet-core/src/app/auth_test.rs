@@ -3,8 +3,8 @@ use std::future::ready;
 use mockall::predicate::eq;
 
 use crate::app::test_support::{
-    auth_service, build_app, build_app_with_auth_service,
-    default_app_state, test_address, test_proton_user, test_user_key, test_user_state,
+    auth_service, build_app, build_app_with_auth_service, default_app_state, test_address,
+    test_proton_user, test_user_key, test_user_state,
 };
 use crate::domain::user::ports::{user_api::MockUserApi, MockUserRepository};
 use crate::errors::core::MeetCoreError;
