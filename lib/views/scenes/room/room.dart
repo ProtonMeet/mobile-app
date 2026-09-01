@@ -105,6 +105,8 @@ import 'side_panel_widget.dart';
 import 'speaker_phone/speaker_phone_panel.dart';
 import 'widgets/room_connection_aware_media_area.dart';
 
+const _waitingRoomJoinRequestNotificationTag = 'waiting_room_join_request';
+
 class RoomPage extends StatefulWidget {
   final Room room;
   final EventsListener<RoomEvent> listener;
@@ -482,6 +484,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     unawaited(_clearNativeReplacementBackground());
 
     // PIP cleanup is handled by bloc
+    GlobalNotification.dismiss(tag: _waitingRoomJoinRequestNotificationTag);
     _bloc.close();
     disableWakelock();
     onWindowShouldClose = null;
@@ -2543,8 +2546,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             listenWhen: (prev, curr) {
               final wasReady =
                   prev.isRoomInitialized && prev.isTrackInitialized;
-              final isReady =
-                  curr.isRoomInitialized && curr.isTrackInitialized;
+              final isReady = curr.isRoomInitialized && curr.isTrackInitialized;
               return !wasReady && isReady;
             },
             listener: (context, state) {
@@ -2589,14 +2591,21 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           ),
           BlocListener<RoomBloc, RoomState>(
             listenWhen: (prev, curr) =>
-                curr.waitingRoomParticipants.length >
-                prev.waitingRoomParticipants.length,
+                prev.waitingRoomParticipants.length !=
+                curr.waitingRoomParticipants.length,
             listener: (context, state) {
+              if (state.waitingRoomParticipants.isEmpty) {
+                GlobalNotification.dismiss(
+                  tag: _waitingRoomJoinRequestNotificationTag,
+                );
+                return;
+              }
               context.showGlobalNotification(
                 context.local.waiting_room_host_join_request_notification,
-                duration: const Duration(seconds: 10),
+                duration: Duration.zero,
+                showCloseButton: false,
+                tag: _waitingRoomJoinRequestNotificationTag,
                 onTap: () {
-                  GlobalNotification.dismiss();
                   if (!mounted) {
                     return;
                   }
