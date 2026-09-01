@@ -33,6 +33,29 @@ copy_pod_frameworks() {
   cp -Rc "${src}/." "${dest}/" 2>/dev/null || cp -R "${src}/." "${dest}/"
 }
 
+# MediaPipe pods are on CocoaPods trunk but not always present in the local specs repo,
+# so pod spec cat can fail even when pod install would succeed later in CI.
+resolve_pod_download_url() {
+  pod_name="$1"
+  version="$2"
+
+  url=$(pod spec cat --version="${version}" "${pod_name}" 2>/dev/null |
+    sed -n 's/.*"http": "\(.*\)".*/\1/p' | head -1)
+  if [ -n "${url}" ]; then
+    echo "${url}"
+    return 0
+  fi
+
+  url=$(curl -fsSL "https://trunk.cocoapods.org/api/v1/pods/${pod_name}/specs/${version}" 2>/dev/null |
+    sed -n 's/.*"http"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
+  if [ -n "${url}" ]; then
+    echo "${url}"
+    return 0
+  fi
+
+  return 1
+}
+
 # CocoaPods cache → remote pod tarball (not committed in plugin-cache).
 fetch_pod() {
   pod_name="$1"
@@ -48,8 +71,7 @@ fetch_pod() {
     return 0
   fi
 
-  url=$(pod spec cat --version="${MEDIAPIPE_VERSION}" "${pod_name}" 2>/dev/null |
-    sed -n 's/.*"http": "\(.*\)".*/\1/p' | head -1)
+  url=$(resolve_pod_download_url "${pod_name}" "${MEDIAPIPE_VERSION}") || url=""
   if [ -z "${url}" ]; then
     echo "proton_video_effects: cannot resolve a download URL for ${pod_name} ${MEDIAPIPE_VERSION}" >&2
     echo "  Run: cd ios && pod install   (or ensure network access for pod download)" >&2
