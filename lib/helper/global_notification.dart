@@ -11,6 +11,7 @@ class GlobalNotificationData {
     this.backgroundColor,
     this.showCloseButton = true,
     this.onTap,
+    this.tag,
   }) : assert(
          content != null || contentWidget != null,
          'Either content or contentWidget must be provided',
@@ -21,6 +22,7 @@ class GlobalNotificationData {
   final Color? backgroundColor;
   final bool showCloseButton;
   final VoidCallback? onTap;
+  final String? tag;
 
   @override
   bool operator ==(Object other) {
@@ -28,12 +30,18 @@ class GlobalNotificationData {
         other.content == content &&
         other.contentWidget == contentWidget &&
         other.backgroundColor == backgroundColor &&
-        other.showCloseButton == showCloseButton;
+        other.showCloseButton == showCloseButton &&
+        other.tag == tag;
   }
 
   @override
-  int get hashCode =>
-      Object.hash(content, contentWidget, backgroundColor, showCloseButton);
+  int get hashCode => Object.hash(
+    content,
+    contentWidget,
+    backgroundColor,
+    showCloseButton,
+    tag,
+  );
 }
 
 /// Controller that owns the currently visible global notification.
@@ -56,6 +64,7 @@ class GlobalNotificationController extends ChangeNotifier {
     Duration duration = const Duration(seconds: 5),
     bool showCloseButton = true,
     VoidCallback? onTap,
+    String? tag,
   }) {
     _autoDismissTimer?.cancel();
     _current = GlobalNotificationData(
@@ -64,16 +73,20 @@ class GlobalNotificationController extends ChangeNotifier {
       backgroundColor: backgroundColor,
       showCloseButton: showCloseButton,
       onTap: onTap,
+      tag: tag,
     );
     notifyListeners();
 
     if (duration > Duration.zero) {
-      _autoDismissTimer = Timer(duration, dismiss);
+      _autoDismissTimer = Timer(duration, () => dismiss(tag: tag));
     }
   }
 
-  void dismiss() {
+  void dismiss({String? tag}) {
     if (_current == null) {
+      return;
+    }
+    if (tag != null && _current!.tag != tag) {
       return;
     }
 
@@ -96,6 +109,7 @@ class GlobalNotification {
     Duration duration = const Duration(seconds: 5),
     bool showCloseButton = true,
     VoidCallback? onTap,
+    String? tag,
   }) {
     GlobalNotificationController.instance.show(
       content: content,
@@ -104,10 +118,11 @@ class GlobalNotification {
       duration: duration,
       showCloseButton: showCloseButton,
       onTap: onTap,
+      tag: tag,
     );
   }
 
-  static void dismiss() {
-    GlobalNotificationController.instance.dismiss();
+  static void dismiss({String? tag}) {
+    GlobalNotificationController.instance.dismiss(tag: tag);
   }
 }
