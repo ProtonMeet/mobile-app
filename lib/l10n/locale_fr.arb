@@ -26,15 +26,15 @@
   "report_a_problem": "Signaler un problème",
   "sign_in_to_proton_title": "Connectez-vous à Proton",
   "sign_in_to_proton_subtitle": "Saisissez les informations de votre compte Proton.",
-  "desktop_login_use_browser_for_security_key": "Use browser for security key",
+  "desktop_login_use_browser_for_security_key": "Passer par le navigateur pour utiliser la clé de sécurité",
   "@desktop_login_use_browser_for_security_key": {
     "description": "Opens desktop sign-in in the system browser so USB security keys (WebAuthn) work on macOS"
   },
-  "desktop_login_open_browser_again": "Open browser again",
+  "desktop_login_open_browser_again": "Ouvrir de nouveau le navigateur",
   "@desktop_login_open_browser_again": {
     "description": "Re-opens the desktop sign-in page in the system browser"
   },
-  "desktop_login_complete_in_browser": "Complete sign-in in your browser, then return to Meet.",
+  "desktop_login_complete_in_browser": "Terminez la connexion dans votre navigateur puis revenez dans Meet.",
   "@desktop_login_complete_in_browser": {
     "description": "Shown while polling for session after user signs in via external browser"
   },
@@ -157,7 +157,7 @@
   "@waiting_room_setting_off_description": {
     "description": "Waiting room switch description when disabled in meeting settings"
   },
-  "waiting_room_enabled_notification": "La salle d'attente activée est activée. Les participants ne peuvent rejoindre la réunion qu'après votre validation.",
+  "waiting_room_enabled_notification": "La salle d'attente est ouverte, les participants pourront rejoindre la réunion après que vous les ayez autorisés.",
   "@waiting_room_enabled_notification": {
     "description": "Global notification when the host enables waiting room in meeting settings"
   },
@@ -174,7 +174,17 @@
   "show_meeting_timer": "Afficher le minuteur de la réunion",
   "unsubscribe_video_by_default": "Désactiver la vidéo entrante",
   "camera_background_blur": "Flou d'arrière-plan",
-  "audio_noise_cancellation": "Réduction du bruit",
+  "virtual_backgrounds_title": "Fonds d'écran virtuels",
+  "@virtual_backgrounds_title": {
+    "description": "Title for virtual backgrounds in meeting settings"
+  },
+  "backgrounds_title": "Fonds d'écran",
+  "@backgrounds_title": {
+    "description": "Title for backgrounds dialog"
+  },
+  "virtual_background_none": "Aucun",
+  "virtual_background_custom": "Personnalisé",
+  "audio_noise_cancellation": "Suppression du bruit",
   "dark_mode": "Mode sombre",
   "show_connection_indicator": "Afficher l'indicateur de connexion",
   "desktop_notifications": "Notifications de bureau",
@@ -608,11 +618,11 @@
   "@recording_label": {
     "description": "Chip shown next to participants currently recording the meeting"
   },
-  "record_this_meeting": "Record this meeting",
+  "record_this_meeting": "Enregistrez cette réunion",
   "@record_this_meeting": {
     "description": "Title for start recording confirmation dialog"
   },
-  "recording_will_begin_attendees_notified": "Recording will begin and attendees will be notified.",
+  "recording_will_begin_attendees_notified": "L'enregistrement va commencer ; nous allons notifier les participants.",
   "@recording_will_begin_attendees_notified": {
     "description": "Message in start recording confirmation dialog"
   },
@@ -632,29 +642,29 @@
   "@stop_recording_confirm_message": {
     "description": "Message in stop recording confirmation dialog"
   },
-  "stop_recording_and_save": "Stop recording and save video",
+  "stop_recording_and_save": "Arrêter l'enregistrement et sauvegarder la vidéo",
   "@stop_recording_and_save": {
     "description": "Primary action in stop recording dialog"
   },
-  "failed_to_start_recording": "Failed to start recording",
+  "failed_to_start_recording": "L'enregistrement a échoué",
   "@failed_to_start_recording": {
     "description": "Error toast when recording could not start"
   },
-  "recording_not_supported": "Meeting recordings aren't supported on this device.",
+  "recording_not_supported": "L'enregistrement des réunions n'est pas pris en charge sur cet appareil.",
   "@recording_not_supported": {},
-  "recording_simulator_not_supported": "Local meeting recording isn't available in the iOS Simulator. Test on a physical iPhone or iPad.",
+  "recording_simulator_not_supported": "L'enregistrement des réunions en local n'est pas possible sur l'émulateur iOS. Testez sur du matériel physique (iPhone ou iPad).",
   "@recording_simulator_not_supported": {
     "description": "Shown when screen recording is unavailable on the platform"
   },
-  "recording_paid_feature": "Local meeting recording is available on paid plans.",
+  "recording_paid_feature": "L'enregistrement des réunions en local est disponible pour les versions payantes.",
   "@recording_paid_feature": {
     "description": "Shown when a free user taps the record button"
   },
-  "recording_recovered_message": "A previous meeting recording was recovered and saved on this device.",
+  "recording_recovered_message": "Un précédent enregistrement de réunion a été récupéré et sauvegardé sur cet appareil.",
   "@recording_recovered_message": {
     "description": "Toast when orphaned recording files are found after app restart"
   },
-  "recording_interrupted_background": "Recording stopped because the app went to the background. The saved portion is in Saved recordings.",
+  "recording_interrupted_background": "L'enregistrement s'est arrêté car l'application est passée en arrière-plan. La partie enregistrée est disponible dans les Enregistrements sauvegardés.",
   "@recording_interrupted_background": {
     "description": "Toast when iOS stops ReplayKit capture after backgrounding"
   },
@@ -662,19 +672,19 @@
   "@recording_save_location_section": {
     "description": "Section title in meeting settings for local recording folder"
   },
-  "recording_save_location": "Save recordings to",
+  "recording_save_location": "Sauvegarder les enregistrements sous",
   "@recording_save_location": {
     "description": "Label for local recording save folder setting"
   },
-  "recording_save_location_app_documents": "Proton Meet folder (app storage)",
+  "recording_save_location_app_documents": "Dossier Proton Meet (stockage de l'application)",
   "@recording_save_location_app_documents": {
     "description": "Preset: app documents recordings folder"
   },
-  "recording_save_location_downloads": "Downloads/Proton Meet",
+  "recording_save_location_downloads": "Téléchargements/Proton Meet",
   "@recording_save_location_downloads": {
     "description": "Preset: downloads folder"
   },
-  "recording_save_location_movies": "Movies/Proton Meet",
+  "recording_save_location_movies": "Films/Proton Meet",
   "@recording_save_location_movies": {
     "description": "Preset: macOS Movies folder"
   },
@@ -682,11 +692,11 @@
   "@recording_save_location_custom": {
     "description": "Preset: user-selected custom folder"
   },
-  "recording_save_location_updated": "Recording save location updated",
+  "recording_save_location_updated": "L'emplacement de sauvegarde des enregistrements a été mis à jour",
   "@recording_save_location_updated": {
     "description": "Toast after changing recording save folder"
   },
-  "recording_save_location_unavailable": "That folder could not be used. Try another location.",
+  "recording_save_location_unavailable": "Ce dossier n'a pas pu être utilisé. Essayez un nouvel emplacement.",
   "@recording_save_location_unavailable": {
     "description": "Error when selected recording folder is not writable"
   },
@@ -694,7 +704,7 @@
   "@saved_recordings_title": {
     "description": "Title for the list of local meeting recordings"
   },
-  "saved_recordings_empty": "No saved recordings yet. Record a meeting to see files here.",
+  "saved_recordings_empty": "Aucun enregistrement sauvegardé pour le moment. Enregistrez une réunion pour visualiser des fichiers ici.",
   "@saved_recordings_empty": {
     "description": "Empty state when no local recordings exist"
   },
@@ -702,7 +712,7 @@
   "@saved_recordings_share": {
     "description": "Share action for a saved recording"
   },
-  "saved_recordings_share_failed": "Could not open the share sheet. Try again.",
+  "saved_recordings_share_failed": "Le tableur partagé n'a pas pu être ouvert. Essayez à nouveau.",
   "@saved_recordings_share_failed": {
     "description": "Error when the system share sheet fails to open"
   },
@@ -710,11 +720,11 @@
   "@saved_recordings_folder": {
     "description": "Label above the folder path in saved recordings sheet"
   },
-  "saved_recordings_recovered": "Recovered after app restart",
+  "saved_recordings_recovered": "Récupéré après un redémarrage de l'application",
   "@saved_recordings_recovered": {
     "description": "Badge for recordings recovered from a crash"
   },
-  "saved_recordings_missing_file": "This recording file is no longer on this device.",
+  "saved_recordings_missing_file": "Ce fichier d'enregistrement n'existe plus sur cet appareil.",
   "@saved_recordings_missing_file": {
     "description": "Snackbar when a listed recording file was deleted"
   },
@@ -1139,6 +1149,10 @@
   "chat_copy_text": "Copier le texte",
   "@chat_copy_text": {
     "description": "Action to copy chat message text to clipboard"
+  },
+  "chat_message_too_long": "Votre message dépasse la limite de caractères autorisée dans le chat. Veuillez le diviser en plusieurs messages plus courts, merci.",
+  "@chat_message_too_long": {
+    "description": "Error notification shown when a composed chat message is longer than the allowed character limit"
   },
   "meeting_quality_feedback": "Commentaire sur la qualité de la réunion",
   "@meeting_quality_feedback": {
@@ -2146,5 +2160,13 @@
   "in_app_update_downloaded": "La nouvelle version de l'application a été téléchargée et sera installée automatiquement.",
   "@in_app_update_downloaded": {
     "description": "Notification shown when a Play Store flexible update finished downloading and will be installed"
+  },
+  "mobile_upgrade_warning_prefix": "Vous utilisez une ancienne version de l'application. Certaines fonctionnalités peuvent ne pas fonctionner comme prévu. Merci de ",
+  "@mobile_upgrade_warning_prefix": {
+    "description": "Prefix for the outdated mobile client warning shown when joining a meeting"
+  },
+  "mobile_upgrade_warning_link": "mettre à niveau vers la dernière version",
+  "@mobile_upgrade_warning_link": {
+    "description": "Tappable link text in the outdated mobile client warning; opens the app store"
   }
 }
