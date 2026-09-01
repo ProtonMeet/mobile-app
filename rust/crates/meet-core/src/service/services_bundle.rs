@@ -1,4 +1,4 @@
-use std::sync::{Arc, Weak};
+use std::sync::Arc;
 
 use tokio::sync::RwLock;
 
@@ -9,35 +9,21 @@ use crate::{
 
 /// Services bundle for the meet application
 pub struct ServicesBundle {
-    pub room_service: RoomService,
-    pub waiting_room_service: WaitingRoomService,
+    pub room_service: Arc<RoomService>,
+    pub waiting_room_service: Arc<WaitingRoomService>,
     pub user_service: RwLock<Service>,
-}
-
-pub(crate) trait BundledService {
-    fn set_service_bundle(&mut self, bundle: Weak<ServicesBundle>);
-    fn services(&self) -> Result<Arc<ServicesBundle>, anyhow::Error>;
 }
 
 impl ServicesBundle {
     pub(crate) fn new(
-        mut room_service: RoomService,
-        mut waiting_room_service: WaitingRoomService,
+        room_service: Arc<RoomService>,
+        waiting_room_service: Arc<WaitingRoomService>,
         user_service: RwLock<Service>,
-    ) -> Arc<Self> {
-        Arc::new_cyclic(|weak| {
-            for service in [
-                &mut room_service as &mut dyn BundledService,
-                &mut waiting_room_service,
-            ] {
-                service.set_service_bundle(weak.clone());
-            }
-
-            Self {
-                room_service,
-                waiting_room_service,
-                user_service,
-            }
-        })
+    ) -> Self {
+        Self {
+            room_service,
+            waiting_room_service,
+            user_service,
+        }
     }
 }

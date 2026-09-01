@@ -250,14 +250,18 @@ impl App {
             http_client.server_time_tracker(),
         ));
 
-        let room_service = RoomService::new(
+        let room_service = Arc::new(RoomService::new(
             http_client.clone(),
             http_client.clone(),
             crypto_client.clone(),
-        );
-        let waiting_room_service = WaitingRoomService::new(crypto_client, mls_service);
+        ));
+        let waiting_room_service = Arc::new(WaitingRoomService::new(crypto_client, mls_service));
 
-        let services = ServicesBundle::new(room_service, waiting_room_service, user_service);
+        let services = Arc::new(ServicesBundle::new(
+            room_service,
+            waiting_room_service,
+            user_service,
+        ));
 
         let services_cloned = services.clone();
         ws_client
@@ -659,6 +663,8 @@ impl App {
         room_service: RoomService,
         waiting_room_service: WaitingRoomService,
     ) -> Self {
+        use std::sync::Arc;
+
         Self {
             state,
             ws_client,
@@ -669,11 +675,11 @@ impl App {
             meeting_api,
             event_api,
             user_key_provider,
-            services: ServicesBundle::new(
-                room_service,
-                waiting_room_service,
+            services: Arc::new(ServicesBundle::new(
+                Arc::new(room_service),
+                Arc::new(waiting_room_service),
                 RwLock::new(user_service),
-            ),
+            )),
         }
     }
 }
