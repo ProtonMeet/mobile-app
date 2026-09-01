@@ -7,7 +7,7 @@ use std::{future::Future, sync::Arc};
 use tokio::sync::Mutex;
 
 macro_rules! gen_handler_methods {
-    ($name:ident, ($($arg:ident: $t:ty),*), noclear) => {
+    ($name:ident, ($($arg:ident: $t:ty),*), detached_only=$do:tt, no_clear=true) => {
         paste::paste! {
             #[cfg(not(target_family = "wasm"))]
             pub fn [<set_ $name>]<F, Fut>(&mut self, mut callback: F)
@@ -40,19 +40,20 @@ macro_rules! gen_handler_methods {
                 self.$name.is_some()
             }
 
-            #[allow(unused, non_camel_case_types)]
-            #[doc = "Calls the "]
-            #[doc = stringify!($name)]
-            #[doc = " handler with the provided arguments, returning `false` if it is not set."]
-            pub async fn [<call_ $name>]<$([<T $arg>]),*>(&self, $($arg: [<T $arg>]),*) -> bool where $($t: From<[<T $arg>]>),* {
-                let Some(handler) = self.$name.as_ref() else { return false };
+            gen_handler_methods!($name, ($($arg:$t),*), detached_only=$do);
+        }
+    };
+    ($name:ident, ($($arg:ident: $t:ty),*), detached_only=$do:tt, no_clear=false) => {
+        gen_handler_methods!($name, ($($arg:$t),*), detached_only=$do, no_clear=true);
 
-                let mut handler = handler.lock().await;
-                handler($($arg.into()),*).await;
-
-                true
+        paste::paste! {
+            pub fn [<clear_ $name>](&mut self) {
+                self.$name = None;
             }
-
+        }
+    };
+    ($name:ident, ($($arg:ident: $t:ty),*), detached_only=true) => {
+        paste::paste! {
             #[allow(unused, non_camel_case_types)]
             #[doc = "Calls the "]
             #[doc = stringify!($name)]
@@ -72,19 +73,28 @@ macro_rules! gen_handler_methods {
             }
         }
     };
-    ($name:ident, ($($arg:ident: $t:ty),*)) => {
-        gen_handler_methods!($name, ($($arg:$t),*), noclear);
+    ($name:ident, ($($arg:ident: $t:ty),*), detached_only=false) => {
+        gen_handler_methods!($name, ($($arg:$t),*), detached_only=true);
 
         paste::paste! {
-            pub fn [<clear_ $name>](&mut self) {
-                self.$name = None;
+            #[allow(unused, non_camel_case_types)]
+            #[doc = "Calls the "]
+            #[doc = stringify!($name)]
+            #[doc = " handler with the provided arguments, returning `false` if it is not set."]
+            pub async fn [<call_ $name>]<$([<T $arg>]),*>(&self, $($arg: [<T $arg>]),*) -> bool where $($t: From<[<T $arg>]>),* {
+                let Some(handler) = self.$name.as_ref() else { return false };
+
+                let mut handler = handler.lock().await;
+                handler($($arg.into()),*).await;
+
+                true
             }
         }
     };
 }
 
 macro_rules! gen_handlers {
-    ($struct_name:ident, $(($handler_name:ident: $handler_type:ident, ($($arg:ident: $t:ty),*)$(, $clear:tt)?)),* ) => {
+    ($struct_name:ident, $(($handler_name:ident: $handler_type:ident, ($($arg:ident: $t:ty),*)$(, $param:tt=$val:tt)*)),* ) => {
         $(
             #[cfg(not(target_family = "wasm"))]
             pub type $handler_type = Box<dyn FnMut($($t),*) -> Box<dyn Future<Output = ()> + Unpin + Send> + Send + 'static>;
@@ -94,7 +104,7 @@ macro_rules! gen_handlers {
         )*
 
         impl $struct_name {
-            $(gen_handler_methods!($handler_name, ($($arg: $t),*)$(, $clear)?);)*
+            $(gen_handler_methods!($handler_name, ($($arg: $t),*)$(, $param=$val)*);)*
         }
     };
 }
@@ -111,11 +121,11 @@ pub struct Handlers {
 }
 
 gen_handlers! { Handlers,
-    (join_decision_handler: JoinDecisionHandler, (request_id: String, admitted: bool)),
-    (join_request_handler: JoinRequestHandler, (change: JoinRequestChange, request_id: String, participant_uid: String, expires_at: u64)),
-    (mls_group_update_handler: MlsGroupUpdateHandler, (room_id: String, reason: GroupKeyUpdateReason), noclear),
-    (mls_sync_state_update_handler: MlsSyncStateUpdateHandler, (state: MlsSyncState, reason: Option<RejoinReason>), noclear),
-    (agent_left_handler: AgentLeftHandler, (device_id: String), noclear),
-    (agent_pending_handler: AgentPendingHandler, (device_id: String), noclear),
-    (livekit_admin_change_handler: LiveKitAdminChangeHandler, (room_id: String, participant_uid: String, participant_type: u32), noclear)
+    (join_decision_handler: JoinDecisionHandler, (request_id: String, admitted: bool), detached_only=true, no_clear=false),
+    (join_request_handler: JoinRequestHandler, (change: JoinRequestChange, request_id: String, participant_uid: String, expires_at: u64), detached_only=true, no_clear=false),
+    (mls_group_update_handler: MlsGroupUpdateHandler, (room_id: String, reason: GroupKeyUpdateReason), detached_only=false, no_clear=true),
+    (mls_sync_state_update_handler: MlsSyncStateUpdateHandler, (state: MlsSyncState, reason: Option<RejoinReason>), detached_only=false, no_clear=true),
+    (agent_left_handler: AgentLeftHandler, (device_id: String), detached_only=false, no_clear=true),
+    (agent_pending_handler: AgentPendingHandler, (device_id: String), detached_only=false, no_clear=true),
+    (livekit_admin_change_handler: LiveKitAdminChangeHandler, (room_id: String, participant_uid: String, participant_type: u32), detached_only=false, no_clear=true)
 }
