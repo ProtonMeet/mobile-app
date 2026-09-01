@@ -92,7 +92,8 @@ void main() async {
   /// sentry init
   await Sentry.init(
     (options) => options
-      ..dsn = Env.sentryApiKey.isNotEmpty ? Env.sentryApiKey : null
+      /// DSN is required or it will raise an error. Useempty string to disable Sentry
+      ..dsn = Env.sentryApiKey?.isNotEmpty == true ? Env.sentryApiKey : ''
       ..environment = appConfig.apiEnv.toString()
       ..debug = kDebugMode
       ..sendDefaultPii = true
