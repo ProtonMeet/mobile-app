@@ -24,7 +24,9 @@ use crate::infra::{
 use crate::service::mls_service::MlsService;
 use crate::service::services_bundle::ServicesBundle;
 use crate::service::user_service::Service;
+use futures::FutureExt;
 use proton_meet_mls::{MlsClientConfig, MlsStore};
+use std::future::ready;
 use std::{collections::HashMap, future::Future, sync::Arc};
 use tokio::sync::RwLock;
 use tracing::error;
@@ -263,10 +265,16 @@ impl App {
             user_service,
         ));
 
-        let services_cloned = services.clone();
+        // Use a weak reference in the message handler to avoid an Arc cycle.
+        // FIXME/TBD: Once the services refactor is completed, it might be possible to replace the
+        // `Weak<ServicesBundle>` by a `Weak<WebsocketService>`.
+        let weak_service = Arc::downgrade(&services);
         ws_client
             .set_message_handler(Arc::new(move |message| {
-                let bundle = services_cloned.clone();
+                let Some(bundle) = weak_service.upgrade() else {
+                    return ready(()).boxed();
+                };
+
                 Box::pin(async move {
                     match bundle
                         .user_service
