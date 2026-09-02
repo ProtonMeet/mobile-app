@@ -43,12 +43,6 @@ if (sentryAccountDSN == null) { sentryAccountDSN = '' }
 def sentryMeetDSN = System.getenv('SENTRY_MEET_DSN')
 if (sentryMeetDSN == null) { sentryMeetDSN = '' }
 
-repositories {
-    flatDir {
-        dirs 'libs'
-    }
-}
-
 android {
     namespace "proton.android.meet"
     compileSdkVersion libs.versions.compileSdk.get().toInteger()

@@ -72,6 +72,16 @@ extension SvgGenImageExtension on SvgGenImage {
     );
   }
 
+  Widget svgSize({Color? color, double? size}) {
+    return svg(
+      width: size,
+      height: size,
+      colorFilter: color != null
+          ? ColorFilter.mode(color, BlendMode.srcIn)
+          : null,
+    );
+  }
+
   Widget svg56() {
     return svg(width: 56, height: 56);
   }

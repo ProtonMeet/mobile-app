@@ -58,8 +58,7 @@ class GlobalNotificationHost extends StatelessWidget {
                   : GlobalNotificationView(
                       key: ValueKey(data),
                       data: data,
-                      onDismiss:
-                          GlobalNotificationController.instance.dismiss,
+                      onDismiss: GlobalNotificationController.instance.dismiss,
                     ),
             ),
             Expanded(child: expandedChild),

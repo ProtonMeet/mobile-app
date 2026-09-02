@@ -1,4 +1,5 @@
 import 'package:livekit_client/livekit_client.dart';
+import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/rust/proton_meet/models/meeting_info.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/rust/proton_meet/user_config.dart';
@@ -44,6 +45,9 @@ class PreJoinState {
   /// User toggle for the native camera background blur in the prejoin preview.
   /// Always forced to `false` when [isCameraBackgroundBlurFeatureEnabled] is `false`.
   final bool cameraBackgroundBlurEnabled;
+
+  /// Selected camera background effect (none, blur, preset, or custom image).
+  final CameraBackgroundSelection cameraBackgroundSelection;
   final bool isCameraPermissionGranted;
   final bool isMicrophonePermissionGranted;
   final bool shouldShowCameraPermissionSettings;
@@ -125,6 +129,7 @@ class PreJoinState {
     this.isVideoEnabled = true,
     this.isCameraBackgroundBlurFeatureEnabled = false,
     this.cameraBackgroundBlurEnabled = false,
+    this.cameraBackgroundSelection = const CameraBackgroundSelection.none(),
     this.isCameraPermissionGranted = false,
     this.isMicrophonePermissionGranted = false,
     this.shouldShowCameraPermissionSettings = false,
@@ -194,6 +199,7 @@ class PreJoinState {
     bool? isVideoEnabled,
     bool? isCameraBackgroundBlurFeatureEnabled,
     bool? cameraBackgroundBlurEnabled,
+    CameraBackgroundSelection? cameraBackgroundSelection,
     bool? isCameraPermissionGranted,
     bool? isMicrophonePermissionGranted,
     bool? shouldShowCameraPermissionSettings,
@@ -322,7 +328,11 @@ class PreJoinState {
           ? null
           : (displayNameFieldError ?? this.displayNameFieldError),
       cameraBackgroundBlurEnabled:
-          cameraBackgroundBlurEnabled ?? this.cameraBackgroundBlurEnabled,
+          cameraBackgroundBlurEnabled ??
+          (cameraBackgroundSelection?.isEffectActive ??
+              this.cameraBackgroundBlurEnabled),
+      cameraBackgroundSelection:
+          cameraBackgroundSelection ?? this.cameraBackgroundSelection,
       meetingInfo: resetMeetingAuth ? null : (meetingInfo ?? this.meetingInfo),
       isMeetingHost: resetMeetingAuth
           ? false

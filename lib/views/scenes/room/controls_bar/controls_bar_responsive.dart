@@ -47,7 +47,7 @@ class ResponsiveControlsBar extends StatefulWidget {
     this.cameraResolution,
     this.cameraMaxBitrate,
     this.currentCameraPosition,
-    this.applyCameraBackgroundBlur = false,
+    this.cameraBackgroundSelection = const CameraBackgroundSelection.none(),
     this.applyAudioDenoise = false,
     this.audioDenoiseType = DenoiseType.rnnoise,
   });
@@ -68,7 +68,10 @@ class ResponsiveControlsBar extends StatefulWidget {
   final VideoResolution? cameraResolution;
   final VideoMaxBitrate? cameraMaxBitrate;
   final CameraPosition? currentCameraPosition;
-  final bool applyCameraBackgroundBlur;
+
+  /// Full background choice (blur, preset, or custom image) so recreating the
+  /// camera track preserves the user's image instead of falling back to blur.
+  final CameraBackgroundSelection cameraBackgroundSelection;
   final bool applyAudioDenoise;
   final DenoiseType audioDenoiseType;
 
@@ -200,7 +203,10 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
   }
 
   Future<void> _disableVideo() async {
-    await syncLocalCameraBackgroundBlur(room: widget.room, enabled: false);
+    await syncLocalCameraBackgroundEffect(
+      room: widget.room,
+      selection: const CameraBackgroundSelection.none(),
+    );
     await participant?.setCameraEnabled(false);
     _onChange();
   }
@@ -208,8 +214,11 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
   Future<void> _enableVideo() async {
     await _startVideoTrack();
     await participant?.setCameraEnabled(true);
-    if (widget.applyCameraBackgroundBlur) {
-      await syncLocalCameraBackgroundBlur(room: widget.room, enabled: true);
+    if (widget.cameraBackgroundSelection.isEffectActive) {
+      await syncLocalCameraBackgroundEffect(
+        room: widget.room,
+        selection: widget.cameraBackgroundSelection,
+      );
     }
     _onChange();
   }
@@ -240,7 +249,7 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
         cameraTrack = await LocalVideoTrackHelper.cameraTrack(
           parameters: VideoParameters(dimensions: resolution.videoDimensions),
           position: widget.currentCameraPosition,
-          applyBackgroundBlur: widget.applyCameraBackgroundBlur,
+          backgroundSelection: widget.cameraBackgroundSelection,
         );
       } catch (e) {
         l.logger.e('[ControlsBar] Failed to create camera track: $e');
@@ -257,7 +266,7 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
           createTrack: () => LocalVideoTrackHelper.cameraTrack(
             parameters: VideoParameters(dimensions: resolution.videoDimensions),
             position: widget.currentCameraPosition,
-            applyBackgroundBlur: widget.applyCameraBackgroundBlur,
+            backgroundSelection: widget.cameraBackgroundSelection,
           ),
           publishOptions: VideoPublishOptions(
             videoCodec: preferredCodec,

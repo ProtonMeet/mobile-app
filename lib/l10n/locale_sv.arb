@@ -26,11 +26,11 @@
   "report_a_problem": "Rapportera problem",
   "sign_in_to_proton_title": "Logga in på Proton",
   "sign_in_to_proton_subtitle": "Enter your Proton Account details.",
-  "desktop_login_use_browser_for_security_key": "Use browser for security key",
+  "desktop_login_use_browser_for_security_key": "Använd webbläsare för säkerhetsnyckel",
   "@desktop_login_use_browser_for_security_key": {
     "description": "Opens desktop sign-in in the system browser so USB security keys (WebAuthn) work on macOS"
   },
-  "desktop_login_open_browser_again": "Open browser again",
+  "desktop_login_open_browser_again": "Öppna webbläsaren igen",
   "@desktop_login_open_browser_again": {
     "description": "Re-opens the desktop sign-in page in the system browser"
   },
@@ -133,7 +133,7 @@
   "@token_is_invalid_description": {
     "description": "Description when the MLS session token is invalid"
   },
-  "token_is_expired_title": "Connection expired",
+  "token_is_expired_title": "Anslutning löpt ut",
   "@token_is_expired_title": {
     "description": "Title when the MLS session token has expired"
   },
@@ -173,11 +173,21 @@
   "meeting": "Möte",
   "show_meeting_timer": "Show meeting timer",
   "unsubscribe_video_by_default": "Stäng av inkommande video",
-  "camera_background_blur": "Background blur",
+  "camera_background_blur": "Bakgrundsoskärpa",
+  "virtual_backgrounds_title": "Virtuella bakgrunder",
+  "@virtual_backgrounds_title": {
+    "description": "Title for virtual backgrounds in meeting settings"
+  },
+  "backgrounds_title": "Bakgrunder",
+  "@backgrounds_title": {
+    "description": "Title for backgrounds dialog"
+  },
+  "virtual_background_none": "Ingen",
+  "virtual_background_custom": "Anpassad",
   "audio_noise_cancellation": "Brusreducering",
   "dark_mode": "Mörkt läge",
   "show_connection_indicator": "Show connection indicator",
-  "desktop_notifications": "Desktop notifications",
+  "desktop_notifications": "Aviseringar för stationär dator",
   "meeting_quality": "Möteskvalitet",
   "camera_resolution": "Kameraupplösning",
   "camera_max_bitrate": "Camera Max Bitrate",
@@ -284,7 +294,7 @@
   "@participant_list_admit_all": {
     "description": "Button label to admit all waiting room participants"
   },
-  "participant_list_joined_at": "Joined at {time}",
+  "participant_list_joined_at": "Gick med kl. {time}",
   "@participant_list_joined_at": {
     "description": "Subtitle for a waiting room participant row",
     "placeholders": {
@@ -344,7 +354,7 @@
   "turn_on_microphone": "Slå på mikrofon",
   "audio_settings": "Ljudinställningar",
   "select_microphone": "Välj en mikrofon",
-  "select_speaker": "Select a speaker",
+  "select_speaker": "Välj en högtalare",
   "permission_not_given": "Permissions not given",
   "permission_camera": "Vi behövde kamerabehörighet för att aktivera din kamera",
   "permission_microphone": "Vi behövde kamerabehörighet för att aktivera din mikrofon",
@@ -608,7 +618,7 @@
   "@recording_label": {
     "description": "Chip shown next to participants currently recording the meeting"
   },
-  "record_this_meeting": "Record this meeting",
+  "record_this_meeting": "Spela in detta möte",
   "@record_this_meeting": {
     "description": "Title for start recording confirmation dialog"
   },
@@ -616,15 +626,15 @@
   "@recording_will_begin_attendees_notified": {
     "description": "Message in start recording confirmation dialog"
   },
-  "start_recording": "Start recording",
+  "start_recording": "Starta inspelning",
   "@start_recording": {
     "description": "Button to start local meeting recording"
   },
-  "stop_recording": "Stop recording",
+  "stop_recording": "Stoppa inspelning",
   "@stop_recording": {
     "description": "Button to stop local meeting recording"
   },
-  "stop_recording_title": "Stop recording",
+  "stop_recording_title": "Stoppa inspelning",
   "@stop_recording_title": {
     "description": "Title for stop recording confirmation dialog"
   },
@@ -632,11 +642,11 @@
   "@stop_recording_confirm_message": {
     "description": "Message in stop recording confirmation dialog"
   },
-  "stop_recording_and_save": "Stop recording and save video",
+  "stop_recording_and_save": "Stoppa inspelning och spara video",
   "@stop_recording_and_save": {
     "description": "Primary action in stop recording dialog"
   },
-  "failed_to_start_recording": "Failed to start recording",
+  "failed_to_start_recording": "Misslyckades att starta inspelning",
   "@failed_to_start_recording": {
     "description": "Error toast when recording could not start"
   },
@@ -658,11 +668,11 @@
   "@recording_interrupted_background": {
     "description": "Toast when iOS stops ReplayKit capture after backgrounding"
   },
-  "recording_save_location_section": "Recording",
+  "recording_save_location_section": "Spelar in",
   "@recording_save_location_section": {
     "description": "Section title in meeting settings for local recording folder"
   },
-  "recording_save_location": "Save recordings to",
+  "recording_save_location": "Spara inspelningar till",
   "@recording_save_location": {
     "description": "Label for local recording save folder setting"
   },
@@ -678,7 +688,7 @@
   "@recording_save_location_movies": {
     "description": "Preset: macOS Movies folder"
   },
-  "recording_save_location_custom": "Custom folder…",
+  "recording_save_location_custom": "Anpassad mapp …",
   "@recording_save_location_custom": {
     "description": "Preset: user-selected custom folder"
   },
@@ -690,7 +700,7 @@
   "@recording_save_location_unavailable": {
     "description": "Error when selected recording folder is not writable"
   },
-  "saved_recordings_title": "Saved recordings",
+  "saved_recordings_title": "Sparade inspelningar",
   "@saved_recordings_title": {
     "description": "Title for the list of local meeting recordings"
   },
@@ -698,7 +708,7 @@
   "@saved_recordings_empty": {
     "description": "Empty state when no local recordings exist"
   },
-  "saved_recordings_share": "Share",
+  "saved_recordings_share": "Dela",
   "@saved_recordings_share": {
     "description": "Share action for a saved recording"
   },
@@ -706,7 +716,7 @@
   "@saved_recordings_share_failed": {
     "description": "Error when the system share sheet fails to open"
   },
-  "saved_recordings_folder": "Saved to",
+  "saved_recordings_folder": "Sparad till",
   "@saved_recordings_folder": {
     "description": "Label above the folder path in saved recordings sheet"
   },
@@ -1139,6 +1149,10 @@
   "chat_copy_text": "Kopiera text",
   "@chat_copy_text": {
     "description": "Action to copy chat message text to clipboard"
+  },
+  "chat_message_too_long": "Your message exceeds the chat character limit. Please split it into shorter messages, thank you.",
+  "@chat_message_too_long": {
+    "description": "Error notification shown when a composed chat message is longer than the allowed character limit"
   },
   "meeting_quality_feedback": "Meeting Quality Feedback",
   "@meeting_quality_feedback": {
@@ -1819,7 +1833,7 @@
   "@calendar_outlook": {
     "description": "Menu label for opening Outlook Calendar"
   },
-  "calendar_proton": "Add to Proton Calendar",
+  "calendar_proton": "Lägg till i Proton Calendar",
   "@calendar_proton": {
     "description": "Menu label for opening Proton Calendar"
   },
@@ -2047,7 +2061,7 @@
   "@almost_there_content_before": {
     "description": "Content before Proton account in almost there bottom sheet (schedule meeting)"
   },
-  "almost_there_content_before_create_room": "To create a room, create a free ",
+  "almost_there_content_before_create_room": "För att skapa ett rum, skapa ett gratis ",
   "@almost_there_content_before_create_room": {
     "description": "Content before Proton account in almost there bottom sheet (create room)"
   },
@@ -2071,7 +2085,7 @@
   "@settings_section_general": {
     "description": "Section header in app settings"
   },
-  "settings_section_meetings": "Meetings",
+  "settings_section_meetings": "Möten",
   "@settings_section_meetings": {
     "description": "Section header for meeting-related app settings"
   },
@@ -2146,5 +2160,13 @@
   "in_app_update_downloaded": "The new app version has been downloaded and will be installed automatically.",
   "@in_app_update_downloaded": {
     "description": "Notification shown when a Play Store flexible update finished downloading and will be installed"
+  },
+  "mobile_upgrade_warning_prefix": "You’re using an older version of the app. Some features may not work as expected. Please ",
+  "@mobile_upgrade_warning_prefix": {
+    "description": "Prefix for the outdated mobile client warning shown when joining a meeting"
+  },
+  "mobile_upgrade_warning_link": "upgrade to the latest version",
+  "@mobile_upgrade_warning_link": {
+    "description": "Tappable link text in the outdated mobile client warning; opens the app store"
   }
 }

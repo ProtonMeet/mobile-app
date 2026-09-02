@@ -756,6 +756,7 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
         screenSharingIndex: state.screenSharingIndex,
         unsubscribeVideoByDefault: state.unsubscribeVideoByDefault,
         cameraBackgroundBlurEnabled: state.cameraBackgroundBlurEnabled,
+        cameraBackgroundSelection: state.cameraBackgroundSelection,
         meetingLink: state.meetingLink,
         showMeetingIsReady: state.showMeetingIsReady,
         isSpeakerMuted: state.isSpeakerMuted,

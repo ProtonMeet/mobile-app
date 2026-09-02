@@ -46,7 +46,8 @@ fi
 
 ios_staged() {
   test -d "${REPO_ROOT}/plugins/proton_denoise/ios/proton_denoise/VendoredFrameworks/RNNoise.xcframework" &&
-    test -d "${REPO_ROOT}/plugins/proton_video_effects/ios/proton_video_effects/VendoredFrameworks/MediaPipeTasksCommon.xcframework"
+    test -d "${REPO_ROOT}/plugins/proton_video_effects/ios/proton_video_effects/VendoredFrameworks/MediaPipeTasksCommon.xcframework" &&
+    test -d "${REPO_ROOT}/plugins/proton_video_effects/ios/proton_video_effects/VendoredFrameworks/MediaPipeTasksVision.xcframework"
 }
 
 macos_staged() {

@@ -174,6 +174,16 @@
   "show_meeting_timer": "Mostra il timer della riunione",
   "unsubscribe_video_by_default": "Disattiva i video in entrata",
   "camera_background_blur": "Sfondo sfocato",
+  "virtual_backgrounds_title": "Virtual backgrounds",
+  "@virtual_backgrounds_title": {
+    "description": "Title for virtual backgrounds in meeting settings"
+  },
+  "backgrounds_title": "Backgrounds",
+  "@backgrounds_title": {
+    "description": "Title for backgrounds dialog"
+  },
+  "virtual_background_none": "None",
+  "virtual_background_custom": "Custom",
   "audio_noise_cancellation": "Eliminazione rumori",
   "dark_mode": "Modalità scura",
   "show_connection_indicator": "Mostra indicatore di connessione",
@@ -1139,6 +1149,10 @@
   "chat_copy_text": "Copia testo",
   "@chat_copy_text": {
     "description": "Action to copy chat message text to clipboard"
+  },
+  "chat_message_too_long": "Il messaggio supera il limite di caratteri consentito. Dividilo in messaggi più brevi, grazie.",
+  "@chat_message_too_long": {
+    "description": "Error notification shown when a composed chat message is longer than the allowed character limit"
   },
   "meeting_quality_feedback": "Feedback qualità riunione",
   "@meeting_quality_feedback": {
@@ -2146,5 +2160,13 @@
   "in_app_update_downloaded": "La nuova versione dell'app è stata scaricata e verrà installata automaticamente.",
   "@in_app_update_downloaded": {
     "description": "Notification shown when a Play Store flexible update finished downloading and will be installed"
+  },
+  "mobile_upgrade_warning_prefix": "Stai utilizzando una versione precedente dell'app. Alcune funzionalità potrebbero non funzionare correttamente. Per favore ",
+  "@mobile_upgrade_warning_prefix": {
+    "description": "Prefix for the outdated mobile client warning shown when joining a meeting"
+  },
+  "mobile_upgrade_warning_link": "Esegui l'aggiornamento alla versione più recente",
+  "@mobile_upgrade_warning_link": {
+    "description": "Tappable link text in the outdated mobile client warning; opens the app store"
   }
 }

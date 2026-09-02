@@ -1,3 +1,4 @@
+import 'package:meet/helper/background_blur/virtual_background_store.dart';
 import 'package:meet/helper/logger.dart';
 import 'package:meet/managers/manager.dart';
 
@@ -76,5 +77,8 @@ class ManagerFactory {
     for (var entry in _managers.entries) {
       await entry.value.logout();
     }
+    // Not manager-owned, but it is user data on disk: the custom virtual
+    // background is a copy of one of the user's photos.
+    await VirtualBackgroundStore.clear();
   }
 }
