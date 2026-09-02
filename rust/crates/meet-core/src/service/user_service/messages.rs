@@ -481,7 +481,7 @@ impl Service {
 
         // trigger the group update callback outside of locks to prevent lock inversion
         self.handlers
-            .call_mls_group_update_handler(room_id, key_update_reason)
+            .call_mls_group_update_handler(room_id.into(), key_update_reason)
             .await;
 
         let _unused_proposals = match received_message {
