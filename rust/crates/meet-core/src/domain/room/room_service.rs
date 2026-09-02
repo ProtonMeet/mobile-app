@@ -1,8 +1,7 @@
-use std::sync::{Arc, Weak};
+use std::sync::Arc;
 
 use crate::{
-    domain::user::models::meeting_session_key::MeetingSessionKey, errors::service::ServiceError,
-    service::services_bundle::ServicesBundle, utils::instant,
+    domain::user::models::meeting_session_key::MeetingSessionKey, errors::service::ServiceError, utils::instant,
 };
 use tracing::info;
 
@@ -31,7 +30,6 @@ pub struct RoomService {
     http_client: Arc<dyn HttpClient>,
     meeting_api: Arc<dyn MeetingApi>,
     crypto_client: Arc<dyn CryptoClient>,
-    services: Weak<ServicesBundle>,
 }
 
 impl RoomService {
@@ -50,7 +48,6 @@ impl RoomService {
             http_client,
             meeting_api,
             crypto_client,
-            services: Weak::new(),
         }
     }
 

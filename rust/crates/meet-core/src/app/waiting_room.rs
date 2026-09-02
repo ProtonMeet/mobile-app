@@ -378,7 +378,7 @@ impl App {
         let mut key_packages = Vec::with_capacity(pending.len());
         let mut admitted_request_ids = Vec::with_capacity(pending.len());
         for request in &pending {
-            let serialized = &self
+            let serialized = self
                 .services
                 .waiting_room_service
                 .decrypt_key_package(
