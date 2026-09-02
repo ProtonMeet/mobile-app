@@ -8,7 +8,7 @@ use tokio::sync::Mutex;
 
 macro_rules! gen_handler_methods {
     ($name:ident, ($($arg:ident: $t:ty),*), detached_only=$do:tt, no_clear=true) => {
-        paste::paste! {
+        pastey::paste! {
             #[cfg(not(target_family = "wasm"))]
             pub fn [<set_ $name>]<F, Fut>(&mut self, mut callback: F)
             where
@@ -46,14 +46,14 @@ macro_rules! gen_handler_methods {
     ($name:ident, ($($arg:ident: $t:ty),*), detached_only=$do:tt, no_clear=false) => {
         gen_handler_methods!($name, ($($arg:$t),*), detached_only=$do, no_clear=true);
 
-        paste::paste! {
+        pastey::paste! {
             pub fn [<clear_ $name>](&mut self) {
                 self.$name = None;
             }
         }
     };
     ($name:ident, ($($arg:ident: $t:ty),*), detached_only=true) => {
-        paste::paste! {
+        pastey::paste! {
             #[allow(unused, non_camel_case_types)]
             #[doc = "Calls the "]
             #[doc = stringify!($name)]
@@ -75,7 +75,7 @@ macro_rules! gen_handler_methods {
     ($name:ident, ($($arg:ident: $t:ty),*), detached_only=false) => {
         gen_handler_methods!($name, ($($arg:$t),*), detached_only=true);
 
-        paste::paste! {
+        pastey::paste! {
             #[allow(unused, non_camel_case_types)]
             #[doc = "Calls the "]
             #[doc = stringify!($name)]
