@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
 use crate::{
-    domain::user::models::meeting_session_key::MeetingSessionKey, errors::service::ServiceError, utils::instant,
+    domain::user::models::meeting_session_key::MeetingSessionKey, errors::service::ServiceError,
+    utils::instant,
 };
 use tracing::info;
 
