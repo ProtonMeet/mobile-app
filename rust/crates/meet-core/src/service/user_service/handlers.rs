@@ -129,3 +129,246 @@ gen_handlers! { Handlers,
     (agent_pending_handler: AgentPendingHandler, (device_id: String), detached_only=false, no_clear=true),
     (livekit_admin_change_handler: LiveKitAdminChangeHandler, (room_id: String, participant_uid: String, participant_type: u32), detached_only=false, no_clear=true)
 }
+
+impl Handlers {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{
+        future::ready,
+        sync::atomic::{AtomicBool, AtomicU8, Ordering},
+        time::Duration,
+    };
+
+    use futures::FutureExt;
+    use meet_type::RejoinReason;
+    use tokio::time::sleep;
+
+    use crate::{
+        domain::room::JoinRequestChange,
+        service::{
+            service_state::MlsSyncState,
+            user_service::{handlers::Handlers, GroupKeyUpdateReason},
+        },
+    };
+
+    #[tokio::test]
+    async fn test_call_mls_group_update_exactly_once() {
+        let mut handlers = Handlers::new();
+
+        static COUNTER: AtomicU8 = AtomicU8::new(0);
+
+        handlers.set_mls_group_update_handler(|_, _| {
+            COUNTER.fetch_add(1, Ordering::AcqRel);
+            ready(()).boxed()
+        });
+
+        let called = handlers
+            .call_mls_group_update_handler("", GroupKeyUpdateReason::Join)
+            .await;
+
+        assert!(called);
+
+        // Check that the handler was called exactly once.
+        assert_eq!(COUNTER.load(Ordering::Acquire), 1);
+    }
+
+    #[test]
+    fn test_has_handler() {
+        let mut handlers = Handlers::new();
+        assert!(!handlers.has_livekit_admin_change_handler());
+
+        handlers.set_livekit_admin_change_handler(|_, _, _| ready(()).boxed());
+        assert!(handlers.has_livekit_admin_change_handler());
+    }
+
+    #[test]
+    fn test_clear_handler() {
+        let mut handlers = Handlers::new();
+        assert!(!handlers.has_join_decision_handler());
+
+        handlers.set_join_decision_handler(|_, _| ready(()).boxed());
+        assert!(handlers.has_join_decision_handler());
+
+        handlers.clear_join_decision_handler();
+        assert!(!handlers.has_join_decision_handler());
+    }
+
+    #[tokio::test]
+    async fn test_all_handlers() {
+        let mut handlers = Handlers::new();
+
+        static JOIN_DECISION_HANDLER_CALLED: AtomicBool = AtomicBool::new(false);
+        static JOIN_REQUEST_HANDLER_CALLED: AtomicBool = AtomicBool::new(false);
+        static MLS_GROUP_UPDATE_HANDLER_CALLED: AtomicBool = AtomicBool::new(false);
+        static MLS_SYNC_STATE_UPDATE_HANDLER_CALLED: AtomicBool = AtomicBool::new(false);
+        static AGENT_LEFT_HANDLER_CALLED: AtomicBool = AtomicBool::new(false);
+        static AGENT_PENDING_HANDLER_CALLED: AtomicBool = AtomicBool::new(false);
+        static LIVEKIT_ADMIN_CHANGE_HANDLER_CALLED: AtomicBool = AtomicBool::new(false);
+
+        fn check_called(should_be_true: &[&AtomicBool], should_be_false: &[&AtomicBool]) {
+            for a in should_be_true {
+                assert!(a.load(Ordering::SeqCst));
+            }
+            for a in should_be_false {
+                assert!(!a.load(Ordering::SeqCst));
+            }
+        }
+
+        handlers.set_join_decision_handler(|_, _| {
+            JOIN_DECISION_HANDLER_CALLED.store(true, Ordering::Release);
+            ready(()).boxed()
+        });
+
+        handlers.set_join_request_handler(|_, _, _, _| {
+            JOIN_REQUEST_HANDLER_CALLED.store(true, Ordering::Release);
+            ready(()).boxed()
+        });
+
+        handlers.set_mls_group_update_handler(|_, _| {
+            MLS_GROUP_UPDATE_HANDLER_CALLED.store(true, Ordering::Release);
+            ready(()).boxed()
+        });
+
+        handlers.set_mls_sync_state_update_handler(|_, _| {
+            MLS_SYNC_STATE_UPDATE_HANDLER_CALLED.store(true, Ordering::Release);
+            ready(()).boxed()
+        });
+
+        handlers.set_agent_left_handler(|_| {
+            AGENT_LEFT_HANDLER_CALLED.store(true, Ordering::Release);
+            ready(()).boxed()
+        });
+
+        handlers.set_agent_pending_handler(|_| {
+            AGENT_PENDING_HANDLER_CALLED.store(true, Ordering::Release);
+            ready(()).boxed()
+        });
+
+        handlers.set_livekit_admin_change_handler(|_, _, _| {
+            LIVEKIT_ADMIN_CHANGE_HANDLER_CALLED.store(true, Ordering::Release);
+            ready(()).boxed()
+        });
+
+        check_called(
+            &[],
+            &[
+                &JOIN_DECISION_HANDLER_CALLED,
+                &JOIN_REQUEST_HANDLER_CALLED,
+                &MLS_GROUP_UPDATE_HANDLER_CALLED,
+                &MLS_SYNC_STATE_UPDATE_HANDLER_CALLED,
+                &AGENT_LEFT_HANDLER_CALLED,
+                &AGENT_PENDING_HANDLER_CALLED,
+                &LIVEKIT_ADMIN_CHANGE_HANDLER_CALLED,
+            ],
+        );
+
+        handlers.call_detached_join_decision_handler("", true);
+        sleep(Duration::from_millis(50)).await;
+        check_called(
+            &[&JOIN_DECISION_HANDLER_CALLED],
+            &[
+                &JOIN_REQUEST_HANDLER_CALLED,
+                &MLS_GROUP_UPDATE_HANDLER_CALLED,
+                &MLS_SYNC_STATE_UPDATE_HANDLER_CALLED,
+                &AGENT_LEFT_HANDLER_CALLED,
+                &AGENT_PENDING_HANDLER_CALLED,
+                &LIVEKIT_ADMIN_CHANGE_HANDLER_CALLED,
+            ],
+        );
+
+        handlers.call_detached_join_request_handler(JoinRequestChange::Added, "", "", 0u64);
+        sleep(Duration::from_millis(50)).await;
+        check_called(
+            &[&JOIN_DECISION_HANDLER_CALLED, &JOIN_REQUEST_HANDLER_CALLED],
+            &[
+                &MLS_GROUP_UPDATE_HANDLER_CALLED,
+                &MLS_SYNC_STATE_UPDATE_HANDLER_CALLED,
+                &AGENT_LEFT_HANDLER_CALLED,
+                &AGENT_PENDING_HANDLER_CALLED,
+                &LIVEKIT_ADMIN_CHANGE_HANDLER_CALLED,
+            ],
+        );
+
+        handlers
+            .call_mls_group_update_handler("", GroupKeyUpdateReason::Join)
+            .await;
+        check_called(
+            &[
+                &JOIN_DECISION_HANDLER_CALLED,
+                &JOIN_REQUEST_HANDLER_CALLED,
+                &MLS_GROUP_UPDATE_HANDLER_CALLED,
+            ],
+            &[
+                &MLS_SYNC_STATE_UPDATE_HANDLER_CALLED,
+                &AGENT_LEFT_HANDLER_CALLED,
+                &AGENT_PENDING_HANDLER_CALLED,
+                &LIVEKIT_ADMIN_CHANGE_HANDLER_CALLED,
+            ],
+        );
+        handlers
+            .call_mls_sync_state_update_handler(MlsSyncState::Checking, RejoinReason::EpochMismatch)
+            .await;
+        check_called(
+            &[
+                &JOIN_DECISION_HANDLER_CALLED,
+                &JOIN_REQUEST_HANDLER_CALLED,
+                &MLS_GROUP_UPDATE_HANDLER_CALLED,
+                &MLS_SYNC_STATE_UPDATE_HANDLER_CALLED,
+            ],
+            &[
+                &AGENT_LEFT_HANDLER_CALLED,
+                &AGENT_PENDING_HANDLER_CALLED,
+                &LIVEKIT_ADMIN_CHANGE_HANDLER_CALLED,
+            ],
+        );
+
+        handlers.call_agent_left_handler("").await;
+        check_called(
+            &[
+                &JOIN_DECISION_HANDLER_CALLED,
+                &JOIN_REQUEST_HANDLER_CALLED,
+                &MLS_GROUP_UPDATE_HANDLER_CALLED,
+                &MLS_SYNC_STATE_UPDATE_HANDLER_CALLED,
+                &AGENT_LEFT_HANDLER_CALLED,
+            ],
+            &[
+                &AGENT_PENDING_HANDLER_CALLED,
+                &LIVEKIT_ADMIN_CHANGE_HANDLER_CALLED,
+            ],
+        );
+
+        handlers.call_agent_pending_handler("").await;
+        check_called(
+            &[
+                &JOIN_DECISION_HANDLER_CALLED,
+                &JOIN_REQUEST_HANDLER_CALLED,
+                &MLS_GROUP_UPDATE_HANDLER_CALLED,
+                &MLS_SYNC_STATE_UPDATE_HANDLER_CALLED,
+                &AGENT_LEFT_HANDLER_CALLED,
+                &AGENT_PENDING_HANDLER_CALLED,
+            ],
+            &[&LIVEKIT_ADMIN_CHANGE_HANDLER_CALLED],
+        );
+
+        handlers
+            .call_livekit_admin_change_handler("", "", 0u32)
+            .await;
+        check_called(
+            &[
+                &JOIN_DECISION_HANDLER_CALLED,
+                &JOIN_REQUEST_HANDLER_CALLED,
+                &MLS_GROUP_UPDATE_HANDLER_CALLED,
+                &MLS_SYNC_STATE_UPDATE_HANDLER_CALLED,
+                &AGENT_LEFT_HANDLER_CALLED,
+                &AGENT_PENDING_HANDLER_CALLED,
+                &LIVEKIT_ADMIN_CHANGE_HANDLER_CALLED,
+            ],
+            &[],
+        );
+    }
+}
