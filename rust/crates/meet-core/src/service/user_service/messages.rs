@@ -1109,29 +1109,11 @@ impl Service {
                                         RTCMessageInContent::AgentBundle(
                                             _mls_agent_bundle_info,
                                         ) => {
-                                            todo!()
+                                            tracing::debug!(
+                                                "Received AgentBundle message (not implemented yet)"
+                                            );
                                         }
                                     }
-                                }
-                                RTCMessageInContent::JoinRequest(_) => {
-                                    tracing::debug!(
-                                        "Received JoinRequest message (not being used)"
-                                    );
-                                }
-                                RTCMessageInContent::JoinDecision(_) => {
-                                    tracing::debug!(
-                                        "Received JoinDecision message (not being used)"
-                                    );
-                                }
-                                RTCMessageInContent::JoinRequestRemoved(_) => {
-                                    tracing::debug!(
-                                        "Received JoinRequestRemoved message (not being used)"
-                                    );
-                                }
-                                RTCMessageInContent::AgentBundle(_) => {
-                                    tracing::debug!(
-                                        "Received AgentBundle message (not being used)"
-                                    );
                                 }
                             }
                         }

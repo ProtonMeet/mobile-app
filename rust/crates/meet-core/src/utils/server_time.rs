@@ -104,6 +104,7 @@ impl ServerTimeTracker {
     }
 
     /// Extrapolated server time in whole seconds since the Unix epoch.
+    #[cfg_attr(not(test), expect(dead_code))]
     pub(crate) fn timestamp(&self) -> Option<i64> {
         self.with_anchor(extrapolated_sec)
     }

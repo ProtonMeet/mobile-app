@@ -63,6 +63,7 @@ pub struct AgentBundleForPush {
 /// shared [`MlsApi`] port for the bundle POST.
 pub struct AgentHostService {
     mls_api: Arc<dyn MlsApi>,
+    #[expect(unused)]
     mls_store: Arc<RwLock<MlsStore>>,
 }
 

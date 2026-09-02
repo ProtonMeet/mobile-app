@@ -18,7 +18,7 @@ impl futures::task::Spawn for TokioExecutor {
         &self,
         future: futures::task::FutureObj<'static, ()>,
     ) -> Result<(), futures::task::SpawnError> {
-        let _ = tokio::spawn(future);
+        tokio::spawn(future);
         Ok(())
     }
 }

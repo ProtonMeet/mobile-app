@@ -211,6 +211,7 @@ pub async fn build_app_with_http(state: AppState, http_client: Arc<ProtonHttpCli
     )
 }
 
+#[allow(unused)]
 pub async fn build_app_with_test_http(
     state: AppState,
     test_http: Arc<dyn crate::domain::user::ports::HttpClient>,
@@ -311,6 +312,7 @@ pub fn test_proton_user(user_id: &str) -> ProtonUser {
     }
 }
 
+#[allow(unused)]
 pub fn test_upcoming_meeting(id: &str) -> UpcomingMeeting {
     UpcomingMeeting {
         id: id.to_string(),
@@ -332,6 +334,7 @@ pub fn test_upcoming_meeting(id: &str) -> UpcomingMeeting {
     }
 }
 
+#[allow(unused)]
 pub fn test_meet_info() -> MeetInfo {
     MeetInfo {
         meet_name: "Test Meeting".to_string(),
@@ -463,6 +466,7 @@ pub async fn build_app_with_room_and_ws(
     )
 }
 
+#[allow(unused)]
 pub async fn build_app_with_room_and_service(
     state: AppState,
     service: Service,

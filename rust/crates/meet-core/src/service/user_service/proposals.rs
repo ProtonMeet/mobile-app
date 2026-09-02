@@ -140,8 +140,8 @@ impl Service {
         // combine all proposals
         let all_proposals: Vec<_> = add_proposals
             .into_iter()
-            .chain(remove_proposals.into_iter())
-            .chain(app_data_update_proposals.into_iter())
+            .chain(remove_proposals)
+            .chain(app_data_update_proposals)
             .collect();
 
         #[cfg(debug_assertions)]
