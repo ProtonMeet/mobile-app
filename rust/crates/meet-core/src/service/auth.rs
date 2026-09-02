@@ -36,9 +36,9 @@ impl AuthServiceImpl {
 }
 
 #[cfg(not(target_family = "wasm"))]
-pub type ArcAuthService = Arc<dyn AuthService + Send + Sync + 'static>;
+pub(crate) type ArcAuthService = Arc<dyn AuthService + Send + Sync + 'static>;
 #[cfg(target_family = "wasm")]
-pub type ArcAuthService = Arc<dyn AuthService + 'static>;
+pub(crate) type ArcAuthService = Arc<dyn AuthService + 'static>;
 
 #[async_trait_with_mock]
 pub(crate) trait AuthService {
