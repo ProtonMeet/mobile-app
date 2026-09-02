@@ -2,7 +2,6 @@ use super::App;
 use crate::app_state::UserState;
 use crate::domain::user::models::UserId;
 use crate::domain::user::ports::user_api::UserApi;
-use crate::domain::user::ports::UserService;
 use crate::errors::core::MeetCoreError;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::infra::dto::proton_user::UserData;

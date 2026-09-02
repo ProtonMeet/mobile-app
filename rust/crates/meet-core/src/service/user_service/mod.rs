@@ -50,7 +50,7 @@ use crate::service::mls_service::MlsService;
 //TODO:(fix) the whole file need to be refactored, there are too many code duplication and not enough abstraction
 use crate::{
     domain::user::{
-        models::{user_settings::UserSettings, UserId, UserTokenInfo},
+        models::{UserId, UserTokenInfo},
         ports::{
             meeting_api::MeetingApi, mls_api::MlsApi, ConnectionState, HttpClient, UserService,
         },
@@ -148,6 +148,7 @@ pub enum GroupKeyUpdateReason {
 
 #[derive(Clone)]
 pub struct Service {
+    #[expect(unused, reason = "Ongoing refactor")]
     http_client: Arc<dyn HttpClient>,
     mls_api: Arc<dyn MlsApi>,
     meeting_api: Arc<dyn MeetingApi>,

@@ -660,8 +660,6 @@ impl App {
         user_key_provider: Arc<dyn UserKeyProvider>,
         services: Arc<ServicesBundle>,
     ) -> Self {
-        use std::sync::Arc;
-
         Self {
             state,
             ws_client,

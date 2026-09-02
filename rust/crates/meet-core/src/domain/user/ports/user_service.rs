@@ -1,11 +1,9 @@
-use crate::domain::user::models::{user_settings::UserSettings, Address, UserId, UserTokenInfo};
-use crate::errors::{core::MeetCoreError, login::LoginError, service::ServiceError};
-use crate::infra::{dto::proton_user::UserData, ws_client::WebSocketMessage};
+use crate::domain::user::models::{UserId, UserTokenInfo};
+use crate::errors::core::MeetCoreError;
+use crate::infra::ws_client::WebSocketMessage;
 use mls_spec::{drafts::ratchet_tree_options::RatchetTreeOption, group::group_info::GroupInfo};
 use mls_trait::{CommitBundle, MlsGroup};
 use mls_types::{CipherSuite, ExternalPskId, MlsMessage};
-use proton_meet_common::models::ProtonUser;
-use proton_meet_common::models::ProtonUserKey;
 use proton_meet_macro::async_trait_with_mock;
 use proton_meet_mls::kv::MemKv;
 use std::sync::Arc;
