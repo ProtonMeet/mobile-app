@@ -72,9 +72,7 @@ mixin RoomFeatureFlagsHandlers on Bloc<RoomBlocEvent, RoomState> {
       return dataProviderManager.unleashDataProvider
           .isMeetMobileUpgradeWarning();
     } catch (e) {
-      l.logger.w(
-        '[RoomBloc] Error checking MeetMobileUpgradeWarning flag: $e',
-      );
+      l.logger.w('[RoomBloc] Error checking MeetMobileUpgradeWarning flag: $e');
       return false;
     }
   }
@@ -114,9 +112,7 @@ mixin RoomFeatureFlagsHandlers on Bloc<RoomBlocEvent, RoomState> {
       return dataProviderManager.unleashDataProvider
           .isMeetMeetingRecordingNative();
     } catch (e) {
-      l.logger.w(
-        '[RoomBloc] Error checking MeetingRecordingNative flag: $e',
-      );
+      l.logger.w('[RoomBloc] Error checking MeetingRecordingNative flag: $e');
       return false;
     }
   }

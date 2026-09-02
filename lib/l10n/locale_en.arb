@@ -174,6 +174,16 @@
   "show_meeting_timer": "Show meeting timer",
   "unsubscribe_video_by_default": "Turn off incoming video",
   "camera_background_blur": "Background blur",
+  "virtual_backgrounds_title": "Virtual backgrounds",
+  "@virtual_backgrounds_title": {
+    "description": "Title for virtual backgrounds in meeting settings"
+  },
+  "backgrounds_title": "Backgrounds",
+  "@backgrounds_title": {
+    "description": "Title for backgrounds dialog"
+  },
+  "virtual_background_none": "None",
+  "virtual_background_custom": "Custom",
   "audio_noise_cancellation": "Noise cancellation",
   "dark_mode": "Dark mode",
   "show_connection_indicator": "Show connection indicator",
@@ -644,8 +654,7 @@
     "description": "Error toast when recording could not start"
   },
   "recording_not_supported": "Meeting recordings aren't supported on this device.",
-  "@recording_not_supported": {
-  },
+  "@recording_not_supported": {},
   "recording_simulator_not_supported": "Local meeting recording isn't available in the iOS Simulator. Test on a physical iPhone or iPad.",
   "@recording_simulator_not_supported": {
     "description": "Shown when screen recording is unavailable on the platform"

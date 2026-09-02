@@ -14,8 +14,10 @@ import 'package:logger/logger.dart';
 import 'package:meet/constants/constants.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/constants/test_ids.dart';
+import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
+import 'package:meet/helper/extension/local_video_track_extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/helper/global_notification.dart';
@@ -50,6 +52,7 @@ import 'package:meet/views/components/alerts/media_permission_dialog.dart';
 import 'package:meet/views/components/alerts/meeting_will_end_dialog.dart';
 import 'package:meet/views/components/alerts/session_expired_dialog.dart';
 import 'package:meet/views/components/bottom.sheets/leave_room_bottom_sheet.dart';
+import 'package:meet/views/components/bottom.sheets/virtual_background_sheet.dart';
 import 'package:meet/views/components/custom.tooltip.dart';
 import 'package:meet/views/components/loading_view.dart';
 import 'package:meet/views/components/test_id.dart';
@@ -79,6 +82,7 @@ import 'package:meet/views/scenes/utils.dart';
 import 'package:meet/views/scenes/widgets/meeting_settings_v2.dart';
 import 'package:meet/views/scenes/widgets/statistics_dialog.dart';
 import 'package:proton_denoise/proton_denoise.dart';
+import 'package:proton_video_effects/proton_video_effects.dart';
 import 'package:sentry/sentry.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -101,6 +105,8 @@ import 'side_panel_widget.dart';
 import 'speaker_phone/speaker_phone_panel.dart';
 import 'widgets/room_connection_aware_media_area.dart';
 
+const _waitingRoomJoinRequestNotificationTag = 'waiting_room_join_request';
+
 class RoomPage extends StatefulWidget {
   final Room room;
   final EventsListener<RoomEvent> listener;
@@ -112,10 +118,9 @@ class RoomPage extends StatefulWidget {
   final PreJoinType preJoinType;
   final AuthBloc? authBloc;
 
-  /// User preference for camera background blur carried over from the prejoin
-  /// screen. Forwarded to [RoomBloc] via [RoomInitialized] which re-applies
-  /// the native processor onto the already-published video track.
+  /// User preference for camera background effects carried over from prejoin.
   final bool cameraBackgroundBlurEnabled;
+  final CameraBackgroundSelection cameraBackgroundSelection;
 
   /// Meeting limits resolved during pre-join; skips getMeetingInfo in room.
   final FrbMeetingInfo? prefetchedMeetingInfo;
@@ -131,6 +136,7 @@ class RoomPage extends StatefulWidget {
     this.preJoinType, {
     this.authBloc,
     this.cameraBackgroundBlurEnabled = false,
+    this.cameraBackgroundSelection = const CameraBackgroundSelection.none(),
     this.prefetchedMeetingInfo,
     super.key,
   });
@@ -292,6 +298,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           preJoinType: widget.preJoinType,
           meetingLink: widget.meetLink,
           cameraBackgroundBlurEnabled: widget.cameraBackgroundBlurEnabled,
+          cameraBackgroundSelection: widget.cameraBackgroundSelection,
           prefetchedMeetingInfo: widget.prefetchedMeetingInfo,
         ),
       );
@@ -470,7 +477,14 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         // NotificationService might not be registered on non-Android platforms
       }
     }
+    // Drop the decoded background image the native engine is holding so the
+    // user's photo does not stay resident after the meeting. Track creation
+    // re-supplies it via `prepareCameraBackgroundSelectionForTrackCreation`,
+    // so a later prejoin or rejoin still gets its background.
+    unawaited(_clearNativeReplacementBackground());
+
     // PIP cleanup is handled by bloc
+    GlobalNotification.dismiss(tag: _waitingRoomJoinRequestNotificationTag);
     _bloc.close();
     disableWakelock();
     onWindowShouldClose = null;
@@ -2532,8 +2546,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             listenWhen: (prev, curr) {
               final wasReady =
                   prev.isRoomInitialized && prev.isTrackInitialized;
-              final isReady =
-                  curr.isRoomInitialized && curr.isTrackInitialized;
+              final isReady = curr.isRoomInitialized && curr.isTrackInitialized;
               return !wasReady && isReady;
             },
             listener: (context, state) {
@@ -2578,14 +2591,21 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           ),
           BlocListener<RoomBloc, RoomState>(
             listenWhen: (prev, curr) =>
-                curr.waitingRoomParticipants.length >
-                prev.waitingRoomParticipants.length,
+                prev.waitingRoomParticipants.length !=
+                curr.waitingRoomParticipants.length,
             listener: (context, state) {
+              if (state.waitingRoomParticipants.isEmpty) {
+                GlobalNotification.dismiss(
+                  tag: _waitingRoomJoinRequestNotificationTag,
+                );
+                return;
+              }
               context.showGlobalNotification(
                 context.local.waiting_room_host_join_request_notification,
-                duration: const Duration(seconds: 10),
+                duration: Duration.zero,
+                showCloseButton: false,
+                tag: _waitingRoomJoinRequestNotificationTag,
                 onTap: () {
-                  GlobalNotification.dismiss();
                   if (!mounted) {
                     return;
                   }
@@ -3286,7 +3306,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         cameraResolution: _cameraResolution,
         cameraMaxBitrate: _cameraMaxBitrate,
         currentCameraPosition: state.currentCameraPosition,
-        applyCameraBackgroundBlur: state.cameraBackgroundBlurEnabled,
+        cameraBackgroundSelection: state.cameraBackgroundSelection,
         applyAudioDenoise: state.audioDenoiseEnabled,
         recordingControls: _buildRecordingControls(state),
         trailing: state.isLocalScreenSharing
@@ -3675,11 +3695,15 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   }
 
   Widget _wrapSidePanel({required RoomSidePanel panel, required Widget child}) {
+    final maxWidth =
+        roomSidePanelUsesSideRail(MediaQuery.of(context).size.width)
+        ? roomSidePanelWidth
+        : double.infinity;
     return SidePanelOrSheet(
       key: ValueKey(panel),
       isScreenSharing: _isScreenSharing,
       isCameraView: _isCameraView,
-      maxWidth: roomSidePanelWidth,
+      maxWidth: maxWidth,
       child: child,
       onDismissed: () {
         if (_openSidePanel != panel) return;
@@ -3782,12 +3806,109 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
+  /// Local camera feed used to preview background choices inside the sheet.
+  ///
+  /// Null while the camera is off: muting leaves the publication and its track
+  /// in place, so without the mute check the sheet would render a live-looking
+  /// preview from a camera the user has already turned off.
+  VideoTrack? get _localCameraTrack {
+    final lp = _bloc.state.room.localParticipant;
+    if (lp == null) {
+      return null;
+    }
+    for (final pub in lp.videoTrackPublications) {
+      if (pub.isScreenShare || pub.muted) {
+        continue;
+      }
+      final track = pub.track;
+      if (track is LocalVideoTrack) {
+        return track;
+      }
+    }
+    return null;
+  }
+
+  /// Camera feed shown only inside the background sheet, while the in-room
+  /// camera is off.
+  ///
+  /// Deliberately never published: unmuting to get a preview would light up the
+  /// user's tile for everyone else and flip room state that they did not ask to
+  /// change. This track is created when the sheet opens, rendered locally, and
+  /// stopped again on close, so nothing reaches remote participants.
+  Future<LocalVideoTrack?> _createSheetPreviewTrack(
+    CameraBackgroundSelection selection,
+  ) async {
+    try {
+      final track = await LocalVideoTrackHelper.cameraTrack(
+        parameters: VideoParametersPresets.h720_169,
+        backgroundSelection: selection,
+      );
+      await track.start();
+      return track;
+    } catch (e) {
+      l.logger.w('[RoomPage] preview-only camera track failed: $e');
+      return null;
+    }
+  }
+
+  Future<void> _clearNativeReplacementBackground() async {
+    if (kIsWeb) {
+      return;
+    }
+    try {
+      await ProtonVideoEffects.instance.clearReplacementBackground();
+    } catch (_) {}
+  }
+
+  Future<void> _stopSheetPreviewTrack(LocalVideoTrack track) async {
+    final trackId = track.mediaStreamTrack.id;
+    if (trackId != null && trackId.isNotEmpty) {
+      try {
+        await ProtonVideoEffects.instance.detachBackgroundBlur(
+          trackId: trackId,
+        );
+      } catch (_) {}
+    }
+    try {
+      await track.stop();
+    } catch (_) {}
+  }
+
+  Future<void> _openVirtualBackgroundSheet(
+    BuildContext context,
+    CameraBackgroundSelection current,
+  ) async {
+    final published = _localCameraTrack;
+    // Null means the camera is muted, so borrow an unpublished one purely for
+    // the preview rather than leaving the sheet blank.
+    final previewOnly = published == null
+        ? await _createSheetPreviewTrack(current)
+        : null;
+    try {
+      if (!context.mounted) {
+        return;
+      }
+      final selection = await VirtualBackgroundSheet.show(
+        context,
+        initialSelection: current,
+        previewTrack: published ?? previewOnly,
+      );
+      if (selection == null || selection == current) {
+        return;
+      }
+      _bloc.add(SetCameraBackgroundSelection(selection));
+    } finally {
+      if (previewOnly != null) {
+        await _stopSheetPreviewTrack(previewOnly);
+      }
+    }
+  }
+
   Widget buildMeetingSettingsContent(
     BuildContext context, {
     bool isHost = false,
   }) {
     final showCameraBackgroundBlur =
-        mobile &&
         !kIsWeb &&
         ManagerFactory()
             .get<DataProviderManager>()
@@ -3809,19 +3930,19 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         return BlocSelector<
           RoomBloc,
           RoomState,
-          (bool, bool, bool, bool, DenoiseType)
+          (bool, bool, CameraBackgroundSelection, bool, DenoiseType)
         >(
           selector: (state) => (
             state.isRejoining,
             state.forceShowConnectionStatusBanner,
-            state.cameraBackgroundBlurEnabled,
+            state.cameraBackgroundSelection,
             state.audioDenoiseEnabled,
             state.audioDenoiseType,
           ),
           builder: (context, data) {
             final isRejoining = data.$1;
             final forceShowConnectionStatusBanner = data.$2;
-            final cameraBackgroundBlurEnabled = data.$3;
+            final cameraBackgroundSelection = data.$3;
             final audioDenoiseEnabled = data.$4;
             final storedAudioDenoiseType = data.$5;
             final selectedAudioDenoiseType =
@@ -3845,10 +3966,21 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               showConnectionSettings:
                   isAutoReconnectionEnabled && isNetworkToolEnabled,
               showCameraBackgroundBlur: showCameraBackgroundBlur,
-              cameraBackgroundBlurEnabled: cameraBackgroundBlurEnabled,
-              onCameraBackgroundBlurChanged: showCameraBackgroundBlur
-                  ? ({required bool value}) {
-                      _bloc.add(SetCameraBackgroundBlurEnabled(enabled: value));
+              cameraBackgroundSelection: cameraBackgroundSelection,
+              onCameraBackgroundTap: showCameraBackgroundBlur
+                  ? () {
+                      // Settings closes first so the background sheet replaces
+                      // it instead of stacking. That tears down this builder's
+                      // context along with the panel, so the sheet is opened
+                      // from the page context, which outlives it.
+                      dismissRoomPanelBottomSheetIfPresent();
+                      _closeSidePanel();
+                      unawaited(
+                        _openVirtualBackgroundSheet(
+                          this.context,
+                          cameraBackgroundSelection,
+                        ),
+                      );
                     }
                   : null,
               showAudioDenoise: showAudioDenoise,

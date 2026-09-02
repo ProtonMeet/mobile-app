@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/helper/background_blur/camera_background_blur_sync.dart';
+import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/helper/denoise/denoise_audio_sync.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/sentry_waiting_room.dart';
@@ -36,7 +37,18 @@ mixin RoomSettingsHandlers
   void registerSettingsHandlers() {
     on<SetUnsubscribeVideoByDefault>(_onSetUnsubscribeVideoByDefault);
     on<MeetingInfoWaitingRoomUpdated>(_onMeetingInfoWaitingRoomUpdated);
-    on<SetCameraBackgroundBlurEnabled>(_onSetCameraBackgroundBlurEnabled);
+    // Both handlers emit immediately and then run a multi-hop native
+    // round-trip (clear -> set image -> set config -> attach). Run one at a
+    // time: interleaved calls let the pipeline settle on an earlier selection
+    // than the one the state reports, and nothing reconciles that afterwards.
+    on<SetCameraBackgroundBlurEnabled>(
+      _onSetCameraBackgroundBlurEnabled,
+      transformer: (events, mapper) => events.asyncExpand(mapper),
+    );
+    on<SetCameraBackgroundSelection>(
+      _onSetCameraBackgroundSelection,
+      transformer: (events, mapper) => events.asyncExpand(mapper),
+    );
     on<SetAudioDenoiseEnabled>(_onSetAudioDenoiseEnabled);
     on<SetAudioDenoiseType>(_onSetAudioDenoiseType);
   }
@@ -172,14 +184,50 @@ mixin RoomSettingsHandlers
     // native processor in agreement on a single source of truth.
     final ffEnabled = isMeetCameraBackgroundBlurEnabled();
     final effectiveEnabled = event.enabled && ffEnabled;
-    emit(state.copyWith(cameraBackgroundBlurEnabled: effectiveEnabled));
-    await syncLocalCameraBackgroundBlur(
+    final selection = effectiveEnabled
+        ? const CameraBackgroundSelection.blur()
+        : const CameraBackgroundSelection.none();
+    emit(
+      state.copyWith(
+        cameraBackgroundBlurEnabled: effectiveEnabled,
+        cameraBackgroundSelection: selection,
+      ),
+    );
+    await syncLocalCameraBackgroundEffect(
       room: state.room,
-      enabled: effectiveEnabled,
+      selection: selection,
     );
     l.logger.d(
       'Camera background blur enabled: $effectiveEnabled '
       '(requested=${event.enabled}, ff=$ffEnabled)',
+    );
+  }
+
+  Future<void> _onSetCameraBackgroundSelection(
+    SetCameraBackgroundSelection event,
+    Emitter<RoomState> emit,
+  ) async {
+    // Same single-source-of-truth rule as the blur toggle: with the FF off the
+    // state must read "no effect", never a preset the native side never got.
+    final ffEnabled = isMeetCameraBackgroundBlurEnabled();
+    final selection = ffEnabled
+        ? event.selection
+        : const CameraBackgroundSelection.none();
+    emit(
+      state.copyWith(
+        cameraBackgroundBlurEnabled: selection.isEffectActive,
+        cameraBackgroundSelection: selection,
+      ),
+    );
+    // Hot-swaps the native processor on the existing track — no republish, so
+    // remote participants never see the video drop while the user browses.
+    await syncLocalCameraBackgroundEffect(
+      room: state.room,
+      selection: selection,
+    );
+    l.logger.d(
+      'Camera background selection: ${selection.kind.name} '
+      '(preset=${selection.presetId}, ff=$ffEnabled)',
     );
   }
 

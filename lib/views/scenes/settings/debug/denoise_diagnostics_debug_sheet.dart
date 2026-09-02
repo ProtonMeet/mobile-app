@@ -299,8 +299,9 @@ class _DenoiseDiagnosticsDebugBodyState
       DenoiseType.rnnoise => _unleash.isFeatureEnabled(
         UnleashFeature.meetAudioDenoiseRnnoise,
       ),
-      DenoiseType.deepfilter =>
-        _unleash.isFeatureEnabled(UnleashFeature.meetAudioDenoiseDeepfilter),
+      DenoiseType.deepfilter => _unleash.isFeatureEnabled(
+        UnleashFeature.meetAudioDenoiseDeepfilter,
+      ),
       DenoiseType.dtlnRs => _unleash.isFeatureEnabled(
         UnleashFeature.meetAudioDenoiseDtlnRs,
       ),
