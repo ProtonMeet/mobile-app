@@ -38,7 +38,7 @@ pub fn meet_sdk_from_app(app: &App) -> Option<Sdk> {
     Sdk::new(&name.to_string(), &sdk_version).ok()
 }
 
-/// Build a muon client with [`MeetPersistence`] = [`AuthStore`] (native only).
+/// Build a muon client with [`MeetPersistence`][super::MeetPersistence] = [`AuthStore`][super::AuthStore] (native only).
 #[cfg(not(target_arch = "wasm32"))]
 pub fn build_meet_client(
     app: App,

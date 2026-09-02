@@ -9,7 +9,7 @@ use tokio::sync::Mutex;
 
 use crate::{
     service::user_service::{QueuedProposal, Service},
-    utils::{sleep, spawn},
+    utils::{sleep, spawn_detached},
 };
 
 pub const DELAY_PER_RANK_MS: u64 = 100;
@@ -227,7 +227,7 @@ pub fn restore_proposals_to_queue(
     }
 
     let reason = reason.to_string();
-    let _ = spawn({
+    spawn_detached({
         let queue = proposal_queue.clone();
         async move {
             let mut queue_lock = queue.lock().await;

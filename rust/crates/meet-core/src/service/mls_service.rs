@@ -36,7 +36,10 @@ pub struct MlsService {
 }
 
 impl MlsService {
-    pub fn new(mls_store: Arc<RwLock<MlsStore>>, server_time_tracker: ServerTimeTracker) -> Self {
+    pub(crate) fn new(
+        mls_store: Arc<RwLock<MlsStore>>,
+        server_time_tracker: ServerTimeTracker,
+    ) -> Self {
         Self {
             mls_store,
             server_time_tracker,

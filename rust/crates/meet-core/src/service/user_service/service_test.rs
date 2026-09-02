@@ -3030,7 +3030,7 @@ pub(crate) mod tests {
 
         apply_waiting_room_policy_commit_as_room_admin(
             &host_group,
-            &[non_host_group.clone()],
+            std::slice::from_ref(&non_host_group),
             meet_link_name,
             false,
             "meeting host should build open-lobby policy commit",
@@ -3071,7 +3071,7 @@ pub(crate) mod tests {
 
         apply_waiting_room_policy_commit_as_room_admin(
             &host_group,
-            &[non_host_group.clone()],
+            std::slice::from_ref(&non_host_group),
             meet_link_name,
             true,
             "meeting host should build waiting-room policy commit",
@@ -3104,7 +3104,7 @@ pub(crate) mod tests {
 
         promote_participant_to_room_admin(
             &creator_group,
-            &[co_host_group.clone()],
+            std::slice::from_ref(&co_host_group),
             &co_host_user_id,
             meet_link_name,
         )
@@ -3143,7 +3143,7 @@ pub(crate) mod tests {
 
         apply_waiting_room_policy_commit_as_room_admin(
             &co_host_group,
-            &[creator_group.clone()],
+            std::slice::from_ref(&creator_group),
             meet_link_name,
             false,
             "co-host RoomAdmin should apply open-lobby policy commit",
@@ -3272,7 +3272,7 @@ pub(crate) mod tests {
 
         promote_participant_to_room_admin(
             &creator_group,
-            &[co_host_group.clone()],
+            std::slice::from_ref(&co_host_group),
             &co_host_user_id,
             meet_link_name,
         )
@@ -3445,7 +3445,7 @@ pub(crate) mod tests {
         let non_host_commit_result = non_host_group
             .write()
             .await
-            .new_commit([ProposalArg::Add(Box::new(guest_key_package.into()))])
+            .new_commit([ProposalArg::Add(Box::new(guest_key_package))])
             .await;
         assert!(
             non_host_commit_result.is_err(),
@@ -3464,7 +3464,7 @@ pub(crate) mod tests {
         let host_commit_result = host_group
             .write()
             .await
-            .new_commit([ProposalArg::Add(Box::new(host_guest_key_package.into()))])
+            .new_commit([ProposalArg::Add(Box::new(host_guest_key_package))])
             .await;
         assert!(
             host_commit_result.is_ok(),
@@ -3947,6 +3947,7 @@ pub(crate) mod tests {
         panic!("no group owns leaf index {leaf_index}");
     }
 
+    #[expect(dead_code)]
     async fn mls_direct_test_remove_member_and_sync(
         committer: &Arc<RwLock<MlsGroup<MemKv>>>,
         all_groups: &mut Vec<Arc<RwLock<MlsGroup<MemKv>>>>,
@@ -3986,6 +3987,7 @@ pub(crate) mod tests {
         all_groups.remove(removed_group_idx);
     }
 
+    #[expect(dead_code)]
     async fn mls_direct_test_assert_groups_in_sync(
         groups: &[Arc<RwLock<MlsGroup<MemKv>>>],
         expected_member_count: usize,
@@ -4004,6 +4006,7 @@ pub(crate) mod tests {
         }
     }
 
+    #[expect(dead_code)]
     pub async fn mls_direct_test_join_members(
         host_group: &Arc<RwLock<MlsGroup<MemKv>>>,
         groups: &mut Vec<Arc<RwLock<MlsGroup<MemKv>>>>,
