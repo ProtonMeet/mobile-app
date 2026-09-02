@@ -106,7 +106,7 @@ impl Service {
             JoinRequestChange::Removed,
             request_id,
             participant_uid,
-            0u64,
+            0,
         );
     }
 

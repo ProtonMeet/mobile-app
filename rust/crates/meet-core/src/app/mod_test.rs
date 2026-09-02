@@ -1,16 +1,14 @@
 use std::future::ready;
 use std::sync::Arc;
 
+use futures::FutureExt;
+
 use crate::app::test_support::{
-    build_app, build_app_with_auth_service, build_app_with_http, build_app_with_service,
-    default_app_state, state_with_participant_only, test_mls_store, test_server_time_tracker,
-    unreachable_test_proton_http_client,
+    build_app, build_app_with_auth_service, build_app_with_http, default_app_state,
+    state_with_participant_only, unreachable_test_proton_http_client,
 };
-use crate::domain::user::ports::meeting_api::MockMeetingApi;
-use crate::domain::user::ports::{MockHttpClient, MockMlsApi};
 use crate::errors::{core::MeetCoreError, http_client::HttpClientError};
 use crate::service::auth::MockAuthService;
-use crate::service::user_service::Service;
 
 #[tokio::test]
 async fn ping_propagates_http_error_without_network() {
@@ -116,12 +114,15 @@ async fn remove_participant_errors_without_livekit_token() {
 
 #[tokio::test]
 async fn get_user_settings_propagates_service_error() {
-    let mut auth = MockAuthService::with_bundled_service_setup();
-    auth.expect_get_user_settings()
-        .once()
-        .returning(|| Err(HttpClientError::Deserialize("offline".to_string()).into()));
+    let mut auth = MockAuthService::new();
+    auth.expect_get_user_settings().once().returning(|| {
+        ready(Err(
+            HttpClientError::Deserialize("offline".to_string()).into()
+        ))
+        .boxed()
+    });
 
-    let app = build_app_with_auth_service(default_app_state(), Box::new(auth)).await;
+    let app = build_app_with_auth_service(default_app_state(), Arc::new(auth)).await;
     let settings = app.get_user_settings().await;
     dbg!(&settings);
     assert!(settings.is_err());

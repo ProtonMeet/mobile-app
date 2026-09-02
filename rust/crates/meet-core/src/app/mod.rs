@@ -250,24 +250,24 @@ impl App {
             http_client.server_time_tracker(),
         ));
 
-        let room_service = RoomService::new(
+        let room_service = Arc::new(RoomService::new(
             http_client.clone(),
             http_client.clone(),
             crypto_client.clone(),
-        );
-        let waiting_room_service = WaitingRoomService::new(crypto_client, mls_service);
-        let auth_service = Box::new(AuthServiceImpl::new(
+        ));
+        let waiting_room_service = Arc::new(WaitingRoomService::new(crypto_client, mls_service));
+        let auth_service = Arc::new(AuthServiceImpl::new(
             http_client.clone(),
             http_client.clone(),
             Arc::new(persister),
         ));
 
-        let services = ServicesBundle::new(
+        let services = Arc::new(ServicesBundle::new(
             room_service,
             waiting_room_service,
             auth_service,
             user_service,
-        );
+        ));
 
         let services_cloned = services.clone();
         ws_client
@@ -659,6 +659,8 @@ impl App {
         user_key_provider: Arc<dyn UserKeyProvider>,
         services: Arc<ServicesBundle>,
     ) -> Self {
+        use std::sync::Arc;
+
         Self {
             state,
             ws_client,

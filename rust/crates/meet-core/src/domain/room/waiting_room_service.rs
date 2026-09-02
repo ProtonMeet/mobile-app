@@ -2,7 +2,6 @@ use std::sync::{Arc, Weak};
 
 use base64::{engine::general_purpose, Engine};
 use proton_meet_crypto::MEET_KEY_PACKAGE_AAD;
-use proton_meet_macro::BundledService;
 
 use crate::domain::mls::ports::KeyPackagePort;
 use crate::domain::room::models::join_request::JoinRequest;
@@ -11,6 +10,7 @@ use crate::domain::user::{
     ports::crypto_client::CryptoClient,
 };
 use crate::service::services_bundle::ServicesBundle;
+
 #[derive(Debug, thiserror::Error)]
 pub enum WaitingRoomError {
     #[error("Failed to generate key package: {0}")]
@@ -22,11 +22,9 @@ pub enum WaitingRoomError {
 }
 
 /// Domain service for waiting-room guest join requests.
-#[derive(BundledService)]
 pub struct WaitingRoomService {
     crypto_client: Arc<dyn CryptoClient>,
     key_packages: Arc<dyn KeyPackagePort>,
-    #[service_bundle]
     services: Weak<ServicesBundle>,
 }
 

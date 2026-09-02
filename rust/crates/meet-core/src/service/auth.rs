@@ -1,8 +1,8 @@
-use std::sync::{Arc, Weak};
+use std::sync::Arc;
 
 #[cfg(not(target_arch = "wasm32"))]
 use proton_meet_common::models::{ProtonUser, ProtonUserKey};
-use proton_meet_macro::{async_trait, bundled_service, BundledService};
+use proton_meet_macro::{async_trait, async_trait_with_mock};
 
 #[cfg(not(target_arch = "wasm32"))]
 use crate::{
@@ -15,16 +15,12 @@ use crate::{
     },
     errors::service::ServiceError,
     infra::storage::error::StorageError,
-    service::services_bundle::{BundledService, ServicesBundle},
 };
 
-#[derive(BundledService)]
 pub(crate) struct AuthServiceImpl {
     http_client: Arc<dyn HttpClient>,
     user_api: Arc<dyn UserApi>,
     user_repository: ArcUserRepository,
-    #[service_bundle]
-    services: Weak<ServicesBundle>,
 }
 
 impl AuthServiceImpl {
@@ -37,13 +33,12 @@ impl AuthServiceImpl {
             http_client,
             user_api,
             user_repository,
-            services: Weak::new(),
         }
     }
 }
 
-#[bundled_service]
-pub(crate) trait AuthService: Send + Sync + BundledService {
+#[async_trait_with_mock]
+pub(crate) trait AuthService: Send + Sync {
     async fn login(
         &self,
         username: &str,

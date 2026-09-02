@@ -176,24 +176,24 @@ pub fn minimal_service() -> RwLock<Service> {
     ))
 }
 
-pub fn minimal_room_service() -> RoomService {
-    RoomService::new(
+pub fn minimal_room_service() -> Arc<RoomService> {
+    Arc::new(RoomService::new(
         Arc::new(MockHttpClient::new()),
         Arc::new(MockMeetingApi::new()),
         Arc::new(MeetCryptoClient::new()),
-    )
+    ))
 }
 
-pub fn minimal_waiting_room_service() -> WaitingRoomService {
+pub fn minimal_waiting_room_service() -> Arc<WaitingRoomService> {
     let crypto_client = Arc::new(MeetCryptoClient::new());
     let mls_service: Arc<dyn crate::domain::mls::ports::KeyPackagePort> = Arc::new(
         crate::service::mls_service::MlsService::new(test_mls_store(), test_server_time_tracker()),
     );
-    WaitingRoomService::new(crypto_client, mls_service)
+    Arc::new(WaitingRoomService::new(crypto_client, mls_service))
 }
 
-pub fn minimal_auth_service() -> Box<dyn AuthService> {
-    Box::new(AuthServiceImpl::new(
+pub fn minimal_auth_service() -> Arc<dyn AuthService> {
+    Arc::new(AuthServiceImpl::new(
         Arc::new(MockHttpClient::new()),
         Arc::new(MockUserApi::new()),
         Arc::new(MockUserRepository::new()),
@@ -214,12 +214,12 @@ pub async fn build_app_with_http(state: AppState, http_client: Arc<ProtonHttpCli
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        ServicesBundle::new(
+        Arc::new(ServicesBundle::new(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
             minimal_service(),
-        ),
+        )),
     )
 }
 
@@ -237,12 +237,12 @@ pub async fn build_app_with_test_http(
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        ServicesBundle::new(
+        Arc::new(ServicesBundle::new(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
             minimal_service(),
-        ),
+        )),
     )
 }
 
@@ -260,12 +260,12 @@ pub async fn build_app_with_test_mls_api(
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        ServicesBundle::new(
+        Arc::new(ServicesBundle::new(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
             minimal_service(),
-        ),
+        )),
     )
 }
 
@@ -280,18 +280,18 @@ pub async fn build_app_with_service(state: AppState, service: Service) -> App {
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        ServicesBundle::new(
+        Arc::new(ServicesBundle::new(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
             RwLock::new(service),
-        ),
+        )),
     )
 }
 
 pub async fn build_app_with_auth_service(
     state: AppState,
-    auth_service: Box<dyn AuthService>,
+    auth_service: Arc<dyn AuthService>,
 ) -> App {
     let http_client = test_proton_http_client().await;
     App::from_test_parts(
@@ -303,12 +303,12 @@ pub async fn build_app_with_auth_service(
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        ServicesBundle::new(
+        Arc::new(ServicesBundle::new(
             minimal_room_service(),
             minimal_waiting_room_service(),
             auth_service,
             minimal_service(),
-        ),
+        )),
     )
 }
 
@@ -327,20 +327,20 @@ pub async fn build_app_with_service_and_mls_api(
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        ServicesBundle::new(
+        Arc::new(ServicesBundle::new(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
             RwLock::new(service),
-        ),
+        )),
     )
 }
 
 pub fn auth_service(
     user_api: MockUserApi,
     user_repository: MockUserRepository,
-) -> Box<dyn AuthService> {
-    Box::new(AuthServiceImpl::new(
+) -> Arc<dyn AuthService> {
+    Arc::new(AuthServiceImpl::new(
         Arc::new(MockHttpClient::new()),
         Arc::new(user_api),
         Arc::new(user_repository),
@@ -481,12 +481,12 @@ pub async fn build_app_with_room(state: AppState, room_service: RoomService) -> 
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        ServicesBundle::new(
-            room_service,
+        Arc::new(ServicesBundle::new(
+            Arc::new(room_service),
             minimal_waiting_room_service(),
             minimal_auth_service(),
             minimal_service(),
-        ),
+        )),
     )
 }
 
@@ -505,12 +505,12 @@ pub async fn build_app_with_room_and_ws(
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        ServicesBundle::new(
-            room_service,
+        Arc::new(ServicesBundle::new(
+            Arc::new(room_service),
             minimal_waiting_room_service(),
             minimal_auth_service(),
             minimal_service(),
-        ),
+        )),
     )
 }
 
@@ -529,12 +529,12 @@ pub async fn build_app_with_room_and_service(
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        ServicesBundle::new(
-            room_service,
+        Arc::new(ServicesBundle::new(
+            Arc::new(room_service),
             minimal_waiting_room_service(),
             minimal_auth_service(),
             RwLock::new(service),
-        ),
+        )),
     )
 }
 
@@ -553,12 +553,12 @@ pub async fn build_app_with_ws_and_service(
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        ServicesBundle::new(
+        Arc::new(ServicesBundle::new(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
             RwLock::new(service),
-        ),
+        )),
     )
 }
 
@@ -576,12 +576,12 @@ pub async fn build_app_with_user_key_provider(
         http_client.clone(),
         http_client,
         user_key_provider,
-        ServicesBundle::new(
+        Arc::new(ServicesBundle::new(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
             minimal_service(),
-        ),
+        )),
     )
 }
 
@@ -600,12 +600,12 @@ pub async fn build_app_with_room_and_user_key_provider(
         http_client.clone(),
         http_client,
         user_key_provider,
-        ServicesBundle::new(
-            room_service,
+        Arc::new(ServicesBundle::new(
+            Arc::new(room_service),
             minimal_waiting_room_service(),
             minimal_auth_service(),
             minimal_service(),
-        ),
+        )),
     )
 }
 
@@ -620,12 +620,12 @@ pub async fn build_app_with_ws(ws: MockWebSocketClient, state: AppState) -> App 
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        ServicesBundle::new(
+        Arc::new(ServicesBundle::new(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
             minimal_service(),
-        ),
+        )),
     )
 }
 
@@ -781,12 +781,12 @@ pub async fn build_app_with_service_room_and_ws(
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        ServicesBundle::new(
-            room_service,
+        Arc::new(ServicesBundle::new(
+            Arc::new(room_service),
             minimal_waiting_room_service(),
             minimal_auth_service(),
             RwLock::new(service),
-        ),
+        )),
     )
 }
 
