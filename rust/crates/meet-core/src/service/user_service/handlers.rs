@@ -120,8 +120,12 @@ pub struct Handlers {
 }
 
 gen_handlers! { Handlers,
+    // Detached-only: these fire from the WS read path. The registered handler may
+    // call App APIs that take `user_service.write()`, which deadlocks while the
+    // `read()` guard is still held.
     (join_decision_handler: JoinDecisionHandler, (request_id: String, admitted: bool), detached_only=true, no_clear=false),
     (join_request_handler: JoinRequestHandler, (change: JoinRequestChange, request_id: String, participant_uid: String, expires_at: u64), detached_only=true, no_clear=false),
+
     (mls_group_update_handler: MlsGroupUpdateHandler, (room_id: String, reason: GroupKeyUpdateReason), detached_only=false, no_clear=true),
     (mls_sync_state_update_handler: MlsSyncStateUpdateHandler, (state: MlsSyncState, reason: Option<RejoinReason>), detached_only=false, no_clear=true),
     (agent_left_handler: AgentLeftHandler, (device_id: String), detached_only=false, no_clear=true),
