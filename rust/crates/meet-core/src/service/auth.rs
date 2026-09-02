@@ -1,10 +1,8 @@
 use std::sync::Arc;
 
-#[cfg(not(target_arch = "wasm32"))]
 use proton_meet_common::models::{ProtonUser, ProtonUserKey};
 use proton_meet_macro::{async_trait, async_trait_with_mock};
 
-#[cfg(not(target_arch = "wasm32"))]
 use crate::{
     domain::user::models::Address, errors::login::LoginError, infra::dto::proton_user::UserData,
 };
@@ -37,8 +35,13 @@ impl AuthServiceImpl {
     }
 }
 
+#[cfg(not(target_family = "wasm"))]
+pub type ArcAuthService = Arc<dyn AuthService + Send + Sync + 'static>;
+#[cfg(target_family = "wasm")]
+pub type ArcAuthService = Arc<dyn AuthService + 'static>;
+
 #[async_trait_with_mock]
-pub(crate) trait AuthService: Send + Sync {
+pub(crate) trait AuthService {
     async fn login(
         &self,
         username: &str,
@@ -245,6 +248,7 @@ pub mod tests {
     const TEST_USER_NAME: &str = "Test User";
 
     #[tokio::test]
+    #[cfg(not(target_arch = "wasm32"))] // Login is not available on web
     async fn test_login_success() {
         let http_client = MockHttpClient::new();
         let mut mock_user_api = MockUserApi::new();
@@ -309,6 +313,7 @@ pub mod tests {
     }
 
     #[tokio::test]
+    #[cfg(not(target_arch = "wasm32"))] // Login is not available on web
     async fn test_login_http_client_error() {
         let http_client = MockHttpClient::new();
         let mut mock_user_api = MockUserApi::new();
@@ -336,6 +341,7 @@ pub mod tests {
     }
 
     #[tokio::test]
+    #[cfg(not(target_arch = "wasm32"))] // Login is not available on web
     async fn test_logout_success() {
         let user_id = TEST_USER_ID.to_string();
 

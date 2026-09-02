@@ -24,7 +24,7 @@ use crate::infra::{
     muon::AuthStore,
     ports::user_key_provider::{MockUserKeyProvider, UserKeyProvider},
 };
-use crate::service::auth::{AuthService, AuthServiceImpl};
+use crate::service::auth::{ArcAuthService, AuthServiceImpl};
 use crate::service::services_bundle::ServicesBundle;
 use crate::service::user_service::{create_mock_mls_api, Service};
 use crate::utils::server_time::ServerTimeTracker;
@@ -192,7 +192,7 @@ pub fn minimal_waiting_room_service() -> Arc<WaitingRoomService> {
     Arc::new(WaitingRoomService::new(crypto_client, mls_service))
 }
 
-pub fn minimal_auth_service() -> Arc<dyn AuthService> {
+pub fn minimal_auth_service() -> ArcAuthService {
     Arc::new(AuthServiceImpl::new(
         Arc::new(MockHttpClient::new()),
         Arc::new(MockUserApi::new()),
@@ -289,10 +289,7 @@ pub async fn build_app_with_service(state: AppState, service: Service) -> App {
     )
 }
 
-pub async fn build_app_with_auth_service(
-    state: AppState,
-    auth_service: Arc<dyn AuthService>,
-) -> App {
+pub async fn build_app_with_auth_service(state: AppState, auth_service: ArcAuthService) -> App {
     let http_client = test_proton_http_client().await;
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
@@ -336,10 +333,7 @@ pub async fn build_app_with_service_and_mls_api(
     )
 }
 
-pub fn auth_service(
-    user_api: MockUserApi,
-    user_repository: MockUserRepository,
-) -> Arc<dyn AuthService> {
+pub fn auth_service(user_api: MockUserApi, user_repository: MockUserRepository) -> ArcAuthService {
     Arc::new(AuthServiceImpl::new(
         Arc::new(MockHttpClient::new()),
         Arc::new(user_api),
