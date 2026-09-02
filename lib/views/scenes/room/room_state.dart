@@ -671,7 +671,8 @@ class RoomState extends Equatable {
       screenSharingIndex: screenSharingIndex ?? this.screenSharingIndex,
       unsubscribeVideoByDefault:
           unsubscribeVideoByDefault ?? this.unsubscribeVideoByDefault,
-      cameraBackgroundBlurEnabled: cameraBackgroundBlurEnabled ??
+      cameraBackgroundBlurEnabled:
+          cameraBackgroundBlurEnabled ??
           (cameraBackgroundSelection?.isEffectActive ??
               this.cameraBackgroundBlurEnabled),
       cameraBackgroundSelection:

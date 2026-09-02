@@ -19,7 +19,8 @@ class MobileUpgradeWarningMessage extends StatefulWidget {
       _MobileUpgradeWarningMessageState();
 }
 
-class _MobileUpgradeWarningMessageState extends State<MobileUpgradeWarningMessage> {
+class _MobileUpgradeWarningMessageState
+    extends State<MobileUpgradeWarningMessage> {
   late final TapGestureRecognizer _linkRecognizer;
 
   @override
@@ -40,9 +41,7 @@ class _MobileUpgradeWarningMessageState extends State<MobileUpgradeWarningMessag
     final textStyle = ProtonStyles.body2Medium(
       color: context.colors.textInverted,
     );
-    final linkStyle = ProtonStyles.body2Medium(
-      color: const Color(0xff0047AB),
-    );
+    final linkStyle = ProtonStyles.body2Medium(color: const Color(0xff0047AB));
 
     return Text.rich(
       TextSpan(

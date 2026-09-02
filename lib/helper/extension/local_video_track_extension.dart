@@ -21,7 +21,8 @@ class LocalVideoTrackHelper {
     return const CameraBackgroundSelection.none();
   }
 
-  static TrackProcessor<VideoProcessorOptions>? _processorWithOptionalUnleashBlur(
+  static TrackProcessor<VideoProcessorOptions>?
+  _processorWithOptionalUnleashBlur(
     TrackProcessor<VideoProcessorOptions>? processor, {
     required CameraBackgroundSelection selection,
   }) {

@@ -93,12 +93,17 @@ class SynchronousSegmentationSwitch extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       value: value,
       onChanged: onChanged,
-      title: Text('Synchronous segmentation', style: theme.textTheme.titleSmall),
+      title: Text(
+        'Synchronous segmentation',
+        style: theme.textTheme.titleSmall,
+      ),
       subtitle: Text(
         'Segments each frame inline so the mask matches it exactly, removing the lag that lets '
         'a waving arm tear the background. Blocks video capture while inferring, so watch '
         'frameFps in the perf log for dropped frames.',
-        style: theme.textTheme.bodySmall?.copyWith(color: context.colors.textWeak),
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: context.colors.textWeak,
+        ),
       ),
     );
   }

@@ -118,7 +118,10 @@ Future<void> syncLocalCameraBackgroundEffect({
     return;
   }
 
-  await applyCameraBackgroundSelectionToTrack(trackId: id, selection: selection);
+  await applyCameraBackgroundSelectionToTrack(
+    trackId: id,
+    selection: selection,
+  );
 }
 
 Future<void> _applyReplacementImageIfNeeded(

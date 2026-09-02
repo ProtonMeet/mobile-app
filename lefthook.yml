@@ -2,6 +2,25 @@ pre-commit:
   parallel: true
   commands:
     flutter:
-      run: flutter analyze --no-fatal-infos
+      run: fvm dart format -o none --set-exit-if-changed lib plugins
+      skip:
+        - run: test "{staged_files}" -eq ""
+      glob: "{lib,plugins}/**/*.dart"
+    rust:
+      run: cd rust && cargo fmt --message-format short --check # do not use --all to avoid including vendor crates
+      skip:
+        - run: test "{staged_files}" -eq ""
+      glob: "rust/**/*.rs"
+pre-push:
+  parallel: true
+  commands:
+    flutter:
+      run: fvm flutter analyze --no-fatal-infos --no-fatal-warnings
+      skip:
+        - run: test "{push_files}" -eq ""
+      glob: "{lib/**/*.dart,plugins/**/{*.dart,pubspec.*},pubspec.*}"
     rust:
       run: cd rust && cargo clippy --all --all-targets
+      skip:
+        - run: test "{push_files}" -eq ""
+      glob: "rust/**/{*.rs,Cargo.*}"
