@@ -19,6 +19,7 @@ impl From<String> for MeetingLinkName {
     }
 }
 
+// TODO: implement [`TryFrom`] to add validation.
 impl From<&str> for MeetingLinkName {
     fn from(meeting_link_name: &str) -> Self {
         Self(meeting_link_name.to_string())

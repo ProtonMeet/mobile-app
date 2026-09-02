@@ -177,7 +177,8 @@ pub struct Service {
 }
 
 impl Service {
-    pub fn new(
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn new(
         http_client: Arc<dyn HttpClient>,
         mls_api: Arc<dyn MlsApi>,
         meeting_api: Arc<dyn MeetingApi>,

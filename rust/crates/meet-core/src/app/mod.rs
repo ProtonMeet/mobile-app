@@ -619,6 +619,7 @@ impl App {
 
 #[cfg(all(test, not(target_family = "wasm")))]
 impl App {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn from_test_parts(
         state: Arc<RwLock<AppState>>,
         ws_client: ArcWebSocketClient,

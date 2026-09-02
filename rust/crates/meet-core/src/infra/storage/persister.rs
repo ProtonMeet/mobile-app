@@ -58,7 +58,7 @@ impl Persister {
             format!("{main}-shm"),
             format!("{main}-journal"),
         ];
-        for path in std::iter::once(main).chain(extras.into_iter()) {
+        for path in std::iter::once(main).chain(extras) {
             match std::fs::remove_file(&path) {
                 Ok(()) => {}
                 Err(e) if e.kind() == ErrorKind::NotFound => {}

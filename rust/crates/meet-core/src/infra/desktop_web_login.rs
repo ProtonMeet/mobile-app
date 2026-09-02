@@ -30,6 +30,7 @@ const BROWSER_REDIRECT_SCHEME: &str = "protonmeet";
 pub struct DesktopWebLoginStart {
     pub login_url: String,
     /// Opaque value embedded in [browser redirect URL](redirect_url); match on deep link callback.
+    #[expect(rustdoc::private_intra_doc_links)]
     pub browser_redirect_state: String,
 }
 
