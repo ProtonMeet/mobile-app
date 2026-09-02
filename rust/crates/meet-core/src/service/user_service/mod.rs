@@ -420,7 +420,7 @@ impl Service {
         roster: Vec<Member>,
     ) -> Result<Vec<u32>, anyhow::Error> {
         let state_lock = self.state.lock().await;
-        let livekit_active_uuid_hashmap = state_lock.livekit_active_uuid_hashset.clone();
+        let livekit_active_uuid_hashmap = state_lock.livekit_active_uuid_hashmap.clone();
         let last_livekit_active_uuid_update_time = state_lock.last_livekit_active_uuid_update_time;
         drop(state_lock);
 
@@ -458,7 +458,7 @@ impl Service {
     ) -> Result<Vec<u32>, anyhow::Error> {
         let mut state_lock = self.state.lock().await;
         let last_livekit_active_uuid_update_time = state_lock.last_livekit_active_uuid_update_time;
-        let Some(livekit_active_uuid_hashmap) = state_lock.livekit_active_uuid_hashset.as_mut()
+        let Some(livekit_active_uuid_hashmap) = state_lock.livekit_active_uuid_hashmap.as_mut()
         else {
             return Ok(vec![]);
         };

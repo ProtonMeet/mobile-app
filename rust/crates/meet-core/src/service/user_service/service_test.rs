@@ -6137,7 +6137,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 },
             );
 
-            state.livekit_active_uuid_hashset = Some(hashmap);
+            state.livekit_active_uuid_hashmap = Some(hashmap);
             state.last_livekit_active_uuid_update_time = current_time;
         }
 
@@ -6203,7 +6203,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                     last_seen: current_time,
                 },
             );
-            state.livekit_active_uuid_hashset = Some(hashmap);
+            state.livekit_active_uuid_hashmap = Some(hashmap);
             state.last_livekit_active_uuid_update_time = current_time;
         }
 
@@ -6218,7 +6218,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         {
             let advanced_time = crate::utils::unix_timestamp_ms() + 20_000;
             let mut state = service1.state.lock().await;
-            if let Some(tracked) = state.livekit_active_uuid_hashset.as_mut() {
+            if let Some(tracked) = state.livekit_active_uuid_hashmap.as_mut() {
                 tracked.insert(
                     member_uuids[0].0,
                     LivekitUUIDInfo {
@@ -6255,7 +6255,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         // Setup: Empty hashmap (no tracked UUIDs)
         {
             let mut state = service1.state.lock().await;
-            state.livekit_active_uuid_hashset = None;
+            state.livekit_active_uuid_hashmap = None;
             state.last_livekit_active_uuid_update_time = crate::utils::unix_timestamp_ms();
         }
 
@@ -6322,7 +6322,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 },
             );
 
-            state.livekit_active_uuid_hashset = Some(hashmap);
+            state.livekit_active_uuid_hashmap = Some(hashmap);
             state.last_livekit_active_uuid_update_time = current_time;
         }
 
