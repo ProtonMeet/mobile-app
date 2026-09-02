@@ -2145,7 +2145,7 @@ impl UserService for Service {
         // trigger the livekit admin change handler to notify wasm/mobile
         if !self
             .handlers
-            .call_livekit_admin_change_handler(room_id, participant_uid, participant_type)
+            .call_livekit_admin_change_handler(room_id.into(), participant_uid, participant_type)
             .await
         {
             return Err(anyhow::anyhow!("LiveKit admin change handler is not set"));

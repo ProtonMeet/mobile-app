@@ -58,11 +58,10 @@ macro_rules! gen_handler_methods {
             #[doc = "Calls the "]
             #[doc = stringify!($name)]
             #[doc = " handler with the provided arguments in a detached future using [`spawn_detached`][crate::utils::spawn_detached], returning `false` if it is not set."]
-            pub fn [<call_detached_ $name>]<$([<T $arg>]),*>(&self, $($arg: [<T $arg>]),*) -> bool where $($t: From<[<T $arg>]>),* {
+            pub fn [<call_detached_ $name>](&self, $($arg: $t),*) -> bool {
                 let Some(handler) = self.$name.as_ref() else { return false };
 
                 let handler = Arc::clone(handler);
-                let ($($arg),*) = ($($arg.into()),*);
 
                 crate::utils::spawn_detached(async move {
                     let mut handler = handler.lock().await;
@@ -81,11 +80,11 @@ macro_rules! gen_handler_methods {
             #[doc = "Calls the "]
             #[doc = stringify!($name)]
             #[doc = " handler with the provided arguments, returning `false` if it is not set."]
-            pub async fn [<call_ $name>]<$([<T $arg>]),*>(&self, $($arg: [<T $arg>]),*) -> bool where $($t: From<[<T $arg>]>),* {
+            pub async fn [<call_ $name>](&self, $($arg: $t),*) -> bool {
                 let Some(handler) = self.$name.as_ref() else { return false };
 
                 let mut handler = handler.lock().await;
-                handler($($arg.into()),*).await;
+                handler($($arg),*).await;
 
                 true
             }
@@ -168,7 +167,7 @@ mod tests {
         });
 
         let called = handlers
-            .call_mls_group_update_handler("", GroupKeyUpdateReason::Join)
+            .call_mls_group_update_handler("".into(), GroupKeyUpdateReason::Join)
             .await;
 
         assert!(called);
@@ -267,7 +266,7 @@ mod tests {
             ],
         );
 
-        handlers.call_detached_join_decision_handler("", true);
+        handlers.call_detached_join_decision_handler("".into(), true);
         sleep(Duration::from_millis(50)).await;
         check_called(
             &[&JOIN_DECISION_HANDLER_CALLED],
@@ -281,7 +280,12 @@ mod tests {
             ],
         );
 
-        handlers.call_detached_join_request_handler(JoinRequestChange::Added, "", "", 0u64);
+        handlers.call_detached_join_request_handler(
+            JoinRequestChange::Added,
+            "".into(),
+            "".into(),
+            0u64,
+        );
         sleep(Duration::from_millis(50)).await;
         check_called(
             &[&JOIN_DECISION_HANDLER_CALLED, &JOIN_REQUEST_HANDLER_CALLED],
@@ -295,7 +299,7 @@ mod tests {
         );
 
         handlers
-            .call_mls_group_update_handler("", GroupKeyUpdateReason::Join)
+            .call_mls_group_update_handler("".into(), GroupKeyUpdateReason::Join)
             .await;
         check_called(
             &[
@@ -311,7 +315,10 @@ mod tests {
             ],
         );
         handlers
-            .call_mls_sync_state_update_handler(MlsSyncState::Checking, RejoinReason::EpochMismatch)
+            .call_mls_sync_state_update_handler(
+                MlsSyncState::Checking,
+                Some(RejoinReason::EpochMismatch),
+            )
             .await;
         check_called(
             &[
@@ -327,7 +334,7 @@ mod tests {
             ],
         );
 
-        handlers.call_agent_left_handler("").await;
+        handlers.call_agent_left_handler("".into()).await;
         check_called(
             &[
                 &JOIN_DECISION_HANDLER_CALLED,
@@ -342,7 +349,7 @@ mod tests {
             ],
         );
 
-        handlers.call_agent_pending_handler("").await;
+        handlers.call_agent_pending_handler("".into()).await;
         check_called(
             &[
                 &JOIN_DECISION_HANDLER_CALLED,
@@ -356,7 +363,7 @@ mod tests {
         );
 
         handlers
-            .call_livekit_admin_change_handler("", "", 0u32)
+            .call_livekit_admin_change_handler("".into(), "".into(), 0u32)
             .await;
         check_called(
             &[
