@@ -145,7 +145,7 @@ mod tests {
 
     use futures::FutureExt;
     use meet_type::RejoinReason;
-    use tokio::time::sleep;
+    use proton_meet_macro::unified_test;
 
     use crate::{
         domain::room::JoinRequestChange,
@@ -153,9 +153,10 @@ mod tests {
             service_state::MlsSyncState,
             user_service::{handlers::Handlers, GroupKeyUpdateReason},
         },
+        utils::sleep,
     };
 
-    #[tokio::test]
+    #[unified_test]
     async fn test_call_mls_group_update_exactly_once() {
         let mut handlers = Handlers::new();
 
@@ -197,7 +198,7 @@ mod tests {
         assert!(!handlers.has_join_decision_handler());
     }
 
-    #[tokio::test]
+    #[unified_test]
     async fn test_all_handlers() {
         let mut handlers = Handlers::new();
 
