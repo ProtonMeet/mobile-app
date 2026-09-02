@@ -327,7 +327,8 @@ class PreJoinState {
       displayNameFieldError: resetDisplayNameFieldError
           ? null
           : (displayNameFieldError ?? this.displayNameFieldError),
-      cameraBackgroundBlurEnabled: cameraBackgroundBlurEnabled ??
+      cameraBackgroundBlurEnabled:
+          cameraBackgroundBlurEnabled ??
           (cameraBackgroundSelection?.isEffectActive ??
               this.cameraBackgroundBlurEnabled),
       cameraBackgroundSelection:

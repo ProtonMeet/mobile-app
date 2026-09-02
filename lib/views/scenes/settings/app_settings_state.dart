@@ -1,7 +1,5 @@
 class AppSettingsState {
-  const AppSettingsState({
-    this.showRecordingSettings = false,
-  });
+  const AppSettingsState({this.showRecordingSettings = false});
 
   final bool showRecordingSettings;
 

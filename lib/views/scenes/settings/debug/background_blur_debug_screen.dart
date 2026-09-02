@@ -516,10 +516,7 @@ class _BackgroundBlurDebugScreenState extends State<BackgroundBlurDebugScreen> {
             ),
             if (_canTuneMaskEdge) ...[
               const SizedBox(height: 16),
-              MaskEdgeSliders(
-                tuning: _maskEdge,
-                onChanged: _onMaskEdgeChanged,
-              ),
+              MaskEdgeSliders(tuning: _maskEdge, onChanged: _onMaskEdgeChanged),
               const SizedBox(height: 8),
               SynchronousSegmentationSwitch(
                 value: _synchronousSegmentation,

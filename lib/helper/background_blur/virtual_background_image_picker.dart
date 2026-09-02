@@ -103,10 +103,7 @@ class VirtualBackgroundImagePicker {
       if (bytes.isEmpty) {
         return null;
       }
-      return VirtualBackgroundPickResult(
-        bytes: bytes,
-        displayName: file.name,
-      );
+      return VirtualBackgroundPickResult(bytes: bytes, displayName: file.name);
     } catch (_) {
       return null;
     }
