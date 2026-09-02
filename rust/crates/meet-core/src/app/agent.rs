@@ -4,10 +4,7 @@ use crate::errors::core::MeetCoreError;
 
 impl App {
     fn parse_meeting_link_name(s: &str) -> Result<MeetingLinkName, MeetCoreError> {
-        MeetingLinkName::try_from(s).map_err(|_| MeetCoreError::InvalidInput {
-            field: "meeting_link_name".to_string(),
-            reason: "invalid meeting link name".to_string(),
-        })
+        Ok(MeetingLinkName::from(s))
     }
 
     pub async fn admit_agent(

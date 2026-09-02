@@ -1,10 +1,7 @@
 use proton_meet_macro::unified_test;
 use std::future::ready;
 
-use crate::app::test_support::{
-    build_app_with_ws, build_app_with_ws_and_service, default_app_state, test_mls_store,
-    test_server_time_tracker,
-};
+use crate::app::test_support::{build_app_with_ws, default_app_state, test_server_time_tracker};
 use crate::domain::user::ports::{ConnectionState, MockWebSocketClient};
 
 #[unified_test]

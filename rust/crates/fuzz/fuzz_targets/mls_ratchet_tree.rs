@@ -4,10 +4,10 @@
 //! Same operation model as `mls_state_machine`, but after every step it runs the
 //! full set of ratchet-tree security oracles:
 //!   * `check_convergence`      — active members at the same epoch agree on roster
-//!                                (no ghost members / silent divergence).
+//!     (no ghost members / silent divergence).
 //!   * `check_sender_integrity` — a removed member's prior application message must
-//!                                not be accepted and attributed to whoever later
-//!                                reuses the freed leaf index (mls-rs PR #361).
+//!     not be accepted and attributed to whoever later
+//!     reuses the freed leaf index (mls-rs PR #361).
 //!
 //! NOTE: the pinned `mls-rs` fork (nexun rev 9a180d16) is **unpatched** for #361,
 //! so this target is expected to find that aliasing bug once libFuzzer evolves a

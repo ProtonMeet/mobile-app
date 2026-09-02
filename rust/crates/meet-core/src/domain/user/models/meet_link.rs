@@ -86,7 +86,7 @@ impl MeetLink {
     }
 }
 
-/// Async wrapper that returns Option<MeetLink> like your original:
+/// Async wrapper that returns `Option<MeetLink>` like your original:
 pub async fn parse_meeting_link(link: String) -> Result<Option<MeetLink>, MeetLinkError> {
     match MeetLink::parse(&link) {
         Ok(m) => Ok(Some(m)),

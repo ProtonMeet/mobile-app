@@ -3,7 +3,7 @@ use std::str::FromStr;
 use meet_identifiers::UserId;
 use mls_spec::{drafts::ratchet_tree_options::RatchetTreeOption, Serializable};
 use mls_trait::{
-    meet_policy::{RoomKind, RoomPolicies, UserRole},
+    meet_policy::{RoomKind, RoomPolicies},
     mimi_protocol_mls::UserIdentifier,
     ProposalArg,
 };
