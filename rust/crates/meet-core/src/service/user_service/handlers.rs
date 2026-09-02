@@ -8,7 +8,7 @@ use tokio::sync::Mutex;
 
 macro_rules! gen_handler_methods {
     ($name:ident, ($($arg:ident: $t:ty),*), detached_only=$do:tt, no_clear=true) => {
-        paste::paste! {
+        pastey::paste! {
             #[cfg(not(target_family = "wasm"))]
             pub fn [<set_ $name>]<F, Fut>(&mut self, mut callback: F)
             where
@@ -46,14 +46,14 @@ macro_rules! gen_handler_methods {
     ($name:ident, ($($arg:ident: $t:ty),*), detached_only=$do:tt, no_clear=false) => {
         gen_handler_methods!($name, ($($arg:$t),*), detached_only=$do, no_clear=true);
 
-        paste::paste! {
+        pastey::paste! {
             pub fn [<clear_ $name>](&mut self) {
                 self.$name = None;
             }
         }
     };
     ($name:ident, ($($arg:ident: $t:ty),*), detached_only=true) => {
-        paste::paste! {
+        pastey::paste! {
             #[allow(unused, non_camel_case_types)]
             #[doc = "Calls the "]
             #[doc = stringify!($name)]
@@ -75,7 +75,7 @@ macro_rules! gen_handler_methods {
     ($name:ident, ($($arg:ident: $t:ty),*), detached_only=false) => {
         gen_handler_methods!($name, ($($arg:$t),*), detached_only=true);
 
-        paste::paste! {
+        pastey::paste! {
             #[allow(unused, non_camel_case_types)]
             #[doc = "Calls the "]
             #[doc = stringify!($name)]
@@ -120,8 +120,12 @@ pub struct Handlers {
 }
 
 gen_handlers! { Handlers,
+    // Detached-only: these fire from the WS read path. The registered handler may
+    // call App APIs that take `user_service.write()`, which deadlocks while the
+    // `read()` guard is still held.
     (join_decision_handler: JoinDecisionHandler, (request_id: String, admitted: bool), detached_only=true, no_clear=false),
     (join_request_handler: JoinRequestHandler, (change: JoinRequestChange, request_id: String, participant_uid: String, expires_at: u64), detached_only=true, no_clear=false),
+
     (mls_group_update_handler: MlsGroupUpdateHandler, (room_id: String, reason: GroupKeyUpdateReason), detached_only=false, no_clear=true),
     (mls_sync_state_update_handler: MlsSyncStateUpdateHandler, (state: MlsSyncState, reason: Option<RejoinReason>), detached_only=false, no_clear=true),
     (agent_left_handler: AgentLeftHandler, (device_id: String), detached_only=false, no_clear=true),
