@@ -70,23 +70,19 @@ class ProtonScreenRecorder {
 
   /// Stream of native recorder events (stop from system UI, availability).
   Stream<ScreenRecorderEvent> events() {
-    _eventStream ??= _eventChannel
-        .receiveBroadcastStream()
-        .where((event) {
-          return event == 'recordingStopped' ||
-              event == 'recordingInterrupted' ||
-              event == 'recordingAvailabilityChanged';
-        })
-        .map((event) {
-          if (event == 'recordingStopped') {
-            return ScreenRecorderEvent.stopped;
-          }
-          if (event == 'recordingInterrupted') {
-            return ScreenRecorderEvent.interrupted;
-          }
-          return ScreenRecorderEvent.availabilityChanged;
-        })
-        .handleError((_) {});
+    _eventStream ??= _eventChannel.receiveBroadcastStream().where((event) {
+      return event == 'recordingStopped' ||
+          event == 'recordingInterrupted' ||
+          event == 'recordingAvailabilityChanged';
+    }).map((event) {
+      if (event == 'recordingStopped') {
+        return ScreenRecorderEvent.stopped;
+      }
+      if (event == 'recordingInterrupted') {
+        return ScreenRecorderEvent.interrupted;
+      }
+      return ScreenRecorderEvent.availabilityChanged;
+    }).handleError((_) {});
     return _eventStream!;
   }
 

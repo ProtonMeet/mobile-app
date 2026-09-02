@@ -5,10 +5,7 @@ import 'package:meet/helper/mobile_upgrade_warning_notification.dart';
 import 'package:meet/views/components/close_button_v1.dart';
 
 class MobileUpgradeWarningCard extends StatelessWidget {
-  const MobileUpgradeWarningCard({
-    required this.onDismiss,
-    super.key,
-  });
+  const MobileUpgradeWarningCard({required this.onDismiss, super.key});
 
   final VoidCallback onDismiss;
 
@@ -37,7 +34,9 @@ class MobileUpgradeWarningCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
               ),
             ),
-            child: const MobileUpgradeWarningMessage(textAlign: TextAlign.start),
+            child: const MobileUpgradeWarningMessage(
+              textAlign: TextAlign.start,
+            ),
           ),
         ),
         Positioned(

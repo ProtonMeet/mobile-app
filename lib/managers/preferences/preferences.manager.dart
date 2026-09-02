@@ -220,7 +220,9 @@ class PreferencesManager implements Manager {
 
   Future<String?> getRecordingSaveLocationKindName() async {
     try {
-      final value = await storage.read(PreferenceKeys.recordingSaveLocationKind);
+      final value = await storage.read(
+        PreferenceKeys.recordingSaveLocationKind,
+      );
       if (value is String && value.isNotEmpty) return value;
       return null;
     } catch (e) {
@@ -235,8 +237,9 @@ class PreferencesManager implements Manager {
 
   Future<String?> getRecordingSaveLocationCustomPath() async {
     try {
-      final value =
-          await storage.read(PreferenceKeys.recordingSaveLocationCustomPath);
+      final value = await storage.read(
+        PreferenceKeys.recordingSaveLocationCustomPath,
+      );
       if (value is String && value.isNotEmpty) return value;
       return null;
     } catch (e) {

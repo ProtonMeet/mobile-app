@@ -174,6 +174,16 @@
   "show_meeting_timer": "Meeting-Timer anzeigen",
   "unsubscribe_video_by_default": "Eingehendes Video deaktivieren",
   "camera_background_blur": "Hintergrundunschärfe",
+  "virtual_backgrounds_title": "Virtuelle Hintergründe",
+  "@virtual_backgrounds_title": {
+    "description": "Title for virtual backgrounds in meeting settings"
+  },
+  "backgrounds_title": "Hintergründe",
+  "@backgrounds_title": {
+    "description": "Title for backgrounds dialog"
+  },
+  "virtual_background_none": "Keine",
+  "virtual_background_custom": "Benutzerdefiniert",
   "audio_noise_cancellation": "Geräuschunterdrückung",
   "dark_mode": "Dunkelmodus",
   "show_connection_indicator": "Verbindungsanzeige anzeigen",
@@ -1139,6 +1149,10 @@
   "chat_copy_text": "Text kopieren",
   "@chat_copy_text": {
     "description": "Action to copy chat message text to clipboard"
+  },
+  "chat_message_too_long": "Diese Nachricht überschreitet die Zeichenbegrenzung für den Chat. Bitte teile sie in kürzere Nachrichten auf. Vielen Dank.",
+  "@chat_message_too_long": {
+    "description": "Error notification shown when a composed chat message is longer than the allowed character limit"
   },
   "meeting_quality_feedback": "Feedback zur Meeting-Qualität",
   "@meeting_quality_feedback": {
@@ -2146,5 +2160,13 @@
   "in_app_update_downloaded": "Die neue App-Version wurde heruntergeladen und wird automatisch installiert.",
   "@in_app_update_downloaded": {
     "description": "Notification shown when a Play Store flexible update finished downloading and will be installed"
+  },
+  "mobile_upgrade_warning_prefix": "Du verwendest eine ältere Version der App. Einige Funktionen funktionieren möglicherweise nicht wie erwartet. Bitte ",
+  "@mobile_upgrade_warning_prefix": {
+    "description": "Prefix for the outdated mobile client warning shown when joining a meeting"
+  },
+  "mobile_upgrade_warning_link": "aktualisiere auf die neueste Version",
+  "@mobile_upgrade_warning_link": {
+    "description": "Tappable link text in the outdated mobile client warning; opens the app store"
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
+import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/views/components/alerts/join_meeting_error.dart';
 import 'package:meet/views/components/loading_view.dart';
@@ -26,8 +27,9 @@ class WaitingRoomPage extends StatefulWidget {
   final VideoParameters selectedVideoParameters;
 
   /// Forwarded to [RoomPage] so the room can re-apply the prejoin camera
-  /// background blur preference onto its published video track.
+  /// background preference onto its published video track.
   final bool cameraBackgroundBlurEnabled;
+  final CameraBackgroundSelection cameraBackgroundSelection;
 
   /// Preview camera track handed over by pre-join, reused instead of opening
   /// the same physical camera a second time. Ownership moves to
@@ -47,6 +49,7 @@ class WaitingRoomPage extends StatefulWidget {
     this.selectedVideoParameters = VideoParametersPresets.h720_169,
     this.cameraBackgroundBlurEnabled = false,
     this.handedOverVideoTrack,
+    this.cameraBackgroundSelection = const CameraBackgroundSelection.none(),
     super.key,
   });
 
@@ -218,6 +221,7 @@ class _WaitingRoomPageState extends State<WaitingRoomPage>
       widget.preJoinType,
       authBloc: widget.args.authBloc,
       cameraBackgroundBlurEnabled: widget.cameraBackgroundBlurEnabled,
+      cameraBackgroundSelection: widget.cameraBackgroundSelection,
       prefetchedMeetingInfo: widget.args.prefetchedMeetingInfo,
     );
 

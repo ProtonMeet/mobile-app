@@ -42,7 +42,8 @@ class AppRouter {
           serviceManager,
         )..add(AuthInitialized());
         final dashboardBloc = DashboardBloc()..add(InitDashboardEvent());
-        final appSettingsBloc = AppSettingsBloc()..add(AppSettingsInitialized());
+        final appSettingsBloc = AppSettingsBloc()
+          ..add(AppSettingsInitialized());
         return MaterialPageRoute(
           builder: (_) => DashboardPage(
             dashboardBloc: dashboardBloc,

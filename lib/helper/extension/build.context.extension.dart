@@ -65,6 +65,7 @@ extension BuildContextExtension on BuildContext {
     Duration duration = const Duration(seconds: 5),
     bool showCloseButton = true,
     VoidCallback? onTap,
+    String? tag,
   }) {
     GlobalNotification.show(
       content: content,
@@ -72,6 +73,7 @@ extension BuildContextExtension on BuildContext {
       duration: duration,
       showCloseButton: showCloseButton,
       onTap: onTap,
+      tag: tag,
     );
   }
 

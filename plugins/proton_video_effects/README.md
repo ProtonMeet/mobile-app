@@ -2,7 +2,6 @@
 
 On-device **camera video effects** for Proton Meet — background blur on local WebRTC camera tracks (`flutter_webrtc` / LiveKit).
 
-
 | Effect                                | Status      | Platforms      |
 | ------------------------------------- | ----------- | -------------- |
 | Background blur (Vision + Core Image) | Shipped     | iOS, macOS     |
@@ -10,17 +9,14 @@ On-device **camera video effects** for Proton Meet — background blur on local 
 | Background blur (TFLite C++ core)     | Native only | Linux, Windows |
 | Custom virtual background             | Testing     | All            |
 
-
 ## Segmentation defaults
 
 Applied once per process on first attach (`applyPlatformDefaultSegmentationModel`):
-
 
 | Platform    | Backend                                                   |
 | ----------- | --------------------------------------------------------- |
 | iOS / macOS | Apple Vision (`VNGeneratePersonSegmentation`)             |
 | Android     | MediaPipe landscape (`selfie_segmenter_landscape.tflite`) |
-
 
 Override for debug via `setSegmentationModelPreference` — see `SegmentationModelPreference`.
 
@@ -28,16 +24,14 @@ Override for debug via `setSegmentationModelPreference` — see `SegmentationMod
 
 Defaults live in `BackgroundBlurConfig` (used by Meet via `const BackgroundBlurConfig()`):
 
-
 | Parameter                  | Default                                                  |
 | -------------------------- | -------------------------------------------------------- |
 | `blurSigma`                | 128 (Gaussian σ on Apple; mapped to box blur on Android) |
 | `backgroundObscureOpacity` | 0.1                                                      |
 
-
 ## Dart API
 
-All native communication goes through `**ProtonVideoEffects.instance`**. Method-channel code is internal (`lib/src/`).
+All native communication goes through `**ProtonVideoEffects.instance`\*\*. Method-channel code is internal (`lib/src/`).
 
 ```
 lib/
@@ -110,6 +104,6 @@ proton_video_effects/
 
 The CPU segmentation + blur pipeline mirrors Android. Wiring processed frames into the **encoder path** still needs a desktop `VideoProcessingAdapter` in `flutter_webrtc`; the native engine exposes `meet_video_effects_process_i420()` for that hook.
 
-## Roadmap: custom background
+## Custom background
 
-Still-image replacement is stubbed in the channel API but disabled in Dart (`BackgroundBlurConfig.replacementBackgroundEnabled = false`). Planned: image path/bytes composited through the same segmentation mask as blur.
+Still-image replacement is enabled (`BackgroundBlurConfig.replacementBackgroundEnabled = true`): an image supplied by path or bytes is composited through the same segmentation mask as blur. Callers set it with `setReplacementBackgroundImagePath` / `setReplacementBackgroundImageBytes` and drop it with `clearReplacementBackground`, which also releases the decoded copy the engine caches.

@@ -26,15 +26,15 @@
   "report_a_problem": "Nahlásit problém",
   "sign_in_to_proton_title": "Přihlaste se do Protonu",
   "sign_in_to_proton_subtitle": "Zadejte údaje ke svému účtu Proton.",
-  "desktop_login_use_browser_for_security_key": "Use browser for security key",
+  "desktop_login_use_browser_for_security_key": "Použít prohlížeč pro bezpečnostní klíč",
   "@desktop_login_use_browser_for_security_key": {
     "description": "Opens desktop sign-in in the system browser so USB security keys (WebAuthn) work on macOS"
   },
-  "desktop_login_open_browser_again": "Open browser again",
+  "desktop_login_open_browser_again": "Znovu otevřít prohlížeč",
   "@desktop_login_open_browser_again": {
     "description": "Re-opens the desktop sign-in page in the system browser"
   },
-  "desktop_login_complete_in_browser": "Complete sign-in in your browser, then return to Meet.",
+  "desktop_login_complete_in_browser": "Dokončete přihlášení ve svém prohlížeči a poté se vraťte do aplikace Meet.",
   "@desktop_login_complete_in_browser": {
     "description": "Shown while polling for session after user signs in via external browser"
   },
@@ -117,27 +117,27 @@
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
-  "check_device_clock_title": "Check your device's date and time",
+  "check_device_clock_title": "Zkontrolujte datum a čas na svém zařízení",
   "@check_device_clock_title": {
     "description": "Title when the device clock skew prevents joining a meeting"
   },
-  "check_device_clock_description": "We couldn't connect you to this meeting because your device's date and time are out of sync.\n\nTo fix this:\n• Open your device Settings\n• Turn on Set Automatically for date and time\n• Return to Proton Meet and join the meeting again",
+  "check_device_clock_description": "Nemohli jsme vás připojit k této schůzce, protože datum a čas na vašem zařízení nejsou synchronizovány.\n\nJak to opravit:\n• Otevřete nastavení zařízení\n• Zapněte automatické nastavení pro datum a čas\n• Vraťte se zpět do Proton Meet a znovu se připojte ke schůzce",
   "@check_device_clock_description": {
     "description": "Description when the user must fix device clock settings before joining"
   },
-  "token_is_invalid_title": "Unable to join meeting",
+  "token_is_invalid_title": "Nelze se připojit ke schůzce",
   "@token_is_invalid_title": {
     "description": "Title when the MLS session token is invalid"
   },
-  "token_is_invalid_description": "Something went wrong while connecting. Tap Close and join the meeting again.",
+  "token_is_invalid_description": "Při připojování došlo k chybě. Klepněte na Zavřít a znovu se připojte ke schůzce.",
   "@token_is_invalid_description": {
     "description": "Description when the MLS session token is invalid"
   },
-  "token_is_expired_title": "Connection expired",
+  "token_is_expired_title": "Připojení vypršelo",
   "@token_is_expired_title": {
     "description": "Title when the MLS session token has expired"
   },
-  "token_is_expired_description": "Your connection expired before you could join. Tap Close and join the meeting again.",
+  "token_is_expired_description": "Vaše připojení vypršelo dříve, než jste se stačili připojit. Klepněte na Zavřít a znovu se připojte ke schůzce.",
   "@token_is_expired_description": {
     "description": "Description when the MLS session token has expired"
   },
@@ -174,6 +174,16 @@
   "show_meeting_timer": "Zobrazit časovač schůzky",
   "unsubscribe_video_by_default": "Vypnout příchozí video",
   "camera_background_blur": "Rozmazané pozadí",
+  "virtual_backgrounds_title": "Virtuální pozadí",
+  "@virtual_backgrounds_title": {
+    "description": "Title for virtual backgrounds in meeting settings"
+  },
+  "backgrounds_title": "Pozadí",
+  "@backgrounds_title": {
+    "description": "Title for backgrounds dialog"
+  },
+  "virtual_background_none": "Žádné",
+  "virtual_background_custom": "Vlastní",
   "audio_noise_cancellation": "Potlačení hluku",
   "dark_mode": "Tmavý režim",
   "show_connection_indicator": "Zobrazit ukazatel připojení",
@@ -608,113 +618,113 @@
   "@recording_label": {
     "description": "Chip shown next to participants currently recording the meeting"
   },
-  "record_this_meeting": "Record this meeting",
+  "record_this_meeting": "Nahrát tuto schůzku",
   "@record_this_meeting": {
     "description": "Title for start recording confirmation dialog"
   },
-  "recording_will_begin_attendees_notified": "Recording will begin and attendees will be notified.",
+  "recording_will_begin_attendees_notified": "Nahrávání začne a účastníci o tom budou informováni.",
   "@recording_will_begin_attendees_notified": {
     "description": "Message in start recording confirmation dialog"
   },
-  "start_recording": "Start recording",
+  "start_recording": "Zahájit nahrávání",
   "@start_recording": {
     "description": "Button to start local meeting recording"
   },
-  "stop_recording": "Stop recording",
+  "stop_recording": "Zastavit nahrávání",
   "@stop_recording": {
     "description": "Button to stop local meeting recording"
   },
-  "stop_recording_title": "Stop recording",
+  "stop_recording_title": "Zastavit nahrávání",
   "@stop_recording_title": {
     "description": "Title for stop recording confirmation dialog"
   },
-  "stop_recording_confirm_message": "Are you sure you want to stop recording?",
+  "stop_recording_confirm_message": "Opravdu si přejete zastavit nahrávání?",
   "@stop_recording_confirm_message": {
     "description": "Message in stop recording confirmation dialog"
   },
-  "stop_recording_and_save": "Stop recording and save video",
+  "stop_recording_and_save": "Zastavit nahrávání a uložit video",
   "@stop_recording_and_save": {
     "description": "Primary action in stop recording dialog"
   },
-  "failed_to_start_recording": "Failed to start recording",
+  "failed_to_start_recording": "Zahájení nahrávání selhalo",
   "@failed_to_start_recording": {
     "description": "Error toast when recording could not start"
   },
-  "recording_not_supported": "Meeting recordings aren't supported on this device.",
+  "recording_not_supported": "Na tomto zařízení není podporováno nahrávání schůzek.",
   "@recording_not_supported": {},
-  "recording_simulator_not_supported": "Local meeting recording isn't available in the iOS Simulator. Test on a physical iPhone or iPad.",
+  "recording_simulator_not_supported": "V simulátoru iOS není k dispozici nahrávání místních schůzek. Testujte na skutečném iPhonu nebo iPadu.",
   "@recording_simulator_not_supported": {
     "description": "Shown when screen recording is unavailable on the platform"
   },
-  "recording_paid_feature": "Local meeting recording is available on paid plans.",
+  "recording_paid_feature": "Nahrávání místních schůzek je k dispozici v rámci placených tarifů.",
   "@recording_paid_feature": {
     "description": "Shown when a free user taps the record button"
   },
-  "recording_recovered_message": "A previous meeting recording was recovered and saved on this device.",
+  "recording_recovered_message": "Nahrávka z předchozí schůzky byla obnovena a uložena do tohoto zařízení.",
   "@recording_recovered_message": {
     "description": "Toast when orphaned recording files are found after app restart"
   },
-  "recording_interrupted_background": "Recording stopped because the app went to the background. The saved portion is in Saved recordings.",
+  "recording_interrupted_background": "Nahrávání se zastavilo, protože aplikace přešla do režimu \\\"Na pozadí\\\". Uložená část se nachází v části Uložené nahrávky.",
   "@recording_interrupted_background": {
     "description": "Toast when iOS stops ReplayKit capture after backgrounding"
   },
-  "recording_save_location_section": "Recording",
+  "recording_save_location_section": "Nahrávání",
   "@recording_save_location_section": {
     "description": "Section title in meeting settings for local recording folder"
   },
-  "recording_save_location": "Save recordings to",
+  "recording_save_location": "Uložit nahrávku do",
   "@recording_save_location": {
     "description": "Label for local recording save folder setting"
   },
-  "recording_save_location_app_documents": "Proton Meet folder (app storage)",
+  "recording_save_location_app_documents": "Složka Proton Meet (úložiště aplikace)",
   "@recording_save_location_app_documents": {
     "description": "Preset: app documents recordings folder"
   },
-  "recording_save_location_downloads": "Downloads/Proton Meet",
+  "recording_save_location_downloads": "Stahování/Proton Meet",
   "@recording_save_location_downloads": {
     "description": "Preset: downloads folder"
   },
-  "recording_save_location_movies": "Movies/Proton Meet",
+  "recording_save_location_movies": "Videa/Proton Meet",
   "@recording_save_location_movies": {
     "description": "Preset: macOS Movies folder"
   },
-  "recording_save_location_custom": "Custom folder…",
+  "recording_save_location_custom": "Vlastní složka…",
   "@recording_save_location_custom": {
     "description": "Preset: user-selected custom folder"
   },
-  "recording_save_location_updated": "Recording save location updated",
+  "recording_save_location_updated": "Umístění ukládání nahrávky aktualizováno",
   "@recording_save_location_updated": {
     "description": "Toast after changing recording save folder"
   },
-  "recording_save_location_unavailable": "That folder could not be used. Try another location.",
+  "recording_save_location_unavailable": "Tuto složku nebylo možné použít. Zkuste jiné umístění.",
   "@recording_save_location_unavailable": {
     "description": "Error when selected recording folder is not writable"
   },
-  "saved_recordings_title": "Saved recordings",
+  "saved_recordings_title": "Uložené nahrávky",
   "@saved_recordings_title": {
     "description": "Title for the list of local meeting recordings"
   },
-  "saved_recordings_empty": "No saved recordings yet. Record a meeting to see files here.",
+  "saved_recordings_empty": "Zatím žádné uložené nahrávky. Chcete-li si prohlédnout soubory, nahrajte schůzku zde.",
   "@saved_recordings_empty": {
     "description": "Empty state when no local recordings exist"
   },
-  "saved_recordings_share": "Share",
+  "saved_recordings_share": "Sdílet",
   "@saved_recordings_share": {
     "description": "Share action for a saved recording"
   },
-  "saved_recordings_share_failed": "Could not open the share sheet. Try again.",
+  "saved_recordings_share_failed": "Nelze otevřít seznam sdílení. Zkuste to znovu.",
   "@saved_recordings_share_failed": {
     "description": "Error when the system share sheet fails to open"
   },
-  "saved_recordings_folder": "Saved to",
+  "saved_recordings_folder": "Uloženo do",
   "@saved_recordings_folder": {
     "description": "Label above the folder path in saved recordings sheet"
   },
-  "saved_recordings_recovered": "Recovered after app restart",
+  "saved_recordings_recovered": "Obnoveno po restartu aplikace",
   "@saved_recordings_recovered": {
     "description": "Badge for recordings recovered from a crash"
   },
-  "saved_recordings_missing_file": "This recording file is no longer on this device.",
+  "saved_recordings_missing_file": "Tento soubor s nahrávkou se již na tomto zařízení nenachází.",
   "@saved_recordings_missing_file": {
     "description": "Snackbar when a listed recording file was deleted"
   },
@@ -1139,6 +1149,10 @@
   "chat_copy_text": "Kopírovat text",
   "@chat_copy_text": {
     "description": "Action to copy chat message text to clipboard"
+  },
+  "chat_message_too_long": "Vaše zpráva překračuje limit počtu znaků v chatu. Rozdělte ji prosím na kratší zprávy, děkujeme.",
+  "@chat_message_too_long": {
+    "description": "Error notification shown when a composed chat message is longer than the allowed character limit"
   },
   "meeting_quality_feedback": "Zpětná vazba ke kvalitě schůzky",
   "@meeting_quality_feedback": {
@@ -2071,7 +2085,7 @@
   "@settings_section_general": {
     "description": "Section header in app settings"
   },
-  "settings_section_meetings": "Meetings",
+  "settings_section_meetings": "Schůzky",
   "@settings_section_meetings": {
     "description": "Section header for meeting-related app settings"
   },
@@ -2143,8 +2157,16 @@
   "@iap_native_test_sign_in_required": {
     "description": "Message shown when sign in is required to open native payments"
   },
-  "in_app_update_downloaded": "The new app version has been downloaded and will be installed automatically.",
+  "in_app_update_downloaded": "Nová verze aplikace byla stažena a bude nainstalována automaticky.",
   "@in_app_update_downloaded": {
     "description": "Notification shown when a Play Store flexible update finished downloading and will be installed"
+  },
+  "mobile_upgrade_warning_prefix": "Používáte starší verzi aplikace. Některé funkce nemusí fungovat tak, jak byste očekávali. Prosím, ",
+  "@mobile_upgrade_warning_prefix": {
+    "description": "Prefix for the outdated mobile client warning shown when joining a meeting"
+  },
+  "mobile_upgrade_warning_link": "aktualizujte na nejnovější verzi",
+  "@mobile_upgrade_warning_link": {
+    "description": "Tappable link text in the outdated mobile client warning; opens the app store"
   }
 }

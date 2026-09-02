@@ -40,6 +40,8 @@
 		<string>App needs to authenticate using faces.</string>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>This app needs access to microphone for video meetings.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>This app needs photo library access to choose a virtual background image.</string>
 		<key>NSCalendarsUsageDescription</key>
 		<string>This app needs access to the calendar to add meetings to the calendar.</string>
 		<key>UIApplicationSupportsIndirectInputEvents</key>

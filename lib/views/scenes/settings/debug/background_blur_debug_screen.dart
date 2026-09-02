@@ -9,6 +9,7 @@ import 'package:meet/helper/extension/local_video_track_extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/views/components/safe_video_track_renderer.dart';
+import 'package:meet/views/scenes/settings/debug/mask_edge_sliders.dart';
 import 'package:proton_video_effects/proton_video_effects.dart';
 
 /// Debug screen: live camera preview with tunable blur sigma and obscure opacity.
@@ -35,7 +36,6 @@ class BackgroundBlurDebugScreen extends StatefulWidget {
 class _BackgroundBlurDebugScreenState extends State<BackgroundBlurDebugScreen> {
   static const double _minBlurSigma = BackgroundBlurConfig.minBlurSigma;
   static const double _maxBlurSigma = BackgroundBlurConfig.maxBlurSigma;
-
   LocalVideoTrack? _videoTrack;
   BackgroundBlurTrackProcessor? _blurProcessor;
   CameraPosition? _cameraPosition;
@@ -46,6 +46,8 @@ class _BackgroundBlurDebugScreenState extends State<BackgroundBlurDebugScreen> {
   String? _error;
   late double _blurSigma;
   late double _obscureOpacity;
+  MaskEdgeTuning _maskEdge = MaskEdgeTuning.standard;
+  bool _synchronousSegmentation = false;
   SegmentationModelPreference _segmentModel = (iOS || macOS)
       ? SegmentationModelPreference.vision
       : SegmentationModelPreference.landscape;
@@ -95,7 +97,11 @@ class _BackgroundBlurDebugScreenState extends State<BackgroundBlurDebugScreen> {
   BackgroundBlurConfig get _blurConfig => BackgroundBlurConfig(
     blurSigma: _blurSigma,
     backgroundObscureOpacity: _obscureOpacity,
+    maskEdge: _maskEdge,
+    synchronousSegmentation: _synchronousSegmentation,
   );
+
+  bool get _canTuneMaskEdge => maskEdgeTuningSupported;
 
   @override
   void initState() {
@@ -324,50 +330,18 @@ class _BackgroundBlurDebugScreenState extends State<BackgroundBlurDebugScreen> {
     }
   }
 
-  Widget _paramSlider({
-    required BuildContext context,
-    required String title,
-    required String description,
-    required double value,
-    required double min,
-    required double max,
-    required int? divisions,
-    required String Function(double) formatValue,
-    required ValueChanged<double> onChanged,
-  }) {
-    final bodySmall = Theme.of(
-      context,
-    ).textTheme.bodySmall?.copyWith(color: context.colors.textWeak);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: 4),
-        Text(description, style: bodySmall),
-        Row(
-          children: [
-            Expanded(
-              child: Slider(
-                value: value.clamp(min, max),
-                min: min,
-                max: max,
-                divisions: divisions,
-                label: formatValue(value),
-                onChanged: onChanged,
-              ),
-            ),
-            SizedBox(
-              width: 48,
-              child: Text(
-                formatValue(value),
-                style: Theme.of(context).textTheme.bodyMedium,
-                textAlign: TextAlign.end,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
+  void _onMaskEdgeChanged(MaskEdgeTuning tuning) {
+    setState(() => _maskEdge = tuning);
+    if (_blurEnabled) {
+      unawaited(_applyBlurConfigLive());
+    }
+  }
+
+  void _onSynchronousSegmentationChanged(bool enabled) {
+    setState(() => _synchronousSegmentation = enabled);
+    if (_blurEnabled) {
+      unawaited(_applyBlurConfigLive());
+    }
   }
 
   Future<void> _copyConfig() async {
@@ -376,6 +350,28 @@ class _BackgroundBlurDebugScreenState extends State<BackgroundBlurDebugScreen> {
       ..writeln(
         'defaultObscureOpacity => ${_obscureOpacity.toStringAsFixed(2)}',
       );
+    if (_canTuneMaskEdge) {
+      buffer
+        ..writeln(
+          'defaultFeatherHeightFraction => '
+          '${_maskEdge.featherHeightFraction.toStringAsFixed(3)}',
+        )
+        ..writeln(
+          'defaultErodeHeightFraction => '
+          '${_maskEdge.erodeHeightFraction.toStringAsFixed(3)}',
+        )
+        ..writeln(
+          'defaultSolidifySlope => ${_maskEdge.solidifySlope.toStringAsFixed(2)}',
+        )
+        ..writeln(
+          'defaultSolidifyMidpoint => '
+          '${_maskEdge.solidifyMidpoint.toStringAsFixed(2)}',
+        )
+        ..writeln(
+          'defaultForegroundGamma => '
+          '${_maskEdge.foregroundGamma.toStringAsFixed(2)}',
+        );
+    }
     final text = buffer.toString();
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) {
@@ -494,8 +490,7 @@ class _BackgroundBlurDebugScreenState extends State<BackgroundBlurDebugScreen> {
               ],
             ),
             const SizedBox(height: 24),
-            _paramSlider(
-              context: context,
+            BlurParamSlider(
               title: 'Blur sigma',
               description:
                   'Gaussian blur strength (4–256). Higher = stronger background blur.',
@@ -507,8 +502,7 @@ class _BackgroundBlurDebugScreenState extends State<BackgroundBlurDebugScreen> {
               onChanged: _onBlurSigmaChanged,
             ),
             const SizedBox(height: 16),
-            _paramSlider(
-              context: context,
+            BlurParamSlider(
               title: 'Background obscure opacity',
               description:
                   'Gray veil over the blurred background (0 = none, 1 = heavy). '
@@ -520,6 +514,15 @@ class _BackgroundBlurDebugScreenState extends State<BackgroundBlurDebugScreen> {
               formatValue: (v) => v.toStringAsFixed(2),
               onChanged: _onObscureOpacityChanged,
             ),
+            if (_canTuneMaskEdge) ...[
+              const SizedBox(height: 16),
+              MaskEdgeSliders(tuning: _maskEdge, onChanged: _onMaskEdgeChanged),
+              const SizedBox(height: 8),
+              SynchronousSegmentationSwitch(
+                value: _synchronousSegmentation,
+                onChanged: _onSynchronousSegmentationChanged,
+              ),
+            ],
             const SizedBox(height: 16),
             Text(
               'Segmentation model',
