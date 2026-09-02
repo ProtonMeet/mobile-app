@@ -52,6 +52,6 @@ pub struct MeetInfo {
     pub has_waiting_room: bool,
     pub max_duration: u32,
     pub max_participants: u32,
-    /// Unix timestamp in seconds (Option<i64>)
+    /// Unix timestamp in seconds (`Option<i64>`)
     pub expiration_time: Option<i64>,
 }

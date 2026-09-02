@@ -301,6 +301,7 @@ impl Service {
     /// the group is already in `Success`.
     ///
     /// `timeout_secs`: max wait for Welcome; `None` uses [`JOIN_PROPOSAL_TIMEOUT`] (15s).
+    #[expect(rustdoc::private_intra_doc_links)]
     pub async fn wait_for_join_proposal_welcome_and_join(
         &self,
         participant_id: &UserId,
@@ -524,7 +525,7 @@ impl Service {
             }
             added_user_identifiers.insert(owning_identity_id);
             committed_request_ids.push(request_id);
-            proposal_args.push(ProposalArg::Add(Box::new(key_package.into())));
+            proposal_args.push(ProposalArg::Add(Box::new(key_package)));
         }
 
         if proposal_args.is_empty() {

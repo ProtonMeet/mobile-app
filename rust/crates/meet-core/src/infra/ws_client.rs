@@ -124,6 +124,7 @@ fn build_ws_auth_cookie(url: &Url, base64_sd_kbt: &str, expires: Option<&str>) -
 }
 
 #[cfg(any(target_arch = "wasm32", test))]
+#[allow(unused)]
 fn build_ws_clear_cookie(url: &Url) -> String {
     build_ws_auth_cookie(url, "", Some(COOKIE_CLEAR_EXPIRES_AT_EPOCH))
 }
@@ -285,7 +286,7 @@ pub struct WsClient {
     max_ping_failures: Arc<Mutex<Option<u32>>>,
     pong_timeout_seconds: Arc<Mutex<Option<u64>>>,
     listener_generation: Arc<StdMutex<u64>>,
-    #[cfg_attr(target_family = "wasm", allow(dead_code))]
+    #[allow(unused)]
     enable_prod_tls_pinning: bool,
 }
 
@@ -575,11 +576,9 @@ impl WebSocketClient for WsClient {
 
         #[cfg(all(not(target_family = "wasm"), not(target_os = "ios")))]
         {
+            #[cfg(not(feature = "insecure-tls"))]
             use crate::infra::tls_pinning::build_prod_tls_config;
             use crate::infra::ws_connect;
-            use rustls::ClientConfig;
-            use std::sync::Arc;
-            use tokio_tungstenite_wasm::Connector;
 
             let url = self.build_ws_url("v1/ws")?;
             #[cfg(feature = "insecure-tls")]
@@ -590,6 +589,10 @@ impl WebSocketClient for WsClient {
             };
             #[cfg(not(feature = "insecure-tls"))]
             let ws_stream = if self.enable_prod_tls_pinning {
+                use rustls::ClientConfig;
+                use std::sync::Arc;
+                use tokio_tungstenite_wasm::Connector;
+
                 let tls_config: Arc<ClientConfig> = Arc::new(build_prod_tls_config()?);
                 let connector = Connector::Rustls(tls_config);
                 ws_connect::connect_with_tls_auth(url.as_str(), base64_sd_kbt, Some(connector))

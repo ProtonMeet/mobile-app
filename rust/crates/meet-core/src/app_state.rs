@@ -30,7 +30,7 @@ pub struct AppState {
     pub used_waiting_room_for_join: Option<bool>,
 }
 
-/// Cached SRP authentication from [App::authenticate_meeting_link] for reuse at join time.
+/// Cached SRP authentication from [`App::authenticate_meeting_link`][super::app::App::authenticate_meeting_link] for reuse at join time.
 #[derive(Clone, Debug)]
 pub struct PrejoinSrpAuth {
     pub meet_link_name: String,

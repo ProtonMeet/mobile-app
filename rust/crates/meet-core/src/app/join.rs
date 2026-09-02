@@ -105,7 +105,7 @@ impl App {
             let now = crate::utils::instant::now();
             {
                 let mut state = self.state.write().await;
-                state.join_start_time = state.join_start_time.or_else(|| Some(now));
+                state.join_start_time = state.join_start_time.or(Some(now));
                 state.join_mls_time = Some(now);
                 state.active_livekit_access_token = Some(access_token.expose_secret().to_string());
                 state.used_waiting_room_for_join = Some(true);
