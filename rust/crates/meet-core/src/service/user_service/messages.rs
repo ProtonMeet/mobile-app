@@ -480,10 +480,9 @@ impl Service {
         };
 
         // trigger the group update callback outside of locks to prevent lock inversion
-        if let Some(handler) = self.mls_group_update_handler.as_ref() {
-            let mut handler = handler.lock().await;
-            handler(room_id.to_string(), key_update_reason).await;
-        }
+        self.handlers
+            .call_mls_group_update_handler(room_id.into(), key_update_reason)
+            .await;
 
         let _unused_proposals = match received_message {
             ReceivedMessage::Commit { output, .. } => output.unused_proposals,
@@ -675,32 +674,31 @@ impl Service {
                 if let Ok(envelope) = serde_json::from_str::<WebSocketTextResponse>(&text) {
                     match envelope.command {
                         WebSocketTextResponseCommand::AgentPending(notification) => {
-                            if let Some(handler) = self.agent_pending_handler.as_ref() {
-                                let mut handler = handler.lock().await;
-                                handler(notification.device_id).await;
-                            } else {
-                                tracing::debug!(
-                                    "AgentPending received but no handler registered: device_id={}",
-                                    notification.device_id
-                                );
+                            let device_id = notification.device_id;
+                            if !self
+                                .handlers
+                                .call_agent_pending_handler(device_id.clone())
+                                .await
+                            {
+                                tracing::debug!("AgentPending received but no handler registered: device_id={device_id}");
                             }
                             return Ok(());
                         }
                         WebSocketTextResponseCommand::AgentLeft(notification) => {
-                            if let Some(handler) = self.agent_left_handler.as_ref() {
-                                let mut handler = handler.lock().await;
-                                handler(notification.device_id).await;
-                            } else {
-                                tracing::debug!(
-                                    "AgentLeft received but no handler registered: device_id={}",
-                                    notification.device_id
-                                );
+                            let device_id = notification.device_id;
+                            if !self
+                                .handlers
+                                .call_agent_left_handler(device_id.clone())
+                                .await
+                            {
+                                tracing::debug!("AgentLeft received but no handler registered: device_id={device_id}");
                             }
                             return Ok(());
                         }
                         _ => {}
                     }
                 }
+
                 // try to parse as JoinRoomResponse
                 if let Ok(join_response) = serde_json::from_str::<JoinRoomResponse>(&text) {
                     #[cfg(debug_assertions)]

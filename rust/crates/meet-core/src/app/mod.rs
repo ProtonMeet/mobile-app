@@ -559,6 +559,7 @@ impl App {
         self.user_service
             .write()
             .await
+            .handlers
             .set_mls_group_update_handler(callback);
     }
 
@@ -575,6 +576,7 @@ impl App {
         self.user_service
             .write()
             .await
+            .handlers
             .set_mls_sync_state_update_handler(callback);
     }
 
@@ -586,6 +588,7 @@ impl App {
         self.user_service
             .write()
             .await
+            .handlers
             .set_livekit_admin_change_handler(callback);
     }
 
@@ -597,6 +600,7 @@ impl App {
         self.user_service
             .write()
             .await
+            .handlers
             .set_agent_pending_handler(callback);
     }
 
@@ -608,6 +612,7 @@ impl App {
         self.user_service
             .write()
             .await
+            .handlers
             .set_agent_left_handler(callback);
     }
 }

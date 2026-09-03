@@ -69,6 +69,7 @@ rand_v09 = { package = "rand", version = "0.9", default-features = false, featur
     "std_rng",
     "thread_rng",
 ] }
+pastey = "0.2.3"
 
 [target.'cfg(target_os = "ios")'.dependencies]
 # rustls = "0.23.31"
