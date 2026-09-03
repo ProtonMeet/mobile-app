@@ -140,7 +140,6 @@ mod tests {
 
     fn sample_user_settings() -> UserSettings {
         UserSettings {
-            meeting_id: "meeting-id".to_string(),
             address_id: Some("address-id".to_string()),
             waiting_room: false,
         }
@@ -307,7 +306,7 @@ mod tests {
         });
 
         let result = HttpClient::get_user_settings(&mock).await.unwrap();
-        assert_eq!(result.meeting_id, "meeting-id");
+        assert_eq!(result.address_id, Some("address-id".to_string()));
     }
 
     #[unified_test]

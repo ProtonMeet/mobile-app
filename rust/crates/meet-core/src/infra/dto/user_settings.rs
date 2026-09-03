@@ -12,8 +12,6 @@ pub struct UserSettingsResponse {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct UserSettingsDto {
-    #[serde(rename = "MeetingID")]
-    pub meeting_id: String,
     #[serde(rename = "AddressID")]
     pub address_id: Option<String>,
     #[serde(default)]
@@ -23,7 +21,6 @@ pub struct UserSettingsDto {
 impl From<UserSettingsResponse> for UserSettings {
     fn from(response: UserSettingsResponse) -> Self {
         UserSettings {
-            meeting_id: response.user_settings.meeting_id,
             address_id: response.user_settings.address_id,
             waiting_room: response.user_settings.waiting_room == 1,
         }
@@ -52,7 +49,6 @@ mod tests {
     fn parses_waiting_room_enabled_as_true() {
         let json = r#"{
             "UserSettings": {
-                "MeetingID": "meeting-1",
                 "AddressID": "address-1",
                 "WaitingRoom": 1
             },
@@ -68,7 +64,6 @@ mod tests {
     fn parses_waiting_room_disabled_as_false() {
         let json = r#"{
             "UserSettings": {
-                "MeetingID": "meeting-1",
                 "AddressID": "address-1",
                 "WaitingRoom": 0
             },
@@ -98,7 +93,6 @@ mod tests {
     fn defaults_waiting_room_to_false_when_missing() {
         let json = r#"{
             "UserSettings": {
-                "MeetingID": "meeting-1",
                 "AddressID": "address-1"
             },
             "Code": 1000
@@ -113,7 +107,6 @@ mod tests {
     fn parses_null_address_id() {
         let json = r#"{
             "UserSettings": {
-                "MeetingID": "meeting-1",
                 "AddressID": null,
                 "WaitingRoom": 1
             },
@@ -124,5 +117,26 @@ mod tests {
         let settings = UserSettings::from(response);
         assert_eq!(settings.address_id, None);
         assert!(settings.waiting_room);
+    }
+
+    #[test]
+    fn ignores_deprecated_meeting_id() {
+        for meeting_id in [r#""meeting-1""#, r#""""#, "null"] {
+            let json = format!(
+                r#"{{
+                    "UserSettings": {{
+                        "MeetingID": {meeting_id},
+                        "AddressID": "address-1",
+                        "WaitingRoom": 1
+                    }},
+                    "Code": 1000
+                }}"#
+            );
+            let response: UserSettingsResponse =
+                serde_json::from_str(&json).expect("parse user settings");
+            let settings = UserSettings::from(response);
+            assert_eq!(settings.address_id, Some("address-1".to_string()));
+            assert!(settings.waiting_room);
+        }
     }
 }

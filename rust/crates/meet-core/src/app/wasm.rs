@@ -42,7 +42,6 @@ pub struct ParticipantTrackSettingsInfo {
 
 #[cfg_attr(target_family = "wasm", wasm_bindgen(getter_with_clone))]
 pub struct UserSettingsInfo {
-    pub meeting_id: String,
     pub address_id: Option<String>,
     pub waiting_room: bool,
 }
@@ -497,7 +496,6 @@ impl App {
             .await
             .map_err(|e| crate::errors::core::MeetCoreErrorEnum::from(e))?;
         Ok(UserSettingsInfo {
-            meeting_id: user_settings.meeting_id,
             address_id: user_settings.address_id,
             waiting_room: user_settings.waiting_room,
         })
@@ -513,7 +511,6 @@ impl App {
             .await
             .map_err(|e| crate::errors::core::MeetCoreErrorEnum::from(e))?;
         Ok(UserSettingsInfo {
-            meeting_id: user_settings.meeting_id,
             address_id: user_settings.address_id,
             waiting_room: user_settings.waiting_room,
         })

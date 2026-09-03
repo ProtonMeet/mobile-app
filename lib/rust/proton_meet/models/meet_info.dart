@@ -20,7 +20,7 @@ class FrbMeetInfo {
   final int maxDuration;
   final int maxParticipants;
 
-  /// Unix timestamp in seconds (Option<i64>)
+  /// Unix timestamp in seconds (`Option<i64>`)
   final PlatformInt64? expirationTime;
 
   const FrbMeetInfo({

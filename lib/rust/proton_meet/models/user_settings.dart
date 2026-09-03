@@ -9,26 +9,19 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `from`
 
 class FrbUserSettings {
-  final String meetingId;
   final String? addressId;
   final bool waitingRoom;
 
-  const FrbUserSettings({
-    required this.meetingId,
-    this.addressId,
-    required this.waitingRoom,
-  });
+  const FrbUserSettings({this.addressId, required this.waitingRoom});
 
   @override
-  int get hashCode =>
-      meetingId.hashCode ^ addressId.hashCode ^ waitingRoom.hashCode;
+  int get hashCode => addressId.hashCode ^ waitingRoom.hashCode;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is FrbUserSettings &&
           runtimeType == other.runtimeType &&
-          meetingId == other.meetingId &&
           addressId == other.addressId &&
           waitingRoom == other.waitingRoom;
 }
