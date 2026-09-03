@@ -631,6 +631,7 @@ impl App {
         self.user_service
             .write()
             .await
+            .handlers
             .set_mls_group_update_handler(|meeting_link_name, reason| {
                 Box::pin(async move {
                     let reason_info: GroupKeyUpdateReasonInfo = reason.into();
@@ -646,6 +647,7 @@ impl App {
         self.user_service
             .write()
             .await
+            .handlers
             .set_mls_sync_state_update_handler(|state, reason| {
                 Box::pin(async move {
                     let state_info: MlsSyncStateInfo = state.into();
@@ -662,6 +664,7 @@ impl App {
         self.user_service
             .write()
             .await
+            .handlers
             .set_livekit_admin_change_handler(|room_id, participant_uid, participant_type| {
                 Box::pin(async move {
                     on_livekit_admin_changed(
@@ -975,6 +978,7 @@ impl App {
         self.user_service
             .write()
             .await
+            .handlers
             .set_agent_pending_handler(|device_id| {
                 Box::pin(async move {
                     on_agent_pending(device_id);
@@ -989,6 +993,7 @@ impl App {
         self.user_service
             .write()
             .await
+            .handlers
             .set_agent_left_handler(|device_id| {
                 Box::pin(async move {
                     on_agent_left(device_id);

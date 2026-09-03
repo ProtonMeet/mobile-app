@@ -1,24 +1,23 @@
 use std::{
     collections::{HashMap, HashSet},
-    future::Future,
     str::FromStr,
     sync::Arc,
     time::Duration,
 };
 
 use self::utils::*;
-use crate::utils::{join, server_time::ServerTimeTracker};
 use crate::{
-    domain::{
-        room::JoinRequestChange,
-        user::{
-            models::meeting_link_name::MeetingLinkName,
-            ports::{new_user_service::NewUserService, ArcWebSocketClient},
-        },
+    domain::user::{
+        models::meeting_link_name::MeetingLinkName,
+        ports::{new_user_service::NewUserService, ArcWebSocketClient},
     },
     infra::crypto_client::derive_external_psk,
     service::service_state::MlsSyncState,
     utils::{instant, sleep},
+};
+use crate::{
+    service::user_service::handlers::Handlers,
+    utils::{join, server_time::ServerTimeTracker},
 };
 use base64::{engine::general_purpose, Engine};
 use ed25519_dalek::pkcs8::DecodePublicKey;
@@ -92,7 +91,7 @@ use identity::{Disclosure, PresentationContext, ProtonMeetIdentity, SdCwt};
 use meet_identifiers::{Domain, GroupId, Id, LeafIndex};
 
 mod captions;
-mod handlers;
+pub(crate) mod handlers;
 mod join;
 mod join_request;
 mod messages;
@@ -152,75 +151,6 @@ pub enum GroupKeyUpdateReason {
     Unknown,
 }
 
-#[cfg(not(target_family = "wasm"))]
-pub type MlsGroupUpdateHandler = Box<
-    dyn FnMut(String, GroupKeyUpdateReason) -> Box<dyn Future<Output = ()> + Unpin + Send>
-        + Send
-        + 'static,
->;
-
-#[cfg(target_family = "wasm")]
-pub type MlsGroupUpdateHandler =
-    Box<dyn FnMut(String, GroupKeyUpdateReason) -> Box<dyn Future<Output = ()> + Unpin> + 'static>;
-
-#[cfg(not(target_family = "wasm"))]
-pub type LiveKitAdminChangeHandler = Box<
-    dyn FnMut(String, String, u32) -> Box<dyn Future<Output = ()> + Unpin + Send> + Send + 'static,
->;
-
-#[cfg(target_family = "wasm")]
-pub type LiveKitAdminChangeHandler =
-    Box<dyn FnMut(String, String, u32) -> Box<dyn Future<Output = ()> + Unpin> + 'static>;
-
-#[cfg(not(target_family = "wasm"))]
-pub type MlsSyncStateUpdateHandler = Box<
-    dyn FnMut(MlsSyncState, Option<RejoinReason>) -> Box<dyn Future<Output = ()> + Unpin + Send>
-        + Send
-        + 'static,
->;
-
-#[cfg(target_family = "wasm")]
-pub type MlsSyncStateUpdateHandler = Box<
-    dyn FnMut(MlsSyncState, Option<RejoinReason>) -> Box<dyn Future<Output = ()> + Unpin> + 'static,
->;
-
-#[cfg(not(target_family = "wasm"))]
-pub type JoinDecisionHandler =
-    Box<dyn FnMut(String, bool) -> Box<dyn Future<Output = ()> + Unpin + Send> + Send + 'static>;
-
-#[cfg(target_family = "wasm")]
-pub type JoinDecisionHandler =
-    Box<dyn FnMut(String, bool) -> Box<dyn Future<Output = ()> + Unpin> + 'static>;
-
-#[cfg(not(target_family = "wasm"))]
-pub type JoinRequestHandler = Box<
-    dyn FnMut(JoinRequestChange, String, String, u64) -> Box<dyn Future<Output = ()> + Unpin + Send>
-        + Send
-        + 'static,
->;
-
-#[cfg(target_family = "wasm")]
-pub type JoinRequestHandler = Box<
-    dyn FnMut(JoinRequestChange, String, String, u64) -> Box<dyn Future<Output = ()> + Unpin>
-        + 'static,
->;
-
-#[cfg(not(target_family = "wasm"))]
-pub type AgentPendingHandler =
-    Box<dyn FnMut(String) -> Box<dyn Future<Output = ()> + Unpin + Send> + Send + 'static>;
-
-#[cfg(target_family = "wasm")]
-pub type AgentPendingHandler =
-    Box<dyn FnMut(String) -> Box<dyn Future<Output = ()> + Unpin> + 'static>;
-
-#[cfg(not(target_family = "wasm"))]
-pub type AgentLeftHandler =
-    Box<dyn FnMut(String) -> Box<dyn Future<Output = ()> + Unpin + Send> + Send + 'static>;
-
-#[cfg(target_family = "wasm")]
-pub type AgentLeftHandler =
-    Box<dyn FnMut(String) -> Box<dyn Future<Output = ()> + Unpin> + 'static>;
-
 #[derive(Clone)]
 pub struct Service {
     http_client: Arc<dyn HttpClient>,
@@ -228,13 +158,6 @@ pub struct Service {
     meeting_api: Arc<dyn MeetingApi>,
     user_api: Arc<dyn UserApi>,
     user_repository: ArcUserRepository,
-    mls_group_update_handler: Option<Arc<Mutex<MlsGroupUpdateHandler>>>,
-    livekit_admin_change_handler: Option<Arc<Mutex<LiveKitAdminChangeHandler>>>,
-    mls_sync_state_update_handler: Option<Arc<Mutex<MlsSyncStateUpdateHandler>>>,
-    join_decision_handler: Option<Arc<Mutex<JoinDecisionHandler>>>,
-    join_request_handler: Option<Arc<Mutex<JoinRequestHandler>>>,
-    agent_pending_handler: Option<Arc<Mutex<AgentPendingHandler>>>,
-    agent_left_handler: Option<Arc<Mutex<AgentLeftHandler>>>,
     ws_client: ArcWebSocketClient,
     mls_store: Arc<RwLock<MlsStore>>,
     state: Arc<Mutex<ServiceState>>,
@@ -250,6 +173,7 @@ pub struct Service {
     /// Wakes tasks waiting on a join-proposal `Welcome` after `welcome_info` is stored.
     join_proposal_welcome_notify: Arc<Notify>,
     server_time_tracker: ServerTimeTracker,
+    pub handlers: Handlers,
 }
 
 impl Service {
@@ -303,13 +227,6 @@ impl Service {
             meeting_api,
             user_api,
             user_repository,
-            mls_group_update_handler: None,
-            livekit_admin_change_handler: None,
-            mls_sync_state_update_handler: None,
-            join_decision_handler: None,
-            join_request_handler: None,
-            agent_pending_handler: None,
-            agent_left_handler: None,
             ws_client,
             mls_store,
             state,
@@ -322,6 +239,7 @@ impl Service {
             mls_service,
             join_proposal_welcome_notify,
             server_time_tracker,
+            handlers: Handlers::default(),
         }
     }
 
@@ -990,10 +908,9 @@ impl Service {
         } else {
             None
         };
-        if let Some(handler) = self.mls_sync_state_update_handler.as_ref() {
-            let mut handler = handler.lock().await;
-            handler(new_state, callback_reason).await;
-        }
+        self.handlers
+            .call_mls_sync_state_update_handler(new_state, callback_reason)
+            .await;
     }
 
     fn connection_lost_type_to_rejoin_reason(
@@ -1950,10 +1867,12 @@ impl UserService for Service {
                     drop(mls_group);
 
                     // Trigger group update handler
-                    if let Some(handler) = self.mls_group_update_handler.as_ref() {
-                        let mut handler = handler.lock().await;
-                        handler(meeting_link_name.to_string(), GroupKeyUpdateReason::Leave).await;
-                    }
+                    self.handlers
+                        .call_mls_group_update_handler(
+                            meeting_link_name.to_string(),
+                            GroupKeyUpdateReason::Leave,
+                        )
+                        .await;
 
                     return Ok(());
                 }
@@ -2230,10 +2149,11 @@ impl UserService for Service {
         participant_type: u32,
     ) -> Result<(), anyhow::Error> {
         // trigger the livekit admin change handler to notify wasm/mobile
-        if let Some(handler) = self.livekit_admin_change_handler.as_ref() {
-            let mut handler = handler.lock().await;
-            handler(room_id.to_string(), participant_uid, participant_type).await;
-        } else {
+        if !self
+            .handlers
+            .call_livekit_admin_change_handler(room_id.into(), participant_uid, participant_type)
+            .await
+        {
             return Err(anyhow::anyhow!("LiveKit admin change handler is not set"));
         }
 
