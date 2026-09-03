@@ -6140,7 +6140,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 },
             );
 
-            state.livekit_active_uuid_hashset = Some(hashmap);
+            state.livekit_active_uuid_hashmap = Some(hashmap);
             state.last_livekit_active_uuid_update_time = current_time;
         }
 
@@ -6153,7 +6153,8 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         // Call get_offline_indices
         let offline_indices = service1.get_offline_indices(test_roster).await.unwrap();
 
-        // Verify: Only the second member (20s ago) should be offline; fourth member not in hashmap is ignored
+        // Verify: Only the second member (20s ago) should be offline; the fourth
+        // member is untracked so this call only starts its offline clock.
         assert_eq!(
             offline_indices.len(),
             1,
@@ -6162,6 +6163,81 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         assert_eq!(
             offline_indices[0], member_uuids[1].1,
             "Offline member should be the one with 20s old timestamp"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_get_offline_indices_removes_never_seen_member_after_threshold() {
+        use crate::service::service_state::LivekitUUIDInfo;
+        use std::collections::HashMap;
+
+        let meet_link_name = "test_offline_never_seen";
+        let ciphersuite = MlsClientConfig::default().ciphersuite;
+
+        let service1 = create_test_service("user1", meet_link_name).await;
+        let service2 = create_test_service("user2", meet_link_name).await;
+
+        let (group1, _group2) =
+            setup_two_user_group(&service1, &service2, meet_link_name, ciphersuite).await;
+
+        let roster: Vec<mls_types::Member> = {
+            let group = group1.read().await;
+            group.roster().collect()
+        };
+
+        let mut member_uuids = vec![];
+        for mut member in roster.iter().cloned() {
+            if let Ok(uuid) = crate::service::utils::get_uuid_from_member(&mut member) {
+                member_uuids.push((uuid, *member.leaf_index()));
+            }
+        }
+        assert_eq!(member_uuids.len(), 2, "Expected 2 valid UUIDs");
+
+        // Only the first member was ever reported by LiveKit; the second one has
+        // never appeared in an active-uuid update.
+        let current_time = crate::utils::unix_timestamp_ms();
+        {
+            let mut state = service1.state.lock().await;
+            let mut hashmap = HashMap::new();
+            hashmap.insert(
+                member_uuids[0].0,
+                LivekitUUIDInfo {
+                    uuid: member_uuids[0].0,
+                    last_seen: current_time,
+                },
+            );
+            state.livekit_active_uuid_hashmap = Some(hashmap);
+            state.last_livekit_active_uuid_update_time = current_time;
+        }
+
+        let first_pass = service1.get_offline_indices(roster.clone()).await.unwrap();
+        assert!(
+            first_pass.is_empty(),
+            "Never-seen member gets a full grace period on first observation"
+        );
+
+        // Advance the reference clock past the threshold, simulating further
+        // LiveKit updates that keep reporting only the first member.
+        {
+            let advanced_time = crate::utils::unix_timestamp_ms() + 20_000;
+            let mut state = service1.state.lock().await;
+            if let Some(tracked) = state.livekit_active_uuid_hashmap.as_mut() {
+                tracked.insert(
+                    member_uuids[0].0,
+                    LivekitUUIDInfo {
+                        uuid: member_uuids[0].0,
+                        last_seen: advanced_time,
+                    },
+                );
+            }
+            state.last_livekit_active_uuid_update_time = advanced_time;
+        }
+
+        let second_pass = service1.get_offline_indices(roster).await.unwrap();
+        assert_eq!(
+            second_pass,
+            vec![member_uuids[1].1],
+            "Never-seen member should be removable once the threshold elapses"
         );
     }
 
@@ -6182,7 +6258,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         // Setup: Empty hashmap (no tracked UUIDs)
         {
             let mut state = service1.state.lock().await;
-            state.livekit_active_uuid_hashset = None;
+            state.livekit_active_uuid_hashmap = None;
             state.last_livekit_active_uuid_update_time = crate::utils::unix_timestamp_ms();
         }
 
@@ -6249,7 +6325,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 },
             );
 
-            state.livekit_active_uuid_hashset = Some(hashmap);
+            state.livekit_active_uuid_hashmap = Some(hashmap);
             state.last_livekit_active_uuid_update_time = current_time;
         }
 

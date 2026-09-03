@@ -84,8 +84,6 @@ pub struct Meeting {
     pub srp_modulus_id: String,
     /// SRP salt
     pub srp_salt: String,
-    /// SRP verifier
-    pub srp_verifier: String,
     /// Meeting start time
     pub start_time: Option<DateTime<Utc>>,
     /// Meeting end time
