@@ -6,7 +6,7 @@ use tokio::sync::RwLock;
 use crate::service::auth::ArcAuthService;
 use crate::{
     domain::room::{RoomService, WaitingRoomService},
-    service::user_service::Service,
+    service::{agent::ArcAgentService, user_service::Service},
 };
 
 /// Services bundle for the meet application
@@ -15,7 +15,8 @@ pub(crate) struct ServicesBundle {
     pub waiting_room_service: Arc<WaitingRoomService>,
     #[cfg(not(target_family = "wasm"))]
     pub auth_service: ArcAuthService,
-    pub user_service: RwLock<Service>,
+    pub agent_service: ArcAgentService,
+    pub user_service: Arc<RwLock<Service>>,
 }
 
 impl ServicesBundle {
@@ -23,13 +24,15 @@ impl ServicesBundle {
         room_service: Arc<RoomService>,
         waiting_room_service: Arc<WaitingRoomService>,
         #[cfg(not(target_family = "wasm"))] auth_service: ArcAuthService,
-        user_service: RwLock<Service>,
+        agent_service: ArcAgentService,
+        user_service: Arc<RwLock<Service>>,
     ) -> Self {
         Self {
             room_service,
             waiting_room_service,
             #[cfg(not(target_family = "wasm"))]
             auth_service,
+            agent_service,
             user_service,
         }
     }

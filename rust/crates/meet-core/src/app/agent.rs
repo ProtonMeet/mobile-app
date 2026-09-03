@@ -16,9 +16,7 @@ impl App {
         let user_id = self.active_user_id().await?;
         let meeting = Self::parse_meeting_link_name(&meeting_link_name)?;
         self.services
-            .user_service
-            .read()
-            .await
+            .agent_service
             .admit_agent(&meeting, &user_id, agent_device_id, meeting_password)
             .await
             .map_err(MeetCoreError::from)
@@ -32,9 +30,7 @@ impl App {
         let user_id = self.active_user_id().await?;
         let meeting = Self::parse_meeting_link_name(&meeting_link_name)?;
         self.services
-            .user_service
-            .read()
-            .await
+            .agent_service
             .remove_agent(&meeting, &user_id, agent_device_id)
             .await
             .map_err(MeetCoreError::from)
@@ -95,9 +91,7 @@ impl App {
         // the host's session rather than by an explicit meeting parameter.
         Self::parse_meeting_link_name(&meeting_link_name)?;
         self.services
-            .user_service
-            .read()
-            .await
+            .agent_service
             .list_pending_agents(&user_id)
             .await
             .map_err(MeetCoreError::from)

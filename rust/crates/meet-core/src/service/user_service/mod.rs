@@ -91,7 +91,7 @@ mod join;
 mod join_request;
 mod messages;
 mod proposals;
-mod utils;
+pub(super) mod utils;
 
 pub(crate) use utils::{credential_is_agent, psk_id_for_commit, public_ratchet_tree_has_agent};
 
@@ -271,7 +271,7 @@ impl Service {
     /// Rank for the designated-committer stagger, with the group's epoch it was
     /// read at: room admins go first, everyone else takes a deterministic
     /// per-epoch position among the candidates.
-    async fn committer_rank(
+    pub(super) async fn committer_rank(
         &self,
         mls_group: &MlsGroup<MemKv>,
     ) -> Result<(u64, u64), anyhow::Error> {
@@ -293,7 +293,7 @@ impl Service {
         Ok((epoch_at, rank))
     }
 
-    async fn get_deterministic_random_rank(
+    pub(super) async fn get_deterministic_random_rank(
         &self,
         own_leaf_index: u32,
         epoch_at: u64,
