@@ -28,12 +28,6 @@ rustflags = ["-C", "link-arg=-framework", "-C", "link-arg=CoreFoundation"]
 [target.x86_64-apple-ios]
 rustflags = ["-C", "link-arg=-framework", "-C", "link-arg=CoreFoundation"]
 
-[net]
-git-fetch-with-cli = true
-
-[registries.proton_public]
-index = "sparse+https://rust-registry.proton.me/index/"
-
 # Configure OpenSSL for Android cross-compilation
 [env]
 OPENSSL_STATIC = { value = "1", condition = { target-family = "android" } }
