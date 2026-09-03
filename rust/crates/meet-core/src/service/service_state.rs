@@ -59,7 +59,7 @@ pub struct ServiceState {
     pub mls_group_state: MlsGroupState,
     pub mls_sync_state: MlsSyncState,
     pub welcome_info: Option<MlsWelcomeInfo>,
-    pub livekit_active_uuid_hashset: Option<HashMap<Uuid, LivekitUUIDInfo>>,
+    pub livekit_active_uuid_hashmap: Option<HashMap<Uuid, LivekitUUIDInfo>>,
     pub last_livekit_active_uuid_update_time: u64,
     pub mls_retry_count: u32,
     pub mls_sync_metrics: Option<MlsSyncMetrics>,
@@ -86,7 +86,7 @@ impl ServiceState {
             mls_group_state: MlsGroupState::Pending,
             mls_sync_state: MlsSyncState::Checking,
             welcome_info: None,
-            livekit_active_uuid_hashset: None,
+            livekit_active_uuid_hashmap: None,
             last_livekit_active_uuid_update_time: 0,
             mls_retry_count: 0,
             mls_sync_metrics: None,
@@ -149,7 +149,7 @@ impl ServiceState {
 
     pub fn set_livekit_active_uuids(&mut self, livekit_active_uuid_list: Vec<String>) {
         let current_time = unix_timestamp_ms();
-        let mut updated_hashmap = self.livekit_active_uuid_hashset.take().unwrap_or_default();
+        let mut updated_hashmap = self.livekit_active_uuid_hashmap.take().unwrap_or_default();
 
         for uuid_str in livekit_active_uuid_list.iter() {
             if let Ok(uuid) = Uuid::parse_str(uuid_str.as_str()) {
@@ -163,16 +163,16 @@ impl ServiceState {
             }
         }
 
-        self.livekit_active_uuid_hashset = Some(updated_hashmap);
+        self.livekit_active_uuid_hashmap = Some(updated_hashmap);
         self.last_livekit_active_uuid_update_time = current_time;
     }
 
     pub fn get_livekit_active_uuid_hashmap(&self) -> HashMap<Uuid, LivekitUUIDInfo> {
-        self.livekit_active_uuid_hashset.clone().unwrap_or_default()
+        self.livekit_active_uuid_hashmap.clone().unwrap_or_default()
     }
 
-    pub fn clear_livekit_active_uuid_hashset(&mut self) {
-        self.livekit_active_uuid_hashset = None;
+    pub fn clear_livekit_active_uuid_hashmap(&mut self) {
+        self.livekit_active_uuid_hashmap = None;
     }
 
     pub fn set_mls_sync_metrics(&mut self, metrics: MlsSyncMetrics) {
@@ -231,7 +231,7 @@ impl ServiceState {
         self.mls_group_state = MlsGroupState::Pending;
         self.mls_sync_state = MlsSyncState::Checking;
         self.welcome_info = None;
-        self.livekit_active_uuid_hashset = None;
+        self.livekit_active_uuid_hashmap = None;
         self.mls_retry_count = 0;
         self.mls_sync_metrics = None;
         self.mls_designated_committer_metrics.clear();
