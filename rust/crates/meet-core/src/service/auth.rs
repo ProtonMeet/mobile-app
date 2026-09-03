@@ -8,27 +8,21 @@ use crate::{
 };
 use crate::{
     domain::user::{
-        models::{UserId, UserSettings},
-        ports::{user_api::UserApi, ArcUserRepository, HttpClient},
+        models::UserId,
+        ports::{user_api::UserApi, ArcUserRepository},
     },
     errors::service::ServiceError,
     infra::storage::error::StorageError,
 };
 
 pub(crate) struct AuthServiceImpl {
-    http_client: Arc<dyn HttpClient>,
     user_api: Arc<dyn UserApi>,
     user_repository: ArcUserRepository,
 }
 
 impl AuthServiceImpl {
-    pub fn new(
-        http_client: Arc<dyn HttpClient>,
-        user_api: Arc<dyn UserApi>,
-        user_repository: ArcUserRepository,
-    ) -> Self {
+    pub fn new(user_api: Arc<dyn UserApi>, user_repository: ArcUserRepository) -> Self {
         Self {
-            http_client,
             user_api,
             user_repository,
         }
@@ -74,13 +68,6 @@ pub(crate) trait AuthService {
     /// [`get_user_keys``][Self::get_user_keys] load from the API again (meet-server may have
     /// changed user data when the event stream sets `refresh`).
     async fn clear_local_user_profile_cache(&self, user_id: &UserId) -> Result<(), StorageError>;
-
-    async fn get_user_settings(&self) -> Result<UserSettings, anyhow::Error>;
-
-    async fn update_user_settings_waiting_room(
-        &self,
-        enable: bool,
-    ) -> Result<UserSettings, anyhow::Error>;
 }
 
 #[async_trait]
@@ -206,22 +193,6 @@ impl AuthService for AuthServiceImpl {
         self.user_repository.delete_user(user_id.as_str()).await?;
         Ok(())
     }
-
-    async fn get_user_settings(&self) -> Result<UserSettings, anyhow::Error> {
-        let user_settings = self.http_client.get_user_settings().await?;
-        Ok(user_settings)
-    }
-
-    async fn update_user_settings_waiting_room(
-        &self,
-        enable: bool,
-    ) -> Result<UserSettings, anyhow::Error> {
-        let user_settings = self
-            .http_client
-            .update_user_settings_waiting_room(enable)
-            .await?;
-        Ok(user_settings)
-    }
 }
 
 #[cfg(test)]
@@ -233,7 +204,7 @@ pub mod tests {
     use crate::{
         domain::user::{
             models::UserId,
-            ports::{user_api::MockUserApi, MockHttpClient, MockUserRepository},
+            ports::{user_api::MockUserApi, MockUserRepository},
         },
         errors::login::LoginError,
         infra::dto::proton_user::UserData,
@@ -248,9 +219,7 @@ pub mod tests {
     const TEST_USER_NAME: &str = "Test User";
 
     #[tokio::test]
-    #[cfg(not(target_arch = "wasm32"))] // Login is not available on web
     async fn test_login_success() {
-        let http_client = MockHttpClient::new();
         let mut mock_user_api = MockUserApi::new();
         mock_user_api
             .expect_login()
@@ -295,11 +264,7 @@ pub mod tests {
             .once()
             .returning(|_, _| Box::pin(ready(Ok(()))));
 
-        let auth_service = AuthServiceImpl::new(
-            Arc::new(http_client),
-            Arc::new(mock_user_api),
-            Arc::new(user_repository),
-        );
+        let auth_service = AuthServiceImpl::new(Arc::new(mock_user_api), Arc::new(user_repository));
 
         let result = auth_service.login(TEST_USERNAME, TEST_PASSWORD).await;
 
@@ -313,9 +278,7 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(not(target_arch = "wasm32"))] // Login is not available on web
     async fn test_login_http_client_error() {
-        let http_client = MockHttpClient::new();
         let mut mock_user_api = MockUserApi::new();
         mock_user_api
             .expect_login()
@@ -328,11 +291,7 @@ pub mod tests {
             });
         let user_repository = MockUserRepository::new();
 
-        let auth_service = AuthServiceImpl::new(
-            Arc::new(http_client),
-            Arc::new(mock_user_api),
-            Arc::new(user_repository),
-        );
+        let auth_service = AuthServiceImpl::new(Arc::new(mock_user_api), Arc::new(user_repository));
 
         let result = auth_service.login(TEST_USERNAME, TEST_PASSWORD).await;
 
@@ -341,11 +300,9 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(not(target_arch = "wasm32"))] // Login is not available on web
     async fn test_logout_success() {
         let user_id = TEST_USER_ID.to_string();
 
-        let http_client = MockHttpClient::new();
         let mut mock_user_api = MockUserApi::new();
         mock_user_api
             .expect_logout()
@@ -359,11 +316,7 @@ pub mod tests {
             .once()
             .returning(|_| Box::pin(ready(Ok(1))));
 
-        let auth_service = AuthServiceImpl::new(
-            Arc::new(http_client),
-            Arc::new(mock_user_api),
-            Arc::new(user_repository),
-        );
+        let auth_service = AuthServiceImpl::new(Arc::new(mock_user_api), Arc::new(user_repository));
 
         let result = auth_service.logout(&UserId::new(user_id)).await;
 

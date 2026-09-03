@@ -8,7 +8,7 @@ use std::{
 use self::utils::*;
 use crate::{
     domain::user::{
-        models::meeting_link_name::MeetingLinkName,
+        models::{meeting_link_name::MeetingLinkName, UserSettings},
         ports::{new_user_service::NewUserService, ArcWebSocketClient},
     },
     infra::crypto_client::derive_external_psk,
@@ -148,7 +148,6 @@ pub enum GroupKeyUpdateReason {
 
 #[derive(Clone)]
 pub struct Service {
-    #[expect(unused, reason = "Ongoing refactor")]
     http_client: Arc<dyn HttpClient>,
     mls_api: Arc<dyn MlsApi>,
     meeting_api: Arc<dyn MeetingApi>,
@@ -2104,6 +2103,22 @@ impl UserService for Service {
         state.reset();
 
         Ok(())
+    }
+
+    async fn get_user_settings(&self) -> Result<UserSettings, anyhow::Error> {
+        let user_settings = self.http_client.get_user_settings().await?;
+        Ok(user_settings)
+    }
+
+    async fn update_user_settings_waiting_room(
+        &self,
+        enable: bool,
+    ) -> Result<UserSettings, anyhow::Error> {
+        let user_settings = self
+            .http_client
+            .update_user_settings_waiting_room(enable)
+            .await?;
+        Ok(user_settings)
     }
 
     async fn get_sd_kbt(&self, user_identifier: &UserId) -> Result<String, anyhow::Error> {

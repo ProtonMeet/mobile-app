@@ -1,4 +1,4 @@
-use crate::domain::user::models::{UserId, UserTokenInfo};
+use crate::domain::user::models::{UserId, UserSettings, UserTokenInfo};
 use crate::errors::core::MeetCoreError;
 use crate::infra::ws_client::WebSocketMessage;
 use mls_spec::{drafts::ratchet_tree_options::RatchetTreeOption, group::group_info::GroupInfo};
@@ -128,6 +128,13 @@ pub trait UserService {
     async fn get_sd_kbt(&self, participant_id: &UserId) -> Result<String, anyhow::Error>;
 
     async fn get_meeting_id(&self, user_identifier: &UserId) -> Result<String, anyhow::Error>;
+
+    async fn get_user_settings(&self) -> Result<UserSettings, anyhow::Error>;
+
+    async fn update_user_settings_waiting_room(
+        &self,
+        enable: bool,
+    ) -> Result<UserSettings, anyhow::Error>;
 
     async fn handle_livekit_admin_change(
         &self,

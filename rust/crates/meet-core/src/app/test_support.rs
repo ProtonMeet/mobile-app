@@ -194,7 +194,6 @@ pub fn minimal_waiting_room_service() -> Arc<WaitingRoomService> {
 
 pub fn minimal_auth_service() -> ArcAuthService {
     Arc::new(AuthServiceImpl::new(
-        Arc::new(MockHttpClient::new()),
         Arc::new(MockUserApi::new()),
         Arc::new(MockUserRepository::new()),
     ))
@@ -336,7 +335,6 @@ pub async fn build_app_with_service_and_mls_api(
 
 pub fn auth_service(user_api: MockUserApi, user_repository: MockUserRepository) -> ArcAuthService {
     Arc::new(AuthServiceImpl::new(
-        Arc::new(MockHttpClient::new()),
         Arc::new(user_api),
         Arc::new(user_repository),
     ))

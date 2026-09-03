@@ -21,6 +21,7 @@ use crate::infra::{
     storage::persister::Persister,
     ws_client::WsClient,
 };
+#[cfg(not(target_family = "wasm"))]
 use crate::service::auth::AuthServiceImpl;
 use crate::service::mls_service::MlsService;
 use crate::service::services_bundle::ServicesBundle;
@@ -35,6 +36,7 @@ use tracing::error;
 use {wasm_bindgen::prelude::wasm_bindgen, wasm_bindgen::JsValue};
 
 mod agent;
+#[cfg(not(target_arch = "wasm32"))]
 mod auth;
 mod chat;
 #[cfg(not(target_arch = "wasm32"))]
@@ -256,8 +258,8 @@ impl App {
             crypto_client.clone(),
         ));
         let waiting_room_service = Arc::new(WaitingRoomService::new(crypto_client, mls_service));
+        #[cfg(not(target_family = "wasm"))]
         let auth_service = Arc::new(AuthServiceImpl::new(
-            http_client.clone(),
             http_client.clone(),
             Arc::new(persister),
         ));
@@ -265,6 +267,7 @@ impl App {
         let services = Arc::new(ServicesBundle::new(
             room_service,
             waiting_room_service,
+            #[cfg(not(target_family = "wasm"))]
             auth_service,
             user_service,
         ));
@@ -442,7 +445,13 @@ impl App {
     }
 
     pub async fn get_user_settings(&self) -> Result<UserSettings, MeetCoreError> {
-        let user_settings = self.services.auth_service.get_user_settings().await?;
+        let user_settings = self
+            .services
+            .user_service
+            .read()
+            .await
+            .get_user_settings()
+            .await?;
         Ok(user_settings)
     }
 
@@ -452,7 +461,9 @@ impl App {
     ) -> Result<UserSettings, MeetCoreError> {
         let user_settings = self
             .services
-            .auth_service
+            .user_service
+            .read()
+            .await
             .update_user_settings_waiting_room(enable)
             .await?;
         Ok(user_settings)
