@@ -99,21 +99,6 @@ impl ServiceState {
         }
     }
 
-    /// Remembered until the agent turns up, the request is cancelled, or the
-    /// meeting is torn down.
-    pub fn set_awaiting_captions_agent(&mut self, room_id: &str, awaiting: bool) {
-        if awaiting {
-            self.rooms_awaiting_captions_agent
-                .insert(room_id.to_string());
-        } else {
-            self.rooms_awaiting_captions_agent.remove(room_id);
-        }
-    }
-
-    pub fn is_awaiting_captions_agent(&self, room_id: &str) -> bool {
-        self.rooms_awaiting_captions_agent.contains(room_id)
-    }
-
     pub fn set_mls_group_state(&mut self, mls_group_state: MlsGroupState) {
         self.mls_group_state = mls_group_state;
     }

@@ -24,8 +24,8 @@ use crate::infra::{
     muon::AuthStore,
     ports::user_key_provider::{MockUserKeyProvider, UserKeyProvider},
 };
-use crate::service::agent::{AgentServiceImpl, ArcAgentService};
 use crate::service::auth::{ArcAuthService, AuthServiceImpl};
+use crate::service::caption::{ArcCaptionService, CaptionServiceImpl};
 use crate::service::services_bundle::ServicesBundle;
 use crate::service::user_service::{create_mock_mls_api, Service};
 use crate::utils::server_time::ServerTimeTracker;
@@ -200,11 +200,12 @@ pub fn minimal_auth_service() -> ArcAuthService {
     ))
 }
 
-pub fn minimal_agent_service() -> ArcAgentService {
-    Arc::new(AgentServiceImpl::new(
+pub fn minimal_agent_service() -> ArcCaptionService {
+    Arc::new(CaptionServiceImpl::new(
         Arc::new(MockMlsApi::new()),
         test_mls_store(),
         minimal_service(),
+        Arc::new(MockMeetingApi::new()),
     ))
 }
 

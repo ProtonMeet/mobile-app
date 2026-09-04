@@ -21,9 +21,9 @@ use crate::infra::{
     storage::persister::Persister,
     ws_client::WsClient,
 };
-use crate::service::agent::AgentServiceImpl;
 #[cfg(not(target_family = "wasm"))]
 use crate::service::auth::AuthServiceImpl;
+use crate::service::caption::CaptionServiceImpl;
 use crate::service::mls_service::MlsService;
 use crate::service::services_bundle::ServicesBundle;
 use crate::service::user_service::Service;
@@ -264,10 +264,11 @@ impl App {
             http_client.clone(),
             Arc::new(persister),
         ));
-        let agent_service = Arc::new(AgentServiceImpl::new(
+        let agent_service = Arc::new(CaptionServiceImpl::new(
             http_client.clone(),
             mls_store.clone(),
             user_service.clone(),
+            http_client.clone(),
         ));
 
         let services = Arc::new(ServicesBundle::new(

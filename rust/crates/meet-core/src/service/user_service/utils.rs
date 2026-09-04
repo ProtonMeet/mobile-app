@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{collections::HashMap, sync::Arc};
 
 use identity::ProtonMeetIdentity;
 use meet_type::fanout::GroupInfoVersion;
@@ -7,14 +7,8 @@ use proton_claims::ClientType;
 use proton_meet_mls::{kv::MemKv, MlsGroup, MlsGroupTrait};
 use tokio::sync::Mutex;
 
-use crate::{
-    service::user_service::{QueuedProposal, Service},
-    utils::{sleep, spawn_detached},
-};
+use crate::{service::user_service::QueuedProposal, utils::spawn_detached};
 
-pub const DELAY_PER_RANK_MS: u64 = 100;
-pub const RANK_GROUP_SIZE: u64 = 3;
-pub const RANK_GROUP_DELAY_MS: u64 = 5000;
 pub const LIVEKIT_OFFLINE_THRESHOLD_MS: u64 = 60_000;
 
 // Kick participant retry configuration
@@ -103,96 +97,6 @@ pub fn psk_id_for_commit(meeting_link_name: &str, has_agent: bool) -> ExternalPs
 pub enum StaggerOutcome {
     Proceed,
     HandledElsewhere,
-}
-
-/// How long each rank group waits before it will summon or dismiss the captions
-/// agent itself. Longer than the MLS stagger: the wait has to cover the round
-/// trip of another participant's request plus the agent joining the group,
-/// otherwise every rank asks for an agent that is already on its way.
-const AGENT_REQUEST_RANK_GROUP_DELAY_MS: u64 = 8000;
-
-/// Shared rank-staggered wait used by `admit_agent` and `remove_agent`.
-/// Sleeps for `jitter * DELAY_PER_RANK_MS + (rank / RANK_GROUP_SIZE) * RANK_GROUP_DELAY_MS`
-/// then re-reads the group's epoch — if it advanced during the wait, the
-/// caller is no longer the designated committer for this event and should
-/// no-op. Same shape as the stagger inside `process_proposal_message`.
-pub async fn stagger_then_check_epoch(
-    service: &Service,
-    room_id: &str,
-    rank: u64,
-    epoch_at_start: u64,
-    op_name: &str,
-) -> StaggerOutcome {
-    use rand::Rng as _;
-    let rank_group = rank / RANK_GROUP_SIZE;
-    let random_jitter = rand::thread_rng().gen_range(0..=20);
-    let delay_ms = random_jitter * DELAY_PER_RANK_MS + rank_group * RANK_GROUP_DELAY_MS;
-    tracing::info!(
-        op = op_name,
-        rank,
-        rank_group,
-        delay_ms,
-        epoch_at_start,
-        "designated-committer stagger"
-    );
-    sleep(Duration::from_millis(delay_ms)).await;
-
-    match service.get_current_epoch(room_id).await {
-        Ok(current) if current != epoch_at_start => {
-            tracing::info!(
-                op = op_name,
-                epoch_at_start,
-                current,
-                "epoch advanced during stagger, another participant handled it, skipping"
-            );
-            StaggerOutcome::HandledElsewhere
-        }
-        Ok(_) => StaggerOutcome::Proceed,
-        Err(e) => {
-            tracing::warn!(
-                op = op_name,
-                "failed to get current epoch after stagger: {e:?}"
-            );
-            StaggerOutcome::Proceed
-        }
-    }
-}
-
-/// Same rank-staggered wait for the captions-agent requests, which are HTTP
-/// calls rather than commits: asking meet-server for an agent doesn't advance
-/// the group's epoch, so what tells us another participant already handled it is
-/// the agent turning up in (or disappearing from) the group.
-pub async fn stagger_then_check_agent(
-    service: &Service,
-    room_id: &str,
-    rank: u64,
-    want_agent: bool,
-    op_name: &str,
-) -> StaggerOutcome {
-    use rand::Rng as _;
-    let rank_group = rank / RANK_GROUP_SIZE;
-    let random_jitter = rand::thread_rng().gen_range(0..=20);
-    let delay_ms =
-        random_jitter * DELAY_PER_RANK_MS + rank_group * AGENT_REQUEST_RANK_GROUP_DELAY_MS;
-    tracing::info!(
-        op = op_name,
-        rank,
-        rank_group,
-        delay_ms,
-        want_agent,
-        "designated-committer stagger"
-    );
-    sleep(Duration::from_millis(delay_ms)).await;
-
-    if service.captions_agent_in_group(room_id).await == want_agent {
-        tracing::info!(
-            op = op_name,
-            "another participant handled it during the stagger, skipping"
-        );
-        return StaggerOutcome::HandledElsewhere;
-    }
-
-    StaggerOutcome::Proceed
 }
 
 /// Calculate retry delay with exponential backoff and jitter

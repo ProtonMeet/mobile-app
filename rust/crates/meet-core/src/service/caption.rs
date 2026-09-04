@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc, time::Duration};
 
 use meet_identifiers::AsOwned;
 use meet_type::fanout::MlsCommitInfo;
@@ -15,25 +15,37 @@ use proton_meet_mls::MlsStore;
 use tokio::sync::RwLock;
 
 use crate::{
-    domain::user::ports::{MlsApi, UserService},
+    domain::user::{
+        models::meeting_link_name::MeetingLinkName,
+        ports::{meeting_api::MeetingApi, MlsApi, UserService},
+    },
     infra::mimi_subject_parser::MimiSubject,
     service::{
+        compute_stagger_time,
         user_service::{
             credential_is_agent,
-            utils::{mimi_sub_from_credential, stagger_then_check_epoch, StaggerOutcome},
+            utils::{group_has_agent, mimi_sub_from_credential, StaggerOutcome},
             GroupKeyUpdateReason, Service,
         },
         utils::convert_mls_types_to_spec,
+        StaggerStats, RANK_GROUP_DELAY_MS,
     },
+    utils::sleep,
 };
 
+/// How long each rank group waits before it will summon or dismiss the captions
+/// agent itself. Longer than the MLS stagger: the wait has to cover the round
+/// trip of another participant's request plus the agent joining the group,
+/// otherwise every rank asks for an agent that is already on its way.
+const AGENT_REQUEST_RANK_GROUP_DELAY_MS: u64 = 8000;
+
 #[cfg(not(target_family = "wasm"))]
-pub(crate) type ArcAgentService = Arc<dyn AgentService + Send + Sync + 'static>;
+pub(crate) type ArcCaptionService = Arc<dyn CaptionService + Send + Sync + 'static>;
 #[cfg(target_family = "wasm")]
-pub(crate) type ArcAgentService = Arc<dyn AgentService + 'static>;
+pub(crate) type ArcCaptionService = Arc<dyn CaptionService + 'static>;
 
 #[async_trait_with_mock]
-pub(crate) trait AgentService {
+pub(crate) trait CaptionService {
     /// Host-side flow: admit an STT agent into the meeting's MLS group.
     /// Runs on a host (a regular meeting member who knows the meeting password).
     ///
@@ -71,30 +83,262 @@ pub(crate) trait AgentService {
         &self,
         user_id: &crate::domain::user::models::UserId,
     ) -> Result<Vec<String>, anyhow::Error>;
+
+    /// Ask meet-server for the live-captions agent.
+    ///
+    /// Every participant that wants captions can call this. The rank-staggered
+    /// wait means the request is normally made once, by the lowest-ranked
+    /// participant, and the others take over in turn if the agent never turns
+    /// up — so a wedged or slow participant can't keep captions from starting.
+    /// Whether captions are wanted at all stays with the caller.
+    async fn request_closed_captions(
+        &self,
+        meeting_link_name: &MeetingLinkName,
+    ) -> Result<(), anyhow::Error>;
+
+    async fn stop_closed_captions(
+        &self,
+        meeting_link_name: &MeetingLinkName,
+    ) -> Result<(), anyhow::Error>;
+
+    async fn set_closed_captions_availability_as_host(
+        &self,
+        meeting_link_name: &MeetingLinkName,
+        available: bool,
+    ) -> Result<(), anyhow::Error>;
 }
 
-pub(crate) struct AgentServiceImpl {
+pub(crate) struct CaptionServiceImpl {
     mls_api: Arc<dyn MlsApi>,
     mls_store: Arc<RwLock<MlsStore>>,
     user_service: Arc<RwLock<Service>>,
+    meeting_api: Arc<dyn MeetingApi>,
+    rooms_awaiting_captions_agent: std::sync::RwLock<HashSet<String>>,
 }
 
-impl AgentServiceImpl {
+impl CaptionServiceImpl {
     pub fn new(
         mls_api: Arc<dyn MlsApi>,
         mls_store: Arc<RwLock<MlsStore>>,
         user_service: Arc<RwLock<Service>>,
+        meeting_api: Arc<dyn MeetingApi>,
     ) -> Self {
         Self {
             mls_api,
             mls_store,
             user_service,
+            meeting_api,
+            rooms_awaiting_captions_agent: Default::default(),
         }
+    }
+
+    /// True while a captions agent holds a leaf in the group. This is what the
+    /// stagger below treats as "somebody already asked", so it doubles as the
+    /// answer to whether there is anything left to do.
+    async fn captions_agent_in_group(&self, room_id: &str) -> bool {
+        let store_lock = self.mls_store.read().await;
+        match store_lock.group_map.get(room_id) {
+            Some(group_arc) => {
+                let mls_group = group_arc.read().await;
+                group_has_agent(&mls_group)
+            }
+            None => false,
+        }
+    }
+
+    async fn settle_closed_captions(
+        &self,
+        meeting_link_name: &crate::domain::user::models::meeting_link_name::MeetingLinkName,
+        want_agent: bool,
+    ) -> Result<(), anyhow::Error> {
+        let room_id = meeting_link_name.as_str().to_string();
+        let op_name = if want_agent {
+            "request_closed_captions"
+        } else {
+            "stop_closed_captions"
+        };
+
+        let agent_in_group = self.captions_agent_in_group(&room_id).await;
+
+        if want_agent && agent_in_group {
+            self.set_awaiting_captions_agent(&room_id, false);
+            tracing::info!(op = op_name, "agent already in the group, skipping");
+            return Ok(());
+        }
+
+        if !want_agent && !agent_in_group {
+            // An agent we asked for that hasn't turned up yet is invisible to
+            // everyone else, so cancelling it is ours to do, and without the
+            // wait: staggering would only let the agent join a meeting nobody
+            // wants it in.
+            if self.is_awaiting_captions_agent(&room_id) {
+                self.meeting_api
+                    .remove_closed_captions_agent(&room_id)
+                    .await?;
+                self.set_awaiting_captions_agent(&room_id, false);
+                tracing::info!(op = op_name, "cancelled our own request");
+            } else {
+                tracing::info!(op = op_name, "no agent to remove, skipping");
+            }
+
+            return Ok(());
+        }
+
+        let group_arc = {
+            let store_lock = self.mls_store.read().await;
+            store_lock
+                .group_map
+                .get(&room_id)
+                .ok_or_else(|| anyhow::anyhow!("group not loaded for meeting"))?
+                .clone()
+        };
+        let rank = {
+            let mls_group = group_arc.read().await;
+            self.user_service
+                .read()
+                .await
+                .committer_rank(&mls_group)
+                .await?
+                .1
+        };
+
+        if let StaggerOutcome::HandledElsewhere = self
+            .stagger_then_check_agent(&room_id, rank, want_agent, op_name)
+            .await
+        {
+            return Ok(());
+        }
+
+        if want_agent {
+            self.meeting_api.add_closed_captions_agent(&room_id).await?;
+        } else {
+            self.meeting_api
+                .remove_closed_captions_agent(&room_id)
+                .await?;
+        }
+        self.set_awaiting_captions_agent(&room_id, want_agent);
+        tracing::info!(op = op_name, rank, "asked meet-server");
+
+        Ok(())
+    }
+
+    /// Remembered until the agent turns up, the request is cancelled, or the
+    /// meeting is torn down.
+    fn set_awaiting_captions_agent(&self, room_id: &str, awaiting: bool) {
+        // NON-PANIC: This lock can never be poisoned as no panicking functions called while it is held.
+        let mut set = self.rooms_awaiting_captions_agent.write().unwrap();
+
+        if awaiting {
+            set.insert(room_id.to_string());
+        } else {
+            set.remove(room_id);
+        }
+    }
+
+    fn is_awaiting_captions_agent(&self, room_id: &str) -> bool {
+        // NON-PANIC: This lock can never be poisoned as no panicking functions called while it is held.
+        self.rooms_awaiting_captions_agent
+            .read()
+            .unwrap()
+            .contains(room_id)
+    }
+
+    /// Shared rank-staggered wait used by `admit_agent` and `remove_agent`.
+    /// Sleeps for `jitter * DELAY_PER_RANK_MS + (rank / RANK_GROUP_SIZE) * RANK_GROUP_DELAY_MS`
+    /// then re-reads the group's epoch — if it advanced during the wait, the
+    /// caller is no longer the designated committer for this event and should
+    /// no-op. Same shape as the stagger inside `process_proposal_message`.
+    pub async fn stagger_then_check_epoch(
+        &self,
+        room_id: &str,
+        rank: u64,
+        epoch_at_start: u64,
+        op_name: &str,
+    ) -> StaggerOutcome {
+        let StaggerStats {
+            delay_ms,
+            rank_group,
+        } = compute_stagger_time(rank, RANK_GROUP_DELAY_MS);
+
+        tracing::info!(
+            op = op_name,
+            rank,
+            rank_group,
+            delay_ms,
+            epoch_at_start,
+            "designated-committer stagger"
+        );
+
+        sleep(Duration::from_millis(delay_ms)).await;
+
+        match self
+            .user_service
+            .read()
+            .await
+            .get_current_epoch(room_id)
+            .await
+        {
+            Ok(current) if current != epoch_at_start => {
+                tracing::info!(
+                    op = op_name,
+                    epoch_at_start,
+                    current,
+                    "epoch advanced during stagger, another participant handled it, skipping"
+                );
+                StaggerOutcome::HandledElsewhere
+            }
+            Ok(_) => StaggerOutcome::Proceed,
+            Err(e) => {
+                tracing::warn!(
+                    op = op_name,
+                    "failed to get current epoch after stagger: {e:?}"
+                );
+                StaggerOutcome::Proceed
+            }
+        }
+    }
+
+    /// Same rank-staggered wait for the captions-agent requests, which are HTTP
+    /// calls rather than commits: asking meet-server for an agent doesn't advance
+    /// the group's epoch, so what tells us another participant already handled it is
+    /// the agent turning up in (or disappearing from) the group.
+    pub async fn stagger_then_check_agent(
+        &self,
+        room_id: &str,
+        rank: u64,
+        want_agent: bool,
+        op_name: &str,
+    ) -> StaggerOutcome {
+        let StaggerStats {
+            delay_ms,
+            rank_group,
+        } = compute_stagger_time(rank, AGENT_REQUEST_RANK_GROUP_DELAY_MS);
+
+        tracing::info!(
+            op = op_name,
+            rank,
+            rank_group,
+            delay_ms,
+            want_agent,
+            "designated-committer stagger"
+        );
+
+        sleep(Duration::from_millis(delay_ms)).await;
+
+        if self.captions_agent_in_group(room_id).await == want_agent {
+            tracing::info!(
+                op = op_name,
+                "another participant handled it during the stagger, skipping"
+            );
+            return StaggerOutcome::HandledElsewhere;
+        }
+
+        StaggerOutcome::Proceed
     }
 }
 
 #[async_trait]
-impl AgentService for AgentServiceImpl {
+impl CaptionService for CaptionServiceImpl {
     /// Host-side flow: admit an STT agent into the meeting's MLS group.
     /// Runs on a host (a regular meeting member who knows the meeting password).
     ///
@@ -160,14 +404,9 @@ impl AgentService for AgentServiceImpl {
                 .await?
         };
 
-        if let StaggerOutcome::HandledElsewhere = stagger_then_check_epoch(
-            &*self.user_service.read().await,
-            &room_id,
-            rank,
-            epoch_at_start,
-            "admit_agent",
-        )
-        .await
+        if let StaggerOutcome::HandledElsewhere = self
+            .stagger_then_check_epoch(&room_id, rank, epoch_at_start, "admit_agent")
+            .await
         {
             return Ok(());
         }
@@ -427,14 +666,9 @@ impl AgentService for AgentServiceImpl {
                 .await?
         };
 
-        if let StaggerOutcome::HandledElsewhere = stagger_then_check_epoch(
-            &*self.user_service.read().await,
-            &room_id,
-            rank,
-            epoch_at_start,
-            "remove_agent",
-        )
-        .await
+        if let StaggerOutcome::HandledElsewhere = self
+            .stagger_then_check_epoch(&room_id, rank, epoch_at_start, "remove_agent")
+            .await
         {
             return Ok(());
         }
@@ -510,5 +744,208 @@ impl AgentService for AgentServiceImpl {
         let host_sd_kbt = self.user_service.read().await.get_sd_kbt(user_id).await?;
 
         Ok(self.mls_api.list_agent_keypackages(&host_sd_kbt).await?)
+    }
+
+    /// Ask meet-server for the live-captions agent.
+    ///
+    /// Every participant that wants captions can call this. The rank-staggered
+    /// wait means the request is normally made once, by the lowest-ranked
+    /// participant, and the others take over in turn if the agent never turns
+    /// up — so a wedged or slow participant can't keep captions from starting.
+    /// Whether captions are wanted at all stays with the caller.
+    async fn request_closed_captions(
+        &self,
+        meeting_link_name: &MeetingLinkName,
+    ) -> Result<(), anyhow::Error> {
+        self.settle_closed_captions(meeting_link_name, true).await
+    }
+
+    /// Ask meet-server to drop the live-captions agent, arbitrated the same way
+    /// as [`Service::request_closed_captions`].
+    async fn stop_closed_captions(
+        &self,
+        meeting_link_name: &MeetingLinkName,
+    ) -> Result<(), anyhow::Error> {
+        self.settle_closed_captions(meeting_link_name, false).await
+    }
+
+    async fn set_closed_captions_availability_as_host(
+        &self,
+        meeting_link_name: &MeetingLinkName,
+        available: bool,
+    ) -> Result<(), anyhow::Error> {
+        let room_id = meeting_link_name.as_str().to_string();
+        self.meeting_api
+            .set_closed_captions_agent_availability(&room_id, available)
+            .await?;
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+#[cfg(not(target_family = "wasm"))]
+mod test {
+    use std::{future::ready, sync::Arc};
+
+    use proton_meet_macro::unified_test;
+
+    use crate::{
+        domain::user::{
+            models::meeting_link_name::MeetingLinkName, ports::meeting_api::MockMeetingApi,
+        },
+        errors::http_client::HttpClientError,
+        service::test::{create_test_service_bundle, setup_single_user_group, ServiceBundleDI},
+    };
+
+    /// A solo caller is a room admin, so it ranks first and only waits out the
+    /// stagger's jitter (up to 2s) before asking.
+    #[unified_test]
+    async fn request_closed_captions_asks_meet_server_when_no_agent_in_group() {
+        let room_id = "captions_request_no_agent";
+
+        let mut meeting_api = MockMeetingApi::new();
+        meeting_api
+            .expect_add_closed_captions_agent()
+            .times(1)
+            .withf(move |link| link == room_id)
+            .returning(|_| Box::pin(ready(Ok(()))));
+
+        let bundle = setup_single_user_group(
+            room_id,
+            ServiceBundleDI {
+                meeting_api: Some(Arc::new(meeting_api)),
+                ..Default::default()
+            },
+        )
+        .await
+        .0;
+
+        bundle
+            .caption_service
+            .request_closed_captions(&MeetingLinkName::from(room_id))
+            .await
+            .unwrap();
+    }
+
+    #[unified_test]
+    async fn stop_closed_captions_is_a_no_op_without_an_agent_in_group() {
+        let room_id = "captions_stop_no_agent";
+
+        let mut meeting_api = MockMeetingApi::new();
+        meeting_api
+            .expect_remove_closed_captions_agent()
+            .times(0)
+            .returning(|_| Box::pin(ready(Ok(()))));
+
+        let bundle = setup_single_user_group(
+            room_id,
+            ServiceBundleDI {
+                meeting_api: Some(Arc::new(meeting_api)),
+                ..Default::default()
+            },
+        )
+        .await
+        .0;
+
+        bundle
+            .caption_service
+            .stop_closed_captions(&MeetingLinkName::from(room_id))
+            .await
+            .unwrap();
+    }
+
+    /// The web client cancels a summon the moment demand disappears, before the
+    /// agent has joined — the state nobody else can see.
+    #[unified_test]
+    async fn stop_closed_captions_cancels_our_own_request_before_the_agent_arrives() {
+        let room_id = "captions_cancel_in_flight";
+        let meeting_name = MeetingLinkName::from(room_id);
+
+        let mut meeting_api = MockMeetingApi::new();
+        meeting_api
+            .expect_add_closed_captions_agent()
+            .times(1)
+            .returning(|_| Box::pin(ready(Ok(()))));
+        meeting_api
+            .expect_remove_closed_captions_agent()
+            .times(1)
+            .withf(move |link| link == room_id)
+            .returning(|_| Box::pin(ready(Ok(()))));
+
+        let (bundle, pop, ..) = setup_single_user_group(
+            room_id,
+            ServiceBundleDI {
+                meeting_api: Some(Arc::new(meeting_api)),
+                ..Default::default()
+            },
+        )
+        .await;
+
+        bundle
+            .caption_service
+            .request_closed_captions(&meeting_name)
+            .await
+            .unwrap();
+        assert!(
+            pop.caption_service.is_awaiting_captions_agent(room_id),
+            "the request should be remembered until the agent arrives"
+        );
+
+        bundle
+            .caption_service
+            .stop_closed_captions(&meeting_name)
+            .await
+            .unwrap();
+        assert!(
+            !pop.caption_service.is_awaiting_captions_agent(room_id),
+            "cancelling should clear the outstanding request"
+        );
+    }
+
+    #[unified_test]
+    async fn request_closed_captions_reports_a_failed_request() {
+        let room_id = "captions_request_http_error";
+
+        let mut meeting_api = MockMeetingApi::new();
+        meeting_api
+            .expect_add_closed_captions_agent()
+            .times(1)
+            .returning(|_| {
+                Box::pin(ready(Err(HttpClientError::MlsHttpError {
+                    message: "server down".to_string(),
+                })))
+            });
+        let bundle = setup_single_user_group(
+            room_id,
+            ServiceBundleDI {
+                meeting_api: Some(Arc::new(meeting_api)),
+                ..Default::default()
+            },
+        )
+        .await
+        .0;
+
+        let result = bundle
+            .caption_service
+            .request_closed_captions(&MeetingLinkName::from(room_id))
+            .await;
+
+        assert!(result.is_err(), "a failed request must reach the caller");
+    }
+
+    #[unified_test]
+    async fn request_closed_captions_needs_a_loaded_group_to_rank_itself() {
+        let room_id = "captions_request_no_group";
+        let bundle = create_test_service_bundle("captions-no-group", room_id, Default::default()).0;
+
+        let result = bundle
+            .caption_service
+            .request_closed_captions(&MeetingLinkName::from(room_id))
+            .await;
+
+        assert!(
+            result.is_err(),
+            "without a group there is no rank, so nothing should be sent"
+        );
     }
 }

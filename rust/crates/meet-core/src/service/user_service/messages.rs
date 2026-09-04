@@ -13,11 +13,11 @@ use crate::{
     service::{
         service_state::MlsGroupState,
         user_service::{
-            utils::{DELAY_PER_RANK_MS, RANK_GROUP_DELAY_MS, RANK_GROUP_SIZE},
             CommitProcessingOutcome, GroupKeyUpdateReason, MessageWithId,
             ProposalProcessingOutcome, ProposalType, QueuedProposal, Service,
         },
         utils::describe_proposal_kind,
+        DELAY_PER_RANK_MS, RANK_GROUP_DELAY_MS, RANK_GROUP_SIZE,
     },
     utils::{instant, sleep},
 };

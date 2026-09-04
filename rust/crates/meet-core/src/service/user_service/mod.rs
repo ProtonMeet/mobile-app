@@ -85,7 +85,6 @@ use crate::{
 use identity::{Disclosure, PresentationContext, ProtonMeetIdentity, SdCwt};
 use meet_identifiers::{Domain, GroupId, Id, LeafIndex};
 
-mod captions;
 pub(crate) mod handlers;
 mod join;
 mod join_request;
@@ -148,24 +147,24 @@ pub enum GroupKeyUpdateReason {
 
 #[derive(Clone)]
 pub struct Service {
-    http_client: Arc<dyn HttpClient>,
-    mls_api: Arc<dyn MlsApi>,
-    meeting_api: Arc<dyn MeetingApi>,
-    ws_client: ArcWebSocketClient,
-    mls_store: Arc<RwLock<MlsStore>>,
-    state: Arc<Mutex<ServiceState>>,
-    message_cache: Arc<Mutex<MlsMessageCache>>,
-    proposal_queue: Arc<Mutex<HashMap<String, Vec<QueuedProposal>>>>,
+    pub(super) http_client: Arc<dyn HttpClient>,
+    pub(super) mls_api: Arc<dyn MlsApi>,
+    pub(super) meeting_api: Arc<dyn MeetingApi>,
+    pub(super) ws_client: ArcWebSocketClient,
+    pub(super) mls_store: Arc<RwLock<MlsStore>>,
+    pub(super) state: Arc<Mutex<ServiceState>>,
+    pub(super) message_cache: Arc<Mutex<MlsMessageCache>>,
+    pub(super) proposal_queue: Arc<Mutex<HashMap<String, Vec<QueuedProposal>>>>,
     // Serializes proposal/commit queue consumption per room to avoid cross-task drains.
-    room_processing_locks: Arc<Mutex<HashMap<String, Arc<Mutex<()>>>>>,
-    proposal_timer: Arc<Mutex<HashMap<String, u64>>>, // room_id -> epoch_at
+    pub(super) room_processing_locks: Arc<Mutex<HashMap<String, Arc<Mutex<()>>>>>,
+    pub(super) proposal_timer: Arc<Mutex<HashMap<String, u64>>>, // room_id -> epoch_at
     // MLS message service for processing commits and proposals
-    mls_msg_service: Arc<crate::domain::mls::mls_message_service::MlsMessageService>,
-    handling_offline_members: Arc<Mutex<bool>>,
-    mls_service: Arc<MlsService>,
+    pub(super) mls_msg_service: Arc<crate::domain::mls::mls_message_service::MlsMessageService>,
+    pub(super) handling_offline_members: Arc<Mutex<bool>>,
+    pub(super) mls_service: Arc<MlsService>,
     /// Wakes tasks waiting on a join-proposal `Welcome` after `welcome_info` is stored.
-    join_proposal_welcome_notify: Arc<Notify>,
-    server_time_tracker: ServerTimeTracker,
+    pub(super) join_proposal_welcome_notify: Arc<Notify>,
+    pub(super) server_time_tracker: ServerTimeTracker,
     pub handlers: Handlers,
 }
 
@@ -890,7 +889,7 @@ impl Service {
     }
 
     /// Helper function to get the current epoch for a room
-    async fn get_current_epoch(&self, room_id: &str) -> Result<u64, anyhow::Error> {
+    pub(super) async fn get_current_epoch(&self, room_id: &str) -> Result<u64, anyhow::Error> {
         let store = self.mls_store.read().await;
         let mls_group = store
             .group_map
