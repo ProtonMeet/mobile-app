@@ -327,7 +327,7 @@ impl Service {
         roster: Vec<Member>,
     ) -> Result<Vec<u32>, anyhow::Error> {
         let state_lock = self.state.lock().await;
-        let livekit_active_uuid_hashmap = state_lock.livekit_active_uuid_hashset.clone();
+        let livekit_active_uuid_hashmap = state_lock.livekit_active_uuid_hashmap.clone();
         let last_livekit_active_uuid_update_time = state_lock.last_livekit_active_uuid_update_time;
         drop(state_lock);
 
@@ -363,10 +363,12 @@ impl Service {
         &self,
         roster: Vec<Member>,
     ) -> Result<Vec<u32>, anyhow::Error> {
-        let state_lock = self.state.lock().await;
-        let livekit_active_uuid_hashmap = state_lock.get_livekit_active_uuid_hashmap();
+        let mut state_lock = self.state.lock().await;
         let last_livekit_active_uuid_update_time = state_lock.last_livekit_active_uuid_update_time;
-        drop(state_lock);
+        let Some(livekit_active_uuid_hashmap) = state_lock.livekit_active_uuid_hashmap.as_mut()
+        else {
+            return Ok(vec![]);
+        };
 
         const COMMITTER_OFFLINE_THRESHOLD_MS: u64 = 15_000;
 
@@ -375,18 +377,21 @@ impl Service {
             .filter_map(|mut member| {
                 match get_uuid_from_member(&mut member) {
                     Ok(uuid) => {
-                        if let Some(uuid_info) = livekit_active_uuid_hashmap.get(&uuid) {
-                            // Check if last_seen is older than threshold
-                            if last_livekit_active_uuid_update_time
-                                .saturating_sub(uuid_info.last_seen)
-                                > COMMITTER_OFFLINE_THRESHOLD_MS
-                            {
-                                Some(*member.leaf_index())
-                            } else {
-                                None
-                            }
+                        // Get the uuid info if it exists, otherwise insert it with the current time in case of the uuid is already ungracefully left the room
+                        let uuid_info = livekit_active_uuid_hashmap.entry(uuid).or_insert(
+                            // mark the uuid as seen at the last_livekit_active_uuid_update_time
+                            // so it will be removed from the MLS group after the threshold
+                            crate::service::service_state::LivekitUUIDInfo {
+                                uuid,
+                                last_seen: last_livekit_active_uuid_update_time,
+                            },
+                        );
+                        // Check if last_seen is older than threshold
+                        if last_livekit_active_uuid_update_time.saturating_sub(uuid_info.last_seen)
+                            > COMMITTER_OFFLINE_THRESHOLD_MS
+                        {
+                            Some(*member.leaf_index())
                         } else {
-                            // UUID not in hashmap, ignore
                             None
                         }
                     }

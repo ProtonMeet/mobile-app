@@ -157,9 +157,6 @@ pub struct MeetingDto {
     /// SRP salt
     #[serde(rename = "SRPSalt")]
     pub srp_salt: String,
-    /// SRP verifier
-    #[serde(rename = "SRPVerifier")]
-    pub srp_verifier: String,
     /// Meeting start time in ISO format (handles both integer Unix timestamp and string RFC3339)
     #[serde(default, deserialize_with = "deserialize_timestamp")]
     pub start_time: Option<String>,
@@ -244,7 +241,6 @@ impl TryFrom<MeetingDto> for Meeting {
             session_key: dto.session_key,
             srp_modulus_id: dto.srp_modulus_id,
             srp_salt: dto.srp_salt,
-            srp_verifier: dto.srp_verifier,
             start_time,
             end_time,
             r_rule: dto.r_rule,

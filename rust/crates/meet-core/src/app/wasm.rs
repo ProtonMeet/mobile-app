@@ -42,7 +42,6 @@ pub struct ParticipantTrackSettingsInfo {
 
 #[cfg_attr(target_family = "wasm", wasm_bindgen(getter_with_clone))]
 pub struct UserSettingsInfo {
-    pub meeting_id: String,
     pub address_id: Option<String>,
     pub waiting_room: bool,
 }
@@ -59,7 +58,6 @@ pub struct MeetingInfo {
     pub session_key: String,
     pub srp_modulus_id: String,
     pub srp_salt: String,
-    pub srp_verifier: String,
     pub r_rule: Option<String>,
     pub time_zone: Option<String>,
     pub custom_password: u8,
@@ -483,7 +481,6 @@ impl App {
                 session_key: m.session_key,
                 srp_modulus_id: m.srp_modulus_id,
                 srp_salt: m.srp_salt,
-                srp_verifier: m.srp_verifier,
                 r_rule: m.r_rule,
                 time_zone: m.time_zone,
                 custom_password: m.custom_password as u8,
@@ -499,7 +496,6 @@ impl App {
             .await
             .map_err(|e| crate::errors::core::MeetCoreErrorEnum::from(e))?;
         Ok(UserSettingsInfo {
-            meeting_id: user_settings.meeting_id,
             address_id: user_settings.address_id,
             waiting_room: user_settings.waiting_room,
         })
@@ -515,7 +511,6 @@ impl App {
             .await
             .map_err(|e| crate::errors::core::MeetCoreErrorEnum::from(e))?;
         Ok(UserSettingsInfo {
-            meeting_id: user_settings.meeting_id,
             address_id: user_settings.address_id,
             waiting_room: user_settings.waiting_room,
         })

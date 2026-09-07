@@ -125,7 +125,6 @@ mod tests {
             session_key: "session-key".to_string(),
             srp_modulus_id: "modulus-id".to_string(),
             srp_salt: "srp-salt".to_string(),
-            srp_verifier: "srp-verifier".to_string(),
             custom_password: CustomPasswordSetting::NoPassword,
             meeting_type: MeetingType::Instant,
             ..Default::default()

@@ -174,16 +174,16 @@
   "show_meeting_timer": "Mostra il timer della riunione",
   "unsubscribe_video_by_default": "Disattiva i video in entrata",
   "camera_background_blur": "Sfondo sfocato",
-  "virtual_backgrounds_title": "Virtual backgrounds",
+  "virtual_backgrounds_title": "Sfondo virtuale",
   "@virtual_backgrounds_title": {
     "description": "Title for virtual backgrounds in meeting settings"
   },
-  "backgrounds_title": "Backgrounds",
+  "backgrounds_title": "Sfondi",
   "@backgrounds_title": {
     "description": "Title for backgrounds dialog"
   },
-  "virtual_background_none": "None",
-  "virtual_background_custom": "Custom",
+  "virtual_background_none": "Nessuno",
+  "virtual_background_custom": "Personalizzato",
   "audio_noise_cancellation": "Eliminazione rumori",
   "dark_mode": "Modalità scura",
   "show_connection_indicator": "Mostra indicatore di connessione",

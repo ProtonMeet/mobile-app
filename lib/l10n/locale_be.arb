@@ -174,16 +174,16 @@
   "show_meeting_timer": "Паказаць таймер сустрэчы",
   "unsubscribe_video_by_default": "Выключыць уваходнае відэа",
   "camera_background_blur": "Размыццё фону",
-  "virtual_backgrounds_title": "Virtual backgrounds",
+  "virtual_backgrounds_title": "Віртуальныя фоны",
   "@virtual_backgrounds_title": {
     "description": "Title for virtual backgrounds in meeting settings"
   },
-  "backgrounds_title": "Backgrounds",
+  "backgrounds_title": "Фоны",
   "@backgrounds_title": {
     "description": "Title for backgrounds dialog"
   },
-  "virtual_background_none": "None",
-  "virtual_background_custom": "Custom",
+  "virtual_background_none": "Адсутнічае",
+  "virtual_background_custom": "Карыстальніцкі",
   "audio_noise_cancellation": "Падаўленне шуму",
   "dark_mode": "Цёмны рэжым",
   "show_connection_indicator": "Паказаць індыкатар падключэння",
@@ -2161,11 +2161,11 @@
   "@in_app_update_downloaded": {
     "description": "Notification shown when a Play Store flexible update finished downloading and will be installed"
   },
-  "mobile_upgrade_warning_prefix": "You’re using an older version of the app. Some features may not work as expected. Please ",
+  "mobile_upgrade_warning_prefix": "Вы выкарыстоўваеце старую версію праграмы. Некаторыя функцыі могуць працаваць некарэктна. ",
   "@mobile_upgrade_warning_prefix": {
     "description": "Prefix for the outdated mobile client warning shown when joining a meeting"
   },
-  "mobile_upgrade_warning_link": "upgrade to the latest version",
+  "mobile_upgrade_warning_link": "Абнавіце да апошняй версіі",
   "@mobile_upgrade_warning_link": {
     "description": "Tappable link text in the outdated mobile client warning; opens the app store"
   }
