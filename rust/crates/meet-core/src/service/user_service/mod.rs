@@ -262,9 +262,10 @@ impl Service {
         &self,
         room_id: &str,
         livekit_active_uuid_list: Vec<String>,
+        is_agent_in_livekit: bool,
     ) -> Result<(), anyhow::Error> {
         let mut state = self.state.lock().await;
-        state.set_livekit_active_uuids(livekit_active_uuid_list);
+        state.set_livekit_active_uuids(livekit_active_uuid_list, is_agent_in_livekit);
         drop(state);
 
         // check if any new offline members need to be handled
@@ -273,6 +274,10 @@ impl Service {
             .map_err(|e| anyhow::anyhow!("Failed to handle offline members: {e:?}"))?;
 
         Ok(())
+    }
+
+    pub async fn is_agent_in_livekit(&self) -> bool {
+        self.state.lock().await.is_agent_in_livekit()
     }
 
     /// Returns the deterministic rank of `own_leaf_index` in the roster.
