@@ -844,6 +844,10 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         } else if (event.reason == DisconnectReason.participantRemoved) {
           await _leaveRoom(leftMeetingBottomSheetIsKickedOut: true);
         } else if (event.reason == DisconnectReason.stateMismatch) {
+          Sentry.captureMessage(
+            'Room disconnected caused by state mismatch, auto rejoin',
+            level: SentryLevel.warning,
+          );
           // auto rejoin when disconnect reason is state mismatch
           _bloc.add(const StartRejoinMeeting());
           shouldPop = false;
