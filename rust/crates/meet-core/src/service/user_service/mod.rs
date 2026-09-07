@@ -382,6 +382,7 @@ impl Service {
     ) -> Result<Vec<u32>, anyhow::Error> {
         let mut state_lock = self.state.lock().await;
         let last_livekit_active_uuid_update_time = state_lock.last_livekit_active_uuid_update_time;
+        let is_agent_in_livekit = state_lock.is_agent_in_livekit();
         let Some(livekit_active_uuid_hashmap) = state_lock.livekit_active_uuid_hashmap.as_mut()
         else {
             return Ok(vec![]);
@@ -394,6 +395,16 @@ impl Service {
             .filter_map(|mut member| {
                 match get_uuid_from_member(&mut member) {
                     Ok(uuid) => {
+                        let is_agent = credential_is_agent(&member.credential);
+
+                        // if this is the agent in MLS, and agent is in livekit, don't consider it as offline
+                        if is_agent && is_agent_in_livekit {
+                            // clear the uuid from the hashmap
+                            // so next time when agent is offline, we will automatically remove it after COMMITTER_OFFLINE_THRESHOLD_MS
+                            livekit_active_uuid_hashmap.remove(&uuid);
+                            return None;
+                        }
+
                         // Get the uuid info if it exists, otherwise insert it with the current time in case of the uuid is already ungracefully left the room
                         let uuid_info = livekit_active_uuid_hashmap.entry(uuid).or_insert(
                             // mark the uuid as seen at the last_livekit_active_uuid_update_time
