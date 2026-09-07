@@ -708,7 +708,7 @@
   "@saved_recordings_empty": {
     "description": "Empty state when no local recordings exist"
   },
-  "saved_recordings_share": "Compartir",
+  "saved_recordings_share": "Comparteix",
   "@saved_recordings_share": {
     "description": "Share action for a saved recording"
   },
