@@ -9,6 +9,7 @@ import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/subscribe_retry_backoff.dart';
 import 'package:meet/managers/channels/call_activity_channel.dart';
 import 'package:meet/managers/room.manager.dart' show RoomManager;
+import 'package:sentry/sentry.dart';
 
 import 'room_bloc_pip.dart';
 import 'room_event.dart';
@@ -414,9 +415,11 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
         await CallActivityChannel.end(immediately: true);
       })
       ..on<RoomAttemptReconnectEvent>((event) {
+        _captureLiveKitReconnectEventToSentry('RoomAttemptReconnectEvent');
         add(const SetLiveKitReconnecting(isLiveKitReconnecting: true));
       })
       ..on<RoomReconnectingEvent>((event) {
+        _captureLiveKitReconnectEventToSentry('RoomReconnectingEvent');
         add(const SetLiveKitReconnecting(isLiveKitReconnecting: true));
       })
       ..on<RoomReconnectedEvent>((event) {
@@ -607,6 +610,18 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
     // [BackgroundRefreshFrbParticipants] for display names; reconnect still
     // refreshes via [RefreshParticipantDisplayNames] below.
     // add more mappings as needed...
+  }
+
+  void _captureLiveKitReconnectEventToSentry(String eventName) {
+    l.logger.w('[RoomEventsBinding] LiveKit $eventName');
+    Sentry.captureMessage(
+      'LiveKit $eventName',
+      level: SentryLevel.warning,
+      withScope: (scope) {
+        scope.setTag('livekit_event', eventName);
+        scope.setTag('meeting_link_name', state.meetInfo.meetLinkName);
+      },
+    );
   }
 
   // Add this function to debug WebRTC codec negotiation
