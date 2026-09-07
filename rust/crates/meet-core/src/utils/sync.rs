@@ -29,7 +29,9 @@ impl<T> SyncRwLock<T> {
             recover: Box::new(recover),
         }
     }
+}
 
+impl<T: ?Sized> SyncRwLock<T> {
     /// Returns a read guard similarly to [std::sync::RwLock::read], but cleaning the value
     /// first if it is poisoned.
     ///
@@ -87,9 +89,9 @@ impl<T> SyncRwLock<T> {
     }
 }
 
-impl<T: Debug> Debug for SyncRwLock<T> {
+impl<T: ?Sized + Debug> Debug for SyncRwLock<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("SyncRwLock").field(&self.lock).finish()
+        f.debug_tuple("SyncRwLock").field(&&self.lock).finish()
     }
 }
 
@@ -112,7 +114,9 @@ impl<T> SyncMutex<T> {
             recover: Box::new(recover),
         }
     }
+}
 
+impl<T: ?Sized> SyncMutex<T> {
     /// Returns a guard similarly to [std::sync::Mutex::lock], but cleaning the value
     /// first if it is poisoned.
     pub fn lock(&self) -> std::sync::MutexGuard<'_, T> {
@@ -143,9 +147,9 @@ impl<T> SyncMutex<T> {
     }
 }
 
-impl<T: Debug> Debug for SyncMutex<T> {
+impl<T: ?Sized + Debug> Debug for SyncMutex<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("SyncMutex").field(&self.lock).finish()
+        f.debug_tuple("SyncMutex").field(&&self.lock).finish()
     }
 }
 
@@ -164,7 +168,9 @@ impl<T> AsyncRwLock<T> {
     pub fn new(value: T) -> Self {
         Self(tokio::sync::RwLock::new(value))
     }
+}
 
+impl<T: ?Sized> AsyncRwLock<T> {
     /// Returns a guard from [`tokio::sync::RwLock::read`] wrapped in [`NotSend`], ensuring it cannot be sent to
     /// another thread (hence not kept across an `await` point[^note]). This should always be preferred to
     /// [`read_send`][Self::read_send].
@@ -209,7 +215,7 @@ impl<T> AsyncRwLock<T> {
     ///
     ///     do_smth().await;
     ///
-    ///     **guard = ();
+    ///     *guard = ();
     /// }
     /// ```
     pub async fn write(&self) -> NotSend<tokio::sync::RwLockWriteGuard<'_, T>> {
@@ -262,7 +268,9 @@ impl<T> AsyncMutex<T> {
     pub fn new(value: T) -> Self {
         Self(tokio::sync::Mutex::new(value))
     }
+}
 
+impl<T: ?Sized> AsyncMutex<T> {
     /// Returns a guard from [`tokio::sync::Mutex::lock`] wrapped in [`NotSend`], ensuring it cannot be sent to
     /// another thread (hence not kept across an `await` point[^note]). This should always be preferred to
     /// [`lock_send`][Self::lock_send].
@@ -282,7 +290,7 @@ impl<T> AsyncMutex<T> {
     ///
     ///     do_smth().await;
     ///
-    ///     **guard = ();
+    ///     *guard = ();
     /// }
     /// ```
     pub async fn lock(&self) -> NotSend<tokio::sync::MutexGuard<'_, T>> {
