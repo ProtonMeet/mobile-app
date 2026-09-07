@@ -13,6 +13,7 @@ use mls_types::ExternalPskId;
 use proton_meet_macro::{async_trait, async_trait_with_mock};
 use proton_meet_mls::MlsStore;
 use tokio::sync::RwLock;
+use tracing::error;
 
 use crate::{
     domain::user::{
@@ -30,7 +31,7 @@ use crate::{
         utils::convert_mls_types_to_spec,
         StaggerStats, RANK_GROUP_DELAY_MS,
     },
-    utils::sleep,
+    utils::{sleep, sync::SyncRwLock},
 };
 
 /// How long each rank group waits before it will summon or dismiss the captions
@@ -113,7 +114,7 @@ pub(crate) struct CaptionServiceImpl {
     mls_store: Arc<RwLock<MlsStore>>,
     user_service: Arc<RwLock<Service>>,
     meeting_api: Arc<dyn MeetingApi>,
-    rooms_awaiting_captions_agent: std::sync::RwLock<HashSet<String>>,
+    rooms_awaiting_captions_agent: SyncRwLock<HashSet<String>>,
 }
 
 impl CaptionServiceImpl {
@@ -128,7 +129,11 @@ impl CaptionServiceImpl {
             mls_store,
             user_service,
             meeting_api,
-            rooms_awaiting_captions_agent: Default::default(),
+            // The program can never panic when locking this, as it only operates insertion/deletion
+            // while the lock is held. Hence, recovery is not needed.
+            rooms_awaiting_captions_agent: SyncRwLock::new(HashSet::new(), |_| {
+                error!("Recovery called for CaptionServiceImpl::rooms_awaiting_captions_agent, this should never happen")
+            }),
         }
     }
 
@@ -225,8 +230,7 @@ impl CaptionServiceImpl {
     /// Remembered until the agent turns up, the request is cancelled, or the
     /// meeting is torn down.
     fn set_awaiting_captions_agent(&self, room_id: &str, awaiting: bool) {
-        // NON-PANIC: This lock can never be poisoned as no panicking functions called while it is held.
-        let mut set = self.rooms_awaiting_captions_agent.write().unwrap();
+        let mut set = self.rooms_awaiting_captions_agent.write();
 
         if awaiting {
             set.insert(room_id.to_string());
@@ -236,11 +240,7 @@ impl CaptionServiceImpl {
     }
 
     fn is_awaiting_captions_agent(&self, room_id: &str) -> bool {
-        // NON-PANIC: This lock can never be poisoned as no panicking functions called while it is held.
-        self.rooms_awaiting_captions_agent
-            .read()
-            .unwrap()
-            .contains(room_id)
+        self.rooms_awaiting_captions_agent.read().contains(room_id)
     }
 
     /// Shared rank-staggered wait used by `admit_agent` and `remove_agent`.
