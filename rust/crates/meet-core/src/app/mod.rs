@@ -340,6 +340,7 @@ impl App {
     pub async fn set_livekit_active_uuids(
         &self,
         livekit_active_uuid_list: Vec<String>,
+        is_agent_in_livekit: bool,
     ) -> Result<(), MeetCoreError> {
         let app_state = self.state.read().await;
         let user_info = app_state
@@ -360,7 +361,7 @@ impl App {
             .user_service
             .read()
             .await
-            .set_livekit_active_uuids(&meeting_id, livekit_active_uuid_list)
+            .set_livekit_active_uuids(&meeting_id, livekit_active_uuid_list, is_agent_in_livekit)
             .await?;
 
         Ok(())

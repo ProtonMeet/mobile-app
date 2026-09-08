@@ -174,16 +174,16 @@
   "show_meeting_timer": "Εμφάνιση χρονομέτρου σύσκεψης",
   "unsubscribe_video_by_default": "Απενεργοποιήστε το εισερχόμενο βίντεο",
   "camera_background_blur": "Θολό παρασκήνιο",
-  "virtual_backgrounds_title": "Virtual backgrounds",
+  "virtual_backgrounds_title": "Εικονικά φόντα",
   "@virtual_backgrounds_title": {
     "description": "Title for virtual backgrounds in meeting settings"
   },
-  "backgrounds_title": "Backgrounds",
+  "backgrounds_title": "Φόντα",
   "@backgrounds_title": {
     "description": "Title for backgrounds dialog"
   },
-  "virtual_background_none": "None",
-  "virtual_background_custom": "Custom",
+  "virtual_background_none": "Κανένα",
+  "virtual_background_custom": "Προσαρμοσμένο",
   "audio_noise_cancellation": "Εξουδετέρωση θορύβου",
   "dark_mode": "Σκοτεινή λειτουργία",
   "show_connection_indicator": "Εμφάνιση ένδειξης σύνδεσης",

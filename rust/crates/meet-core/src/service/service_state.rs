@@ -61,6 +61,7 @@ pub struct ServiceState {
     pub welcome_info: Option<MlsWelcomeInfo>,
     pub livekit_active_uuid_hashmap: Option<HashMap<Uuid, LivekitUUIDInfo>>,
     pub last_livekit_active_uuid_update_time: u64,
+    pub is_agent_in_livekit: bool,
     pub mls_retry_count: u32,
     pub mls_sync_metrics: Option<MlsSyncMetrics>,
     pub mls_designated_committer_metrics: HashMap<u32, MLSDesignatedCommitterMetrics>,
@@ -88,6 +89,7 @@ impl ServiceState {
             welcome_info: None,
             livekit_active_uuid_hashmap: None,
             last_livekit_active_uuid_update_time: 0,
+            is_agent_in_livekit: false,
             mls_retry_count: 0,
             mls_sync_metrics: None,
             mls_designated_committer_metrics: HashMap::new(),
@@ -147,7 +149,11 @@ impl ServiceState {
         self.guest_pending_join_request_id = None;
     }
 
-    pub fn set_livekit_active_uuids(&mut self, livekit_active_uuid_list: Vec<String>) {
+    pub fn set_livekit_active_uuids(
+        &mut self,
+        livekit_active_uuid_list: Vec<String>,
+        is_agent_in_livekit: bool,
+    ) {
         let current_time = unix_timestamp_ms();
         let mut updated_hashmap = self.livekit_active_uuid_hashmap.take().unwrap_or_default();
 
@@ -165,6 +171,11 @@ impl ServiceState {
 
         self.livekit_active_uuid_hashmap = Some(updated_hashmap);
         self.last_livekit_active_uuid_update_time = current_time;
+        self.is_agent_in_livekit = is_agent_in_livekit;
+    }
+
+    pub fn is_agent_in_livekit(&self) -> bool {
+        self.is_agent_in_livekit
     }
 
     pub fn get_livekit_active_uuid_hashmap(&self) -> HashMap<Uuid, LivekitUUIDInfo> {
@@ -173,6 +184,7 @@ impl ServiceState {
 
     pub fn clear_livekit_active_uuid_hashmap(&mut self) {
         self.livekit_active_uuid_hashmap = None;
+        self.is_agent_in_livekit = false;
     }
 
     pub fn set_mls_sync_metrics(&mut self, metrics: MlsSyncMetrics) {
@@ -239,5 +251,6 @@ impl ServiceState {
         self.last_host_role_update_proposal_epoch = None;
         self.pending_waiting_room_join_requests.clear();
         self.rooms_awaiting_captions_agent.clear();
+        self.is_agent_in_livekit = false;
     }
 }

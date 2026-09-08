@@ -319,6 +319,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ExternalUrl.shared.launchProtonHelpCenter();
       return;
     }
-    await nativeViewChannel.nativeReportBugs(state.displayName, state.email);
+    if (state.email.isNotEmpty) {
+      await nativeViewChannel.nativeReportBugs(state.displayName, state.email);
+    }
   }
 }

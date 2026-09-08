@@ -4306,6 +4306,7 @@ fn wire__crate__proton_meet__core__AppCore_set_livekit_active_uuids_impl(
                 flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
             >>::sse_decode(&mut deserializer);
             let api_active_uuids = <Vec<String>>::sse_decode(&mut deserializer);
+            let api_is_agent_in_livekit = <bool>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, ()>(
@@ -4331,6 +4332,7 @@ fn wire__crate__proton_meet__core__AppCore_set_livekit_active_uuids_impl(
                             crate::proton_meet::core::AppCore::set_livekit_active_uuids(
                                 &mut *api_that_guard,
                                 api_active_uuids,
+                                api_is_agent_in_livekit,
                             )
                             .await;
                         })?;
@@ -8598,11 +8600,9 @@ impl SseDecode for crate::proton_meet::models::event::FrbUserPayload {
 impl SseDecode for crate::proton_meet::models::user_settings::FrbUserSettings {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut var_meetingId = <String>::sse_decode(deserializer);
         let mut var_addressId = <Option<String>>::sse_decode(deserializer);
         let mut var_waitingRoom = <bool>::sse_decode(deserializer);
         return crate::proton_meet::models::user_settings::FrbUserSettings {
-            meeting_id: var_meetingId,
             address_id: var_addressId,
             waiting_room: var_waitingRoom,
         };
@@ -10271,7 +10271,6 @@ impl flutter_rust_bridge::IntoIntoDart<crate::proton_meet::models::event::FrbUse
 impl flutter_rust_bridge::IntoDart for crate::proton_meet::models::user_settings::FrbUserSettings {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
-            self.meeting_id.into_into_dart().into_dart(),
             self.address_id.into_into_dart().into_dart(),
             self.waiting_room.into_into_dart().into_dart(),
         ]
@@ -11468,7 +11467,6 @@ impl SseEncode for crate::proton_meet::models::event::FrbUserPayload {
 impl SseEncode for crate::proton_meet::models::user_settings::FrbUserSettings {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <String>::sse_encode(self.meeting_id, serializer);
         <Option<String>>::sse_encode(self.address_id, serializer);
         <bool>::sse_encode(self.waiting_room, serializer);
     }

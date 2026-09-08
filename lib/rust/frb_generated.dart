@@ -506,6 +506,7 @@ abstract class RustLibApi extends BaseApi {
   Future<void> crateProtonMeetCoreAppCoreSetLivekitActiveUuids({
     required AppCore that,
     required List<String> activeUuids,
+    required bool isAgentInLivekit,
   });
 
   Future<void> crateProtonMeetCoreAppCoreSetLivekitAdminChangeCallback({
@@ -3864,6 +3865,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Future<void> crateProtonMeetCoreAppCoreSetLivekitActiveUuids({
     required AppCore that,
     required List<String> activeUuids,
+    required bool isAgentInLivekit,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -3874,6 +3876,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             serializer,
           );
           sse_encode_list_String(activeUuids, serializer);
+          sse_encode_bool(isAgentInLivekit, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -3886,7 +3889,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: null,
         ),
         constMeta: kCrateProtonMeetCoreAppCoreSetLivekitActiveUuidsConstMeta,
-        argValues: [that, activeUuids],
+        argValues: [that, activeUuids, isAgentInLivekit],
         apiImpl: this,
       ),
     );
@@ -3895,7 +3898,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateProtonMeetCoreAppCoreSetLivekitActiveUuidsConstMeta =>
       const TaskConstMeta(
         debugName: "AppCore_set_livekit_active_uuids",
-        argNames: ["that", "activeUuids"],
+        argNames: ["that", "activeUuids", "isAgentInLivekit"],
       );
 
   @override
@@ -7528,12 +7531,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   FrbUserSettings dco_decode_frb_user_settings(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
     return FrbUserSettings(
-      meetingId: dco_decode_String(arr[0]),
-      addressId: dco_decode_opt_String(arr[1]),
-      waitingRoom: dco_decode_bool(arr[2]),
+      addressId: dco_decode_opt_String(arr[0]),
+      waitingRoom: dco_decode_bool(arr[1]),
     );
   }
 
@@ -8799,11 +8801,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   FrbUserSettings sse_decode_frb_user_settings(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_meetingId = sse_decode_String(deserializer);
     var var_addressId = sse_decode_opt_String(deserializer);
     var var_waitingRoom = sse_decode_bool(deserializer);
     return FrbUserSettings(
-      meetingId: var_meetingId,
       addressId: var_addressId,
       waitingRoom: var_waitingRoom,
     );
@@ -10375,7 +10375,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     SseSerializer serializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_String(self.meetingId, serializer);
     sse_encode_opt_String(self.addressId, serializer);
     sse_encode_bool(self.waitingRoom, serializer);
   }
@@ -11499,11 +11498,14 @@ class AppCoreImpl extends RustOpaque implements AppCore {
     callback: callback,
   );
 
-  Future<void> setLivekitActiveUuids({required List<String> activeUuids}) =>
-      RustLib.instance.api.crateProtonMeetCoreAppCoreSetLivekitActiveUuids(
-        that: this,
-        activeUuids: activeUuids,
-      );
+  Future<void> setLivekitActiveUuids({
+    required List<String> activeUuids,
+    required bool isAgentInLivekit,
+  }) => RustLib.instance.api.crateProtonMeetCoreAppCoreSetLivekitActiveUuids(
+    that: this,
+    activeUuids: activeUuids,
+    isAgentInLivekit: isAgentInLivekit,
+  );
 
   Future<void> setLivekitAdminChangeCallback({
     required FutureOr<void> Function(String, String, int) callback,
