@@ -4306,6 +4306,7 @@ fn wire__crate__proton_meet__core__AppCore_set_livekit_active_uuids_impl(
                 flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>,
             >>::sse_decode(&mut deserializer);
             let api_active_uuids = <Vec<String>>::sse_decode(&mut deserializer);
+            let api_is_agent_in_livekit = <bool>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, ()>(
@@ -4331,6 +4332,7 @@ fn wire__crate__proton_meet__core__AppCore_set_livekit_active_uuids_impl(
                             crate::proton_meet::core::AppCore::set_livekit_active_uuids(
                                 &mut *api_that_guard,
                                 api_active_uuids,
+                                api_is_agent_in_livekit,
                             )
                             .await;
                         })?;

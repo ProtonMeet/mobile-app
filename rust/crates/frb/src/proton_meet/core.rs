@@ -381,8 +381,15 @@ impl AppCore {
         self.user_config.save();
     }
 
-    pub async fn set_livekit_active_uuids(&mut self, active_uuids: Vec<String>) {
-        let _ = self.inner.set_livekit_active_uuids(active_uuids).await;
+    pub async fn set_livekit_active_uuids(
+        &mut self,
+        active_uuids: Vec<String>,
+        is_agent_in_livekit: bool,
+    ) {
+        let _ = self
+            .inner
+            .set_livekit_active_uuids(active_uuids, is_agent_in_livekit)
+            .await;
     }
 
     /// SRP-authenticate a meeting link and return decrypted metadata (name, limits).

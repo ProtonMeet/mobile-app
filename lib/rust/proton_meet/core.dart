@@ -358,7 +358,10 @@ abstract class AppCore implements RustOpaqueInterface {
     callback,
   });
 
-  Future<void> setLivekitActiveUuids({required List<String> activeUuids});
+  Future<void> setLivekitActiveUuids({
+    required List<String> activeUuids,
+    required bool isAgentInLivekit,
+  });
 
   Future<void> setLivekitAdminChangeCallback({
     required FutureOr<void> Function(String, String, int) callback,
