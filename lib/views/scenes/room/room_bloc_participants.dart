@@ -190,7 +190,11 @@ mixin RoomParticipantsHandlers on Bloc<RoomBlocEvent, RoomState> {
     }
 
     final appCoreManager = ManagerFactory().get<AppCoreManager>();
-    appCoreManager.appCore.setLivekitActiveUuids(activeUuids: activeUuids);
+    appCoreManager.appCore.setLivekitActiveUuids(
+      activeUuids: activeUuids,
+      isAgentInLivekit:
+          false, // TODO: check if agent is in livekit in live caption PR
+    );
   }
 
   /// Retrieves the display name for a participant.

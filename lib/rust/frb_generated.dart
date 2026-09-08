@@ -506,6 +506,7 @@ abstract class RustLibApi extends BaseApi {
   Future<void> crateProtonMeetCoreAppCoreSetLivekitActiveUuids({
     required AppCore that,
     required List<String> activeUuids,
+    required bool isAgentInLivekit,
   });
 
   Future<void> crateProtonMeetCoreAppCoreSetLivekitAdminChangeCallback({
@@ -3864,6 +3865,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Future<void> crateProtonMeetCoreAppCoreSetLivekitActiveUuids({
     required AppCore that,
     required List<String> activeUuids,
+    required bool isAgentInLivekit,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -3874,6 +3876,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             serializer,
           );
           sse_encode_list_String(activeUuids, serializer);
+          sse_encode_bool(isAgentInLivekit, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -3886,7 +3889,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: null,
         ),
         constMeta: kCrateProtonMeetCoreAppCoreSetLivekitActiveUuidsConstMeta,
-        argValues: [that, activeUuids],
+        argValues: [that, activeUuids, isAgentInLivekit],
         apiImpl: this,
       ),
     );
@@ -3895,7 +3898,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateProtonMeetCoreAppCoreSetLivekitActiveUuidsConstMeta =>
       const TaskConstMeta(
         debugName: "AppCore_set_livekit_active_uuids",
-        argNames: ["that", "activeUuids"],
+        argNames: ["that", "activeUuids", "isAgentInLivekit"],
       );
 
   @override
@@ -11495,11 +11498,14 @@ class AppCoreImpl extends RustOpaque implements AppCore {
     callback: callback,
   );
 
-  Future<void> setLivekitActiveUuids({required List<String> activeUuids}) =>
-      RustLib.instance.api.crateProtonMeetCoreAppCoreSetLivekitActiveUuids(
-        that: this,
-        activeUuids: activeUuids,
-      );
+  Future<void> setLivekitActiveUuids({
+    required List<String> activeUuids,
+    required bool isAgentInLivekit,
+  }) => RustLib.instance.api.crateProtonMeetCoreAppCoreSetLivekitActiveUuids(
+    that: this,
+    activeUuids: activeUuids,
+    isAgentInLivekit: isAgentInLivekit,
+  );
 
   Future<void> setLivekitAdminChangeCallback({
     required FutureOr<void> Function(String, String, int) callback,

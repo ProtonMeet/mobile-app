@@ -397,8 +397,9 @@ impl App {
     pub async fn set_livekit_active_uuids_wasm(
         &self,
         livekit_active_uuid_list: Vec<String>,
+        is_agent_in_livekit: bool,
     ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
-        self.set_livekit_active_uuids(livekit_active_uuid_list)
+        self.set_livekit_active_uuids(livekit_active_uuid_list, is_agent_in_livekit)
             .await
             .map_err(|e| e.into())
     }
