@@ -414,7 +414,13 @@ mod manual {
         )
         .await?;
 
-        let login_result = app.user_service.read().await.login("bart", "bart").await;
+        let login_result = app
+            .services
+            .user_service
+            .read()
+            .await
+            .login("bart", "bart")
+            .await;
         let user_id = match &login_result {
             Ok((_, user_data, _, _)) => {
                 assert!(!user_data.id.to_string().is_empty());

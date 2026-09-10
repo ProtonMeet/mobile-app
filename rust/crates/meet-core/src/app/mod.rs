@@ -22,8 +22,11 @@ use crate::infra::{
     ws_client::WsClient,
 };
 use crate::service::mls_service::MlsService;
+use crate::service::services_bundle::ServiceBundle;
 use crate::service::user_service::Service;
+use futures::FutureExt;
 use proton_meet_mls::{MlsClientConfig, MlsStore};
+use std::future::ready;
 use std::{collections::HashMap, future::Future, sync::Arc};
 use tokio::sync::RwLock;
 use tracing::error;
@@ -124,9 +127,7 @@ pub struct App {
     user_key_provider: Arc<dyn UserKeyProvider>,
 
     /// services
-    pub(crate) user_service: Arc<RwLock<Service>>,
-    pub(crate) room_service: Arc<RoomService>,
-    pub(crate) waiting_room_service: Arc<WaitingRoomService>,
+    pub(crate) services: Arc<ServiceBundle>,
 }
 
 impl App {
@@ -240,7 +241,7 @@ impl App {
             http_client.server_time_tracker(),
         ));
 
-        let user_service = Arc::new(RwLock::new(Service::new(
+        let user_service = RwLock::new(Service::new(
             http_client.clone(),
             http_client.clone(),
             http_client.clone(),
@@ -249,7 +250,7 @@ impl App {
             ws_client.clone(),
             mls_store.clone(),
             http_client.server_time_tracker(),
-        )));
+        ));
 
         let room_service = Arc::new(RoomService::new(
             http_client.clone(),
@@ -258,12 +259,25 @@ impl App {
         ));
         let waiting_room_service = Arc::new(WaitingRoomService::new(crypto_client, mls_service));
 
-        let user_service_clone = user_service.clone();
+        let services = Arc::new(ServiceBundle::new(
+            room_service,
+            waiting_room_service,
+            user_service,
+        ));
+
+        // Use a weak reference in the message handler to avoid an Arc cycle.
+        // FIXME/TBD: Once the services refactor is completed, it might be possible to replace the
+        // `Weak<ServicesBundle>` by a `Weak<WebsocketService>`.
+        let weak_service = Arc::downgrade(&services);
         ws_client
             .set_message_handler(Arc::new(move |message| {
-                let user_service = user_service_clone.clone();
+                let Some(bundle) = weak_service.upgrade() else {
+                    return ready(()).boxed();
+                };
+
                 Box::pin(async move {
-                    match user_service
+                    match bundle
+                        .user_service
                         .read()
                         .await
                         .handle_websocket_message(message)
@@ -279,9 +293,7 @@ impl App {
             .await;
 
         Ok(Self {
-            user_service,
-            room_service,
-            waiting_room_service,
+            services,
 
             state: Arc::new(RwLock::new(AppState {
                 active_user: user_state,
@@ -339,12 +351,14 @@ impl App {
         drop(app_state);
 
         let meeting_id = self
+            .services
             .user_service
             .read()
             .await
             .get_meeting_id(&user_id)
             .await?;
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .set_livekit_active_uuids(&meeting_id, livekit_active_uuid_list, is_agent_in_livekit)
@@ -361,6 +375,7 @@ impl App {
             .ok_or(MeetCoreError::ParticipantNotFound)?;
         let user_id = user_info.user_id();
         let meeting_id = self
+            .services
             .user_service
             .read()
             .await
@@ -368,6 +383,7 @@ impl App {
             .await?;
         // first check
         let is_up_to_date = self
+            .services
             .user_service
             .read()
             .await
@@ -382,6 +398,7 @@ impl App {
         }
         // recheck
         let is_up_to_date = self
+            .services
             .user_service
             .read()
             .await
@@ -407,12 +424,14 @@ impl App {
             .as_ref()
             .ok_or(MeetCoreError::LivekitAccessTokenNotFound)?;
         let meeting_id = self
+            .services
             .user_service
             .read()
             .await
             .get_meeting_id(&user_id)
             .await?;
         let participant_track_settings = self
+            .services
             .room_service
             .update_participant_track_settings(
                 meeting_id.as_str(),
@@ -426,7 +445,13 @@ impl App {
     }
 
     pub async fn get_user_settings(&self) -> Result<UserSettings, MeetCoreError> {
-        let user_settings = self.user_service.read().await.get_user_settings().await?;
+        let user_settings = self
+            .services
+            .user_service
+            .read()
+            .await
+            .get_user_settings()
+            .await?;
         Ok(user_settings)
     }
 
@@ -435,6 +460,7 @@ impl App {
         enable: bool,
     ) -> Result<UserSettings, MeetCoreError> {
         let user_settings = self
+            .services
             .user_service
             .read()
             .await
@@ -458,12 +484,14 @@ impl App {
             .ok_or(MeetCoreError::ParticipantNotFound)?;
         let user_id = user_info.user_id();
         let meeting_id = self
+            .services
             .user_service
             .read()
             .await
             .get_meeting_id(&user_id)
             .await?;
-        self.room_service
+        self.services
+            .room_service
             .remove_participant(
                 meeting_id.as_str(),
                 livekit_access_token,
@@ -482,13 +510,15 @@ impl App {
             .ok_or(MeetCoreError::ParticipantNotFound)?;
         let user_id = user_info.user_id();
         let meeting_id = self
+            .services
             .user_service
             .read()
             .await
             .get_meeting_id(&user_id)
             .await?;
 
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .get_group_key(meeting_id.as_str())
@@ -504,13 +534,15 @@ impl App {
             .ok_or(MeetCoreError::ParticipantNotFound)?;
         let user_id = user_info.user_id();
         let meeting_id = self
+            .services
             .user_service
             .read()
             .await
             .get_meeting_id(&user_id)
             .await?;
 
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .get_group_len(meeting_id.as_str())
@@ -526,6 +558,7 @@ impl App {
             .ok_or(MeetCoreError::ParticipantNotFound)?;
         let user_id = user_info.user_id();
         let meeting_id = self
+            .services
             .user_service
             .read()
             .await
@@ -533,6 +566,7 @@ impl App {
             .await?;
 
         let group_display_code = self
+            .services
             .user_service
             .read()
             .await
@@ -557,7 +591,8 @@ impl App {
         F: Fn(String, crate::service::user_service::GroupKeyUpdateReason) -> Fut + Send + 'static,
         Fut: Future<Output = ()> + Unpin + Send + 'static,
     {
-        self.user_service
+        self.services
+            .user_service
             .write()
             .await
             .handlers
@@ -574,7 +609,8 @@ impl App {
             + 'static,
         Fut: Future<Output = ()> + Unpin + Send + 'static,
     {
-        self.user_service
+        self.services
+            .user_service
             .write()
             .await
             .handlers
@@ -586,7 +622,8 @@ impl App {
         F: Fn(String, String, u32) -> Fut + Send + 'static,
         Fut: Future<Output = ()> + Unpin + Send + 'static,
     {
-        self.user_service
+        self.services
+            .user_service
             .write()
             .await
             .handlers
@@ -598,7 +635,8 @@ impl App {
         F: Fn(String) -> Fut + Send + 'static,
         Fut: Future<Output = ()> + Unpin + Send + 'static,
     {
-        self.user_service
+        self.services
+            .user_service
             .write()
             .await
             .handlers
@@ -610,7 +648,8 @@ impl App {
         F: Fn(String) -> Fut + Send + 'static,
         Fut: Future<Output = ()> + Unpin + Send + 'static,
     {
-        self.user_service
+        self.services
+            .user_service
             .write()
             .await
             .handlers
@@ -630,10 +669,12 @@ impl App {
         meeting_api: Arc<dyn MeetingApi>,
         event_api: Arc<dyn EventApi>,
         user_key_provider: Arc<dyn UserKeyProvider>,
-        user_service: Arc<RwLock<Service>>,
-        room_service: Arc<RoomService>,
-        waiting_room_service: Arc<WaitingRoomService>,
+        user_service: Service,
+        room_service: RoomService,
+        waiting_room_service: WaitingRoomService,
     ) -> Self {
+        use std::sync::Arc;
+
         Self {
             state,
             ws_client,
@@ -644,9 +685,11 @@ impl App {
             meeting_api,
             event_api,
             user_key_provider,
-            user_service,
-            room_service,
-            waiting_room_service,
+            services: Arc::new(ServiceBundle::new(
+                Arc::new(room_service),
+                Arc::new(waiting_room_service),
+                RwLock::new(user_service),
+            )),
         }
     }
 }

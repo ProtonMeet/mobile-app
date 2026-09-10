@@ -23,7 +23,8 @@ impl App {
             .as_ref()
             .ok_or(MeetCoreError::ParticipantNotFound)?;
         let user_id = user_info.user_id();
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .get_meeting_id(&user_id)
@@ -41,7 +42,8 @@ impl App {
     }
 
     async fn local_sender_uri(&self, meeting_link_name: &str) -> Result<String, MeetCoreError> {
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .local_mimi_sender_uri(meeting_link_name)
@@ -68,6 +70,7 @@ impl App {
             parameters: vec![],
         };
         let mls_msg = self
+            .services
             .user_service
             .read()
             .await
@@ -95,6 +98,7 @@ impl App {
         let ciphertext = chat::extract_mls_ciphertext(&data)?;
         let mls_msg = MlsMessage::from_bytes(&ciphertext)?;
         let (content, media_type, sender_id, sender_mimi_uri) = self
+            .services
             .user_service
             .read()
             .await

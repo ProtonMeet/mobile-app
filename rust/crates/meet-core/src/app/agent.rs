@@ -15,7 +15,8 @@ impl App {
     ) -> Result<(), MeetCoreError> {
         let user_id = self.active_user_id().await?;
         let meeting = Self::parse_meeting_link_name(&meeting_link_name)?;
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .admit_agent(&meeting, &user_id, agent_device_id, meeting_password)
@@ -30,7 +31,8 @@ impl App {
     ) -> Result<(), MeetCoreError> {
         let user_id = self.active_user_id().await?;
         let meeting = Self::parse_meeting_link_name(&meeting_link_name)?;
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .remove_agent(&meeting, &user_id, agent_device_id)
@@ -45,7 +47,8 @@ impl App {
         meeting_link_name: String,
     ) -> Result<(), MeetCoreError> {
         let meeting = Self::parse_meeting_link_name(&meeting_link_name)?;
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .request_closed_captions(&meeting)
@@ -59,7 +62,8 @@ impl App {
         meeting_link_name: String,
     ) -> Result<(), MeetCoreError> {
         let meeting = Self::parse_meeting_link_name(&meeting_link_name)?;
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .stop_closed_captions(&meeting)
@@ -73,7 +77,8 @@ impl App {
         available: bool,
     ) -> Result<(), MeetCoreError> {
         let meeting = Self::parse_meeting_link_name(&meeting_link_name)?;
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .set_closed_captions_availability_as_host(&meeting, available)
@@ -89,7 +94,8 @@ impl App {
         // Validate the link name even though the server scopes the listing by
         // the host's session rather than by an explicit meeting parameter.
         Self::parse_meeting_link_name(&meeting_link_name)?;
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .list_pending_agents(&user_id)

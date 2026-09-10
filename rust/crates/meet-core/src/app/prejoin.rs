@@ -46,7 +46,8 @@ impl App {
             return Ok(());
         }
 
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .reset_waiting_room_guest_join_state()
@@ -293,6 +294,7 @@ impl App {
             };
 
         let user_info = self
+            .services
             .user_service
             .read()
             .await
@@ -318,7 +320,8 @@ impl App {
             },
         )?;
 
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .has_mls_group_info(&user_info.user_id())

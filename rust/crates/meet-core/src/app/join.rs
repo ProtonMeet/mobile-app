@@ -36,6 +36,7 @@ impl App {
                 .ok_or(MeetCoreError::ParticipantNotFound)?;
             let user_id = user_info.user_id();
             let meeting_id = self
+                .services
                 .user_service
                 .read()
                 .await
@@ -44,7 +45,8 @@ impl App {
             (user_id, meeting_id)
         };
         // Step 2: Leave room
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .leave_room(&participant_id, &meeting_id)
@@ -71,6 +73,7 @@ impl App {
             .ok_or(MeetCoreError::ParticipantNotFound)?;
         let user_id = user_info.user_id();
         let meeting_id = self
+            .services
             .user_service
             .read()
             .await
@@ -80,7 +83,8 @@ impl App {
             .active_livekit_access_token
             .as_ref()
             .ok_or(MeetCoreError::LivekitAccessTokenNotFound)?;
-        self.room_service
+        self.services
+            .room_service
             .end_meeting(&meeting_id, livekit_access_token)
             .await?;
 
@@ -126,6 +130,7 @@ impl App {
         }
         let mls_start = instant::now();
         let user_info = self
+            .services
             .user_service
             .read()
             .await
@@ -173,7 +178,12 @@ impl App {
                 join_and_connect_start.elapsed().as_millis()
             );
 
-            self.user_service.read().await.reset_service_state().await;
+            self.services
+                .user_service
+                .read()
+                .await
+                .reset_service_state()
+                .await;
             if let Err(disconnect_err) = self.disconnect_from_ws().await {
                 warn!("Failed to disconnect from websocket: {:?}", disconnect_err);
             }
@@ -187,14 +197,18 @@ impl App {
 
         // Check if user is host and update role if needed
         let user_id = user_info.user_id();
-        if let Ok(meeting_id) = self
+
+        let meeting_id_res = self
+            .services
             .user_service
             .read()
             .await
             .get_meeting_id(&user_id)
-            .await
-        {
+            .await;
+
+        if let Ok(meeting_id) = meeting_id_res {
             if let Err(e) = self
+                .services
                 .user_service
                 .read()
                 .await
@@ -228,6 +242,7 @@ impl App {
 
         let mls_start = instant::now();
         let user_info = self
+            .services
             .user_service
             .read()
             .await
@@ -274,7 +289,12 @@ impl App {
                 join_and_connect_start.elapsed().as_millis()
             );
 
-            self.user_service.read().await.reset_service_state().await;
+            self.services
+                .user_service
+                .read()
+                .await
+                .reset_service_state()
+                .await;
             if let Err(disconnect_err) = self.disconnect_from_ws().await {
                 warn!("Failed to disconnect from websocket: {:?}", disconnect_err);
             }
@@ -303,6 +323,7 @@ impl App {
         }
 
         let user_info = self
+            .services
             .user_service
             .read()
             .await
@@ -335,7 +356,12 @@ impl App {
                 &e,
                 join_and_connect_start.elapsed().as_millis()
             );
-            self.user_service.read().await.reset_service_state().await;
+            self.services
+                .user_service
+                .read()
+                .await
+                .reset_service_state()
+                .await;
             if let Err(disconnect_err) = self.disconnect_from_ws().await {
                 warn!("Failed to disconnect from websocket: {:?}", disconnect_err);
             }
@@ -349,14 +375,18 @@ impl App {
 
         // Check if user is host and update role if needed
         let user_id = user_info.user_id();
-        if let Ok(meeting_id) = self
+
+        let meeting_id_res = self
+            .services
             .user_service
             .read()
             .await
             .get_meeting_id(&user_id)
-            .await
-        {
+            .await;
+
+        if let Ok(meeting_id) = meeting_id_res {
             if let Err(e) = self
+                .services
                 .user_service
                 .read()
                 .await
@@ -425,7 +455,13 @@ impl App {
             .clone();
         let user_id = user_info.user_id();
         let sd_start = instant::now();
-        let sd_kbt = self.user_service.read().await.get_sd_kbt(&user_id).await?;
+        let sd_kbt = self
+            .services
+            .user_service
+            .read()
+            .await
+            .get_sd_kbt(&user_id)
+            .await?;
         debug!(
             "connect_to_ws step=get_sd_kbt ms={}",
             sd_start.elapsed().as_millis()
@@ -526,8 +562,13 @@ impl App {
             .await
             .meeting_display_name_session_key
             .clone();
-        let participants = self.room_service.get_participants(&meet_link_name).await?;
         let participants = self
+            .services
+            .room_service
+            .get_participants(&meet_link_name)
+            .await?;
+        let participants = self
+            .services
             .room_service
             .decrypt_participant_display_names(participants, session_key.as_ref())
             .await;
@@ -539,6 +580,7 @@ impl App {
         meet_link_name: String,
     ) -> Result<u32, MeetCoreError> {
         let count = self
+            .services
             .room_service
             .get_participants_count(&meet_link_name)
             .await?;
@@ -546,12 +588,18 @@ impl App {
     }
 
     pub async fn lock_meeting(&self, meet_link_name: String) -> Result<(), MeetCoreError> {
-        self.room_service.lock_meeting(&meet_link_name).await?;
+        self.services
+            .room_service
+            .lock_meeting(&meet_link_name)
+            .await?;
         Ok(())
     }
 
     pub async fn unlock_meeting(&self, meet_link_name: String) -> Result<(), MeetCoreError> {
-        self.room_service.unlock_meeting(&meet_link_name).await?;
+        self.services
+            .room_service
+            .unlock_meeting(&meet_link_name)
+            .await?;
         Ok(())
     }
 
@@ -597,6 +645,7 @@ impl App {
         let user_id = user_token_info.user_id();
         let meeting_start = instant::now();
         let meeting_id = self
+            .services
             .user_service
             .read()
             .await
@@ -611,7 +660,8 @@ impl App {
         let meeting_link_name = MeetingLinkName::from(meeting_id);
 
         let join_result = (|| async {
-            self.user_service
+            self.services
+                .user_service
                 .read()
                 .await
                 .join_room_with_switch_join_type(
@@ -637,7 +687,8 @@ impl App {
                     "Error joining room with switch join type: {:?}, retrying with switch_join_type=false",
                     &e
                 );
-                self.user_service
+                self.services
+                    .user_service
                     .read()
                     .await
                     .join_room_with_switch_join_type(
@@ -677,6 +728,7 @@ impl App {
         let user_id = user_token_info.user_id();
         let meeting_start = instant::now();
         let meeting_id = self
+            .services
             .user_service
             .read()
             .await
@@ -688,7 +740,8 @@ impl App {
         );
 
         let join_call_start = instant::now();
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .join_room(&user_token_info, &meeting_id)
@@ -720,6 +773,7 @@ impl App {
         let user_id = user_info.user_id();
         let meeting_start = instant::now();
         let meeting_id = self
+            .services
             .user_service
             .read()
             .await
@@ -731,7 +785,8 @@ impl App {
         );
 
         let join_call_start = instant::now();
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .join_room_with_proposal(&user_id, &meeting_id)
@@ -761,13 +816,15 @@ impl App {
         };
         let user_id = user_token_info.user_id();
         let meeting_id = self
+            .services
             .user_service
             .read()
             .await
             .get_meeting_id(&user_id)
             .await?;
 
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .kick_participant(&participant_id, &meeting_id)
