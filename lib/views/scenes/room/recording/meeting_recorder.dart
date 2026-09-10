@@ -308,7 +308,7 @@ class MeetingRecorder {
     try {
       final notificationService = ManagerFactory().get<NotificationService>();
       final roomName = (room.name ?? '').trim();
-      return notificationService.startScreenShareForegroundService(
+      return await notificationService.startScreenShareForegroundService(
         roomName: roomName.isNotEmpty ? roomName : 'Meeting',
       );
     } catch (e) {

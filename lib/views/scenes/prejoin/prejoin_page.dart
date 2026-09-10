@@ -70,7 +70,11 @@ class _PreJoinPageState extends State<PreJoinPage> {
         // Dispatch initialization event after page is shown
         if (widget.joinArgs != null) {
           widget.bloc.add(
-            PreJoinInitialized(widget.joinArgs!, _displayNameForBlocInit),
+            PreJoinInitialized(
+              widget.joinArgs!,
+              _displayNameForBlocInit,
+              isPaidUser: widget.authBloc.state.isPaidUser,
+            ),
           );
         }
 
@@ -125,6 +129,14 @@ class _PreJoinPageState extends State<PreJoinPage> {
                 _displayNameController.text = state.displayName;
                 widget.bloc.add(UpdateDisplayName(state.displayName));
               }
+            },
+          ),
+          BlocListener<AuthBloc, AuthState>(
+            listenWhen: (prev, curr) => prev.isPaidUser != curr.isPaidUser,
+            listener: (context, state) {
+              widget.bloc.add(
+                PreJoinIsPaidUserUpdated(isPaidUser: state.isPaidUser),
+              );
             },
           ),
           BlocListener<PreJoinBloc, PreJoinState>(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/local_toast.dart';
+import 'package:meet/views/components/settings/settings_nav_row.dart';
 import 'package:meet/views/scenes/room/recording/recording_save_location.dart';
 import 'package:meet/views/scenes/room/side_panel_widget.dart';
 
@@ -21,6 +22,33 @@ String recordingSaveLocationLabelForKind(
     case RecordingSaveLocationKind.custom:
       return context.local.recording_save_location_custom;
   }
+}
+
+/// Figma-style value line, e.g. "Downloads › Proton Meet".
+String recordingSaveLocationDisplayTitle(
+  BuildContext context,
+  RecordingSaveLocationKind kind,
+  String pathSummary,
+) {
+  final kindLabel = recordingSaveLocationLabelForKind(context, kind);
+  if (pathSummary.isEmpty) {
+    return kindLabel;
+  }
+
+  final parts = pathSummary
+      .replaceAll('\\', '/')
+      .split('/')
+      .where((part) => part.isNotEmpty)
+      .toList();
+  if (parts.isEmpty) {
+    return kindLabel;
+  }
+
+  final folder = parts.last;
+  if (folder == kindLabel) {
+    return kindLabel;
+  }
+  return '$kindLabel › $folder';
 }
 
 /// Opens the save-location picker and persists the selection.
@@ -124,17 +152,18 @@ class RecordingSaveLocationPicker {
   }
 }
 
-/// App settings card: choose where local recordings are saved.
-class RecordingSaveLocationAppSettingsCard extends StatefulWidget {
-  const RecordingSaveLocationAppSettingsCard({super.key});
+/// Settings row: choose where local recordings are saved.
+///
+/// Shared by app settings and the in-call meeting settings panel.
+class RecordingSaveLocationRow extends StatefulWidget {
+  const RecordingSaveLocationRow({super.key});
 
   @override
-  State<RecordingSaveLocationAppSettingsCard> createState() =>
-      _RecordingSaveLocationAppSettingsCardState();
+  State<RecordingSaveLocationRow> createState() =>
+      _RecordingSaveLocationRowState();
 }
 
-class _RecordingSaveLocationAppSettingsCardState
-    extends State<RecordingSaveLocationAppSettingsCard> {
+class _RecordingSaveLocationRowState extends State<RecordingSaveLocationRow> {
   RecordingSaveLocationConfig? _config;
   String _pathSummary = '';
 
@@ -161,156 +190,17 @@ class _RecordingSaveLocationAppSettingsCardState
 
   @override
   Widget build(BuildContext context) {
-    const borderRadius = BorderRadius.all(Radius.circular(24));
     final config = _config;
-    final kindLabel = config == null
-        ? ''
-        : recordingSaveLocationLabelForKind(context, config.kind);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Material(
-        color: Colors.white.withValues(alpha: 0.04),
-        borderRadius: borderRadius,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: _openPicker,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        context.local.recording_save_location,
-                        style: ProtonStyles.body2Medium(
-                          color: context.colors.textWeak,
-                        ),
-                      ),
-                      if (kindLabel.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          kindLabel,
-                          style: ProtonStyles.body1Medium(
-                            color: context.colors.textNorm,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                      if (_pathSummary.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          _pathSummary,
-                          style: ProtonStyles.body2Regular(
-                            color: context.colors.textWeak,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: context.colors.textWeak,
-                  size: 24,
-                ),
-              ],
+    return SettingsNavRow(
+      overline: context.local.save_recordings_to,
+      title: config == null
+          ? context.local.recording_save_location
+          : recordingSaveLocationDisplayTitle(
+              context,
+              config.kind,
+              _pathSummary,
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// In-room setting row: choose where local recordings are saved.
-class RecordingSaveLocationSettingRow extends StatefulWidget {
-  const RecordingSaveLocationSettingRow({super.key});
-
-  @override
-  State<RecordingSaveLocationSettingRow> createState() =>
-      _RecordingSaveLocationSettingRowState();
-}
-
-class _RecordingSaveLocationSettingRowState
-    extends State<RecordingSaveLocationSettingRow> {
-  RecordingSaveLocationConfig? _config;
-  String _pathSummary = '';
-
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_reload());
-  }
-
-  Future<void> _reload() async {
-    final config = await RecordingSaveLocationConfig.load();
-    final path = await config.displayPath();
-    if (!mounted) return;
-    setState(() {
-      _config = config;
-      _pathSummary = path;
-    });
-  }
-
-  Future<void> _openPicker() async {
-    await RecordingSaveLocationPicker.show(context);
-    await _reload();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final config = _config;
-    final title = config == null
-        ? context.local.recording_save_location
-        : recordingSaveLocationLabelForKind(context, config.kind);
-
-    return InkWell(
       onTap: _openPicker,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.local.recording_save_location,
-                  style: ProtonStyles.body1Medium(
-                    color: context.colors.textNorm,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  title,
-                  style: ProtonStyles.body2Regular(
-                    color: context.colors.textWeak,
-                  ),
-                ),
-                if (_pathSummary.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    _pathSummary,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: ProtonStyles.body2Regular(
-                      color: context.colors.textWeak,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          Icon(Icons.chevron_right, color: context.colors.interActionWeak),
-        ],
-      ),
     );
   }
 }

@@ -92,7 +92,6 @@ class _MeetUpcomingTitleState extends State<MeetUpcomingTitle>
 
   Widget _buildTabButtons(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 100, maxWidth: 300),
       padding: const EdgeInsets.all(4),
       height: 52,
       decoration: BoxDecoration(
@@ -104,6 +103,8 @@ class _MeetUpcomingTitleState extends State<MeetUpcomingTitle>
         borderRadius: BorderRadius.circular(999),
         child: TabBar(
           controller: _tabController,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
           indicator: BoxDecoration(
             color: context.colors.protonBlue,
             borderRadius: BorderRadius.circular(999),
@@ -127,12 +128,14 @@ class _MeetUpcomingTitleState extends State<MeetUpcomingTitle>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(context.local.my_meetings_count),
-                      const SizedBox(width: 6),
-                      _CountBadge(
-                        count: widget.myMeetingsCount,
-                        isSelected:
-                            widget.selectedTab == MeetUpcomingTab.myMeetings,
-                      ),
+                      if (!widget.isLoading) ...[
+                        const SizedBox(width: 6),
+                        _CountBadge(
+                          count: widget.myMeetingsCount,
+                          isSelected:
+                              widget.selectedTab == MeetUpcomingTab.myMeetings,
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -148,12 +151,14 @@ class _MeetUpcomingTitleState extends State<MeetUpcomingTitle>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(context.local.my_rooms_count),
-                      const SizedBox(width: 6),
-                      _CountBadge(
-                        count: widget.myRoomsCount,
-                        isSelected:
-                            widget.selectedTab == MeetUpcomingTab.myRooms,
-                      ),
+                      if (!widget.isLoading) ...[
+                        const SizedBox(width: 6),
+                        _CountBadge(
+                          count: widget.myRoomsCount,
+                          isSelected:
+                              widget.selectedTab == MeetUpcomingTab.myRooms,
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -172,7 +177,7 @@ class _MeetUpcomingTitleState extends State<MeetUpcomingTitle>
     final myRoomsSelected = widget.selectedTab == MeetUpcomingTab.myRooms;
 
     return Container(
-      constraints: const BoxConstraints(minWidth: 100, maxWidth: 400),
+      constraints: const BoxConstraints(minWidth: 100),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -180,6 +185,7 @@ class _MeetUpcomingTitleState extends State<MeetUpcomingTitle>
             testId: TestIds.dashboardTabMyMeetings,
             label: myMeetingsLabel,
             count: widget.myMeetingsCount,
+            showCount: !widget.isLoading,
             selected: myMeetingsSelected,
             onTap: () => _selectTab(MeetUpcomingTab.myMeetings),
           ),
@@ -193,6 +199,7 @@ class _MeetUpcomingTitleState extends State<MeetUpcomingTitle>
             testId: TestIds.dashboardTabMyRooms,
             label: myRoomsLabel,
             count: widget.myRoomsCount,
+            showCount: !widget.isLoading,
             selected: myRoomsSelected,
             onTap: () => _selectTab(MeetUpcomingTab.myRooms),
           ),
@@ -220,7 +227,7 @@ class _MeetUpcomingTitleState extends State<MeetUpcomingTitle>
               : _buildTextTabs(context),
           const Spacer(),
           if (effectiveShowButton) ...[
-            const SizedBox(width: 16),
+            const SizedBox(width: 8),
             _ActionButton(
               testId: hasReload ? TestIds.dashboardFetchReload : null,
               onTap: widget.isLoading
@@ -255,12 +262,14 @@ class _TextTab extends StatelessWidget {
     required this.count,
     required this.selected,
     required this.onTap,
+    this.showCount = true,
     this.testId,
   });
 
   final String label;
   final int count;
   final bool selected;
+  final bool showCount;
   final VoidCallback onTap;
   final String? testId;
 
@@ -286,8 +295,10 @@ class _TextTab extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(label, style: textStyle),
-                const SizedBox(width: 6),
-                _CountBadge(count: count, isSelected: selected),
+                if (showCount) ...[
+                  const SizedBox(width: 6),
+                  _CountBadge(count: count, isSelected: selected),
+                ],
               ],
             ),
           ),

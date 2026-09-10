@@ -5,11 +5,14 @@ import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/views/components/alerts/base_bottom_sheet.dart';
 import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart';
 
+typedef OnInvalidSelection = void Function(String message);
+
 Future<void> showWaitingRoomSheet(
   BuildContext context, {
   required bool selected,
-  required bool isOnOptionEnabled,
+  required bool isPaidUser,
   required ValueChanged<bool> onSelect,
+  OnInvalidSelection? onInvalidSelection,
 }) {
   return showModalBottomSheet(
     context: context,
@@ -40,8 +43,9 @@ Future<void> showWaitingRoomSheet(
             const SizedBox(height: 8),
             _WaitingRoomOptions(
               selected: selected,
-              isOnOptionEnabled: isOnOptionEnabled,
+              isPaidUser: isPaidUser,
               onSelect: onSelect,
+              onInvalidSelection: onInvalidSelection,
             ),
           ],
         ),
@@ -53,13 +57,15 @@ Future<void> showWaitingRoomSheet(
 class _WaitingRoomOptions extends StatelessWidget {
   const _WaitingRoomOptions({
     required this.selected,
-    required this.isOnOptionEnabled,
+    required this.isPaidUser,
     required this.onSelect,
+    this.onInvalidSelection,
   });
 
   final bool selected;
-  final bool isOnOptionEnabled;
+  final bool isPaidUser;
   final ValueChanged<bool> onSelect;
+  final OnInvalidSelection? onInvalidSelection;
 
   @override
   Widget build(BuildContext context) {
@@ -74,8 +80,14 @@ class _WaitingRoomOptions extends StatelessWidget {
             title: context.local.switch_on,
             hint: context.local.schedule_waiting_room_on_hint,
             isSelected: selected,
-            enabled: isOnOptionEnabled,
+            enabled: isPaidUser,
             onTap: () {
+              if (!isPaidUser) {
+                onInvalidSelection?.call(
+                  context.local.waiting_room_paid_feature,
+                );
+                return;
+              }
               onSelect(true);
               Navigator.pop(context);
             },
@@ -124,7 +136,7 @@ class _WaitingRoomOption extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: InkWell(
-        onTap: enabled ? onTap : null,
+        onTap: onTap,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -14,6 +14,7 @@ import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/channels/platform_info_channel.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
+import 'package:meet/managers/providers/unleash.data.provider.dart';
 import 'package:meet/managers/room.manager.dart';
 import 'package:meet/managers/services/force_upgrade.dart';
 import 'package:meet/managers/user_activity.manager.dart';
@@ -148,12 +149,23 @@ class WaitingRoomBloc extends Bloc<WaitingRoomEvent, WaitingRoomState> {
       FrbUpcomingMeeting? meetLink = event.args.meetingLink;
       if (event.preJoinType == PreJoinType.create) {
         final meetingName = isPaidUser ? "Premium meeting" : "Free meeting";
+        var waitingRoom = false;
+        try {
+          waitingRoom = await ManagerFactory()
+              .get<DataProviderManager>()
+              .meetUserSettingsDataProvider
+              .resolveWaitingRoomDefault(isPaidUser: isPaidUser);
+        } catch (e) {
+          l.logger.w(
+            '[WaitingRoomBloc] Failed to load waiting room default: $e',
+          );
+        }
         try {
           meetLink = await appCoreManager.appCore.createMeeting(
             meetingName: meetingName,
             hasSession: appCoreManager.isAuthenticated,
             meetingType: MeetingType.instant,
-            waitingRoom: false,
+            waitingRoom: waitingRoom,
           );
           emit(state.copyWith(meetLink: meetLink));
           unawaited(() async {

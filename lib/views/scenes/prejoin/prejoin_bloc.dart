@@ -4,10 +4,10 @@ import 'package:audio_session/audio_session.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/helper/audio_output_probe.dart';
+import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/helper/denoise/denoise_audio_capture_options.dart';
 import 'package:meet/helper/extension/bridge_error.extension.dart';
 import 'package:meet/helper/extension/bridge_session_check.extension.dart';
-import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/helper/extension/local_video_track_extension.dart';
 import 'package:meet/helper/extension/media_device_list_ext.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
@@ -19,13 +19,13 @@ import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/preferences/preferences.manager.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
+import 'package:meet/managers/providers/unleash.data.provider.dart';
 import 'package:meet/managers/services/denoise_audio.service.dart';
 import 'package:meet/managers/services/force_upgrade.dart';
 import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/rust/errors.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/rust/proton_meet/user_config.dart';
-import 'package:meet/rust/proton_meet/user_subscription.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_event.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_meeting_preview.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -95,9 +95,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     );
     on<SwapVideo>(_onSwapVideo);
     on<ToggleKeepDisplayName>(_onToggleKeepDisplayName);
-    on<PreJoinPaidUserResolved>(
-      (event, emit) => emit(state.copyWith(isPaidUser: event.isPaidUser)),
-    );
+    on<PreJoinIsPaidUserUpdated>(_onIsPaidUserUpdated);
     on<PreJoinAttemptJoin>(_onAttemptJoin);
     on<PreJoinHostMeetingContextResolved>(
       (event, emit) => emit(
@@ -899,6 +897,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
         isCameraBackgroundBlurFeatureEnabled:
             isCameraBackgroundBlurFeatureEnabled,
         isWaitingRoomFeatureEnabled: isWaitingRoomFeatureEnabled,
+        isPaidUser: event.isPaidUser,
       ),
     );
     final meetLink = event.args.meetingLink;
@@ -916,7 +915,7 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
       );
     }
     if (!isGuest && userId != null) {
-      unawaited(_loadPaidUserStatus(userId));
+      unawaited(_warmupUserState(userId));
     }
     if (event.args.type == PreJoinType.join &&
         event.args.hasDashboardMeetingContext &&
@@ -1404,20 +1403,27 @@ class PreJoinBloc extends Bloc<PreJoinEvent, PreJoinState> {
     }
   }
 
-  Future<void> _loadPaidUserStatus(String userId) async {
+  void _onIsPaidUserUpdated(
+    PreJoinIsPaidUserUpdated event,
+    Emitter<PreJoinState> emit,
+  ) {
+    emit(state.copyWith(isPaidUser: event.isPaidUser));
+    final userId = serviceManager.get<AppCoreManager>().userID;
+    if (userId != null) {
+      unawaited(_warmupUserState(userId));
+    }
+  }
+
+  /// Prefetch user state into Rust; paid status comes from [AuthState.isPaidUser].
+  Future<void> _warmupUserState(String userId) async {
     try {
       final appCoreManager = serviceManager.get<AppCoreManager>();
-      final userState = await appCoreManager.appCore.fetchUserState(
+      await appCoreManager.appCore.fetchUserState(
         userId: userId,
         forceRemote: false,
       );
-      if (!isClosed) {
-        add(
-          PreJoinPaidUserResolved(isPaidUser: isPaid(user: userState.userData)),
-        );
-      }
     } catch (e) {
-      l.logger.w('[PreJoinBloc] Error fetching paid user status: $e');
+      l.logger.w('[PreJoinBloc] Error warming up user state: $e');
     }
   }
 

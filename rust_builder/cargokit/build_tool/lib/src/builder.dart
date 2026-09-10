@@ -119,6 +119,22 @@ class RustBuilder {
     if (!rustup.installedTargets(toolchain)!.contains(target.rust)) {
       rustup.installTarget(target.rust, toolchain: toolchain);
     }
+    _logRustToolchainInfo(toolchain);
+  }
+
+  void _logRustToolchainInfo(String toolchain) {
+    _log.info('Cargokit resolved Rust toolchain: $toolchain');
+    final version =
+        runCommand('rustup', ['run', toolchain, 'rustc', '--version']);
+    _log.info('Rust compiler: ${version.stdout.toString().trim()}');
+    final verbose = runCommand('rustup', ['run', toolchain, 'rustc', '-vV']);
+    for (final line in verbose.stdout.toString().split('\n')) {
+      if (line.startsWith('host:') ||
+          line.startsWith('release:') ||
+          line.startsWith('commit-hash:')) {
+        _log.info('  $line');
+      }
+    }
   }
 
   CargoBuildOptions? get _buildOptions =>

@@ -8,8 +8,8 @@ import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/strings.dart';
 import 'package:meet/helper/local_toast.dart';
 import 'package:meet/managers/channels/platform_info_channel.dart';
-import 'package:meet/views/components/button.v5.dart';
 import 'package:meet/views/components/bottom.sheets/virtual_background_sheet.dart';
+import 'package:meet/views/components/button.v5.dart';
 import 'package:meet/views/components/button.v6.dart';
 import 'package:meet/views/components/custom.loading.dart';
 import 'package:meet/views/components/test_id.dart';
@@ -544,7 +544,9 @@ class PreJoinScreen extends StatelessWidget {
                 showWaitingRoomSheet(
                   context,
                   selected: state.waitingRoomEnabled,
-                  isOnOptionEnabled: state.canManageWaitingRoom,
+                  isPaidUser: state.isPaidUser,
+                  onInvalidSelection: (message) =>
+                      LocalToast.showToast(context, message),
                   onSelect: (enabled) {
                     bloc.add(WaitingRoomChanged(enabled));
                   },

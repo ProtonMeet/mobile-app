@@ -8,6 +8,7 @@ import 'package:meet/managers/manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/preferences/preferences.manager.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
+import 'package:meet/managers/providers/unleash.data.provider.dart';
 import 'package:meet/managers/secure.storage/secure.storage.manager.dart';
 import 'package:meet/managers/services/force_upgrade.dart';
 import 'package:meet/models/unlock.timer.dart';

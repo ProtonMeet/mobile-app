@@ -64,13 +64,12 @@ class Rustup {
 
     final res = runCommand("rustup", ['toolchain', 'list']);
 
-    // To list all non-custom toolchains, we need to filter out lines that
-    // don't start with "stable", "beta", or "nightly".
-    Pattern nonCustom = RegExp(r"^(stable|beta|nightly)");
+    // Include stable/beta/nightly and pinned versions (e.g. 1.95.0-aarch64-...).
+    final toolchainPattern = RegExp(r'^(stable|beta|nightly|\d+\.\d+)');
     final lines = res.stdout
         .toString()
         .split('\n')
-        .where((e) => e.isNotEmpty && e.startsWith(nonCustom))
+        .where((e) => e.isNotEmpty && toolchainPattern.hasMatch(e))
         .map(extractToolchainName)
         .toList(growable: true);
 

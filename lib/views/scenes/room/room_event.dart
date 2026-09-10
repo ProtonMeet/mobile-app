@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:livekit_client/livekit_client.dart';
-import 'package:logger/logger.dart';
 import 'package:meet/helper/background_blur/camera_background_blur_sync.dart'
     show syncLocalCameraBackgroundEffect;
 import 'package:meet/helper/background_blur/camera_background_selection.dart';
@@ -9,7 +8,6 @@ import 'package:meet/rust/proton_meet/models/mls_sync_state.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
-import 'package:meet/views/scenes/room/chat/chat_models.dart';
 import 'package:meet/views/scenes/room/participant_track.dart';
 import 'package:meet/views/scenes/room/room_state.dart';
 import 'package:proton_denoise/proton_denoise.dart';
@@ -41,6 +39,12 @@ class RoomInitialized extends RoomBlocEvent {
   /// Populated during pre-join to skip a redundant getMeetingInfo call.
   final FrbMeetingInfo? prefetchedMeetingInfo;
 
+  /// Paid status from [AuthState.isPaidUser] at join time.
+  final bool isPaidUser;
+
+  /// Host hint from pre-join; used until meet-api participant data loads.
+  final bool isMeetingHost;
+
   const RoomInitialized({
     required this.room,
     required this.listener,
@@ -52,6 +56,8 @@ class RoomInitialized extends RoomBlocEvent {
     this.cameraBackgroundBlurEnabled = false,
     this.cameraBackgroundSelection = const CameraBackgroundSelection.none(),
     this.prefetchedMeetingInfo,
+    this.isPaidUser = false,
+    this.isMeetingHost = false,
   });
 
   @override
@@ -66,7 +72,19 @@ class RoomInitialized extends RoomBlocEvent {
     cameraBackgroundBlurEnabled,
     cameraBackgroundSelection,
     prefetchedMeetingInfo,
+    isPaidUser,
+    isMeetingHost,
   ];
+}
+
+/// Syncs paid status when [AuthBloc] refreshes subscription state.
+class RoomIsPaidUserUpdated extends RoomBlocEvent {
+  const RoomIsPaidUserUpdated({required this.isPaidUser});
+
+  final bool isPaidUser;
+
+  @override
+  List<Object?> get props => [isPaidUser];
 }
 
 class SortParticipants extends RoomBlocEvent {
@@ -79,167 +97,6 @@ class SortParticipants extends RoomBlocEvent {
 class DebouncedSortParticipants extends RoomBlocEvent {
   @override
   List<Object?> get props => [];
-}
-
-class AddSystemMessage extends RoomBlocEvent {
-  final String message;
-  final String identity;
-  final String name;
-  final String type;
-
-  final Level logLevel;
-
-  final ChatJoinLeaveKind? joinLeaveKind;
-  final String? meetingName;
-
-  const AddSystemMessage(
-    this.message,
-    this.identity,
-    this.name, {
-    this.logLevel = Level.debug,
-    this.type = 'system',
-    this.joinLeaveKind,
-    this.meetingName,
-  });
-
-  @override
-  List<Object?> get props => [
-    message,
-    identity,
-    name,
-    joinLeaveKind,
-    meetingName,
-  ];
-}
-
-class SendChatMessage extends RoomBlocEvent {
-  const SendChatMessage({
-    required this.text,
-    required this.localDisplayName,
-    this.replyToId,
-    this.topicId,
-  });
-
-  final String text;
-  final String localDisplayName;
-  final String? replyToId;
-  final String? topicId;
-
-  @override
-  List<Object?> get props => [text, localDisplayName, replyToId, topicId];
-}
-
-class ToggleChatReaction extends RoomBlocEvent {
-  const ToggleChatReaction({
-    required this.messageId,
-    required this.emoji,
-    this.existingReactionId,
-  });
-
-  final String messageId;
-  final String emoji;
-
-  /// When set, the local participant is removing an existing reaction.
-  final String? existingReactionId;
-
-  @override
-  List<Object?> get props => [messageId, emoji, existingReactionId];
-}
-
-class ReceiveChatTextMessage extends RoomBlocEvent {
-  const ReceiveChatTextMessage({
-    required this.id,
-    required this.message,
-    required this.timestamp,
-    required this.identity,
-    required this.name,
-    this.showToast = false,
-  });
-
-  final String id;
-  final String message;
-  final int timestamp;
-  final String identity;
-  final String name;
-  final bool showToast;
-
-  @override
-  List<Object?> get props => [
-    id,
-    message,
-    timestamp,
-    identity,
-    name,
-    showToast,
-  ];
-}
-
-class ReceiveMimiChatMessage extends RoomBlocEvent {
-  const ReceiveMimiChatMessage({
-    required this.id,
-    required this.message,
-    required this.timestamp,
-    required this.identity,
-    required this.name,
-    this.inReplyToId,
-    this.topicId,
-    this.showToast = false,
-  });
-
-  final String id;
-  final String message;
-  final int timestamp;
-  final String identity;
-  final String name;
-  final String? inReplyToId;
-  final String? topicId;
-  final bool showToast;
-
-  @override
-  List<Object?> get props => [
-    id,
-    message,
-    timestamp,
-    identity,
-    name,
-    inReplyToId,
-    topicId,
-    showToast,
-  ];
-}
-
-class ReceiveMimiChatReaction extends RoomBlocEvent {
-  const ReceiveMimiChatReaction({
-    required this.reactionId,
-    required this.senderIdentity,
-    this.replacesId,
-    this.targetId,
-    this.emoji,
-  });
-
-  final String reactionId;
-  final String senderIdentity;
-  final String? replacesId;
-  final String? targetId;
-  final String? emoji;
-
-  @override
-  List<Object?> get props => [
-    reactionId,
-    senderIdentity,
-    replacesId,
-    targetId,
-    emoji,
-  ];
-}
-
-class RemoveChatMessage extends RoomBlocEvent {
-  const RemoveChatMessage(this.messageId);
-
-  final String messageId;
-
-  @override
-  List<Object?> get props => [messageId];
 }
 
 /// room events
@@ -363,12 +220,6 @@ class NotificationPermissionSettingsConsumed extends RoomBlocEvent {
   const NotificationPermissionSettingsConsumed();
 }
 
-/// Clears ephemeral [RoomState.chatEffects] / [RoomState.chatSystemNotices]
-/// after [RoomPage] mirrors them into [ChatController].
-class ChatBlocOutputsConsumed extends RoomBlocEvent {
-  const ChatBlocOutputsConsumed();
-}
-
 class UpdateVideoFPS extends RoomBlocEvent {
   final int fps;
 
@@ -394,21 +245,6 @@ class RoomParticipantUpdated extends RoomBlocEvent {
 
   @override
   List<Object?> get props => [tracks];
-}
-
-class RoomMessageReceived extends RoomBlocEvent {
-  final String message;
-  final String identity;
-  final String name;
-
-  const RoomMessageReceived({
-    required this.message,
-    required this.identity,
-    required this.name,
-  });
-
-  @override
-  List<Object?> get props => [message, identity, name];
 }
 
 class ToggleSpeaker extends RoomBlocEvent {}

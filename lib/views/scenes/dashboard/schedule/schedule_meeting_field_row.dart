@@ -12,6 +12,7 @@ class ScheduleMeetingFieldRow extends StatelessWidget {
     this.topBorder = true,
     this.bottomBorder = true,
     this.validationError,
+    this.enabled = true,
     super.key,
   });
 
@@ -23,11 +24,12 @@ class ScheduleMeetingFieldRow extends StatelessWidget {
   final bool topBorder;
   final bool bottomBorder;
   final String? validationError;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: enabled ? onTap : null,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
