@@ -3,210 +3,29 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:in_app_review/in_app_review.dart' show InAppReview;
 import 'package:meet/constants/env.dart';
 import 'package:meet/helper/extension/response_error.extension.dart';
 import 'package:meet/helper/logger.dart';
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
+import 'package:meet/managers/providers/unleash.features.dart';
+import 'package:meet/managers/providers/unleash.features.merge.dart';
 import 'package:meet/managers/services/force_upgrade.dart';
 import 'package:meet/rust/errors.dart';
-import 'package:unleash_proxy_client_flutter/toggle_config.dart';
+import 'package:unleash_proxy_client_flutter/storage_provider.dart';
 import 'package:unleash_proxy_client_flutter/unleash_proxy_client_flutter.dart';
-import 'package:unleash_proxy_client_flutter/variant.dart';
 
-/// Enum for feature flags
-enum UnleashFeature {
-  meetSeamlessKeyRotationEnabled,
-  meetNewJoinType,
-  meetScreenShare,
-  meetPictureInPicture,
-  meetClientMetricsLog,
-  meetMobileSpeakerToggle,
-  meetVp9,
-  meetH264,
-  meetSwitchJoinType,
-  meetNewSwitchJoinType,
-  isNeedForceUpgrade,
-  meetScheduleInAdvance,
-  meetAutoReconnection,
-  meetMobileEnableNetworkTool,
-  meetAdminLowerHand,
-  meetShowProtonCalendar,
-  meetFeedbackOnSkip,
-  meetInAppStoreReview,
-  meetMultipleRecording,
+export 'unleash.features.dart';
+export 'unleash.features.getters.dart';
+export 'unleash.features.merge.dart';
 
-  /// Native local meeting recording (ReplayKit / ScreenCaptureKit controls).
-  meetMeetingRecordingNative,
-  meetInAppPurchase,
+class UnleashFeatureFlagsUpdated extends DataState {
+  UnleashFeatureFlagsUpdated(this.revision);
 
-  /// Experimental: in app update (currently only support android)
-  meetMobileInAppUpdate,
+  final int revision;
 
-  /// When enabled, show a warning banner on join for outdated mobile clients.
-  meetMobileUpgradeWarning,
-
-  // Native camera background blur (iOS / Android / macOS).
-  meetCameraBackgroundBlur,
-
-  /// Experimental: native microphone denoise (parent flag).
-  meetAudioDenoise,
-
-  /// RNNoise backend under [meetAudioDenoise].
-  meetAudioDenoiseRnnoise,
-
-  /// DeepFilter backend under [meetAudioDenoise] (stub until model ships).
-  meetAudioDenoiseDeepfilter,
-
-  /// dtln-rs (DTLN) backend under [meetAudioDenoise].
-  meetAudioDenoiseDtlnRs,
-
-  /// Controls visibility of waiting-room switch UI (schedule / create / prejoin / in-room).
-  /// The join flow is still driven by the server meeting info, independent of this flag.
-  meetWaitingRoom,
-
-  /// MimiV1 chat handling: threads + event-based emoji reactions.
-  /// When disabled, chat falls back to the legacy encrypt/decrypt path
-  /// (no threads, no MimiV1 reactions).
-  meetNewChatHandling,
-
-  /// Long-press message actions: quick reactions + thread reply bottom sheet.
-  meetChatThreads,
-
-  /// When enabled, MLS operations use cached server time from HTTP response headers.
-  /// When disabled, they fall back to the local clock.
-  meetUseCachedServerTime,
-}
-
-/// Function to retrieve all default toggles
-Map<String, ToggleConfig> getDefaultToggles() {
-  return {
-    for (var feature in UnleashFeature.values)
-      feature.name: ?feature.defaultValue,
-  };
-}
-
-/// Extension to get feature names
-extension UnleashFeatureExt on UnleashFeature {
-  String get name {
-    switch (this) {
-      case UnleashFeature.meetSeamlessKeyRotationEnabled:
-        return "MeetSeamlessKeyRotationEnabled";
-      case UnleashFeature.meetNewJoinType:
-        return "MeetNewJoinType";
-      case UnleashFeature.meetScreenShare:
-        return "MeetScreenShare";
-      case UnleashFeature.meetPictureInPicture:
-        return "MeetPictureInPicture";
-      case UnleashFeature.meetClientMetricsLog:
-        return "MeetClientMetricsLog";
-      case UnleashFeature.meetMobileSpeakerToggle:
-        return "MeetMobileSpeakerToggle";
-      case UnleashFeature.meetVp9:
-        return "MeetVp9";
-      case UnleashFeature.meetH264:
-        return "MeetH264";
-      case UnleashFeature.meetSwitchJoinType:
-        return "MeetSwitchJoinType";
-      case UnleashFeature.isNeedForceUpgrade:
-        return "NeedForceUpgrade";
-      case UnleashFeature.meetScheduleInAdvance:
-        return "MeetScheduleInAdvance";
-      case UnleashFeature.meetAutoReconnection:
-        return "MeetAutoReconnection";
-      case UnleashFeature.meetMobileEnableNetworkTool:
-        return "MeetMobileEnableNetworkTool";
-      case UnleashFeature.meetAdminLowerHand:
-        return "MeetAdminLowerHand";
-      case UnleashFeature.meetShowProtonCalendar:
-        return "MeetShowProtonCalendar";
-      case UnleashFeature.meetFeedbackOnSkip:
-        return "MeetFeedbackOnSkip";
-      case UnleashFeature.meetInAppStoreReview:
-        return "MeetInAppStoreReview";
-      case UnleashFeature.meetInAppPurchase:
-        return "MeetInAppPurchase";
-      case UnleashFeature.meetNewSwitchJoinType:
-        return "MeetNewSwitchJoinType";
-      case UnleashFeature.meetMultipleRecording:
-        return "MeetMultipleRecording";
-      case UnleashFeature.meetMeetingRecordingNative:
-        return "MeetingRecordingNative";
-      case UnleashFeature.meetMobileInAppUpdate:
-        return "MeetMobileInAppUpdate";
-      case UnleashFeature.meetMobileUpgradeWarning:
-        return "MeetMobileUpgradeWarning";
-      case UnleashFeature.meetCameraBackgroundBlur:
-        return "MeetCameraBackgroundBlur";
-      case UnleashFeature.meetAudioDenoise:
-        return "MeetAudioDenoise";
-      case UnleashFeature.meetAudioDenoiseRnnoise:
-        return "MeetAudioDenoiseRnnoise";
-      case UnleashFeature.meetAudioDenoiseDeepfilter:
-        return "MeetAudioDenoiseDeepfilter";
-      case UnleashFeature.meetAudioDenoiseDtlnRs:
-        return "MeetAudioDenoiseDtlnRs";
-      case UnleashFeature.meetWaitingRoom:
-        return "MeetWaitingRoom";
-      case UnleashFeature.meetNewChatHandling:
-        return "MeetNewChatHandling";
-      case UnleashFeature.meetChatThreads:
-        return "MeetChatThreads";
-      case UnleashFeature.meetUseCachedServerTime:
-        return "MeetUseCachedServerTime";
-    }
-  }
-
-  /// Returns the default toggle configuration for the feature, if applicable
-  ToggleConfig? get defaultValue {
-    switch (this) {
-      case UnleashFeature.meetVp9:
-        return ToggleConfig(
-          enabled: false,
-          impressionData: false,
-          variant: Variant(enabled: false, name: 'disabled'),
-        );
-      case UnleashFeature.meetH264:
-        return ToggleConfig(
-          enabled: false,
-          impressionData: false,
-          variant: Variant(enabled: false, name: 'disabled'),
-        );
-      case UnleashFeature.isNeedForceUpgrade:
-        return ToggleConfig(
-          enabled: false,
-          impressionData: false,
-          variant: Variant(enabled: false, name: 'disabled'),
-        );
-      case UnleashFeature.meetShowProtonCalendar:
-        return ToggleConfig(
-          enabled: false,
-          impressionData: false,
-          variant: Variant(enabled: false, name: 'disabled'),
-        );
-      case UnleashFeature.meetAdminLowerHand:
-        return ToggleConfig(
-          enabled: false,
-          impressionData: false,
-          variant: Variant(enabled: false, name: 'disabled'),
-        );
-      case UnleashFeature.meetMobileInAppUpdate:
-        return ToggleConfig(
-          enabled: false,
-          impressionData: false,
-          variant: Variant(enabled: false, name: 'disabled'),
-        );
-      case UnleashFeature.meetUseCachedServerTime:
-        return ToggleConfig(
-          enabled: false,
-          impressionData: false,
-          variant: Variant(enabled: false, name: 'disabled'),
-        );
-      default:
-        return null;
-    }
-  }
+  @override
+  List<Object?> get props => [revision];
 }
 
 class UnleashDataProvider extends DataProvider {
@@ -215,46 +34,62 @@ class UnleashDataProvider extends DataProvider {
 
   final AppCoreManager appCoreManager;
 
-  // /// API client for feature flags
-  // final FrbUnleashClient frbUnleashClient;
-
   /// API environment configuration
   final ApiEnv apiEnv;
 
-  /// refresh interval
-  final duration = const Duration(minutes: 2).inSeconds;
+  /// Periodic refresh interval in seconds (override in tests).
+  final int refreshIntervalSeconds;
 
   /// Timer for periodic refresh
   Timer? refreshTimer;
   Future<void> _serverTimeFlagSync = Future.value();
+  int _featureFlagsRevision = 0;
+
+  /// Called after Unleash toggles refresh (`ready` / `update`). Wired by
+  /// [DataProviderManager] to re-sync feature-flag-aware providers.
+  Future<void> Function()? onFeatureFlagsUpdated;
 
   UnleashDataProvider(
     this.apiEnv,
     this.appCoreManager, {
-    bool bootstrapOverride = false,
-  }) {
+    bool bootstrapOverride = true,
+    StorageProvider? storageProvider,
+    int refreshIntervalSeconds = 120,
+  }) : refreshIntervalSeconds = refreshIntervalSeconds {
     final hostApiPath = apiEnv.apiPath;
     const appName = 'ProtonMeet';
     unleashClient = UnleashClient(
       url: Uri.parse('$hostApiPath/feature/v2/frontend'),
       clientKey: '-',
       appName: appName,
-      refreshInterval: duration,
+      refreshInterval: refreshIntervalSeconds,
       disableMetrics: true,
       disableRefresh: true,
       bootstrapOverride: bootstrapOverride,
+      storageProvider: storageProvider,
       bootstrap: getDefaultToggles(),
       fetcher: (http.Request request) async {
         final response = await appCoreManager.appCore.fetchToggles();
-        if (kDebugMode && response.statusCode == 200) {
+        final body = response.body.toList();
+        if (response.statusCode == 200) {
           try {
-            final decoded = jsonDecode(utf8.decode(response.body));
-            _logUnleashJson(decoded);
-          } catch (e) {
-            logger.w('[Unleash] Failed to decode fetchToggles response: $e');
+            final mergedBody = mergeTogglesWithClientDefaults(body);
+            if (kDebugMode) {
+              _logUnleashJson(jsonDecode(mergedBody));
+            }
+            return http.Response.bytes(
+              utf8.encode(mergedBody),
+              response.statusCode,
+            );
+          } catch (e, st) {
+            logger.w(
+              '[Unleash] Failed to merge client defaults into toggles',
+              error: e,
+              stackTrace: st,
+            );
           }
         }
-        return http.Response.bytes(response.body.toList(), response.statusCode);
+        return http.Response.bytes(body, response.statusCode);
       },
     );
     setupUnleashListeners();
@@ -263,7 +98,7 @@ class UnleashDataProvider extends DataProvider {
   /// Sets up Unleash event listeners
   void setupUnleashListeners() {
     unleashClient.on('ready', (value) {
-      _syncUseCachedServerTimeFlag();
+      _notifyFeatureFlagsUpdated();
       if (unleashClient.isEnabled('MeetFirstFlag')) {
         logger.i('MeetFirstFlag is enabled');
       } else {
@@ -287,7 +122,7 @@ class UnleashDataProvider extends DataProvider {
 
     unleashClient.on('update', (value) {
       logger.i('UnleashClient update: $value');
-      _syncUseCachedServerTimeFlag();
+      _notifyFeatureFlagsUpdated();
     });
 
     unleashClient.on('impression', (value) {
@@ -328,7 +163,7 @@ class UnleashDataProvider extends DataProvider {
   void startPeriodicRefresh() {
     if (refreshTimer == null || !refreshTimer!.isActive) {
       refreshTimer = Timer.periodic(
-        Duration(seconds: duration),
+        Duration(seconds: refreshIntervalSeconds),
         (_) => unleashClient.start(),
       );
     }
@@ -352,13 +187,36 @@ class UnleashDataProvider extends DataProvider {
   @override
   Future<void> reload() async {}
 
-  /// Generic method to check if a feature flag is enabled
+  /// Returns whether [feature] is enabled (including any [UnleashFeature.parent]).
+  ///
+  /// Checks [kUnleashLocalOverrides] first (debug-only local toggles).
   bool isFeatureEnabled(UnleashFeature feature) {
-    return unleashClient.isEnabled(feature.name);
+    final parent = feature.parent;
+    if (parent != null && !isFeatureEnabled(parent)) {
+      return false;
+    }
+
+    if (kDebugMode) {
+      // still follows parent pattern for now, but can be overridden locally
+      final local = kUnleashLocalOverrides[feature];
+      if (local != null) return local;
+    }
+
+    return unleashClient.isEnabled(feature.toggleName);
+  }
+
+  void _notifyFeatureFlagsUpdated() {
+    _syncUseCachedServerTimeFlag();
+    _featureFlagsRevision++;
+    emitState(UnleashFeatureFlagsUpdated(_featureFlagsRevision));
+    final callback = onFeatureFlagsUpdated;
+    if (callback != null) {
+      unawaited(callback());
+    }
   }
 
   void _syncUseCachedServerTimeFlag() {
-    final enabled = isMeetUseCachedServerTime();
+    final enabled = isFeatureEnabled(UnleashFeature.meetUseCachedServerTime);
     logger.d('isMeetUseCachedServerTime: $enabled');
 
     _serverTimeFlagSync = _serverTimeFlagSync.then((_) async {
@@ -374,109 +232,4 @@ class UnleashDataProvider extends DataProvider {
     });
     unawaited(_serverTimeFlagSync);
   }
-
-  /// Check specific feature flags
-  bool isMeetSeamlessKeyRotationEnabled() =>
-      isFeatureEnabled(UnleashFeature.meetSeamlessKeyRotationEnabled);
-
-  bool isMeetUseCachedServerTime() =>
-      isFeatureEnabled(UnleashFeature.meetUseCachedServerTime);
-
-  bool isMeetNewJoinType() => isFeatureEnabled(UnleashFeature.meetNewJoinType);
-
-  bool isMeetScreenShare() => isFeatureEnabled(UnleashFeature.meetScreenShare);
-
-  bool isMeetPictureInPicture() =>
-      isFeatureEnabled(UnleashFeature.meetPictureInPicture);
-
-  bool isMeetClientMetricsLog() =>
-      isFeatureEnabled(UnleashFeature.meetClientMetricsLog);
-
-  bool isMeetMobileSpeakerToggle() =>
-      isFeatureEnabled(UnleashFeature.meetMobileSpeakerToggle);
-
-  bool isMeetVp9() => isFeatureEnabled(UnleashFeature.meetVp9);
-
-  bool isMeetH264() => isFeatureEnabled(UnleashFeature.meetH264);
-
-  bool isMeetSwitchJoinType() =>
-      isFeatureEnabled(UnleashFeature.meetSwitchJoinType);
-
-  bool isMeetNewSwitchJoinType() =>
-      isFeatureEnabled(UnleashFeature.meetNewSwitchJoinType);
-
-  bool isNeedForceUpgrade() =>
-      isFeatureEnabled(UnleashFeature.isNeedForceUpgrade);
-
-  bool isMeetScheduleInAdvance() =>
-      isFeatureEnabled(UnleashFeature.meetScheduleInAdvance);
-
-  bool isMeetAutoReconnection() =>
-      isFeatureEnabled(UnleashFeature.meetAutoReconnection);
-
-  bool isMeetMobileEnableNetworkTool() =>
-      isFeatureEnabled(UnleashFeature.meetMobileEnableNetworkTool);
-
-  bool isMeetAdminLowerHand() =>
-      isFeatureEnabled(UnleashFeature.meetAdminLowerHand);
-
-  /// "Add to Proton Calendar" in join / add-to-calendar flows.
-  bool isMeetShowProtonCalendar() =>
-      isFeatureEnabled(UnleashFeature.meetShowProtonCalendar);
-
-  /// When enabled, leaving the low-rating feedback flow via Skip still submits score + tags.
-  bool isMeetFeedbackOnSkip() =>
-      isFeatureEnabled(UnleashFeature.meetFeedbackOnSkip);
-
-  // ignore: comment_references
-  /// When false, deferred / store [InAppReview] flows are disabled (Unleash kill switch).
-  bool isMeetInAppStoreReviewEnabled() =>
-      isFeatureEnabled(UnleashFeature.meetInAppStoreReview);
-
-  bool isMeetMultipleRecording() =>
-      isFeatureEnabled(UnleashFeature.meetMultipleRecording);
-
-  /// Native local recording controls (host/admin start/stop in room UI).
-  bool isMeetMeetingRecordingNative() =>
-      isFeatureEnabled(UnleashFeature.meetMeetingRecordingNative);
-
-  /// Native subscription / upgrade (StoreKit / Play Billing) via method channel.
-  bool isMeetInAppPurchaseEnabled() =>
-      isFeatureEnabled(UnleashFeature.meetInAppPurchase);
-
-  /// Native pipeline for camera background blur (pass-through until ML / Vision ship).
-  bool isMeetCameraBackgroundBlur() =>
-      isFeatureEnabled(UnleashFeature.meetCameraBackgroundBlur);
-
-  /// Experimental: in app update (currently only support android)
-  bool isMeetMobileInAppUpdate() =>
-      isFeatureEnabled(UnleashFeature.meetMobileInAppUpdate);
-
-  /// Warning banner for outdated mobile clients when joining a meeting.
-  bool isMeetMobileUpgradeWarning() =>
-      isFeatureEnabled(UnleashFeature.meetMobileUpgradeWarning);
-
-  /// Parent flag for native mic denoise (RNNoise / DTLN / DeepFilter).
-  bool isMeetAudioDenoise() =>
-      isFeatureEnabled(UnleashFeature.meetAudioDenoise);
-  bool isMeetAudioDenoiseRnnoise() =>
-      isMeetAudioDenoise() &&
-      isFeatureEnabled(UnleashFeature.meetAudioDenoiseRnnoise);
-  bool isMeetAudioDenoiseDeepfilter() =>
-      isMeetAudioDenoise() &&
-      isFeatureEnabled(UnleashFeature.meetAudioDenoiseDeepfilter);
-  bool isMeetAudioDenoiseDtlnRs() =>
-      isMeetAudioDenoise() &&
-      isFeatureEnabled(UnleashFeature.meetAudioDenoiseDtlnRs);
-
-  /// Controls whether waiting-room switch UI is shown. Does not affect the
-  /// server-driven waiting-room join flow.
-  bool isMeetWaitingRoom() => isFeatureEnabled(UnleashFeature.meetWaitingRoom);
-
-  /// MimiV1 chat: threads + event-based emoji reactions.
-  bool isMeetNewChatHandling() =>
-      isFeatureEnabled(UnleashFeature.meetNewChatHandling);
-
-  /// Long-press chat message actions (quick reactions + thread reply sheet).
-  bool isMeetChatThreads() => isFeatureEnabled(UnleashFeature.meetChatThreads);
 }

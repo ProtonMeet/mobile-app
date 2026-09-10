@@ -185,8 +185,6 @@ dependencies {
     // Init rust context
     // implementation(libs.rustls.platform.verifier)
     coreLibraryDesugaring(libs.desugaring.jdk.libs)
-    // implementation(platform(libs.firebase.bom))
-    // implementation(libs.firebase.messaging)
 
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.activity.compose)

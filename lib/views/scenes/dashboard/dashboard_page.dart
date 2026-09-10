@@ -14,15 +14,14 @@ import 'package:meet/helper/extension/response_error.extension.dart';
 import 'package:meet/helper/global_notification.dart';
 import 'package:meet/helper/local_toast.dart';
 import 'package:meet/helper/logger.dart' as l;
-import 'package:meet/helper/proton_user_settings.dart';
 import 'package:meet/helper/user.agent.dart';
-import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/app.state.manager.dart';
 import 'package:meet/managers/channels/platform_info_channel.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
+import 'package:meet/managers/providers/meet.user.settings.data.provider.dart';
+import 'package:meet/managers/providers/unleash.data.provider.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
-import 'package:meet/rust/proton_meet/user_subscription.dart' as user_sub;
 import 'package:meet/views/components/alerts/account_switcher_sheet.dart';
 import 'package:meet/views/components/alerts/create_room_dialog.dart';
 import 'package:meet/views/components/alerts/dashboard_error.dart';
@@ -65,6 +64,7 @@ class DashboardPage extends StatefulWidget {
     required this.dashboardBloc,
     required this.authBloc,
     required this.appSettingsBloc,
+    required this.meetUserSettingsDataProvider,
     super.key,
   });
   static const String routeName = '/dashboard';
@@ -72,6 +72,7 @@ class DashboardPage extends StatefulWidget {
   final DashboardBloc dashboardBloc;
   final AuthBloc authBloc;
   final AppSettingsBloc appSettingsBloc;
+  final MeetUserSettingsDataProvider meetUserSettingsDataProvider;
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -292,11 +293,10 @@ class _DashboardPageState extends State<DashboardPage> {
       _showSignInRequiredBottomSheet(AlmostThereContext.createRoom);
       return;
     }
-    final appCoreManager = ManagerFactory().get<AppCoreManager>();
     final showWaitingRoom = widget.dashboardBloc.isMeetWaitingRoomEnabled();
     final initialWaitingRoomEnabled = showWaitingRoom
-        ? await ProtonUserSettings.instance.resolveWaitingRoomDefault(
-            appCoreManager,
+        ? await widget.meetUserSettingsDataProvider.resolveWaitingRoomDefault(
+            isPaidUser: authState.isPaidUser,
           )
         : false;
     if (!mounted) {
@@ -304,7 +304,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }
     showCreateRoomDialog(
       context,
-      isPaidUser: _isPaidUser(authState),
+      isPaidUser: authState.isPaidUser,
       showWaitingRoom: showWaitingRoom,
       initialWaitingRoomEnabled: initialWaitingRoomEnabled,
       onCreateRoom: (roomName, {required bool waitingRoom}) {
@@ -329,11 +329,10 @@ class _DashboardPageState extends State<DashboardPage> {
       _showSignInRequiredBottomSheet(AlmostThereContext.schedule);
       return;
     }
-    final appCoreManager = ManagerFactory().get<AppCoreManager>();
     final showWaitingRoom = widget.dashboardBloc.isMeetWaitingRoomEnabled();
     final initialWaitingRoomEnabled = showWaitingRoom
-        ? await ProtonUserSettings.instance.resolveWaitingRoomDefault(
-            appCoreManager,
+        ? await widget.meetUserSettingsDataProvider.resolveWaitingRoomDefault(
+            isPaidUser: authState.isPaidUser,
           )
         : false;
     if (!mounted) {
@@ -341,7 +340,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }
     showScheduleMeetingDialog(
       context,
-      isPaidUser: _isPaidUser(authState),
+      isPaidUser: authState.isPaidUser,
       showWaitingRoom: showWaitingRoom,
       initialWaitingRoomEnabled: initialWaitingRoomEnabled,
       displayColors: getParticipantDisplayColors(context, 0),
@@ -349,11 +348,6 @@ class _DashboardPageState extends State<DashboardPage> {
         widget.dashboardBloc.add(ScheduleMeetingEvent(data: data));
       },
     );
-  }
-
-  bool _isPaidUser(AuthState authState) {
-    final user = authState.user;
-    return user != null && user_sub.isPaid(user: user);
   }
 
   Future<void> _saveIcsFile(String icsContent, String title) async {
@@ -761,8 +755,6 @@ class _DashboardPageState extends State<DashboardPage> {
                               context,
                               appSettingsBloc: widget.appSettingsBloc,
                               authBloc: widget.authBloc,
-                              showWaitingRoom: widget.dashboardBloc
-                                  .isMeetWaitingRoomEnabled(),
                             );
                           },
                           onNavBarTitleChanged: (_) {

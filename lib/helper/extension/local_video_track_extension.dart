@@ -4,6 +4,7 @@ import 'package:meet/helper/background_blur/camera_background_effect_service.dar
 import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
+import 'package:meet/managers/providers/unleash.data.provider.dart';
 import 'package:proton_video_effects/proton_video_effects.dart';
 
 /// Helper class for creating LocalVideoTrack instances

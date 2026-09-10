@@ -294,11 +294,18 @@ mixin RoomParticipantsHandlers on Bloc<RoomBlocEvent, RoomState> {
     final updated = Map<String, MeetParticipant>.of(state.frbParticipantsMap);
     final localParticipant = state.room.localParticipant;
     if (localParticipant != null) {
-      final frbParticipant = MeetParticipant(
+      final existing = updated[localParticipant.identity];
+      final isHostHint = state.localHostHint;
+      updated[localParticipant.identity] = MeetParticipant(
         participantUuid: localParticipant.identity,
         displayName: state.displayName,
+        encryptedDisplayName: existing?.encryptedDisplayName,
+        canSubscribe: existing?.canSubscribe,
+        canPublish: existing?.canPublish,
+        canPublishData: existing?.canPublishData,
+        isAdmin: isHostHint ? 1 : existing?.isAdmin,
+        isHost: isHostHint ? 1 : existing?.isHost,
       );
-      updated.putIfAbsent(localParticipant.identity, () => frbParticipant);
     }
     return updated;
   }

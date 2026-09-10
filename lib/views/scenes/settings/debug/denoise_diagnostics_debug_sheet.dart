@@ -9,7 +9,7 @@ import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/managers/providers/unleash.data.provider.dart';
 import 'package:meet/views/components/alerts/base_bottom_sheet_v2.dart';
-import 'package:meet/views/scenes/settings/settings_section_header.dart';
+import 'package:meet/views/components/settings/settings_section.dart';
 import 'package:proton_denoise/proton_denoise.dart';
 
 /// Debug sheet: Unleash denoise flags + per-backend native load probes.

@@ -168,17 +168,17 @@ class AppViewModelImpl extends AppViewModel {
         apiEnv,
         storage,
         shared,
-        // apiServiceManager,
-        // dbConnection,
+        appCoreManager,
         // userManager,
       );
-      dataProviderManager.init();
+      await dataProviderManager.init();
       serviceManager.register(dataProviderManager);
 
       /// meeting event loop manager
       final meetingEventLoopManager = MeetingEventLoopManager(
         appCoreManager,
         appStateManger,
+        dataProviderManager,
       );
       await meetingEventLoopManager.init();
       serviceManager.register(meetingEventLoopManager);

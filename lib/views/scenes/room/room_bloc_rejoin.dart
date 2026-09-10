@@ -741,7 +741,6 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
         participantTracks: state.participantTracks,
         screenSharingTracks: state.screenSharingTracks,
         speakerTracks: state.speakerTracks,
-        messages: state.messages,
         joinedParticipants: state.joinedParticipants,
         leftParticipants: state.leftParticipants,
         showChatBubble: state.showChatBubble,

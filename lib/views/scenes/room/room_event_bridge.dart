@@ -495,13 +495,6 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
           return;
         }
         add(BridgeParticipantDisconnected(event));
-        add(
-          AddSystemMessage(
-            'Participant disconnected: ${event.participant.identity}',
-            event.participant.identity,
-            event.participant.name,
-          ),
-        );
       })
       ..on<TrackSubscribedEvent>((event) async {
         // Race resolved: SDK now owns `pub.subscribed == true` for this

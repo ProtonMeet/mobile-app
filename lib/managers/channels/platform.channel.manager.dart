@@ -11,6 +11,7 @@ import 'package:meet/managers/manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart'
     hide DirectEmitEvent;
+import 'package:meet/managers/providers/unleash.data.provider.dart';
 import 'package:meet/models/native.session.model.dart';
 
 import 'platform.channel.state.dart';

@@ -10,7 +10,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart' show DesktopCapturerSource;
 import 'package:just_the_tooltip/just_the_tooltip.dart';
 import 'package:livekit_client/livekit_client.dart' hide ConnectionState;
-import 'package:logger/logger.dart';
 import 'package:meet/constants/constants.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/constants/test_ids.dart';
@@ -35,6 +34,7 @@ import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/notification_service.dart';
 import 'package:meet/managers/preferences/preferences.manager.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
+import 'package:meet/managers/providers/unleash.data.provider.dart';
 import 'package:meet/managers/room.manager.dart' show RoomManager;
 import 'package:meet/managers/services/denoise_audio.service.dart';
 import 'package:meet/managers/services/in_app_review_service.dart';
@@ -63,6 +63,10 @@ import 'package:meet/views/scenes/exts.dart';
 import 'package:meet/views/scenes/feedbacks/left_meeting_feedback_sheet.dart';
 import 'package:meet/views/scenes/feedbacks/pre_rating_sheet.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
+import 'package:meet/views/scenes/room/chat/bloc/chat_bloc.dart';
+import 'package:meet/views/scenes/room/chat/bloc/chat_event.dart';
+import 'package:meet/views/scenes/room/chat/bloc/chat_state.dart';
+import 'package:meet/views/scenes/room/chat/bloc/chat_transport.dart';
 import 'package:meet/views/scenes/room/chat/chat_bubble.dart';
 import 'package:meet/views/scenes/room/chat/chat_controller.dart';
 import 'package:meet/views/scenes/room/chat/chat_models.dart';
@@ -75,11 +79,17 @@ import 'package:meet/views/scenes/room/participant/participant_info.dart';
 import 'package:meet/views/scenes/room/participant_list/participant_list.dart';
 import 'package:meet/views/scenes/room/room_is_ready_dialog.dart';
 import 'package:meet/views/scenes/room/room_state_exts.dart';
+import 'package:meet/views/scenes/room/settings/bloc/in_room_settings_bloc.dart';
+import 'package:meet/views/scenes/room/settings/bloc/in_room_settings_event.dart';
+import 'package:meet/views/scenes/room/settings/bloc/in_room_settings_state.dart';
+import 'package:meet/views/scenes/room/settings/bloc/in_room_settings_transport.dart';
+import 'package:meet/views/scenes/room/settings/in_room_settings_bindings_sync.dart';
+import 'package:meet/views/scenes/room/settings/in_room_settings_panel.dart';
 import 'package:meet/views/scenes/room/widgets/floating.action.button.location.dart';
 import 'package:meet/views/scenes/signin/auth_bloc.dart';
 import 'package:meet/views/scenes/signin/auth_event.dart';
+import 'package:meet/views/scenes/signin/auth_state.dart';
 import 'package:meet/views/scenes/utils.dart';
-import 'package:meet/views/scenes/widgets/meeting_settings_v2.dart';
 import 'package:meet/views/scenes/widgets/statistics_dialog.dart';
 import 'package:proton_denoise/proton_denoise.dart';
 import 'package:proton_video_effects/proton_video_effects.dart';
@@ -125,6 +135,9 @@ class RoomPage extends StatefulWidget {
   /// Meeting limits resolved during pre-join; skips getMeetingInfo in room.
   final FrbMeetingInfo? prefetchedMeetingInfo;
 
+  /// Host hint from pre-join; speeds up host UI before meet-api loads.
+  final bool isMeetingHost;
+
   const RoomPage(
     this.room,
     this.listener,
@@ -138,6 +151,7 @@ class RoomPage extends StatefulWidget {
     this.cameraBackgroundBlurEnabled = false,
     this.cameraBackgroundSelection = const CameraBackgroundSelection.none(),
     this.prefetchedMeetingInfo,
+    this.isMeetingHost = false,
     super.key,
   });
 
@@ -158,10 +172,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
   bool _isSidePanelOpen(RoomSidePanel panel) => _openSidePanel == panel;
 
-  /// Keeps [ChatController.isChatOpen] aligned with the visible chat panel so
-  /// unread badge / seen state stay correct (replaces legacy lastOpenChatTime).
+  /// Tells chat whether its panel is visible, which drives seen/unread state
+  /// and whether an incoming message raises a toast.
   void _syncChatOpenWithSidePanel() {
-    _chatController.setChatOpen(open: _isSidePanelOpen(RoomSidePanel.chat));
+    _chatBloc.add(
+      ChatPanelVisibilityChanged(isOpen: _isSidePanelOpen(RoomSidePanel.chat)),
+    );
   }
 
   void _closeSidePanel() {
@@ -217,9 +233,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   bool _isScreenSharing = false;
   bool _hideSelfCamera = false;
   bool _unsubscribeVideoByDefault = false;
-  bool _lockMeeting = false;
-  bool _waitingRoomEnabled = false;
-  final bool _pictureInPictureMode = false;
   final CameraLayout _layout = CameraLayout.grid;
   final bool _showRotationButton = false;
 
@@ -239,9 +252,21 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   bool _hadLiveKitTransportIssuesThisMeeting = false;
   final Map<String, ParticipantReaction> _activeReactions = {};
 
-  /// Single source of truth for the chat panel (messages, threads, reactions).
-  /// Bloc only emits ephemeral [RoomChatEffect]s; this controller owns durable state.
-  final ChatController _chatController = ChatController(localIdentity: '');
+  /// Owns the chat transcript for the whole call. Created here because chat
+  /// must accumulate messages from join onward, not from the first time the
+  /// panel is opened.
+  late final ChatBloc _chatBloc;
+  late final InRoomSettingsBloc _inRoomSettingsBloc;
+
+  StreamSubscription<RoomChatMessage>? _chatToastSub;
+
+  /// Latest chat message awaiting a toast this frame, if any.
+  RoomChatMessage? _pendingChatToast;
+  bool _chatToastScheduled = false;
+
+  /// Read-only view of the transcript for widgets that still render off the
+  /// controller directly.
+  ChatController get _chatController => _chatBloc.controller;
 
   bool get _newChatEnabled => ManagerFactory()
       .get<DataProviderManager>()
@@ -300,8 +325,44 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           cameraBackgroundBlurEnabled: widget.cameraBackgroundBlurEnabled,
           cameraBackgroundSelection: widget.cameraBackgroundSelection,
           prefetchedMeetingInfo: widget.prefetchedMeetingInfo,
+          isPaidUser: widget.authBloc?.state.isPaidUser ?? false,
+          isMeetingHost:
+              widget.isMeetingHost || widget.preJoinType == PreJoinType.create,
         ),
       );
+
+    _chatBloc = ChatBloc(
+      transport: AppCoreChatTransport(
+        appCore: () => appCoreManager.appCore,
+        room: () => _bloc.state.room,
+      ),
+      isThreadedChatEnabled: () => _newChatEnabled,
+      participantCount: () {
+        final roomState = _bloc.state;
+        // Either source can be ahead of the other while the roster settles.
+        return roomState.participantTracks.length > roomState.participantsCount
+            ? roomState.participantTracks.length
+            : roomState.participantsCount;
+      },
+    );
+    _chatToastSub = _chatBloc.incomingMessageToasts.listen(
+      _showIncomingChatToast,
+    );
+
+    _inRoomSettingsBloc =
+        InRoomSettingsBloc(
+          dataProviderManager: ManagerFactory().get<DataProviderManager>(),
+          transport: _RoomHostSettingsTransport(this),
+        )..add(
+          InRoomSettingsInitialized(
+            lockMeeting: widget.meetInfo.isLocked,
+            waitingRoomEnabled: widget.meetInfo.hasWaitingRoom,
+          ),
+        );
+
+    if (widget.isMeetingHost || widget.preJoinType == PreJoinType.create) {
+      _inRoomSettingsBloc.add(InRoomHostStatusUpdated(isHost: true));
+    }
 
     if (_bloc.isMeetMeetingRecordingNativeEnabled()) {
       _meetingRecorder = MeetingRecorder(
@@ -338,14 +399,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     } else {
       _meetingRecorder = null;
     }
-
-    if (widget.meetInfo.isLocked) {
-      setState(() {
-        _lockMeeting = widget.meetInfo.isLocked;
-      });
-    }
-
-    _waitingRoomEnabled = widget.meetInfo.hasWaitingRoom;
 
     // Initialize call activity action channel for Dynamic Island actions
     //TODO(fix): move to room_bloc.dart
@@ -444,7 +497,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   @override
   void dispose() {
     _activeReactions.clear();
-    _chatController.dispose();
+    unawaited(_chatToastSub?.cancel());
+    unawaited(_chatBloc.close());
+    unawaited(_inRoomSettingsBloc.close());
 
     WidgetsBinding.instance.removeObserver(this);
     // Restore normal unknown-route behavior after leaving the meeting.
@@ -816,12 +871,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         _bloc.add(ExitPipMode());
         await _hideNotification('room disconnected');
       }
-      _bloc.add(
-        AddSystemMessage(
-          'Room disconnected: reason => ${event.reason}',
-          'system',
-          'System',
-          logLevel: Level.info,
+      _chatBloc.add(
+        ChatSystemNoticeAdded(
+          message: 'Room disconnected: reason => ${event.reason}',
+          identity: 'system',
+          name: 'System',
         ),
       );
       // To-do: check if we really need addPostFrameCallback here
@@ -1284,90 +1338,32 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
-  /// Mirrors pending [RoomState] chat outputs into [ChatController], then clears
-  /// the bloc buffers so they do not accumulate across the meeting.
-  void _syncChatFromBloc(RoomState state) {
-    for (final notice in state.chatSystemNotices) {
-      _chatController.addSystemMessage(
-        id: notice.id,
-        message: notice.message,
-        identity: notice.identity,
-        name: notice.name,
-        timestamp: notice.timestamp,
-        joinLeaveKind: notice.joinLeaveKind,
-        joinLeaveMeetingName: notice.meetingName,
-      );
-    }
-
-    RoomChatMessage? lastReceivedMessageToShowToast;
-    for (final effect in state.chatEffects) {
-      final toast = _applyChatEffect(effect);
-      if (toast != null) {
-        lastReceivedMessageToShowToast = toast;
-      }
-    }
-    if (lastReceivedMessageToShowToast != null) {
-      _showIncomingChatToast(lastReceivedMessageToShowToast);
-    }
-
-    if (state.chatSystemNotices.isNotEmpty || state.chatEffects.isNotEmpty) {
-      _bloc.add(const ChatBlocOutputsConsumed());
-    }
-  }
-
   void _showIncomingChatToast(RoomChatMessage msg) {
-    LocalToast.showToastification(
-      context,
-      msg.name,
-      msg.message,
-      onTap: (_) {
-        _openChatSidePanel();
-      },
-    );
-  }
-
-  RoomChatMessage? _applyChatEffect(RoomChatEffect effect) {
-    switch (effect.kind) {
-      case RoomChatEffectKind.addReaction:
-        _chatController.addReaction(
-          reactionId: effect.reactionId!,
-          messageId: effect.messageId!,
-          emoji: effect.emoji!,
-          identity: effect.identity!,
-        );
-        return null;
-      case RoomChatEffectKind.removeReaction:
-        _chatController.removeReaction(
-          replacesId: effect.replacesId!,
-          identity: effect.identity!,
-        );
-        return null;
-      case RoomChatEffectKind.localEcho:
-        final msg = effect.messagePayload!;
-        _chatController.addLocalEcho(msg);
-        return null;
-      case RoomChatEffectKind.updateMessageStatus:
-        _chatController.updateStatus(effect.messageId!, effect.status!);
-        return null;
-      case RoomChatEffectKind.removeMessage:
-        _chatController.removeMessage(effect.messageId!);
-        return null;
-      case RoomChatEffectKind.receiveMessage:
-        final msg = effect.messagePayload!;
-        final isNew = _chatController.receiveMessage(msg);
-        if (!effect.showToast ||
-            !isNew ||
-            !mounted ||
-            !context.mounted ||
-            _isSidePanelOpen(RoomSidePanel.chat)) {
-          return null;
-        }
-        final localId = _bloc.state.room.localParticipant?.identity ?? '';
-        if (!isRelevantThreadMessage(msg, _chatController.messages, localId)) {
-          return null;
-        }
-        return msg; // return the message to be shown as a toast, we will only show the last message as a toast
+    // Several messages can land in the same frame — an MLS catch-up after a
+    // reconnect delivers a whole backlog at once — so show only the most
+    // recent instead of stacking a toast per message.
+    _pendingChatToast = msg;
+    if (_chatToastScheduled) {
+      return;
     }
+    _chatToastScheduled = true;
+    WidgetsBinding.instance.ensureVisualUpdate();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _chatToastScheduled = false;
+      final pending = _pendingChatToast;
+      _pendingChatToast = null;
+      if (pending == null || !mounted || !context.mounted) {
+        return;
+      }
+      LocalToast.showToastification(
+        context,
+        pending.name,
+        pending.message,
+        onTap: (_) {
+          _openChatSidePanel();
+        },
+      );
+    });
   }
 
   /// Sends a chat message. When [replyToId]/[topicId] are set it is a thread
@@ -1386,12 +1382,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       return;
     }
 
-    _bloc.add(
-      SendChatMessage(
+    _chatBloc.add(
+      ChatMessageSubmitted(
         text: trimmed,
+        senderDisplayName: widget.displayName,
         replyToId: replyToId,
         topicId: topicId,
-        localDisplayName: widget.displayName,
       ),
     );
   }
@@ -1399,24 +1395,16 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   /// Toggles an emoji reaction (MimiV1) on [messageId].
   Future<void> toggleChatReaction(String messageId, String emoji) async {
     if (!_newChatEnabled) return;
-    _bloc.add(
-      ToggleChatReaction(
-        messageId: messageId,
-        emoji: emoji,
-        existingReactionId: _chatController.findLocalReactionId(
-          messageId,
-          emoji,
-        ),
-      ),
-    );
+    _chatBloc.add(ChatReactionToggled(messageId: messageId, emoji: emoji));
   }
 
   /// Retries a failed outgoing message, preserving thread metadata.
   void _retryChatMessage(RoomChatMessage message) {
-    _bloc.add(RemoveChatMessage(message.id));
-    unawaited(
-      sendChatMessage(
-        message.message,
+    _chatBloc.add(
+      ChatMessageRetryRequested(
+        messageId: message.id,
+        text: message.message,
+        senderDisplayName: widget.displayName,
         replyToId: message.inReplyToId,
         topicId: message.topicId,
       ),
@@ -1485,40 +1473,23 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           event,
           fallbackName,
         );
-        final incoming = RoomChatMessage(
-          id: decoded.id,
-          message: decoded.text ?? '',
-          timestamp: decoded.receivedAtMs.toInt(),
-          identity: decoded.senderParticipantId,
-          name: displayName,
-          inReplyToId: decoded.inReplyToId,
-          topicId: decoded.topicId,
-        );
-        _bloc.add(
-          ReceiveMimiChatMessage(
-            id: incoming.id,
-            message: incoming.message,
-            timestamp: incoming.timestamp,
-            identity: incoming.identity,
-            name: incoming.name,
-            inReplyToId: incoming.inReplyToId,
-            topicId: incoming.topicId,
-            showToast:
-                mounted &&
-                context.mounted &&
-                !_isSidePanelOpen(RoomSidePanel.chat) &&
-                isRelevantThreadMessage(
-                  incoming,
-                  _chatController.messages,
-                  localId ?? '',
-                ),
+        _chatBloc.add(
+          ChatMessageReceived(
+            id: decoded.id,
+            message: decoded.text ?? '',
+            timestamp: decoded.receivedAtMs.toInt(),
+            identity: decoded.senderParticipantId,
+            name: displayName,
+            inReplyToId: decoded.inReplyToId,
+            topicId: decoded.topicId,
+            notify: true,
           ),
         );
         return;
       case FrbChatEventKind.reaction:
         if (localId != null && decoded.senderParticipantId == localId) return;
-        _bloc.add(
-          ReceiveMimiChatReaction(
+        _chatBloc.add(
+          ChatReactionReceived(
             reactionId: decoded.id,
             senderIdentity: decoded.senderParticipantId,
             replacesId: decoded.replacesId,
@@ -1546,26 +1517,24 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     final id = '$identity-${DateTime.now().microsecondsSinceEpoch}';
 
     if (type == 'system') {
-      _bloc.add(
-        AddSystemMessage(
-          message,
-          identity,
-          name,
-          type: type,
-          logLevel: Level.info,
+      _chatBloc.add(
+        ChatSystemNoticeAdded(
+          message: message,
+          identity: identity,
+          name: name,
           joinLeaveKind: joinLeaveKind,
           meetingName: meetingName,
         ),
       );
     } else {
-      _bloc.add(
-        ReceiveChatTextMessage(
+      _chatBloc.add(
+        ChatMessageReceived(
           id: id,
           message: message,
           timestamp: now,
           identity: identity,
           name: name,
-          showToast: showToast,
+          notify: showToast,
         ),
       );
     }
@@ -2402,6 +2371,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                 UserAgent(),
                 ManagerFactory().get<PlatformChannelManager>(),
                 ManagerFactory(),
+                ManagerFactory()
+                    .get<DataProviderManager>()
+                    .meetUserSettingsDataProvider,
               )
           ..add(AuthInitialized());
 
@@ -2429,6 +2401,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                 UserAgent(),
                 ManagerFactory().get<PlatformChannelManager>(),
                 ManagerFactory(),
+                ManagerFactory()
+                    .get<DataProviderManager>()
+                    .meetUserSettingsDataProvider,
               )
           ..add(AuthInitialized());
 
@@ -2437,7 +2412,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   }
 
   /// Toggle meeting lock state (lock/unlock)
-  Future<bool> _toggleLockMeeting(bool value) async {
+  Future<bool> _toggleLockMeeting({required bool value}) async {
     bool success = false;
     Exception? caughtException;
 
@@ -2463,9 +2438,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     }
 
     if (success) {
-      setState(() {
-        _lockMeeting = value;
-      });
       LocalToast.showToast(
         context,
         value
@@ -2476,7 +2448,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     return success;
   }
 
-  Future<bool> _toggleWaitingRoomSetting(bool value) async {
+  Future<bool> _toggleWaitingRoomSetting({required bool value}) async {
     bool success = false;
     Exception? caughtException;
 
@@ -2502,9 +2474,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     }
 
     if (success) {
-      setState(() {
-        _waitingRoomEnabled = value;
-      });
       context.showGlobalNotification(
         value
             ? context.local.waiting_room_enabled_notification
@@ -2542,10 +2511,30 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _syncChatOpenWithSidePanel();
     });
-    return BlocProvider(
-      create: (context) => _bloc,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<RoomBloc>(create: (context) => _bloc),
+        BlocProvider<ChatBloc>.value(value: _chatBloc),
+        BlocProvider<InRoomSettingsBloc>.value(value: _inRoomSettingsBloc),
+      ],
       child: MultiBlocListener(
         listeners: [
+          if (widget.authBloc != null)
+            BlocListener<AuthBloc, AuthState>(
+              bloc: widget.authBloc,
+              listenWhen: (prev, curr) => prev.isPaidUser != curr.isPaidUser,
+              listener: (context, state) {
+                _bloc.add(RoomIsPaidUserUpdated(isPaidUser: state.isPaidUser));
+              },
+            ),
+          BlocListener<RoomBloc, RoomState>(
+            listenWhen: (prev, curr) => prev.isHost != curr.isHost,
+            listener: (context, state) {
+              _inRoomSettingsBloc.add(
+                InRoomHostStatusUpdated(isHost: state.isHost),
+              );
+            },
+          ),
           BlocListener<RoomBloc, RoomState>(
             listenWhen: (prev, curr) {
               final wasReady =
@@ -2660,11 +2649,16 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               }
             },
           ),
-          // Mirror ephemeral bloc chat outputs into ChatController (SSOT).
+          // Keep chat's notion of the local sender aligned across rejoins.
           BlocListener<RoomBloc, RoomState>(
             listenWhen: (prev, curr) =>
-                prev.chatSyncGeneration != curr.chatSyncGeneration,
-            listener: (context, state) => _syncChatFromBloc(state),
+                prev.room.localParticipant?.identity !=
+                curr.room.localParticipant?.identity,
+            listener: (context, state) => _chatBloc.add(
+              ChatLocalIdentityChanged(
+                state.room.localParticipant?.identity ?? '',
+              ),
+            ),
           ),
           // Add chat message for all joined participants
           BlocListener<RoomBloc, RoomState>(
@@ -3280,12 +3274,10 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         return state;
       },
       builder: (context, state) {
-        return ListenableBuilder(
-          listenable: _chatController,
-          builder: (context, _) {
-            final chatUnreadCount = _chatController.unreadCount;
-            return _buildControlsBarBody(context, state, chatUnreadCount);
-          },
+        return BlocSelector<ChatBloc, ChatState, int>(
+          selector: (chatState) => chatState.unreadCount,
+          builder: (context, chatUnreadCount) =>
+              _buildControlsBarBody(context, state, chatUnreadCount),
         );
       },
     );
@@ -3708,6 +3700,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       isScreenSharing: _isScreenSharing,
       isCameraView: _isCameraView,
       maxWidth: maxWidth,
+      sheetBlocProviders: [
+        BlocProvider<InRoomSettingsBloc>.value(value: _inRoomSettingsBloc),
+      ],
       child: child,
       onDismissed: () {
         if (_openSidePanel != panel) return;
@@ -3794,7 +3789,6 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       builder: (context, data) {
         final room = data.$2;
         final localId = room.localParticipant?.identity ?? '';
-        _chatController.updateLocalIdentity(localId);
         return ChatBubble(
           controller: _chatController,
           userIdentity: localId,
@@ -3803,7 +3797,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           onSend: sendChatMessage,
           onToggleReaction: toggleChatReaction,
           onRetry: _retryChatMessage,
-          onDiscard: (m) => _bloc.add(RemoveChatMessage(m.id)),
+          onDiscard: (m) => _chatBloc.add(ChatMessageDiscarded(m.id)),
           participantTracks: data.$1,
         );
       },
@@ -3912,7 +3906,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     BuildContext context, {
     bool isHost = false,
   }) {
-    final showCameraBackgroundBlur =
+    final showCameraBackground =
         !kIsWeb &&
         ManagerFactory()
             .get<DataProviderManager>()
@@ -3934,7 +3928,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         return BlocSelector<
           RoomBloc,
           RoomState,
-          (bool, bool, CameraBackgroundSelection, bool, DenoiseType)
+          (bool, bool, CameraBackgroundSelection, bool, DenoiseType, bool)
         >(
           selector: (state) => (
             state.isRejoining,
@@ -3942,6 +3936,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             state.cameraBackgroundSelection,
             state.audioDenoiseEnabled,
             state.audioDenoiseType,
+            state.isPaidUser,
           ),
           builder: (context, data) {
             final isRejoining = data.$1;
@@ -3949,110 +3944,98 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             final cameraBackgroundSelection = data.$3;
             final audioDenoiseEnabled = data.$4;
             final storedAudioDenoiseType = data.$5;
+            final isPaidUser = data.$6;
             final selectedAudioDenoiseType =
                 denoiseTypeOptions.any((o) => o.type == storedAudioDenoiseType)
                 ? storedAudioDenoiseType
                 : denoiseTypeOptions.firstOrNull?.type;
-            final isAutoReconnectionEnabled = _bloc
-                .isMeetAutoReconnectionEnabled();
-            final isNetworkToolEnabled = _bloc
-                .isMeetMobileEnableNetworkToolEnabled();
-            return MeetingSettingsV2(
-              hideSelfView: _hideSelfCamera,
-              unsubscribeVideoByDefault: _unsubscribeVideoByDefault,
-              pictureInPictureMode: _pictureInPictureMode,
-              lockMeeting: _lockMeeting,
-              waitingRoomEnabled: _waitingRoomEnabled,
-              showWaitingRoom: _bloc.isMeetWaitingRoomEnabled(),
-              isHost: isHost,
-              isRejoining: isRejoining,
-              forceShowConnectionStatusBanner: forceShowConnectionStatusBanner,
-              showConnectionSettings:
-                  isAutoReconnectionEnabled && isNetworkToolEnabled,
-              showCameraBackgroundBlur: showCameraBackgroundBlur,
-              cameraBackgroundSelection: cameraBackgroundSelection,
-              onCameraBackgroundTap: showCameraBackgroundBlur
-                  ? () {
-                      // Settings closes first so the background sheet replaces
-                      // it instead of stacking. That tears down this builder's
-                      // context along with the panel, so the sheet is opened
-                      // from the page context, which outlives it.
-                      dismissRoomPanelBottomSheetIfPresent();
-                      _closeSidePanel();
-                      unawaited(
-                        _openVirtualBackgroundSheet(
-                          this.context,
-                          cameraBackgroundSelection,
-                        ),
-                      );
-                    }
-                  : null,
-              showAudioDenoise: showAudioDenoise,
-              audioDenoiseEnabled: audioDenoiseEnabled,
-              onAudioDenoiseChanged: showAudioDenoise
-                  ? ({required bool value}) {
-                      _bloc.add(SetAudioDenoiseEnabled(enabled: value));
-                    }
-                  : null,
-              audioDenoiseTypeOptions: denoiseTypeOptions,
-              selectedAudioDenoiseType: selectedAudioDenoiseType,
-              onAudioDenoiseTypeSelected:
-                  showAudioDenoise && denoiseTypeOptions.length > 1
-                  ? (type) {
-                      _bloc.add(SetAudioDenoiseType(type: type));
-                    }
-                  : null,
-              showRecordingSaveLocation:
-                  isHost && _bloc.isMeetMeetingRecordingNativeEnabled(),
-              onHideSelfViewChanged: ({required bool value}) {
-                _bloc.add(SetHideSelfView(hideSelfView: value));
-                setState(() {
-                  _hideSelfCamera = value;
-                });
-              },
-              onLockMeetingChanged: isHost
-                  ? ({required bool value}) async {
-                      return _toggleLockMeeting(value);
-                    }
-                  : null,
-              onWaitingRoomChanged: isHost
-                  ? ({required bool value}) async {
-                      return _toggleWaitingRoomSetting(value);
-                    }
-                  : null,
-              onUnsubscribeVideoByDefaultChanged: ({required bool value}) {
-                _bloc.add(SetUnsubscribeVideoByDefault(value: value));
-
-                setState(() {
-                  _unsubscribeVideoByDefault = value;
-                  if (value) {
-                    unsubscribeAllVideoTracks();
-                  } else {
-                    subscribeAllVideoTracks();
-                  }
-                });
-              },
-              onReconnectPressed:
-                  (isAutoReconnectionEnabled && isNetworkToolEnabled)
-                  ? () {
-                      _bloc.add(
+            final showConnectionSettings =
+                _bloc.isMeetAutoReconnectionEnabled() &&
+                _bloc.isMeetMobileEnableNetworkToolEnabled();
+            return InRoomSettingsBindingsSync(
+              bloc: _inRoomSettingsBloc,
+              bindings: InRoomSettingsBindingsUpdated(
+                isHost: isHost,
+                isPaidUser: isPaidUser,
+                incomingVideoEnabled: !_unsubscribeVideoByDefault,
+                selfViewEnabled: !_hideSelfCamera,
+                showAudioDenoise: showAudioDenoise,
+                audioDenoiseEnabled: audioDenoiseEnabled,
+                audioDenoiseTypes: denoiseTypeOptions,
+                selectedAudioDenoiseType: selectedAudioDenoiseType,
+                showCameraBackground: showCameraBackground,
+                cameraBackgroundSelection: cameraBackgroundSelection,
+                showConnectionSettings: showConnectionSettings,
+                isRejoining: isRejoining,
+                forceShowConnectionStatusBanner:
+                    forceShowConnectionStatusBanner,
+                onIncomingVideoChanged: _setIncomingVideoEnabled,
+                onSelfViewChanged: _setSelfViewEnabled,
+                onAudioDenoiseChanged: showAudioDenoise
+                    ? (value) =>
+                          _bloc.add(SetAudioDenoiseEnabled(enabled: value))
+                    : null,
+                onAudioDenoiseTypeSelected: denoiseTypeOptions.length > 1
+                    ? (type) => _bloc.add(SetAudioDenoiseType(type: type))
+                    : null,
+                onBackgroundBlurChanged: (value) => _bloc.add(
+                  SetCameraBackgroundSelection(
+                    value
+                        ? const CameraBackgroundSelection.blur()
+                        : const CameraBackgroundSelection.none(),
+                  ),
+                ),
+                onVirtualBackgroundsTap: () {
+                  dismissRoomPanelBottomSheetIfPresent();
+                  _closeSidePanel();
+                  unawaited(
+                    _openVirtualBackgroundSheet(
+                      this.context,
+                      cameraBackgroundSelection,
+                    ),
+                  );
+                },
+                onReconnectPressed: showConnectionSettings
+                    ? () => _bloc.add(
                         const StartRejoinMeeting(reason: RejoinReason.other),
-                      );
-                    }
-                  : null,
-              onForceShowConnectionStatusBannerChanged:
-                  (isAutoReconnectionEnabled && isNetworkToolEnabled)
-                  ? ({required bool value}) {
-                      _bloc.add(
+                      )
+                    : null,
+                onForceShowConnectionStatusBannerChanged: showConnectionSettings
+                    ? (value) => _bloc.add(
                         SetForceShowConnectionStatusBanner(value: value),
-                      );
-                    }
-                  : null,
+                      )
+                    : null,
+              ),
+              child: const InRoomSettingsPanel(),
             );
           },
         );
       },
     );
+  }
+
+  /// Mirrors the design wording: the switch turns incoming video on, while the
+  /// bloc stores the opposite ("unsubscribe by default").
+  void _setIncomingVideoEnabled(bool enabled) {
+    _inRoomSettingsBloc.add(InRoomIncomingVideoToggled(enabled: enabled));
+    _bloc.add(SetUnsubscribeVideoByDefault(value: !enabled));
+
+    setState(() {
+      _unsubscribeVideoByDefault = !enabled;
+      if (enabled) {
+        subscribeAllVideoTracks();
+      } else {
+        unsubscribeAllVideoTracks();
+      }
+    });
+  }
+
+  void _setSelfViewEnabled(bool enabled) {
+    _inRoomSettingsBloc.add(InRoomSelfViewToggled(enabled: enabled));
+    _bloc.add(SetHideSelfView(hideSelfView: !enabled));
+    setState(() {
+      _hideSelfCamera = !enabled;
+    });
   }
 
   void unsubscribeAllVideoTracks() {
@@ -4327,4 +4310,18 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       ),
     );
   }
+}
+
+class _RoomHostSettingsTransport implements InRoomHostSettingsTransport {
+  _RoomHostSettingsTransport(this._roomPage);
+
+  final _RoomPageState _roomPage;
+
+  @override
+  Future<bool> toggleLockMeeting({required bool value}) =>
+      _roomPage._toggleLockMeeting(value: value);
+
+  @override
+  Future<bool> toggleWaitingRoom({required bool value}) =>
+      _roomPage._toggleWaitingRoomSetting(value: value);
 }

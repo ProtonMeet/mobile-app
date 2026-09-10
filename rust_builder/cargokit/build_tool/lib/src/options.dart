@@ -84,9 +84,14 @@ class CargoBuildOptions {
       if (toolchain != null) {
         return (toolchain, customVersion);
       }
+      // Bare version strings like "1.95.0" (not stable/beta/nightly).
+      if (RegExp(r'^\d+\.\d+').hasMatch(name)) {
+        return (Toolchain.custom, name);
+      }
     }
     throw SourceSpanException(
-        'Unknown toolchain. Must be one of ${Toolchain.values.map((e) => e.name)}.',
+        'Unknown toolchain. Must be one of ${Toolchain.values.map((e) => e.name)}, '
+        'or a version like "1.95.0" / "stable-1.95.0".',
         node.span);
   }
 
@@ -254,6 +259,7 @@ class CargokitCrateOptions {
     final uri = Uri.file(path.join(manifestDir, "cargokit.yaml"));
     final file = File.fromUri(uri);
     if (file.existsSync()) {
+      _log.info('Loading Cargokit options from ${file.path}');
       final contents = loadYamlNode(file.readAsStringSync(), sourceUrl: uri);
       return parse(contents);
     } else {

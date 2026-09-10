@@ -9,7 +9,6 @@ import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/rust/proton_meet/models/meeting_type.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
-import 'package:meet/rust/proton_meet/user_subscription.dart' as user_sub;
 import 'package:meet/views/components/alerts/create_room_dialog.dart';
 import 'package:meet/views/components/alerts/delete_meeting_dialog.dart';
 import 'package:meet/views/components/test_id.dart';
@@ -118,10 +117,7 @@ class UpcomingMeetingListItem extends StatelessWidget {
                       Opacity(
                         opacity: 0.90,
                         child: BlocSelector<AuthBloc, AuthState, bool>(
-                          selector: (state) {
-                            final user = state.user;
-                            return user != null && user_sub.isPaid(user: user);
-                          },
+                          selector: (state) => state.isPaidUser,
                           builder: (context, isPaidUser) {
                             return Text(
                               _resolveDisplayName(
@@ -357,6 +353,7 @@ class UpcomingMeetingListItem extends StatelessWidget {
 
   void _handleEdit(BuildContext context) {
     final dashboardBloc = context.read<DashboardBloc>();
+    final authBloc = context.read<AuthBloc>();
     final showWaitingRoom = dashboardBloc.isMeetWaitingRoomEnabled();
     void patchWaitingRoom({
       required String meetingLinkName,
@@ -375,12 +372,10 @@ class UpcomingMeetingListItem extends StatelessWidget {
         useLocalTimezone: false,
       );
       final authState = context.read<AuthBloc>().state;
-      final user = authState.user;
-      final isPaidUser = user != null && user_sub.isPaid(user: user);
       showEditScheduleMeetingDialog(
         context,
         initialData: initialData,
-        isPaidUser: isPaidUser,
+        isPaidUser: authState.isPaidUser,
         meetingLinkName: meeting.meetingLinkName,
         displayColors: displayColors,
         showWaitingRoom: showWaitingRoom,
@@ -397,6 +392,7 @@ class UpcomingMeetingListItem extends StatelessWidget {
         initialRoomName: meeting.meetingName,
         displayColors: displayColors,
         showWaitingRoom: showWaitingRoom,
+        isPaidUser: authBloc.state.isPaidUser,
         meetingLinkName: meeting.meetingLinkName,
         initialWaitingRoomEnabled: meeting.waitingRoom.isWaitingRoomEnabled,
         onWaitingRoomSettingChanged: patchWaitingRoom,

@@ -5,13 +5,13 @@ import 'package:meet/helper/extension/bridge_session_check.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/external.url.dart';
 import 'package:meet/helper/logger.dart' as l;
-import 'package:meet/helper/proton_user_settings.dart';
 import 'package:meet/helper/sentry_telemetry.dart';
 import 'package:meet/helper/user.agent.dart';
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/channels/platform.channel.manager.dart';
 import 'package:meet/managers/channels/platform.channel.state.dart';
 import 'package:meet/managers/manager.factory.dart';
+import 'package:meet/managers/providers/meet.user.settings.data.provider.dart';
 import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/rust/errors.dart';
 import 'package:meet/rust/proton_meet/models/user.dart';
@@ -35,6 +35,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final UserAgent userAgent;
   final PlatformChannelManager nativeViewChannel;
   final ManagerFactory serviceManager;
+  final MeetUserSettingsDataProvider meetUserSettingsDataProvider;
   late StreamSubscription<NativeLoginState> _subscription;
 
   @override
@@ -44,8 +45,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     return super.close();
   }
 
-  AuthBloc(this.userAgent, this.nativeViewChannel, this.serviceManager)
-    : super(AuthState()) {
+  AuthBloc(
+    this.userAgent,
+    this.nativeViewChannel,
+    this.serviceManager,
+    this.meetUserSettingsDataProvider,
+  ) : super(AuthState()) {
     on<AuthLoading>((event, emit) {
       emit(state.copyWith(isLoading: true));
     });
@@ -138,7 +143,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         // After getUser succeeds the Proton HTTP client/session is ready for
         // GET /core/v4/settings (see SentryTelemetry).
         await SentryTelemetry().refreshIfNeeded(appCoreManager);
-        await ProtonUserSettings.instance.refreshIfNeeded(appCoreManager);
+        await meetUserSettingsDataProvider.refreshIfNeeded();
       } else {
         SentryTelemetry().resetForGuest();
       }
@@ -169,9 +174,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (e, st) {
       l.logger.e('getUserConfig after login failed: $e', stackTrace: st);
     }
-    final displayName = _resolvedDisplayName(event.user);
+
+    // Native login only hands back id/name/email; subscription fields (subscribed,
+    // services, flags) come from GET /users. Without this, isPaidUser stays false
+    // until the next cold start when AuthInitialized calls getUser.
+    var user = event.user;
+    try {
+      user = await appCoreManager.appCore.getUser(userId: event.user.id);
+    } on BridgeError catch (e) {
+      if (!e.consumeBridgeSessionIfNeeded()) {
+        l.logger.e('getUser after login failed: $e');
+      }
+    } catch (e, st) {
+      l.logger.e('getUser after login failed: $e', stackTrace: st);
+    }
+
+    final displayName = _resolvedDisplayName(user);
     l.logger.i(
-      'onLoggedInUser displayName: $displayName, user.name: ${event.user.name}, user.displayName: ${event.user.displayName}, user.email: ${event.user.email}',
+      'onLoggedInUser displayName: $displayName, user.name: ${user.name}, user.displayName: ${user.displayName}, user.email: ${user.email}, subscribed: ${user.subscribed}',
     );
 
     emit(
@@ -179,8 +199,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         isLoading: false,
         userConfig: userConfig ?? state.userConfig,
         displayName: displayName,
-        email: event.user.email,
-        user: event.user,
+        email: user.email,
+        user: user,
         initials: getInitials(displayName, defaultValue: ''),
         isLoggingIn: false,
         shouldShowFlutterSignIn: false,
@@ -188,7 +208,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ),
     );
     await SentryTelemetry().refreshIfNeeded(appCoreManager);
-    await ProtonUserSettings.instance.refreshIfNeeded(appCoreManager);
+    await meetUserSettingsDataProvider.refreshIfNeeded();
   }
 
   Future<({bool camera, bool microphone})> _requestPermissions() async {
@@ -247,7 +267,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     await serviceManager.logout();
     SentryTelemetry().resetForGuest();
-    ProtonUserSettings.instance.resetForGuest();
     emit(
       state.copyWith(
         isSignedOut: true,

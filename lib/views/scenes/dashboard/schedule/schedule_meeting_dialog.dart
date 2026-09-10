@@ -7,6 +7,7 @@ import 'package:meet/helper/extension/bridge_error.extension.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/datetime.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
+import 'package:meet/helper/local_toast.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/pre_meeting_waiting_room.dart';
 import 'package:meet/managers/app.core.manager.dart';
@@ -737,7 +738,8 @@ class _ScheduleMeetingDialogState extends State<ScheduleMeetingDialog> {
     await showWaitingRoomSheet(
       context,
       selected: _waitingRoomEnabled,
-      isOnOptionEnabled: true,
+      isPaidUser: widget.isPaidUser,
+      onInvalidSelection: (message) => LocalToast.showToast(context, message),
       onSelect: (enabled) async {
         if (!_usePreMeetingWaitingRoomApi) {
           setState(() {

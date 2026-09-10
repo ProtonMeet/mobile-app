@@ -5,6 +5,7 @@ import 'package:meet/helper/logger.dart';
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/app.state.manager.dart';
 import 'package:meet/managers/manager.dart';
+import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/managers/services/service.dart';
 import 'package:meet/rust/errors.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
@@ -18,6 +19,7 @@ import 'package:meet/views/scenes/dashboard/dashboard_event.dart';
 class MeetingEventLoopManager extends Service implements Manager {
   final AppCoreManager _appCoreManager;
   final AppStateManager _appStateManager;
+  final DataProviderManager _dataProviderManager;
 
   // Stream controller for meeting updates
   final _meetingUpdateStreamController =
@@ -45,7 +47,8 @@ class MeetingEventLoopManager extends Service implements Manager {
 
   MeetingEventLoopManager(
     this._appCoreManager,
-    this._appStateManager, {
+    this._appStateManager,
+    this._dataProviderManager, {
     super.duration = _normalPollInterval,
   });
 
@@ -131,6 +134,11 @@ class MeetingEventLoopManager extends Service implements Manager {
       // Update last event ID (cache in memory)
       _lastEventId = eventResponse.eventId;
       _lastCoreEventId = coreEventResponse.eventId;
+
+      await _dataProviderManager.syncFromEventLoop(
+        meetEvents: eventResponse,
+        coreEvents: coreEventResponse,
+      );
 
       // Check if we need to reload meetings:
       // 1. If refresh flag is set
@@ -330,6 +338,6 @@ class MeetingEventLoopManager extends Service implements Manager {
 
   @override
   Priority getPriority() {
-    return Priority.level3; // Medium priority
+    return Priority.level4;
   }
 }

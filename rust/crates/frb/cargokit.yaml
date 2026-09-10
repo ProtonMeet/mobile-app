@@ -1,10 +1,11 @@
 cargo:
   debug:
-    toolchain: stable
+    toolchain: 1.95.0
     extra_flags: ["--config", "build.rustflags='--cfg mls_build_async'"]
   release:
-    toolchain: stable
+    toolchain: 1.95.0
     extra_flags: ["--config", "build.rustflags='--cfg mls_build_async'"]
   profile:
-    toolchain: stable
+    toolchain: 1.95.0
     extra_flags: ["--config", "build.rustflags='--cfg mls_build_async'"]
+# For ios extra_flags, see build_pod.sh
