@@ -7,6 +7,7 @@ use mls_types::MlsMessage;
 pub async fn encrypt_legacy(app: &App, message: &str) -> Result<Vec<u8>, MeetCoreError> {
     let meeting_id = app.active_meeting_link().await?;
     let encrypted_message = app
+        .services
         .user_service
         .read()
         .await
@@ -22,6 +23,7 @@ pub async fn decrypt_legacy(
     let meeting_id = app.active_meeting_link().await?;
     let mls_message = MlsMessage::from_bytes(&data)?;
     let (decrypted_message, sender_id) = app
+        .services
         .user_service
         .read()
         .await

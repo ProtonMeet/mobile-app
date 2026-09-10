@@ -37,6 +37,7 @@ impl App {
         force_remote: bool,
     ) -> Result<UserState, MeetCoreError> {
         let user = self
+            .services
             .user_service
             .read()
             .await
@@ -44,13 +45,20 @@ impl App {
             .await?;
 
         let user_keys = self
+            .services
             .user_service
             .read()
             .await
             .get_user_keys(&UserId::new(user_id.clone()))
             .await?;
 
-        let user_addresses = self.user_service.read().await.get_user_addresses().await?;
+        let user_addresses = self
+            .services
+            .user_service
+            .read()
+            .await
+            .get_user_addresses()
+            .await?;
         let user_state = UserState {
             user_data: user.clone(),
             user_keys,
@@ -70,7 +78,8 @@ impl App {
         user_id: String,
     ) -> Result<UserState, MeetCoreError> {
         let id = UserId::new(user_id.clone());
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .clear_local_user_profile_cache(&id)
@@ -88,6 +97,7 @@ impl App {
         use zeroize::Zeroizing;
         let password = Zeroizing::new(password);
         let (login_response, user, user_keys, user_addresses) = self
+            .services
             .user_service
             .read()
             .await
@@ -112,7 +122,8 @@ impl App {
     }
 
     pub async fn logout(&self, user_id: String) -> Result<(), MeetCoreError> {
-        self.user_service
+        self.services
+            .user_service
             .read()
             .await
             .logout(&UserId::new(user_id))
@@ -130,6 +141,7 @@ impl App {
         two_factor_code: String,
     ) -> Result<UserData, MeetCoreError> {
         let user_data = self
+            .services
             .user_service
             .read()
             .await
@@ -137,7 +149,13 @@ impl App {
             .await?;
         let user = user_data.user.clone();
         let user_keys = user.keys.clone().unwrap_or_default();
-        let user_addresses = self.user_service.read().await.get_user_addresses().await?;
+        let user_addresses = self
+            .services
+            .user_service
+            .read()
+            .await
+            .get_user_addresses()
+            .await?;
         let mut state = self.state.write().await;
         state.active_user = Some(UserState {
             user_data: user,
@@ -150,6 +168,7 @@ impl App {
     #[tracing::instrument(err, skip_all)]
     pub async fn get_user(&self, user_id: String) -> Result<ProtonUser, anyhow::Error> {
         let user_data = self
+            .services
             .user_service
             .read()
             .await
