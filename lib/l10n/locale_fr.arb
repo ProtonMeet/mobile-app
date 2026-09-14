@@ -660,6 +660,10 @@
   "@recording_paid_feature": {
     "description": "Shown when a free user taps the record button"
   },
+  "waiting_room_paid_feature": "Disponible avec un abonnement payant",
+  "@waiting_room_paid_feature": {
+    "description": "Subtitle on the in-room waiting room toggle for free users"
+  },
   "recording_recovered_message": "Un précédent enregistrement de réunion a été récupéré et sauvegardé sur cet appareil.",
   "@recording_recovered_message": {
     "description": "Toast when orphaned recording files are found after app restart"
@@ -2116,6 +2120,98 @@
   "system_default_mode": "Paramètres système par défaut",
   "@system_default_mode": {
     "description": "Use device language for app UI"
+  },
+  "settings_value_enabled": "Activé",
+  "@settings_value_enabled": {
+    "description": "Current value of a settings row that is turned on"
+  },
+  "settings_value_disabled": "Désactivé",
+  "@settings_value_disabled": {
+    "description": "Current value of a settings row that is turned off"
+  },
+  "appearance": "Apparence",
+  "@appearance": {
+    "description": "Label for the theme row in app settings"
+  },
+  "appearance_dark": "Sombre",
+  "@appearance_dark": {
+    "description": "Dark theme value shown in the appearance row"
+  },
+  "waiting_room": "Salle d'attente",
+  "@waiting_room": {
+    "description": "Label for the waiting room row in app settings"
+  },
+  "live_captions": "Sous-titres en temps réel",
+  "@live_captions": {
+    "description": "Label for the live captions row in settings"
+  },
+  "live_captions_all_participants": "Activé pour tous les participants",
+  "@live_captions_all_participants": {
+    "description": "Live captions value when every participant can use captions"
+  },
+  "save_recordings_to": "Sauvegarder les enregistrements sous",
+  "@save_recordings_to": {
+    "description": "Label for the recording folder row in app settings"
+  },
+  "test_microphone": "Tester le microphone",
+  "@test_microphone": {
+    "description": "Opens the microphone test in app settings"
+  },
+  "test_speakers": "Tester les haut-parleurs",
+  "@test_speakers": {
+    "description": "Opens the speaker test in app settings"
+  },
+  "settings_section_host": "Paramètres de l'hôte",
+  "@settings_section_host": {
+    "description": "Section header for host-only in-call settings"
+  },
+  "settings_section_video_audio": "Vidéo et audio",
+  "@settings_section_video_audio": {
+    "description": "Section header for video and audio in-call settings"
+  },
+  "settings_section_background": "Arrière plan",
+  "@settings_section_background": {
+    "description": "Section header for camera background in-call settings"
+  },
+  "settings_section_display": "Affichage",
+  "@settings_section_display": {
+    "description": "Section header for display in-call settings"
+  },
+  "record_meeting": "Enregistrer la réunion",
+  "@record_meeting": {
+    "description": "Host toggle that records the meeting"
+  },
+  "allow_live_captions": "Autoriser les sous-titres en direct",
+  "@allow_live_captions": {
+    "description": "Host toggle that lets participants use live captions"
+  },
+  "allow_live_captions_description": "Autoriser les participants à utiliser les sous-titres.",
+  "@allow_live_captions_description": {
+    "description": "Explanation under the allow live captions toggle"
+  },
+  "transcribe_meeting": "Transcrire la réunion",
+  "@transcribe_meeting": {
+    "description": "Host toggle that creates a meeting transcript"
+  },
+  "transcribe_meeting_off_description": "Aucune transcription de la réunion ne sera créée",
+  "@transcribe_meeting_off_description": {
+    "description": "Explanation under the transcribe meeting toggle when off"
+  },
+  "incoming_video": "Réception d’une vidéo",
+  "@incoming_video": {
+    "description": "Toggle that shows video from other participants"
+  },
+  "self_view": "Vue de soi",
+  "@self_view": {
+    "description": "Toggle that shows the local camera tile"
+  },
+  "picture_in_picture_while_sharing": "Picture-in-picture pendant le partage",
+  "@picture_in_picture_while_sharing": {
+    "description": "Toggle that keeps a picture-in-picture window during screen share"
+  },
+  "meeting_timer": "Minuteur de réunion",
+  "@meeting_timer": {
+    "description": "Toggle that shows the meeting duration timer"
   },
   "pre_rating_sheet_title": "Appréciez-vous Proton Meet ?",
   "@pre_rating_sheet_title": {
