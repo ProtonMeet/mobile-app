@@ -660,6 +660,10 @@
   "@recording_paid_feature": {
     "description": "Shown when a free user taps the record button"
   },
+  "waiting_room_paid_feature": "Disponible con un plan de pago",
+  "@waiting_room_paid_feature": {
+    "description": "Subtitle on the in-room waiting room toggle for free users"
+  },
   "recording_recovered_message": "Se recuperó y guardó una grabación de reunión anterior en este dispositivo.",
   "@recording_recovered_message": {
     "description": "Toast when orphaned recording files are found after app restart"
@@ -2116,6 +2120,98 @@
   "system_default_mode": "Valor por defecto del sistema",
   "@system_default_mode": {
     "description": "Use device language for app UI"
+  },
+  "settings_value_enabled": "Activado",
+  "@settings_value_enabled": {
+    "description": "Current value of a settings row that is turned on"
+  },
+  "settings_value_disabled": "Desactivado",
+  "@settings_value_disabled": {
+    "description": "Current value of a settings row that is turned off"
+  },
+  "appearance": "Apariencia",
+  "@appearance": {
+    "description": "Label for the theme row in app settings"
+  },
+  "appearance_dark": "Oscuro",
+  "@appearance_dark": {
+    "description": "Dark theme value shown in the appearance row"
+  },
+  "waiting_room": "Sala de espera",
+  "@waiting_room": {
+    "description": "Label for the waiting room row in app settings"
+  },
+  "live_captions": "Subtítulos en directo",
+  "@live_captions": {
+    "description": "Label for the live captions row in settings"
+  },
+  "live_captions_all_participants": "Activado para todos los participantes",
+  "@live_captions_all_participants": {
+    "description": "Live captions value when every participant can use captions"
+  },
+  "save_recordings_to": "Guardar grabaciones en",
+  "@save_recordings_to": {
+    "description": "Label for the recording folder row in app settings"
+  },
+  "test_microphone": "Probar micrófono",
+  "@test_microphone": {
+    "description": "Opens the microphone test in app settings"
+  },
+  "test_speakers": "Probar altavoces",
+  "@test_speakers": {
+    "description": "Opens the speaker test in app settings"
+  },
+  "settings_section_host": "Ajustes del anfitrión",
+  "@settings_section_host": {
+    "description": "Section header for host-only in-call settings"
+  },
+  "settings_section_video_audio": "Video y audio",
+  "@settings_section_video_audio": {
+    "description": "Section header for video and audio in-call settings"
+  },
+  "settings_section_background": "Fondo",
+  "@settings_section_background": {
+    "description": "Section header for camera background in-call settings"
+  },
+  "settings_section_display": "Pantalla",
+  "@settings_section_display": {
+    "description": "Section header for display in-call settings"
+  },
+  "record_meeting": "Grabar reunión",
+  "@record_meeting": {
+    "description": "Host toggle that records the meeting"
+  },
+  "allow_live_captions": "Permitir subtítulos en directo",
+  "@allow_live_captions": {
+    "description": "Host toggle that lets participants use live captions"
+  },
+  "allow_live_captions_description": "Permitir a los participantes usar subtítulos en directo.",
+  "@allow_live_captions_description": {
+    "description": "Explanation under the allow live captions toggle"
+  },
+  "transcribe_meeting": "Transcribir la reunión",
+  "@transcribe_meeting": {
+    "description": "Host toggle that creates a meeting transcript"
+  },
+  "transcribe_meeting_off_description": "No se creará la transcripción de la reunión",
+  "@transcribe_meeting_off_description": {
+    "description": "Explanation under the transcribe meeting toggle when off"
+  },
+  "incoming_video": "Video entrante",
+  "@incoming_video": {
+    "description": "Toggle that shows video from other participants"
+  },
+  "self_view": "Auto imagen",
+  "@self_view": {
+    "description": "Toggle that shows the local camera tile"
+  },
+  "picture_in_picture_while_sharing": "Imagen en imagen mientras se comparte",
+  "@picture_in_picture_while_sharing": {
+    "description": "Toggle that keeps a picture-in-picture window during screen share"
+  },
+  "meeting_timer": "Temporizador de la reunión",
+  "@meeting_timer": {
+    "description": "Toggle that shows the meeting duration timer"
   },
   "pre_rating_sheet_title": "¿Disfruta de Proton Meet?",
   "@pre_rating_sheet_title": {

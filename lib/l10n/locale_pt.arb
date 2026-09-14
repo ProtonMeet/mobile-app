@@ -30,7 +30,7 @@
   "@desktop_login_use_browser_for_security_key": {
     "description": "Opens desktop sign-in in the system browser so USB security keys (WebAuthn) work on macOS"
   },
-  "desktop_login_open_browser_again": "Open browser again",
+  "desktop_login_open_browser_again": "Abrir navegador de novo",
   "@desktop_login_open_browser_again": {
     "description": "Re-opens the desktop sign-in page in the system browser"
   },
@@ -133,7 +133,7 @@
   "@token_is_invalid_description": {
     "description": "Description when the MLS session token is invalid"
   },
-  "token_is_expired_title": "Connection expired",
+  "token_is_expired_title": "Conexão expirada",
   "@token_is_expired_title": {
     "description": "Title when the MLS session token has expired"
   },
@@ -174,16 +174,16 @@
   "show_meeting_timer": "Mostrar cronômetro da reunião",
   "unsubscribe_video_by_default": "Desativar vídeo de entrada",
   "camera_background_blur": "Desfoque de fundo",
-  "virtual_backgrounds_title": "Virtual backgrounds",
+  "virtual_backgrounds_title": "Planos de fundo virtuais",
   "@virtual_backgrounds_title": {
     "description": "Title for virtual backgrounds in meeting settings"
   },
-  "backgrounds_title": "Backgrounds",
+  "backgrounds_title": "Planos de fundo",
   "@backgrounds_title": {
     "description": "Title for backgrounds dialog"
   },
-  "virtual_background_none": "None",
-  "virtual_background_custom": "Custom",
+  "virtual_background_none": "Nenhum",
+  "virtual_background_custom": "Personalizado",
   "audio_noise_cancellation": "Cancelamento de ruído",
   "dark_mode": "Modo escuro",
   "show_connection_indicator": "Mostrar indicador de conexão",
@@ -626,19 +626,19 @@
   "@recording_will_begin_attendees_notified": {
     "description": "Message in start recording confirmation dialog"
   },
-  "start_recording": "Start recording",
+  "start_recording": "Iniciar gravação",
   "@start_recording": {
     "description": "Button to start local meeting recording"
   },
-  "stop_recording": "Stop recording",
+  "stop_recording": "Parar gravação",
   "@stop_recording": {
     "description": "Button to stop local meeting recording"
   },
-  "stop_recording_title": "Stop recording",
+  "stop_recording_title": "Parar gravação",
   "@stop_recording_title": {
     "description": "Title for stop recording confirmation dialog"
   },
-  "stop_recording_confirm_message": "Are you sure you want to stop recording?",
+  "stop_recording_confirm_message": "Deseja mesmo interromper a gravação?",
   "@stop_recording_confirm_message": {
     "description": "Message in stop recording confirmation dialog"
   },
@@ -660,6 +660,10 @@
   "@recording_paid_feature": {
     "description": "Shown when a free user taps the record button"
   },
+  "waiting_room_paid_feature": "Disponível com um plano pago",
+  "@waiting_room_paid_feature": {
+    "description": "Subtitle on the in-room waiting room toggle for free users"
+  },
   "recording_recovered_message": "A previous meeting recording was recovered and saved on this device.",
   "@recording_recovered_message": {
     "description": "Toast when orphaned recording files are found after app restart"
@@ -668,7 +672,7 @@
   "@recording_interrupted_background": {
     "description": "Toast when iOS stops ReplayKit capture after backgrounding"
   },
-  "recording_save_location_section": "Recording",
+  "recording_save_location_section": "Gravando",
   "@recording_save_location_section": {
     "description": "Section title in meeting settings for local recording folder"
   },
@@ -684,11 +688,11 @@
   "@recording_save_location_downloads": {
     "description": "Preset: downloads folder"
   },
-  "recording_save_location_movies": "Movies/Proton Meet",
+  "recording_save_location_movies": "Filmes/Proton Meet",
   "@recording_save_location_movies": {
     "description": "Preset: macOS Movies folder"
   },
-  "recording_save_location_custom": "Custom folder…",
+  "recording_save_location_custom": "Pasta personalizada…",
   "@recording_save_location_custom": {
     "description": "Preset: user-selected custom folder"
   },
@@ -700,7 +704,7 @@
   "@recording_save_location_unavailable": {
     "description": "Error when selected recording folder is not writable"
   },
-  "saved_recordings_title": "Saved recordings",
+  "saved_recordings_title": "Gravações salvas",
   "@saved_recordings_title": {
     "description": "Title for the list of local meeting recordings"
   },
@@ -708,7 +712,7 @@
   "@saved_recordings_empty": {
     "description": "Empty state when no local recordings exist"
   },
-  "saved_recordings_share": "Share",
+  "saved_recordings_share": "Compartilhar",
   "@saved_recordings_share": {
     "description": "Share action for a saved recording"
   },
@@ -716,7 +720,7 @@
   "@saved_recordings_share_failed": {
     "description": "Error when the system share sheet fails to open"
   },
-  "saved_recordings_folder": "Saved to",
+  "saved_recordings_folder": "Salvo para",
   "@saved_recordings_folder": {
     "description": "Label above the folder path in saved recordings sheet"
   },
@@ -1146,7 +1150,7 @@
   "@chat_reply": {
     "description": "Action to reply to a chat message in a thread"
   },
-  "chat_copy_text": "Copy text",
+  "chat_copy_text": "Copiar texto",
   "@chat_copy_text": {
     "description": "Action to copy chat message text to clipboard"
   },
@@ -1645,19 +1649,19 @@
   "@schedule_waiting_room_on": {
     "description": "Waiting room enabled option title"
   },
-  "schedule_waiting_room_on_hint": "Use waiting room with a paid plan",
+  "schedule_waiting_room_on_hint": "Use a sala de espera com um plano pago",
   "@schedule_waiting_room_on_hint": {
     "description": "Waiting room enabled option hint"
   },
-  "schedule_waiting_room_off": "Waiting room Off",
+  "schedule_waiting_room_off": "Sala de espera desligada",
   "@schedule_waiting_room_off": {
     "description": "Waiting room disabled option title"
   },
-  "switch_on": "On",
+  "switch_on": "Ativado",
   "@switch_on": {
     "description": "Label when switch on"
   },
-  "switch_off": "Off",
+  "switch_off": "Desativado",
   "@switch_off": {
     "description": "Label when switch off"
   },
@@ -2085,7 +2089,7 @@
   "@settings_section_general": {
     "description": "Section header in app settings"
   },
-  "settings_section_meetings": "Meetings",
+  "settings_section_meetings": "Reuniões",
   "@settings_section_meetings": {
     "description": "Section header for meeting-related app settings"
   },
@@ -2116,6 +2120,98 @@
   "system_default_mode": "Padrão do sistema",
   "@system_default_mode": {
     "description": "Use device language for app UI"
+  },
+  "settings_value_enabled": "Ativado",
+  "@settings_value_enabled": {
+    "description": "Current value of a settings row that is turned on"
+  },
+  "settings_value_disabled": "Desativado",
+  "@settings_value_disabled": {
+    "description": "Current value of a settings row that is turned off"
+  },
+  "appearance": "Aparência",
+  "@appearance": {
+    "description": "Label for the theme row in app settings"
+  },
+  "appearance_dark": "Escuro",
+  "@appearance_dark": {
+    "description": "Dark theme value shown in the appearance row"
+  },
+  "waiting_room": "Sala de espera",
+  "@waiting_room": {
+    "description": "Label for the waiting room row in app settings"
+  },
+  "live_captions": "Live captions",
+  "@live_captions": {
+    "description": "Label for the live captions row in settings"
+  },
+  "live_captions_all_participants": "Enabled for all participants",
+  "@live_captions_all_participants": {
+    "description": "Live captions value when every participant can use captions"
+  },
+  "save_recordings_to": "Save recordings to",
+  "@save_recordings_to": {
+    "description": "Label for the recording folder row in app settings"
+  },
+  "test_microphone": "Testar microfone",
+  "@test_microphone": {
+    "description": "Opens the microphone test in app settings"
+  },
+  "test_speakers": "Test speakers",
+  "@test_speakers": {
+    "description": "Opens the speaker test in app settings"
+  },
+  "settings_section_host": "Host settings",
+  "@settings_section_host": {
+    "description": "Section header for host-only in-call settings"
+  },
+  "settings_section_video_audio": "Vídeo e áudio",
+  "@settings_section_video_audio": {
+    "description": "Section header for video and audio in-call settings"
+  },
+  "settings_section_background": "Plano de fundo",
+  "@settings_section_background": {
+    "description": "Section header for camera background in-call settings"
+  },
+  "settings_section_display": "Exibição",
+  "@settings_section_display": {
+    "description": "Section header for display in-call settings"
+  },
+  "record_meeting": "Record meeting",
+  "@record_meeting": {
+    "description": "Host toggle that records the meeting"
+  },
+  "allow_live_captions": "Allow live captions",
+  "@allow_live_captions": {
+    "description": "Host toggle that lets participants use live captions"
+  },
+  "allow_live_captions_description": "Allow participants to use captions.",
+  "@allow_live_captions_description": {
+    "description": "Explanation under the allow live captions toggle"
+  },
+  "transcribe_meeting": "Transcribe meeting",
+  "@transcribe_meeting": {
+    "description": "Host toggle that creates a meeting transcript"
+  },
+  "transcribe_meeting_off_description": "No meeting transcript will be created",
+  "@transcribe_meeting_off_description": {
+    "description": "Explanation under the transcribe meeting toggle when off"
+  },
+  "incoming_video": "Incoming video",
+  "@incoming_video": {
+    "description": "Toggle that shows video from other participants"
+  },
+  "self_view": "Self view",
+  "@self_view": {
+    "description": "Toggle that shows the local camera tile"
+  },
+  "picture_in_picture_while_sharing": "Picture-in-picture while sharing",
+  "@picture_in_picture_while_sharing": {
+    "description": "Toggle that keeps a picture-in-picture window during screen share"
+  },
+  "meeting_timer": "Meeting timer",
+  "@meeting_timer": {
+    "description": "Toggle that shows the meeting duration timer"
   },
   "pre_rating_sheet_title": "Você está gostando do Proton Meet?",
   "@pre_rating_sheet_title": {
