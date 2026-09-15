@@ -134,6 +134,8 @@ class ChatController extends ChangeNotifier {
         timestamp: message.timestamp,
         topicId: message.topicId,
       );
+      // MEET-1332: Expand the thread by default when a reply is received.
+      _setThreadExpanded(message.topicId!, expanded: true, notify: false);
     }
 
     _insertChronological(message.copyWith(seen: _computeIncomingSeen(message)));
