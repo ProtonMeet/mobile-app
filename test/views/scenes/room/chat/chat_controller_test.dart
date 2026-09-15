@@ -46,6 +46,25 @@ void main() {
       expect(controller.threads, hasLength(1));
       expect(controller.threads.single.root.id, 'root-1');
       expect(controller.threads.single.replies.single.id, 'reply-1');
+      expect(controller.threads.single.root.expanded, isTrue);
+    });
+
+    test('expands thread when a reply is received', () {
+      final controller = ChatController(localIdentity: localId);
+      controller.receiveMessage(_msg(id: 'root-1', identity: otherId));
+      controller.setThreadExpanded('root-1', expanded: false);
+
+      controller.receiveMessage(
+        _msg(
+          id: 'reply-1',
+          identity: otherId,
+          topicId: 'root-1',
+          inReplyToId: 'root-1',
+          timestamp: 2,
+        ),
+      );
+
+      expect(controller.messageById('root-1')?.expanded, isTrue);
     });
 
     test('creates missing root placeholder for early reply', () {
