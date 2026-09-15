@@ -43,21 +43,20 @@ void main() {
     });
 
     test('hasReactions ignores empty emoji lists', () {
+      expect(_message(id: 'm-1', reactions: {'👍': []}).hasReactions, isFalse);
       expect(
-        _message(id: 'm-1', reactions: {'👍': []}).hasReactions,
-        isFalse,
-      );
-      expect(
-        _message(id: 'm-1', reactions: {'👍': ['user-a']}).hasReactions,
+        _message(
+          id: 'm-1',
+          reactions: {
+            '👍': ['user-a'],
+          },
+        ).hasReactions,
         isTrue,
       );
     });
 
     test('missingRoot factory marks placeholder state', () {
-      final root = RoomChatMessage.missingRoot(
-        rootId: 'root-1',
-        timestamp: 42,
-      );
+      final root = RoomChatMessage.missingRoot(rootId: 'root-1', timestamp: 42);
 
       expect(root.id, 'root-1');
       expect(root.topicId, 'root-1');
@@ -70,14 +69,12 @@ void main() {
       final local = _message(
         id: 'm-1',
         message: 'draft',
-        reactions: {'👍': ['me']},
+        reactions: {
+          '👍': ['me'],
+        },
       ).copyWith(expanded: true, replyDraft: 'typing', seen: true);
 
-      final echo = _message(
-        id: 'm-1',
-        message: 'sent',
-        identity: 'me',
-      );
+      final echo = _message(id: 'm-1', message: 'sent', identity: 'me');
 
       final merged = local.withEchoPreservingLocalUi(echo);
 
@@ -85,7 +82,9 @@ void main() {
       expect(merged.expanded, isTrue);
       expect(merged.replyDraft, 'typing');
       expect(merged.seen, isTrue);
-      expect(merged.reactions, {'👍': ['me']});
+      expect(merged.reactions, {
+        '👍': ['me'],
+      });
     });
 
     test('copyWith can clear reply draft', () {
@@ -98,7 +97,9 @@ void main() {
 
   group('cloneReactions', () {
     test('deep copies emoji identity lists', () {
-      final source = {'👍': ['a', 'b']};
+      final source = {
+        '👍': ['a', 'b'],
+      };
       final cloned = cloneReactions(source);
 
       cloned['👍']!.add('c');

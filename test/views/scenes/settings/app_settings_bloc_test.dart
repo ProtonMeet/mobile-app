@@ -383,10 +383,7 @@ void main() {
         unleashStreamController.add(UnleashFeatureFlagsUpdated(1));
         await emissions;
       },
-      expect: () => [
-        appSettings(),
-        appSettings(waitingRoomEnabled: true),
-      ],
+      expect: () => [appSettings(), appSettings(waitingRoomEnabled: true)],
     );
 
     test('rebinds unleash subscription when provider is replaced', () async {

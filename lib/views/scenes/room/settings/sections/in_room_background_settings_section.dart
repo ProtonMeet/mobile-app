@@ -47,7 +47,10 @@ class InRoomBackgroundSettingsSection extends StatelessWidget {
 }
 
 /// Null for blur and presets — the swatch already identifies the choice.
-String? _virtualBackgroundLabel(BuildContext context, InRoomSettingsState state) {
+String? _virtualBackgroundLabel(
+  BuildContext context,
+  InRoomSettingsState state,
+) {
   switch (state.cameraBackgroundSelection.kind) {
     case CameraBackgroundEffectKind.none:
       return context.local.virtual_background_none;

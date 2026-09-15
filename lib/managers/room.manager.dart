@@ -92,10 +92,11 @@ class RoomManager {
   }
 
   /// Get feature flags for join type
-  Future<(bool, bool, bool)> getJoinTypeFlags() async {
+  Future<(bool, bool, bool, bool)> getJoinTypeFlags() async {
     bool isMeetNewJoinType = true;
     bool isMeetSwitchJoinType = true;
     bool isMeetNewSwitchJoinType = false;
+    bool isMeetNewJoinFunctions = false;
     try {
       final dataProviderManager = ManagerFactory().get<DataProviderManager>();
       isMeetNewJoinType = dataProviderManager.unleashDataProvider
@@ -104,10 +105,17 @@ class RoomManager {
           .isMeetSwitchJoinType();
       isMeetNewSwitchJoinType = dataProviderManager.unleashDataProvider
           .isMeetNewSwitchJoinType();
+      isMeetNewJoinFunctions = dataProviderManager.unleashDataProvider
+          .isMeetNewJoinFunctions();
     } catch (e) {
       l.logger.e("error getting join type flags: $e");
     }
-    return (isMeetNewJoinType, isMeetSwitchJoinType, isMeetNewSwitchJoinType);
+    return (
+      isMeetNewJoinType,
+      isMeetSwitchJoinType,
+      isMeetNewSwitchJoinType,
+      isMeetNewJoinFunctions,
+    );
   }
 
   /// Get seamless key rotation feature flag
@@ -285,28 +293,47 @@ class RoomManager {
     final (cameraEncoding, screenEncoding) = await getUserConfig();
 
     // Get feature flags
-    final (isMeetNewJoinType, isMeetSwitchJoinType, isMeetNewSwitchJoinType) =
-        await getJoinTypeFlags();
+    final (
+      isMeetNewJoinType,
+      isMeetSwitchJoinType,
+      isMeetNewSwitchJoinType,
+      isMeetNewJoinFunctions,
+    ) = await getJoinTypeFlags();
 
     final sessionId = await appCoreManager.getProtonSessionId();
 
     FrbMeetInfo meetInfo;
     final joinMlsStopwatch = Stopwatch()..start();
-    meetInfo = await appCoreManager.appCore.joinMeeting(
-      meetLinkName: config.meetLinkName,
-      meetLinkPassword: config.meetLinkPassword,
-      displayName: config.displayName,
-      sessionId: sessionId,
-      isMeetNewJoinType: isMeetNewJoinType,
-      isMeetSwitchJoinType: isMeetSwitchJoinType,
-      reuseToken: reuseToken,
-      isMeetNewSwitchJoinType: isMeetNewSwitchJoinType,
-      reusePrejoinAuth: config.reusePrejoinAuth,
-      isWaitingRoom: config.isWaitingRoom,
-    );
+
+    if (isMeetNewJoinFunctions) {
+      meetInfo = await appCoreManager.appCore.joinMeeting2(
+        meetLinkName: config.meetLinkName,
+        meetLinkPassword: config.meetLinkPassword,
+        displayName: config.displayName,
+        sessionId: sessionId,
+        reuseToken: reuseToken,
+        reusePrejoinAuth: config.reusePrejoinAuth,
+        isWaitingRoom: config.isWaitingRoom,
+      );
+    } else {
+      meetInfo = await appCoreManager.appCore.joinMeeting(
+        meetLinkName: config.meetLinkName,
+        meetLinkPassword: config.meetLinkPassword,
+        displayName: config.displayName,
+        sessionId: sessionId,
+        isMeetNewJoinType: isMeetNewJoinType,
+        isMeetSwitchJoinType: isMeetSwitchJoinType,
+        reuseToken: reuseToken,
+        isMeetNewSwitchJoinType: isMeetNewSwitchJoinType,
+        reusePrejoinAuth: config.reusePrejoinAuth,
+        isWaitingRoom: config.isWaitingRoom,
+      );
+    }
+
     joinMlsStopwatch.stop();
     l.logger.i(
       '[RoomManager] joinMeeting (meet-server + MLS + signaling WS) '
+      'isMeetNewJoinFunctions=$isMeetNewJoinFunctions '
       '${joinMlsStopwatch.elapsedMilliseconds}ms',
     );
 

@@ -39,12 +39,7 @@ class DebugLogger {
     StackTrace? stackTrace,
   }) {
     if (kDebugMode) {
-      _logger.d(
-        message,
-        time: time,
-        error: error,
-        stackTrace: stackTrace,
-      );
+      _logger.d(message, time: time, error: error, stackTrace: stackTrace);
     }
   }
 
@@ -55,12 +50,7 @@ class DebugLogger {
     StackTrace? stackTrace,
   }) {
     if (kDebugMode) {
-      _logger.i(
-        message,
-        time: time,
-        error: error,
-        stackTrace: stackTrace,
-      );
+      _logger.i(message, time: time, error: error, stackTrace: stackTrace);
     }
   }
 
@@ -71,12 +61,7 @@ class DebugLogger {
     StackTrace? stackTrace,
   }) {
     if (kDebugMode) {
-      _logger.w(
-        message,
-        time: time,
-        error: error,
-        stackTrace: stackTrace,
-      );
+      _logger.w(message, time: time, error: error, stackTrace: stackTrace);
     }
   }
 
@@ -87,12 +72,7 @@ class DebugLogger {
     StackTrace? stackTrace,
   }) {
     if (kDebugMode) {
-      _logger.e(
-        message,
-        time: time,
-        error: error,
-        stackTrace: stackTrace,
-      );
+      _logger.e(message, time: time, error: error, stackTrace: stackTrace);
     }
   }
 
@@ -103,12 +83,7 @@ class DebugLogger {
     StackTrace? stackTrace,
   }) {
     if (kDebugMode) {
-      _logger.f(
-        message,
-        time: time,
-        error: error,
-        stackTrace: stackTrace,
-      );
+      _logger.f(message, time: time, error: error, stackTrace: stackTrace);
     }
   }
 

@@ -63,7 +63,8 @@ class SettingsToggleRow extends StatelessWidget {
               ),
               child: CupertinoSwitch(
                 value: value,
-                onChanged: onChanged ??
+                onChanged:
+                    onChanged ??
                     (silentWhenDisabled
                         ? null
                         : (_) => LocalToast.showToast(

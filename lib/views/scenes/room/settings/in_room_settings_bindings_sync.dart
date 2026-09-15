@@ -21,7 +21,8 @@ class InRoomSettingsBindingsSync extends StatefulWidget {
       _InRoomSettingsBindingsSyncState();
 }
 
-class _InRoomSettingsBindingsSyncState extends State<InRoomSettingsBindingsSync> {
+class _InRoomSettingsBindingsSyncState
+    extends State<InRoomSettingsBindingsSync> {
   @override
   void initState() {
     super.initState();
