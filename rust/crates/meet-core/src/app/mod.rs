@@ -25,7 +25,7 @@ use crate::infra::{
 use crate::service::auth::AuthServiceImpl;
 use crate::service::caption::CaptionServiceImpl;
 use crate::service::mls_service::MlsService;
-use crate::service::services_bundle::ServicesBundle;
+use crate::service::services_bundle::ServiceBundle;
 use crate::service::user_service::Service;
 use proton_meet_mls::{MlsClientConfig, MlsStore};
 use std::sync::Arc;
@@ -130,7 +130,7 @@ pub struct App {
     user_key_provider: Arc<dyn UserKeyProvider>,
 
     /// services
-    pub(crate) services: Arc<ServicesBundle>,
+    pub(crate) services: Arc<ServiceBundle>,
 }
 
 impl App {
@@ -271,7 +271,7 @@ impl App {
             http_client.clone(),
         ));
 
-        let services = Arc::new(ServicesBundle::new(
+        let services = Arc::new(ServiceBundle::new(
             room_service,
             waiting_room_service,
             #[cfg(not(target_family = "wasm"))]
@@ -349,6 +349,7 @@ impl App {
     pub async fn set_livekit_active_uuids(
         &self,
         livekit_active_uuid_list: Vec<String>,
+        is_agent_in_livekit: bool,
     ) -> Result<(), MeetCoreError> {
         let app_state = self.state.read().await;
         let user_info = app_state
@@ -369,7 +370,7 @@ impl App {
             .user_service
             .read()
             .await
-            .set_livekit_active_uuids(&meeting_id, livekit_active_uuid_list)
+            .set_livekit_active_uuids(&meeting_id, livekit_active_uuid_list, is_agent_in_livekit)
             .await?;
 
         Ok(())
@@ -677,7 +678,7 @@ impl App {
         meeting_api: Arc<dyn MeetingApi>,
         event_api: Arc<dyn EventApi>,
         user_key_provider: Arc<dyn UserKeyProvider>,
-        services: Arc<ServicesBundle>,
+        services: Arc<ServiceBundle>,
     ) -> Self {
         Self {
             state,

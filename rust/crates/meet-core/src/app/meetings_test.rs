@@ -644,13 +644,8 @@ mod manual {
             )
             .await?;
 
-        app.join_meeting_with_access_token(
-            meet_info.access_token,
-            meet_info.meet_link_name,
-            meeting.meeting_password,
-            None,
-        )
-        .await?;
+        app.join_meeting_from_info2(&meet_info, meeting.meeting_password, None, false)
+            .await?;
 
         Ok(())
     }

@@ -22,6 +22,12 @@ analyzer:
     - lib/l10n/generated/**
     - gopenpgp_plugin/**
     - plugins/proton_screen_recorder/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
 
 linter:
   # https://dart.dev/lints.

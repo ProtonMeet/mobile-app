@@ -11,6 +11,7 @@ import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/local_toast.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/views/components/alerts/base_bottom_sheet_v2.dart';
+import 'package:meet/views/components/settings/settings_nav_row.dart';
 import 'package:meet/views/scenes/room/recording/recording_save_location.dart';
 import 'package:meet/views/scenes/room/recording/recording_storage.dart';
 import 'package:path/path.dart' as p;
@@ -33,25 +34,15 @@ class SavedRecordingsSheet {
   }
 }
 
-/// In-room / settings row that opens [SavedRecordingsSheet].
+/// App / in-call settings row that opens [SavedRecordingsSheet].
 class SavedRecordingsSettingRow extends StatelessWidget {
   const SavedRecordingsSettingRow({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return SettingsNavRow(
+      title: context.local.saved_recordings_title,
       onTap: () => SavedRecordingsSheet.show(context),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              context.local.saved_recordings_title,
-              style: ProtonStyles.body1Medium(color: context.colors.textNorm),
-            ),
-          ),
-          Icon(Icons.chevron_right, color: context.colors.interActionWeak),
-        ],
-      ),
     );
   }
 }

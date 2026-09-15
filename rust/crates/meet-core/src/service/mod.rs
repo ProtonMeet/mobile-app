@@ -4,9 +4,10 @@ pub mod agent_host_service;
 #[cfg(not(target_family = "wasm"))]
 pub mod auth;
 pub mod caption;
+pub mod services_bundle;
+// forder name is same with module name, ignore for now and refactor later
 pub mod mls_service;
 pub mod service_state;
-pub mod services_bundle;
 pub mod user_service;
 pub mod utils;
 pub mod waiting_room_setting;
@@ -63,7 +64,7 @@ mod test {
         },
         infra::mimi_subject_parser::ANONYMOUS_USER_IDENTIFIER,
         service::{
-            caption::CaptionServiceImpl, services_bundle::ServicesBundle, user_service::Service,
+            caption::CaptionServiceImpl, services_bundle::ServiceBundle, user_service::Service,
         },
         utils::server_time::ServerTimeTracker,
     };
@@ -260,7 +261,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         meet_link_name: &str,
         is_host: bool,
         di: ServiceBundleDI,
-    ) -> (ServicesBundle, PopulatedServiceBundleDI) {
+    ) -> (ServiceBundle, PopulatedServiceBundleDI) {
         let http_client = di
             .http_client
             .unwrap_or_else(|| Arc::new(MockHttpClient::new()));
@@ -322,7 +323,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         ));
 
         (
-            ServicesBundle::new(
+            ServiceBundle::new(
                 Arc::new(RoomService::new(
                     http_client.clone(),
                     meeting_api.clone(),
@@ -359,7 +360,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         user_id: &str,
         meet_link_name: &str,
         di: ServiceBundleDI,
-    ) -> (ServicesBundle, PopulatedServiceBundleDI) {
+    ) -> (ServiceBundle, PopulatedServiceBundleDI) {
         create_test_service_bundle_with_host(user_id, meet_link_name, false, di)
     }
 
@@ -367,7 +368,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         room_id: &str,
         di: ServiceBundleDI,
     ) -> (
-        ServicesBundle,
+        ServiceBundle,
         PopulatedServiceBundleDI,
         Arc<RwLock<MlsGroup<MemKv>>>,
         proton_meet_mls::CipherSuite,

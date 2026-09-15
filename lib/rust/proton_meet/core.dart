@@ -35,7 +35,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'storage/user_key_provider.dart';
 import 'user_config.dart';
 
-// These functions are ignored because they are not marked as `pub`: `get_app_core_runtime_handle`, `join_meeting_reuse_token`, `spawn_authenticate_meeting_link`, `spawn_on_background`
+// These functions are ignored because they are not marked as `pub`: `get_app_core_runtime_handle`, `join_meeting_reuse_token2`, `join_meeting_reuse_token`, `spawn_authenticate_meeting_link`, `spawn_on_background`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `MEET_JOIN_DECISION_DART_CALLBACK`, `MEET_JOIN_REQUEST_DART_CALLBACK`, `MEET_LIVEKIT_ADMIN_CHANGE_DART_CALLBACK`, `MEET_MLS_GROUP_UPDATE_DART_CALLBACK`, `MEET_MLS_SYNC_STATE_UPDATE_DART_CALLBACK`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `deref`, `deref`, `deref`, `deref`, `deref`, `initialize`, `initialize`, `initialize`, `initialize`, `initialize`
 // These functions have error during generation (see debug logs or enable `stop_on_error: true` for more details): `update_display_name`
@@ -231,6 +231,16 @@ abstract class AppCore implements RustOpaqueInterface {
     required bool isWaitingRoom,
   });
 
+  Future<FrbMeetInfo> joinMeeting2({
+    required String meetLinkName,
+    required String meetLinkPassword,
+    required String displayName,
+    String? sessionId,
+    required bool reuseToken,
+    required bool reusePrejoinAuth,
+    required bool isWaitingRoom,
+  });
+
   Future<void> joinMeetingWithAccessToken({
     required String accessToken,
     required String meetLinkName,
@@ -358,7 +368,10 @@ abstract class AppCore implements RustOpaqueInterface {
     callback,
   });
 
-  Future<void> setLivekitActiveUuids({required List<String> activeUuids});
+  Future<void> setLivekitActiveUuids({
+    required List<String> activeUuids,
+    required bool isAgentInLivekit,
+  });
 
   Future<void> setLivekitAdminChangeCallback({
     required FutureOr<void> Function(String, String, int) callback,

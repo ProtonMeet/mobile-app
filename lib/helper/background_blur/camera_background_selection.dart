@@ -35,7 +35,7 @@ class CameraBackgroundSelection extends Equatable {
       case CameraBackgroundEffectKind.none:
         return const BackgroundBlurConfig();
       case CameraBackgroundEffectKind.blur:
-        return const BackgroundBlurConfig(mode: CameraBackgroundMode.blur);
+        return const BackgroundBlurConfig();
       case CameraBackgroundEffectKind.preset:
       case CameraBackgroundEffectKind.custom:
         final path = replacementImagePath ?? customImagePath;

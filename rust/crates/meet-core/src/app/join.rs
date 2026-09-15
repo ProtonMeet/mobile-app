@@ -1,4 +1,5 @@
 use super::App;
+use crate::domain::user::models::MeetInfo;
 use crate::domain::user::models::{
     access_token::AccessToken, meet_link_info::MeetParticipant, meeting_link_name::MeetingLinkName,
     meeting_password::MeetingPassword, UserId,
@@ -197,9 +198,24 @@ impl App {
 
         // Check if user is host and update role if needed
         let user_id = user_info.user_id();
-        let user_service = self.services.user_service.read().await;
-        if let Ok(meeting_id) = user_service.get_meeting_id(&user_id).await {
-            if let Err(e) = user_service.check_and_update_host_role(&meeting_id).await {
+
+        let meeting_id_res = self
+            .services
+            .user_service
+            .read()
+            .await
+            .get_meeting_id(&user_id)
+            .await;
+
+        if let Ok(meeting_id) = meeting_id_res {
+            if let Err(e) = self
+                .services
+                .user_service
+                .read()
+                .await
+                .check_and_update_host_role(&meeting_id)
+                .await
+            {
                 warn!(
                     "Failed to check and update host role after proposal join: {:?}",
                     e
@@ -209,6 +225,139 @@ impl App {
         }
 
         Ok(())
+    }
+
+    pub async fn join_meeting2(
+        &self,
+        access_token: AccessToken,
+        meet_link_name: MeetingLinkName,
+        meeting_password: MeetingPassword,
+        session_id: Option<String>,
+        is_waiting_room: bool,
+    ) -> Result<(), MeetCoreError> {
+        if is_waiting_room && self.is_mls_group_joined().await {
+            tracing::info!(
+                "join_meeting: waiting room flow with MLS already joined, skipping MLS join"
+            );
+            let now = crate::utils::instant::now();
+            {
+                let mut state = self.state.write().await;
+                state.join_start_time = state.join_start_time.or(Some(now));
+                state.join_mls_time = Some(now);
+                state.active_livekit_access_token = Some(access_token.expose_secret().to_string());
+                state.used_waiting_room_for_join = Some(true);
+            }
+            return Ok(());
+        }
+
+        // Record join start time
+        {
+            let mut state = self.state.write().await;
+            state.join_start_time = Some(crate::utils::instant::now());
+            state.join_mls_time = None;
+            if is_waiting_room {
+                state.used_waiting_room_for_join = Some(true);
+            } else if state.used_waiting_room_for_join != Some(true) {
+                state.used_waiting_room_for_join = Some(false);
+            }
+        }
+        let mls_start = instant::now();
+        let user_info = self
+            .services
+            .user_service
+            .read()
+            .await
+            .create_mls_client(
+                access_token.expose_secret(),
+                meet_link_name.as_str(),
+                meeting_password.expose_secret(),
+                session_id.as_deref(),
+            )
+            .await?;
+        debug!(
+            "join_meeting_with_access_token step=create_mls_client ms={} user={:?} device_id={}",
+            mls_start.elapsed().as_millis(),
+            &user_info.user_identifier,
+            &user_info.device_id,
+        );
+        debug!(
+            "MLS client created for user: {:?}, device_id: {}",
+            &user_info.user_identifier, &user_info.device_id,
+        );
+
+        let state_start = instant::now();
+        {
+            let mut state = self.state.write().await;
+            state.active_user_info = Some(user_info.clone());
+            state.active_livekit_access_token = Some(access_token.expose_secret().to_string());
+        }
+        debug!(
+            "join_meeting_with_access_token step=store_state ms={}",
+            state_start.elapsed().as_millis()
+        );
+
+        let join_and_connect_start = instant::now();
+
+        let connect_ws_fut = Box::pin(self.connect_to_ws());
+        let join_room_fut = Box::pin(self.join_room_with_switch_join_type2(is_waiting_room));
+
+        let result = try_join(connect_ws_fut, join_room_fut).await;
+
+        if let Err(e) = result {
+            error!(
+                "Error connecting to WebSocket or joining room: {:?}, ms={}",
+                &e,
+                join_and_connect_start.elapsed().as_millis()
+            );
+
+            self.services
+                .user_service
+                .read()
+                .await
+                .reset_service_state()
+                .await;
+            if let Err(disconnect_err) = self.disconnect_from_ws().await {
+                warn!("Failed to disconnect from websocket: {:?}", disconnect_err);
+            }
+            return Err(e);
+        }
+
+        info!(
+            "Connected to WebSocket and joined room ms={}",
+            join_and_connect_start.elapsed().as_millis()
+        );
+
+        // Check if user is host and update role if needed
+        let user_id = user_info.user_id();
+        let lock = self.services.user_service.read().await;
+        if let Ok(meeting_id) = lock.get_meeting_id(&user_id).await {
+            if let Err(e) = lock.check_and_update_host_role(&meeting_id).await {
+                warn!(
+                    "Failed to check and update host role after proposal join: {:?}",
+                    e
+                );
+                // Don't fail the join if role update fails
+            }
+        }
+
+        Ok(())
+    }
+
+    pub async fn join_meeting_from_info2(
+        &self,
+        meeting_info: &MeetInfo,
+        password: String,
+        session_id: Option<String>,
+        is_waiting_room: bool,
+    ) -> Result<(), MeetCoreError> {
+        self.join_meeting2(
+            meeting_info.access_token.clone().into(),
+            meeting_info.meet_link_name.clone().into(),
+            password.into(),
+            session_id,
+            is_waiting_room,
+        )
+        .await
     }
 
     pub async fn join_meeting_with_access_token(
@@ -360,14 +509,16 @@ impl App {
 
         // Check if user is host and update role if needed
         let user_id = user_info.user_id();
-        if let Ok(meeting_id) = self
+
+        let meeting_id_res = self
             .services
             .user_service
             .read()
             .await
             .get_meeting_id(&user_id)
-            .await
-        {
+            .await;
+
+        if let Ok(meeting_id) = meeting_id_res {
             if let Err(e) = self
                 .services
                 .user_service
@@ -665,6 +816,94 @@ impl App {
         .await;
 
         if let Err(e) = join_result {
+            if e.is_retryable_switch_join() {
+                debug!(
+                    "Error joining room with switch join type: {:?}, retrying with switch_join_type=false",
+                    &e
+                );
+                self.services
+                    .user_service
+                    .read()
+                    .await
+                    .join_room_with_switch_join_type(
+                        &user_token_info,
+                        &meeting_link_name,
+                        false,
+                        is_waiting_room,
+                    )
+                    .await?;
+            } else {
+                return Err(e);
+            }
+        }
+
+        {
+            let mut app_state = self.state.write().await;
+            app_state.join_mls_time = Some(crate::utils::instant::now());
+        }
+        debug!(
+            "join_room step=join_room_call ms={} total_ms={}",
+            join_call_start.elapsed().as_millis(),
+            total_start.elapsed().as_millis()
+        );
+        Ok(())
+    }
+
+    pub async fn join_room_with_switch_join_type2(
+        &self,
+        is_waiting_room: bool,
+    ) -> Result<(), MeetCoreError> {
+        let total_start = instant::now();
+        let user_token_info = {
+            let app_state = self.state.read().await;
+            app_state
+                .active_user_info
+                .as_ref()
+                .ok_or(MeetCoreError::ParticipantNotFound)?
+                .clone()
+        };
+        let user_id = user_token_info.user_id();
+        let meeting_start = instant::now();
+        let meeting_id = self
+            .services
+            .user_service
+            .read()
+            .await
+            .get_meeting_id(&user_id)
+            .await?;
+        debug!(
+            "join_room step=get_meeting_id ms={}",
+            meeting_start.elapsed().as_millis()
+        );
+
+        let join_call_start = instant::now();
+        let meeting_link_name = MeetingLinkName::from(meeting_id);
+
+        let join_result = (|| async {
+            self.services
+                .user_service
+                .read()
+                .await
+                .join_room_with_switch_join_type(
+                    &user_token_info,
+                    &meeting_link_name,
+                    true,
+                    is_waiting_room,
+                )
+                .await
+        })
+        .retry(
+            ExponentialBuilder::default()
+                .with_max_times(5)
+                .with_min_delay(Duration::from_millis(500))
+                .with_max_delay(Duration::from_secs(10)),
+        )
+        .when(|e| e.is_retryable_switch_join())
+        .await;
+
+        if let Err(e) = join_result {
+            // Attempts one last time with External Commit, in case the join was using External Proposal but all users
+            // were unavailable to process the proposal.
             if e.is_retryable_switch_join() {
                 debug!(
                     "Error joining room with switch join type: {:?}, retrying with switch_join_type=false",

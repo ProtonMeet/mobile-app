@@ -10,7 +10,7 @@ use crate::{
 };
 
 /// Services bundle for the meet application
-pub(crate) struct ServicesBundle {
+pub(crate) struct ServiceBundle {
     pub room_service: Arc<RoomService>,
     pub waiting_room_service: Arc<WaitingRoomService>,
     #[cfg(not(target_family = "wasm"))]
@@ -19,7 +19,7 @@ pub(crate) struct ServicesBundle {
     pub user_service: Arc<RwLock<Service>>,
 }
 
-impl ServicesBundle {
+impl ServiceBundle {
     pub(crate) fn new(
         room_service: Arc<RoomService>,
         waiting_room_service: Arc<WaitingRoomService>,

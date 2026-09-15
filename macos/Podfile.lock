@@ -14,7 +14,7 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/rust_builder/macos
 
 SPEC CHECKSUMS:
-  FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
+  FlutterMacOS: c232990155153907050900a2e175c7773903ba4e
   rust_builder: 26319731cff3d47ae0b57e7a06c664f9282a1369
 
 PODFILE CHECKSUM: 396772b5c9cfc0c2207a68f67855b3b0ff0622cf

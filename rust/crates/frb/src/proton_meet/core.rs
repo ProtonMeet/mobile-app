@@ -381,8 +381,15 @@ impl AppCore {
         self.user_config.save();
     }
 
-    pub async fn set_livekit_active_uuids(&mut self, active_uuids: Vec<String>) {
-        let _ = self.inner.set_livekit_active_uuids(active_uuids).await;
+    pub async fn set_livekit_active_uuids(
+        &mut self,
+        active_uuids: Vec<String>,
+        is_agent_in_livekit: bool,
+    ) {
+        let _ = self
+            .inner
+            .set_livekit_active_uuids(active_uuids, is_agent_in_livekit)
+            .await;
     }
 
     /// SRP-authenticate a meeting link and return decrypted metadata (name, limits).
@@ -732,6 +739,72 @@ impl AppCore {
         Ok(meet_info.into())
     }
 
+    #[allow(clippy::too_many_arguments)]
+    pub async fn join_meeting2(
+        &mut self,
+        meet_link_name: String,
+        meet_link_password: String,
+        display_name: String,
+        session_id: Option<String>,
+        reuse_token: bool,
+        reuse_prejoin_auth: bool,
+        is_waiting_room: bool,
+    ) -> Result<FrbMeetInfo, BridgeError> {
+        if reuse_token {
+            return self
+                .join_meeting_reuse_token2(
+                    meet_link_name,
+                    meet_link_password,
+                    session_id,
+                    is_waiting_room,
+                )
+                .await;
+        }
+
+        let mut meet_info = if reuse_prejoin_auth {
+            if let Some(cached) = self
+                .inner
+                .try_take_prejoin_srp_auth(&meet_link_name, &display_name)
+                .await
+            {
+                tracing::info!(
+                    "join_meeting: reusing pre-join SRP auth for {}",
+                    meet_link_name
+                );
+                cached
+            } else {
+                self.spawn_authenticate_meeting_link(
+                    meet_link_name.clone(),
+                    meet_link_password.clone(),
+                    display_name.clone(),
+                )
+                .await?
+            }
+        } else {
+            self.spawn_authenticate_meeting_link(
+                meet_link_name.clone(),
+                meet_link_password.clone(),
+                display_name,
+            )
+            .await?
+        };
+
+        self.inner
+            .join_meeting_from_info2(&meet_info, meet_link_password, session_id, is_waiting_room)
+            .await?;
+        meet_info.participants_count = self
+            .inner
+            .get_participants_count(meet_link_name)
+            .await
+            .unwrap_or(0);
+        tracing::info!(
+            "Successfully joined meeting with GroupInfo-based join switching, participant_count={}",
+            meet_info.participants_count
+        );
+
+        Ok(meet_info.into())
+    }
+
     async fn spawn_authenticate_meeting_link(
         &self,
         meet_link_name: String,
@@ -848,6 +921,57 @@ impl AppCore {
             "Successfully joined meeting with commit (reuse_token, is_fallback={})",
             is_fallback
         );
+
+        let meeting_info: FrbMeetingInfo =
+            self.inner.get_meeting_info(&meet_link_name).await?.into();
+        Ok(FrbMeetInfo {
+            meet_name: meeting_info.meeting_name,
+            meet_link_name,
+            access_token,
+            websocket_url,
+            participants_count: participant_count,
+            is_locked: meeting_info.locked != 0,
+            has_waiting_room: meeting_info.waiting_room == 1,
+            max_duration: meeting_info.max_duration,
+            max_participants: meeting_info.max_participants,
+            expiration_time: meeting_info.expiration_time,
+        })
+    }
+
+    async fn join_meeting_reuse_token2(
+        &mut self,
+        meet_link_name: String,
+        meet_link_password: String,
+        session_id: Option<String>,
+        is_waiting_room: bool,
+    ) -> Result<FrbMeetInfo, BridgeError> {
+        let participant_count = self
+            .inner
+            .get_participants_count(meet_link_name.clone())
+            .await?;
+
+        tracing::info!("join_meeting (reuse_token): participant_count={participant_count}");
+
+        let access_token = self.inner.get_active_livekit_access_token().await?;
+        let websocket_url = self.inner.get_active_livekit_websocket_url().await?;
+
+        if !self.inner.is_mls_group_joined().await {
+            if let Err(e) = self.inner.disconnect_wss_intentional().await {
+                tracing::warn!("join_meeting (reuse_token): wss disconnect failed: {e:?}");
+            }
+
+            self.inner
+                .join_meeting2(
+                    access_token.clone().into(),
+                    meet_link_name.clone().into(),
+                    meet_link_password.into(),
+                    session_id,
+                    is_waiting_room,
+                )
+                .await?;
+        } else {
+            tracing::info!("join_meeting (reuse_token): MLS already joined, skipping MLS join");
+        }
 
         let meeting_info: FrbMeetingInfo =
             self.inner.get_meeting_info(&meet_link_name).await?.into();

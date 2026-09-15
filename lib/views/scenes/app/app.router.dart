@@ -3,6 +3,7 @@ import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/user.agent.dart';
 import 'package:meet/managers/channels/platform.channel.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
+import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/managers/services/simulation.service.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/views/scenes/app/app.splash.view.dart';
@@ -36,19 +37,28 @@ class AppRouter {
       case '/':
         return MaterialPageRoute(builder: (_) => const SplashView());
       case DashboardPage.routeName:
+        final dataProviderManager = serviceManager.get<DataProviderManager>();
+        final platform = serviceManager.get<PlatformChannelManager>();
+
+        final meetUserSettingsDataProvider =
+            dataProviderManager.meetUserSettingsDataProvider;
         final authBloc = AuthBloc(
           UserAgent(),
-          serviceManager.get<PlatformChannelManager>(),
+          platform,
           serviceManager,
+          meetUserSettingsDataProvider,
         )..add(AuthInitialized());
         final dashboardBloc = DashboardBloc()..add(InitDashboardEvent());
-        final appSettingsBloc = AppSettingsBloc()
-          ..add(AppSettingsInitialized());
+        final appSettingsBloc = AppSettingsBloc(
+          dataProviderManager: dataProviderManager,
+          meetUserSettingsDataProvider: meetUserSettingsDataProvider,
+        )..add(AppSettingsInitialized());
         return MaterialPageRoute(
           builder: (_) => DashboardPage(
             dashboardBloc: dashboardBloc,
             authBloc: authBloc,
             appSettingsBloc: appSettingsBloc,
+            meetUserSettingsDataProvider: meetUserSettingsDataProvider,
           ),
         );
       case PreJoinPage.routeName:

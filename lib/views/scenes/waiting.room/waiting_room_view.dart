@@ -223,6 +223,7 @@ class _WaitingRoomPageState extends State<WaitingRoomPage>
       cameraBackgroundBlurEnabled: widget.cameraBackgroundBlurEnabled,
       cameraBackgroundSelection: widget.cameraBackgroundSelection,
       prefetchedMeetingInfo: widget.args.prefetchedMeetingInfo,
+      isMeetingHost: widget.args.isMeetingHost,
     );
 
     // Use a custom fade transition for smoother animation

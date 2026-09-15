@@ -4,7 +4,6 @@ import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/desktop_meet_child_client_id.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/logger.dart';
 import 'package:meet/managers/app.core.manager.dart';
@@ -13,6 +12,7 @@ import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/models/native.session.model.dart';
 import 'package:meet/rust/proton_meet/models/user.dart';
 import 'package:meet/views/components/bottom.sheets/bottom_sheet_handle_bar.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 Future<void> showDesktopWebLoginSheet(
   BuildContext context, {

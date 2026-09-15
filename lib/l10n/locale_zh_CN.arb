@@ -660,6 +660,10 @@
   "@recording_paid_feature": {
     "description": "Shown when a free user taps the record button"
   },
+  "waiting_room_paid_feature": "付费套餐可用",
+  "@waiting_room_paid_feature": {
+    "description": "Subtitle on the in-room waiting room toggle for free users"
+  },
   "recording_recovered_message": "A previous meeting recording was recovered and saved on this device.",
   "@recording_recovered_message": {
     "description": "Toast when orphaned recording files are found after app restart"
@@ -2116,6 +2120,98 @@
   "system_default_mode": "系统默认",
   "@system_default_mode": {
     "description": "Use device language for app UI"
+  },
+  "settings_value_enabled": "启用",
+  "@settings_value_enabled": {
+    "description": "Current value of a settings row that is turned on"
+  },
+  "settings_value_disabled": "禁用",
+  "@settings_value_disabled": {
+    "description": "Current value of a settings row that is turned off"
+  },
+  "appearance": "外观",
+  "@appearance": {
+    "description": "Label for the theme row in app settings"
+  },
+  "appearance_dark": "深色主题",
+  "@appearance_dark": {
+    "description": "Dark theme value shown in the appearance row"
+  },
+  "waiting_room": "等候室",
+  "@waiting_room": {
+    "description": "Label for the waiting room row in app settings"
+  },
+  "live_captions": "实时字幕",
+  "@live_captions": {
+    "description": "Label for the live captions row in settings"
+  },
+  "live_captions_all_participants": "对所有参与者启用",
+  "@live_captions_all_participants": {
+    "description": "Live captions value when every participant can use captions"
+  },
+  "save_recordings_to": "保存记录至",
+  "@save_recordings_to": {
+    "description": "Label for the recording folder row in app settings"
+  },
+  "test_microphone": "测试麦克风",
+  "@test_microphone": {
+    "description": "Opens the microphone test in app settings"
+  },
+  "test_speakers": "测试扬声器",
+  "@test_speakers": {
+    "description": "Opens the speaker test in app settings"
+  },
+  "settings_section_host": "主机设置",
+  "@settings_section_host": {
+    "description": "Section header for host-only in-call settings"
+  },
+  "settings_section_video_audio": "视频和音频",
+  "@settings_section_video_audio": {
+    "description": "Section header for video and audio in-call settings"
+  },
+  "settings_section_background": "背景",
+  "@settings_section_background": {
+    "description": "Section header for camera background in-call settings"
+  },
+  "settings_section_display": "显示",
+  "@settings_section_display": {
+    "description": "Section header for display in-call settings"
+  },
+  "record_meeting": "录制会议",
+  "@record_meeting": {
+    "description": "Host toggle that records the meeting"
+  },
+  "allow_live_captions": "允许实时字幕",
+  "@allow_live_captions": {
+    "description": "Host toggle that lets participants use live captions"
+  },
+  "allow_live_captions_description": "允许参与者使用字幕",
+  "@allow_live_captions_description": {
+    "description": "Explanation under the allow live captions toggle"
+  },
+  "transcribe_meeting": "转录会议",
+  "@transcribe_meeting": {
+    "description": "Host toggle that creates a meeting transcript"
+  },
+  "transcribe_meeting_off_description": "不生成会议纪要",
+  "@transcribe_meeting_off_description": {
+    "description": "Explanation under the transcribe meeting toggle when off"
+  },
+  "incoming_video": "传入视频",
+  "@incoming_video": {
+    "description": "Toggle that shows video from other participants"
+  },
+  "self_view": "我的画面",
+  "@self_view": {
+    "description": "Toggle that shows the local camera tile"
+  },
+  "picture_in_picture_while_sharing": "分享时启用画中画",
+  "@picture_in_picture_while_sharing": {
+    "description": "Toggle that keeps a picture-in-picture window during screen share"
+  },
+  "meeting_timer": "会议计时器",
+  "@meeting_timer": {
+    "description": "Toggle that shows the meeting duration timer"
   },
   "pre_rating_sheet_title": "喜欢 Proton Meet 吗？",
   "@pre_rating_sheet_title": {

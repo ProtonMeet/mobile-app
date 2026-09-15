@@ -10,7 +10,14 @@ abstract class PreJoinEvent {}
 class PreJoinInitialized extends PreJoinEvent {
   final JoinArgs args;
   final String displayName;
-  PreJoinInitialized(this.args, this.displayName);
+  final bool isPaidUser;
+  PreJoinInitialized(this.args, this.displayName, {this.isPaidUser = false});
+}
+
+/// Sync paid status after auth refresh (e.g. session expiry + re-login).
+class PreJoinIsPaidUserUpdated extends PreJoinEvent {
+  final bool isPaidUser;
+  PreJoinIsPaidUserUpdated({required this.isPaidUser});
 }
 
 class PreJoinToggleAudio extends PreJoinEvent {}
@@ -107,11 +114,6 @@ class PreJoinSetCameraBackgroundSelection extends PreJoinEvent {
 class ToggleKeepDisplayName extends PreJoinEvent {
   final bool keep;
   ToggleKeepDisplayName({required this.keep});
-}
-
-class PreJoinPaidUserResolved extends PreJoinEvent {
-  final bool isPaidUser;
-  PreJoinPaidUserResolved({required this.isPaidUser});
 }
 
 /// Authenticates the meeting link when the user presses Join.

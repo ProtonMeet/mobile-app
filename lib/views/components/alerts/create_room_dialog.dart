@@ -3,6 +3,7 @@ import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/bridge_error.extension.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
+import 'package:meet/helper/local_toast.dart';
 import 'package:meet/helper/pre_meeting_waiting_room.dart';
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/app.state.manager.dart';
@@ -57,6 +58,7 @@ Future<void> showEditRoomDialog(
   bool autofocus = true,
   ParticipantDisplayColors? displayColors,
   bool showWaitingRoom = false,
+  bool isPaidUser = false,
   String? meetingLinkName,
   bool initialWaitingRoomEnabled = false,
   OnWaitingRoomSettingChanged? onWaitingRoomSettingChanged,
@@ -80,6 +82,7 @@ Future<void> showEditRoomDialog(
       selectAllOnFocus: true,
       displayColors: displayColors,
       showWaitingRoom: showWaitingRoom,
+      isPaidUser: isPaidUser,
       meetingLinkName: meetingLinkName,
       initialWaitingRoomEnabled: initialWaitingRoomEnabled,
       onWaitingRoomSettingChanged: onWaitingRoomSettingChanged,
@@ -237,7 +240,8 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
     }
     widget.onCreateRoom!(
       roomName,
-      waitingRoom: widget.showWaitingRoom && _waitingRoomEnabled,
+      waitingRoom:
+          widget.showWaitingRoom && widget.isPaidUser && _waitingRoomEnabled,
     );
   }
 
@@ -299,7 +303,8 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
     await showWaitingRoomSheet(
       context,
       selected: _waitingRoomEnabled,
-      isOnOptionEnabled: true,
+      isPaidUser: widget.isPaidUser,
+      onInvalidSelection: (message) => LocalToast.showToast(context, message),
       onSelect: (enabled) async {
         if (!isEditWithPreMeetingApi) {
           setState(() {

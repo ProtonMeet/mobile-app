@@ -1,5 +1,6 @@
 import 'package:meet/rust/proton_meet/models/user.dart';
 import 'package:meet/rust/proton_meet/user_config.dart';
+import 'package:meet/rust/proton_meet/user_subscription.dart' as user_sub;
 
 class AuthState {
   final String displayName;
@@ -91,4 +92,11 @@ class AuthState {
   }
 
   bool get isSignedIn => user != null;
+
+  /// Lazily resolved and cached: [user_sub.isPaid] crosses the FRB boundary,
+  /// and this state object is rebuilt on every change anyway.
+  late final bool isPaidUser = switch (user) {
+    final ProtonUser user => user_sub.isPaid(user: user),
+    null => false,
+  };
 }

@@ -4,11 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
+import 'package:meet/views/components/settings/settings_action_item.dart';
+import 'package:meet/views/components/settings/settings_section.dart';
 import 'package:meet/views/scenes/settings/debug/denoise_diagnostics_debug_sheet.dart';
 import 'package:meet/views/scenes/settings/debug/denoise_mic_preview_debug_screen.dart';
 import 'package:meet/views/scenes/settings/debug/offline_file_denoise_debug_sheet.dart';
-import 'package:meet/views/scenes/settings/settings_action_item.dart';
-import 'package:meet/views/scenes/settings/settings_section_header.dart';
 import 'package:proton_denoise/proton_denoise.dart';
 
 /// Debug-only submenu for denoise diagnostics, file tests, and live mic preview.

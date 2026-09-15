@@ -440,6 +440,7 @@ class SidePanelOrSheet extends StatefulWidget {
     required this.isCameraView,
     required this.maxWidth,
     this.onDismissed,
+    this.sheetBlocProviders = const [],
     super.key,
   });
 
@@ -448,6 +449,10 @@ class SidePanelOrSheet extends StatefulWidget {
   final bool isCameraView;
   final VoidCallback? onDismissed;
   final double maxWidth;
+
+  /// Extra blocs replayed into the modal bottom sheet route (narrow layout).
+  /// The sheet builder only inherits [RoomBloc] unless these are provided.
+  final List<BlocProvider> sheetBlocProviders;
 
   @override
   State<SidePanelOrSheet> createState() => _SidePanelOrSheetState();
@@ -547,8 +552,11 @@ class _SidePanelOrSheetState extends State<SidePanelOrSheet> {
           builderMedia.size.height,
         );
 
-        return BlocProvider.value(
-          value: roomBloc,
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider<RoomBloc>.value(value: roomBloc),
+            ...widget.sheetBlocProviders,
+          ],
           child: RoomSidePanelScope(
             showSheetHeader: true,
             showHandleBar: true,

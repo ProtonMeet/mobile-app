@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
@@ -10,95 +9,11 @@ import 'package:meet/rust/proton_meet/models/meeting_info.dart';
 import 'package:meet/rust/proton_meet/models/mls_sync_state.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
 import 'package:meet/views/scenes/room/camera_layout.dart';
-import 'package:meet/views/scenes/room/chat/chat_models.dart';
 import 'package:meet/views/scenes/room/layout/responsive_camera_layout.dart'
     show ResponsiveCameraLayout;
 import 'package:meet/views/scenes/room/participant/participant_info.dart';
 import 'package:meet/views/scenes/room/participant_detail.dart';
 import 'package:proton_denoise/proton_denoise.dart';
-
-/// A system notice destined for the in-room chat panel (join/leave, disconnect, …).
-///
-/// Produced by [RoomBloc] when handling [AddSystemMessage] with
-/// [Level.info][logLevel]; [RoomPage] mirrors these into [ChatController].
-class RoomChatSystemNotice extends Equatable {
-  const RoomChatSystemNotice({
-    required this.id,
-    required this.message,
-    required this.identity,
-    required this.name,
-    required this.timestamp,
-    this.joinLeaveKind,
-    this.meetingName,
-  });
-
-  final String id;
-  final String message;
-  final String identity;
-  final String name;
-  final int timestamp;
-  final ChatJoinLeaveKind? joinLeaveKind;
-  final String? meetingName;
-
-  @override
-  List<Object?> get props => [
-    id,
-    message,
-    identity,
-    name,
-    timestamp,
-    joinLeaveKind,
-    meetingName,
-  ];
-}
-
-/// Side-effect emitted by [RoomBloc] chat handlers for [RoomPage] to mirror
-/// into [ChatController].
-enum RoomChatEffectKind {
-  addReaction,
-  removeReaction,
-  localEcho,
-  updateMessageStatus,
-  receiveMessage,
-  removeMessage,
-}
-
-class RoomChatEffect extends Equatable {
-  const RoomChatEffect({
-    required this.kind,
-    this.reactionId,
-    this.replacesId,
-    this.messageId,
-    this.emoji,
-    this.identity,
-    this.messagePayload,
-    this.status,
-    this.showToast = false,
-  });
-
-  final RoomChatEffectKind kind;
-  final String? reactionId;
-  final String? replacesId;
-  final String? messageId;
-  final String? emoji;
-  final String? identity;
-  final RoomChatMessage? messagePayload;
-  final ChatMessageStatus? status;
-  final bool showToast;
-
-  @override
-  List<Object?> get props => [
-    kind,
-    reactionId,
-    replacesId,
-    messageId,
-    emoji,
-    identity,
-    messagePayload,
-    status,
-    showToast,
-  ];
-}
 
 /// Rejoin status enum for tracking rejoin process steps
 enum RejoinStatus {
@@ -225,26 +140,15 @@ class RoomState extends Equatable {
   /// True while admit-all waiting-room join requests is in flight.
   final bool isAdmitAllWaitingRoomInProgress;
 
-  /// messages
-  final List<types.Message> messages;
-
-  /// System chat notices emitted by [AddSystemMessage] (UI syncs to ChatController).
-  final List<RoomChatSystemNotice> chatSystemNotices;
-
-  /// Ephemeral chat side-effects (reactions, echoes, incoming messages) for UI
-  /// sync. Cleared after [RoomPage] mirrors into [ChatController].
-  final List<RoomChatEffect> chatEffects;
-
-  /// Bumped when [chatEffects] or [chatSystemNotices] gain pending items.
-  /// Used by [BlocListener] instead of comparing the lists in [props].
-  final int chatSyncGeneration;
-
   /// mls group data
   final String epoch;
   final String displayCode;
   final int participantsCount;
   final int mlsGroupLen;
   final bool isPaidUser;
+
+  /// Pre-join host hint until meet-api participant flags are available.
+  final bool localHostHint;
 
   ///
   final int fps;
@@ -418,17 +322,23 @@ class RoomState extends Equatable {
     final participantData = frbParticipantsMap[localParticipant.identity];
 
     if (participantData == null) {
-      // If participant data not yet loaded, fallback to checking if alone
-      final remoteParticipants = room.remoteParticipants.values.toList();
-      return remoteParticipants.isEmpty;
+      return localHostHint;
     }
 
     // Check IsAdmin or IsHost (1 = Allowed, 0 or null = NotAllowed)
     // Same logic as WebApp: hasAdminPermission = !!IsAdmin || !!IsHost
     final isAdmin = participantData.isAdmin == 1;
     final isHostValue = participantData.isHost == 1;
+    if (isAdmin || isHostValue) {
+      return true;
+    }
 
-    return isAdmin || isHostValue;
+    // Local stub participant may exist before meet-api flags arrive.
+    if (participantData.isAdmin == null && participantData.isHost == null) {
+      return localHostHint;
+    }
+
+    return false;
   }
 
   bool get isLocalParticipantAdminOrHost => isHost;
@@ -475,10 +385,6 @@ class RoomState extends Equatable {
     this.screenSharingTracks = const [],
     this.speakerTracks = const [],
     this.raisedHandsByIdentity = const {},
-    this.messages = const [],
-    this.chatSystemNotices = const [],
-    this.chatEffects = const [],
-    this.chatSyncGeneration = 0,
     this.joinedParticipants = const [],
     this.leftParticipants = const [],
     this.waitingRoomParticipants = const [],
@@ -490,6 +396,7 @@ class RoomState extends Equatable {
     this.isFullScreen = false,
     this.hideSelfCamera = false,
     this.isPaidUser = false,
+    this.localHostHint = false,
 
     ///
     this.fps = 30,
@@ -558,10 +465,6 @@ class RoomState extends Equatable {
     List<ParticipantInfo>? screenSharingTracks,
     List<ParticipantInfo>? speakerTracks,
     Map<String, bool>? raisedHandsByIdentity,
-    List<types.Message>? messages,
-    List<RoomChatSystemNotice>? chatSystemNotices,
-    List<RoomChatEffect>? chatEffects,
-    int? chatSyncGeneration,
     List<ParticipantDetail>? joinedParticipants,
     List<ParticipantDetail>? leftParticipants,
     List<WaitingRoomJoinRequest>? waitingRoomParticipants,
@@ -602,6 +505,7 @@ class RoomState extends Equatable {
     bool? isSpeakerPhone,
     bool? isMeetMobileSpeakerToggleEnabled,
     bool? isPaidUser,
+    bool? localHostHint,
     FrbMeetingInfo? meetingInfo,
     CameraPosition? currentCameraPosition,
     int? audioDeviceCount,
@@ -643,10 +547,6 @@ class RoomState extends Equatable {
       speakerTracks: speakerTracks ?? this.speakerTracks,
       raisedHandsByIdentity:
           raisedHandsByIdentity ?? this.raisedHandsByIdentity,
-      messages: messages ?? this.messages,
-      chatSystemNotices: chatSystemNotices ?? this.chatSystemNotices,
-      chatEffects: chatEffects ?? this.chatEffects,
-      chatSyncGeneration: chatSyncGeneration ?? this.chatSyncGeneration,
       joinedParticipants: joinedParticipants ?? this.joinedParticipants,
       leftParticipants: leftParticipants ?? this.leftParticipants,
       waitingRoomParticipants:
@@ -708,6 +608,7 @@ class RoomState extends Equatable {
           isMeetMobileSpeakerToggleEnabled ??
           this.isMeetMobileSpeakerToggleEnabled,
       isPaidUser: isPaidUser ?? this.isPaidUser,
+      localHostHint: localHostHint ?? this.localHostHint,
       meetingInfo: meetingInfo ?? this.meetingInfo,
       currentCameraPosition:
           currentCameraPosition ?? this.currentCameraPosition,
@@ -763,9 +664,6 @@ class RoomState extends Equatable {
     screenSharingTracks,
     speakerTracks,
     raisedHandsByIdentity,
-    messages,
-    chatSyncGeneration,
-
     joinedParticipants,
     leftParticipants,
     waitingRoomParticipants,
@@ -810,6 +708,7 @@ class RoomState extends Equatable {
     isSpeakerPhone,
     isMeetMobileSpeakerToggleEnabled,
     isPaidUser,
+    localHostHint,
     meetingInfo,
     currentCameraPosition,
     audioDeviceCount,

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -11,9 +12,25 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
 class DebugLogger {
-  final Logger _logger;
+  DebugLogger._(this._logger);
 
-  DebugLogger(this._logger);
+  factory DebugLogger({
+    DateTimeFormatter dateTimeFormat = DateTimeFormat.dateAndTime,
+    List<LogOutput>? outputs,
+    @visibleForTesting bool? showCallerDetails,
+  }) {
+    return DebugLogger._(
+      Logger(
+        printer: _DebugLogPrinter(
+          dateTimeFormat: dateTimeFormat,
+          showCallerDetails: showCallerDetails ?? kDebugMode,
+        ),
+        output: MultiOutput(outputs ?? [ConsoleOutput()]),
+      ),
+    );
+  }
+
+  final Logger _logger;
 
   void d(
     dynamic message, {
@@ -89,23 +106,171 @@ class DebugLogger {
   }
 }
 
-final _baseLogger = Logger(
-  printer: PrettyPrinter(
-    methodCount: 1,
-    noBoxingByDefault: true,
-    dateTimeFormat: DateTimeFormat.dateAndTime,
-  ),
-  output: MultiOutput([ConsoleOutput()]),
-);
+/// One line per log with a clickable call-site location; stack traces only for errors.
+class _DebugLogPrinter extends LogPrinter {
+  _DebugLogPrinter({
+    this.dateTimeFormat = DateTimeFormat.dateAndTime,
+    this.showCallerDetails = kDebugMode,
+  });
 
-var logger = DebugLogger(_baseLogger);
+  final DateTimeFormatter dateTimeFormat;
+  final bool showCallerDetails;
+
+  static const _errorStackFrames = 8;
+
+  static const _wrapperPathPrefixes = [
+    'package:meet/helper/logger.dart',
+    'package:logger/',
+  ];
+
+  static final _deviceFrame = RegExp(r'#\d+\s+(.+) \((\S+)\)');
+
+  static final _levelTags = {
+    Level.trace: '[T]',
+    Level.debug: '[D]',
+    Level.info: '[I]',
+    Level.warning: '[W]',
+    Level.error: '[E]',
+    Level.fatal: '[F]',
+  };
+
+  static final _levelColors = {
+    Level.trace: AnsiColor.fg(AnsiColor.grey(0.5)),
+    Level.debug: const AnsiColor.none(),
+    Level.info: const AnsiColor.fg(12),
+    Level.warning: const AnsiColor.fg(208),
+    Level.error: const AnsiColor.fg(196),
+    Level.fatal: const AnsiColor.fg(199),
+  };
+
+  static final _levelEmojis = {
+    Level.trace: '',
+    Level.debug: '🐛',
+    Level.info: '💡',
+    Level.warning: '⚠️',
+    Level.error: '⛔',
+    Level.fatal: '👾',
+  };
+
+  @override
+  List<String> log(LogEvent event) {
+    final message = _stringify(event.message);
+    final time = _formatTime(event.time);
+    final levelTag = _levelTags[event.level] ?? '[?]';
+    final emoji = _levelEmojis[event.level] ?? '';
+    final caller = showCallerDetails
+        ? _firstCallerLocation(event.stackTrace ?? StackTrace.current)
+        : null;
+
+    final contentLine = [
+      if (time.isNotEmpty) time,
+      levelTag,
+      if (emoji.isNotEmpty) emoji,
+      message,
+    ].join(' ');
+
+    final coloredLine = (_levelColors[event.level] ?? const AnsiColor.none())(
+      contentLine,
+    );
+
+    final output = <String>[if (caller != null) '# $caller', coloredLine];
+
+    if (event.error != null) {
+      output.add('  error: ${event.error}');
+      if (_errorStackFrames > 0) {
+        final stack = _filteredStack(
+          event.stackTrace ?? StackTrace.current,
+          _errorStackFrames,
+        );
+        if (stack != null) {
+          output.add(stack);
+        }
+      }
+    }
+
+    return output;
+  }
+
+  String _formatTime(DateTime time) {
+    // onlyTimeAndSinceStart needs PrettyPrinter.startTime; _DebugLogPrinter has none.
+    if (dateTimeFormat == DateTimeFormat.onlyTimeAndSinceStart) {
+      return DateTimeFormat.dateAndTime(time);
+    }
+    return dateTimeFormat(time);
+  }
+
+  String? _firstCallerLocation(StackTrace stackTrace) {
+    for (final rawLine in stackTrace.toString().split('\n')) {
+      final frame = _parseFrame(rawLine);
+      if (frame != null) {
+        return frame.location;
+      }
+    }
+    return null;
+  }
+
+  ({String method, String location})? _parseFrame(String rawLine) {
+    if (rawLine.isEmpty || _isWrapperFrame(rawLine)) {
+      return null;
+    }
+
+    final match = _deviceFrame.firstMatch(rawLine);
+    if (match == null) {
+      return null;
+    }
+
+    final method = match.group(1);
+    final location = match.group(2);
+    if (method == null || location == null) {
+      return null;
+    }
+
+    return (method: method, location: location);
+  }
+
+  String? _filteredStack(StackTrace stackTrace, int maxFrames) {
+    final lines = <String>[];
+
+    for (final rawLine in stackTrace.toString().split('\n')) {
+      final frame = _parseFrame(rawLine);
+      if (frame == null) continue;
+
+      lines.add('  #${lines.length} ${frame.method} (${frame.location})');
+      if (lines.length >= maxFrames) break;
+    }
+
+    return lines.isEmpty ? null : lines.join('\n');
+  }
+
+  bool _isWrapperFrame(String line) {
+    for (final prefix in _wrapperPathPrefixes) {
+      if (line.contains(prefix)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  String _stringify(dynamic message) {
+    final resolved = message is Function ? message() : message;
+    if (resolved is Map || resolved is Iterable) {
+      try {
+        return JsonEncoder.withIndent(
+          '  ',
+          (object) => object.toString(),
+        ).convert(resolved);
+      } catch (_) {
+        return resolved.toString();
+      }
+    }
+    return resolved.toString();
+  }
+}
+
+var logger = DebugLogger();
 
 var rustLogger = Logger(
-  printer: PrettyPrinter(
-    methodCount: 1,
-    noBoxingByDefault: true,
-    dateTimeFormat: DateTimeFormat.dateAndTime,
-  ),
+  printer: _DebugLogPrinter(),
   output: MultiOutput([ConsoleOutput()]),
 );
 
@@ -126,12 +291,8 @@ class LoggerService {
   static Future<void> initDartLogger() async {
     final directory = await getApplicationDocumentsDirectory();
     final logsPath = join(directory.path, "logs");
-    final baseLogger = Logger(
-      printer: PrettyPrinter(
-        methodCount: 1,
-        dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
-      ),
-      output: MultiOutput([
+    logger = DebugLogger(
+      outputs: [
         ConsoleOutput(),
         AdvancedFileOutput(
           path: logsPath,
@@ -139,9 +300,8 @@ class LoggerService {
           latestFileName: appLogName,
           fileNameFormatter: customFileNameFormatter,
         ),
-      ]),
+      ],
     );
-    logger = DebugLogger(baseLogger);
   }
 
   static Future<void> initRustLogger() async {

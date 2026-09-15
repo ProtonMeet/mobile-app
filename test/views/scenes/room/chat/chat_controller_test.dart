@@ -5,6 +5,8 @@ import 'package:meet/views/scenes/room/chat/chat_models.dart';
 RoomChatMessage _msg({
   required String id,
   required String identity,
+  String message = 'hello',
+  int timestamp = 1,
   String? topicId,
   String? inReplyToId,
   bool isMissingRoot = false,
@@ -12,8 +14,8 @@ RoomChatMessage _msg({
 }) {
   return RoomChatMessage(
     id: id,
-    message: 'hello',
-    timestamp: 1,
+    message: message,
+    timestamp: timestamp,
     identity: identity,
     name: identity,
     topicId: topicId,
@@ -26,6 +28,87 @@ RoomChatMessage _msg({
 void main() {
   const localId = 'local-user';
   const otherId = 'other-user';
+
+  group('ChatController', () {
+    test('groups messages into threads with replies', () {
+      final controller = ChatController(localIdentity: localId);
+      controller.receiveMessage(_msg(id: 'root-1', identity: otherId));
+      controller.receiveMessage(
+        _msg(
+          id: 'reply-1',
+          identity: otherId,
+          topicId: 'root-1',
+          inReplyToId: 'root-1',
+          timestamp: 2,
+        ),
+      );
+
+      expect(controller.threads, hasLength(1));
+      expect(controller.threads.single.root.id, 'root-1');
+      expect(controller.threads.single.replies.single.id, 'reply-1');
+    });
+
+    test('creates missing root placeholder for early reply', () {
+      final controller = ChatController(localIdentity: localId);
+      controller.receiveMessage(
+        _msg(
+          id: 'reply-1',
+          identity: otherId,
+          topicId: 'root-1',
+          inReplyToId: 'root-1',
+        ),
+      );
+
+      expect(controller.messages, hasLength(2));
+      expect(controller.threads.single.isRootMissing, isTrue);
+    });
+
+    test('tracks unread messages and clears them when chat opens', () {
+      final controller = ChatController(localIdentity: localId);
+      controller.receiveMessage(_msg(id: 'root-1', identity: otherId));
+
+      expect(controller.unreadCount, 1);
+
+      controller.setChatOpen(open: true);
+
+      expect(controller.unreadCount, 0);
+      expect(controller.messages.single.seen, isTrue);
+    });
+
+    test('adds and removes reactions for a message', () {
+      final controller = ChatController(localIdentity: localId);
+      controller.receiveMessage(_msg(id: 'msg-1', identity: otherId));
+
+      controller.addReaction(
+        reactionId: 'reaction-1',
+        messageId: 'msg-1',
+        emoji: '👍',
+        identity: localId,
+      );
+
+      expect(controller.hasLocalReaction('msg-1', '👍'), isTrue);
+      expect(controller.findLocalReactionId('msg-1', '👍'), 'reaction-1');
+
+      controller.removeReaction(replacesId: 'reaction-1', identity: localId);
+
+      expect(controller.hasLocalReaction('msg-1', '👍'), isFalse);
+    });
+
+    test('ignores duplicate message ids', () {
+      final controller = ChatController(localIdentity: localId);
+      final first = controller.receiveMessage(
+        _msg(id: 'msg-1', identity: otherId),
+      );
+      final second = controller.receiveMessage(
+        _msg(id: 'msg-1', identity: otherId, message: 'duplicate'),
+      );
+
+      expect(first, isTrue);
+      expect(second, isFalse);
+      expect(controller.messages, hasLength(1));
+      expect(controller.messages.single.message, 'hello');
+    });
+  });
 
   group('isRelevantThreadMessage', () {
     test('notifies on root messages from others', () {

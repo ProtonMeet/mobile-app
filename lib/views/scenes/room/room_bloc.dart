@@ -20,6 +20,7 @@ import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/notification_service.dart';
 import 'package:meet/managers/preferences/preferences.manager.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
+import 'package:meet/managers/providers/unleash.data.provider.dart';
 import 'package:meet/managers/room.manager.dart';
 import 'package:meet/managers/services/denoise_audio.service.dart';
 import 'package:meet/permissions/permission_service.dart';
@@ -32,7 +33,6 @@ import 'package:sentry/sentry.dart';
 
 import 'recording/recording_status_handler.dart';
 import 'room_bloc_alone_meeting.dart';
-import 'room_bloc_chat.dart';
 import 'room_bloc_connection_check.dart';
 import 'room_bloc_data.dart';
 import 'room_bloc_debug_logging.dart';
@@ -61,7 +61,6 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
         RoomEventsBinding,
         RoomParticipantsHandlers,
         RoomWaitingRoomHandlers,
-        RoomChatHandlers,
         RoomTracksHandlers,
         RoomDataHandlers,
         RoomAloneMeetingHandlers,
@@ -127,7 +126,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
   Future<bool> _startScreenShareForegroundService() async {
     try {
       final notificationService = ManagerFactory().get<NotificationService>();
-      return notificationService.startScreenShareForegroundService(
+      return await notificationService.startScreenShareForegroundService(
         roomName: state.meetInfo.meetName,
       );
     } catch (e) {
@@ -173,6 +172,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
   @override
   Future<void> close() async {
     _watchDogTimer?.cancel();
+    _watchDogTimer = null;
     _roomHealthSampleTimer?.cancel();
     cancelWaitingRoomExpirationTimer();
     cancelWaitingRoomDisplayNameRetryTimer();
@@ -247,6 +247,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     final appCoreManager = ManagerFactory().get<AppCoreManager>();
     roomManager = RoomManager(appCoreManager);
     on<RoomInitialized>(_onRoomInitialized);
+    on<RoomIsPaidUserUpdated>(_onIsPaidUserUpdated);
     on<RoomDisposed>(_onRoomDisposed);
     // Throttle the high-frequency `DebouncedSortParticipants` stream coming
     // from LiveKit `ParticipantEvent`s (200+/s in 200-person rooms).
@@ -270,10 +271,6 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     /// register tracks handlers
     /// see: room_bloc_tracks.dart
     registerTracksHandlers();
-
-    /// register chat handlers
-    /// see: room_bloc_chat.dart
-    registerChatHandlers();
 
     /// register data-channel handlers
     /// see: room_bloc_data.dart
@@ -436,7 +433,13 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
 
   void _startRoomHealthSampling() {
     _roomHealthSampleTimer?.cancel();
-    _roomHealthSampleTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+    _roomHealthSampleTimer = Timer.periodic(const Duration(seconds: 60), (
+      timer,
+    ) {
+      if (isClosed) {
+        timer.cancel();
+        return;
+      }
       final room = state.room;
       logRoomTrackStats('periodic_60s', room);
     });
@@ -450,6 +453,27 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
   /// Parameters:
   /// - [event]: The room initialization event containing room and key information
   /// - [emit]: State emitter for updating the room state
+  void _onIsPaidUserUpdated(
+    RoomIsPaidUserUpdated event,
+    Emitter<RoomState> emit,
+  ) {
+    emit(state.copyWith(isPaidUser: event.isPaidUser));
+  }
+
+  /// Prefetch user state into Rust; paid status comes from [AuthState.isPaidUser].
+  Future<void> _isPaidUserSafeGuard(String userId) async {
+    try {
+      final appCoreManager = ManagerFactory().get<AppCoreManager>();
+      final user = await appCoreManager.appCore.getUser(userId: userId);
+      final isPaidFromUser = isPaid(user: user);
+      if (!isClosed && isPaidFromUser != state.isPaidUser) {
+        add(RoomIsPaidUserUpdated(isPaidUser: isPaidFromUser));
+      }
+    } catch (e) {
+      l.logger.w('[RoomBloc] Error verifying paid user status: $e');
+    }
+  }
+
   Future<void> _onRoomInitialized(
     RoomInitialized event,
     Emitter<RoomState> emit,
@@ -466,17 +490,18 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       await scope.setTag('meeting_link_name', state.meetInfo.meetLinkName);
     });
 
-    final appCoreManager = ManagerFactory().get<AppCoreManager>();
-    final userID = appCoreManager.userID;
-    if (userID != null) {
-      await appCoreManager.appCore
-          .getUser(userId: userID)
-          .then((value) {
-            emit(state.copyWith(isPaidUser: isPaid(user: value)));
-          })
-          .catchError((e) {
-            l.logger.e("error getting user: $e");
-          });
+    final localHostHint =
+        event.isMeetingHost || event.preJoinType == PreJoinType.create;
+    emit(
+      state.copyWith(
+        isPaidUser: event.isPaidUser,
+        localHostHint: localHostHint,
+      ),
+    );
+
+    final userId = ManagerFactory().get<AppCoreManager>().userID;
+    if (userId != null) {
+      unawaited(_isPaidUserSafeGuard(userId));
     }
 
     // Start checking if user is alone
@@ -609,13 +634,19 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       _audioSessionDevicesSub = audioSession.devicesChangedEventStream.listen((
         _,
       ) async {
-        if (state.isRejoining) {
+        if (isClosed || state.isRejoining) {
           return;
         }
         final hardwareDevices = await Hardware.instance.enumerateDevices();
+        if (isClosed) {
+          return;
+        }
         final capabilities = await AudioOutputProbe.detectFromSpeakerDevices(
           hardwareDevices.where((d) => d.kind == 'audiooutput'),
         );
+        if (isClosed) {
+          return;
+        }
         if (capabilities.hasExternal != state.hasExternalAudioOutput ||
             capabilities.hasBluetooth != state.hasBluetoothAudioOutput) {
           add(
@@ -643,6 +674,9 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     _deviceChangeSub = Hardware.instance.onDeviceChange.stream.listen((
       value,
     ) async {
+      if (isClosed) {
+        return;
+      }
       // skip when rejoin is in progress
       if (state.isRejoining) {
         l.logger.d(
@@ -661,6 +695,9 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       final capabilities = await AudioOutputProbe.detect(
         labelSuggestsExternal: nextHasExternal,
       );
+      if (isClosed) {
+        return;
+      }
 
       add(
         AudioOutputDevicesChanged(
@@ -671,11 +708,18 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       );
     });
 
-    _watchDogTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
+    _watchDogTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
+      if (isClosed) {
+        timer.cancel();
+        return;
+      }
       // every track pub/unpub, raise hand / un-raised hand, speaking event
       // will trigger a sort, so we don't need to sort periodically
       // add(SortParticipants());
       add(MlsGroupUpdated());
+      if (isClosed) {
+        return;
+      }
       // Calculate elapsed time from call start
       final elapsedSeconds = _callStartTime != null
           ? DateTime.now().difference(_callStartTime!).inSeconds
@@ -741,6 +785,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       );
     } else {
       try {
+        final appCoreManager = ManagerFactory().get<AppCoreManager>();
         final meetingInfo = await appCoreManager.appCore.getMeetingInfo(
           meetingLinkName: event.meetLinkName,
         );

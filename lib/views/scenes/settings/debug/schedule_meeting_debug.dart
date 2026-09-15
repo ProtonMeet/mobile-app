@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
-import 'package:meet/rust/proton_meet/user_subscription.dart' as user_sub;
 import 'package:meet/views/scenes/core/coordinator.dart';
 import 'package:meet/views/scenes/dashboard/schedule/schedule_meeting_dialog.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
@@ -18,8 +17,7 @@ final class ScheduleMeetingDebugMenu {
       return;
     }
 
-    final user = authBloc?.state.user;
-    final isPaidUser = user != null && user_sub.isPaid(user: user);
+    final isPaidUser = authBloc?.state.isPaidUser ?? false;
 
     Navigator.of(context).pop();
     WidgetsBinding.instance.addPostFrameCallback((_) {

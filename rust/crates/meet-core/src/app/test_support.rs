@@ -26,7 +26,7 @@ use crate::infra::{
 };
 use crate::service::auth::{ArcAuthService, AuthServiceImpl};
 use crate::service::caption::{ArcCaptionService, CaptionServiceImpl};
-use crate::service::services_bundle::ServicesBundle;
+use crate::service::services_bundle::ServiceBundle;
 use crate::service::user_service::{create_mock_mls_api, Service};
 use crate::utils::server_time::ServerTimeTracker;
 
@@ -223,7 +223,7 @@ pub async fn build_app_with_http(state: AppState, http_client: Arc<ProtonHttpCli
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        Arc::new(ServicesBundle::new(
+        Arc::new(ServiceBundle::new(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
@@ -248,7 +248,7 @@ pub async fn build_app_with_test_http(
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        Arc::new(ServicesBundle::new(
+        Arc::new(ServiceBundle::new(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
@@ -272,7 +272,7 @@ pub async fn build_app_with_test_mls_api(
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        Arc::new(ServicesBundle::new(
+        Arc::new(ServiceBundle::new(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
@@ -293,7 +293,7 @@ pub async fn build_app_with_service(state: AppState, service: Service) -> App {
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        Arc::new(ServicesBundle::new(
+        Arc::new(ServiceBundle::new(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
@@ -314,7 +314,7 @@ pub async fn build_app_with_auth_service(state: AppState, auth_service: ArcAuthS
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        Arc::new(ServicesBundle::new(
+        Arc::new(ServiceBundle::new(
             minimal_room_service(),
             minimal_waiting_room_service(),
             auth_service,
@@ -339,7 +339,7 @@ pub async fn build_app_with_service_and_mls_api(
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        Arc::new(ServicesBundle::new(
+        Arc::new(ServiceBundle::new(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
@@ -492,7 +492,7 @@ pub async fn build_app_with_room(state: AppState, room_service: RoomService) -> 
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        Arc::new(ServicesBundle::new(
+        Arc::new(ServiceBundle::new(
             Arc::new(room_service),
             minimal_waiting_room_service(),
             minimal_auth_service(),
@@ -517,7 +517,7 @@ pub async fn build_app_with_room_and_ws(
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        Arc::new(ServicesBundle::new(
+        Arc::new(ServiceBundle::new(
             Arc::new(room_service),
             minimal_waiting_room_service(),
             minimal_auth_service(),
@@ -543,7 +543,7 @@ pub async fn build_app_with_room_and_service(
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        Arc::new(ServicesBundle::new(
+        Arc::new(ServiceBundle::new(
             Arc::new(room_service),
             minimal_waiting_room_service(),
             minimal_auth_service(),
@@ -568,7 +568,7 @@ pub async fn build_app_with_ws_and_service(
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        Arc::new(ServicesBundle::new(
+        Arc::new(ServiceBundle::new(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
@@ -592,7 +592,7 @@ pub async fn build_app_with_user_key_provider(
         http_client.clone(),
         http_client,
         user_key_provider,
-        Arc::new(ServicesBundle::new(
+        Arc::new(ServiceBundle::new(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
@@ -617,7 +617,7 @@ pub async fn build_app_with_room_and_user_key_provider(
         http_client.clone(),
         http_client,
         user_key_provider,
-        Arc::new(ServicesBundle::new(
+        Arc::new(ServiceBundle::new(
             Arc::new(room_service),
             minimal_waiting_room_service(),
             minimal_auth_service(),
@@ -638,7 +638,7 @@ pub async fn build_app_with_ws(ws: MockWebSocketClient, state: AppState) -> App 
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        Arc::new(ServicesBundle::new(
+        Arc::new(ServiceBundle::new(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
@@ -800,7 +800,7 @@ pub async fn build_app_with_service_room_and_ws(
         http_client.clone(),
         http_client,
         minimal_user_key_provider(),
-        Arc::new(ServicesBundle::new(
+        Arc::new(ServiceBundle::new(
             Arc::new(room_service),
             minimal_waiting_room_service(),
             minimal_auth_service(),

@@ -93,7 +93,11 @@ class ChatController extends ChangeNotifier {
   }
 
   void updateLocalIdentity(String identity) {
-    if (identity.isNotEmpty) localIdentity = identity;
+    if (identity.isEmpty || localIdentity == identity) {
+      return;
+    }
+    localIdentity = identity;
+    notifyListeners();
   }
 
   void setChatOpen({required bool open}) {

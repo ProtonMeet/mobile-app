@@ -35,7 +35,7 @@ async fn fetch_toggles_propagates_http_error() {
 async fn set_livekit_active_uuids_errors_without_participant() {
     let app = build_app(default_app_state()).await;
     let err = app
-        .set_livekit_active_uuids(vec!["uuid".to_string()])
+        .set_livekit_active_uuids(vec!["uuid".to_string()], false)
         .await
         .unwrap_err();
     assert!(matches!(err, MeetCoreError::ParticipantNotFound));
