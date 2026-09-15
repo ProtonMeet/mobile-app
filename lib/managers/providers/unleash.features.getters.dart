@@ -108,4 +108,7 @@ extension UnleashDataProviderFeatureGetters on UnleashDataProvider {
   /// disabled, so this is a preview / QA gate rather than a product feature.
   bool isMeetSettingsPreview() =>
       isFeatureEnabled(UnleashFeature.meetSettingsPreview);
+
+  bool isMeetNewJoinFunctions() =>
+      isFeatureEnabled(UnleashFeature.meetNewJoinFunctions);
 }

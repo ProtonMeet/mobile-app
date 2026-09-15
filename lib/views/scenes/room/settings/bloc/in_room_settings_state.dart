@@ -141,22 +141,21 @@ class InRoomSettingsState extends Equatable {
       lockMeeting: lockMeeting ?? this.lockMeeting,
       waitingRoomEnabled: waitingRoomEnabled ?? this.waitingRoomEnabled,
       pendingToggles: pendingToggles ?? this.pendingToggles,
-      incomingVideoEnabled:
-          incomingVideoEnabled ?? this.incomingVideoEnabled,
+      incomingVideoEnabled: incomingVideoEnabled ?? this.incomingVideoEnabled,
       selfViewEnabled: selfViewEnabled ?? this.selfViewEnabled,
       showAudioDenoise: showAudioDenoise ?? this.showAudioDenoise,
       audioDenoiseEnabled: audioDenoiseEnabled ?? this.audioDenoiseEnabled,
       audioDenoiseTypes: audioDenoiseTypes ?? this.audioDenoiseTypes,
       selectedAudioDenoiseType:
           selectedAudioDenoiseType ?? this.selectedAudioDenoiseType,
-      showCameraBackground:
-          showCameraBackground ?? this.showCameraBackground,
+      showCameraBackground: showCameraBackground ?? this.showCameraBackground,
       cameraBackgroundSelection:
           cameraBackgroundSelection ?? this.cameraBackgroundSelection,
       showConnectionSettings:
           showConnectionSettings ?? this.showConnectionSettings,
       isRejoining: isRejoining ?? this.isRejoining,
-      forceShowConnectionStatusBanner: forceShowConnectionStatusBanner ??
+      forceShowConnectionStatusBanner:
+          forceShowConnectionStatusBanner ??
           this.forceShowConnectionStatusBanner,
       bindingsRevision: bindingsRevision ?? this.bindingsRevision,
       onIncomingVideoChanged:

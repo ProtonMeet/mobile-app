@@ -285,20 +285,14 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         if (isClosed) {
           return;
         }
-        controller.removeReaction(
-          replacesId: composed.id,
-          identity: localId,
-        );
+        controller.removeReaction(replacesId: composed.id, identity: localId);
       }
     } catch (e) {
       l.logger.e('[ChatBloc] toggling reaction failed: $e');
     }
   }
 
-  void _onMessageReceived(
-    ChatMessageReceived event,
-    Emitter<ChatState> emit,
-  ) {
+  void _onMessageReceived(ChatMessageReceived event, Emitter<ChatState> emit) {
     final message = RoomChatMessage(
       id: event.id,
       message: event.message,
@@ -342,7 +336,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
     final targetId = event.targetId;
     final emoji = event.emoji;
-    if (targetId == null || emoji == null || emoji.isEmpty || emoji.length > 10) {
+    if (targetId == null ||
+        emoji == null ||
+        emoji.isEmpty ||
+        emoji.length > 10) {
       return;
     }
     controller.addReaction(

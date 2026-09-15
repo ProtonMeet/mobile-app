@@ -433,7 +433,7 @@ async fn join_room_with_switch_join_type_falls_back_to_false_on_retryable_error(
     state.active_user_info = Some(joiner_token);
     let app = build_app_with_service(state, join_service).await;
 
-    app.join_room_with_switch_join_type(true, false)
+    app.join_room_with_switch_join_type2(false)
         .await
         .expect("should fall back to external commit after retryable proposal failures");
 
@@ -476,11 +476,12 @@ mod manual {
                 user_id.clone(),
             )
             .await?;
-        app.join_meeting_with_access_token(
-            meet_info.access_token,
-            meeting_link_name.to_string(),
-            meeting_link_p.to_string(),
+        app.join_meeting2(
+            meet_info.access_token.into(),
+            meeting_link_name.to_string().into(),
+            meeting_link_p.to_string().into(),
             None,
+            false,
         )
         .await?;
 

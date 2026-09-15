@@ -5,11 +5,7 @@ import 'package:meet/views/components/settings/settings_nav_row.dart';
 
 /// Nav row for settings that are visible in preview but not implemented yet.
 class SettingsPreviewNavRow extends StatelessWidget {
-  const SettingsPreviewNavRow({
-    required this.title,
-    super.key,
-    this.overline,
-  });
+  const SettingsPreviewNavRow({required this.title, super.key, this.overline});
 
   final String title;
   final String? overline;

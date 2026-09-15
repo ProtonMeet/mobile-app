@@ -125,6 +125,11 @@ enum UnleashFeature {
   meetSettingsPreview(
     'MeetSettingsPreview',
     clientDefault: FeatureClientDefault.off,
+  ),
+
+  meetNewJoinFunctions(
+    'MeetNewJoinFunctions',
+    clientDefault: FeatureClientDefault.off,
   );
 
   const UnleashFeature(this.toggleName, {this.clientDefault, this.parent});
