@@ -78,6 +78,28 @@ mixin RoomFeatureFlagsHandlers on Bloc<RoomBlocEvent, RoomState> {
     }
   }
 
+  /// Check if old Android SDK warning banner is enabled via feature flag.
+  bool isOldAndroidSdkWarningEnabled() {
+    try {
+      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
+      return dataProviderManager.unleashDataProvider.isOldAndroidSdkWarning();
+    } catch (e) {
+      l.logger.w('[RoomBloc] Error checking OldAndroidSdkWarning flag: $e');
+      return false;
+    }
+  }
+
+  /// Check if old iOS version warning banner is enabled via feature flag.
+  bool isOldIosSdkWarningEnabled() {
+    try {
+      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
+      return dataProviderManager.unleashDataProvider.isOldIosSdkWarning();
+    } catch (e) {
+      l.logger.w('[RoomBloc] Error checking OldIosSdkWarning flag: $e');
+      return false;
+    }
+  }
+
   /// Check if Mobile Enable Network Tool feature is enabled via feature flag
   bool isMeetMobileEnableNetworkToolEnabled() {
     try {

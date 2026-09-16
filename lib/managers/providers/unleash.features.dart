@@ -81,6 +81,12 @@ enum UnleashFeature {
   /// When enabled, show a warning banner on join for outdated mobile clients.
   meetMobileUpgradeWarning('MeetMobileUpgradeWarning'),
 
+  /// When enabled, warn on Android 7/8 devices (API level below 28).
+  oldAndroidSdkWarning('OldAndroidSdkWarning'),
+
+  /// When enabled, warn on iOS versions below 17.
+  oldIosSdkWarning('OldIosSdkWarning'),
+
   // Native camera background blur (iOS / Android / macOS).
   meetCameraBackgroundBlur('MeetCameraBackgroundBlur'),
 

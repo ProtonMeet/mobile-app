@@ -44,6 +44,8 @@ void main() {
     ((p) => p.isMeetCameraBackgroundBlur(), 'MeetCameraBackgroundBlur'),
     ((p) => p.isMeetMobileInAppUpdate(), 'MeetMobileInAppUpdate'),
     ((p) => p.isMeetMobileUpgradeWarning(), 'MeetMobileUpgradeWarning'),
+    ((p) => p.isOldAndroidSdkWarning(), 'OldAndroidSdkWarning'),
+    ((p) => p.isOldIosSdkWarning(), 'OldIosSdkWarning'),
     ((p) => p.isMeetAudioDenoise(), 'MeetAudioDenoise'),
     ((p) => p.isMeetAudioDenoiseRnnoise(), 'MeetAudioDenoiseRnnoise'),
     ((p) => p.isMeetAudioDenoiseDeepfilter(), 'MeetAudioDenoiseDeepfilter'),
@@ -93,7 +95,7 @@ void main() {
 
   group('UnleashDataProviderFeatureGetters', () {
     test('covers every extension getter', () {
-      expect(getterCases, hasLength(35));
+      expect(getterCases, hasLength(37));
     });
 
     test('each getter reads its unleash toggle when enabled', () async {
