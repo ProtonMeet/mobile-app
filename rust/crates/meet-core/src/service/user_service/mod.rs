@@ -2134,6 +2134,8 @@ impl UserService for Service {
 
         let mut state = self.state.lock().await;
         state.reset();
+        drop(state);
+
         if let Ok(s) = self.services() {
             s.reset().await;
         }

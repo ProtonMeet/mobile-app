@@ -200,13 +200,9 @@ impl CaptionServiceImpl {
                 .clone()
         };
         let rank = {
+            let service = self.user_service.read().await;
             let mls_group = group_arc.read().await;
-            self.user_service
-                .read()
-                .await
-                .committer_rank(&mls_group)
-                .await?
-                .1
+            service.committer_rank(&mls_group).await?.1
         };
 
         if let StaggerOutcome::HandledElsewhere = self
@@ -398,12 +394,9 @@ impl CaptionService for CaptionServiceImpl {
         }
 
         let (epoch_at_start, rank) = {
+            let service = self.user_service.read().await;
             let mls_group = group_arc.read().await;
-            self.user_service
-                .read()
-                .await
-                .committer_rank(&mls_group)
-                .await?
+            service.committer_rank(&mls_group).await?
         };
 
         if let StaggerOutcome::HandledElsewhere = self
@@ -578,10 +571,9 @@ impl CaptionService for CaptionServiceImpl {
 
         drop(mls_group);
 
-        self.user_service
-            .read()
-            .await
-            .handlers
+        // Clone handlers to avoid possible deadlock on `self.user_service`
+        let handlers = self.user_service.read().await.handlers.clone();
+        handlers
             .call_mls_group_update_handler(room_id, GroupKeyUpdateReason::Join)
             .await;
 
@@ -724,10 +716,9 @@ impl CaptionService for CaptionServiceImpl {
                 mls_group.merge_pending_commit().await?;
                 drop(mls_group);
 
-                self.user_service
-                    .read()
-                    .await
-                    .handlers
+                // Clone handlers to avoid possible deadlock on `self.user_service`
+                let handlers = self.user_service.read().await.handlers.clone();
+                handlers
                     .call_mls_group_update_handler(room_id, GroupKeyUpdateReason::Leave)
                     .await;
                 Ok(())
