@@ -31,6 +31,9 @@ class InRoomSettingsBloc
     on<InRoomSettingsBindingsUpdated>(_onBindingsUpdated);
     on<InRoomLockMeetingToggled>(_onLockMeetingToggled);
     on<InRoomWaitingRoomToggled>(_onWaitingRoomToggled);
+    on<InRoomLiveCaptionsAvailabilityToggled>(
+      _onLiveCaptionsAvailabilityToggled,
+    );
     on<InRoomIncomingVideoToggled>(_onIncomingVideoToggled);
     on<InRoomSelfViewToggled>(_onSelfViewToggled);
     on<InRoomHostStatusUpdated>(_onHostStatusUpdated);
@@ -181,6 +184,25 @@ class InRoomSettingsBloc
       emit: emit,
       onSuccess: ({required bool value}) =>
           state.copyWith(waitingRoomEnabled: value),
+    );
+  }
+
+  Future<void> _onLiveCaptionsAvailabilityToggled(
+    InRoomLiveCaptionsAvailabilityToggled event,
+    Emitter<InRoomSettingsState> emit,
+  ) async {
+    if (!state.showLiveCaptions) {
+      return;
+    }
+
+    await _runHostToggle(
+      toggle: InRoomPendingToggle.liveCaptionsAvailability,
+      value: event.enabled,
+      action: () =>
+          _transport.toggleLiveCaptionsAvailability(value: event.enabled),
+      emit: emit,
+      onSuccess: ({required bool value}) =>
+          state.copyWith(liveCaptionsAvailableForParticipants: value),
     );
   }
 

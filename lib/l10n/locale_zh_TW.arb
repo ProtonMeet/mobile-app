@@ -165,6 +165,18 @@
   "@waiting_room_disabled_notification": {
     "description": "Global notification when the host disables waiting room in meeting settings"
   },
+  "allow_live_captions": "允許即時字幕",
+  "@allow_live_captions": {
+    "description": "Host security setting to let participants use live captions"
+  },
+  "allow_live_captions_on_description": "參與者可開啟即時字幕。您可在「顯示」中開啟自己的字幕。",
+  "@allow_live_captions_on_description": {
+    "description": "Live captions availability switch description when enabled for participants"
+  },
+  "allow_live_captions_off_description": "參與者無法使用即時字幕",
+  "@allow_live_captions_off_description": {
+    "description": "Live captions availability switch description when disabled for participants"
+  },
   "hide_self_view": "Hide self view",
   "allow_all_participants_to": "Allow all participants to:",
   "chat": "聊天",
@@ -2264,5 +2276,21 @@
   "mobile_upgrade_warning_link": "upgrade to the latest version",
   "@mobile_upgrade_warning_link": {
     "description": "Tappable link text in the outdated mobile client warning; opens the app store"
-  }
+  },
+  "live_captions": "即時字幕",
+  "live_captions_accessibility": "無障礙功能",
+  "live_captions_modal_title": "要開啟即時字幕嗎？",
+  "live_captions_modal_message": "字幕功能需要存取會議音訊。字幕僅對您可見，且不會被儲存。",
+  "live_captions_enable": "開啟字幕",
+  "live_captions_spoken_language": "口語語言",
+  "live_captions_loading": "載入中…",
+  "live_captions_ready": "字幕已開啟",
+  "live_captions_failing": "即時字幕無法使用。請嘗試關閉後再重新開啟。",
+  "live_captions_summon_failed": "無法啟動即時字幕，請稍後再試。",
+  "live_captions_disabled_by_host": "主持人已關閉此會議的即時字幕功能。",
+  "live_captions_agent_transcribing": "轉錄中…",
+  "live_captions_agent_name": "即時字幕代理",
+  "live_captions_agent_disclaimer": "此系統代理會產生即時字幕。它不是會議參與者，也無法傳送訊息。",
+  "participant_list_system_section": "系統",
+  "participant_list_people_section": "與會者"
 }

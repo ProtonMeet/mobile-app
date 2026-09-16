@@ -170,7 +170,6 @@ class _VirtualBackgroundDebugScreenState
     unawaited(_applyMaskEdgeLive());
   }
 
-
   Future<void> _startCamera() async {
     await _stopCamera();
     if (!_permissionGranted || !_effectsReady) {

@@ -166,4 +166,29 @@ mixin RoomFeatureFlagsHandlers on Bloc<RoomBlocEvent, RoomState> {
       return false;
     }
   }
+
+  /// Main switch for in-room live captions UI and preference writes.
+  bool isMeetLiveCaptionsEnabled() {
+    try {
+      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
+      return dataProviderManager.unleashDataProvider.isMeetLiveCaptions();
+    } catch (e) {
+      l.logger.w('[RoomBloc] Error checking MeetLiveCaptions flag: $e');
+      return false;
+    }
+  }
+
+  /// Spoken-language picker in meeting settings and captions sheet header.
+  bool isMeetLiveCaptionsLanguageSelectorEnabled() {
+    try {
+      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
+      return dataProviderManager.unleashDataProvider
+          .isMeetLiveCaptionsLanguageSelector();
+    } catch (e) {
+      l.logger.w(
+        '[RoomBloc] Error checking MeetLiveCaptionsLanguageSelector flag: $e',
+      );
+      return false;
+    }
+  }
 }

@@ -118,6 +118,16 @@ enum UnleashFeature {
     clientDefault: FeatureClientDefault.off,
   ),
 
+  /// Main switch for live captions (Settings UI and related flows).
+  meetLiveCaptions('MeetLiveCaptions'),
+
+  /// Spoken-language picker in meeting settings and captions sheet header.
+  /// Gated by [meetLiveCaptions].
+  meetLiveCaptionsLanguageSelector(
+    'MeetLiveCaptionsLanguageSelector',
+    parent: meetLiveCaptions,
+  ),
+
   /// Shows settings rows that are designed but not wired to logic yet
   /// (appearance, live captions, transcription, device tests, meeting timer,
   /// picture-in-picture while sharing). They render disabled. Off by default;

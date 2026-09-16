@@ -9,6 +9,7 @@ import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/subscribe_retry_backoff.dart';
 import 'package:meet/managers/channels/call_activity_channel.dart';
 import 'package:meet/managers/room.manager.dart' show RoomManager;
+import 'package:meet/models/live_captions/live_caption_agent.dart';
 import 'package:sentry/sentry.dart';
 
 import 'room_bloc_pip.dart';
@@ -332,6 +333,9 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
   void _subscribeAudioAndScreenShareForParticipant(
     RemoteParticipant participant,
   ) {
+    if (isCaptionAgent(participant)) {
+      return;
+    }
     for (final pub in participant.trackPublications.values) {
       _subscribeIfAudioOrScreenShare(pub);
     }
@@ -385,6 +389,9 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
     _reconcilingInFlightAudioSubscribes = true;
     try {
       for (final participant in state.room.remoteParticipants.values) {
+        if (isCaptionAgent(participant)) {
+          continue;
+        }
         for (final pub in participant.audioTrackPublications) {
           final sid = pub.sid;
           if (_pendingSubscribeSids.contains(sid) ||
@@ -473,6 +480,10 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
         // Idempotent with the TrackPublishedEvent handler below.
         _subscribeAudioAndScreenShareForParticipant(event.participant);
       })
+      ..on<ParticipantAttributesChanged>((event) {
+        // Currently, participant attributes are only used for live captions.
+        add(BridgeParticipantAttributesChanged(event));
+      })
       ..on<ParticipantDisconnectedEvent>((event) {
         // Defensive: drop all pending sids belonging to this participant
         // in case TrackUnsubscribedEvent does not fire on disconnect
@@ -525,7 +536,9 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
         // Apply the audio + screen-share subscribe policy on every newly
         // published track (autoSubscribe: false means nothing flows
         // otherwise). Camera video is intentionally skipped here.
-        _subscribeIfAudioOrScreenShare(event.publication);
+        if (!isCaptionAgent(event.participant)) {
+          _subscribeIfAudioOrScreenShare(event.publication);
+        }
         await _handleMuteAudioTrackIfSpeakerMuted(event.participant);
         _handleUnsubscribeVideoByDefault(event.publication);
         if (event.publication.kind == TrackType.VIDEO) {
@@ -548,7 +561,8 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
         // dropped idle mics), pull it back here so the unmute is audible.
         // No-op when already subscribed.
         final pub = event.publication;
-        if (pub is RemoteTrackPublication) {
+        if (pub is RemoteTrackPublication &&
+            !isCaptionAgent(event.participant)) {
           _subscribeIfAudioOrScreenShare(pub);
         }
         await _handleMuteAudioTrackIfSpeakerMuted(event.participant);

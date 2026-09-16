@@ -353,7 +353,6 @@ class _BackgroundBlurDebugScreenState extends State<BackgroundBlurDebugScreen> {
     }
   }
 
-
   Future<void> _copyConfig() async {
     final buffer = StringBuffer()
       ..writeln('defaultBlurSigma => $_blurSigma')

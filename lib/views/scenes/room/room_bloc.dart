@@ -23,6 +23,7 @@ import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/managers/providers/unleash.data.provider.dart';
 import 'package:meet/managers/room.manager.dart';
 import 'package:meet/managers/services/denoise_audio.service.dart';
+import 'package:meet/models/live_captions/live_caption_agent.dart';
 import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/rust/proton_meet/models/meet_info.dart';
 import 'package:meet/rust/proton_meet/user_subscription.dart';
@@ -37,6 +38,9 @@ import 'room_bloc_connection_check.dart';
 import 'room_bloc_data.dart';
 import 'room_bloc_debug_logging.dart';
 import 'room_bloc_feature_flags.dart';
+import 'room_bloc_live_captions.dart';
+import 'room_bloc_live_captions_agent.dart';
+import 'room_bloc_live_captions_transcriptions.dart';
 import 'room_bloc_participants.dart';
 import 'room_bloc_pip.dart';
 import 'room_bloc_reconnection_listeners.dart';
@@ -71,6 +75,9 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
         RoomRejoinHandlers,
         RoomReconnectionListeners,
         RoomBlocDebugLogging,
+        RoomLiveCaptionsTranscriptionHandlers,
+        RoomLiveCaptionsHandlers,
+        RoomLiveCaptionsAgentHandlers,
         RoomSettingsHandlers {
   Timer? _watchDogTimer;
   DateTime? _callStartTime;
@@ -189,9 +196,14 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
 
     await clearWaitingRoomCallbacks();
 
+    await clearLiveCaptionsAgentAdmissionCallbacks();
+
     await CallActivityChannel.end();
 
     await disposePip();
+
+    teardownLiveCaptionsTranscriptionHandler();
+    teardownLiveCaptionsAgentLifecycle();
 
     // Dispose room manager
     await roomManager?.dispose();
@@ -299,6 +311,9 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     /// register settings handlers
     /// see: room_bloc_settings.dart
     registerSettingsHandlers();
+    registerLiveCaptionsHandlers();
+    registerLiveCaptionsTranscriptionHandlers();
+    registerLiveCaptionsAgentHandlers();
 
     on<ParticipantRecordingStarted>(_onParticipantRecordingStarted);
     on<ParticipantRecordingStopped>(_onParticipantRecordingStopped);
@@ -521,8 +536,18 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     // Register waiting-room join request callbacks (host receives live updates)
     await registerWaitingRoomCallbacks();
 
+    // MLS agent admission (AgentPending → admitAgent)
+    unawaited(registerLiveCaptionsAgentAdmissionCallbacks());
+
     // Setup LiveKit listeners (bridge) See: room_event_bridge.dart
     setUpListeners();
+
+    if (isMeetLiveCaptionsEnabled()) {
+      ensureLiveCaptionsTranscriptionHandler(room: event.room);
+      if (event.room.remoteParticipants.values.any(isCaptionAgent)) {
+        add(const LiveCaptionsCaptionAgentConnected());
+      }
+    }
 
     unawaited(DenoiseAudioService.instance.warmUpDeepFilterIfNeeded());
 

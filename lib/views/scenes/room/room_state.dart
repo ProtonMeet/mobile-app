@@ -1,8 +1,10 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
 import 'package:livekit_client/livekit_client.dart';
+import 'package:meet/constants/live_captions_constants.dart';
 import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
+import 'package:meet/models/live_captions/live_captions_models.dart';
 import 'package:meet/rust/proton_meet/models/meet_info.dart';
 import 'package:meet/rust/proton_meet/models/meet_participant.dart';
 import 'package:meet/rust/proton_meet/models/meeting_info.dart';
@@ -296,6 +298,27 @@ class RoomState extends Equatable {
   /// the banner can pick a "first" recorder deterministically.
   final List<String> participantsRecording;
 
+  /// Local user wants live captions (`wants_captions === 'true'`).
+  final bool liveCaptionsWanted;
+
+  /// Normalized STT language for UI (`multi` when auto-detect).
+  final String liveCaptionLanguage;
+
+  /// True while a caption preference attribute write is in flight.
+  final bool isLiveCaptionsPreferenceWriteInFlight;
+
+  /// Caption bar pipeline output (step 006 wires real transcription data).
+  final Transcriptions liveCaptionsTranscriptions;
+
+  /// Bumped when any participant caption attribute changes (wanters / UI sync).
+  final int liveCaptionsAttributesGeneration;
+
+  /// One-shot flag: agent summon timed out; [RoomPage] shows a toast then clears.
+  final bool shouldShowLiveCaptionsSummonFailedError;
+
+  /// Host-controlled: whether participants may turn on live captions.
+  final bool liveCaptionsAvailableForParticipants;
+
   /// True if anyone in the room is currently recording.
   bool get isRecordingInProgress => participantsRecording.isNotEmpty;
 
@@ -451,6 +474,13 @@ class RoomState extends Equatable {
     this.currentAudioOutputDeviceId,
     this.participantsRecording = const [],
     this.localRecordingElapsedSeconds = 0,
+    this.liveCaptionsWanted = false,
+    this.liveCaptionLanguage = LiveCaptionsConstants.defaultCaptionLanguage,
+    this.isLiveCaptionsPreferenceWriteInFlight = false,
+    this.liveCaptionsTranscriptions = Transcriptions.empty,
+    this.liveCaptionsAttributesGeneration = 0,
+    this.shouldShowLiveCaptionsSummonFailedError = false,
+    this.liveCaptionsAvailableForParticipants = true,
   });
 
   RoomState copyWith({
@@ -530,6 +560,13 @@ class RoomState extends Equatable {
     String? currentAudioOutputDeviceId,
     List<String>? participantsRecording,
     int? localRecordingElapsedSeconds,
+    bool? liveCaptionsWanted,
+    String? liveCaptionLanguage,
+    bool? isLiveCaptionsPreferenceWriteInFlight,
+    Transcriptions? liveCaptionsTranscriptions,
+    int? liveCaptionsAttributesGeneration,
+    bool? shouldShowLiveCaptionsSummonFailedError,
+    bool? liveCaptionsAvailableForParticipants,
   }) {
     return RoomState(
       room: room,
@@ -645,6 +682,22 @@ class RoomState extends Equatable {
           participantsRecording ?? this.participantsRecording,
       localRecordingElapsedSeconds:
           localRecordingElapsedSeconds ?? this.localRecordingElapsedSeconds,
+      liveCaptionsWanted: liveCaptionsWanted ?? this.liveCaptionsWanted,
+      liveCaptionLanguage: liveCaptionLanguage ?? this.liveCaptionLanguage,
+      isLiveCaptionsPreferenceWriteInFlight:
+          isLiveCaptionsPreferenceWriteInFlight ??
+          this.isLiveCaptionsPreferenceWriteInFlight,
+      liveCaptionsTranscriptions:
+          liveCaptionsTranscriptions ?? this.liveCaptionsTranscriptions,
+      liveCaptionsAttributesGeneration:
+          liveCaptionsAttributesGeneration ??
+          this.liveCaptionsAttributesGeneration,
+      shouldShowLiveCaptionsSummonFailedError:
+          shouldShowLiveCaptionsSummonFailedError ??
+          this.shouldShowLiveCaptionsSummonFailedError,
+      liveCaptionsAvailableForParticipants:
+          liveCaptionsAvailableForParticipants ??
+          this.liveCaptionsAvailableForParticipants,
     );
   }
 
@@ -733,5 +786,12 @@ class RoomState extends Equatable {
     currentAudioOutputDeviceId,
     participantsRecording,
     localRecordingElapsedSeconds,
+    liveCaptionsWanted,
+    liveCaptionLanguage,
+    isLiveCaptionsPreferenceWriteInFlight,
+    liveCaptionsTranscriptions,
+    liveCaptionsAttributesGeneration,
+    shouldShowLiveCaptionsSummonFailedError,
+    liveCaptionsAvailableForParticipants,
   ];
 }

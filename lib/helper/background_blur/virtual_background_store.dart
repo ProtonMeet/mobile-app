@@ -36,7 +36,8 @@ class VirtualBackgroundStore {
   /// disk regardless, since [_resetDirectory] empties the directory first.
   static Future<File> store(Uint8List bytes, {String? displayName}) async {
     final directory = await _resetDirectory();
-    final name = '${_fileStem}_${_storeSequence++}${_extensionFor(displayName)}';
+    final name =
+        '${_fileStem}_${_storeSequence++}${_extensionFor(displayName)}';
     final file = File(p.join(directory.path, name));
     await file.writeAsBytes(bytes, flush: true);
     return file;
