@@ -16,7 +16,7 @@ import ProtonCoreLog
 import ProtonCoreLogin
 import ProtonCoreLoginUI
 import ProtonCoreNetworking
-import ProtonCorePayments
+import ProtonCorePaymentsV2
 import ProtonCoreServices
 import ProtonCoreSettings
 import ProtonCoreUIFoundations
@@ -320,6 +320,9 @@ import app_links
               details: nil))
         }
       case "native.account.logout":
+        self.paymentsManager?.stopTransactionObserver()
+        self.paymentsManager = nil
+        TransactionsObserver.shared.stop()
         self.authManager = AuthHelper()
         apiService?.authDelegate = authManager
         print("native.account.logout triggered")
@@ -414,6 +417,7 @@ import app_links
     }
     FeatureFlagsRepository.shared.setApiService(apiService)
     FeatureFlagsRepository.shared.setFlagOverride(CoreFeatureFlagType.dynamicPlan, true)
+    FeatureFlagsRepository.shared.setFlagOverride(CoreFeatureFlagType.paymentsOmnichannelEnabled, true)
 
     Task {
       do {
@@ -586,20 +590,29 @@ import app_links
       scopes: scopes,
       mailboxPassword: "")
     let authDelegate = AuthHelper(credential: auth)
+    // authDelegate on APIService is weak; retain credentials for the payments session.
+    self.authManager = authDelegate
     apiService.authDelegate = authDelegate
-    self.paymentsManager = PaymentsManager(
-      storage: UserDefaults(),
-      apiService: apiService,
-      authManager: authDelegate)
+    self.paymentsManager?.stopTransactionObserver()
+    self.paymentsManager = PaymentsManager(apiService: apiService)
 
     if upgradePlan {
-      self.paymentsManager?.upgradeSubscription(completion: { [weak self] result in
-        guard self != nil else { return }
-        // nothing for now
+      self.paymentsManager?.upgradeSubscription(completion: { result in
+        switch result {
+        case .success(let purchased):
+          PMLog.info("Upgrade flow finished. purchased=\(purchased)")
+        case .failure(let error):
+          PMLog.info("Upgrade flow failed: \(error)")
+        }
       })
     } else {
-      self.paymentsManager?.manageSubscription(completion: { [weak self] result in
-        guard self != nil else { return }
+      self.paymentsManager?.manageSubscription(completion: { result in
+        switch result {
+        case .success(let purchased):
+          PMLog.info("Subscription flow finished. purchased=\(purchased)")
+        case .failure(let error):
+          PMLog.info("Subscription flow failed: \(error)")
+        }
       })
     }
   }

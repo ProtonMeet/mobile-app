@@ -2,152 +2,122 @@
 //  PaymentsManager.swift
 //
 
+import Combine
 import Foundation
-import ProtonCoreFeatureFlags
 import ProtonCoreLog
-import ProtonCorePayments
-import ProtonCorePaymentsUI
+import ProtonCorePaymentsUIV2
+import ProtonCorePaymentsV2
 import ProtonCoreServices
-import ProtonCoreUIFoundations
 
 final class PaymentsManager {
-    typealias PaymentsResult = Result<InAppPurchasePlan?, Error>
+    typealias PaymentsResult = Result<Bool, Error>
 
     private let apiService: APIService
-    private let payments: Payments
-    private var paymentsUI: PaymentsUI?
-    private let authManager: AuthDelegate
-    private let inMemoryTokenStorage: PaymentTokenStorage = InMemoryTokenStorage()
+    private let paymentsV2 = PaymentsV2()
+    private var cancellables = Set<AnyCancellable>()
+    private var hasReportedCompletion = false
 
-    init(storage: UserDefaults,
-         apiService: APIService,
-         authManager: AuthDelegate,
-         bugAlertHandler: BugAlertHandler = nil) {
-        let persistentDataStorage = UserDefaultsServicePlanDataStorage(storage: storage)
+    init(apiService: APIService) {
         self.apiService = apiService
-        self.authManager = authManager
-        let payments = Payments(inAppPurchaseIdentifiers: PaymentsConstants.inAppPurchaseIdentifiers,
-                                apiService: apiService,
-                                localStorage: persistentDataStorage,
-                                reportBugAlertHandler: bugAlertHandler)
-        self.payments = payments
-        payments.storeKitManager.delegate = self
-        initializePaymentsStack()
     }
 
-    func createPaymentsUI() -> PaymentsUI {
-        PaymentsUI(payments: payments,
-                   clientApp: PaymentsConstants.clientApp,
-                   shownPlanNames: PaymentsConstants.shownPlanNames,
-                   customization: .init(inAppTheme: {
-                       return InAppTheme.matchSystem
-                   }))
-    }
-
-    private func initializePaymentsStack() {
-        switch payments.planService {
-        case let .left(service):
-            service.currentSubscriptionChangeDelegate = self
-        default:
-            break
-        }
-
-        let featureFlagsRepository = FeatureFlagsRepository.shared
-        if featureFlagsRepository.isEnabled(CoreFeatureFlagType.dynamicPlan) {
-            // In the dynamic plans, fetching available IAPs from StoreKit is done alongside fetching available plans
-            Task {
-                if case let .right(plansDataSource) = payments.planService {
-                    do {
-                        try await plansDataSource.fetchAvailablePlans()
-                    } catch {
-                        PMLog.error("FetchÏ available plans error: \(error)", sendToExternal: true)
-                    }
-                    payments.storeKitManager.subscribeToPaymentQueue()
-                }
-            }
-        } else {
-            // Before dynamic plans, to be ready to present the available plans, we must fetch the available IAPs from StoreKit
-            payments.storeKitManager.updateAvailableProductsList { [weak self] error in
-                self?.payments.storeKitManager.subscribeToPaymentQueue()
-            }
-        }
+    func stopTransactionObserver() {
+        TransactionsObserver.shared.stop()
     }
 
     func manageSubscription(completion: @escaping (PaymentsResult) -> Void) {
-       guard !Bundle.main.isFromTestFlight else { return }
-        
-        self.paymentsUI = createPaymentsUI()
-        paymentsUI?.showCurrentPlan(presentationType: .modal, backendFetch: true) { [weak self] result in
-            guard let self else { return }
-            handlePaymentsResponse(result: result, completion: completion)
-        }
+        guard !Bundle.main.isFromTestFlight else { return }
+        presentPlans(hideCurrentPlan: false, completion: completion)
     }
-    
+
     func upgradeSubscription(completion: @escaping (PaymentsResult) -> Void) {
-       guard !Bundle.main.isFromTestFlight else { return }
+        guard !Bundle.main.isFromTestFlight else { return }
+        presentPlans(hideCurrentPlan: true, completion: completion)
+    }
 
-        self.paymentsUI = createPaymentsUI()
-        paymentsUI?.showUpgradePlan(presentationType: .modal, backendFetch: true) { [weak self] reason in
-            guard let self else { return }
-            handlePaymentsResponse(result: reason, completion: completion)
+    private func presentPlans(hideCurrentPlan: Bool, completion: @escaping (PaymentsResult) -> Void) {
+        hasReportedCompletion = false
+        cancellables.removeAll()
+
+        Task { @MainActor in
+            do {
+                try await ensureTransactionObserverStarted()
+                try paymentsV2.showAvailablePlans(
+                    presentationMode: .modal,
+                    hideCurrentPlan: hideCurrentPlan,
+                    apiService: apiService
+                )
+            } catch {
+                reportCompletionOnce(.failure(error), completion: completion)
+                return
+            }
+
+            paymentsV2.transactionProgress
+                .dropFirst()
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] state in
+                    guard let self else { return }
+                    switch state {
+                    case .transactionCompleted:
+                        reportCompletionOnce(.success(true), completion: completion)
+                        paymentsV2.dismissPayments()
+                    case .transactionCancelledByUser:
+                        reportCompletionOnce(.success(false), completion: completion)
+                        paymentsV2.dismissPayments()
+                    case .mismatchTransactionIDs,
+                         .transactionProcessError,
+                         .transactionProcessErrorInvalidReq,
+                         .unableToGetUserTransactionUUID,
+                         .unknownError:
+                        reportCompletionOnce(
+                            .failure(PaymentsV2PresentationError.transactionFailed(state)),
+                            completion: completion
+                        )
+                    default:
+                        break
+                    }
+                }
+                .store(in: &cancellables)
+
+            paymentsV2.viewCycleState
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] state in
+                    guard let self, state == .dismissed else { return }
+                    reportCompletionOnce(.success(false), completion: completion)
+                }
+                .store(in: &cancellables)
         }
     }
 
-    private func handlePaymentsResponse(result: PaymentsUIResultReason,
-                                        completion: @escaping (PaymentsResult) -> Void) {
-        switch result {
-        case let .purchasedPlan(accountPlan: plan):
-            PMLog.info("Purchased plan: \(plan.protonName)")
-            completion(.success(plan))
-        case .open:
-            break
-        case let .planPurchaseProcessingInProgress(accountPlan: plan):
-            PMLog.info("Purchasing \(plan.protonName)")
-        case .close:
-            PMLog.info("Payments closed")
-            completion(.success(nil))
-        case let .purchaseError(error: error):
-            PMLog.info("Purchase failed with error \(error)")
-            completion(.failure(error))
-        case .toppedUpCredits:
-            PMLog.error("Credits topped up: should never happen with dynamic plans")
-            preconditionFailure(".toppedUpCredits received")
-        case let .apiMightBeBlocked(message, originalError: error):
-            PMLog.info("\(message), error \(error)")
-            completion(.failure(error))
-        case .planAlreadyPurchased(error: let error):
-            completion(.failure(error))
+    private func ensureTransactionObserverStarted() async throws {
+        if TransactionsObserver.shared.isON {
+            return
         }
+
+        let configuration = TransactionsObserverConfiguration(
+            remoteManager: RemoteManager(apiService: apiService)
+        )
+        TransactionsObserver.shared.setConfiguration(configuration)
+        try await TransactionsObserver.shared.start()
+    }
+
+    private func reportCompletionOnce(
+        _ result: PaymentsResult,
+        completion: @escaping (PaymentsResult) -> Void
+    ) {
+        guard !hasReportedCompletion else { return }
+        hasReportedCompletion = true
+        completion(result)
     }
 }
 
-extension PaymentsManager: StoreKitManagerDelegate {
-    var tokenStorage: PaymentTokenStorage? {
-        inMemoryTokenStorage
-    }
+private enum PaymentsV2PresentationError: LocalizedError {
+    case transactionFailed(TransactionHandlerState)
 
-    var isUnlocked: Bool {
-        true
-    }
-
-    var isSignedIn: Bool {
-        guard let authCredential = authManager.authCredential(sessionUID: self.apiService.sessionUID) else {
-            return false
+    var errorDescription: String? {
+        switch self {
+        case .transactionFailed(let state):
+            return "Payments V2 transaction failed: \(state)"
         }
-        return !authCredential.isForUnauthenticatedSession
-    }
-
-    var activeUsername: String? {
-        authManager.credential(sessionUID: self.apiService.sessionUID)?.userName
-    }
-
-    var userId: String? {
-        authManager.credential(sessionUID: self.apiService.sessionUID)?.userID
-    }
-}
-
-extension PaymentsManager: CurrentSubscriptionChangeDelegate {
-    func onCurrentSubscriptionChange(old: Subscription?, new: Subscription?) {
-        // Nothing to do here for now, I guess?
     }
 }
