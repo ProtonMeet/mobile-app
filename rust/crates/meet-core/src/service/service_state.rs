@@ -1,6 +1,6 @@
 use crate::infra::dto::realtime::{ConnectionLostType, MlsWelcomeInfo};
 use crate::utils::unix_timestamp_ms;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -70,9 +70,6 @@ pub struct ServiceState {
     pub pending_waiting_room_join_requests: HashMap<String, PendingWaitingRoomJoinRequest>,
     /// Guest's outstanding waiting-room join request id (for filtering stale reject WS events).
     pub guest_pending_join_request_id: Option<String>,
-    /// Rooms this client has asked a captions agent for and not seen arrive.
-    /// Nobody else can observe that request, so cancelling it is ours to do.
-    pub rooms_awaiting_captions_agent: HashSet<String>,
 }
 
 impl Default for ServiceState {
@@ -97,7 +94,6 @@ impl ServiceState {
             last_host_role_update_proposal_epoch: None,
             pending_waiting_room_join_requests: HashMap::new(),
             guest_pending_join_request_id: None,
-            rooms_awaiting_captions_agent: HashSet::new(),
         }
     }
 
@@ -235,7 +231,6 @@ impl ServiceState {
         self.last_offline_members_handled_epoch = None;
         self.last_host_role_update_proposal_epoch = None;
         self.pending_waiting_room_join_requests.clear();
-        self.rooms_awaiting_captions_agent.clear();
         self.is_agent_in_livekit = false;
     }
 }

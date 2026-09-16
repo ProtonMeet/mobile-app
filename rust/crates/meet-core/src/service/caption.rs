@@ -107,6 +107,8 @@ pub(crate) trait CaptionService {
         meeting_link_name: &MeetingLinkName,
         available: bool,
     ) -> Result<(), anyhow::Error>;
+
+    async fn reset(&self);
 }
 
 pub(crate) struct CaptionServiceImpl {
@@ -779,6 +781,10 @@ impl CaptionService for CaptionServiceImpl {
             .set_closed_captions_agent_availability(&room_id, available)
             .await?;
         Ok(())
+    }
+
+    async fn reset(&self) {
+        self.rooms_awaiting_captions_agent.write().clear();
     }
 }
 

@@ -1,6 +1,6 @@
 //! Shared fixtures for `app/` unit tests. Keeps mocks out of production modules.
 
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 use std::{collections::HashMap, future::ready, str::FromStr};
 
 use mls_trait::MlsClientConfig;
@@ -174,6 +174,7 @@ pub fn minimal_service() -> Arc<RwLock<Service>> {
         Arc::new(minimal_ws_mock()),
         test_mls_store(),
         test_server_time_tracker(),
+        Weak::new(),
     )))
 }
 
@@ -662,6 +663,7 @@ pub async fn join_test_service_with_mls_client(
         Arc::new(minimal_ws_mock()),
         mls_store.clone(),
         test_server_time_tracker(),
+        Weak::new(),
     );
     let user_info = service
         .create_mls_client("access-token", meet_link, "meet-password", None)
@@ -695,6 +697,7 @@ async fn mls_test_service(user_id: &str, meet_link: &str) -> (Service, Arc<RwLoc
         Arc::new(minimal_ws_mock()),
         mls_store.clone(),
         test_server_time_tracker(),
+        Weak::new(),
     );
     (service, mls_store)
 }

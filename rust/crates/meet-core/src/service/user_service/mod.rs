@@ -1,7 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     str::FromStr,
-    sync::Arc,
+    sync::{Arc, Weak},
     time::Duration,
 };
 
@@ -12,7 +12,7 @@ use crate::{
         ports::{new_user_service::NewUserService, ArcWebSocketClient},
     },
     infra::crypto_client::derive_external_psk,
-    service::service_state::MlsSyncState,
+    service::{service_state::MlsSyncState, services_bundle::ServiceBundle},
     utils::{instant, sleep},
 };
 use crate::{
@@ -166,6 +166,7 @@ pub struct Service {
     pub(super) join_proposal_welcome_notify: Arc<Notify>,
     pub(super) server_time_tracker: ServerTimeTracker,
     pub handlers: Handlers,
+    pub(super) services: Weak<ServiceBundle>,
 }
 
 impl Service {
@@ -177,6 +178,7 @@ impl Service {
         ws_client: ArcWebSocketClient,
         mls_store: Arc<RwLock<MlsStore>>,
         server_time_tracker: ServerTimeTracker,
+        services: Weak<ServiceBundle>,
     ) -> Self {
         let state = Arc::new(Mutex::new(ServiceState::new()));
         let message_cache = Arc::new(Mutex::new(MlsMessageCache::new()));
@@ -228,7 +230,14 @@ impl Service {
             join_proposal_welcome_notify,
             server_time_tracker,
             handlers: Handlers::default(),
+            services,
         }
+    }
+
+    fn services(&self) -> Result<Arc<ServiceBundle>, anyhow::Error> {
+        self.services
+            .upgrade()
+            .ok_or_else(|| anyhow::anyhow!("Could not upgrade service bundle"))
     }
 
     async fn room_processing_lock(&self, room_id: &str) -> Arc<Mutex<()>> {
@@ -658,6 +667,10 @@ impl Service {
         let mut state = self.state.lock().await;
         state.reset();
         drop(state);
+
+        if let Ok(s) = self.services() {
+            s.reset().await;
+        }
     }
 
     /// Returns whether MLS group info exists on the server (host has started the meeting).
@@ -2121,6 +2134,9 @@ impl UserService for Service {
 
         let mut state = self.state.lock().await;
         state.reset();
+        if let Ok(s) = self.services() {
+            s.reset().await;
+        }
 
         Ok(())
     }

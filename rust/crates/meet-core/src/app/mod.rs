@@ -27,7 +27,9 @@ use crate::service::caption::CaptionServiceImpl;
 use crate::service::mls_service::MlsService;
 use crate::service::services_bundle::ServiceBundle;
 use crate::service::user_service::Service;
+use futures::FutureExt;
 use proton_meet_mls::{MlsClientConfig, MlsStore};
+use std::future::ready;
 use std::sync::Arc;
 use std::{collections::HashMap, future::Future};
 use tokio::sync::RwLock;
@@ -37,7 +39,7 @@ use tracing::error;
 use {wasm_bindgen::prelude::wasm_bindgen, wasm_bindgen::JsValue};
 
 mod agent;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(target_family = "wasm"))]
 mod auth;
 mod chat;
 #[cfg(not(target_arch = "wasm32"))]
@@ -244,46 +246,53 @@ impl App {
             http_client.server_time_tracker(),
         ));
 
-        let user_service = Arc::new(RwLock::new(Service::new(
-            http_client.clone(),
-            http_client.clone(),
-            http_client.clone(),
-            ws_client.clone(),
-            mls_store.clone(),
-            http_client.server_time_tracker(),
-        )));
+        let services = Arc::new_cyclic(|weak| {
+            let user_service = Arc::new(RwLock::new(Service::new(
+                http_client.clone(),
+                http_client.clone(),
+                http_client.clone(),
+                ws_client.clone(),
+                mls_store.clone(),
+                http_client.server_time_tracker(),
+                weak.clone(),
+            )));
 
-        let room_service = Arc::new(RoomService::new(
-            http_client.clone(),
-            http_client.clone(),
-            crypto_client.clone(),
-        ));
-        let waiting_room_service = Arc::new(WaitingRoomService::new(crypto_client, mls_service));
-        #[cfg(not(target_family = "wasm"))]
-        let auth_service = Arc::new(AuthServiceImpl::new(
-            http_client.clone(),
-            Arc::new(persister),
-        ));
-        let agent_service = Arc::new(CaptionServiceImpl::new(
-            http_client.clone(),
-            mls_store.clone(),
-            user_service.clone(),
-            http_client.clone(),
-        ));
-
-        let services = Arc::new(ServiceBundle::new(
-            room_service,
-            waiting_room_service,
+            let room_service = Arc::new(RoomService::new(
+                http_client.clone(),
+                http_client.clone(),
+                crypto_client.clone(),
+            ));
+            let waiting_room_service =
+                Arc::new(WaitingRoomService::new(crypto_client, mls_service));
             #[cfg(not(target_family = "wasm"))]
-            auth_service,
-            agent_service,
-            user_service,
-        ));
+            let auth_service = Arc::new(AuthServiceImpl::new(
+                http_client.clone(),
+                Arc::new(persister),
+            ));
+            let agent_service = Arc::new(CaptionServiceImpl::new(
+                http_client.clone(),
+                mls_store.clone(),
+                user_service.clone(),
+                http_client.clone(),
+            ));
 
-        let services_cloned = services.clone();
+            ServiceBundle::new(
+                room_service,
+                waiting_room_service,
+                #[cfg(not(target_family = "wasm"))]
+                auth_service,
+                agent_service,
+                user_service,
+            )
+        });
+
+        let weak_services = Arc::downgrade(&services);
         ws_client
             .set_message_handler(Arc::new(move |message| {
-                let bundle = services_cloned.clone();
+                let Some(bundle) = weak_services.upgrade() else {
+                    return ready(()).boxed();
+                };
+
                 Box::pin(async move {
                     match bundle
                         .user_service

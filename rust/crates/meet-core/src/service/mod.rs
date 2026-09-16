@@ -261,7 +261,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         meet_link_name: &str,
         is_host: bool,
         di: ServiceBundleDI,
-    ) -> (ServiceBundle, PopulatedServiceBundleDI) {
+    ) -> (Arc<ServiceBundle>, PopulatedServiceBundleDI) {
         let http_client = di
             .http_client
             .unwrap_or_else(|| Arc::new(MockHttpClient::new()));
@@ -301,28 +301,35 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             .user_repository
             .unwrap_or_else(|| Arc::new(MockUserRepository::new()));
 
-        let user_service = Arc::new(RwLock::new(Service::new(
-            http_client.clone(),
-            mls_api.clone(),
-            meeting_api.clone(),
-            ws_client.clone(),
-            mls_store.clone(),
-            server_time_tracker.clone(),
-        )));
-
         #[cfg(not(target_family = "wasm"))]
-        let auth_service = Arc::new(AuthServiceImpl::new(
-            user_api.clone(),
-            user_repository.clone(),
-        ));
-        let caption_service = Arc::new(CaptionServiceImpl::new(
-            mls_api.clone(),
-            mls_store.clone(),
-            user_service.clone(),
-            meeting_api.clone(),
-        ));
+        let mut auth_service = None;
+        let mut caption_service = None;
+        let service_bundle = Arc::new_cyclic(|weak| {
+            let user_service = Arc::new(RwLock::new(Service::new(
+                http_client.clone(),
+                mls_api.clone(),
+                meeting_api.clone(),
+                ws_client.clone(),
+                mls_store.clone(),
+                server_time_tracker.clone(),
+                weak.clone(),
+            )));
 
-        (
+            #[cfg(not(target_family = "wasm"))]
+            {
+                auth_service = Some(Arc::new(AuthServiceImpl::new(
+                    user_api.clone(),
+                    user_repository.clone(),
+                )));
+            }
+
+            caption_service = Some(Arc::new(CaptionServiceImpl::new(
+                mls_api.clone(),
+                mls_store.clone(),
+                user_service.clone(),
+                meeting_api.clone(),
+            )));
+
             ServiceBundle::new(
                 Arc::new(RoomService::new(
                     http_client.clone(),
@@ -334,10 +341,14 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                     key_packages.clone(),
                 )),
                 #[cfg(not(target_family = "wasm"))]
-                auth_service.clone(),
-                caption_service.clone(),
+                auth_service.clone().unwrap(),
+                caption_service.clone().unwrap(),
                 user_service,
-            ),
+            )
+        });
+
+        (
+            service_bundle,
             PopulatedServiceBundleDI {
                 http_client,
                 mls_api,
@@ -350,8 +361,8 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 user_api,
                 user_repository,
                 #[cfg(not(target_family = "wasm"))]
-                auth_service,
-                caption_service,
+                auth_service: auth_service.unwrap(),
+                caption_service: caption_service.unwrap(),
             },
         )
     }
@@ -360,7 +371,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         user_id: &str,
         meet_link_name: &str,
         di: ServiceBundleDI,
-    ) -> (ServiceBundle, PopulatedServiceBundleDI) {
+    ) -> (Arc<ServiceBundle>, PopulatedServiceBundleDI) {
         create_test_service_bundle_with_host(user_id, meet_link_name, false, di)
     }
 
@@ -368,7 +379,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         room_id: &str,
         di: ServiceBundleDI,
     ) -> (
-        ServiceBundle,
+        Arc<ServiceBundle>,
         PopulatedServiceBundleDI,
         Arc<RwLock<MlsGroup<MemKv>>>,
         proton_meet_mls::CipherSuite,

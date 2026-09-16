@@ -6,7 +6,7 @@ pub(crate) mod tests {
         collections::HashMap,
         future::ready,
         str::FromStr,
-        sync::{Arc, Mutex as StdMutex},
+        sync::{Arc, Mutex as StdMutex, Weak},
     };
 
     use esdicawt::spec::CwtAny;
@@ -3773,6 +3773,7 @@ pub(crate) mod tests {
             Arc::new(ws_client_mock),
             mls_store,
             ServerTimeTracker::new(),
+            Weak::new(),
         )
     }
 
@@ -5342,6 +5343,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             Arc::new(MockWebSocketClient::new()),
             mls_store,
             ServerTimeTracker::new(),
+            Weak::new(),
         );
 
         // Copy proposal queue manually
@@ -5535,6 +5537,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             Arc::new(ws_client_mock),
             mls_store,
             ServerTimeTracker::new(),
+            Weak::new(),
         );
 
         // Test is_mls_up_to_date - should return true for same group
@@ -5646,6 +5649,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             Arc::new(ws_client_mock),
             mls_store,
             ServerTimeTracker::new(),
+            Weak::new(),
         );
 
         // Test is_mls_up_to_date - should return false because user1 is not in group2's roster
@@ -6951,6 +6955,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             Arc::new(join_switch_ws_client_mock()),
             mls_store,
             ServerTimeTracker::new(),
+            Weak::new(),
         )
     }
 

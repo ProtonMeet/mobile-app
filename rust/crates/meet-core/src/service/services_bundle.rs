@@ -36,4 +36,8 @@ impl ServiceBundle {
             user_service,
         }
     }
+
+    pub async fn reset(&self) {
+        self.caption_service.reset().await;
+    }
 }
