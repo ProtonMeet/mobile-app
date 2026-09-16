@@ -51,6 +51,8 @@ class BackgroundBlurChannel(
     // Matches Dart BackgroundBlurConfig defaults until setBackgroundBlurConfig runs.
     private var pendingBlurSigma: Float = 128f
     private var pendingObscureOpacity: Float = 0.1f
+    private var pendingMaskEdge: MaskEdgeTuning = MaskEdgeTuning()
+    private var pendingDebugMaskOverlay: Boolean = false
     private var pendingReplacementPath: String? = null
     private var pendingReplacementBytes: ByteArray? = null
 
@@ -101,7 +103,7 @@ class BackgroundBlurChannel(
         storePendingBlurConfig(call)
         storePendingReplacement(call)
         allProcessors().forEach { proc ->
-            proc.applyBlurConfig(pendingBlurSigma, pendingObscureOpacity)
+            applyPendingBlurConfig(proc)
             applyPendingReplacement(proc)
         }
         result.success(null)
@@ -138,15 +140,18 @@ class BackgroundBlurChannel(
     }
 
     private fun getSegmentationModel(result: MethodChannel.Result) {
-        val info = sharedProcessor?.segmentationModelDebugInfo()
-            ?: processors.values.firstOrNull()?.segmentationModelDebugInfo()
+        val proc = sharedProcessor ?: processors.values.firstOrNull()
+        val info = proc?.segmentationModelDebugInfo()
             ?: mapOf(
                 "model" to "none",
                 "backend" to "none",
                 "forced" to false,
                 "supported" to true,
             )
-        result.success(info)
+        // Echo the mask dials the engine is actually running with. Without this the debug screen
+        // can only show what it sent, which hides a value the engine clamped or never received.
+        val maskEdge = proc?.maskEdgeDebugInfo() ?: emptyMap()
+        result.success(info + maskEdge)
     }
 
     private fun clearReplacementBackground(result: MethodChannel.Result) {
@@ -162,6 +167,8 @@ class BackgroundBlurChannel(
         call.argument<Number>("backgroundObscureOpacity")?.toFloat()?.let {
             pendingObscureOpacity = it
         }
+        pendingMaskEdge = MaskEdgeTuning.fromMethodCall(call)
+        pendingDebugMaskOverlay = call.argument<Boolean>("debugMaskOverlay") == true
     }
 
     private fun allProcessors(): List<MeetBackgroundBlurFrameProcessor> {
@@ -175,7 +182,12 @@ class BackgroundBlurChannel(
     }
 
     private fun applyPendingBlurConfig(proc: MeetBackgroundBlurFrameProcessor) {
-        proc.applyBlurConfig(pendingBlurSigma, pendingObscureOpacity)
+        proc.applyBlurConfig(
+            pendingBlurSigma,
+            pendingObscureOpacity,
+            pendingMaskEdge,
+            pendingDebugMaskOverlay,
+        )
     }
 
     private fun storePendingReplacement(call: MethodCall) {

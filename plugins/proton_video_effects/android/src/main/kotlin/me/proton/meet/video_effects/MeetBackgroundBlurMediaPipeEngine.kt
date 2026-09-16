@@ -22,6 +22,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.PorterDuff
@@ -41,6 +43,7 @@ import org.webrtc.VideoFrame
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.gpu.GpuDelegate
+import org.tensorflow.lite.gpu.GpuDelegateFactory
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.Callable
@@ -71,6 +74,21 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         private const val SINGLECLASS_MODEL_ASSET = "selfie_segmenter.tflite"
         private const val LANDSCAPE_MODEL_ASSET = "selfie_segmenter_landscape.tflite"
 
+        /**
+         * Extra quarter turn the mask needs on top of undoing [MaskSnapshot.sourceRotation].
+         *
+         * Empirical, not derived. Rotating the frame upright for inference and un-rotating the
+         * mask by the same angle should cancel exactly, and reading the transform by hand says it
+         * does — but on device the silhouette lands a quarter turn off, and neither the tensor
+         * layout (plain row-major on both the write and the read) nor the compositing matrix
+         * accounts for it. Measured against the debug mask overlay on front and rear cameras,
+         * whose frame rotations differ by 180°; both need this same turn, so it is a fixed offset
+         * between mask space and buffer space rather than anything that tracks frame rotation.
+         *
+         * If you touch the rotation path, re-check this with the overlay rather than trusting it.
+         */
+        private const val MASK_UNROTATE_BIAS_DEGREES = 270
+
         private const val SQUARE_SEGMENTER_SIZE = 256
         private const val LANDSCAPE_INPUT_WIDTH = 256
         private const val LANDSCAPE_INPUT_HEIGHT = 144
@@ -90,6 +108,13 @@ internal class MeetBackgroundBlurMediaPipeEngine(
 
         private const val BACKGROUND_BLUR_PASSES = 2
 
+        /**
+         * Box-blur iterations per pass. Repeated box blurs converge on a Gaussian, and three is
+         * the usual point of diminishing returns; the extra two buy a little more smoothness on
+         * the hard edges the downsample leaves behind.
+         */
+        private const val BOX_BLUR_PASSES_PER_ROUND = 5
+
         /** Box-blur radius when [blurSigma] equals [DEFAULT_BLUR_SIGMA] (calibration anchor, not Dart default). */
         private const val DEFAULT_BLUR_RADIUS = 8
 
@@ -98,25 +123,23 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         private const val MIN_BLUR_SIGMA = 4f
         private const val MAX_BLUR_SIGMA = 256f
 
-        /** Pushes uncertain mask values toward background so objects leak less. */
-        private const val MASK_FOREGROUND_GAMMA = 1.35f
-
         /** Desaturate blurred plate (0 = full color, 1 = grayscale). Matches iOS `backgroundDesaturation`. */
         private const val BACKGROUND_DESATURATION = 0.5f
 
         /**
-         * σ for the mask feather, run on the 256² mask before upscale. After upscale to the
-         * processing resolution this turns into a `σ × upscaleFactor` pixel-wide soft edge.
+         * Floors for the mask feather σ, in mask pixels. The tuned
+         * [MaskEdgeTuning.featherHeightFraction] is used when it asks for more than the floor.
          *
-         * Two values:
-         *   * [MASK_FEATHER_SIGMA_CONFIDENCE] — small (1.5). The mask is already a continuous
-         *     probability so most of the smoothness comes from the source. Larger values would
-         *     bleed the subject silhouette outward.
-         *   * [MASK_FEATHER_SIGMA_CATEGORY] — larger (3.0). The mask is hard binary 0/255 from
-         *     the argmax category output, so we need a wider Gaussian to recover an edge that
-         *     looks comparable to the confidence-mask path after upscale.
+         * Two values, because the two segmenter outputs start from very different edges:
+         *   * [MASK_FEATHER_SIGMA_MIN_CONFIDENCE] — small. The mask is already a continuous
+         *     probability so most of the smoothness comes from the source; this only guarantees
+         *     the upscale has about a pixel of ramp to interpolate.
+         *   * [MASK_FEATHER_SIGMA_CATEGORY] — larger. The mask is hard binary 0/255 from the
+         *     argmax category output, with no ramp of its own, so it needs a wider Gaussian to
+         *     produce an edge comparable to the confidence path after upscale. This one is a hard
+         *     floor rather than a default: below it the category path visibly staircases.
          */
-        private const val MASK_FEATHER_SIGMA_CONFIDENCE = 1.5f
+        private const val MASK_FEATHER_SIGMA_MIN_CONFIDENCE = 0.9f
         private const val MASK_FEATHER_SIGMA_CATEGORY = 3.0f
 
         /** Per-class index 0 (background) in the multiclass model. */
@@ -149,6 +172,14 @@ internal class MeetBackgroundBlurMediaPipeEngine(
          *  as the foreground mask regardless of which model produced it, so the compositing path
          *  doesn't need to branch. */
         val foregroundAlpha: ByteArray,
+        /**
+         * Frame rotation the segmenter analysed this mask under, so compositing can turn it back
+         * into buffer space.
+         *
+         * Inference is asynchronous and the device can rotate between dispatch and result, so the
+         * angle has to travel with the mask rather than be re-read from the current frame.
+         */
+        val sourceRotation: Int = 0,
     )
 
     private enum class SegmenterBackendKind {
@@ -210,6 +241,24 @@ internal class MeetBackgroundBlurMediaPipeEngine(
     private val maskLock = Any()
     private var currentMask: MaskSnapshot? = null
 
+    /** Rotation applied to the frame handed to the in-flight inference; see [MaskSnapshot.sourceRotation]. */
+    @Volatile
+    private var pendingInferenceRotation: Int = 0
+
+    /**
+     * Debug: paint the shaped mask over the sharp frame instead of blending a background.
+     *
+     * The mask is otherwise only observable through where the blur lands, which conflates a
+     * misplaced mask with a badly shaped one. Tinting it directly separates the two.
+     */
+    @Volatile
+    private var debugMaskOverlay: Boolean = false
+
+    fun setDebugMaskOverlay(enabled: Boolean) {
+        debugMaskOverlay = enabled
+    }
+
+
     // Matches Dart BackgroundBlurConfig until setBlurConfig runs.
     @Volatile
     private var blurSigma: Float = 128f
@@ -229,9 +278,26 @@ internal class MeetBackgroundBlurMediaPipeEngine(
     private var orientedReplacementHeight: Int = 0
     private var orientedReplacementRotation: Int = -1
 
+    @Volatile
+    private var maskEdge: MaskEdgeTuning = MaskEdgeTuning()
+
     fun setBlurConfig(blurSigma: Float, backgroundObscureOpacity: Float) {
         this.blurSigma = blurSigma.coerceIn(MIN_BLUR_SIGMA, MAX_BLUR_SIGMA)
         this.backgroundObscureOpacity = backgroundObscureOpacity.coerceIn(0f, 1f)
+    }
+
+    fun setMaskEdgeTuning(tuning: MaskEdgeTuning) {
+        maskEdge = tuning.clamped()
+    }
+
+    fun maskEdgeDebugInfo(): Map<String, Any> = maskEdge.let {
+        mapOf(
+            "maskFeatherHeightFraction" to it.featherHeightFraction,
+            "maskErodeHeightFraction" to it.erodeHeightFraction,
+            "maskSolidifySlope" to it.solidifySlope,
+            "maskSolidifyMidpoint" to it.solidifyMidpoint,
+            "maskForegroundGamma" to it.foregroundGamma,
+        )
     }
 
     fun setReplacementBackgroundImagePath(path: String?): Boolean {
@@ -356,24 +422,159 @@ internal class MeetBackgroundBlurMediaPipeEngine(
     private var segmentClockMs: Long = 0L
     /** Reused ARGB scratch for I420 → Bitmap conversion to avoid per-frame large IntArray churn. */
     private var i420ArgbScratch: IntArray? = null
+    /**
+     * Plane-sized byte scratch for the I420 ↔ ARGB conversions.
+     *
+     * Both directions used to address the `ByteBuffer` one sample at a time — ~2.8 M bounds-checked
+     * direct-buffer accesses per frame at 720p in each direction. Bulk `get`/`put` is a single
+     * memcpy per plane, after which the conversion loops run over plain byte arrays.
+     *
+     * Shared by both directions: the import fills them at the top of `process()` and nothing reads
+     * them again by the time the output packing overwrites them at the bottom.
+     */
+    private var i420YScratch: ByteArray? = null
+    private var i420UScratch: ByteArray? = null
+    private var i420VScratch: ByteArray? = null
     /** Reused ARGB scratch for Bitmap → I420 conversion to avoid per-frame large IntArray churn. */
     private var bitmapToI420Scratch: IntArray? = null
     /** Reused downscaled blur scratch (pixels + tmp) to reduce repeated allocations. */
     private var blurPixelsScratch: IntArray? = null
     private var blurTmpScratch: IntArray? = null
+    /** Downscale target for the blur plate; pooled so the plate costs no allocation per frame. */
+    private var blurDownscaleBitmap: Bitmap? = null
+    private var blurDownscaleCanvas: Canvas? = null
+    private val blurDownscaleRect = android.graphics.Rect()
     /** Reused ARGB scratch for packing the 256² alpha mask before upscale. */
     private var maskSrcArgbScratch: IntArray? = null
     /** Reused separable feather passes on the 256² mask (two × 64 KiB, not worth reallocating). */
     private var featherPass1Scratch: ByteArray? = null
     private var featherOutScratch: ByteArray? = null
+    /** Reused separable erosion passes on the 256² mask. */
+    private var erodePass1Scratch: ByteArray? = null
+    private var erodeOutScratch: ByteArray? = null
+    /** Holds the solidify result when erosion was skipped and would otherwise alias the cache. */
+    private var maskToneScratch: ByteArray? = null
+
+    /**
+     * 256-entry lookup tables for the solidify and gamma stages.
+     *
+     * Both are pure per-sample functions of the alpha byte, so evaluating them per mask pixel —
+     * 65 536 `Math.pow` calls a frame for gamma alone — is wasted work. Rebuilt only when the
+     * tuning it was derived from stops matching.
+     */
+    @Volatile
+    private var maskToneLut: MaskToneLut? = null
+
+    /** Mask upscale scratch. Reused across frames; sizes track the processing resolution. */
+    private var maskSrcBitmap: Bitmap? = null
+    private val maskUpscaleMatrix = Matrix()
+
+    /**
+     * The shaped mask currently held by [maskSrcBitmap], identified by the snapshot it came from.
+     *
+     * Inference runs slower than capture, so the same snapshot is composited onto several frames
+     * in a row. Erode, solidify, feather and gamma depend only on the snapshot and the tuning, so
+     * re-running them per frame recomputes an identical mask — four separable passes over 65 k
+     * samples thrown away every time. Identity comparison is enough: snapshots are never mutated
+     * after publication, a new inference always produces a new instance.
+     */
+    private var shapedMaskSource: MaskSnapshot? = null
+    private var shapedMaskEdge: MaskEdgeTuning? = null
+
+    /**
+     * Segmenter input, rotated upright and scaled to the model's input size by a single filtered
+     * draw.
+     *
+     * The previous shape rotated the whole frame into a new full-size bitmap and then scaled that
+     * into a second one, so every frame allocated ~3 MB and resampled 900 k pixels twice before
+     * the model saw anything — all on the capture thread, ahead of the inference it gates.
+     */
+    private var segmenterInputBitmap: Bitmap? = null
+    private var segmenterInputCanvas: Canvas? = null
+    private val segmenterInputMatrix = Matrix()
+    private var segmenterPixelScratch: IntArray? = null
+
+    /**
+     * Off-screen layer holding the mask-cut foreground, reused across frames.
+     *
+     * `Canvas.saveLayer` allocates and frees a frame-sized layer on every call, which on a software
+     * canvas is a full ARGB_8888 buffer per frame. Keeping our own layer makes the same composite
+     * allocation-free, and lets the mask upscale target it directly instead of going through a
+     * separate frame-sized mask bitmap.
+     */
+    private var pooledForegroundBitmap: Bitmap? = null
+    private var pooledForegroundCanvas: Canvas? = null
+
+    /**
+     * SRC rather than the default SRC_OVER: the destination is a cached bitmap still holding the
+     * previous frame's mask, and compositing over it would blend the two alphas together instead
+     * of replacing them. SRC also makes an explicit clear unnecessary, since the scaled draw
+     * covers the destination exactly.
+     */
+    private val maskUpscalePaint = Paint().apply {
+        isFilterBitmap = true
+        isAntiAlias = false
+        xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC)
+    }
+
+    /** Composites the sharp frame through the mask alpha. Allocation-free across frames. */
+    private val srcInPaint = Paint().apply {
+        xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
+        isAntiAlias = false
+        isFilterBitmap = true
+    }
+
+    private val desaturateFilter = ColorMatrixColorFilter(
+        ColorMatrix().apply { setSaturation(1f - BACKGROUND_DESATURATION.coerceIn(0f, 1f)) },
+    )
+
+    /**
+     * Draws the background plate. Filtering matters here: the blurred plate is a fraction of the
+     * frame and this draw is what scales it up, so without it the plate arrives blocky rather than
+     * blurred.
+     */
+    private val plateDrawPaint = Paint().apply {
+        isFilterBitmap = true
+        isAntiAlias = false
+    }
+
+    private val veilPaint = Paint()
+
+    /**
+     * SRC for the same reason as [maskUpscalePaint]: the plate scratch still holds the previous
+     * frame and the draw covers it exactly, so replacing is both correct and cheaper than a clear.
+     */
+    private val plateDownscalePaint = Paint().apply {
+        isFilterBitmap = true
+        isAntiAlias = false
+        xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC)
+    }
+
+    /** Colour filter only applies to the blurred camera plate; see [BackgroundPlate]. */
+    private fun platePaint(wantsDesaturation: Boolean): Paint = plateDrawPaint.apply {
+        colorFilter =
+            if (wantsDesaturation && BACKGROUND_DESATURATION > 0f) desaturateFilter else null
+    }
+
+    private class MaskToneLut(
+        /** The tuning these tables were derived from; see [shapeMaskAlpha] for why it is stored. */
+        val edge: MaskEdgeTuning,
+        val solidify: ByteArray,
+        /** Null when gamma is neutral, so the caller can skip the pass entirely. */
+        val gamma: ByteArray?,
+    )
     /** Mutable ARGB bitmap reused for I420→ARGB import (camera frames are TextureBuffer, not in-place). */
     private var pooledArgbBitmap: Bitmap? = null
     private var pooledArgbBitmapW: Int = 0
     private var pooledArgbBitmapH: Int = 0
     /** Mutable ARGB bitmap reused for compositing output before packing into I420. */
     private var pooledComposedBitmap: Bitmap? = null
+    private var pooledComposedCanvas: Canvas? = null
     private var pooledComposedBitmapW: Int = 0
     private var pooledComposedBitmapH: Int = 0
+
+    /** Destination for the background plate draw; reused so the plate scale costs no allocation. */
+    private val plateDstRect = android.graphics.Rect()
     /**
      * Reused I420 sink written every composed frame. WebRTC owns the returned `VideoFrame` and
      * releases it after encode; we keep one buffer allocation per resolution instead of
@@ -420,6 +621,7 @@ internal class MeetBackgroundBlurMediaPipeEngine(
                         inputWidth = attempt.inputWidth,
                         inputHeight = attempt.inputHeight,
                         modelBuffer = loadModelBuffer(attempt.modelAsset),
+                        serializationDir = gpuSerializationDir(),
                     )
                     tfliteBackend = created
                     segmenter = null
@@ -620,6 +822,22 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         }
     }
 
+    /**
+     * Cache directory for the GPU delegate's compiled kernels.
+     *
+     * `codeCacheDir` is the right home: the platform already clears it on app upgrade, which is
+     * exactly when a cached kernel binary could go stale. Null if it cannot be created, which only
+     * costs us the compile on next attach.
+     */
+    private fun gpuSerializationDir(): String? = try {
+        java.io.File(context.codeCacheDir, "tflite_gpu")
+            .takeIf { it.isDirectory || it.mkdirs() }
+            ?.absolutePath
+    } catch (e: Throwable) {
+        Log.w(TAG, "gpuSerializationDir: unavailable", e)
+        null
+    }
+
     /** TFLite + GpuDelegate — bypasses MediaPipe Tasks GPU image conversion (Adreno CHECK crash). */
     private class TfliteGpuSegmenterBackend(
         private val modelAsset: String,
@@ -627,6 +845,7 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         private val inputWidth: Int,
         private val inputHeight: Int,
         private val modelBuffer: ByteBuffer,
+        private val serializationDir: String?,
     ) : AutoCloseable {
         private enum class OutputLayout {
             NHWC,
@@ -654,7 +873,9 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         private var inputZeroPoint: Int = 0
         private var outputScale: Float = 1f
         private var outputZeroPoint: Int = 0
-        private var pixelScratch: IntArray? = null
+        /** Staging arrays for the input tensor; see [runOnGpuThread] for why they exist. */
+        private var inputFloatScratch: FloatArray? = null
+        private var inputByteScratch: ByteArray? = null
         @Volatile
         private var isClosed: Boolean = false
 
@@ -675,30 +896,18 @@ internal class MeetBackgroundBlurMediaPipeEngine(
             }
         }
 
+        /**
+         * [pixels] stays owned by the caller and must not be written again until one of the
+         * callbacks fires — the single in-flight guard in the engine is what guarantees that.
+         */
         fun segmentAsync(
-            srcBitmap: Bitmap,
+            pixels: IntArray,
             onResult: (MaskSnapshot?) -> Unit,
             onError: (Throwable) -> Unit,
         ) {
             if (isClosed) {
-                srcBitmap.recycle()
                 onError(IllegalStateException("TFLite backend is closed"))
                 return
-            }
-
-            val pixels = try {
-                val needed = srcBitmap.width * srcBitmap.height
-                val scratch = pixelScratch?.takeIf { it.size == needed } ?: IntArray(needed).also {
-                    pixelScratch = it
-                }
-                srcBitmap.getPixels(scratch, 0, srcBitmap.width, 0, 0, srcBitmap.width, srcBitmap.height)
-                scratch
-            } catch (error: Throwable) {
-                srcBitmap.recycle()
-                onError(error)
-                return
-            } finally {
-                if (!srcBitmap.isRecycled) srcBitmap.recycle()
             }
 
             executor.execute {
@@ -716,21 +925,33 @@ internal class MeetBackgroundBlurMediaPipeEngine(
 
         private fun initialiseOnGpuThread() {
             modelBuffer.rewind()
-            val delegateOptions = GpuDelegate.Options().apply {
+            val delegateOptions = GpuDelegateFactory.Options().apply {
                 // Prefer throughput/latency over exact FP32 parity for a segmentation mask. The
                 // mask is already feathered and upscaled in compositing, so FP16 precision loss is
                 // visually negligible but can materially reduce GPU inference time on Adreno.
                 setPrecisionLossAllowed(true)
-                // Explicit low-latency mode since this is real-time per-frame inference.
-                setInferencePreference(GpuDelegate.Options.INFERENCE_PREFERENCE_FAST_SINGLE_ANSWER)
+                // We run the same graph on every camera frame for the whole call, which is exactly
+                // what SUSTAINED_SPEED is for: the delegate keeps its compiled program and
+                // intermediate GPU buffers alive between invocations. FAST_SINGLE_ANSWER optimises
+                // for a one-shot answer and lets the delegate tear that state down, so a streaming
+                // workload pays setup cost again on every frame.
+                setInferencePreference(GpuDelegateFactory.Options.INFERENCE_PREFERENCE_SUSTAINED_SPEED)
                 // No-op for FLOAT models, but enables delegate support for quantized paths where
                 // available. Keeps one backend binary for both model families.
                 setQuantizedModelsAllowed(true)
+                // Cache the compiled kernels. Building them takes long enough that attach can hit
+                // [TFLITE_GPU_INIT_TIMEOUT_MS] on slower GPUs and silently fall back to the CPU
+                // segmenter for the whole call — a cache hit turns that into a load.
+                serializationDir?.let { setSerializationParams(it, modelAsset) }
             }
             val delegate = GpuDelegate(delegateOptions)
             val options = Interpreter.Options()
                 .addDelegate(delegate)
-                .setNumThreads(1)
+                // Delegation is usually partial — ops the GPU backend does not implement stay on
+                // the CPU and run on these threads, in the middle of the graph. One thread makes
+                // that fallback the bottleneck; two keeps it off the critical path without
+                // competing with the capture thread for the whole little cluster.
+                .setNumThreads(2)
             val created = Interpreter(modelBuffer, options)
 
             val inputTensor = created.getInputTensor(0)
@@ -842,23 +1063,42 @@ internal class MeetBackgroundBlurMediaPipeEngine(
             require(pixels.size == inputPixelCount) {
                 "Unexpected input pixels=${pixels.size} expected=$inputPixelCount"
             }
+            // Fill a plain array and hand it over in one bulk copy. Writing the tensor sample by
+            // sample costs ~200 k bounds-checked direct-buffer writes per inference, which lands
+            // squarely in the mask's end-to-end latency.
             input.rewind()
-            var i = 0
-            while (i < pixels.size) {
-                val px = pixels[i]
-                val r = ((px ushr 16) and 0xFF) / 255f
-                val g = ((px ushr 8) and 0xFF) / 255f
-                val b = (px and 0xFF) / 255f
-                if (inputDataType == DataType.FLOAT32) {
-                    input.putFloat(r)
-                    input.putFloat(g)
-                    input.putFloat(b)
-                } else {
-                    input.put(quantizeToUint8(r, inputScale, inputZeroPoint).toByte())
-                    input.put(quantizeToUint8(g, inputScale, inputZeroPoint).toByte())
-                    input.put(quantizeToUint8(b, inputScale, inputZeroPoint).toByte())
+            val sampleCount = pixels.size * 3
+            if (inputDataType == DataType.FLOAT32) {
+                val staging = inputFloatScratch?.takeIf { it.size == sampleCount }
+                    ?: FloatArray(sampleCount).also { inputFloatScratch = it }
+                var i = 0
+                var o = 0
+                while (i < pixels.size) {
+                    val px = pixels[i]
+                    staging[o] = ((px ushr 16) and 0xFF) / 255f
+                    staging[o + 1] = ((px ushr 8) and 0xFF) / 255f
+                    staging[o + 2] = (px and 0xFF) / 255f
+                    i++
+                    o += 3
                 }
-                i++
+                input.asFloatBuffer().put(staging)
+            } else {
+                val staging = inputByteScratch?.takeIf { it.size == sampleCount }
+                    ?: ByteArray(sampleCount).also { inputByteScratch = it }
+                var i = 0
+                var o = 0
+                while (i < pixels.size) {
+                    val px = pixels[i]
+                    staging[o] =
+                        quantizeToUint8(((px ushr 16) and 0xFF) / 255f, inputScale, inputZeroPoint).toByte()
+                    staging[o + 1] =
+                        quantizeToUint8(((px ushr 8) and 0xFF) / 255f, inputScale, inputZeroPoint).toByte()
+                    staging[o + 2] =
+                        quantizeToUint8((px and 0xFF) / 255f, inputScale, inputZeroPoint).toByte()
+                    i++
+                    o += 3
+                }
+                input.put(staging)
             }
             input.rewind()
             output.rewind()
@@ -1062,14 +1302,35 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         }
         // Drop large reusable arrays on detach so process lifetime doesn't pin peak sizes forever.
         i420ArgbScratch = null
+        i420YScratch = null
+        i420UScratch = null
+        i420VScratch = null
         bitmapToI420Scratch = null
         blurPixelsScratch = null
         blurTmpScratch = null
         maskSrcArgbScratch = null
+        segmenterPixelScratch = null
         featherPass1Scratch = null
         featherOutScratch = null
+        erodePass1Scratch = null
+        erodeOutScratch = null
+        maskToneScratch = null
+        shapedMaskSource = null
+        shapedMaskEdge = null
+        maskSrcBitmap?.recycle()
+        maskSrcBitmap = null
+        segmenterInputCanvas = null
+        segmenterInputBitmap?.recycle()
+        segmenterInputBitmap = null
+        blurDownscaleCanvas = null
+        blurDownscaleBitmap?.recycle()
+        blurDownscaleBitmap = null
+        pooledForegroundCanvas = null
+        pooledForegroundBitmap?.recycle()
+        pooledForegroundBitmap = null
         pooledArgbBitmap?.recycle()
         pooledArgbBitmap = null
+        pooledComposedCanvas = null
         pooledComposedBitmap?.recycle()
         pooledComposedBitmap = null
         try {
@@ -1129,7 +1390,8 @@ internal class MeetBackgroundBlurMediaPipeEngine(
             Log.d(
                 TAG,
                 "process: frame=$frameId input=${inputBitmap.width}x${inputBitmap.height} " +
-                    "snapshot=${snapshot?.let { "${it.width}x${it.height}" } ?: "null"} " +
+                    "rot=${frame.rotation} model=${segmenterInputWidth}x$segmenterInputHeight " +
+                    "snapshot=${snapshot?.let { "${it.width}x${it.height}@${it.sourceRotation}" } ?: "null"} " +
                     "canDispatch=$canDispatch",
             )
             Log.d(
@@ -1149,7 +1411,7 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         // — never leaves the pipeline stuck.
         if (canDispatch) {
             try {
-                dispatchAsyncSegmentation(tflite, seg, inputBitmap)
+                dispatchAsyncSegmentation(tflite, seg, inputBitmap, frame.rotation)
             } catch (oom: OutOfMemoryError) {
                 Log.e(TAG, "process[dispatchAsyncSegmentation]: OOM at frame=$frameId", oom)
                 clearInferenceInFlight()
@@ -1190,6 +1452,60 @@ internal class MeetBackgroundBlurMediaPipeEngine(
     }
 
     /**
+     * Renders [source] upright and squashed to the model's input size in one filtered draw.
+     *
+     * [rotationDegrees] is the angle the renderer will apply downstream, so applying it here puts
+     * the pixels in the orientation the viewer will eventually see — which is the orientation the
+     * model was trained on. Feeding the model a sideways subject is what made the mask track while
+     * you held still and fall apart as soon as you moved; `MeetBackgroundBlurMediaPipeEngine.swift`
+     * applies the same correction through `visionOrientation(forRotationDegrees:)`.
+     *
+     * Rotation and downscale are a single matrix because doing them as two `Bitmap.createBitmap`
+     * calls meant a frame-sized allocation and a 900 k-pixel resample per step, on the capture
+     * thread, before the inference this gates could even start.
+     *
+     * Squashing the aspect ratio is intentional — masks are upscaled back to the camera aspect at
+     * compositing time.
+     */
+    private fun renderSegmenterInput(source: Bitmap, rotationDegrees: Int): Bitmap? {
+        val dstW = segmenterInputWidth
+        val dstH = segmenterInputHeight
+        val bitmap = segmenterInputBitmap
+            ?.takeIf { !it.isRecycled && it.width == dstW && it.height == dstH }
+            ?: try {
+                segmenterInputBitmap?.recycle()
+                Bitmap.createBitmap(dstW, dstH, Bitmap.Config.ARGB_8888).also {
+                    segmenterInputBitmap = it
+                    segmenterInputCanvas = Canvas(it)
+                }
+            } catch (e: OutOfMemoryError) {
+                Log.w(TAG, "renderSegmenterInput: OOM allocating ${dstW}x$dstH input", e)
+                segmenterInputBitmap = null
+                segmenterInputCanvas = null
+                return null
+            }
+        val canvas = segmenterInputCanvas ?: Canvas(bitmap).also { segmenterInputCanvas = it }
+
+        val rotation = ((rotationDegrees % 360) + 360) % 360
+        // A quarter turn swaps the axes, so the scale has to be measured against the rotated
+        // extent or the frame ends up squashed along the wrong one.
+        val quarterTurned = rotation == 90 || rotation == 270
+        val rotatedW = if (quarterTurned) source.height else source.width
+        val rotatedH = if (quarterTurned) source.width else source.height
+        if (rotatedW <= 0 || rotatedH <= 0) return null
+
+        segmenterInputMatrix.reset()
+        segmenterInputMatrix.postTranslate(-source.width / 2f, -source.height / 2f)
+        segmenterInputMatrix.postRotate(rotation.toFloat())
+        segmenterInputMatrix.postTranslate(rotatedW / 2f, rotatedH / 2f)
+        segmenterInputMatrix.postScale(dstW.toFloat() / rotatedW, dstH.toFloat() / rotatedH)
+        // SRC so the previous frame's content is replaced rather than blended; the draw covers the
+        // destination exactly, which also makes an explicit clear unnecessary.
+        canvas.drawBitmap(source, segmenterInputMatrix, maskUpscalePaint)
+        return bitmap
+    }
+
+    /**
      * Hands the current frame to the active async segmentation backend. Returns immediately; the
      * result is delivered later via the backend listener/callback. Caller must have already set
      * `inferenceInFlight = true`. Failure paths clear the flag again so the pipeline never gets
@@ -1199,33 +1515,29 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         tflite: TfliteGpuSegmenterBackend?,
         seg: ImageSegmenter?,
         srcBitmap: Bitmap,
+        rotationDegrees: Int,
     ) {
         try {
-            // Pre-scale to the active model input (256² or 256×144 landscape). Squashing aspect
-            // ratio is fine — masks are upscaled back to the camera aspect at compositing time.
-            val scaled = Bitmap.createScaledBitmap(
-                srcBitmap,
-                segmenterInputWidth,
-                segmenterInputHeight,
-                /* filter = */ true,
-            )
-            // `createScaledBitmap` may return the source if dimensions already match. The active
-            // backend owns and recycles `small`, while `process()` still owns `srcBitmap`, so make
-            // the ownership boundary explicit.
-            val small = if (scaled === srcBitmap) {
-                scaled.copy(Bitmap.Config.ARGB_8888, /* isMutable = */ false)
-            } else {
-                scaled
-            }
+            val small = renderSegmenterInput(srcBitmap, rotationDegrees)
             if (small == null) {
-                Log.w(TAG, "dispatchAsyncSegmentation: scaled.copy returned null")
                 clearInferenceInFlight()
                 return
             }
+            // Un-rotating a mask by an angle the frame was never turned by would put the silhouette
+            // a quarter turn away from the person, so stamp the angle the draw actually applied.
+            pendingInferenceRotation = ((rotationDegrees % 360) + 360) % 360
+
             segmentClockMs += 33L
             if (tflite != null) {
+                // Read the pixels out here rather than handing the pooled bitmap to the backend:
+                // the single in-flight guard means nothing else can touch this array until the
+                // result lands, and it keeps the pooled bitmap out of the backend's ownership.
+                val needed = small.width * small.height
+                val pixels = segmenterPixelScratch?.takeIf { it.size == needed }
+                    ?: IntArray(needed).also { segmenterPixelScratch = it }
+                small.getPixels(pixels, 0, small.width, 0, 0, small.width, small.height)
                 tflite.segmentAsync(
-                    small,
+                    pixels,
                     onResult = { snapshot -> completeInference(success = true, newSnapshot = snapshot) },
                     onError = { error ->
                         Log.w(TAG, "TFLite segmentAsync failed", error)
@@ -1233,7 +1545,18 @@ internal class MeetBackgroundBlurMediaPipeEngine(
                     },
                 )
             } else if (seg != null) {
-                val mpImage = BitmapImageBuilder(small).build()
+                // MediaPipe holds the bitmap until its result callback fires, and that callback is
+                // also what releases the in-flight slot — so handing it the pooled bitmap would let
+                // the next dispatch redraw pixels it is still reading. This path is the CPU
+                // fallback and the copy is only 256 KiB, so pay for the isolation.
+                val mpImage = BitmapImageBuilder(
+                    small.copy(Bitmap.Config.ARGB_8888, /* isMutable = */ false)
+                        ?: run {
+                            Log.w(TAG, "dispatchAsyncSegmentation: segmenter input copy returned null")
+                            clearInferenceInFlight()
+                            return
+                        },
+                ).build()
                 synchronized(maskLock) {
                     // Defensive: there should be only one in-flight image due to inferenceInFlight
                     // gating, but if callbacks are delayed we still close any stale input here.
@@ -1242,7 +1565,6 @@ internal class MeetBackgroundBlurMediaPipeEngine(
                 }
                 seg.segmentAsync(mpImage, segmentClockMs)
             } else {
-                small.recycle()
                 clearInferenceInFlight()
             }
         } catch (e: Throwable) {
@@ -1395,7 +1717,11 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         val endNs = System.nanoTime()
         synchronized(maskLock) {
             closePendingMpInputImageLocked()
-            if (newSnapshot != null) currentMask = newSnapshot
+            // Stamp the angle the frame was rotated by before inference. Only one inference is ever
+            // in flight, so this still describes the frame that produced `newSnapshot`.
+            if (newSnapshot != null) {
+                currentMask = newSnapshot.copy(sourceRotation = pendingInferenceRotation)
+            }
 
             val hadInFlight = inferenceInFlight || currentInferenceStartNs > 0L
             val startedNs = currentInferenceStartNs
@@ -1467,10 +1793,13 @@ internal class MeetBackgroundBlurMediaPipeEngine(
      *      feathering at compositing resolution; the σ then stretches during upscale into a
      *      ~σ × upscaleFactor pixel-wide soft edge — exactly what hides 1-2 frames of inference
      *      lag without bleeding into the subject).
-     *   2. Upscale the feathered mask to compositing resolution as an alpha-only bitmap.
-     *   3. Background blur — downscale, 3× box-blur, upscale.
-     *   4. Composite via `Canvas` + `PorterDuff.SRC_IN`: keep the sharp `input` where the mask
+     *   2. Background blur — downscale, box-blur.
+     *   3. Composite via `Canvas` + `PorterDuff.SRC_IN`: keep the sharp `input` where the mask
      *      is foreground, fall back to `blurred` elsewhere.
+     *
+     * Both the mask and the blurred plate stay at their own small resolutions until the
+     * compositing draws, which scale them as they fill the frame. Resizing either into a
+     * frame-sized bitmap first was an allocation and a resample for pixels about to be resampled.
      */
     private fun composeWithMask(
         input: Bitmap,
@@ -1480,55 +1809,238 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         val w = input.width
         val h = input.height
 
-        // Wider feather for the binary category-mask path so the upscale produces a soft edge
-        // visually comparable to the confidence-mask path. See [MASK_FEATHER_SIGMA_*] docs.
-        val featherSigma = if (usesCategoryMaskOutput) {
-            MASK_FEATHER_SIGMA_CATEGORY
-        } else {
-            MASK_FEATHER_SIGMA_CONFIDENCE
-        }
-        val hardenedAlpha = hardenForegroundAlpha(snapshot.foregroundAlpha, MASK_FOREGROUND_GAMMA)
-        val featheredAlpha = featherMask(
-            snapshot.copy(foregroundAlpha = hardenedAlpha),
-            featherSigma,
+        val maskBitmap = shapedMaskBitmap(snapshot) ?: return null
+        // The segmenter analysed an upright frame, so its mask is in upright space. Undo that turn
+        // to land back in buffer space, which is what the sharp frame and the blurred plate are in.
+        val maskMatrix = maskDrawMatrix(
+            snapshot.width,
+            snapshot.height,
+            w,
+            h,
+            snapshot.sourceRotation + MASK_UNROTATE_BIAS_DEGREES,
         )
-        val maskBitmap = upscaleAlphaToBitmap(featheredAlpha, snapshot.width, snapshot.height, w, h)
-            ?: return null
+
+        if (debugMaskOverlay) {
+            return drawMaskOverlay(input, maskBitmap, maskMatrix, w, h)
+        }
 
         val plate = makeBackgroundPlate(input, w, h, rotationDegrees)
             ?: return null
-        val blurred = plate.bitmap
+
+        // 1) Off-screen layer: draw the foreground-alpha mask, then composite the sharp `input` on
+        //    top with SRC_IN so it survives only where the mask is opaque. This is the equivalent
+        //    of iOS's `CIBlendWithMask(input=sharp, bg=blurred, mask=foreground)`, built into a
+        //    pooled layer instead of a `saveLayer` so it costs no frame-sized allocation. The mask
+        //    upscales straight into this layer — going through a frame-sized mask bitmap first
+        //    would be an extra full-frame draw for the same pixels.
+        val foreground = ensureForegroundBitmap(w, h) ?: return null
+        val foregroundCanvas = pooledForegroundCanvas ?: return null
+        foregroundCanvas.drawBitmap(maskBitmap, maskMatrix, maskUpscalePaint)
+        foregroundCanvas.drawBitmap(input, 0f, 0f, srcInPaint)
 
         val out = ensureComposedBitmap(w, h)
-        val canvas = Canvas(out)
+        val canvas = pooledComposedCanvas ?: return null
 
-        // 1) Fill output with the background plate, optionally veiled for extra privacy.
-        canvas.drawBitmap(blurred, 0f, 0f, null)
+        // 2) Fill output with the background plate, optionally veiled for extra privacy.
+        //    Desaturation rides on the draw as a colour filter so Skia does it while it is already
+        //    touching these pixels, instead of a getPixels/setPixels round trip over the frame.
+        //    The blurred plate is smaller than the frame and Skia scales it up as part of this
+        //    draw — it has to touch every destination pixel either way, so resampling it into a
+        //    frame-sized bitmap beforehand was a wasted allocation and a wasted pass.
+        plateDstRect.set(0, 0, w, h)
+        canvas.drawBitmap(plate.bitmap, null, plateDstRect, platePaint(plate.wantsDesaturation))
         if (plate.wantsObscureVeil && backgroundObscureOpacity > 0f) {
             val alpha = (backgroundObscureOpacity * 255f).toInt().coerceIn(0, 255)
-            val veilPaint = Paint().apply {
-                color = android.graphics.Color.argb(alpha, 115, 115, 122)
-            }
+            veilPaint.color = android.graphics.Color.argb(alpha, 115, 115, 122)
             canvas.drawRect(0f, 0f, w.toFloat(), h.toFloat(), veilPaint)
         }
 
-        // 2) Off-screen layer: draw the foreground-alpha mask, then composite the sharp `input`
-        //    on top with SRC_IN so it survives only where the mask is opaque. Restoring the
-        //    layer composites this masked foreground back over the blurred bg, completing the
-        //    equivalent of iOS's `CIBlendWithMask(input=sharp, bg=blurred, mask=foreground)`.
-        val sc = canvas.saveLayer(0f, 0f, w.toFloat(), h.toFloat(), null)
-        canvas.drawBitmap(maskBitmap, 0f, 0f, null)
-        val srcInPaint = Paint().apply {
-            xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
-            isAntiAlias = false
-            isFilterBitmap = true
-        }
-        canvas.drawBitmap(input, 0f, 0f, srcInPaint)
-        canvas.restoreToCount(sc)
+        // 3) Lay the masked foreground over the background.
+        canvas.drawBitmap(foreground, 0f, 0f, null)
 
-        maskBitmap.recycle()
-        if (plate.recyclable) {
-            blurred.recycle()
+        return out
+    }
+
+    /**
+     * Debug view: the sharp frame with the foreground mask tinted red over it.
+     *
+     * Deliberately skips the background plate, so what you see is the mask itself rather than its
+     * effect on a blur. Red where the mask calls foreground, untinted where it calls background,
+     * and the tint tracks the mask's alpha so the feathered edge stays visible. A correct mask is
+     * a red silhouette sitting exactly on the subject.
+     */
+    private fun drawMaskOverlay(
+        input: Bitmap,
+        maskBitmap: Bitmap,
+        maskMatrix: Matrix,
+        w: Int,
+        h: Int,
+    ): Bitmap? {
+        // SRC_IN in the pooled layer keeps the mask's alpha and swaps its colour for red; drawing
+        // the layer over the frame then leaves the tint translucent where the mask is feathered.
+        val foreground = ensureForegroundBitmap(w, h) ?: return null
+        val foregroundCanvas = pooledForegroundCanvas ?: return null
+        foregroundCanvas.drawBitmap(maskBitmap, maskMatrix, maskUpscalePaint)
+        foregroundCanvas.drawColor(android.graphics.Color.argb(150, 255, 0, 0), PorterDuff.Mode.SRC_IN)
+
+        val out = ensureComposedBitmap(w, h)
+        val canvas = pooledComposedCanvas ?: return null
+        canvas.drawBitmap(input, 0f, 0f, null)
+        canvas.drawBitmap(foreground, 0f, 0f, null)
+        return out
+    }
+
+    /**
+     * Shapes the raw segmentation alpha into the mask used for blending.
+     *
+     * Runs Apple's stages in Apple's order — erode, solidify, feather, gamma — because the order
+     * is what keeps the dials independent. The previous Android order (gamma, then feather, with a
+     * fixed σ and no erode or solidify) is what produced the two long-standing complaints:
+     *
+     *  * **Body partly erased.** The segmenter reports *confidence*, not coverage, so the interior
+     *    of a person routinely sits below 1.0. Without a solidify step those samples blend as
+     *    translucent, and the hardcoded `gamma = 1.35` then pushed them further toward background,
+     *    actively eating the subject. Solidify now makes the interior opaque and gamma defaults to
+     *    the neutral 1.0.
+     *  * **Background bleeding into the edge.** With no erosion the outline sat on (or outside) the
+     *    true silhouette, and the feather spread it wider still, so a band of real background
+     *    survived around the subject. Erosion pulls the outline in before the feather widens it.
+     *
+     * Apple runs all of this after upscaling to frame resolution. Doing that here would mean
+     * per-pixel Kotlin loops over ~900 k pixels every frame, so we work in mask space and convert
+     * the frame-height fractions to mask pixels — see [MaskEdgeTuning] for why the two are
+     * equivalent. The cost is quantisation: one mask pixel is ~2.8 frame pixels at 720p, so
+     * sub-pixel erosion radii round away rather than shifting the outline slightly.
+     */
+    private fun shapeMaskAlpha(snapshot: MaskSnapshot, edge: MaskEdgeTuning): ByteArray {
+        // [edge] is read once by the caller and keys both the cached tables and the shaped-mask
+        // cache. `setMaskEdgeTuning` runs on the platform thread while this runs on the capture
+        // thread, so re-reading the field — or invalidating a cache separately from the value —
+        // could shape one frame with the new erode radius and the old solidify curve.
+        val maskH = snapshot.height
+        val lut = maskToneLut?.takeIf { it.edge == edge }
+            ?: buildMaskToneLut(edge).also { maskToneLut = it }
+
+        val eroded = erodeMask(
+            snapshot.foregroundAlpha,
+            snapshot.width,
+            maskH,
+            radius = edge.erodeHeightFraction * maskH,
+        )
+        // A sub-pixel erode radius short-circuits and hands back the snapshot's own array. That
+        // array is the cached mask, reused until the next inference lands, so mapping the LUT over
+        // it in place would re-solidify the same mask on every frame until it saturated.
+        val solidified = applyLut(detachIfShared(eroded, snapshot.foregroundAlpha), lut.solidify)
+
+        // The binary category mask has no ramp of its own to widen, so it needs a floor well above
+        // the confidence path's; below it the upscale produces a staircase instead of an edge.
+        val featherFloor = if (usesCategoryMaskOutput) {
+            MASK_FEATHER_SIGMA_CATEGORY
+        } else {
+            MASK_FEATHER_SIGMA_MIN_CONFIDENCE
+        }
+        val feathered = featherMask(
+            snapshot.copy(foregroundAlpha = solidified),
+            maxOf(edge.featherHeightFraction * maskH, featherFloor),
+        )
+        return lut.gamma?.let { applyLut(feathered, it) } ?: feathered
+    }
+
+    private fun buildMaskToneLut(edge: MaskEdgeTuning): MaskToneLut {
+        // Same linear stretch about the midpoint that `solidifyMask` runs as a CIColorMatrix on
+        // Apple, clamped for the same reason: the stretch pushes values past 0 and 1, and an
+        // out-of-range alpha survives into the blend.
+        val solidify = ByteArray(256)
+        val slope = edge.solidifySlope
+        val bias = 0.5f - slope * edge.solidifyMidpoint
+        for (i in 0..255) {
+            val v = if (slope > 1f) slope * (i / 255f) + bias else i / 255f
+            solidify[i] = (v * 255f).toInt().coerceIn(0, 255).toByte()
+        }
+
+        val gamma = if (edge.foregroundGamma == 1f) {
+            null
+        } else {
+            ByteArray(256).also { table ->
+                for (i in 0..255) {
+                    val v = Math.pow((i / 255f).toDouble(), edge.foregroundGamma.toDouble())
+                    table[i] = (v * 255.0).toInt().coerceIn(0, 255).toByte()
+                }
+            }
+        }
+        return MaskToneLut(edge, solidify, gamma)
+    }
+
+    /** Copies into engine-owned scratch when [candidate] still aliases the cached mask. */
+    private fun detachIfShared(candidate: ByteArray, shared: ByteArray): ByteArray {
+        if (candidate !== shared) return candidate
+        val scratch = maskToneScratch?.takeIf { it.size == candidate.size }
+            ?: ByteArray(candidate.size).also { maskToneScratch = it }
+        candidate.copyInto(scratch)
+        return scratch
+    }
+
+    /** In-place table map; the mask arrays are already engine-owned scratch. */
+    private fun applyLut(alpha: ByteArray, lut: ByteArray): ByteArray {
+        var i = 0
+        while (i < alpha.size) {
+            alpha[i] = lut[alpha[i].toInt() and 0xFF]
+            i++
+        }
+        return alpha
+    }
+
+    /**
+     * Separable minimum filter — the counterpart of `CIMorphologyMinimum` in `erodeMask` on Apple.
+     *
+     * Erosion by a square structuring element is separable, so this is two O(w × h × radius)
+     * passes rather than a 2-D window. Radii under half a pixel are dropped, matching the
+     * `radius >= 0.5` guard on the Apple side.
+     */
+    private fun erodeMask(src: ByteArray, w: Int, h: Int, radius: Float): ByteArray {
+        val r = (radius + 0.5f).toInt()
+        if (r < 1) return src
+
+        val needed = w * h
+        val pass1 = erodePass1Scratch?.takeIf { it.size == needed }
+            ?: ByteArray(needed).also { erodePass1Scratch = it }
+        var y = 0
+        while (y < h) {
+            val rowOffset = y * w
+            var x = 0
+            while (x < w) {
+                var m = 255
+                var k = -r
+                while (k <= r) {
+                    val xx = (x + k).coerceIn(0, w - 1)
+                    val v = src[rowOffset + xx].toInt() and 0xFF
+                    if (v < m) m = v
+                    k++
+                }
+                pass1[rowOffset + x] = m.toByte()
+                x++
+            }
+            y++
+        }
+
+        val out = erodeOutScratch?.takeIf { it.size == needed }
+            ?: ByteArray(needed).also { erodeOutScratch = it }
+        var x = 0
+        while (x < w) {
+            var yy = 0
+            while (yy < h) {
+                var m = 255
+                var k = -r
+                while (k <= r) {
+                    val ny = (yy + k).coerceIn(0, h - 1)
+                    val v = pass1[ny * w + x].toInt() and 0xFF
+                    if (v < m) m = v
+                    k++
+                }
+                out[yy * w + x] = m.toByte()
+                yy++
+            }
+            x++
         }
         return out
     }
@@ -1601,18 +2113,32 @@ internal class MeetBackgroundBlurMediaPipeEngine(
     }
 
     /**
-     * Wraps a UInt8 foreground-alpha array as an ARGB Bitmap (the RGB channels are irrelevant —
-     * `PorterDuff.Mode.SRC_IN` only looks at alpha), then bilinearly upscales to
-     * (dstW × dstH).
+     * The shaped mask as an alpha-only ARGB bitmap at mask resolution (the RGB channels are
+     * irrelevant — `PorterDuff.Mode.SRC_IN` only looks at alpha).
+     *
+     * Reuses the previous result while the snapshot and the tuning are unchanged. Inference is
+     * slower than capture, so the same snapshot is composited onto several frames in a row and
+     * re-shaping it each time recomputes an identical mask.
      */
-    private fun upscaleAlphaToBitmap(
-        alpha: ByteArray,
-        srcW: Int,
-        srcH: Int,
-        dstW: Int,
-        dstH: Int,
-    ): Bitmap? {
-        if (srcW <= 0 || srcH <= 0 || dstW <= 0 || dstH <= 0) return null
+    private fun shapedMaskBitmap(snapshot: MaskSnapshot): Bitmap? {
+        val srcW = snapshot.width
+        val srcH = snapshot.height
+        if (srcW <= 0 || srcH <= 0) return null
+
+        val edge = maskEdge
+        val cached = maskSrcBitmap
+        if (cached != null && !cached.isRecycled &&
+            cached.width == srcW && cached.height == srcH &&
+            shapedMaskSource === snapshot && shapedMaskEdge == edge
+        ) {
+            return cached
+        }
+        // Drop the stale marks first: a failure below must not leave the cache claiming that
+        // `maskSrcBitmap` holds a mask it never got around to writing.
+        shapedMaskSource = null
+        shapedMaskEdge = null
+
+        val alpha = shapeMaskAlpha(snapshot, edge)
         val srcNeeded = srcW * srcH
         val srcPixels = maskSrcArgbScratch?.takeIf { it.size == srcNeeded }
             ?: IntArray(srcNeeded).also { maskSrcArgbScratch = it }
@@ -1622,11 +2148,55 @@ internal class MeetBackgroundBlurMediaPipeEngine(
             srcPixels[i] = a shl 24 // RGB=0, alpha-only
             i++
         }
-        val src = Bitmap.createBitmap(srcPixels, srcW, srcH, Bitmap.Config.ARGB_8888)
-        if (srcW == dstW && srcH == dstH) return src
-        val scaled = Bitmap.createScaledBitmap(src, dstW, dstH, /* filter = */ true)
-        if (scaled !== src) src.recycle()
-        return scaled
+
+        // Cached rather than rebuilt per frame: `createBitmap` used to allocate a 256² ARGB_8888
+        // buffer every frame, pure allocator churn feeding the GC.
+        val src = reuseBitmap(maskSrcBitmap, srcW, srcH)?.also { maskSrcBitmap = it } ?: return null
+        src.setPixels(srcPixels, 0, srcW, 0, 0, srcW, srcH)
+        shapedMaskSource = snapshot
+        shapedMaskEdge = edge
+        return src
+    }
+
+    /**
+     * Transform that lays the mask-resolution bitmap over the frame, undoing [sourceRotation].
+     *
+     * Returns the shared [maskUpscaleMatrix], so the caller must consume it before the next call.
+     */
+    private fun maskDrawMatrix(
+        srcW: Int,
+        srcH: Int,
+        dstW: Int,
+        dstH: Int,
+        sourceRotation: Int,
+    ): Matrix {
+        val rotation = ((sourceRotation % 360) + 360) % 360
+        // A quarter turn swaps the axes, so the scale has to be measured against the rotated
+        // extent rather than the raw mask, or the mask ends up stretched along the wrong axis.
+        val quarterTurned = rotation == 90 || rotation == 270
+        val rotatedW = if (quarterTurned) srcH else srcW
+        val rotatedH = if (quarterTurned) srcW else srcH
+
+        maskUpscaleMatrix.reset()
+        maskUpscaleMatrix.postTranslate(-srcW / 2f, -srcH / 2f)
+        maskUpscaleMatrix.postRotate(-rotation.toFloat())
+        maskUpscaleMatrix.postTranslate(rotatedW / 2f, rotatedH / 2f)
+        maskUpscaleMatrix.postScale(dstW.toFloat() / rotatedW, dstH.toFloat() / rotatedH)
+        return maskUpscaleMatrix
+    }
+
+    /** Returns [cached] when it already matches, otherwise a fresh mutable ARGB bitmap. */
+    private fun reuseBitmap(cached: Bitmap?, w: Int, h: Int): Bitmap? {
+        if (cached != null && !cached.isRecycled && cached.width == w && cached.height == h) {
+            return cached
+        }
+        cached?.recycle()
+        return try {
+            Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        } catch (e: OutOfMemoryError) {
+            Log.w(TAG, "reuseBitmap: OOM allocating ${w}x$h mask scratch", e)
+            null
+        }
     }
 
     /**
@@ -1634,12 +2204,14 @@ internal class MeetBackgroundBlurMediaPipeEngine(
      * a picture the user deliberately chose only mutes it. Mirrors iOS `makeBackgroundPlate`,
      * which returns the replacement before `applyObscureVeil` runs.
      */
-    /** [recyclable] is false for the cached oriented replacement, which outlives the frame. */
+    /** Both plate sources are engine-owned and outlive the frame, so neither is recycled here. */
     private class BackgroundPlate(
         val bitmap: Bitmap,
         val wantsObscureVeil: Boolean,
-        val recyclable: Boolean,
-    )
+    ) {
+        /** Desaturation exists to mute the real room, so it follows the veil, not the plate. */
+        val wantsDesaturation: Boolean get() = wantsObscureVeil
+    }
 
     private fun makeBackgroundPlate(
         input: Bitmap,
@@ -1649,10 +2221,10 @@ internal class MeetBackgroundBlurMediaPipeEngine(
     ): BackgroundPlate? {
         val oriented = orientedReplacement(dstW, dstH, rotationDegrees)
         if (oriented != null) {
-            return BackgroundPlate(oriented, wantsObscureVeil = false, recyclable = false)
+            return BackgroundPlate(oriented, wantsObscureVeil = false)
         }
         val blurred = makeBlurredBackgroundPlate(input) ?: return null
-        return BackgroundPlate(blurred, wantsObscureVeil = true, recyclable = true)
+        return BackgroundPlate(blurred, wantsObscureVeil = true)
     }
 
     /**
@@ -1740,91 +2312,62 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         return cropped
     }
 
-    /** Blurred camera plate when no replacement image is set. */
-    private fun makeBlurredBackgroundPlate(input: Bitmap): Bitmap? {
-        var plate = blurBackgroundBitmapOnce(input, recycleSource = false) ?: return null
-        var pass = 1
-        while (pass < BACKGROUND_BLUR_PASSES) {
-            plate = blurBackgroundBitmapOnce(plate, recycleSource = true) ?: return null
-            pass++
-        }
-        if (BACKGROUND_DESATURATION <= 0f) {
-            return plate
-        }
-        return desaturateBitmap(plate, BACKGROUND_DESATURATION)
-    }
-
-    private fun hardenForegroundAlpha(alpha: ByteArray, gamma: Float): ByteArray {
-        if (gamma <= 1f) return alpha
-        val out = ByteArray(alpha.size)
-        var i = 0
-        while (i < alpha.size) {
-            val n = (alpha[i].toInt() and 0xFF) / 255f
-            val hardened = Math.pow(n.toDouble(), gamma.toDouble()).toFloat()
-            out[i] = (hardened * 255f).toInt().coerceIn(0, 255).toByte()
-            i++
-        }
-        return out
-    }
-
-    private fun desaturateBitmap(bitmap: Bitmap, amount: Float): Bitmap {
-        if (amount <= 0f) return bitmap
-        val w = bitmap.width
-        val h = bitmap.height
-        val needed = w * h
-        val pixels = blurPixelsScratch?.takeIf { it.size == needed } ?: IntArray(needed).also {
-            blurPixelsScratch = it
-        }
-        bitmap.getPixels(pixels, 0, w, 0, 0, w, h)
-        val keep = (1f - amount.coerceIn(0f, 1f))
-        var i = 0
-        while (i < pixels.size) {
-            val px = pixels[i]
-            val a = px ushr 24
-            val r = (px ushr 16) and 0xFF
-            val g = (px ushr 8) and 0xFF
-            val b = px and 0xFF
-            val luma = (0.299f * r + 0.587f * g + 0.114f * b).toInt()
-            val nr = (r * keep + luma * (1f - keep)).toInt().coerceIn(0, 255)
-            val ng = (g * keep + luma * (1f - keep)).toInt().coerceIn(0, 255)
-            val nb = (b * keep + luma * (1f - keep)).toInt().coerceIn(0, 255)
-            pixels[i] = (a shl 24) or (nr shl 16) or (ng shl 8) or nb
-            i++
-        }
-        val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        out.setPixels(pixels, 0, w, 0, 0, w, h)
-        if (!bitmap.isRecycled) {
-            bitmap.recycle()
-        }
-        return out
-    }
-
     /**
-     * One downscale → box-blur (5 iterations) → upscale pass at [BACKGROUND_BLUR_DOWNSAMPLE].
+     * Blurred camera plate when no replacement image is set, at [BACKGROUND_BLUR_DOWNSAMPLE] of the
+     * frame size. The compositing draw scales it up as it fills the output, so producing a
+     * frame-sized copy here would be an allocation and a resample for pixels that get resampled
+     * again immediately.
+     *
+     * Every box-blur pass runs at the downsampled size, with a single scale down around the whole
+     * set. The previous shape called a self-contained downscale/blur/upscale helper
+     * [BACKGROUND_BLUR_PASSES] times, so each extra pass upscaled to full frame resolution only for
+     * the next one to immediately throw that away.
+     *
+     * Desaturation moved out to a colour filter on the compositing draw; doing it here meant a
+     * full-resolution `getPixels`/`setPixels` round trip on top.
      */
-    private fun blurBackgroundBitmapOnce(input: Bitmap, recycleSource: Boolean): Bitmap? {
+    private fun makeBlurredBackgroundPlate(input: Bitmap): Bitmap? {
         val w = input.width
         val h = input.height
         val dsW = (w * BACKGROUND_BLUR_DOWNSAMPLE).toInt().coerceAtLeast(8)
         val dsH = (h * BACKGROUND_BLUR_DOWNSAMPLE).toInt().coerceAtLeast(8)
-        val downscaled = Bitmap.createScaledBitmap(input, dsW, dsH, /* filter = */ true)
+
+        val downscaled = ensureBlurDownscaleBitmap(dsW, dsH) ?: return null
+        val downscaleCanvas = blurDownscaleCanvas ?: return null
+        blurDownscaleRect.set(0, 0, dsW, dsH)
+        downscaleCanvas.drawBitmap(input, null, blurDownscaleRect, plateDownscalePaint)
+
         val needed = dsW * dsH
-        val pixels = blurPixelsScratch?.takeIf { it.size == needed } ?: IntArray(needed).also {
-            blurPixelsScratch = it
-        }
-        val tmp = blurTmpScratch?.takeIf { it.size == needed } ?: IntArray(needed).also {
-            blurTmpScratch = it
-        }
+        val pixels = blurPixelsScratch?.takeIf { it.size == needed }
+            ?: IntArray(needed).also { blurPixelsScratch = it }
+        val tmp = blurTmpScratch?.takeIf { it.size == needed }
+            ?: IntArray(needed).also { blurTmpScratch = it }
+
         downscaled.getPixels(pixels, 0, dsW, 0, 0, dsW, dsH)
         val radius = backgroundBlurRadius()
-        repeat(5) { boxBlurPixelsInPlace(pixels, tmp, dsW, dsH, radius) }
-        downscaled.setPixels(pixels, 0, dsW, 0, 0, dsW, dsH)
-        val upscaled = Bitmap.createScaledBitmap(downscaled, w, h, /* filter = */ true)
-        if (upscaled !== downscaled) downscaled.recycle()
-        if (recycleSource && input !== upscaled) {
-            input.recycle()
+        repeat(BACKGROUND_BLUR_PASSES * BOX_BLUR_PASSES_PER_ROUND) {
+            boxBlurPixelsInPlace(pixels, tmp, dsW, dsH, radius)
         }
-        return upscaled
+        downscaled.setPixels(pixels, 0, dsW, 0, 0, dsW, dsH)
+        return downscaled
+    }
+
+    private fun ensureBlurDownscaleBitmap(dsW: Int, dsH: Int): Bitmap? {
+        blurDownscaleBitmap
+            ?.takeIf { !it.isRecycled && it.width == dsW && it.height == dsH }
+            ?.let { return it }
+        blurDownscaleBitmap?.recycle()
+        blurDownscaleCanvas = null
+        return try {
+            Bitmap.createBitmap(dsW, dsH, Bitmap.Config.ARGB_8888).also {
+                blurDownscaleBitmap = it
+                blurDownscaleCanvas = Canvas(it)
+            }
+        } catch (e: OutOfMemoryError) {
+            Log.w(TAG, "makeBlurredBackgroundPlate: OOM allocating ${dsW}x$dsH plate", e)
+            blurDownscaleBitmap = null
+            null
+        }
     }
 
     /**
@@ -1956,43 +2499,88 @@ internal class MeetBackgroundBlurMediaPipeEngine(
     private fun i420ToBitmap(i420: VideoFrame.I420Buffer): Bitmap {
         val w = i420.width
         val h = i420.height
-        val yBuf = i420.dataY
-        val uBuf = i420.dataU
-        val vBuf = i420.dataV
         val yStride = i420.strideY
         val uStride = i420.strideU
         val vStride = i420.strideV
+        val chromaH = (h + 1) / 2
+
+        // Pull the planes across in three memcpys. Addressing the direct buffers per sample cost
+        // ~2.8 M bounds-checked JNI-backed reads a frame at 720p, which dwarfed the arithmetic.
+        val yArr = copyPlane(i420.dataY, i420YScratch, h * yStride).also { i420YScratch = it }
+        val uArr = copyPlane(i420.dataU, i420UScratch, chromaH * uStride).also { i420UScratch = it }
+        val vArr = copyPlane(i420.dataV, i420VScratch, chromaH * vStride).also { i420VScratch = it }
 
         val needed = w * h
         val pixels = i420ArgbScratch?.takeIf { it.size == needed } ?: IntArray(needed).also {
             i420ArgbScratch = it
         }
+        // Walk 2×2 blocks: the four luma samples in a block share one chroma pair, so this loads
+        // and converts chroma once instead of four times.
         var y = 0
         while (y < h) {
-            val yRow = y * yStride
-            val uvRow = (y / 2) * uStride
-            val vRow = (y / 2) * vStride
-            val outRow = y * w
+            val hasRow1 = y + 1 < h
+            val yRow0 = y * yStride
+            val yRow1 = yRow0 + yStride
+            val uRow = (y shr 1) * uStride
+            val vRow = (y shr 1) * vStride
+            val outRow0 = y * w
+            val outRow1 = outRow0 + w
             var x = 0
             while (x < w) {
-                val yv = (yBuf.get(yRow + x).toInt() and 0xFF) - 16
-                val uv = (uBuf.get(uvRow + (x / 2)).toInt() and 0xFF) - 128
-                val vv = (vBuf.get(vRow + (x / 2)).toInt() and 0xFF) - 128
-                val c298 = 298 * yv
-                val r = (c298 + 409 * vv + 128) shr 8
-                val g = (c298 - 100 * uv - 208 * vv + 128) shr 8
-                val b = (c298 + 516 * uv + 128) shr 8
-                pixels[outRow + x] = 0xFF.shl(24) or
-                    (r.coerceIn(0, 255) shl 16) or
-                    (g.coerceIn(0, 255) shl 8) or
-                    b.coerceIn(0, 255)
-                x++
+                val c = x shr 1
+                val uv = (uArr[uRow + c].toInt() and 0xFF) - 128
+                val vv = (vArr[vRow + c].toInt() and 0xFF) - 128
+                val rBias = 409 * vv + 128
+                val gBias = -100 * uv - 208 * vv + 128
+                val bBias = 516 * uv + 128
+                val hasCol1 = x + 1 < w
+
+                pixels[outRow0 + x] = argbFromLuma(yArr[yRow0 + x], rBias, gBias, bBias)
+                if (hasCol1) {
+                    pixels[outRow0 + x + 1] = argbFromLuma(yArr[yRow0 + x + 1], rBias, gBias, bBias)
+                }
+                if (hasRow1) {
+                    pixels[outRow1 + x] = argbFromLuma(yArr[yRow1 + x], rBias, gBias, bBias)
+                    if (hasCol1) {
+                        pixels[outRow1 + x + 1] =
+                            argbFromLuma(yArr[yRow1 + x + 1], rBias, gBias, bBias)
+                    }
+                }
+                x += 2
             }
-            y++
+            y += 2
         }
         val bitmap = ensureArgbBitmap(w, h)
         bitmap.setPixels(pixels, 0, w, 0, 0, w, h)
         return bitmap
+    }
+
+    /** One luma sample plus the block's pre-multiplied chroma terms → opaque packed ARGB. */
+    private fun argbFromLuma(luma: Byte, rBias: Int, gBias: Int, bBias: Int): Int {
+        val c298 = 298 * ((luma.toInt() and 0xFF) - 16)
+        val r = (c298 + rBias) shr 8
+        val g = (c298 + gBias) shr 8
+        val b = (c298 + bBias) shr 8
+        return 0xFF.shl(24) or
+            (r.coerceIn(0, 255) shl 16) or
+            (g.coerceIn(0, 255) shl 8) or
+            b.coerceIn(0, 255)
+    }
+
+    /**
+     * Bulk-copies a plane into a reusable array, addressing it from index 0 like the per-sample
+     * reads it replaces.
+     *
+     * [size] is the stride-derived upper bound, so it overshoots the readable bytes by the last
+     * row's padding; the `remaining` guard keeps that from throwing and nothing reads the padding.
+     */
+    private fun copyPlane(buffer: ByteBuffer, cached: ByteArray?, size: Int): ByteArray {
+        val out = cached?.takeIf { it.size >= size } ?: ByteArray(size)
+        val view = buffer.duplicate()
+        view.position(0)
+        val available = minOf(size, view.remaining())
+        view.get(out, 0, available)
+        return out
     }
 
     private fun ensureArgbBitmap(width: Int, height: Int): Bitmap {
@@ -2015,10 +2603,30 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         ) {
             pooledComposedBitmap?.recycle()
             pooledComposedBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            pooledComposedCanvas = Canvas(pooledComposedBitmap!!)
             pooledComposedBitmapW = width
             pooledComposedBitmapH = height
         }
         return pooledComposedBitmap!!
+    }
+
+    /** Pooled stand-in for `Canvas.saveLayer`; see [pooledForegroundBitmap]. */
+    private fun ensureForegroundBitmap(width: Int, height: Int): Bitmap? {
+        pooledForegroundBitmap
+            ?.takeIf { !it.isRecycled && it.width == width && it.height == height }
+            ?.let { return it }
+        pooledForegroundBitmap?.recycle()
+        pooledForegroundCanvas = null
+        return try {
+            Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).also {
+                pooledForegroundBitmap = it
+                pooledForegroundCanvas = Canvas(it)
+            }
+        } catch (e: OutOfMemoryError) {
+            Log.w(TAG, "ensureForegroundBitmap: OOM allocating ${width}x$height layer", e)
+            pooledForegroundBitmap = null
+            null
+        }
     }
 
     /**
@@ -2064,46 +2672,71 @@ internal class MeetBackgroundBlurMediaPipeEngine(
         }
         bitmap.getPixels(pixels, 0, ew, 0, 0, ew, eh)
 
-        val yBuf = buffer.dataY
-        val uBuf = buffer.dataU
-        val vBuf = buffer.dataV
         val yStride = buffer.strideY
         val uStride = buffer.strideU
         val vStride = buffer.strideV
+        val chromaH = eh / 2
+
+        // Build the planes in arrays and hand each over in one bulk write. This used to be two
+        // separate passes over `pixels` writing the direct buffers a sample at a time — the frame
+        // was walked twice for no reason, and every sample paid a bounds-checked buffer write.
+        val yArr = ensurePlaneScratch(i420YScratch, eh * yStride).also { i420YScratch = it }
+        val uArr = ensurePlaneScratch(i420UScratch, chromaH * uStride).also { i420UScratch = it }
+        val vArr = ensurePlaneScratch(i420VScratch, chromaH * vStride).also { i420VScratch = it }
 
         var y = 0
         while (y < eh) {
-            val row = y * ew
-            val outRow = y * yStride
+            val row0 = y * ew
+            val row1 = row0 + ew
+            val yOut0 = y * yStride
+            val yOut1 = yOut0 + yStride
+            val uOut = (y shr 1) * uStride
+            val vOut = (y shr 1) * vStride
             var x = 0
             while (x < ew) {
-                val px = pixels[row + x]
-                val r = (px ushr 16) and 0xFF
-                val g = (px ushr 8) and 0xFF
-                val b = px and 0xFF
-                val yv = ((66 * r + 129 * g + 25 * b + 128) shr 8) + 16
-                yBuf.put(outRow + x, yv.coerceIn(0, 255).toByte())
-                x++
-            }
-            y++
-        }
-        var yy = 0
-        while (yy < eh) {
-            val uvRow = (yy / 2) * uStride
-            val vRow = (yy / 2) * vStride
-            var x = 0
-            while (x < ew) {
-                val px = pixels[yy * ew + x]
-                val r = (px ushr 16) and 0xFF
-                val g = (px ushr 8) and 0xFF
-                val b = px and 0xFF
-                val uv = ((-38 * r - 74 * g + 112 * b + 128) shr 8) + 128
-                val vv = ((112 * r - 94 * g - 18 * b + 128) shr 8) + 128
-                uBuf.put(uvRow + (x / 2), uv.coerceIn(0, 255).toByte())
-                vBuf.put(vRow + (x / 2), vv.coerceIn(0, 255).toByte())
+                val p00 = pixels[row0 + x]
+                val p01 = pixels[row0 + x + 1]
+                val p10 = pixels[row1 + x]
+                val p11 = pixels[row1 + x + 1]
+
+                yArr[yOut0 + x] = lumaOf(p00)
+                yArr[yOut0 + x + 1] = lumaOf(p01)
+                yArr[yOut1 + x] = lumaOf(p10)
+                yArr[yOut1 + x + 1] = lumaOf(p11)
+
+                // Chroma from the top-left sample of the block, matching the previous behaviour.
+                val r = (p00 ushr 16) and 0xFF
+                val g = (p00 ushr 8) and 0xFF
+                val b = p00 and 0xFF
+                val c = x shr 1
+                uArr[uOut + c] = (((-38 * r - 74 * g + 112 * b + 128) shr 8) + 128)
+                    .coerceIn(0, 255).toByte()
+                vArr[vOut + c] = (((112 * r - 94 * g - 18 * b + 128) shr 8) + 128)
+                    .coerceIn(0, 255).toByte()
                 x += 2
             }
-            yy += 2
+            y += 2
         }
+
+        writePlane(buffer.dataY, yArr, eh * yStride)
+        writePlane(buffer.dataU, uArr, chromaH * uStride)
+        writePlane(buffer.dataV, vArr, chromaH * vStride)
+    }
+
+    /** BT.601 limited-range luma from a packed ARGB pixel. */
+    private fun lumaOf(px: Int): Byte {
+        val r = (px ushr 16) and 0xFF
+        val g = (px ushr 8) and 0xFF
+        val b = px and 0xFF
+        return (((66 * r + 129 * g + 25 * b + 128) shr 8) + 16).coerceIn(0, 255).toByte()
+    }
+
+    private fun ensurePlaneScratch(cached: ByteArray?, size: Int): ByteArray =
+        cached?.takeIf { it.size >= size } ?: ByteArray(size)
+
+    private fun writePlane(buffer: ByteBuffer, plane: ByteArray, size: Int) {
+        val view = buffer.duplicate()
+        view.position(0)
+        view.put(plane, 0, minOf(size, view.remaining()))
     }
 }

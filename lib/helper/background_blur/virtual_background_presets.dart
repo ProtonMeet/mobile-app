@@ -17,28 +17,28 @@ class VirtualBackgroundPresets {
 
   static final List<VirtualBackgroundPreset> all = [
     VirtualBackgroundPreset(
-      id: 'proton',
-      asset: Assets.images.virtualBackgrounds.a00Proton,
+      id: 'virtualBg01',
+      asset: Assets.images.virtualBackgrounds.virtualBg01,
     ),
     VirtualBackgroundPreset(
-      id: 'office',
-      asset: Assets.images.virtualBackgrounds.a01ModernOfficeV2WorkingOffice,
+      id: 'virtualBg02',
+      asset: Assets.images.virtualBackgrounds.virtualBg02,
     ),
     VirtualBackgroundPreset(
-      id: 'mountain',
-      asset: Assets.images.virtualBackgrounds.a02MountainLandscape,
+      id: 'virtualBg03',
+      asset: Assets.images.virtualBackgrounds.virtualBg03,
     ),
     VirtualBackgroundPreset(
-      id: 'abstract',
-      asset: Assets.images.virtualBackgrounds.a03AbstractNaturalTexture,
+      id: 'virtualBg04',
+      asset: Assets.images.virtualBackgrounds.virtualBg04,
     ),
     VirtualBackgroundPreset(
-      id: 'beach',
-      asset: Assets.images.virtualBackgrounds.a04BeachLandscapeV2Happy,
+      id: 'virtualBg05',
+      asset: Assets.images.virtualBackgrounds.virtualBg05,
     ),
     VirtualBackgroundPreset(
-      id: 'coffee',
-      asset: Assets.images.virtualBackgrounds.a05CoffeePlaceV2Furnished,
+      id: 'virtualBg06',
+      asset: Assets.images.virtualBackgrounds.virtualBg06,
     ),
   ];
 

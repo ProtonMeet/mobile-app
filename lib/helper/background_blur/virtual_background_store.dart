@@ -23,12 +23,21 @@ class VirtualBackgroundStore {
   static const _fileStem = 'background';
   static const _allowedExtensions = {'.jpg', '.jpeg', '.png', '.webp', '.heic'};
 
+  /// Distinguishes one stored background from the next; see [store].
+  static int _storeSequence = 0;
+
   /// Stores [bytes] as the custom background, replacing any previous one.
+  ///
+  /// The name carries a sequence number because the path is the whole identity
+  /// of a custom selection: `CameraBackgroundSelection` compares by value, so
+  /// with a fixed name picking a *different* photo produced a selection equal
+  /// to the current one and every caller that skips no-op changes dropped it —
+  /// the user picked an image and nothing happened. Only one file is ever on
+  /// disk regardless, since [_resetDirectory] empties the directory first.
   static Future<File> store(Uint8List bytes, {String? displayName}) async {
     final directory = await _resetDirectory();
-    final file = File(
-      p.join(directory.path, '$_fileStem${_extensionFor(displayName)}'),
-    );
+    final name = '${_fileStem}_${_storeSequence++}${_extensionFor(displayName)}';
+    final file = File(p.join(directory.path, name));
     await file.writeAsBytes(bytes, flush: true);
     return file;
   }

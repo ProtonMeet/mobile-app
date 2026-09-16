@@ -62,6 +62,24 @@ void main() {
       expect(File(entries.single.path).readAsBytesSync(), bytes(3));
     });
 
+    // The path is the whole identity of a custom selection, and callers skip
+    // changes that compare equal. A reused name meant picking a different photo
+    // was silently dropped.
+    test('gives each stored image a distinct path', () async {
+      final first = await VirtualBackgroundStore.store(
+        bytes(1),
+        displayName: 'a.jpg',
+      );
+      final second = await VirtualBackgroundStore.store(
+        bytes(2),
+        displayName: 'b.jpg',
+      );
+
+      expect(second.path, isNot(first.path));
+      expect(storeDirectory.listSync(), hasLength(1));
+      expect(second.readAsBytesSync(), bytes(2));
+    });
+
     test(
       'derives the extension from the picked name, defaulting to jpg',
       () async {

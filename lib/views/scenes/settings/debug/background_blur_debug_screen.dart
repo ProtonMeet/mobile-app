@@ -48,9 +48,10 @@ class _BackgroundBlurDebugScreenState extends State<BackgroundBlurDebugScreen> {
   late double _obscureOpacity;
   MaskEdgeTuning _maskEdge = MaskEdgeTuning.standard;
   bool _synchronousSegmentation = false;
+  bool _maskDebugOverlay = false;
   SegmentationModelPreference _segmentModel = (iOS || macOS)
       ? SegmentationModelPreference.vision
-      : SegmentationModelPreference.landscape;
+      : SegmentationModelPreference.single;
   String? _segmentBackend;
   bool _switchingSegmentModel = false;
 
@@ -99,6 +100,7 @@ class _BackgroundBlurDebugScreenState extends State<BackgroundBlurDebugScreen> {
     backgroundObscureOpacity: _obscureOpacity,
     maskEdge: _maskEdge,
     synchronousSegmentation: _synchronousSegmentation,
+    debugMaskOverlay: _maskDebugOverlay,
   );
 
   bool get _canTuneMaskEdge => maskEdgeTuningSupported;
@@ -344,6 +346,14 @@ class _BackgroundBlurDebugScreenState extends State<BackgroundBlurDebugScreen> {
     }
   }
 
+  void _onMaskDebugOverlayChanged(bool enabled) {
+    setState(() => _maskDebugOverlay = enabled);
+    if (_blurEnabled) {
+      unawaited(_applyBlurConfigLive());
+    }
+  }
+
+
   Future<void> _copyConfig() async {
     final buffer = StringBuffer()
       ..writeln('defaultBlurSigma => $_blurSigma')
@@ -521,6 +531,10 @@ class _BackgroundBlurDebugScreenState extends State<BackgroundBlurDebugScreen> {
               SynchronousSegmentationSwitch(
                 value: _synchronousSegmentation,
                 onChanged: _onSynchronousSegmentationChanged,
+              ),
+              MaskDebugOverlaySwitch(
+                value: _maskDebugOverlay,
+                onChanged: _onMaskDebugOverlayChanged,
               ),
             ],
             const SizedBox(height: 16),

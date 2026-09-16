@@ -2,6 +2,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
+import 'package:meet/helper/logger.dart' as l;
 
 /// Result of picking a custom virtual background image.
 class VirtualBackgroundPickResult {
@@ -62,6 +63,13 @@ class VirtualBackgroundImagePicker {
         imageQuality: _jpegQuality,
       );
       if (picked == null) {
+        // Also what a cross-task `startActivityForResult` looks like: Android
+        // cancels it outright, so a misconfigured `launchMode` is
+        // indistinguishable from the user backing out of the gallery.
+        l.logger.i(
+          '[VirtualBackgroundImagePicker] gallery returned no image '
+          '(user cancelled, or the result never reached the activity)',
+        );
         return null;
       }
       final path = picked.path;
@@ -79,7 +87,14 @@ class VirtualBackgroundImagePicker {
         bytes: bytes,
         displayName: picked.name,
       );
-    } catch (_) {
+    } catch (e, st) {
+      // A swallowed failure here is indistinguishable from the user cancelling,
+      // which is exactly how a broken picker reaches us as "nothing happened".
+      l.logger.e(
+        '[VirtualBackgroundImagePicker] gallery pick failed: $e',
+        error: e,
+        stackTrace: st,
+      );
       return null;
     }
   }
@@ -102,7 +117,12 @@ class VirtualBackgroundImagePicker {
         return null;
       }
       return VirtualBackgroundPickResult(bytes: bytes, displayName: file.name);
-    } catch (_) {
+    } catch (e, st) {
+      l.logger.e(
+        '[VirtualBackgroundImagePicker] file pick failed: $e',
+        error: e,
+        stackTrace: st,
+      );
       return null;
     }
   }

@@ -11,6 +11,7 @@ class BackgroundBlurConfig {
     this.backgroundObscureOpacity = defaultObscureOpacity,
     this.maskEdge = MaskEdgeTuning.standard,
     this.synchronousSegmentation = false,
+    this.debugMaskOverlay = false,
     this.replacementImagePath,
   });
 
@@ -26,7 +27,7 @@ class BackgroundBlurConfig {
   final double blurSigma;
   final double backgroundObscureOpacity;
 
-  /// How the segmentation mask is shaped before blending. Apple platforms only.
+  /// How the segmentation mask is shaped before blending. Honoured on Apple and Android.
   final MaskEdgeTuning maskEdge;
 
   /// Segment inline on the capture thread so each frame gets its own mask. Apple platforms only.
@@ -36,6 +37,13 @@ class BackgroundBlurConfig {
   /// capture, so any spike past the frame period drops captured frames. Debug/experimental —
   /// leave off in production until the latency headroom is proven on the slowest target device.
   final bool synchronousSegmentation;
+
+  /// Debug: replace the composite with the sharp frame plus a red tint over the mask.
+  ///
+  /// Makes the mask's position, orientation and feather directly visible, which the normal
+  /// output cannot show — there, a misplaced mask and a badly shaped one look alike. Android
+  /// only for now; ignored elsewhere.
+  final bool debugMaskOverlay;
 
   final String? replacementImagePath;
 
@@ -50,6 +58,7 @@ class BackgroundBlurConfig {
     double? backgroundObscureOpacity,
     MaskEdgeTuning? maskEdge,
     bool? synchronousSegmentation,
+    bool? debugMaskOverlay,
     String? replacementImagePath,
     bool clearReplacementImagePath = false,
   }) {
@@ -61,6 +70,7 @@ class BackgroundBlurConfig {
       maskEdge: maskEdge ?? this.maskEdge,
       synchronousSegmentation:
           synchronousSegmentation ?? this.synchronousSegmentation,
+      debugMaskOverlay: debugMaskOverlay ?? this.debugMaskOverlay,
       replacementImagePath: clearReplacementImagePath
           ? null
           : replacementImagePath ?? this.replacementImagePath,
@@ -76,6 +86,7 @@ class BackgroundBlurConfig {
       'backgroundObscureOpacity': clampObscureOpacity(backgroundObscureOpacity),
       'backgroundMode': effectiveMode.channelId,
       'synchronousSegmentation': synchronousSegmentation,
+      'debugMaskOverlay': debugMaskOverlay,
       ...maskEdge.toMethodChannelArgs(),
     };
     final path = replacementImagePath;
@@ -111,6 +122,7 @@ class BackgroundBlurConfig {
           : defaultObscureOpacity,
       maskEdge: MaskEdgeTuning.fromMethodChannelArgs(args),
       synchronousSegmentation: args['synchronousSegmentation'] == true,
+      debugMaskOverlay: args['debugMaskOverlay'] == true,
       replacementImagePath: path is String && path.isNotEmpty ? path : null,
     );
   }
