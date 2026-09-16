@@ -61,9 +61,18 @@ internal class MeetBackgroundBlurFrameProcessor(
         isEnabled = enabled
     }
 
-    fun applyBlurConfig(blurSigma: Float, backgroundObscureOpacity: Float) {
+    fun applyBlurConfig(
+        blurSigma: Float,
+        backgroundObscureOpacity: Float,
+        maskEdge: MaskEdgeTuning,
+        debugMaskOverlay: Boolean,
+    ) {
         engine.setBlurConfig(blurSigma, backgroundObscureOpacity)
+        engine.setMaskEdgeTuning(maskEdge)
+        engine.setDebugMaskOverlay(debugMaskOverlay)
     }
+
+    fun maskEdgeDebugInfo(): Map<String, Any> = engine.maskEdgeDebugInfo()
 
     fun setReplacementBackgroundImagePath(path: String?): Boolean =
         engine.setReplacementBackgroundImagePath(path)

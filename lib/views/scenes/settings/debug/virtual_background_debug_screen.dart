@@ -49,6 +49,7 @@ class _VirtualBackgroundDebugScreenState
   String? _error;
   MaskEdgeTuning _maskEdge = MaskEdgeTuning.standard;
   bool _synchronousSegmentation = false;
+  bool _maskDebugOverlay = false;
 
   bool get _canFlipCamera => iOS || android;
 
@@ -138,6 +139,7 @@ class _VirtualBackgroundDebugScreenState
     return resolveCameraBackgroundBlurConfig(selection).copyWith(
       maskEdge: _maskEdge,
       synchronousSegmentation: _synchronousSegmentation,
+      debugMaskOverlay: _maskDebugOverlay,
     );
   }
 
@@ -162,6 +164,12 @@ class _VirtualBackgroundDebugScreenState
     setState(() => _synchronousSegmentation = enabled);
     unawaited(_applyMaskEdgeLive());
   }
+
+  void _onMaskDebugOverlayChanged(bool enabled) {
+    setState(() => _maskDebugOverlay = enabled);
+    unawaited(_applyMaskEdgeLive());
+  }
+
 
   Future<void> _startCamera() async {
     await _stopCamera();
@@ -293,15 +301,17 @@ class _VirtualBackgroundDebugScreenState
   }
 
   Widget _preview(BuildContext context) {
-    const aspectRatio = 16 / 9;
+    const aspectRatio = 9 / 16;
+    const maxHeight = 600.0;
     final maxWidth = (context.width - 32).clamp(280.0, 360.0);
-    final height = maxWidth / aspectRatio;
+    final height = (maxWidth / aspectRatio).clamp(0.0, maxHeight);
+    final width = height * aspectRatio;
 
     return Center(
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: SizedBox(
-          width: maxWidth,
+          width: width,
           height: height,
           child: ColoredBox(
             color: context.colors.interActionPurpleMinor3,
@@ -394,6 +404,10 @@ class _VirtualBackgroundDebugScreenState
               SynchronousSegmentationSwitch(
                 value: _synchronousSegmentation,
                 onChanged: _onSynchronousSegmentationChanged,
+              ),
+              MaskDebugOverlaySwitch(
+                value: _maskDebugOverlay,
+                onChanged: _onMaskDebugOverlayChanged,
               ),
             ],
             const SizedBox(height: 16),

@@ -97,10 +97,20 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
         </provider>
+        <!--
+          launchMode is singleTask/singleTop, not singleInstance: a singleInstance activity is
+          the only activity allowed in its task, so everything it launches lands in a
+          different task and Android cancels cross-task startActivityForResult
+          outright. That silently broke every activity result in the app — the gallery
+          picker for custom virtual backgrounds opened normally and then always came
+          back empty. singleTask keeps MainActivity a single reused instance for deep
+          links and return-to-call (see onNewIntent) while letting launched activities
+          share its task and report back.
+        -->
         <activity
             android:name="proton.android.meet.activity.MainActivity"
             android:exported="true"
-            android:launchMode="singleInstance"
+            android:launchMode="singleTop"
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"

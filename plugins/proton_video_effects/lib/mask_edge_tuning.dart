@@ -1,7 +1,10 @@
 /// Shape of the segmentation mask before it is used to blend subject over background.
 ///
-/// Apple platforms only. Android feathers in mask space with a fixed sigma and has no erosion or
-/// confidence-remapping step, so it ignores every field here.
+/// Honoured by the Apple and Android engines alike. Apple shapes the mask at frame resolution in
+/// Core Image; Android shapes it in mask space and converts these frame-height fractions to mask
+/// pixels, which is equivalent because the mask is a scaled copy of the frame. The practical
+/// difference is quantisation: one Android mask pixel is a few frame pixels, so sub-pixel erode
+/// radii round away instead of nudging the outline.
 ///
 /// The pipeline applies these in a fixed order — upscale, erode, solidify, feather, gamma — and
 /// the order is what keeps the knobs independent. Erosion moves the outline without reshaping the
@@ -20,7 +23,7 @@ class MaskEdgeTuning {
 
   static const MaskEdgeTuning standard = MaskEdgeTuning();
 
-  static const double defaultFeatherHeightFraction = 0.005;
+  static const double defaultFeatherHeightFraction = 0.010;
   static const double defaultErodeHeightFraction = 0.002;
   static const double defaultSolidifySlope = 6;
   static const double defaultSolidifyMidpoint = 0.55;

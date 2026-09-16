@@ -13,6 +13,7 @@ import 'package:livekit_client/livekit_client.dart' hide ConnectionState;
 import 'package:meet/constants/constants.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/constants/test_ids.dart';
+import 'package:meet/helper/background_blur/camera_background_effect_service.dart';
 import 'package:meet/helper/background_blur/camera_background_selection.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
@@ -836,6 +837,18 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         }
       } catch (e) {
         l.logger.e('[RoomPage] Error refreshing video track: $e');
+      }
+
+      // Pausing stops the capturer and resuming restarts it, which swaps in a
+      // fresh WebRTC track id. The native effect is keyed by that id, so
+      // without re-attaching the background stops applying while the UI still
+      // reports it as on. Mirrors what the controls bar does on manual enable.
+      final selection = _bloc.state.cameraBackgroundSelection;
+      if (selection.isEffectActive) {
+        await syncLocalCameraBackgroundEffect(
+          room: _bloc.state.room,
+          selection: selection,
+        );
       }
     } catch (e) {
       l.logger.e('[RoomPage] Error ensuring video track started: $e');

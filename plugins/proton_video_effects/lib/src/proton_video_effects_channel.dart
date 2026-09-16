@@ -66,7 +66,11 @@ class ProtonVideoEffectsChannel {
         switch (defaultTargetPlatform) {
           TargetPlatform.iOS ||
           TargetPlatform.macOS => SegmentationModelPreference.vision,
-          TargetPlatform.android => SegmentationModelPreference.landscape,
+          // Square, not landscape: the engine turns the capture buffer upright before inference,
+          // so what reaches the tensor is a portrait 9:16 frame. The landscape model's 256×144
+          // input would squash that ~3× vertically and the mask comes back as a slab rather than
+          // a silhouette. 256×256 costs a 1.8× squash instead.
+          TargetPlatform.android => SegmentationModelPreference.single,
           _ => null,
         };
     if (preference == null) {
