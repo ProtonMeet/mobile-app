@@ -254,8 +254,8 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
     /// replaced with empty `Mock*` instances, with two exceptions:
     /// - [`MlsApi`] is created from the provided `user_id`, `meet_link_name` and `is_host`, using [`create_mock_mls_api`].
     /// - [`WebSocketClient`][crate::domain::user::ports::WebSocketClient] is set to always return
-    ///     [`Connected`](crate::domain::user::ports::ConnectionState::Connected) when
-    ///     [`get_connection_state`](crate::domain::user::ports::WebSocketClient::get_connection_state) is called.
+    ///   [`Connected`](crate::domain::user::ports::ConnectionState::Connected) when
+    ///   [`get_connection_state`](crate::domain::user::ports::WebSocketClient::get_connection_state) is called.
     fn create_test_service_bundle_with_host(
         user_id: &str,
         meet_link_name: &str,
@@ -287,9 +287,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 config: MlsClientConfig::default(),
             }))
         });
-        let server_time_tracker = di
-            .server_time_tracker
-            .unwrap_or_else(|| ServerTimeTracker::new());
+        let server_time_tracker = di.server_time_tracker.unwrap_or_default();
         let crypto_client = di
             .crypto_client
             .unwrap_or_else(|| Arc::new(MockCryptoClient::new()));
