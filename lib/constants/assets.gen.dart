@@ -197,6 +197,14 @@ class $AssetsImagesIconGen {
   /// File path: assets/images/icon/ic-link.svg
   SvgGenImage get icLink => const SvgGenImage('assets/images/icon/ic-link.svg');
 
+  /// File path: assets/images/icon/ic-live-caption.svg
+  SvgGenImage get icLiveCaption =>
+      const SvgGenImage('assets/images/icon/ic-live-caption.svg');
+
+  /// File path: assets/images/icon/ic-live-captions.svg
+  SvgGenImage get icLiveCaptions =>
+      const SvgGenImage('assets/images/icon/ic-live-captions.svg');
+
   /// File path: assets/images/icon/ic-locked.svg
   SvgGenImage get icLocked =>
       const SvgGenImage('assets/images/icon/ic-locked.svg');
@@ -395,6 +403,8 @@ class $AssetsImagesIconGen {
     icLeaveMeetingGuest,
     icLeftMeeting,
     icLink,
+    icLiveCaption,
+    icLiveCaptions,
     icLocked,
     icMeetingShieldH,
     icMeetingsCalendar,

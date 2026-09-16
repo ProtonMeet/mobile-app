@@ -64,6 +64,8 @@ pub type MlsSyncStateUpdateCallback =
 pub type JoinDecisionCallback = dyn Fn(String, bool) -> DartFnFuture<()> + Send + Sync;
 pub type JoinRequestCallback =
     dyn Fn(JoinRequestChange, String, String, u64) -> DartFnFuture<()> + Send + Sync;
+pub type AgentPendingCallback = dyn Fn(String) -> DartFnFuture<()> + Send + Sync;
+pub type AgentLeftCallback = dyn Fn(String) -> DartFnFuture<()> + Send + Sync;
 
 lazy_static::lazy_static! {
     static ref MEET_MLS_GROUP_UPDATE_DART_CALLBACK: Arc<Mutex<Option<Arc<MlsGroupUpdateCallback>>>> =
@@ -75,6 +77,10 @@ lazy_static::lazy_static! {
     static ref MEET_JOIN_DECISION_DART_CALLBACK: Arc<Mutex<Option<Arc<JoinDecisionCallback>>>> =
         Arc::new(Mutex::new(None));
     static ref MEET_JOIN_REQUEST_DART_CALLBACK: Arc<Mutex<Option<Arc<JoinRequestCallback>>>> =
+        Arc::new(Mutex::new(None));
+    static ref MEET_AGENT_PENDING_DART_CALLBACK: Arc<Mutex<Option<Arc<AgentPendingCallback>>>> =
+        Arc::new(Mutex::new(None));
+    static ref MEET_AGENT_LEFT_DART_CALLBACK: Arc<Mutex<Option<Arc<AgentLeftCallback>>>> =
         Arc::new(Mutex::new(None));
 }
 
@@ -1248,6 +1254,130 @@ impl AppCore {
 
     pub async fn remove_participant(&self, participant_uuid: String) -> Result<(), BridgeError> {
         self.inner.remove_participant(participant_uuid).await?;
+        Ok(())
+    }
+
+    pub async fn request_closed_captions(&self, meet_link_name: String) -> Result<(), BridgeError> {
+        self.inner.request_closed_captions(meet_link_name).await?;
+        Ok(())
+    }
+
+    pub async fn stop_closed_captions(&self, meet_link_name: String) -> Result<(), BridgeError> {
+        self.inner.stop_closed_captions(meet_link_name).await?;
+        Ok(())
+    }
+
+    /// Host-only: enable or disable live captions for the meeting via meet-server.
+    /// Used by waiting-room host controls (independent of per-participant `wants_captions`).
+    pub async fn set_closed_captions_availability_as_host(
+        &self,
+        meet_link_name: String,
+        available: bool,
+    ) -> Result<(), BridgeError> {
+        self.inner
+            .set_closed_captions_availability_as_host(meet_link_name, available)
+            .await?;
+        Ok(())
+    }
+
+    /// Admit a pending live-captions agent into the MLS group. Requires the
+    /// meeting password to derive the agent PSK. Safe for any joined client
+    /// that holds the password; meet-core rank-stagger deduplicates callers.
+    pub async fn admit_agent(
+        &self,
+        meet_link_name: String,
+        agent_device_id: String,
+        meeting_password: String,
+    ) -> Result<(), BridgeError> {
+        self.inner
+            .admit_agent(meet_link_name, agent_device_id, meeting_password)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn remove_agent(
+        &self,
+        meet_link_name: String,
+        agent_device_id: String,
+    ) -> Result<(), BridgeError> {
+        self.inner
+            .remove_agent(meet_link_name, agent_device_id)
+            .await?;
+        Ok(())
+    }
+
+    /// List device IDs of agents that uploaded a KeyPackage but are not yet
+    /// admitted to the MLS group (reconcile sweep after handler registration).
+    pub async fn list_pending_agents(
+        &self,
+        meet_link_name: String,
+    ) -> Result<Vec<String>, BridgeError> {
+        let device_ids = self.inner.list_pending_agents(meet_link_name).await?;
+        Ok(device_ids)
+    }
+
+    /// Fired when meet-server signals an agent uploaded its KeyPackage and
+    /// awaits MLS admission (`AgentPending` websocket event).
+    pub async fn set_agent_pending_callback(
+        &self,
+        callback: impl Fn(String) -> DartFnFuture<()> + Send + Sync + 'static,
+    ) -> Result<(), BridgeError> {
+        let callback_guard = {
+            let mut guard = MEET_AGENT_PENDING_DART_CALLBACK.lock().await;
+            *guard = Some(Arc::new(callback));
+            MEET_AGENT_PENDING_DART_CALLBACK.clone()
+        };
+
+        self.inner
+            .set_agent_pending_handler(move |device_id| {
+                let callback_lock = callback_guard.clone();
+                Box::pin(async move {
+                    if let Some(callback) = callback_lock.lock().await.as_ref().cloned() {
+                        flutter_rust_bridge::spawn(async move {
+                            let _ = callback(device_id).await;
+                        });
+                    }
+                })
+            })
+            .await;
+        Ok(())
+    }
+
+    pub async fn clear_agent_pending_callback(&self) -> Result<(), BridgeError> {
+        let mut guard = MEET_AGENT_PENDING_DART_CALLBACK.lock().await;
+        *guard = None;
+        Ok(())
+    }
+
+    /// Fired when an admitted agent leaves the MLS roster (cleanup tracking).
+    pub async fn set_agent_left_callback(
+        &self,
+        callback: impl Fn(String) -> DartFnFuture<()> + Send + Sync + 'static,
+    ) -> Result<(), BridgeError> {
+        let callback_guard = {
+            let mut guard = MEET_AGENT_LEFT_DART_CALLBACK.lock().await;
+            *guard = Some(Arc::new(callback));
+            MEET_AGENT_LEFT_DART_CALLBACK.clone()
+        };
+
+        self.inner
+            .set_agent_left_handler(move |device_id| {
+                let callback_lock = callback_guard.clone();
+                Box::pin(async move {
+                    if let Some(callback) = callback_lock.lock().await.as_ref().cloned() {
+                        flutter_rust_bridge::spawn(async move {
+                            let _ = callback(device_id).await;
+                        });
+                    }
+                })
+            })
+            .await;
+        Ok(())
+    }
+
+    pub async fn clear_agent_left_callback(&self) -> Result<(), BridgeError> {
+        let mut guard = MEET_AGENT_LEFT_DART_CALLBACK.lock().await;
+        *guard = None;
         Ok(())
     }
 

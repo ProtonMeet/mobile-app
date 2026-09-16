@@ -36,12 +36,21 @@ import 'storage/user_key_provider.dart';
 import 'user_config.dart';
 
 // These functions are ignored because they are not marked as `pub`: `get_app_core_runtime_handle`, `join_meeting_reuse_token2`, `join_meeting_reuse_token`, `spawn_authenticate_meeting_link`, `spawn_on_background`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `MEET_JOIN_DECISION_DART_CALLBACK`, `MEET_JOIN_REQUEST_DART_CALLBACK`, `MEET_LIVEKIT_ADMIN_CHANGE_DART_CALLBACK`, `MEET_MLS_GROUP_UPDATE_DART_CALLBACK`, `MEET_MLS_SYNC_STATE_UPDATE_DART_CALLBACK`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `deref`, `deref`, `deref`, `deref`, `deref`, `initialize`, `initialize`, `initialize`, `initialize`, `initialize`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `MEET_AGENT_LEFT_DART_CALLBACK`, `MEET_AGENT_PENDING_DART_CALLBACK`, `MEET_JOIN_DECISION_DART_CALLBACK`, `MEET_JOIN_REQUEST_DART_CALLBACK`, `MEET_LIVEKIT_ADMIN_CHANGE_DART_CALLBACK`, `MEET_MLS_GROUP_UPDATE_DART_CALLBACK`, `MEET_MLS_SYNC_STATE_UPDATE_DART_CALLBACK`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `deref`, `deref`, `deref`, `deref`, `deref`, `deref`, `deref`, `initialize`, `initialize`, `initialize`, `initialize`, `initialize`, `initialize`, `initialize`
 // These functions have error during generation (see debug logs or enable `stop_on_error: true` for more details): `update_display_name`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<AppCore>>
 abstract class AppCore implements RustOpaqueInterface {
+  /// Admit a pending live-captions agent into the MLS group. Requires the
+  /// meeting password to derive the agent PSK. Safe for any joined client
+  /// that holds the password; meet-core rank-stagger deduplicates callers.
+  Future<void> admitAgent({
+    required String meetLinkName,
+    required String agentDeviceId,
+    required String meetingPassword,
+  });
+
   /// Admits all pending waiting-room join requests (host only).
   /// Returns the `request_id`s that were successfully admitted.
   Future<List<String>> admitAllWaitingRoomJoinRequests({
@@ -66,6 +75,10 @@ abstract class AppCore implements RustOpaqueInterface {
   /// Cancels the guest's outstanding waiting-room join request (DELETE when submitted),
   /// resets local MLS guest admission state, and disconnects the MLS websocket.
   Future<void> cancelWaitingRoomJoinRequest({required String meetLinkName});
+
+  Future<void> clearAgentLeftCallback();
+
+  Future<void> clearAgentPendingCallback();
 
   Future<void> clearJoinDecisionCallback();
 
@@ -257,6 +270,10 @@ abstract class AppCore implements RustOpaqueInterface {
 
   Future<void> leaveRoom();
 
+  /// List device IDs of agents that uploaded a KeyPackage but are not yet
+  /// admitted to the MLS group (reconcile sweep after handler registration).
+  Future<List<String>> listPendingAgents({required String meetLinkName});
+
   Future<void> lockMeeting({required String meetLinkName});
 
   /// Log metrics when connection is lost
@@ -347,12 +364,37 @@ abstract class AppCore implements RustOpaqueInterface {
     required String participantUid,
   });
 
+  Future<void> removeAgent({
+    required String meetLinkName,
+    required String agentDeviceId,
+  });
+
   Future<void> removeParticipant({required String participantUuid});
+
+  Future<void> requestClosedCaptions({required String meetLinkName});
 
   Future<void> sendMeetingFeedback({
     required String meetingLinkName,
     required int score,
     required List<String> feedbackParts,
+  });
+
+  /// Fired when an admitted agent leaves the MLS roster (cleanup tracking).
+  Future<void> setAgentLeftCallback({
+    required FutureOr<void> Function(String) callback,
+  });
+
+  /// Fired when meet-server signals an agent uploaded its KeyPackage and
+  /// awaits MLS admission (`AgentPending` websocket event).
+  Future<void> setAgentPendingCallback({
+    required FutureOr<void> Function(String) callback,
+  });
+
+  /// Host-only: enable or disable live captions for the meeting via meet-server.
+  /// Used by waiting-room host controls (independent of per-participant `wants_captions`).
+  Future<void> setClosedCaptionsAvailabilityAsHost({
+    required String meetLinkName,
+    required bool available,
   });
 
   Future<void> setJoinDecisionCallback({
@@ -398,6 +440,8 @@ abstract class AppCore implements RustOpaqueInterface {
 
   /// Set WebSocket pong timeout in seconds (None to use default)
   Future<void> setWebsocketPongTimeout({BigInt? seconds});
+
+  Future<void> stopClosedCaptions({required String meetLinkName});
 
   Stream<AppEvent> subscribeEvents();
 

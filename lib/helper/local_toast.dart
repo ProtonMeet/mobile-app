@@ -69,6 +69,10 @@ class LocalToast {
     showToast(context, message, toastType: ToastType.error);
   }
 
+  static void showWarningToast(BuildContext context, String message) {
+    showToast(context, message, toastType: ToastType.warning);
+  }
+
   static void showToast(
     BuildContext context,
     String message, {

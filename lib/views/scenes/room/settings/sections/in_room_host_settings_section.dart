@@ -55,18 +55,28 @@ class InRoomHostSettingsSection extends StatelessWidget {
                           bloc.add(InRoomWaitingRoomToggled(enabled: value))
                     : null,
               ),
-            if (state.showPreviewSettings) ...[
+            if (state.showLiveCaptions)
               SettingsToggleRow(
                 title: context.local.allow_live_captions,
-                subtitle: context.local.allow_live_captions_description,
-                value: false,
+                subtitle: state.liveCaptionsAvailableForParticipants
+                    ? context.local.allow_live_captions_on_description
+                    : context.local.allow_live_captions_off_description,
+                value: state.liveCaptionsAvailableForParticipants,
+                isLoading: state.isPending(
+                  InRoomPendingToggle.liveCaptionsAvailability,
+                ),
+                onChanged: state.canEditHostToggles
+                    ? (value) => bloc.add(
+                        InRoomLiveCaptionsAvailabilityToggled(enabled: value),
+                      )
+                    : null,
               ),
+            if (state.showPreviewSettings)
               SettingsToggleRow(
                 title: context.local.transcribe_meeting,
                 subtitle: context.local.transcribe_meeting_off_description,
                 value: false,
               ),
-            ],
             if (state.showRecordingRows) ...buildRecordingSettingsRows(),
           ],
         );

@@ -40,11 +40,13 @@ import 'package:meet/managers/room.manager.dart' show RoomManager;
 import 'package:meet/managers/services/denoise_audio.service.dart';
 import 'package:meet/managers/services/in_app_review_service.dart';
 import 'package:meet/managers/user_activity.manager.dart';
+import 'package:meet/models/live_captions/live_captions_models.dart';
 import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/platform/html.window.dart';
 import 'package:meet/rust/errors.dart';
 import 'package:meet/rust/proton_meet/models/chat_event.dart';
 import 'package:meet/rust/proton_meet/models/meet_info.dart';
+import 'package:meet/rust/proton_meet/models/meet_participant.dart';
 import 'package:meet/rust/proton_meet/models/meeting_info.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
@@ -75,6 +77,9 @@ import 'package:meet/views/scenes/room/controls_bar/controls_bar_responsive.dart
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 import 'package:meet/views/scenes/room/layout/fixed_sizing_camera_layout.dart';
 import 'package:meet/views/scenes/room/layout/responsive_camera_layout.dart';
+import 'package:meet/views/scenes/room/live_captions/live_caption_language_setting_row.dart';
+import 'package:meet/views/scenes/room/live_captions/live_captions_modal.dart';
+import 'package:meet/views/scenes/room/live_captions/live_captions_sheet.dart';
 import 'package:meet/views/scenes/room/participant/participant.dart';
 import 'package:meet/views/scenes/room/participant/participant_info.dart';
 import 'package:meet/views/scenes/room/participant_list/participant_list.dart';
@@ -2496,6 +2501,34 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     return success;
   }
 
+  Future<bool> _toggleLiveCaptionsAvailability(bool value) async {
+    bool success = false;
+    Exception? caughtException;
+
+    try {
+      await _bloc.toggleLiveCaptionsAvailabilityAsHost(
+        value: value,
+        meetLinkName: widget.meetInfo.meetLinkName,
+      );
+      success = true;
+    } catch (e) {
+      caughtException = e as Exception;
+      success = false;
+    }
+
+    if (!mounted) return success;
+
+    if (caughtException != null) {
+      if (caughtException is BridgeError_ApiResponse) {
+        LocalToast.showErrorToast(context, caughtException.field0.error);
+      } else {
+        LocalToast.showErrorToast(context, caughtException.toString());
+      }
+    }
+
+    return success;
+  }
+
   Future<void> leaveRoomDialog({
     bool isHost = false,
     bool isAlone = false,
@@ -2593,6 +2626,18 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                 context.local.waiting_room_join_request_not_found,
               );
               _bloc.add(const WaitingRoomJoinRequestNotFoundErrorConsumed());
+            },
+          ),
+          BlocListener<RoomBloc, RoomState>(
+            listenWhen: (prev, curr) =>
+                !prev.shouldShowLiveCaptionsSummonFailedError &&
+                curr.shouldShowLiveCaptionsSummonFailedError,
+            listener: (context, state) {
+              LocalToast.showErrorToast(
+                context,
+                context.local.live_captions_summon_failed,
+              );
+              _bloc.add(const LiveCaptionsSummonFailedErrorConsumed());
             },
           ),
           BlocListener<RoomBloc, RoomState>(
@@ -3117,10 +3162,13 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Expanded(
-                              child: RepaintBoundary(
-                                child: _buildMediaGestureWrapper(
-                                  context,
-                                  _buildMediaArea(context),
+                              child: _withLiveCaptionsSheet(
+                                context,
+                                RepaintBoundary(
+                                  child: _buildMediaGestureWrapper(
+                                    context,
+                                    _buildMediaArea(context),
+                                  ),
                                 ),
                               ),
                             ),
@@ -3132,9 +3180,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                             ),
                           ],
                         )
-                      : _buildMediaGestureWrapper(
+                      : _withLiveCaptionsSheet(
                           context,
-                          _buildMainContent(context),
+                          _buildMediaGestureWrapper(
+                            context,
+                            _buildMainContent(context),
+                          ),
                         ),
                 ),
                 if (room.localParticipant != null) _buildControlsBarWithFade(),
@@ -3279,6 +3330,109 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       meetingRecorder: _meetingRecorder!,
       showUpsellOnTap: state.isPaidUser ? null : upsellTap,
     );
+  }
+
+  /// Floats the captions sheet over the media area, leaving the controls bar
+  /// reachable. Taps outside the sheet fall through to [child].
+  Widget _withLiveCaptionsSheet(BuildContext context, Widget child) {
+    if (!_bloc.isMeetLiveCaptionsEnabled()) {
+      return child;
+    }
+    return Stack(
+      children: [
+        Positioned.fill(child: child),
+        Positioned.fill(child: _buildLiveCaptionsSheet(context)),
+      ],
+    );
+  }
+
+  Widget _buildLiveCaptionsSheet(BuildContext context) {
+    return BlocSelector<
+      RoomBloc,
+      RoomState,
+      (bool, Transcriptions, Map<String, MeetParticipant>)
+    >(
+      selector: (state) => (
+        state.liveCaptionsWanted,
+        state.liveCaptionsTranscriptions,
+        state.frbParticipantsMap,
+      ),
+      builder: (context, data) {
+        if (!data.$1) {
+          return const SizedBox.shrink();
+        }
+        return LiveCaptionsSheet(
+          transcriptions: data.$2,
+          participantNamesByIdentity: data.$3,
+          onSave: () => _copyLiveCaptionsHistory(context, data.$3),
+          onOpenSettings: _bloc.isMeetLiveCaptionsLanguageSelectorEnabled()
+              ? () => _openLiveCaptionsSettings(context)
+              : null,
+        );
+      },
+    );
+  }
+
+  Future<void> _copyLiveCaptionsHistory(
+    BuildContext context,
+    Map<String, MeetParticipant> participantNamesByIdentity,
+  ) async {
+    final text = _bloc.formatLiveCaptionsHistoryForClipboard(
+      participantNamesByIdentity,
+    );
+    if (text.isEmpty) {
+      return;
+    }
+    await Clipboard.setData(ClipboardData(text: text));
+    if (context.mounted) {
+      LocalToast.showToast(context, context.local.copied_to_clipboard);
+    }
+  }
+
+  void _openLiveCaptionsSettings(BuildContext context) {
+    if (!_bloc.isMeetLiveCaptionsLanguageSelectorEnabled()) {
+      return;
+    }
+    if (_bloc.state.isLiveCaptionsPreferenceWriteInFlight) {
+      return;
+    }
+    showLiveCaptionLanguagePicker(
+      context,
+      selectedLanguage: _bloc.state.liveCaptionLanguage,
+      onLanguageSelected: _handleLiveCaptionLanguageSelected,
+    );
+  }
+
+  /// Controls overflow menu: same enable/disable flow as meeting settings.
+  void _toggleLiveCaptions() {
+    unawaited(
+      _handleLiveCaptionsToggleChanged(
+        enabled: !_bloc.state.liveCaptionsWanted,
+      ),
+    );
+  }
+
+  Future<void> _handleLiveCaptionsToggleChanged({required bool enabled}) async {
+    final roomState = _bloc.state;
+    if (enabled && !roomState.liveCaptionsAvailableForParticipants) {
+      if (!mounted) return;
+      LocalToast.showWarningToast(
+        context,
+        context.local.live_captions_disabled_by_host,
+      );
+      return;
+    }
+    if (enabled) {
+      final confirmed = await showLiveCaptionsEnableDialog(context);
+      if (!mounted || confirmed != true) {
+        return;
+      }
+    }
+    _bloc.add(SetLiveCaptionsWanted(enabled: enabled));
+  }
+
+  Future<void> _handleLiveCaptionLanguageSelected(String language) async {
+    _bloc.add(SetLiveCaptionLanguage(language: language));
   }
 
   Widget buildControlsBar() {
@@ -3434,13 +3588,36 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             /// button (right before the leave button).
             if (!state.isLocalScreenSharing && shareAction != null) shareAction,
 
+            /// Live captions — toggled from the controls bar.
+            if (_bloc.isMeetLiveCaptionsEnabled() &&
+                state.room.localParticipant != null)
+              ControlAction(
+                testId: TestIds.roomLiveCaptions,
+                icon: context.images.iconLiveCaption.svg24(
+                  color: context.colors.textNorm,
+                ),
+                activeIcon: context.images.iconLiveCaption.svg24(
+                  color: context.colors.interActionNorm,
+                ),
+                tooltip: state.liveCaptionsWanted
+                    ? context.local.live_captions_turn_off
+                    : context.local.live_captions_turn_on,
+                isActive: state.liveCaptionsWanted,
+                onPressed: () {
+                  if (state.isLiveCaptionsPreferenceWriteInFlight) {
+                    return;
+                  }
+                  _toggleLiveCaptions();
+                },
+              ),
+
             /// Participants
             ControlAction(
               testId: TestIds.roomParticipants,
               icon: context.images.iconParticipants.svg24(),
-              badge: '${state.room.remoteParticipants.length + 1}',
+              badge: '${state.currentParticipantCount}',
               tooltip:
-                  '${context.local.show_participants_list} (${state.room.remoteParticipants.length + 1})',
+                  '${context.local.show_participants_list} (${state.currentParticipantCount})',
               onPressed: () => _toggleSidePanel(RoomSidePanel.participants),
             ),
 
@@ -3941,7 +4118,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         return BlocSelector<
           RoomBloc,
           RoomState,
-          (bool, bool, CameraBackgroundSelection, bool, DenoiseType, bool)
+          (bool, bool, CameraBackgroundSelection, bool, DenoiseType, bool, bool)
         >(
           selector: (state) => (
             state.isRejoining,
@@ -3950,6 +4127,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             state.audioDenoiseEnabled,
             state.audioDenoiseType,
             state.isPaidUser,
+            state.liveCaptionsAvailableForParticipants,
           ),
           builder: (context, data) {
             final isRejoining = data.$1;
@@ -3958,6 +4136,8 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             final audioDenoiseEnabled = data.$4;
             final storedAudioDenoiseType = data.$5;
             final isPaidUser = data.$6;
+            final liveCaptionsAvailableForParticipants = data.$7;
+            final showLiveCaptions = _bloc.isMeetLiveCaptionsEnabled();
             final selectedAudioDenoiseType =
                 denoiseTypeOptions.any((o) => o.type == storedAudioDenoiseType)
                 ? storedAudioDenoiseType
@@ -3970,6 +4150,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               bindings: InRoomSettingsBindingsUpdated(
                 isHost: isHost,
                 isPaidUser: isPaidUser,
+                showLiveCaptions: showLiveCaptions,
+                liveCaptionsAvailableForParticipants:
+                    liveCaptionsAvailableForParticipants,
                 incomingVideoEnabled: !_unsubscribeVideoByDefault,
                 selfViewEnabled: !_hideSelfCamera,
                 showAudioDenoise: showAudioDenoise,
@@ -4337,4 +4520,8 @@ class _RoomHostSettingsTransport implements InRoomHostSettingsTransport {
   @override
   Future<bool> toggleWaitingRoom({required bool value}) =>
       _roomPage._toggleWaitingRoomSetting(value: value);
+
+  @override
+  Future<bool> toggleLiveCaptionsAvailability({required bool value}) =>
+      _roomPage._toggleLiveCaptionsAvailability(value);
 }

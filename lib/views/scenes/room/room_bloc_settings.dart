@@ -32,10 +32,14 @@ mixin RoomSettingsHandlers
   /// Lock to prevent concurrent waiting-room setting updates
   bool _isTogglingWaitingRoom = false;
 
+  /// Lock to prevent concurrent live-captions availability updates
+  bool _isTogglingLiveCaptionsAvailability = false;
+
   /// Registers settings-related event handlers.
   void registerSettingsHandlers() {
     on<SetUnsubscribeVideoByDefault>(_onSetUnsubscribeVideoByDefault);
     on<MeetingInfoWaitingRoomUpdated>(_onMeetingInfoWaitingRoomUpdated);
+    on<LiveCaptionsAvailabilityUpdated>(_onLiveCaptionsAvailabilityUpdated);
     // Both handlers emit immediately and then run a multi-hop native
     // round-trip (clear -> set image -> set config -> attach). Run one at a
     // time: interleaved calls let the pipeline settle on an earlier selection
@@ -130,6 +134,37 @@ mixin RoomSettingsHandlers
     }
   }
 
+  /// Host-only: allow or block participants from using live captions.
+  Future<void> toggleLiveCaptionsAvailabilityAsHost({
+    required bool value,
+    required String meetLinkName,
+  }) async {
+    if (_isTogglingLiveCaptionsAvailability) {
+      l.logger.w(
+        'Live captions availability toggle already in progress, ignoring request',
+      );
+      return;
+    }
+
+    _isTogglingLiveCaptionsAvailability = true;
+    try {
+      final appCoreManager = ManagerFactory().get<AppCoreManager>();
+      await appCoreManager.appCore.setClosedCaptionsAvailabilityAsHost(
+        meetLinkName: meetLinkName,
+        available: value,
+      );
+      add(LiveCaptionsAvailabilityUpdated(available: value));
+      l.logger.d(
+        'Live captions availability ${value ? "enabled" : "disabled"}',
+      );
+    } catch (e, stackTrace) {
+      l.logger.e('Error toggling live captions availability: $e');
+      Error.throwWithStackTrace(e, stackTrace);
+    } finally {
+      _isTogglingLiveCaptionsAvailability = false;
+    }
+  }
+
   /// Sets the unsubscribe video by default state.
   ///
   /// When enabled, new video tracks will be automatically unsubscribed.
@@ -172,6 +207,14 @@ mixin RoomSettingsHandlers
       ),
     );
     l.logger.d('Meeting info waiting room: ${event.enabled}');
+  }
+
+  void _onLiveCaptionsAvailabilityUpdated(
+    LiveCaptionsAvailabilityUpdated event,
+    Emitter<RoomState> emit,
+  ) {
+    emit(state.copyWith(liveCaptionsAvailableForParticipants: event.available));
+    l.logger.d('Live captions availability: ${event.available}');
   }
 
   Future<void> _onSetCameraBackgroundBlurEnabled(

@@ -3,4 +3,6 @@ abstract class InRoomHostSettingsTransport {
   Future<bool> toggleLockMeeting({required bool value});
 
   Future<bool> toggleWaitingRoom({required bool value});
+
+  Future<bool> toggleLiveCaptionsAvailability({required bool value});
 }

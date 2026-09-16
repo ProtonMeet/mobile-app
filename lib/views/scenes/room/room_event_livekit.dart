@@ -50,3 +50,12 @@ class BridgeLocalTrackPublished extends RoomBlocEvent {
   @override
   List<Object?> get props => [];
 }
+
+class BridgeParticipantAttributesChanged extends RoomBlocEvent {
+  const BridgeParticipantAttributesChanged(this.event);
+
+  final ParticipantAttributesChanged event;
+
+  @override
+  List<Object?> get props => [event];
+}

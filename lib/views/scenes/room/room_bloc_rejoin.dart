@@ -11,6 +11,7 @@ import 'package:meet/helper/video_track_publisher.dart';
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/room.manager.dart';
+import 'package:meet/models/live_captions/live_captions_models.dart';
 import 'package:meet/rust/errors.dart';
 import 'package:meet/rust/proton_meet/models/meet_participant.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
@@ -388,6 +389,11 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
 
       // Clean up old room
       emit(state.copyWith(rejoinStatus: RejoinStatus.finalizingConnection));
+      if (this is RoomBloc) {
+        (this as RoomBloc).teardownLiveCaptionsTranscriptionHandler(
+          room: oldRoom,
+        );
+      }
       try {
         // Remove old listener
         await oldListener.cancelAll();
@@ -797,8 +803,21 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
         currentVideoInputDeviceId: state.currentVideoInputDeviceId,
         currentAudioOutputDeviceId: state.currentAudioOutputDeviceId,
         participantsRecording: state.participantsRecording,
+        liveCaptionsWanted: state.liveCaptionsWanted,
+        liveCaptionLanguage: state.liveCaptionLanguage,
+        liveCaptionsTranscriptions: Transcriptions.empty,
+        liveCaptionsAttributesGeneration:
+            state.liveCaptionsAttributesGeneration,
       );
       emit(newState);
+
+      if (this is RoomBloc) {
+        final roomBloc = this as RoomBloc;
+        roomBloc.resetLiveCaptionsTranscriptionPipeline(emitUpdate: false);
+        roomBloc.ensureLiveCaptionsTranscriptionHandler(room: newRoom);
+        unawaited(roomBloc.registerLiveCaptionsAgentAdmissionCallbacks());
+        roomBloc.scheduleLiveCaptionsAgentEvaluation();
+      }
 
       // Update participant list to reflect the new room
       add(SortParticipants());

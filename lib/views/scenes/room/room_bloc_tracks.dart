@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/constants/constants.dart';
+import 'package:meet/models/live_captions/live_caption_agent.dart';
 import 'package:meet/views/scenes/room/active_speaker_order.dart';
 import 'package:meet/views/scenes/room/camera_layout.dart';
 import 'package:meet/views/scenes/room/participant/participant_info.dart';
@@ -150,6 +151,10 @@ mixin RoomTracksHandlers
     // reconcile in-flight audio subscribes, to avoid duplicate subscribes and improve performance
     reconcileInFlightAudioSubscribes();
     for (var participant in room.remoteParticipants.values) {
+      // STT caption agents belong in the participant list only, not the video grid.
+      if (isCaptionAgent(participant)) {
+        continue;
+      }
       final identity = participant.identity;
       bool hasVideo = false;
       for (var t in participant.videoTrackPublications) {

@@ -6,6 +6,7 @@ import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/helper/local_toast.dart';
+import 'package:meet/models/live_captions/live_caption_agent.dart';
 
 import 'package:meet/rust/proton_meet/models/meeting_info.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
@@ -26,6 +27,8 @@ class ParticipantListLayoutConstants {
   static const double actionButtonSize = 32.0;
   static const double actionIconSize = 16.0;
   static const double participantItemHeight = 64.0;
+  static const double systemAgentItemMinHeight = 88.0;
+  static const double sectionHeaderVerticalPadding = 12.0;
   static const double horizontalPadding = 24.0;
   static const double verticalPadding = 12.0;
   static const double spacingSmall = 4.0;
@@ -132,6 +135,25 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
 
   List<ParticipantDetail> get _filteredParticipants => widget.participants;
 
+  ({List<ParticipantDetail> systemAgents, List<ParticipantDetail> people})
+  get _partitionedParticipants {
+    final systemAgents = <ParticipantDetail>[];
+    final people = <ParticipantDetail>[];
+    for (final participant in _filteredParticipants) {
+      if (_isCaptionsAgentDetail(participant)) {
+        systemAgents.add(participant);
+      } else {
+        people.add(participant);
+      }
+    }
+    return (systemAgents: systemAgents, people: people);
+  }
+
+  bool _isCaptionsAgentDetail(ParticipantDetail detail) =>
+      detail.participant != null && isCaptionAgent(detail.participant!);
+
+  int get _peopleParticipantCount => _partitionedParticipants.people.length;
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -149,18 +171,39 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
 
   @override
   Widget build(BuildContext context) {
+    final partitioned = _partitionedParticipants;
+    final systemAgents = partitioned.systemAgents;
+    final people = partitioned.people;
+
     if (widget.presentation == ParticipantListPresentation.embeddedScrollView) {
-      final participants = _filteredParticipants;
-      if (participants.isEmpty) {
+      if (systemAgents.isEmpty && people.isEmpty) {
         return _buildEmptyState(context);
       }
 
-      return ListView.builder(
+      return ListView(
         padding: EdgeInsets.zero,
-        itemCount: participants.length,
-        itemBuilder: (context, index) {
-          return _buildParticipantItem(context, participants[index]);
-        },
+        children: [
+          if (systemAgents.isNotEmpty) ...[
+            _buildSectionHeader(
+              context,
+              context.local.participant_list_system_section,
+            ),
+            for (final participant in systemAgents)
+              _buildSystemAgentItem(context, participant),
+          ],
+          if (people.isNotEmpty) ...[
+            if (systemAgents.isNotEmpty)
+              const SizedBox(
+                height: ParticipantListLayoutConstants.spacingMedium,
+              ),
+            _buildSectionHeader(
+              context,
+              context.local.participant_list_people_section,
+            ),
+            for (final participant in people)
+              _buildPeopleParticipantItem(context, participant),
+          ],
+        ],
       );
     }
 
@@ -172,7 +215,10 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
   }
 
   List<Widget> _buildSlivers(BuildContext context) {
-    final participants = _filteredParticipants;
+    final partitioned = _partitionedParticipants;
+    final systemAgents = partitioned.systemAgents;
+    final people = partitioned.people;
+
     return [
       SliverToBoxAdapter(
         child: BlocSelector<RoomBloc, RoomState, (bool, bool, FrbMeetingInfo?)>(
@@ -182,7 +228,7 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
             final isHost = data.$1;
             final isPaidUser = data.$2;
             final meetingInfo = data.$3;
-            final participantCount = widget.participants.length;
+            final participantCount = _peopleParticipantCount;
             final isGuestMeetingRoom = _isGuestMeetingRoom(meetingInfo);
 
             if ((!isHost && !isGuestMeetingRoom) || meetingInfo == null) {
@@ -250,27 +296,67 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
           },
         ),
       ),
-      if (participants.isEmpty)
+      if (systemAgents.isEmpty && people.isEmpty)
         SliverFillRemaining(
           hasScrollBody: false,
           child: _buildEmptyState(context),
         )
-      else
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              final participant = participants[index];
-              final key = participant.participant?.identity ?? participant.name;
-              return RepaintBoundary(
-                key: ValueKey(key),
-                child: _buildParticipantItem(context, participant),
-              );
-            },
-            childCount: participants.length,
-            addAutomaticKeepAlives: false,
-            addRepaintBoundaries: false,
+      else ...[
+        if (systemAgents.isNotEmpty) ...[
+          SliverToBoxAdapter(
+            child: _buildSectionHeader(
+              context,
+              context.local.participant_list_system_section,
+            ),
           ),
-        ),
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final participant = systemAgents[index];
+                final key =
+                    participant.participant?.identity ?? participant.name;
+                return RepaintBoundary(
+                  key: ValueKey('system-$key'),
+                  child: _buildSystemAgentItem(context, participant),
+                );
+              },
+              childCount: systemAgents.length,
+              addAutomaticKeepAlives: false,
+              addRepaintBoundaries: false,
+            ),
+          ),
+        ],
+        if (people.isNotEmpty) ...[
+          if (systemAgents.isNotEmpty)
+            const SliverToBoxAdapter(
+              child: SizedBox(
+                height: ParticipantListLayoutConstants.spacingMedium,
+              ),
+            ),
+          SliverToBoxAdapter(
+            child: _buildSectionHeader(
+              context,
+              context.local.participant_list_people_section,
+            ),
+          ),
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final participant = people[index];
+                final key =
+                    participant.participant?.identity ?? participant.name;
+                return RepaintBoundary(
+                  key: ValueKey('people-$key'),
+                  child: _buildPeopleParticipantItem(context, participant),
+                );
+              },
+              childCount: people.length,
+              addAutomaticKeepAlives: false,
+              addRepaintBoundaries: false,
+            ),
+          ),
+        ],
+      ],
       SliverPadding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewPadding.bottom,
@@ -302,7 +388,7 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
             builder: (context, data) {
               final meetingInfo = data.$1;
               final isHost = data.$2;
-              final participantCount = widget.participants.length;
+              final participantCount = _peopleParticipantCount;
               final isGuestMeetingRoom = _isGuestMeetingRoom(meetingInfo);
               final countText =
                   (meetingInfo != null && (isHost || isGuestMeetingRoom))
@@ -350,7 +436,115 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
     );
   }
 
-  Widget _buildParticipantItem(BuildContext context, ParticipantDetail p) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        RoomSidePanelLayout.horizontalPadding,
+        ParticipantListLayoutConstants.sectionHeaderVerticalPadding,
+        RoomSidePanelLayout.horizontalPadding,
+        ParticipantListLayoutConstants.spacingSmall,
+      ),
+      child: Text(
+        title,
+        style: ProtonStyles.body2Semibold(color: context.colors.textWeak),
+      ),
+    );
+  }
+
+  Widget _buildSystemAgentItem(BuildContext context, ParticipantDetail p) {
+    final participantId = p.participant?.identity ?? p.name;
+    final colors = _colorCache.putIfAbsent(participantId, () {
+      return (
+        backgroundColor: context.colors.protonBlue.withValues(alpha: 0.24),
+        profileTextColor: context.colors.protonBlue,
+      );
+    });
+    final initials = AgentDisplayInfo.liveCaptionAgent.initials;
+
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(
+        minHeight: ParticipantListLayoutConstants.systemAgentItemMinHeight,
+      ),
+      padding: const EdgeInsets.only(
+        top: ParticipantListLayoutConstants.verticalPadding,
+        left: RoomSidePanelLayout.horizontalPadding,
+        right: RoomSidePanelLayout.horizontalPadding,
+        bottom: ParticipantListLayoutConstants.verticalPadding,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: ParticipantListLayoutConstants.avatarSize,
+                height: ParticipantListLayoutConstants.avatarSize,
+                child: Container(
+                  clipBehavior: Clip.antiAlias,
+                  decoration: ShapeDecoration(
+                    color: colors.backgroundColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        ParticipantListLayoutConstants.borderRadiusAvatar,
+                      ),
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      initials,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: colors.profileTextColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        height: 1.50,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(
+                width: ParticipantListLayoutConstants.spacingLarge,
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.local.live_captions_agent_name,
+                      style: ProtonStyles.body2Medium(
+                        color: context.colors.textNorm,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      context.local.live_captions_agent_transcribing,
+                      style: ProtonStyles.body2Regular(
+                        color: context.colors.protonBlue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: ParticipantListLayoutConstants.spacingMedium),
+          Text(
+            context.local.live_captions_agent_disclaimer,
+            style: ProtonStyles.body2Regular(color: context.colors.textWeak),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPeopleParticipantItem(
+    BuildContext context,
+    ParticipantDetail p,
+  ) {
     final participantId = p.participant?.identity ?? p.name;
     final colors = _colorCache.putIfAbsent(participantId, () {
       final c = getParticipantDisplayColors(context, participantId.hashCode);

@@ -109,6 +109,13 @@ extension UnleashDataProviderFeatureGetters on UnleashDataProvider {
   bool isMeetSettingsPreview() =>
       isFeatureEnabled(UnleashFeature.meetSettingsPreview);
 
+  /// Main switch for live captions (Settings option and related UI).
+  bool isMeetLiveCaptions() =>
+      isFeatureEnabled(UnleashFeature.meetLiveCaptions);
+
+  /// Spoken-language picker UI in meeting settings and captions sheet.
+  bool isMeetLiveCaptionsLanguageSelector() =>
+      isFeatureEnabled(UnleashFeature.meetLiveCaptionsLanguageSelector);
   bool isMeetNewJoinFunctions() =>
       isFeatureEnabled(UnleashFeature.meetNewJoinFunctions);
 }

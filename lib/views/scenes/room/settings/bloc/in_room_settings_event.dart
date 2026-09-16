@@ -27,6 +27,8 @@ class InRoomSettingsBindingsUpdated extends InRoomSettingsEvent {
   InRoomSettingsBindingsUpdated({
     required this.isHost,
     required this.isPaidUser,
+    required this.showLiveCaptions,
+    required this.liveCaptionsAvailableForParticipants,
     required this.incomingVideoEnabled,
     required this.selfViewEnabled,
     required this.showAudioDenoise,
@@ -50,6 +52,8 @@ class InRoomSettingsBindingsUpdated extends InRoomSettingsEvent {
 
   final bool isHost;
   final bool isPaidUser;
+  final bool showLiveCaptions;
+  final bool liveCaptionsAvailableForParticipants;
   final bool incomingVideoEnabled;
   final bool selfViewEnabled;
   final bool showAudioDenoise;
@@ -80,6 +84,12 @@ class InRoomLockMeetingToggled extends InRoomSettingsEvent {
 
 class InRoomWaitingRoomToggled extends InRoomSettingsEvent {
   InRoomWaitingRoomToggled({required this.enabled});
+
+  final bool enabled;
+}
+
+class InRoomLiveCaptionsAvailabilityToggled extends InRoomSettingsEvent {
+  InRoomLiveCaptionsAvailabilityToggled({required this.enabled});
 
   final bool enabled;
 }
