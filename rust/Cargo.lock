@@ -4734,9 +4734,9 @@ dependencies = [
 
 [[package]]
 name = "proton-crypto"
-version = "0.8.0"
+version = "0.13.2"
 source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "fec2d3598fa2b1757afd8bd26a45122926bd878e428b24b2daf2a78f1e6b5db6"
+checksum = "ffabef1f787e619c537b64973d08dc8237a967c77751970e20103990cf2087be"
 dependencies = [
  "gopenpgp-sys",
  "hex",
@@ -4746,13 +4746,14 @@ dependencies = [
  "serde",
  "subtle",
  "thiserror 1.0.69",
+ "web-time",
 ]
 
 [[package]]
 name = "proton-crypto-account"
-version = "0.13.0"
+version = "0.19.2"
 source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "172ac10ea77d50f4326b04c46062e2929c259fc2d3df57b1ae64334f5f63b658"
+checksum = "44da3c028bdac38410c5ed802d3aa673395ae1782a62a3faf8808ff579744a45"
 dependencies = [
  "base64",
  "derive_more 2.1.1",
@@ -4763,6 +4764,7 @@ dependencies = [
  "serde_json",
  "serde_repr",
  "serde_with",
+ "sha2 0.10.9",
  "thiserror 1.0.69",
  "zeroize",
 ]
@@ -6131,7 +6133,7 @@ version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f103c50866b8743da9429b8a581d81a27c2d3a9c4ac7df8f8571c1dd7896eda"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "proc-macro2",
  "quote",
  "syn 2.0.118",
@@ -7322,7 +7324,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]

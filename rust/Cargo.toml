@@ -40,10 +40,10 @@ base64 = { version = "0.22.1" }
 sha2 = { version = "0.10" }
 
 # other proton internal dependencies
-proton-srp = { version = "0.8.0", default-features = false, registry = "proton_public" }
-proton-crypto = { registry = "proton_public", version = "0.8.0" }
-proton-crypto-account = { registry = "proton_public", version = "0.13.0" }
-proton-crypto-subtle = { registry = "proton_public", version = "0.2.0" }
+proton-srp = { version = "0.8.3", default-features = false, registry = "proton_public" }
+proton-crypto = { registry = "proton_public", version = "0.13.2" }
+proton-crypto-account = { registry = "proton_public", version = "0.19.2" }
+proton-crypto-subtle = { registry = "proton_public", version = "0.2.1" }
 
 # MLS intergration
 mls-trait = { path = "../vendor/client/core/mls-trait" }
