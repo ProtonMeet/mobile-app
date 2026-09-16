@@ -36,6 +36,10 @@ abstract final class TestIds {
       'meet.dashboard.sign_in_card.dismiss';
   static const dashboardMobileUpgradeWarningCardDismiss =
       'meet.dashboard.mobile_upgrade_warning_card.dismiss';
+  static const dashboardOldAndroidSdkWarningCardDismiss =
+      'meet.dashboard.old_android_sdk_warning_card.dismiss';
+  static const dashboardOldIosSdkWarningCardDismiss =
+      'meet.dashboard.old_ios_sdk_warning_card.dismiss';
   static const dashboardGuestPersonalMeeting =
       'meet.dashboard.guest_personal_meeting';
 

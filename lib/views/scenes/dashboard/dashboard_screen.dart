@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,6 +12,8 @@ import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/meet_join_link_parser.dart';
+import 'package:meet/helper/old_android_sdk_warning.dart';
+import 'package:meet/helper/old_ios_sdk_warning.dart';
 import 'package:meet/managers/app.state.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/managers/providers/data.provider.manager.dart';
@@ -27,6 +31,7 @@ import 'dashboard_bloc.dart';
 import 'dashboard_cards.dart';
 import 'dashboard_event.dart';
 import 'dashboard_state.dart';
+import 'deprecated_os_warning_card.dart';
 import 'mobile_upgrade_warning_card.dart';
 import 'search/sort_sheet.dart';
 import 'search_results_view.dart';
@@ -81,6 +86,10 @@ class DashboardScreen extends StatefulWidget {
 
 class DashboardScreenState extends State<DashboardScreen> {
   bool _mobileUpgradeWarningCardDismissed = false;
+  bool _oldAndroidSdkWarningCardDismissed = false;
+  bool _oldIosSdkWarningCardDismissed = false;
+  bool? _isOldAndroidSdk;
+  bool? _isOldIosSdk;
   bool _handledInitialLink = false;
   final GlobalKey _upcomingTitleKey = GlobalKey();
   final GlobalKey _searchBarKey = GlobalKey();
@@ -145,6 +154,7 @@ class DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     widget.scrollController.addListener(_onScroll);
+    unawaited(_loadDeprecatedOsWarningStatus());
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -218,6 +228,57 @@ class DashboardScreenState extends State<DashboardScreen> {
     } on Object {
       return false;
     }
+  }
+
+  Future<void> _loadDeprecatedOsWarningStatus() async {
+    var changed = false;
+    bool? isOldAndroidSdk;
+    bool? isOldIosSdk;
+
+    if (android && _isOldAndroidSdkWarningEnabled()) {
+      isOldAndroidSdk = await isDeprecatedAndroidSdk();
+      changed = true;
+    }
+    if (iOS && _isOldIosSdkWarningEnabled()) {
+      isOldIosSdk = await isDeprecatedIosVersion();
+      changed = true;
+    }
+
+    if (!mounted || !changed) return;
+    setState(() {
+      if (isOldAndroidSdk != null) _isOldAndroidSdk = isOldAndroidSdk;
+      if (isOldIosSdk != null) _isOldIosSdk = isOldIosSdk;
+    });
+  }
+
+  bool _isOldAndroidSdkWarningEnabled() {
+    try {
+      return ManagerFactory()
+          .get<DataProviderManager>()
+          .unleashDataProvider
+          .isOldAndroidSdkWarning();
+    } on Object {
+      return false;
+    }
+  }
+
+  bool _isOldIosSdkWarningEnabled() {
+    try {
+      return ManagerFactory()
+          .get<DataProviderManager>()
+          .unleashDataProvider
+          .isOldIosSdkWarning();
+    } on Object {
+      return false;
+    }
+  }
+
+  bool _shouldShowOldAndroidSdkWarningCard() {
+    return _isOldAndroidSdk == true && !_oldAndroidSdkWarningCardDismissed;
+  }
+
+  bool _shouldShowOldIosSdkWarningCard() {
+    return _isOldIosSdk == true && !_oldIosSdkWarningCardDismissed;
   }
 
   void _onScroll() {
@@ -495,6 +556,36 @@ class DashboardScreenState extends State<DashboardScreen> {
                   sliver: const SliverToBoxAdapter(child: SizedBox.shrink()),
                 ),
               ] else ...[
+                if (_shouldShowOldAndroidSdkWarningCard())
+                  SliverToBoxAdapter(
+                    child: DeprecatedOsWarningCard(
+                      dismissTestId:
+                          TestIds.dashboardOldAndroidSdkWarningCardDismiss,
+                      message: const OldAndroidSdkWarningMessage(
+                        textAlign: TextAlign.start,
+                      ),
+                      onDismiss: () {
+                        setState(() {
+                          _oldAndroidSdkWarningCardDismissed = true;
+                        });
+                      },
+                    ),
+                  ),
+                if (_shouldShowOldIosSdkWarningCard())
+                  SliverToBoxAdapter(
+                    child: DeprecatedOsWarningCard(
+                      dismissTestId:
+                          TestIds.dashboardOldIosSdkWarningCardDismiss,
+                      message: const OldIosSdkWarningMessage(
+                        textAlign: TextAlign.start,
+                      ),
+                      onDismiss: () {
+                        setState(() {
+                          _oldIosSdkWarningCardDismissed = true;
+                        });
+                      },
+                    ),
+                  ),
                 if (_isMeetMobileUpgradeWarningEnabled() &&
                     !_mobileUpgradeWarningCardDismissed)
                   SliverToBoxAdapter(

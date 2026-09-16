@@ -2355,5 +2355,13 @@
   "participant_list_people_section": "People",
   "@participant_list_people_section": {
     "description": "Section header for human participants in the participant list"
+  },
+  "old_android_sdk_warning_message": "A future Proton Meet update will require Android 9 or later. Please update your device to keep using the app.",
+  "@old_android_sdk_warning_message": {
+    "description": "Warning shown on Android 7/8 devices when OldAndroidSdkWarning flag is enabled; informs users that support will be deprecated soon"
+  },
+  "old_ios_sdk_warning_message": "A future Proton Meet update will require iOS 17 or later. Please update your device to keep using the app.",
+  "@old_ios_sdk_warning_message": {
+    "description": "Warning shown on iOS versions below 17 when OldIosSdkWarning flag is enabled; informs users that support will be deprecated soon"
   }
 }

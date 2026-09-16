@@ -24,6 +24,8 @@ import 'package:meet/helper/global_notification.dart';
 import 'package:meet/helper/local_toast.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/mobile_upgrade_warning_notification.dart';
+import 'package:meet/helper/old_android_sdk_warning.dart';
+import 'package:meet/helper/old_ios_sdk_warning.dart';
 import 'package:meet/helper/user.agent.dart';
 import 'package:meet/managers/android_notification_service.dart';
 import 'package:meet/managers/app.core.manager.dart';
@@ -498,6 +500,37 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   /// Reset auto fullscreen timer when user interacts (touch/focus)
   void _resetAutoFullScreenTimer() {
     _bloc.add(ResetAutoFullScreenTimer());
+  }
+
+  /// P1: Deprecated OS version (Android SDK / iOS).
+  /// P2: Outdated app version ([MeetMobileUpgradeWarning]).
+  Future<void> _maybeShowInRoomMobileWarning(BuildContext context) async {
+    if (_mobileUpgradeWarningShown) return;
+
+    if (_bloc.isOldAndroidSdkWarningEnabled() && android) {
+      final showOldAndroidWarning = await isDeprecatedAndroidSdk();
+      if (!mounted || !context.mounted) return;
+      if (showOldAndroidWarning) {
+        _mobileUpgradeWarningShown = true;
+        showOldAndroidSdkWarningNotification(context);
+        return;
+      }
+    }
+
+    if (_bloc.isOldIosSdkWarningEnabled() && iOS) {
+      final showOldIosWarning = await isDeprecatedIosVersion();
+      if (!mounted || !context.mounted) return;
+      if (showOldIosWarning) {
+        _mobileUpgradeWarningShown = true;
+        showOldIosSdkWarningNotification(context);
+        return;
+      }
+    }
+
+    if (!_bloc.isMeetMobileUpgradeWarningEnabled()) return;
+    if (!mounted || !context.mounted) return;
+    _mobileUpgradeWarningShown = true;
+    showMobileUpgradeWarningNotification(context);
   }
 
   @override
@@ -2589,12 +2622,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
               return !wasReady && isReady;
             },
             listener: (context, state) {
-              if (_mobileUpgradeWarningShown ||
-                  !_bloc.isMeetMobileUpgradeWarningEnabled()) {
-                return;
-              }
-              _mobileUpgradeWarningShown = true;
-              showMobileUpgradeWarningNotification(context);
+              unawaited(_maybeShowInRoomMobileWarning(context));
             },
           ),
           BlocListener<RoomBloc, RoomState>(
