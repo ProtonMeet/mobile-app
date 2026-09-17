@@ -55,14 +55,7 @@ impl Service {
         let psk_id_bytes = agent_psk_id_for_meeting(meeting_link_name.as_str());
         let room_id = meeting_link_name.as_str().to_string();
 
-        let group_arc = {
-            let store_lock = self.mls_store.read().await;
-            store_lock
-                .group_map
-                .get(&room_id)
-                .ok_or_else(|| anyhow::anyhow!("group not loaded for meeting"))?
-                .clone()
-        };
+        let group_arc = self.mls_store.read().await.find_group(&room_id)?;
 
         {
             use std::str::FromStr;
@@ -294,14 +287,11 @@ impl Service {
     /// stagger below treats as "somebody already asked", so it doubles as the
     /// answer to whether there is anything left to do.
     pub(super) async fn captions_agent_in_group(&self, room_id: &str) -> bool {
-        let store_lock = self.mls_store.read().await;
-        match store_lock.group_map.get(room_id) {
-            Some(group_arc) => {
-                let mls_group = group_arc.read().await;
-                group_has_agent(&mls_group)
-            }
-            None => false,
-        }
+        let Ok(group_arc) = self.mls_store.read().await.find_group(room_id) else {
+            return false;
+        };
+        let mls_group = group_arc.read().await;
+        group_has_agent(&mls_group)
     }
 
     /// Ask meet-server for the live-captions agent.
@@ -371,14 +361,7 @@ impl Service {
             return Ok(());
         }
 
-        let group_arc = {
-            let store_lock = self.mls_store.read().await;
-            store_lock
-                .group_map
-                .get(&room_id)
-                .ok_or_else(|| anyhow::anyhow!("group not loaded for meeting"))?
-                .clone()
-        };
+        let group_arc = self.mls_store.read().await.find_group(&room_id)?;
         let rank = {
             let mls_group = group_arc.read().await;
             self.committer_rank(&mls_group).await?.1
@@ -439,14 +422,7 @@ impl Service {
         use std::str::FromStr;
 
         let room_id = meeting_link_name.as_str().to_string();
-        let group_arc = {
-            let store_lock = self.mls_store.read().await;
-            store_lock
-                .group_map
-                .get(&room_id)
-                .ok_or_else(|| anyhow::anyhow!("group not loaded for meeting"))?
-                .clone()
-        };
+        let group_arc = self.mls_store.read().await.find_group(&room_id)?;
 
         let (epoch_at_start, leaf_index, is_admin) = {
             let mls_group = group_arc.read().await;

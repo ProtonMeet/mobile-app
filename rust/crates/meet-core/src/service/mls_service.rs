@@ -274,6 +274,7 @@ impl KeyPackagePort for MlsService {
             .find_client(&user_id.to_string(), &cs)
             .map_err(|e| match e {
                 MlsStoreError::MlsClientNotFound => KeyPackageError::MlsClientNotFound,
+                MlsStoreError::MlsGroupNotFound => KeyPackageError::MlsStoreError(e.to_string()),
             })?;
 
         let (key_packages, _expiration) = client
@@ -489,14 +490,11 @@ mod tests {
             .await
             .expect("host should create group");
 
-        let host_group = {
-            let store = mls_store.read().await;
-            store
-                .group_map
-                .get(meeting_link_name.as_str())
-                .cloned()
-                .expect("host group should be in store after create_mls_group")
-        };
+        let host_group = mls_store
+            .read()
+            .await
+            .find_group(meeting_link_name.as_str())
+            .expect("host group should be in store after create_mls_group");
         let epoch_before = *host_group.read().await.epoch();
 
         let group_info = match group_info_msg.content {
@@ -685,14 +683,11 @@ mod tests {
             .await
             .expect("host should create group");
 
-        let host_group = {
-            let store = mls_store.read().await;
-            store
-                .group_map
-                .get(meeting_link_name.as_str())
-                .cloned()
-                .expect("host group should be in store after create_mls_group")
-        };
+        let host_group = mls_store
+            .read()
+            .await
+            .find_group(meeting_link_name.as_str())
+            .expect("host group should be in store after create_mls_group");
         let initial_epoch = *host_group.read().await.epoch();
 
         let group_info = match group_info_msg.content {
@@ -762,14 +757,11 @@ mod tests {
             .await
             .expect("guest should join via Welcome");
 
-        let guest_group_entry = {
-            let store = mls_store.read().await;
-            store
-                .group_map
-                .get(meeting_link_name.as_str())
-                .cloned()
-                .expect("guest group should be stored after join_group_via_welcome")
-        };
+        let guest_group_entry = mls_store
+            .read()
+            .await
+            .find_group(meeting_link_name.as_str())
+            .expect("guest group should be stored after join_group_via_welcome");
 
         assert_eq!(guest_group_entry.read().await.roster().count(), 2);
         assert_eq!(
@@ -815,14 +807,11 @@ mod tests {
             .await
             .expect("group creation should succeed");
 
-        let stored_group = {
-            let store = mls_store.read().await;
-            store
-                .group_map
-                .get(meeting_link_name.as_str())
-                .cloned()
-                .expect("group should be saved in store")
-        };
+        let stored_group = mls_store
+            .read()
+            .await
+            .find_group(meeting_link_name.as_str())
+            .expect("group should be saved in store");
         assert_eq!(stored_group.read().await.roster().count(), 1);
     }
 

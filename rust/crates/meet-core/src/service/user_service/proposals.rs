@@ -47,14 +47,7 @@ impl Service {
             return Ok(());
         }
 
-        let mls_group_lock = {
-            let store_lock = self.mls_store.read().await;
-            store_lock
-                .group_map
-                .get(room_id)
-                .ok_or_else(|| anyhow::anyhow!("Failed to find mls group for room {room_id}"))?
-                .clone()
-        };
+        let mls_group_lock = self.mls_store.read().await.find_group(room_id)?;
         let mut mls_group = mls_group_lock.write().await;
 
         // separate add and remove proposals
@@ -689,15 +682,8 @@ impl Service {
         }
 
         // Re-acquire locks for message processing
-        let store = self.mls_store.read().await;
-        let mut mls_group = store
-            .group_map
-            .get(room_id)
-            .ok_or(anyhow::anyhow!(
-                "Failed to find mls group for room {room_id}"
-            ))?
-            .write()
-            .await;
+        let mls_group_lock = self.mls_store.read().await.find_group(room_id)?;
+        let mut mls_group = mls_group_lock.write().await;
 
         let (received_message, _) = mls_group.decrypt_message(proposal).await?;
         match received_message {
