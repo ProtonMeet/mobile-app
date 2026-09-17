@@ -200,6 +200,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
     pub fn create_mock_mls_api(email: &str, meeting_link_name: &str, is_host: bool) -> MockMlsApi {
         let mut mls_api = MockMlsApi::new();
 
+        // nosemgrep
         let issuer_sk = "-----BEGIN PRIVATE KEY-----
 MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 -----END PRIVATE KEY-----";
