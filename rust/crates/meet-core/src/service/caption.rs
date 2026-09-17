@@ -676,10 +676,10 @@ impl CaptionService for CaptionServiceImpl {
         let current_epoch = *mls_group.epoch();
         if current_epoch != epoch_at_start {
             tracing::info!(
-                op = "admit_agent",
+                op = "remove_agent",
                 epoch_at_start,
                 current_epoch,
-                "epoch advanced between stagger and lock, another admin handled it, skipping"
+                "epoch advanced between stagger and lock, another committer handled it, skipping"
             );
             return Ok(());
         }
