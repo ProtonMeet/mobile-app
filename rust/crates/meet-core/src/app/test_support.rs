@@ -26,8 +26,9 @@ use crate::infra::{
 };
 use crate::service::auth::{ArcAuthService, AuthServiceImpl};
 use crate::service::caption::{ArcCaptionService, CaptionServiceImpl};
+use crate::service::create_mock_mls_api;
 use crate::service::services_bundle::ServiceBundle;
-use crate::service::user_service::{create_mock_mls_api, Service};
+use crate::service::user_service::Service;
 use crate::utils::server_time::ServerTimeTracker;
 
 pub fn test_user_key(id: &str, primary: u32, active: u32) -> ProtonUserKey {
@@ -201,11 +202,11 @@ pub fn minimal_auth_service() -> ArcAuthService {
     ))
 }
 
-pub fn minimal_agent_service() -> ArcCaptionService {
+pub fn minimal_caption_service(service: Arc<RwLock<Service>>) -> ArcCaptionService {
     Arc::new(CaptionServiceImpl::new(
         Arc::new(MockMlsApi::new()),
         test_mls_store(),
-        minimal_service(),
+        service,
         Arc::new(MockMeetingApi::new()),
     ))
 }
@@ -215,6 +216,7 @@ pub async fn build_app(state: AppState) -> App {
 }
 
 pub async fn build_app_with_http(state: AppState, http_client: Arc<ProtonHttpClient>) -> App {
+    let service = minimal_service();
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(minimal_ws_mock()),
@@ -228,8 +230,8 @@ pub async fn build_app_with_http(state: AppState, http_client: Arc<ProtonHttpCli
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
-            minimal_agent_service(),
-            minimal_service(),
+            minimal_caption_service(service.clone()),
+            service,
         )),
     )
 }
@@ -240,6 +242,7 @@ pub async fn build_app_with_test_http(
     test_http: Arc<dyn crate::domain::user::ports::HttpClient>,
 ) -> App {
     let http_client = test_proton_http_client().await;
+    let service = minimal_service();
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(minimal_ws_mock()),
@@ -253,8 +256,8 @@ pub async fn build_app_with_test_http(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
-            minimal_agent_service(),
-            minimal_service(),
+            minimal_caption_service(service.clone()),
+            service,
         )),
     )
 }
@@ -264,6 +267,7 @@ pub async fn build_app_with_test_mls_api(
     test_mls: Arc<dyn crate::domain::user::ports::MlsApi>,
 ) -> App {
     let http_client = test_proton_http_client().await;
+    let service = minimal_service();
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(minimal_ws_mock()),
@@ -277,14 +281,15 @@ pub async fn build_app_with_test_mls_api(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
-            minimal_agent_service(),
-            minimal_service(),
+            minimal_caption_service(service.clone()),
+            service,
         )),
     )
 }
 
 pub async fn build_app_with_service(state: AppState, service: Service) -> App {
     let http_client = test_proton_http_client().await;
+    let service = Arc::new(RwLock::new(service));
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(minimal_ws_mock()),
@@ -298,14 +303,15 @@ pub async fn build_app_with_service(state: AppState, service: Service) -> App {
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
-            minimal_agent_service(),
-            Arc::new(RwLock::new(service)),
+            minimal_caption_service(service.clone()),
+            service,
         )),
     )
 }
 
 pub async fn build_app_with_auth_service(state: AppState, auth_service: ArcAuthService) -> App {
     let http_client = test_proton_http_client().await;
+    let service = minimal_service();
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(minimal_ws_mock()),
@@ -319,8 +325,8 @@ pub async fn build_app_with_auth_service(state: AppState, auth_service: ArcAuthS
             minimal_room_service(),
             minimal_waiting_room_service(),
             auth_service,
-            minimal_agent_service(),
-            minimal_service(),
+            minimal_caption_service(service.clone()),
+            service,
         )),
     )
 }
@@ -331,6 +337,7 @@ pub async fn build_app_with_service_and_mls_api(
     mls_api: Arc<dyn crate::domain::user::ports::MlsApi>,
 ) -> App {
     let http_client = test_proton_http_client().await;
+    let service = Arc::new(RwLock::new(service));
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(minimal_ws_mock()),
@@ -344,8 +351,8 @@ pub async fn build_app_with_service_and_mls_api(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
-            minimal_agent_service(),
-            Arc::new(RwLock::new(service)),
+            minimal_caption_service(service.clone()),
+            service,
         )),
     )
 }
@@ -484,6 +491,7 @@ pub fn room_service_with_http_and_crypto(
 
 pub async fn build_app_with_room(state: AppState, room_service: RoomService) -> App {
     let http_client = test_proton_http_client().await;
+    let service = minimal_service();
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(minimal_ws_mock()),
@@ -497,8 +505,8 @@ pub async fn build_app_with_room(state: AppState, room_service: RoomService) -> 
             Arc::new(room_service),
             minimal_waiting_room_service(),
             minimal_auth_service(),
-            minimal_agent_service(),
-            minimal_service(),
+            minimal_caption_service(service.clone()),
+            service,
         )),
     )
 }
@@ -509,6 +517,7 @@ pub async fn build_app_with_room_and_ws(
     ws: MockWebSocketClient,
 ) -> App {
     let http_client = test_proton_http_client().await;
+    let service = minimal_service();
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(ws),
@@ -522,8 +531,8 @@ pub async fn build_app_with_room_and_ws(
             Arc::new(room_service),
             minimal_waiting_room_service(),
             minimal_auth_service(),
-            minimal_agent_service(),
-            minimal_service(),
+            minimal_caption_service(service.clone()),
+            service,
         )),
     )
 }
@@ -535,6 +544,7 @@ pub async fn build_app_with_room_and_service(
     room_service: RoomService,
 ) -> App {
     let http_client = test_proton_http_client().await;
+    let service = Arc::new(RwLock::new(service));
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(minimal_ws_mock()),
@@ -548,8 +558,8 @@ pub async fn build_app_with_room_and_service(
             Arc::new(room_service),
             minimal_waiting_room_service(),
             minimal_auth_service(),
-            minimal_agent_service(),
-            Arc::new(RwLock::new(service)),
+            minimal_caption_service(service.clone()),
+            service,
         )),
     )
 }
@@ -560,6 +570,7 @@ pub async fn build_app_with_ws_and_service(
     service: Service,
 ) -> App {
     let http_client = test_proton_http_client().await;
+    let service = Arc::new(RwLock::new(service));
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         ws,
@@ -573,8 +584,8 @@ pub async fn build_app_with_ws_and_service(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
-            minimal_agent_service(),
-            Arc::new(RwLock::new(service)),
+            minimal_caption_service(service.clone()),
+            service,
         )),
     )
 }
@@ -584,6 +595,7 @@ pub async fn build_app_with_user_key_provider(
     user_key_provider: Arc<dyn UserKeyProvider>,
 ) -> App {
     let http_client = test_proton_http_client().await;
+    let service = minimal_service();
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(minimal_ws_mock()),
@@ -597,8 +609,8 @@ pub async fn build_app_with_user_key_provider(
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
-            minimal_agent_service(),
-            minimal_service(),
+            minimal_caption_service(service.clone()),
+            service,
         )),
     )
 }
@@ -609,6 +621,7 @@ pub async fn build_app_with_room_and_user_key_provider(
     user_key_provider: Arc<dyn UserKeyProvider>,
 ) -> App {
     let http_client = test_proton_http_client().await;
+    let service = minimal_service();
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(minimal_ws_mock()),
@@ -622,14 +635,15 @@ pub async fn build_app_with_room_and_user_key_provider(
             Arc::new(room_service),
             minimal_waiting_room_service(),
             minimal_auth_service(),
-            minimal_agent_service(),
-            minimal_service(),
+            minimal_caption_service(service.clone()),
+            service,
         )),
     )
 }
 
 pub async fn build_app_with_ws(ws: MockWebSocketClient, state: AppState) -> App {
     let http_client = test_proton_http_client().await;
+    let service = minimal_service();
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(ws),
@@ -643,8 +657,8 @@ pub async fn build_app_with_ws(ws: MockWebSocketClient, state: AppState) -> App 
             minimal_room_service(),
             minimal_waiting_room_service(),
             minimal_auth_service(),
-            minimal_agent_service(),
-            minimal_service(),
+            minimal_caption_service(service.clone()),
+            service,
         )),
     )
 }
@@ -794,6 +808,7 @@ pub async fn build_app_with_service_room_and_ws(
     ws: MockWebSocketClient,
 ) -> App {
     let http_client = test_proton_http_client().await;
+    let service = Arc::new(RwLock::new(service));
     App::from_test_parts(
         Arc::new(RwLock::new(state)),
         Arc::new(ws),
@@ -807,8 +822,8 @@ pub async fn build_app_with_service_room_and_ws(
             Arc::new(room_service),
             minimal_waiting_room_service(),
             minimal_auth_service(),
-            minimal_agent_service(),
-            Arc::new(RwLock::new(service)),
+            minimal_caption_service(service.clone()),
+            service,
         )),
     )
 }

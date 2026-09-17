@@ -670,6 +670,20 @@ impl CaptionService for CaptionServiceImpl {
         let host_sd_kbt = self.user_service.read().await.get_sd_kbt(user_id).await?;
         let mut mls_group = group_arc.write().await;
 
+        // TOCTOU re-check: the stagger validated the epoch, then we spent time
+        // on network + crypto. If the epoch advanced in that window, another
+        // committer beat us — bail before starting a redundant commit.
+        let current_epoch = *mls_group.epoch();
+        if current_epoch != epoch_at_start {
+            tracing::info!(
+                op = "admit_agent",
+                epoch_at_start,
+                current_epoch,
+                "epoch advanced between stagger and lock, another admin handled it, skipping"
+            );
+            return Ok(());
+        }
+
         let proposal_args = vec![
             ProposalArg::Remove(leaf_index),
             ProposalArg::PskExternal {

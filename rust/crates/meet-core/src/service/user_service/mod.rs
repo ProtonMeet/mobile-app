@@ -2345,6 +2345,6 @@ pub(crate) mod service_test;
 
 #[cfg(all(test, not(target_family = "wasm")))]
 pub(crate) use service_test::{
-    create_mock_mls_api, create_test_service, join_switch_service_with_mls_api,
-    mls_group_export_snapshot, setup_n_user_group,
+    create_test_service, join_switch_service_with_mls_api, mls_group_export_snapshot,
+    setup_n_user_group,
 };

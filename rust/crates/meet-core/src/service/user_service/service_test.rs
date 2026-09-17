@@ -9,7 +9,6 @@ pub(crate) mod tests {
         sync::{Arc, Mutex as StdMutex, Weak},
     };
 
-    use esdicawt::spec::CwtAny;
     use mls_types::ExternalPskId;
     use muon::http::Status;
     use tokio::sync::RwLock;
@@ -34,6 +33,7 @@ pub(crate) mod tests {
         },
         service::{
             service_state::MlsGroupState,
+            test::create_mock_mls_api,
             user_service::{ProposalType, QueuedProposal, Service},
             utils::convert_mls_spec_to_types,
             waiting_room_setting::{
@@ -44,11 +44,8 @@ pub(crate) mod tests {
         utils::server_time::ServerTimeTracker,
     };
 
-    use base64::{prelude::BASE64_STANDARD, Engine};
     use cose_key_thumbprint::CoseKeyThumbprint;
-    use ed25519_dalek::pkcs8::{
-        spki::der::pem::LineEnding, DecodePrivateKey, DecodePublicKey, EncodePublicKey,
-    };
+    use ed25519_dalek::pkcs8::{DecodePrivateKey, DecodePublicKey};
     use identity::{
         Disclosure, Ed25519Issuer, IdentityResult, PresentationContext, ProtonMeetIdentity, SdCwt,
     };
@@ -65,7 +62,7 @@ pub(crate) mod tests {
         MlsClientTrait, MlsGroupConfig, ProposalArg, ProtonMeetIdentityProvider,
     };
     use proton_claims::{
-        reexports::{cose_key_set::CoseKeySet, Issuer, IssuerParams, SpiceOidcClaims},
+        reexports::{Issuer, IssuerParams, SpiceOidcClaims},
         ClientType, MimiProvider, ProtonMeetClaims,
     };
     use proton_meet_mls::{
@@ -4892,52 +4889,6 @@ pub(crate) mod tests {
     }
 
     /// Helper function to create a mock MLS API with common expectations
-    pub fn create_mock_mls_api(email: &str, meeting_link_name: &str, is_host: bool) -> MockMlsApi {
-        let mut mls_api = MockMlsApi::new();
-
-        let issuer_sk = "-----BEGIN PRIVATE KEY-----
-MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
------END PRIVATE KEY-----";
-
-        let issuer_signing_key = ed25519_dalek::SigningKey::from_pkcs8_pem(issuer_sk).unwrap();
-        let cks = CoseKeySet::new(&issuer_signing_key).unwrap();
-        let email = email.to_string();
-        let meeting_link_name = meeting_link_name.to_string();
-
-        mls_api
-            .expect_fetch_sd_cwt()
-            .returning(move |_, _, base64_holder_verifying_key, _| {
-                let holder_verifying_key =
-                    BASE64_STANDARD.decode(base64_holder_verifying_key).unwrap();
-                let holder_verifying_key = ed25519_dalek::VerifyingKey::from_bytes(
-                    &holder_verifying_key.as_slice().try_into().unwrap(),
-                )
-                .unwrap();
-                let holder_verifying_key_pem = holder_verifying_key
-                    .to_public_key_pem(LineEnding::LF)
-                    .unwrap();
-                let (sd_cwt, _issuer_signing_key) = mock_sdcwt_issuance(
-                    &holder_verifying_key_pem,
-                    &meeting_link_name,
-                    &email,
-                    proton_claims::Role::User,
-                    is_host,
-                )
-                .unwrap();
-                let base64_sd_cwt = BASE64_STANDARD.encode(sd_cwt.to_cbor_bytes().unwrap());
-                Box::pin(ready(Ok(base64_sd_cwt)))
-            });
-
-        let cks_clone = cks.clone();
-        mls_api
-            .expect_fetch_cose_key_set()
-            .returning(move || Box::pin(ready(Ok(cks_clone.to_cbor_bytes().unwrap()))));
-        mls_api
-            .expect_fetch_external_sender()
-            .returning(move || Box::pin(ready(Ok(vec![]))));
-
-        mls_api
-    }
 
     pub fn mock_sdcwt_issuance(
         holder_confirmation_key_pem: &str,
@@ -7943,6 +7894,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
 #[cfg(test)]
 pub use tests::{
-    create_mock_mls_api, create_test_service, join_switch_service_with_mls_api,
-    mls_group_export_snapshot, setup_n_user_group,
+    create_test_service, join_switch_service_with_mls_api, mls_group_export_snapshot,
+    setup_n_user_group,
 };

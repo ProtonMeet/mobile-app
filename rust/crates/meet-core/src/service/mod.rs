@@ -197,11 +197,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
     }
 
     /// Helper function to create a mock MLS API with common expectations
-    pub(super) fn create_mock_mls_api(
-        email: &str,
-        meeting_link_name: &str,
-        is_host: bool,
-    ) -> MockMlsApi {
+    pub fn create_mock_mls_api(email: &str, meeting_link_name: &str, is_host: bool) -> MockMlsApi {
         let mut mls_api = MockMlsApi::new();
 
         let issuer_sk = "-----BEGIN PRIVATE KEY-----
@@ -419,3 +415,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         (bundle, populated, group, config.ciphersuite, user_key)
     }
 }
+
+#[cfg(all(test, not(target_family = "wasm")))]
+pub(crate) use test::create_mock_mls_api;
