@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/constants/constants.dart';
+import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/extension/remote_track_publication_extension.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/helper/subscribe_retry_backoff.dart';
@@ -22,6 +23,12 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
   Future<void> close() {
     _bound = false;
     _clearAllPendingSubscribes(clearRetryCounts: true);
+    _audioEngineStateSub?.cancel();
+    _audioEngineStateSub = null;
+    for (final timer in _audioDiagnosticTimers) {
+      timer.cancel();
+    }
+    _audioDiagnosticTimers.clear();
     _signalListener.cancelAll();
     _signalListener.dispose();
     // _participantStatLogger.dispose();
@@ -29,6 +36,10 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
   }
 
   bool _bound = false;
+
+  // ignore: experimental_member_use
+  StreamSubscription<AudioEngineState>? _audioEngineStateSub;
+  final List<Timer> _audioDiagnosticTimers = <Timer>[];
   bool _reconcilingInFlightAudioSubscribes = false;
   DateTime? _lastAudioReconcileAt;
   late EventsListener<SignalEvent> _signalListener;
@@ -588,6 +599,7 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
       ..on<ParticipantNameUpdatedEvent>((event) {
         add(DebouncedSortParticipants());
       })
+      ..on<TrackE2EEStateEvent>(_logE2EEState)
       ..on<DataReceivedEvent>((event) async {
         add(BridgeDataReceived(event));
       });
@@ -612,11 +624,140 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
     // tracks now; camera video is left for the UI grid to subscribe on
     // demand (ResponsiveCameraLayout._updateVideoSubscriptions).
     _subscribeExistingAudioAndScreenShare();
+    _startAudioDiagnostics();
     // Existing roster: ParticipantConnected is not replayed for remotes already
     // in the room when listeners attach. Init queues
     // [BackgroundRefreshFrbParticipants] for display names; reconnect still
     // refreshes via [RefreshParticipantDisplayNames] below.
     // add more mappings as needed...
+  }
+
+  /// Diagnostics for "joined muted -> nobody is audible" reports.
+  ///
+  /// Three independent signals, because the symptom has two plausible causes
+  /// that look identical to the user:
+  /// - Audio engine state: on iOS the native engine owns audio-session
+  ///   activation. `isPlayoutEnabled: false` while remote audio is subscribed
+  ///   means the session never started and no amount of subscribing helps.
+  /// - [TrackE2EEStateEvent]: a missing-key / decryption-failed receiver means
+  ///   the frames arrive but cannot be decrypted, so the pipeline is fine and
+  ///   the key ring is not.
+  /// - Publication snapshot: rules out the subscribe path itself (unbound
+  ///   track, disabled media track, still-muted publisher).
+  void _startAudioDiagnostics() {
+    if (!kDebugMode) {
+      return;
+    }
+
+    if (mobile || macOS) {
+      // ignore: experimental_member_use
+      final engine = AudioManager.instance.audioEngineState;
+      l.logger.i(
+        '[AudioDiag] engine at bind playout=${engine.isPlayoutEnabled} '
+        'recording=${engine.isRecordingEnabled}',
+      );
+      _audioEngineStateSub?.cancel();
+      // ignore: experimental_member_use
+      final engineStates = AudioManager.instance.audioEngineStateStream;
+      _audioEngineStateSub = engineStates.listen((engineState) {
+        l.logger.i(
+          '[AudioDiag] engine changed playout=${engineState.isPlayoutEnabled} '
+          'recording=${engineState.isRecordingEnabled}',
+        );
+      });
+    }
+
+    for (final delay in audioDiagnosticSnapshotDelays) {
+      _audioDiagnosticTimers.add(
+        Timer(delay, () {
+          if (isClosed) {
+            return;
+          }
+          unawaited(_logRemoteAudioSnapshot(delay));
+        }),
+      );
+    }
+  }
+
+  Future<void> _logRemoteAudioSnapshot(Duration elapsed) async {
+    // ignore: experimental_member_use
+    final engine = AudioManager.instance.audioEngineState;
+    final buffer = StringBuffer(
+      '[AudioDiag] snapshot at ${elapsed.inSeconds}s '
+      'playout=${engine.isPlayoutEnabled} '
+      'recording=${engine.isRecordingEnabled} '
+      'localMicPublished=${state.room.localParticipant?.isMicrophoneEnabled() ?? false} '
+      'speakerMuted=${state.isSpeakerMuted ?? false}\n',
+    );
+    for (final participant in state.room.remoteParticipants.values) {
+      for (final pub in participant.audioTrackPublications) {
+        final track = pub.track;
+        buffer.writeln(
+          '  ${participant.identity} sid=${pub.sid} '
+          'subscribed=${pub.subscribed} bound=${track != null} '
+          'enabled=${track?.mediaStreamTrack.enabled} '
+          'publisherMuted=${pub.muted} '
+          '${await _receiverStatsSummary(track)}',
+        );
+      }
+    }
+    l.logger.i(buffer.toString());
+  }
+
+  Future<String> _receiverStatsSummary(Track? track) async {
+    if (track is! RemoteAudioTrack) {
+      return 'stats=unavailable';
+    }
+    try {
+      final stats = await track.getReceiverStats();
+      if (stats == null) {
+        return 'stats=none';
+      }
+      return 'packetsReceived=${stats.packetsReceived} '
+          'packetsLost=${stats.packetsLost} '
+          'bytesReceived=${stats.bytesReceived} '
+          'audioEnergy=${stats.totalAudioEnergy} '
+          'samplesDuration=${stats.totalSamplesDuration} '
+          'concealedSamples=${stats.concealedSamples}';
+    } catch (e) {
+      return 'stats=error($e)';
+    }
+  }
+
+  /// Debug builds only, like [_startAudioDiagnostics].
+  void _logE2EEState(TrackE2EEStateEvent event) {
+    if (!kDebugMode) {
+      return;
+    }
+
+    final isFailure =
+        event.state == E2EEState.kMissingKey ||
+        event.state == E2EEState.kDecryptionFailed ||
+        event.state == E2EEState.kEncryptionFailed ||
+        event.state == E2EEState.kInternalError;
+    final isLocal = event.participant is LocalParticipant;
+    final message =
+        '[AudioDiag] e2ee ${event.state} '
+        '${isLocal ? 'sender' : 'receiver'} '
+        'identity=${event.participant.identity} sid=${event.publication.sid} '
+        'kind=${event.publication.kind} source=${event.publication.source}';
+
+    if (!isFailure) {
+      l.logger.d(message);
+      return;
+    }
+
+    l.logger.e(message);
+    Sentry.captureMessage(
+      'LiveKit E2EE ${event.state}',
+      level: SentryLevel.error,
+      withScope: (scope) {
+        scope.setTag('e2ee_state', event.state.toString());
+        scope.setTag('e2ee_role', isLocal ? 'sender' : 'receiver');
+        scope.setTag('track_kind', event.publication.kind.toString());
+        scope.setTag('meeting_link_name', state.meetInfo.meetLinkName);
+      },
+    );
   }
 
   void _captureLiveKitReconnectEventToSentry(String eventName) {

@@ -14,7 +14,7 @@ class SafeVideoTrackRenderer extends StatelessWidget {
   const SafeVideoTrackRenderer({
     required this.videoTrack,
     this.fit = VideoViewFit.cover,
-    this.renderMode = VideoRenderMode.auto,
+    this.renderMode = VideoRenderMode.platformView,
     this.mirrorMode = VideoViewMirrorMode.auto,
     super.key,
   });

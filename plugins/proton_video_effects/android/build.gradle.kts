@@ -90,7 +90,7 @@ dependencies {
     implementation("com.google.ai.edge.litert:litert-gpu:$litertVersion")
     implementation("com.google.ai.edge.litert:litert-gpu-api:$litertVersion")
     // flutter_webrtc ships WebRTC at runtime; compileOnly avoids duplicate classes.
-    compileOnly("io.github.webrtc-sdk:android:144.7559.09")
+    compileOnly("io.github.webrtc-sdk:android:150.7871.01")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.mockito:mockito-core:5.23.0")
