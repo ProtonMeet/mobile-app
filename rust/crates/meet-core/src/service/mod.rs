@@ -32,6 +32,9 @@ fn compute_stagger_time(rank: u64, rank_group_delay: u64) -> StaggerStats {
     }
 }
 
+#[cfg(all(test, not(target_family = "wasm")))]
+pub(crate) use test::create_mock_mls_api;
+
 #[cfg(test)]
 mod test {
     use std::{collections::HashMap, future::ready, sync::Arc};
@@ -416,6 +419,3 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         (bundle, populated, group, config.ciphersuite, user_key)
     }
 }
-
-#[cfg(all(test, not(target_family = "wasm")))]
-pub(crate) use test::create_mock_mls_api;

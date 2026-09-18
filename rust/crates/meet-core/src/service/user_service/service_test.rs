@@ -4889,7 +4889,6 @@ pub(crate) mod tests {
     }
 
     /// Helper function to create a mock MLS API with common expectations
-
     pub fn mock_sdcwt_issuance(
         holder_confirmation_key_pem: &str,
         meeting_link_name: &str,
