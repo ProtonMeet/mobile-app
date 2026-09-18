@@ -69,6 +69,15 @@ const int maxAudioSubscribeRetries = 3;
 /// Min interval between sort-path [reconcileInFlightAudioSubscribes] passes.
 const Duration audioReconcileMinInterval = Duration(seconds: 2);
 
+/// When to snapshot remote audio publication + audio engine state after join,
+/// for diagnosing "joined muted and nobody is audible" reports.
+const List<Duration> audioDiagnosticSnapshotDelays = [
+  Duration(seconds: 3),
+  Duration(seconds: 10),
+  Duration(seconds: 20),
+  Duration(seconds: 40),
+];
+
 /// delay unsubscribe track
 const Duration delayUnsubscribeTrack = Duration(milliseconds: 2000);
 
