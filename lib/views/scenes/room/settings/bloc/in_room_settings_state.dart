@@ -5,7 +5,7 @@ import 'package:meet/views/scenes/room/settings/bloc/in_room_settings_event.dart
 import 'package:proton_denoise/proton_denoise.dart';
 
 /// Server-backed host toggles that show a spinner while the request is in flight.
-enum InRoomPendingToggle { lockMeeting, waitingRoom }
+enum InRoomPendingToggle { lockMeeting, waitingRoom, liveCaptionsAvailability }
 
 /// One selectable denoise backend, shown when several are enabled via Unleash.
 class DenoiseTypeUiOption extends Equatable {
@@ -28,8 +28,10 @@ class InRoomSettingsState extends Equatable {
     this.showPreviewSettings = false,
     this.showWaitingRoom = false,
     this.showRecordingRows = false,
+    this.showLiveCaptions = false,
     this.lockMeeting = false,
     this.waitingRoomEnabled = false,
+    this.liveCaptionsAvailableForParticipants = true,
     this.pendingToggles = const {},
     this.incomingVideoEnabled = true,
     this.selfViewEnabled = true,
@@ -58,9 +60,11 @@ class InRoomSettingsState extends Equatable {
   final bool showPreviewSettings;
   final bool showWaitingRoom;
   final bool showRecordingRows;
+  final bool showLiveCaptions;
 
   final bool lockMeeting;
   final bool waitingRoomEnabled;
+  final bool liveCaptionsAvailableForParticipants;
   final Set<InRoomPendingToggle> pendingToggles;
 
   final bool incomingVideoEnabled;
@@ -108,8 +112,10 @@ class InRoomSettingsState extends Equatable {
     bool? showPreviewSettings,
     bool? showWaitingRoom,
     bool? showRecordingRows,
+    bool? showLiveCaptions,
     bool? lockMeeting,
     bool? waitingRoomEnabled,
+    bool? liveCaptionsAvailableForParticipants,
     Set<InRoomPendingToggle>? pendingToggles,
     bool? incomingVideoEnabled,
     bool? selfViewEnabled,
@@ -138,8 +144,12 @@ class InRoomSettingsState extends Equatable {
       showPreviewSettings: showPreviewSettings ?? this.showPreviewSettings,
       showWaitingRoom: showWaitingRoom ?? this.showWaitingRoom,
       showRecordingRows: showRecordingRows ?? this.showRecordingRows,
+      showLiveCaptions: showLiveCaptions ?? this.showLiveCaptions,
       lockMeeting: lockMeeting ?? this.lockMeeting,
       waitingRoomEnabled: waitingRoomEnabled ?? this.waitingRoomEnabled,
+      liveCaptionsAvailableForParticipants:
+          liveCaptionsAvailableForParticipants ??
+          this.liveCaptionsAvailableForParticipants,
       pendingToggles: pendingToggles ?? this.pendingToggles,
       incomingVideoEnabled: incomingVideoEnabled ?? this.incomingVideoEnabled,
       selfViewEnabled: selfViewEnabled ?? this.selfViewEnabled,
@@ -190,8 +200,11 @@ class InRoomSettingsState extends Equatable {
       showPreviewSettings: showPreviewSettings,
       showWaitingRoom: showWaitingRoom,
       showRecordingRows: showRecordingRows,
+      showLiveCaptions: event.showLiveCaptions,
       lockMeeting: lockMeeting,
       waitingRoomEnabled: waitingRoomEnabled,
+      liveCaptionsAvailableForParticipants:
+          event.liveCaptionsAvailableForParticipants,
       pendingToggles: pendingToggles,
       incomingVideoEnabled: event.incomingVideoEnabled,
       selfViewEnabled: event.selfViewEnabled,
@@ -224,8 +237,10 @@ class InRoomSettingsState extends Equatable {
     showPreviewSettings,
     showWaitingRoom,
     showRecordingRows,
+    showLiveCaptions,
     lockMeeting,
     waitingRoomEnabled,
+    liveCaptionsAvailableForParticipants,
     pendingToggles,
     incomingVideoEnabled,
     selfViewEnabled,

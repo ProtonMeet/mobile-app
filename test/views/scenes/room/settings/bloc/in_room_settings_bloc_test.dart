@@ -67,8 +67,10 @@ class TestDataProviderManager implements DataProviderManager {
 class FakeHostTransport implements InRoomHostSettingsTransport {
   final lockResults = <bool>[];
   final waitingRoomResults = <bool>[];
+  final liveCaptionsAvailabilityResults = <bool>[];
   var nextLockResult = true;
   var nextWaitingRoomResult = true;
+  var nextLiveCaptionsAvailabilityResult = true;
   Completer<void>? holdLock;
   Completer<void>? holdWaitingRoom;
 
@@ -89,11 +91,19 @@ class FakeHostTransport implements InRoomHostSettingsTransport {
     }
     return nextWaitingRoomResult;
   }
+
+  @override
+  Future<bool> toggleLiveCaptionsAvailability({required bool value}) async {
+    liveCaptionsAvailabilityResults.add(value);
+    return nextLiveCaptionsAvailabilityResult;
+  }
 }
 
 InRoomSettingsBindingsUpdated bindingsEvent({
   bool isHost = false,
   bool isPaidUser = false,
+  bool showLiveCaptions = false,
+  bool liveCaptionsAvailableForParticipants = true,
   bool incomingVideoEnabled = true,
   bool selfViewEnabled = true,
   bool showAudioDenoise = false,
@@ -110,6 +120,8 @@ InRoomSettingsBindingsUpdated bindingsEvent({
   return InRoomSettingsBindingsUpdated(
     isHost: isHost,
     isPaidUser: isPaidUser,
+    showLiveCaptions: showLiveCaptions,
+    liveCaptionsAvailableForParticipants: liveCaptionsAvailableForParticipants,
     incomingVideoEnabled: incomingVideoEnabled,
     selfViewEnabled: selfViewEnabled,
     showAudioDenoise: showAudioDenoise,

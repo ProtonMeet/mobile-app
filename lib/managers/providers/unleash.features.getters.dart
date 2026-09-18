@@ -80,6 +80,14 @@ extension UnleashDataProviderFeatureGetters on UnleashDataProvider {
   bool isMeetMobileUpgradeWarning() =>
       isFeatureEnabled(UnleashFeature.meetMobileUpgradeWarning);
 
+  /// Warning banner for Android devices below the supported minimum SDK.
+  bool isOldAndroidSdkWarning() =>
+      isFeatureEnabled(UnleashFeature.oldAndroidSdkWarning);
+
+  /// Warning banner for iOS versions below the supported minimum.
+  bool isOldIosSdkWarning() =>
+      isFeatureEnabled(UnleashFeature.oldIosSdkWarning);
+
   /// Parent flag for native mic denoise (RNNoise / DTLN / DeepFilter).
   bool isMeetAudioDenoise() =>
       isFeatureEnabled(UnleashFeature.meetAudioDenoise);
@@ -109,6 +117,13 @@ extension UnleashDataProviderFeatureGetters on UnleashDataProvider {
   bool isMeetSettingsPreview() =>
       isFeatureEnabled(UnleashFeature.meetSettingsPreview);
 
+  /// Main switch for live captions (Settings option and related UI).
+  bool isMeetLiveCaptions() =>
+      isFeatureEnabled(UnleashFeature.meetLiveCaptions);
+
+  /// Spoken-language picker UI in meeting settings and captions sheet.
+  bool isMeetLiveCaptionsLanguageSelector() =>
+      isFeatureEnabled(UnleashFeature.meetLiveCaptionsLanguageSelector);
   bool isMeetNewJoinFunctions() =>
       isFeatureEnabled(UnleashFeature.meetNewJoinFunctions);
 }

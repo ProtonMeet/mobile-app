@@ -97,7 +97,7 @@ class ProtonVideoEffects {
   /// Sets the platform segmentation backend once per process (before first attach).
   ///
   /// iOS / macOS → [SegmentationModelPreference.vision];
-  /// Android → [SegmentationModelPreference.landscape].
+  /// Android → [SegmentationModelPreference.single].
   Future<void> applyPlatformDefaultSegmentationModel() =>
       _channel.applyPlatformDefaultSegmentationModel();
 

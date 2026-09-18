@@ -160,6 +160,10 @@ class ProtonImages extends ThemeExtension<ProtonImages> {
       Assets.images.icon.icBackgroundsAddImage;
   SvgGenImage get iconVirtualBackground => Assets.images.icon.icBackgroundsBtn;
 
+  /// icons for live captions
+  SvgGenImage get iconLiveCaptions => Assets.images.icon.icLiveCaptions;
+  SvgGenImage get iconLiveCaption => Assets.images.icon.icLiveCaption;
+
   @override
   ProtonImages copyWith({bool? isDark}) =>
       ProtonImages(isDark: isDark ?? this.isDark);

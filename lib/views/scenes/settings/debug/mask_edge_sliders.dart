@@ -3,9 +3,19 @@ import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:proton_video_effects/proton_video_effects.dart';
 
-/// Mask edge shaping lives in the Core Image pipeline; Android feathers in mask space with a
-/// fixed sigma and has no erosion step, so neither dial has an equivalent there.
-bool get maskEdgeTuningSupported => iOS || macOS;
+/// Every mobile/desktop engine now runs the same erode → solidify → feather → gamma stages, so the
+/// dials mean the same thing everywhere. Apple applies them at frame resolution via Core Image;
+/// Android applies them in mask space with the fractions converted to mask pixels.
+bool get maskEdgeTuningSupported => iOS || macOS || android;
+
+/// Inline segmentation is an Apple-only experiment: the Android engine always dispatches
+/// inference asynchronously and drops `synchronousSegmentation` on the floor, so the switch would
+/// be a control that does nothing.
+bool get synchronousSegmentationSupported => iOS || macOS;
+
+/// The mask overlay is only implemented in the Android engine, where the mask geometry is the
+/// thing under investigation. Apple composites through Core Image and has no equivalent path.
+bool get maskDebugOverlaySupported => android;
 
 /// Labelled slider with a live value readout, shared by the background debug screens.
 class BlurParamSlider extends StatelessWidget {
@@ -71,8 +81,7 @@ class BlurParamSlider extends StatelessWidget {
 
 /// Switch for the inline-segmentation experiment.
 ///
-/// Renders nothing where [maskEdgeTuningSupported] is false, since only the Vision path has an
-/// inline mode.
+/// Renders nothing where [synchronousSegmentationSupported] is false.
 class SynchronousSegmentationSwitch extends StatelessWidget {
   const SynchronousSegmentationSwitch({
     required this.value,
@@ -85,7 +94,7 @@ class SynchronousSegmentationSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!maskEdgeTuningSupported) {
+    if (!synchronousSegmentationSupported) {
       return const SizedBox.shrink();
     }
     final theme = Theme.of(context);
@@ -101,6 +110,42 @@ class SynchronousSegmentationSwitch extends StatelessWidget {
         'Segments each frame inline so the mask matches it exactly, removing the lag that lets '
         'a waving arm tear the background. Blocks video capture while inferring, so watch '
         'frameFps in the perf log for dropped frames.',
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: context.colors.textWeak,
+        ),
+      ),
+    );
+  }
+}
+
+/// Switch for the red mask overlay.
+///
+/// Renders nothing where [maskDebugOverlaySupported] is false.
+class MaskDebugOverlaySwitch extends StatelessWidget {
+  const MaskDebugOverlaySwitch({
+    required this.value,
+    required this.onChanged,
+    super.key,
+  });
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!maskDebugOverlaySupported) {
+      return const SizedBox.shrink();
+    }
+    final theme = Theme.of(context);
+    return SwitchListTile(
+      contentPadding: EdgeInsets.zero,
+      value: value,
+      onChanged: onChanged,
+      title: Text('Show mask overlay', style: theme.textTheme.titleSmall),
+      subtitle: Text(
+        'Drops the background effect and tints the mask red over the sharp frame, so its '
+        'position, orientation and feather are visible directly. A correct mask is a red '
+        'silhouette sitting exactly on you.',
         style: theme.textTheme.bodySmall?.copyWith(
           color: context.colors.textWeak,
         ),

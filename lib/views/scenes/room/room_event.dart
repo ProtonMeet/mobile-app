@@ -3,6 +3,7 @@ import 'package:livekit_client/livekit_client.dart';
 import 'package:meet/helper/background_blur/camera_background_blur_sync.dart'
     show syncLocalCameraBackgroundEffect;
 import 'package:meet/helper/background_blur/camera_background_selection.dart';
+import 'package:meet/models/live_captions/live_captions_models.dart';
 import 'package:meet/rust/proton_meet/models/meeting_info.dart';
 import 'package:meet/rust/proton_meet/models/mls_sync_state.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
@@ -384,6 +385,15 @@ class MeetingInfoWaitingRoomUpdated extends RoomBlocEvent {
   List<Object?> get props => [enabled];
 }
 
+class LiveCaptionsAvailabilityUpdated extends RoomBlocEvent {
+  final bool available;
+
+  const LiveCaptionsAvailabilityUpdated({required this.available});
+
+  @override
+  List<Object?> get props => [available];
+}
+
 class SetCameraBackgroundBlurEnabled extends RoomBlocEvent {
   final bool enabled;
 
@@ -420,6 +430,103 @@ class SetAudioDenoiseType extends RoomBlocEvent {
 
   @override
   List<Object?> get props => [type];
+}
+
+class SetLiveCaptionsWanted extends RoomBlocEvent {
+  const SetLiveCaptionsWanted({required this.enabled});
+
+  final bool enabled;
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+class SetLiveCaptionLanguage extends RoomBlocEvent {
+  const SetLiveCaptionLanguage({required this.language});
+
+  final String language;
+
+  @override
+  List<Object?> get props => [language];
+}
+
+class UpsertLiveCaptionSegment extends RoomBlocEvent {
+  const UpsertLiveCaptionSegment(this.segment);
+
+  final CaptionSegment segment;
+
+  @override
+  List<Object?> get props => [segment];
+}
+
+class LiveCaptionsTranscriptionTick extends RoomBlocEvent {
+  const LiveCaptionsTranscriptionTick();
+}
+
+class ClearLiveCaptionsTranscriptions extends RoomBlocEvent {
+  const ClearLiveCaptionsTranscriptions();
+}
+
+class LiveCaptionsTranscriptionStreamStarted extends RoomBlocEvent {
+  const LiveCaptionsTranscriptionStreamStarted();
+}
+
+class LiveCaptionsTranscriptionStreamReadFailed extends RoomBlocEvent {
+  const LiveCaptionsTranscriptionStreamReadFailed();
+}
+
+class LiveCaptionsTranscriptionStreamDecryptFailed extends RoomBlocEvent {
+  const LiveCaptionsTranscriptionStreamDecryptFailed();
+}
+
+class RefreshLiveCaptionsTranscriptions extends RoomBlocEvent {
+  const RefreshLiveCaptionsTranscriptions(this.transcriptions);
+
+  final Transcriptions transcriptions;
+
+  @override
+  List<Object?> get props => [transcriptions];
+}
+
+/// Dispatched when the STT caption agent joins the room.
+class LiveCaptionsCaptionAgentConnected extends RoomBlocEvent {
+  const LiveCaptionsCaptionAgentConnected();
+}
+
+/// Dispatched when the STT caption agent leaves the room.
+class LiveCaptionsCaptionAgentDisconnected extends RoomBlocEvent {
+  const LiveCaptionsCaptionAgentDisconnected();
+}
+
+/// Re-evaluates the wanters-driven captions agent lifecycle state machine.
+class EvaluateLiveCaptionsAgentLifecycle extends RoomBlocEvent {
+  const EvaluateLiveCaptionsAgentLifecycle();
+}
+
+/// Fired after [LiveCaptionsConstants.agentDisableGrace] with no wanters.
+class LiveCaptionsAgentGraceElapsed extends RoomBlocEvent {
+  const LiveCaptionsAgentGraceElapsed();
+}
+
+/// Next summon retry attempt within the 30s enable window.
+class LiveCaptionsAgentSummonRetry extends RoomBlocEvent {
+  const LiveCaptionsAgentSummonRetry();
+}
+
+/// Agent still present after a disable request; retry or report failure.
+class LiveCaptionsAgentTeardownCheck extends RoomBlocEvent {
+  const LiveCaptionsAgentTeardownCheck();
+}
+
+/// STT agent did not join within [LiveCaptionsConstants.agentWait]; local
+/// preference is auto-disabled and the UI should surface an error toast.
+class LiveCaptionsAgentSummonFailed extends RoomBlocEvent {
+  const LiveCaptionsAgentSummonFailed();
+}
+
+/// Clears [RoomState.shouldShowLiveCaptionsSummonFailedError] after the toast.
+class LiveCaptionsSummonFailedErrorConsumed extends RoomBlocEvent {
+  const LiveCaptionsSummonFailedErrorConsumed();
 }
 
 class SetForceShowConnectionStatusBanner extends RoomBlocEvent {

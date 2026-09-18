@@ -36,6 +36,10 @@ abstract final class TestIds {
       'meet.dashboard.sign_in_card.dismiss';
   static const dashboardMobileUpgradeWarningCardDismiss =
       'meet.dashboard.mobile_upgrade_warning_card.dismiss';
+  static const dashboardOldAndroidSdkWarningCardDismiss =
+      'meet.dashboard.old_android_sdk_warning_card.dismiss';
+  static const dashboardOldIosSdkWarningCardDismiss =
+      'meet.dashboard.old_ios_sdk_warning_card.dismiss';
   static const dashboardGuestPersonalMeeting =
       'meet.dashboard.guest_personal_meeting';
 
@@ -89,10 +93,17 @@ abstract final class TestIds {
   static const roomChat = 'meet.room.controls.chat';
   static const roomSettings = 'meet.room.controls.settings';
   static const roomInfo = 'meet.room.controls.info';
+  static const roomLiveCaptions = 'meet.room.controls.live_captions';
 
   // ── Room — top bar & misc ───────────────────────────────────────────────
 
   static const roomSwapCamera = 'meet.room.top_bar.swap_camera';
   static const roomSpeakerOutput = 'meet.room.top_bar.speaker_output';
   static const roomRotate = 'meet.room.rotate';
+
+  // ── Room — live captions sheet ──────────────────────────────────────────
+
+  static const roomLiveCaptionsSheet = 'meet.room.live_captions.sheet';
+  static const roomLiveCaptionsSave = 'meet.room.live_captions.save';
+  static const roomLiveCaptionsSettings = 'meet.room.live_captions.settings';
 }

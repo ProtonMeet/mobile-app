@@ -81,6 +81,12 @@ enum UnleashFeature {
   /// When enabled, show a warning banner on join for outdated mobile clients.
   meetMobileUpgradeWarning('MeetMobileUpgradeWarning'),
 
+  /// When enabled, warn on Android 7/8 devices (API level below 28).
+  oldAndroidSdkWarning('OldAndroidSdkWarning'),
+
+  /// When enabled, warn on iOS versions below 17.
+  oldIosSdkWarning('OldIosSdkWarning'),
+
   // Native camera background blur (iOS / Android / macOS).
   meetCameraBackgroundBlur('MeetCameraBackgroundBlur'),
 
@@ -116,6 +122,16 @@ enum UnleashFeature {
   meetUseCachedServerTime(
     'MeetUseCachedServerTime',
     clientDefault: FeatureClientDefault.off,
+  ),
+
+  /// Main switch for live captions (Settings UI and related flows).
+  meetLiveCaptions('MeetLiveCaptions'),
+
+  /// Spoken-language picker in meeting settings and captions sheet header.
+  /// Gated by [meetLiveCaptions].
+  meetLiveCaptionsLanguageSelector(
+    'MeetLiveCaptionsLanguageSelector',
+    parent: meetLiveCaptions,
   ),
 
   /// Shows settings rows that are designed but not wired to logic yet

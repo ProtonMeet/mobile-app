@@ -197,6 +197,14 @@ class $AssetsImagesIconGen {
   /// File path: assets/images/icon/ic-link.svg
   SvgGenImage get icLink => const SvgGenImage('assets/images/icon/ic-link.svg');
 
+  /// File path: assets/images/icon/ic-live-caption.svg
+  SvgGenImage get icLiveCaption =>
+      const SvgGenImage('assets/images/icon/ic-live-caption.svg');
+
+  /// File path: assets/images/icon/ic-live-captions.svg
+  SvgGenImage get icLiveCaptions =>
+      const SvgGenImage('assets/images/icon/ic-live-captions.svg');
+
   /// File path: assets/images/icon/ic-locked.svg
   SvgGenImage get icLocked =>
       const SvgGenImage('assets/images/icon/ic-locked.svg');
@@ -395,6 +403,8 @@ class $AssetsImagesIconGen {
     icLeaveMeetingGuest,
     icLeftMeeting,
     icLink,
+    icLiveCaption,
+    icLiveCaptions,
     icLocked,
     icMeetingShieldH,
     icMeetingsCalendar,
@@ -519,43 +529,44 @@ class $AssetsImagesLogosGen {
 class $AssetsImagesVirtualBackgroundsGen {
   const $AssetsImagesVirtualBackgroundsGen();
 
-  /// File path: assets/images/virtual_backgrounds/00-Proton.png
-  AssetGenImage get a00Proton =>
-      const AssetGenImage('assets/images/virtual_backgrounds/00-Proton.png');
-
-  /// File path: assets/images/virtual_backgrounds/01-modern-office-v2-working-office.png
-  AssetGenImage get a01ModernOfficeV2WorkingOffice => const AssetGenImage(
-    'assets/images/virtual_backgrounds/01-modern-office-v2-working-office.png',
+  /// File path: assets/images/virtual_backgrounds/virtual-bg-01.png
+  AssetGenImage get virtualBg01 => const AssetGenImage(
+    'assets/images/virtual_backgrounds/virtual-bg-01.png',
   );
 
-  /// File path: assets/images/virtual_backgrounds/02-mountain-landscape.png
-  AssetGenImage get a02MountainLandscape => const AssetGenImage(
-    'assets/images/virtual_backgrounds/02-mountain-landscape.png',
+  /// File path: assets/images/virtual_backgrounds/virtual-bg-02.png
+  AssetGenImage get virtualBg02 => const AssetGenImage(
+    'assets/images/virtual_backgrounds/virtual-bg-02.png',
   );
 
-  /// File path: assets/images/virtual_backgrounds/03-abstract-natural-texture.png
-  AssetGenImage get a03AbstractNaturalTexture => const AssetGenImage(
-    'assets/images/virtual_backgrounds/03-abstract-natural-texture.png',
+  /// File path: assets/images/virtual_backgrounds/virtual-bg-03.png
+  AssetGenImage get virtualBg03 => const AssetGenImage(
+    'assets/images/virtual_backgrounds/virtual-bg-03.png',
   );
 
-  /// File path: assets/images/virtual_backgrounds/04-beach-landscape-v2-happy.png
-  AssetGenImage get a04BeachLandscapeV2Happy => const AssetGenImage(
-    'assets/images/virtual_backgrounds/04-beach-landscape-v2-happy.png',
+  /// File path: assets/images/virtual_backgrounds/virtual-bg-04.png
+  AssetGenImage get virtualBg04 => const AssetGenImage(
+    'assets/images/virtual_backgrounds/virtual-bg-04.png',
   );
 
-  /// File path: assets/images/virtual_backgrounds/05-coffee-place-v2-furnished.png
-  AssetGenImage get a05CoffeePlaceV2Furnished => const AssetGenImage(
-    'assets/images/virtual_backgrounds/05-coffee-place-v2-furnished.png',
+  /// File path: assets/images/virtual_backgrounds/virtual-bg-05.png
+  AssetGenImage get virtualBg05 => const AssetGenImage(
+    'assets/images/virtual_backgrounds/virtual-bg-05.png',
+  );
+
+  /// File path: assets/images/virtual_backgrounds/virtual-bg-06.png
+  AssetGenImage get virtualBg06 => const AssetGenImage(
+    'assets/images/virtual_backgrounds/virtual-bg-06.png',
   );
 
   /// List of all assets
   List<AssetGenImage> get values => [
-    a00Proton,
-    a01ModernOfficeV2WorkingOffice,
-    a02MountainLandscape,
-    a03AbstractNaturalTexture,
-    a04BeachLandscapeV2Happy,
-    a05CoffeePlaceV2Furnished,
+    virtualBg01,
+    virtualBg02,
+    virtualBg03,
+    virtualBg04,
+    virtualBg05,
+    virtualBg06,
   ];
 }
 

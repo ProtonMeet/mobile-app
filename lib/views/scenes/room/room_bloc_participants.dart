@@ -8,6 +8,7 @@ import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
+import 'package:meet/models/live_captions/live_caption_agent.dart';
 import 'package:meet/rust/proton_meet/models/meet_participant.dart';
 
 import 'participant_detail.dart';
@@ -114,6 +115,13 @@ mixin RoomParticipantsHandlers on Bloc<RoomBlocEvent, RoomState> {
     }
     _updateLivekitActiveUuids();
     add(SortParticipants());
+
+    if (state.isRoomInitialized) {
+      if (isCaptionAgent(participant)) {
+        add(const LiveCaptionsCaptionAgentConnected());
+      }
+      add(const EvaluateLiveCaptionsAgentLifecycle());
+    }
   }
 
   /// Handles the event when a participant disconnects from the room.
@@ -151,6 +159,15 @@ mixin RoomParticipantsHandlers on Bloc<RoomBlocEvent, RoomState> {
     // sending us a Stopped envelope, otherwise the banner could get stuck.
     if (state.participantsRecording.contains(participantIdentity)) {
       add(ParticipantRecordingStopped(identity: participantIdentity));
+    }
+
+    final disconnectedParticipant = event.event.participant;
+    if (state.isRoomInitialized) {
+      if (isCaptionAgent(disconnectedParticipant)) {
+        add(const LiveCaptionsCaptionAgentDisconnected());
+      } else {
+        add(const EvaluateLiveCaptionsAgentLifecycle());
+      }
     }
   }
 

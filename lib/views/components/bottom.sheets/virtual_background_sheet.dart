@@ -10,6 +10,7 @@ import 'package:meet/helper/background_blur/virtual_background_presets.dart';
 import 'package:meet/helper/background_blur/virtual_background_store.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/extension/svg_gen_image_extension.dart';
+import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/views/components/alerts/base_bottom_sheet_v2.dart';
 import 'package:meet/views/components/safe_video_track_renderer.dart';
 
@@ -107,6 +108,14 @@ class _VirtualBackgroundSheetBodyState
         }
         _commitSelection(CameraBackgroundSelection.custom(file.path));
       }
+    } catch (e, st) {
+      // Called through `unawaited`, so without this a failed copy is an
+      // unhandled async error and the sheet just sits there.
+      l.logger.e(
+        '[VirtualBackgroundSheet] storing the picked image failed: $e',
+        error: e,
+        stackTrace: st,
+      );
     } finally {
       if (mounted) {
         setState(() => _pickingImage = false);

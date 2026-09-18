@@ -44,6 +44,8 @@ void main() {
     ((p) => p.isMeetCameraBackgroundBlur(), 'MeetCameraBackgroundBlur'),
     ((p) => p.isMeetMobileInAppUpdate(), 'MeetMobileInAppUpdate'),
     ((p) => p.isMeetMobileUpgradeWarning(), 'MeetMobileUpgradeWarning'),
+    ((p) => p.isOldAndroidSdkWarning(), 'OldAndroidSdkWarning'),
+    ((p) => p.isOldIosSdkWarning(), 'OldIosSdkWarning'),
     ((p) => p.isMeetAudioDenoise(), 'MeetAudioDenoise'),
     ((p) => p.isMeetAudioDenoiseRnnoise(), 'MeetAudioDenoiseRnnoise'),
     ((p) => p.isMeetAudioDenoiseDeepfilter(), 'MeetAudioDenoiseDeepfilter'),
@@ -52,6 +54,11 @@ void main() {
     ((p) => p.isMeetNewChatHandling(), 'MeetNewChatHandling'),
     ((p) => p.isMeetChatThreads(), 'MeetChatThreads'),
     ((p) => p.isMeetSettingsPreview(), 'MeetSettingsPreview'),
+    ((p) => p.isMeetLiveCaptions(), 'MeetLiveCaptions'),
+    (
+      (p) => p.isMeetLiveCaptionsLanguageSelector(),
+      'MeetLiveCaptionsLanguageSelector',
+    ),
   ];
 
   late MockAppCore mockAppCore;
@@ -88,7 +95,7 @@ void main() {
 
   group('UnleashDataProviderFeatureGetters', () {
     test('covers every extension getter', () {
-      expect(getterCases, hasLength(33));
+      expect(getterCases, hasLength(37));
     });
 
     test('each getter reads its unleash toggle when enabled', () async {
@@ -118,6 +125,22 @@ void main() {
       for (final (getter, toggleName) in getterCases) {
         expect(getter(provider), isFalse, reason: toggleName);
       }
+
+      await provider.clear();
+    });
+
+    test('live captions language selector respects parent flag', () async {
+      final provider = createUnleashTestProvider(
+        appCoreManager,
+        mockAppCore,
+        toggles: const {
+          'MeetLiveCaptions': false,
+          'MeetLiveCaptionsLanguageSelector': true,
+        },
+      );
+      await provider.start();
+
+      expect(provider.isMeetLiveCaptionsLanguageSelector(), isFalse);
 
       await provider.clear();
     });

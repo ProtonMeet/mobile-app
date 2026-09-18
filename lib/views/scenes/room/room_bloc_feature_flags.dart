@@ -78,6 +78,28 @@ mixin RoomFeatureFlagsHandlers on Bloc<RoomBlocEvent, RoomState> {
     }
   }
 
+  /// Check if old Android SDK warning banner is enabled via feature flag.
+  bool isOldAndroidSdkWarningEnabled() {
+    try {
+      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
+      return dataProviderManager.unleashDataProvider.isOldAndroidSdkWarning();
+    } catch (e) {
+      l.logger.w('[RoomBloc] Error checking OldAndroidSdkWarning flag: $e');
+      return false;
+    }
+  }
+
+  /// Check if old iOS version warning banner is enabled via feature flag.
+  bool isOldIosSdkWarningEnabled() {
+    try {
+      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
+      return dataProviderManager.unleashDataProvider.isOldIosSdkWarning();
+    } catch (e) {
+      l.logger.w('[RoomBloc] Error checking OldIosSdkWarning flag: $e');
+      return false;
+    }
+  }
+
   /// Check if Mobile Enable Network Tool feature is enabled via feature flag
   bool isMeetMobileEnableNetworkToolEnabled() {
     try {
@@ -163,6 +185,31 @@ mixin RoomFeatureFlagsHandlers on Bloc<RoomBlocEvent, RoomState> {
     } catch (e) {
       // If there's an error accessing the feature flag, default to false.
       l.logger.w('[RoomBloc] Error checking MeetAdminLowerHand flag: $e');
+      return false;
+    }
+  }
+
+  /// Main switch for in-room live captions UI and preference writes.
+  bool isMeetLiveCaptionsEnabled() {
+    try {
+      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
+      return dataProviderManager.unleashDataProvider.isMeetLiveCaptions();
+    } catch (e) {
+      l.logger.w('[RoomBloc] Error checking MeetLiveCaptions flag: $e');
+      return false;
+    }
+  }
+
+  /// Spoken-language picker in meeting settings and captions sheet header.
+  bool isMeetLiveCaptionsLanguageSelectorEnabled() {
+    try {
+      final dataProviderManager = ManagerFactory().get<DataProviderManager>();
+      return dataProviderManager.unleashDataProvider
+          .isMeetLiveCaptionsLanguageSelector();
+    } catch (e) {
+      l.logger.w(
+        '[RoomBloc] Error checking MeetLiveCaptionsLanguageSelector flag: $e',
+      );
       return false;
     }
   }

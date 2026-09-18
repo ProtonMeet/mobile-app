@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:meet/constants/constants.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
+import 'package:meet/models/live_captions/live_caption_agent.dart';
 import 'package:meet/rust/proton_meet/models/mls_sync_state.dart';
 import 'package:meet/views/scenes/room/room_state.dart';
 
@@ -17,7 +18,11 @@ extension RoomStateExtension on RoomState {
       (meetingInfo?.maxParticipants ?? 0) == guestMeetingRoomSize;
 
   /// LiveKit participants currently in the meeting (local + remote).
-  int get currentParticipantCount => room.remoteParticipants.length + 1;
+  ///
+  /// The live caption agent joins as a remote participant but is never shown
+  /// as a person, so it is left out of the tally.
+  int get currentParticipantCount =>
+      room.remoteParticipantsExcludingCaptionAgent.length + 1;
 
   /// Whether admitting all [waitingParticipantCount] waiting-room requests
   /// would exceed [meetingInfo.maxParticipants].
