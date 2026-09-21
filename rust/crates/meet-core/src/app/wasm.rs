@@ -314,6 +314,26 @@ impl App {
         .map_err(|e| e.into())
     }
 
+    #[wasm_bindgen(js_name = joinMeeting2)]
+    pub async fn join_meeting2_wasm(
+        &self,
+        access_token: String,
+        meet_link_name: String,
+        meeting_password: String,
+        session_id: Option<String>,
+        is_waiting_room: bool,
+    ) -> Result<(), crate::errors::core::MeetCoreErrorEnum> {
+        self.join_meeting2(
+            AccessToken::new(access_token),
+            MeetingLinkName::new(meet_link_name),
+            MeetingPassword::new(meeting_password),
+            session_id,
+            is_waiting_room,
+        )
+        .await
+        .map_err(|e| e.into())
+    }
+
     #[wasm_bindgen(js_name = joinRoomWithProposal)]
     pub async fn join_meeting_with_access_token_with_proposal_wasm(
         &self,
