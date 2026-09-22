@@ -152,6 +152,23 @@ class MockAppCore extends _i1.Mock implements _i16.AppCore {
           as bool);
 
   @override
+  _i17.Future<void> admitAgent({
+    required String? meetLinkName,
+    required String? agentDeviceId,
+    required String? meetingPassword,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#admitAgent, [], {
+              #meetLinkName: meetLinkName,
+              #agentDeviceId: agentDeviceId,
+              #meetingPassword: meetingPassword,
+            }),
+            returnValue: _i17.Future<void>.value(),
+            returnValueForMissingStub: _i17.Future<void>.value(),
+          )
+          as _i17.Future<void>);
+
+  @override
   _i17.Future<List<String>> admitAllWaitingRoomJoinRequests({
     required String? meetLinkName,
   }) =>
@@ -211,6 +228,24 @@ class MockAppCore extends _i1.Mock implements _i16.AppCore {
             Invocation.method(#cancelWaitingRoomJoinRequest, [], {
               #meetLinkName: meetLinkName,
             }),
+            returnValue: _i17.Future<void>.value(),
+            returnValueForMissingStub: _i17.Future<void>.value(),
+          )
+          as _i17.Future<void>);
+
+  @override
+  _i17.Future<void> clearAgentLeftCallback() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearAgentLeftCallback, []),
+            returnValue: _i17.Future<void>.value(),
+            returnValueForMissingStub: _i17.Future<void>.value(),
+          )
+          as _i17.Future<void>);
+
+  @override
+  _i17.Future<void> clearAgentPendingCallback() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearAgentPendingCallback, []),
             returnValue: _i17.Future<void>.value(),
             returnValueForMissingStub: _i17.Future<void>.value(),
           )
@@ -890,6 +925,43 @@ class MockAppCore extends _i1.Mock implements _i16.AppCore {
           as _i17.Future<_i2.FrbMeetInfo>);
 
   @override
+  _i17.Future<_i2.FrbMeetInfo> joinMeeting2({
+    required String? meetLinkName,
+    required String? meetLinkPassword,
+    required String? displayName,
+    String? sessionId,
+    required bool? reuseToken,
+    required bool? reusePrejoinAuth,
+    required bool? isWaitingRoom,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#joinMeeting2, [], {
+              #meetLinkName: meetLinkName,
+              #meetLinkPassword: meetLinkPassword,
+              #displayName: displayName,
+              #sessionId: sessionId,
+              #reuseToken: reuseToken,
+              #reusePrejoinAuth: reusePrejoinAuth,
+              #isWaitingRoom: isWaitingRoom,
+            }),
+            returnValue: _i17.Future<_i2.FrbMeetInfo>.value(
+              _FakeFrbMeetInfo_0(
+                this,
+                Invocation.method(#joinMeeting2, [], {
+                  #meetLinkName: meetLinkName,
+                  #meetLinkPassword: meetLinkPassword,
+                  #displayName: displayName,
+                  #sessionId: sessionId,
+                  #reuseToken: reuseToken,
+                  #reusePrejoinAuth: reusePrejoinAuth,
+                  #isWaitingRoom: isWaitingRoom,
+                }),
+              ),
+            ),
+          )
+          as _i17.Future<_i2.FrbMeetInfo>);
+
+  @override
   _i17.Future<void> joinMeetingWithAccessToken({
     required String? accessToken,
     required String? meetLinkName,
@@ -935,6 +1007,18 @@ class MockAppCore extends _i1.Mock implements _i16.AppCore {
             returnValueForMissingStub: _i17.Future<void>.value(),
           )
           as _i17.Future<void>);
+
+  @override
+  _i17.Future<List<String>> listPendingAgents({
+    required String? meetLinkName,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#listPendingAgents, [], {
+              #meetLinkName: meetLinkName,
+            }),
+            returnValue: _i17.Future<List<String>>.value(<String>[]),
+          )
+          as _i17.Future<List<String>>);
 
   @override
   _i17.Future<void> lockMeeting({required String? meetLinkName}) =>
@@ -1155,10 +1239,36 @@ class MockAppCore extends _i1.Mock implements _i16.AppCore {
           as _i17.Future<void>);
 
   @override
+  _i17.Future<void> removeAgent({
+    required String? meetLinkName,
+    required String? agentDeviceId,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#removeAgent, [], {
+              #meetLinkName: meetLinkName,
+              #agentDeviceId: agentDeviceId,
+            }),
+            returnValue: _i17.Future<void>.value(),
+            returnValueForMissingStub: _i17.Future<void>.value(),
+          )
+          as _i17.Future<void>);
+
+  @override
   _i17.Future<void> removeParticipant({required String? participantUuid}) =>
       (super.noSuchMethod(
             Invocation.method(#removeParticipant, [], {
               #participantUuid: participantUuid,
+            }),
+            returnValue: _i17.Future<void>.value(),
+            returnValueForMissingStub: _i17.Future<void>.value(),
+          )
+          as _i17.Future<void>);
+
+  @override
+  _i17.Future<void> requestClosedCaptions({required String? meetLinkName}) =>
+      (super.noSuchMethod(
+            Invocation.method(#requestClosedCaptions, [], {
+              #meetLinkName: meetLinkName,
             }),
             returnValue: _i17.Future<void>.value(),
             returnValueForMissingStub: _i17.Future<void>.value(),
@@ -1176,6 +1286,45 @@ class MockAppCore extends _i1.Mock implements _i16.AppCore {
               #meetingLinkName: meetingLinkName,
               #score: score,
               #feedbackParts: feedbackParts,
+            }),
+            returnValue: _i17.Future<void>.value(),
+            returnValueForMissingStub: _i17.Future<void>.value(),
+          )
+          as _i17.Future<void>);
+
+  @override
+  _i17.Future<void> setAgentLeftCallback({
+    required _i17.FutureOr<void> Function(String)? callback,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#setAgentLeftCallback, [], {#callback: callback}),
+            returnValue: _i17.Future<void>.value(),
+            returnValueForMissingStub: _i17.Future<void>.value(),
+          )
+          as _i17.Future<void>);
+
+  @override
+  _i17.Future<void> setAgentPendingCallback({
+    required _i17.FutureOr<void> Function(String)? callback,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#setAgentPendingCallback, [], {
+              #callback: callback,
+            }),
+            returnValue: _i17.Future<void>.value(),
+            returnValueForMissingStub: _i17.Future<void>.value(),
+          )
+          as _i17.Future<void>);
+
+  @override
+  _i17.Future<void> setClosedCaptionsAvailabilityAsHost({
+    required String? meetLinkName,
+    required bool? available,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#setClosedCaptionsAvailabilityAsHost, [], {
+              #meetLinkName: meetLinkName,
+              #available: available,
             }),
             returnValue: _i17.Future<void>.value(),
             returnValueForMissingStub: _i17.Future<void>.value(),
@@ -1308,6 +1457,17 @@ class MockAppCore extends _i1.Mock implements _i16.AppCore {
       (super.noSuchMethod(
             Invocation.method(#setWebsocketPongTimeout, [], {
               #seconds: seconds,
+            }),
+            returnValue: _i17.Future<void>.value(),
+            returnValueForMissingStub: _i17.Future<void>.value(),
+          )
+          as _i17.Future<void>);
+
+  @override
+  _i17.Future<void> stopClosedCaptions({required String? meetLinkName}) =>
+      (super.noSuchMethod(
+            Invocation.method(#stopClosedCaptions, [], {
+              #meetLinkName: meetLinkName,
             }),
             returnValue: _i17.Future<void>.value(),
             returnValueForMissingStub: _i17.Future<void>.value(),

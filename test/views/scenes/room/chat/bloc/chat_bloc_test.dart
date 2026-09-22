@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:meet/utils/mentions/mention_token.dart';
 import 'package:meet/views/scenes/room/chat/bloc/chat_bloc.dart';
 import 'package:meet/views/scenes/room/chat/bloc/chat_event.dart';
+import 'package:meet/views/scenes/room/chat/bloc/chat_incoming_notification.dart';
 import 'package:meet/views/scenes/room/chat/bloc/chat_transport.dart';
 import 'package:meet/views/scenes/room/chat/chat_controller.dart';
 import 'package:meet/views/scenes/room/chat/chat_models.dart';
@@ -91,14 +93,16 @@ class FakeChatTransport implements ChatTransport {
 void main() {
   late FakeChatTransport transport;
   late ChatBloc bloc;
-  late List<RoomChatMessage> toasts;
+  late List<ChatIncomingNotification> toasts;
   var threadedChatEnabled = true;
+  var chatMentionsEnabled = false;
   var participants = 3;
 
   ChatBloc buildBloc() {
     final created = ChatBloc(
       transport: transport,
       isThreadedChatEnabled: () => threadedChatEnabled,
+      isChatMentionsEnabled: () => chatMentionsEnabled,
       participantCount: () => participants,
       // No real waiting; the retry schedule itself is what we assert on.
       publishRetryDelays: const [Duration.zero, Duration.zero],
@@ -111,6 +115,7 @@ void main() {
 
   setUp(() {
     threadedChatEnabled = true;
+    chatMentionsEnabled = false;
     participants = 3;
     transport = FakeChatTransport();
     bloc = buildBloc();
@@ -122,13 +127,13 @@ void main() {
     String identity = 'alice',
     String? topicId,
     bool notify = true,
-    int timestamp = 500,
+    int? timestamp,
   }) async {
     bloc.add(
       ChatMessageReceived(
         id: id,
         message: 'hello $id',
-        timestamp: timestamp,
+        timestamp: timestamp ?? DateTime.now().millisecondsSinceEpoch,
         identity: identity,
         name: identity,
         topicId: topicId,
@@ -440,7 +445,7 @@ void main() {
 
         expect(bloc.state.unreadCount, 1);
         expect(bloc.state.unseenRootCount, 1);
-        expect(toasts.map((m) => m.id), ['m1']);
+        expect(toasts.map((n) => n.message.id), ['m1']);
       },
     );
 
@@ -477,10 +482,11 @@ void main() {
     });
 
     test('does not toast a reply in a thread we are not part of', () async {
-      await receive('root', timestamp: 100);
-      await receive('reply', topicId: 'root', timestamp: 200);
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await receive('root', timestamp: now - 2000);
+      await receive('reply', topicId: 'root', timestamp: now - 1000);
 
-      expect(toasts.map((m) => m.id), ['root']);
+      expect(toasts.map((n) => n.message.id), ['root']);
     });
 
     test('toasts a reply in a thread we started', () async {
@@ -489,9 +495,65 @@ void main() {
       );
       await pumpEventQueue();
 
-      await receive('reply', topicId: 'echo-1', timestamp: 1500);
+      await receive('reply', topicId: 'echo-1');
 
-      expect(toasts.map((m) => m.id), ['reply']);
+      expect(toasts.map((n) => n.message.id), ['reply']);
+    });
+
+    test('ignores stale messages older than 8 seconds', () async {
+      final stale = DateTime.now().millisecondsSinceEpoch - 9000;
+      await receive('stale', timestamp: stale);
+
+      expect(bloc.state.unreadCount, 1);
+      expect(toasts, isEmpty);
+    });
+
+    test('toasts a direct mention when mentions are enabled', () async {
+      chatMentionsEnabled = true;
+      const localId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+      transport.localIdentity = localId;
+      bloc.controller.updateLocalIdentity(localId);
+      final token = getMentionToken(localId);
+      bloc.add(
+        ChatMessageReceived(
+          id: 'mention',
+          message: 'ping $token',
+          timestamp: DateTime.now().millisecondsSinceEpoch,
+          identity: 'alice',
+          name: 'Alice',
+          notify: true,
+        ),
+      );
+      await pumpEventQueue();
+
+      expect(toasts.single.isMention, isTrue);
+      expect(toasts.single.message.id, 'mention');
+    });
+
+    test('mention overrides thread relevance filter', () async {
+      chatMentionsEnabled = true;
+      const localId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+      transport.localIdentity = localId;
+      bloc.controller.updateLocalIdentity(localId);
+      final token = getMentionToken(localId);
+      await receive('root', timestamp: DateTime.now().millisecondsSinceEpoch);
+      toasts.clear();
+
+      bloc.add(
+        ChatMessageReceived(
+          id: 'mention-reply',
+          message: 'hey $token',
+          timestamp: DateTime.now().millisecondsSinceEpoch,
+          identity: 'bob',
+          name: 'Bob',
+          topicId: 'root',
+          notify: true,
+        ),
+      );
+      await pumpEventQueue();
+
+      expect(toasts.single.isMention, isTrue);
+      expect(toasts.single.message.id, 'mention-reply');
     });
 
     test('re-reporting the current panel visibility emits nothing', () async {
@@ -509,7 +571,7 @@ void main() {
 
     test('opening the panel marks everything seen', () async {
       await receive('m1');
-      await receive('m2', timestamp: 600);
+      await receive('m2');
       expect(bloc.state.unreadCount, 2);
 
       bloc.add(const ChatPanelVisibilityChanged(isOpen: true));
@@ -631,6 +693,7 @@ void main() {
       final localBloc = ChatBloc(
         transport: transport,
         isThreadedChatEnabled: () => true,
+        isChatMentionsEnabled: () => false,
         participantCount: () => 1,
         controller: customController,
         publishRetryDelays: const [Duration.zero],
@@ -679,6 +742,7 @@ void main() {
       final closing = ChatBloc(
         transport: FakeChatTransport(),
         isThreadedChatEnabled: () => true,
+        isChatMentionsEnabled: () => false,
         participantCount: () => 1,
       );
       final done = expectLater(closing.incomingMessageToasts, emitsDone);
@@ -693,6 +757,7 @@ void main() {
       final closing = ChatBloc(
         transport: closingTransport,
         isThreadedChatEnabled: () => true,
+        isChatMentionsEnabled: () => false,
         participantCount: () => 1,
         publishRetryDelays: const [Duration.zero, Duration(milliseconds: 20)],
       );

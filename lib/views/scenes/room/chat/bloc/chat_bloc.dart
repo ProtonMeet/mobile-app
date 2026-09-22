@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/helper/logger.dart' as l;
+import 'package:meet/utils/mentions/mention_token.dart';
 import 'package:meet/views/scenes/room/chat/bloc/chat_event.dart';
+import 'package:meet/views/scenes/room/chat/bloc/chat_incoming_notification.dart';
 import 'package:meet/views/scenes/room/chat/bloc/chat_state.dart';
 import 'package:meet/views/scenes/room/chat/bloc/chat_transport.dart';
 import 'package:meet/views/scenes/room/chat/chat_controller.dart';
@@ -22,11 +24,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ChatBloc({
     required ChatTransport transport,
     required bool Function() isThreadedChatEnabled,
+    required bool Function() isChatMentionsEnabled,
     required int Function() participantCount,
     ChatController? controller,
     List<Duration> publishRetryDelays = defaultPublishRetryDelays,
   }) : _transport = transport,
        _isThreadedChatEnabled = isThreadedChatEnabled,
+       _isChatMentionsEnabled = isChatMentionsEnabled,
        _participantCount = participantCount,
        _publishRetryDelays = publishRetryDelays,
        _ownsController = controller == null,
@@ -65,6 +69,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   /// meetings they drown out real messages.
   static const int joinLeaveSuppressThreshold = 50;
 
+  /// Ignore chat toasts for messages older than this (reconnect history replay).
+  static const Duration incomingToastMaxAge = Duration(seconds: 8);
+
   /// Reducer for the transcript.
   ///
   /// Exposed because [ChatWidget] still renders directly off the controller.
@@ -74,11 +81,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   final ChatTransport _transport;
   final bool Function() _isThreadedChatEnabled;
+  final bool Function() _isChatMentionsEnabled;
   final int Function() _participantCount;
   final List<Duration> _publishRetryDelays;
 
-  final StreamController<RoomChatMessage> _toasts =
-      StreamController<RoomChatMessage>.broadcast();
+  final StreamController<ChatIncomingNotification> _toasts =
+      StreamController<ChatIncomingNotification>.broadcast();
 
   int _revision = 0;
 
@@ -87,7 +95,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ///
   /// A stream rather than a state field because a toast is a one-shot effect;
   /// putting it in state would need a "consumed" event to clear it.
-  Stream<RoomChatMessage> get incomingMessageToasts => _toasts.stream;
+  Stream<ChatIncomingNotification> get incomingMessageToasts => _toasts.stream;
 
   /// Resolves the local sender id, adopting the transport's value when the
   /// controller has not been told one yet.
@@ -311,14 +319,27 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     if (!event.notify || controller.isChatOpen) {
       return;
     }
-    if (!isRelevantThreadMessage(
-      message,
-      controller.messages,
-      _resolveLocalIdentity(),
-    )) {
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - message.timestamp > incomingToastMaxAge.inMilliseconds) {
       return;
     }
-    _toasts.add(message);
+
+    final localId = _resolveLocalIdentity();
+    final isMention =
+        _isChatMentionsEnabled() &&
+        localId.isNotEmpty &&
+        message.identity != localId &&
+        isParticipantMentioned(message.message, localId);
+
+    if (!isMention &&
+        !isRelevantThreadMessage(message, controller.messages, localId)) {
+      return;
+    }
+
+    _toasts.add(
+      ChatIncomingNotification(message: message, isMention: isMention),
+    );
   }
 
   void _onReactionReceived(
