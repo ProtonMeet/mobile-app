@@ -7,6 +7,7 @@ import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/platform/html.window.dart';
 import 'package:meet/views/components/local.toast.view.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
+import 'package:meet/views/scenes/utils.dart';
 import 'package:toastification/toastification.dart';
 
 class _ToastificationRequest {
@@ -17,6 +18,8 @@ class _ToastificationRequest {
     required this.onTap,
     required this.index,
     required this.autoCloseInSeconds,
+    this.messageWidget,
+    this.avatarName,
   });
 
   final BuildContext context;
@@ -25,6 +28,8 @@ class _ToastificationRequest {
   final void Function(ToastificationItem)? onTap;
   final int index;
   final int autoCloseInSeconds;
+  final Widget? messageWidget;
+  final String? avatarName;
 }
 
 class _ToastificationContent extends ChangeNotifier {
@@ -33,12 +38,16 @@ class _ToastificationContent extends ChangeNotifier {
     required this.message,
     required this.onTap,
     required this.index,
+    this.messageWidget,
+    this.avatarName,
   });
 
   String title;
   String message;
   void Function(ToastificationItem)? onTap;
   int index;
+  Widget? messageWidget;
+  String? avatarName;
   bool _disposed = false;
 
   @override
@@ -53,6 +62,8 @@ class _ToastificationContent extends ChangeNotifier {
     message = request.message;
     onTap = request.onTap;
     index = request.index;
+    messageWidget = request.messageWidget;
+    avatarName = request.avatarName;
     notifyListeners();
   }
 }
@@ -117,6 +128,14 @@ class LocalToast {
     });
   }
 
+  /// Dismisses the currently visible toastification banner, if any.
+  static void dismissActiveToastification() {
+    final active = _activeToastificationItem;
+    if (active == null) return;
+    toastification.dismiss(active);
+    _clearActiveToastification(item: active);
+  }
+
   static void showToastification(
     BuildContext context,
     String title,
@@ -124,6 +143,8 @@ class LocalToast {
     void Function(ToastificationItem)? onTap,
     int index = 0,
     int autoCloseInSeconds = 2,
+    Widget? messageWidget,
+    String? avatarName,
   }) {
     if (!isWindowsFocused()) {
       /// do not show toastification when page didn't have focus
@@ -138,6 +159,8 @@ class LocalToast {
       onTap: onTap,
       index: index,
       autoCloseInSeconds: autoCloseInSeconds,
+      messageWidget: messageWidget,
+      avatarName: avatarName,
     );
     if (_toastificationFlushScheduled) return;
     _toastificationFlushScheduled = true;
@@ -168,6 +191,8 @@ class LocalToast {
       message: request.message,
       onTap: request.onTap,
       index: request.index,
+      messageWidget: request.messageWidget,
+      avatarName: request.avatarName,
     );
     _activeToastificationContent = content;
 
@@ -183,67 +208,78 @@ class LocalToast {
           listenable: content,
           builder: (BuildContext context, Widget? child) {
             final colors = getParticipantDisplayColors(context, content.index);
-            return Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: context.colors.backgroundNorm,
-                border: Border.all(color: context.colors.appBorderNorm),
-              ),
-              padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.only(bottom: 80),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: colors.backgroundColor,
-                    radius: 20,
-                    child: Text(
-                      content.title.isNotEmpty
-                          ? content.title[0].toUpperCase()
-                          : "",
-                      style: ProtonStyles.body1Semibold(
-                        color: colors.profileTextColor,
+            final avatarInitials = getInitials(
+              content.avatarName ?? content.title,
+            );
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: content.onTap == null
+                  ? null
+                  : () => content.onTap!(holder),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: context.colors.backgroundNorm,
+                  border: Border.all(color: context.colors.appBorderNorm),
+                ),
+                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.only(bottom: 80),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: colors.backgroundColor,
+                      radius: 20,
+                      child: Text(
+                        avatarInitials,
+                        style: ProtonStyles.body1Semibold(
+                          color: colors.profileTextColor,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          content.title,
-                          style: ProtonStyles.body1Semibold(
-                            color: context.colors.textNorm,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            content.title,
+                            style: ProtonStyles.body1Semibold(
+                              color: context.colors.textNorm,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          content.message,
-                          style: ProtonStyles.body2Regular(
-                            color: context.colors.textWeak,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                          if (content.message.isNotEmpty ||
+                              content.messageWidget != null) ...[
+                            const SizedBox(height: 4),
+                            content.messageWidget ??
+                                Text(
+                                  content.message,
+                                  style: ProtonStyles.body2Regular(
+                                    color: context.colors.textWeak,
+                                  ),
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                          ],
+                        ],
+                      ),
                     ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      toastification.dismiss(
-                        holder,
-                        showRemoveAnimation: false,
-                      );
-                      _clearActiveToastification(item: holder);
-                    },
-                    child: Icon(
-                      Icons.close,
-                      size: 20,
-                      color: context.colors.textHint,
+                    GestureDetector(
+                      onTap: () {
+                        toastification.dismiss(
+                          holder,
+                          showRemoveAnimation: false,
+                        );
+                        _clearActiveToastification(item: holder);
+                      },
+                      child: Icon(
+                        Icons.close,
+                        size: 20,
+                        color: context.colors.textHint,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           },

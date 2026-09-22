@@ -112,6 +112,10 @@ extension UnleashDataProviderFeatureGetters on UnleashDataProvider {
   /// Long-press chat message actions (quick reactions + thread reply sheet).
   bool isMeetChatThreads() => isFeatureEnabled(UnleashFeature.meetChatThreads);
 
+  /// @mentions in chat composer and notifications.
+  bool isMeetChatMentions() =>
+      isFeatureEnabled(UnleashFeature.meetChatMentions);
+
   /// Settings rows that are designed but not wired to logic yet. They render
   /// disabled, so this is a preview / QA gate rather than a product feature.
   bool isMeetSettingsPreview() =>
