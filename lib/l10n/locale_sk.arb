@@ -165,6 +165,18 @@
   "@waiting_room_disabled_notification": {
     "description": "Global notification when the host disables waiting room in meeting settings"
   },
+  "allow_live_captions": "Povoliť živé titulky",
+  "@allow_live_captions": {
+    "description": "Host toggle that lets participants use live captions"
+  },
+  "allow_live_captions_on_description": "Účastníci si môžu zapnúť titulky v reálnom čase. Zapnite si ich sami v nastaveniach v časti „Zobrazenie“.",
+  "@allow_live_captions_on_description": {
+    "description": "Live captions availability switch description when enabled for participants"
+  },
+  "allow_live_captions_off_description": "Účastníci nemôžu používať titulky v reálnom čase",
+  "@allow_live_captions_off_description": {
+    "description": "Live captions availability switch description when disabled for participants"
+  },
   "hide_self_view": "Skryť vlastný náhľad",
   "allow_all_participants_to": "Povoliť všetkým účastníkom:",
   "chat": "Chat",
@@ -2143,7 +2155,7 @@
   },
   "live_captions": "Živé titulky",
   "@live_captions": {
-    "description": "Label for the live captions row in settings"
+    "description": "Toggle label for enabling live captions in meeting settings"
   },
   "live_captions_all_participants": "Povolené pre všetkých účastníkov",
   "@live_captions_all_participants": {
@@ -2180,10 +2192,6 @@
   "record_meeting": "Nahrať schôdzu",
   "@record_meeting": {
     "description": "Host toggle that records the meeting"
-  },
-  "allow_live_captions": "Povoliť živé titulky",
-  "@allow_live_captions": {
-    "description": "Host toggle that lets participants use live captions"
   },
   "allow_live_captions_description": "Povoliť účastníkom používať titulky",
   "@allow_live_captions_description": {
@@ -2264,5 +2272,85 @@
   "mobile_upgrade_warning_link": "aktualizujte na najnovšiu verziu.",
   "@mobile_upgrade_warning_link": {
     "description": "Tappable link text in the outdated mobile client warning; opens the app store"
+  },
+  "live_captions_accessibility": "Prístupnosť",
+  "@live_captions_accessibility": {
+    "description": "Settings section title for live captions"
+  },
+  "live_captions_modal_title": "Zobraziť živé titulky?",
+  "@live_captions_modal_title": {
+    "description": "Title for first-enable live captions confirmation dialog"
+  },
+  "live_captions_modal_message": "Na vytvorenie titulkov v reálnom čase potrebuje služba titulkovania prístup k zvukovému záznamu stretnutia. Titulky sú viditeľné len pre vás a neukladajú sa.",
+  "@live_captions_modal_message": {
+    "description": "Body for first-enable live captions confirmation dialog"
+  },
+  "live_captions_enable": "Povoliť titulky",
+  "@live_captions_enable": {
+    "description": "Primary button in live captions confirmation dialog"
+  },
+  "live_captions_spoken_language": "Jazyk",
+  "@live_captions_spoken_language": {
+    "description": "Label above caption language picker"
+  },
+  "live_captions_turn_on": "Zobraziť živé titulky",
+  "@live_captions_turn_on": {
+    "description": "Tooltip for the top bar live captions button while captions are off"
+  },
+  "live_captions_turn_off": "Skryť živé titulky",
+  "@live_captions_turn_off": {
+    "description": "Tooltip for the top bar live captions button while captions are on"
+  },
+  "live_captions_settings": "Nastavenia titulkov",
+  "@live_captions_settings": {
+    "description": "Tooltip for the settings button in the live captions sheet header"
+  },
+  "live_captions_loading": "Načítavanie…",
+  "@live_captions_loading": {
+    "description": "Caption bar status while waiting for first segment"
+  },
+  "live_captions_ready": "Titulky sú zapnuté",
+  "@live_captions_ready": {
+    "description": "Caption bar status when agent is ready but no lines yet"
+  },
+  "live_captions_failing": "Živé titulky nefungujú. Skúste ich vypnúť a znova zapnúť.",
+  "@live_captions_failing": {
+    "description": "Caption bar status when decrypt pipeline fails"
+  },
+  "live_captions_summon_failed": "Nepodarilo sa spustiť živé titulky. Skúste to neskôr.",
+  "@live_captions_summon_failed": {
+    "description": "Toast when the STT agent fails to join within the enable timeout"
+  },
+  "live_captions_disabled_by_host": "Organizátor deaktivoval živé titulky pre túto schôdzu.",
+  "@live_captions_disabled_by_host": {
+    "description": "Warning when a participant tries to enable live captions after the host disabled them"
+  },
+  "live_captions_agent_transcribing": "Prepisovanie…",
+  "@live_captions_agent_transcribing": {
+    "description": "Participant list status for the STT caption agent"
+  },
+  "live_captions_agent_name": "Agent živých titulkov",
+  "@live_captions_agent_name": {
+    "description": "Display name for the STT caption agent in participant list"
+  },
+  "live_captions_agent_disclaimer": "Tento systémový agent vytvára titulky v reálnom čase. Nie je účastníkom a nemôže posielať správy.",
+  "@live_captions_agent_disclaimer": {
+    "description": "Participant list disclaimer for the STT caption agent"
+  },
+  "participant_list_system_section": "Systém",
+  "@participant_list_system_section": {
+    "description": "Section header for system agents in the participant list"
+  },
+  "participant_list_people_section": "Ľudia",
+  "@participant_list_people_section": {
+    "description": "Section header for human participants in the participant list"
+  },
+  "old_android_sdk_warning_message": "Budúca aktualizácia aplikácie Proton Meet bude vyžadovať systém Android 9 alebo novší. Ak chcete aplikáciu naďalej používať, aktualizujte si zariadenie.",
+  "@old_android_sdk_warning_message": {
+    "description": "Warning shown on Android 7/8 devices when OldAndroidSdkWarning flag is enabled; informs users that support will be deprecated soon"
+  },
+  "old_ios_sdk_warning_message": "Budúca aktualizácia aplikácie Proton Meet bude vyžadovať systém iOS 17 alebo novší. Ak chcete aplikáciu naďalej používať, aktualizujte si zariadenie.",
+  "@old_ios_sdk_warning_message": {
+    "description": "Warning shown on iOS versions below 17 when OldIosSdkWarning flag is enabled; informs users that support will be deprecated soon"
   }
 }
