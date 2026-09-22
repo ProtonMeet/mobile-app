@@ -11,6 +11,8 @@ use crate::domain::user::ports::{
     ArcWebSocketClient, EventApi, HttpClient, MlsApi, UnleashApi, UserService, WebSocketClient,
 };
 use crate::errors::core::MeetCoreError;
+use crate::infra::adapters::mls::message_cache_adapter::MessageCacheAdapter;
+use crate::infra::message_cache::MlsMessageCache;
 use crate::infra::muon::is_prod_environment;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::infra::muon::AuthStore;
@@ -24,6 +26,7 @@ use crate::infra::{
 #[cfg(not(target_family = "wasm"))]
 use crate::service::auth::AuthServiceImpl;
 use crate::service::caption::CaptionServiceImpl;
+use crate::service::message_queue::MessageQueue;
 use crate::service::mls_service::MlsService;
 use crate::service::services_bundle::ServiceBundle;
 use crate::service::user_service::Service;
@@ -32,7 +35,7 @@ use proton_meet_mls::{MlsClientConfig, MlsStore};
 use std::future::ready;
 use std::sync::Arc;
 use std::{collections::HashMap, future::Future};
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
 use tracing::error;
 
 #[cfg(target_family = "wasm")]
@@ -245,6 +248,9 @@ impl App {
             mls_store.clone(),
             http_client.server_time_tracker(),
         ));
+        let msg_cache = Arc::new(MessageCacheAdapter::new(Arc::new(Mutex::new(
+            MlsMessageCache::new(),
+        ))));
 
         let services = Arc::new_cyclic(|weak| {
             let user_service = Arc::new(RwLock::new(Service::new(
@@ -276,6 +282,10 @@ impl App {
                 http_client.clone(),
             ));
 
+            let weak = weak.clone();
+            let mls_store = mls_store.clone();
+            let msg_cache = msg_cache.clone();
+            let http_client = http_client.clone();
             ServiceBundle::new(
                 room_service,
                 waiting_room_service,
@@ -283,6 +293,24 @@ impl App {
                 auth_service,
                 agent_service,
                 user_service,
+                move |room_id| {
+                    let weak = weak.clone();
+                    let mls_store = mls_store.clone();
+                    let msg_cache = msg_cache.clone();
+                    let http_client = http_client.clone();
+
+                    Box::pin(async move {
+                        let group = mls_store.read().await.group_map.get(&room_id)?.clone();
+
+                        Some(Arc::new(MessageQueue::new(
+                            room_id,
+                            group,
+                            msg_cache.clone(),
+                            weak.clone(),
+                            http_client.clone(),
+                        )))
+                    })
+                },
             )
         });
 

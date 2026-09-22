@@ -41,13 +41,22 @@ impl MessageCachePort for MessageCacheAdapter {
         Ok(guard.get_messages_for_epoch(room_id, epoch))
     }
 
-    async fn remove_processed_messages(
-        &self,
-        room_id: &str,
-        epoch: u64,
-    ) -> Result<(), anyhow::Error> {
+    async fn remove_processed_messages(&self, room_id: &str, epoch: u64) {
         let mut guard = self.message_cache.lock().await;
         guard.remove_processed_messages(room_id, epoch);
-        Ok(())
+    }
+
+    async fn get_processable_epochs(&self, room_id: &str, current_epoch: u64) -> Vec<u64> {
+        self.message_cache
+            .lock()
+            .await
+            .get_processable_epochs(room_id, current_epoch)
+    }
+
+    async fn cleanup_old_messages(&self, room_id: &str, current_epoch: u64, threshold: u64) {
+        self.message_cache
+            .lock()
+            .await
+            .cleanup_old_messages(room_id, current_epoch, threshold);
     }
 }

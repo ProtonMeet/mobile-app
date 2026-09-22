@@ -1,9 +1,13 @@
 #[derive(Debug, thiserror::Error)]
 pub enum ServiceError {
+    #[error("Received commit message without epoch")]
+    NoEpochCommit,
     #[error("Received commit message with old epoch")]
     OldEpochCommit,
     #[error("Received commit message with future epoch")]
     FutureEpochCommit,
+    #[error("Received proposal message without epoch")]
+    NoEpochProposal,
     #[error("Received proposal message with old epoch")]
     OldEpochProposal,
     #[error("Received proposal message with future epoch")]

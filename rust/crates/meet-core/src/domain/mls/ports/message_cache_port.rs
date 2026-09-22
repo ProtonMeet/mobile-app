@@ -20,9 +20,8 @@ pub trait MessageCachePort: Send + Sync {
         epoch: u64,
     ) -> Result<Option<Vec<(CachedMessageType, CachedMlsMessage)>>, anyhow::Error>;
 
-    async fn remove_processed_messages(
-        &self,
-        room_id: &str,
-        epoch: u64,
-    ) -> Result<(), anyhow::Error>;
+    async fn remove_processed_messages(&self, room_id: &str, epoch: u64);
+
+    async fn get_processable_epochs(&self, room_id: &str, current_epoch: u64) -> Vec<u64>;
+    async fn cleanup_old_messages(&self, room_id: &str, current_epoch: u64, threshold: u64);
 }

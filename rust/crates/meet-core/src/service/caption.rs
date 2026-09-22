@@ -1,4 +1,4 @@
-use std::{collections::HashSet, sync::Arc, time::Duration};
+use std::{collections::HashSet, sync::Arc};
 
 use meet_identifiers::AsOwned;
 use meet_type::fanout::MlsCommitInfo;
@@ -262,12 +262,12 @@ impl CaptionServiceImpl {
             op = op_name,
             rank,
             rank_group,
-            delay_ms,
+            delay_ms = delay_ms.as_millis(),
             epoch_at_start,
             "designated-committer stagger"
         );
 
-        sleep(Duration::from_millis(delay_ms)).await;
+        sleep(delay_ms).await;
 
         match self
             .user_service
@@ -316,12 +316,12 @@ impl CaptionServiceImpl {
             op = op_name,
             rank,
             rank_group,
-            delay_ms,
+            delay_ms = delay_ms.as_millis(),
             want_agent,
             "designated-committer stagger"
         );
 
-        sleep(Duration::from_millis(delay_ms)).await;
+        sleep(delay_ms).await;
 
         if self.captions_agent_in_group(room_id).await == want_agent {
             tracing::info!(

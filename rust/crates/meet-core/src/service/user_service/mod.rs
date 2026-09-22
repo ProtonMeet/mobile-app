@@ -112,8 +112,8 @@ struct MessageWithId {
 /// Queued proposal waiting to be processed in batch
 #[derive(Clone)]
 pub(crate) struct QueuedProposal {
-    proposal_message: mls_types::MlsMessage,
-    proposal_type: ProposalType,
+    pub(crate) proposal_message: mls_types::MlsMessage,
+    pub(crate) proposal_type: ProposalType,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -145,6 +145,17 @@ pub enum GroupKeyUpdateReason {
     Unknown,
 }
 
+impl GroupKeyUpdateReason {
+    pub(super) fn from_applied_proposals(has_add: bool, has_remove: bool) -> Self {
+        match (has_add, has_remove) {
+            (true, true) => GroupKeyUpdateReason::Mixed,
+            (true, false) => GroupKeyUpdateReason::Join,
+            (false, true) => GroupKeyUpdateReason::Leave,
+            (false, false) => GroupKeyUpdateReason::Unknown,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Service {
     pub(super) http_client: Arc<dyn HttpClient>,
@@ -153,13 +164,6 @@ pub struct Service {
     pub(super) ws_client: ArcWebSocketClient,
     pub(super) mls_store: Arc<RwLock<MlsStore>>,
     pub(super) state: Arc<Mutex<ServiceState>>,
-    pub(super) message_cache: Arc<Mutex<MlsMessageCache>>,
-    pub(super) proposal_queue: Arc<Mutex<HashMap<String, Vec<QueuedProposal>>>>,
-    // Serializes proposal/commit queue consumption per room to avoid cross-task drains.
-    pub(super) room_processing_locks: Arc<Mutex<HashMap<String, Arc<Mutex<()>>>>>,
-    pub(super) proposal_timer: Arc<Mutex<HashMap<String, u64>>>, // room_id -> epoch_at
-    // MLS message service for processing commits and proposals
-    pub(super) mls_msg_service: Arc<crate::domain::mls::mls_message_service::MlsMessageService>,
     pub(super) handling_offline_members: Arc<Mutex<bool>>,
     pub(super) mls_service: Arc<MlsService>,
     /// Wakes tasks waiting on a join-proposal `Welcome` after `welcome_info` is stored.
@@ -183,27 +187,9 @@ impl Service {
         let state = Arc::new(Mutex::new(ServiceState::new()));
         let message_cache = Arc::new(Mutex::new(MlsMessageCache::new()));
 
-        // Create infrastructure adapters
-        let mls_store_adapter = Arc::new(
-            crate::infra::adapters::mls::mls_store_adapter::MlsStoreAdapter::new(mls_store.clone()),
-        );
         let message_cache_adapter = Arc::new(
             crate::infra::adapters::mls::message_cache_adapter::MessageCacheAdapter::new(
                 message_cache.clone(),
-            ),
-        );
-        let state_repository_adapter = Arc::new(
-            crate::infra::adapters::mls::state_repository_adapter::StateRepositoryAdapter::new(
-                state.clone(),
-            ),
-        );
-
-        // Create MLS message service
-        let mls_msg_service = Arc::new(
-            crate::domain::mls::mls_message_service::MlsMessageService::new(
-                mls_store_adapter as Arc<dyn crate::domain::mls::ports::MlsStorePort>,
-                message_cache_adapter as Arc<dyn crate::domain::mls::ports::MessageCachePort>,
-                state_repository_adapter as Arc<dyn crate::domain::mls::ports::StateRepositoryPort>,
             ),
         );
 
@@ -220,11 +206,6 @@ impl Service {
             ws_client,
             mls_store,
             state,
-            message_cache,
-            proposal_queue: Arc::new(Mutex::new(HashMap::new())),
-            room_processing_locks: Arc::new(Mutex::new(HashMap::new())),
-            proposal_timer: Arc::new(Mutex::new(HashMap::new())),
-            mls_msg_service,
             handling_offline_members: Arc::new(Mutex::new(false)),
             mls_service,
             join_proposal_welcome_notify,
@@ -238,14 +219,6 @@ impl Service {
         self.services
             .upgrade()
             .ok_or_else(|| anyhow::anyhow!("Could not upgrade service bundle"))
-    }
-
-    async fn room_processing_lock(&self, room_id: &str) -> Arc<Mutex<()>> {
-        let mut room_locks = self.room_processing_locks.lock().await;
-        room_locks
-            .entry(room_id.to_string())
-            .or_insert_with(|| Arc::new(Mutex::new(())))
-            .clone()
     }
 
     /// Generates a unique group id by appending a UUID suffix.
@@ -2017,14 +1990,6 @@ impl UserService for Service {
         message: WebSocketMessage,
     ) -> Result<(), anyhow::Error> {
         self.handle_websocket_message_impl(message).await
-    }
-
-    async fn handle_proposal(
-        &self,
-        room_id: &str,
-        proposal: mls_types::MlsMessage,
-    ) -> Result<(), anyhow::Error> {
-        self.handle_proposal_impl(room_id, proposal).await
     }
 
     async fn handle_livekit_admin_change(

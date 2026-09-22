@@ -4,10 +4,10 @@ pub mod agent_host_service;
 #[cfg(not(target_family = "wasm"))]
 pub mod auth;
 pub mod caption;
-pub mod services_bundle;
-// forder name is same with module name, ignore for now and refactor later
+pub mod message_queue;
 pub mod mls_service;
 pub mod service_state;
+pub mod services_bundle;
 pub mod user_service;
 pub mod utils;
 pub mod waiting_room_setting;
@@ -17,7 +17,7 @@ const RANK_GROUP_SIZE: u64 = 3;
 const RANK_GROUP_DELAY_MS: u64 = 5000;
 
 struct StaggerStats {
-    delay_ms: u64,
+    delay_ms: Duration,
     rank_group: u64,
 }
 fn compute_stagger_time(rank: u64, rank_group_delay: u64) -> StaggerStats {
@@ -28,9 +28,12 @@ fn compute_stagger_time(rank: u64, rank_group_delay: u64) -> StaggerStats {
 
     StaggerStats {
         rank_group,
-        delay_ms: random_jitter * DELAY_PER_RANK_MS + rank_group * rank_group_delay,
+        delay_ms: Duration::from_millis(
+            random_jitter * DELAY_PER_RANK_MS + rank_group * rank_group_delay,
+        ),
     }
 }
+use std::time::Duration;
 
 #[cfg(all(test, not(target_family = "wasm")))]
 pub(crate) use test::create_mock_mls_api;

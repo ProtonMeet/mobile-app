@@ -119,12 +119,6 @@ pub trait UserService {
         meeting_link_name: &str,
     ) -> Result<(), anyhow::Error>;
 
-    async fn handle_proposal(
-        &self,
-        room_id: &str,
-        proposal: mls_types::MlsMessage,
-    ) -> Result<(), anyhow::Error>;
-
     async fn get_sd_kbt(&self, participant_id: &UserId) -> Result<String, anyhow::Error>;
 
     async fn get_meeting_id(&self, user_identifier: &UserId) -> Result<String, anyhow::Error>;
