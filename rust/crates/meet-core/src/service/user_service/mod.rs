@@ -124,20 +124,6 @@ pub(crate) enum ProposalType {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum CommitProcessingOutcome {
-    Applied,
-    DeferredFutureEpoch,
-    NoStateChange,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum ProposalProcessingOutcome {
-    Applied,
-    DeferredFutureEpoch,
-    NoStateChange,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum GroupKeyUpdateReason {
     Join,
     Leave,
@@ -186,12 +172,6 @@ impl Service {
     ) -> Self {
         let state = Arc::new(Mutex::new(ServiceState::new()));
         let message_cache = Arc::new(Mutex::new(MlsMessageCache::new()));
-
-        let message_cache_adapter = Arc::new(
-            crate::infra::adapters::mls::message_cache_adapter::MessageCacheAdapter::new(
-                message_cache.clone(),
-            ),
-        );
 
         let mls_service = Arc::new(MlsService::new(
             mls_store.clone(),
@@ -1542,261 +1522,17 @@ impl UserService for Service {
             meeting_link_name,
         );
 
-        //Retry loop with fresh remove proposal each attempt
-        for attempt_num in 0..KICK_MAX_ATTEMPTS {
-            tracing::debug!(
-                "Kick attempt {}/{} for participant {} in meeting {}",
-                attempt_num + 1,
-                KICK_MAX_ATTEMPTS,
-                target_participant_id,
-                meeting_link_name
-            );
-
-            let queued_proposals = {
-                let mut queue_lock = self.proposal_queue.lock().await;
-
-                let proposals = queue_lock.remove(meeting_link_name).unwrap_or_default();
-
-                // Clear timer entry while still holding queue lock
-                // This prevents timer from racing between timer check and queue access
-                let mut timer_map = self.proposal_timer.lock().await;
-                timer_map.remove(meeting_link_name);
-
-                proposals
-            };
-
-            // Get write lock for this retry attempt
-            let mls_store = self.mls_store.read().await;
-            let mut mls_group = mls_store
-                .group_map
-                .get(meeting_link_name)
-                .ok_or(MeetCoreError::ParticipantNotFound)?
-                .write()
-                .await;
-
-            let role = mls_group.own_role_for_current_epoch()?;
-            if role.role_index != UserRole::RoomAdmin.builder().role_index {
-                tracing::warn!("User is not RoomAdmin, cannot kick participant");
-                restore_proposals_to_queue(
-                    &self.proposal_queue,
-                    meeting_link_name.to_string(),
-                    queued_proposals,
-                    "not RoomAdmin",
-                );
-                return Err(MeetCoreError::NotRoomAdmin);
-            }
-
-            // Process each queued proposal through MLS group
-            for queued in &queued_proposals {
-                if let Err(e) = mls_group
-                    .decrypt_message(queued.proposal_message.clone())
-                    .await
-                {
-                    tracing::warn!("Failed to process queued proposal: {:?}", e);
-                    // Continue with other proposals - invalid ones filtered by MLS library
-                }
-            }
-
-            // Find target member in current roster
-            let target_member = mls_group.roster().find(|m| match &m.credential {
-                mls_types::Credential::SdCwtDraft04 {
-                    claimset: Some(claimset),
-                    ..
-                } => claimset.uuid == target_uuid.into_bytes(),
-                _ => false,
-            });
-
-            // If target not found, they were removed concurrently - success!
-            let target_member = match target_member {
-                Some(m) => m,
-                None => {
-                    tracing::debug!(
-                        "Target {} removed concurrently during attempt {}",
-                        target_participant_id,
-                        attempt_num + 1
-                    );
-                    return Ok(());
-                }
-            };
-
-            tracing::debug!(
-                "Creating remove proposal for leaf_index {} in epoch {}",
-                target_member.leaf_index(),
-                mls_group.epoch()
-            );
-
-            let authorizer = mls_group.authorizer()?;
-            let epoch = mls_group.epoch();
-            let mut active_participants = HashSet::new();
-            let mut to_remove = Vec::new();
-            let mut proposal_args = Vec::new();
-
-            proposal_args.push(ProposalArg::Remove(target_member.leaf_index()));
-
-            for mut m in mls_group.roster() {
-                let user_id = m.user_id()?;
-                let identity = ProtonMeetIdentityProvider::user_identifier(&user_id);
-                active_participants.insert(identity.clone());
-                if m.leaf_index() == target_member.leaf_index() {
-                    to_remove.push(identity);
-                }
-            }
-
-            for identity in to_remove {
-                proposal_args.extend(
-                    authorizer
-                        .role_proposal_for_removed_user(*epoch, &identity, &active_participants)?
-                        .into_iter()
-                        .map(|component| ProposalArg::UpdateComponent {
-                            id: component.component_id,
-                            data: component.data,
-                        }),
-                );
-            }
-
-            proposal_args.push(ProposalArg::PskExternal {
-                id: psk_id_for_commit(meeting_link_name, group_has_agent(&mls_group)),
-            });
-
-            let result = mls_group.new_commit(proposal_args).await;
-            let (commit_bundle, _welcome_option) = match result {
-                Ok((commit_bundle, _welcome_option)) => (commit_bundle, _welcome_option),
-                Err(e) => {
-                    tracing::error!("Failed to create commit bundle: {:?}", e);
-                    return Err(e.into());
-                }
-            };
-
-            // Extract required fields
-            let group_info = commit_bundle
-                .group_info
-                .ok_or(anyhow::anyhow!("Missing group info in commit bundle"))?;
-            let ratchet_tree = commit_bundle
-                .ratchet_tree
-                .ok_or(anyhow::anyhow!("Missing ratchet tree in commit bundle"))?;
-
-            // Convert to spec format for server
-            let group_info_message = convert_mls_types_to_spec(&group_info)?;
-            let ratchet_tree_option = ratchet_tree
-                .try_into()
-                .map_err(|e| anyhow::anyhow!("Failed to convert ratchet tree: {e}"))?;
-
-            // Create MlsCommitInfo wrapper
-            let welcome = commit_bundle.welcome.map(TryInto::try_into).transpose()?;
-            let commit_info = MlsCommitInfo {
-                room_id: meeting_link_name.as_bytes().to_vec(),
-                welcome_message: welcome,
-                commit: convert_mls_types_to_spec(&commit_bundle.commit)?,
-            };
-
-            tracing::debug!(
-                "Created commit bundle for attempt {}, uploading to server",
-                attempt_num + 1
-            );
-
-            let base64_sd_kbt = self
-                .get_sd_kbt(&UserId::new(mls_group.own_user_id()?.to_string()))
-                .await?;
-
-            let result = self
-                .mls_api
-                .update_group_info(
-                    &base64_sd_kbt,
-                    &group_info_message,
-                    &ratchet_tree_option,
-                    Some(&commit_info),
-                    None, // No additional proposals
-                )
-                .await;
-
-            // Handle server response
-            match result {
-                Ok(_) => {
-                    // Success - merge pending commit
-                    mls_group.merge_pending_commit().await?;
-
-                    tracing::info!(
-                        "Successfully kicked participant {} from meeting {} on attempt {}",
-                        target_participant_id,
-                        meeting_link_name,
-                        attempt_num + 1
-                    );
-
-                    drop(mls_group);
-
-                    // Trigger group update handler
-                    self.handlers
-                        .call_mls_group_update_handler(
-                            meeting_link_name.to_string(),
-                            GroupKeyUpdateReason::Leave,
-                        )
-                        .await;
-
-                    return Ok(());
-                }
-                Err(e) => {
-                    mls_group.clear_pending_commit();
-                    mls_group.clear_pending_proposals();
-                    mls_group.write_to_storage().await?;
-
-                    drop(mls_group);
-
-                    let is_retryable = if let HttpClientError::ErrorCode(status, _) = &e {
-                        *status == 422
-                    } else {
-                        false
-                    };
-
-                    // Case 1: Non-retryable error - fail fast with original error
-                    if !is_retryable {
-                        tracing::warn!(
-                            "Kick failed with non-retryable error on attempt {}: {:?}",
-                            attempt_num + 1,
-                            e
-                        );
-                        restore_proposals_to_queue(
-                            &self.proposal_queue,
-                            meeting_link_name.to_string(),
-                            queued_proposals.clone(),
-                            "non-retryable error",
-                        );
-                        return Err(e.into());
-                    }
-
-                    // Case 2: Retryable (422) but max attempts exhausted
-                    if attempt_num >= KICK_MAX_ATTEMPTS - 1 {
-                        tracing::error!(
-                            "Kick failed after {} attempts with HTTP 422, max retries exhausted",
-                            KICK_MAX_ATTEMPTS
-                        );
-                        restore_proposals_to_queue(
-                            &self.proposal_queue,
-                            meeting_link_name.to_string(),
-                            queued_proposals.clone(),
-                            "max retries exhausted",
-                        );
-                        return Err(MeetCoreError::MaxRetriesReached);
-                    }
-
-                    // Case 3: Retryable (422) with attempts remaining - sleep and retry
-                    let delay_ms =
-                        calculate_retry_delay(attempt_num, KICK_BASE_DELAY_MS, KICK_MAX_DELAY_MS);
-
-                    tracing::warn!(
-                        "Kick failed with HTTP 422 (attempt {}/{}), retrying in {}ms",
-                        attempt_num + 1,
-                        KICK_MAX_ATTEMPTS,
-                        delay_ms
-                    );
-
-                    sleep(Duration::from_millis(delay_ms)).await;
-                    // Continue to next iteration
-                }
-            }
-        }
-
-        // This should be unreachable since all paths in the loop return
-        unreachable!("Should have returned from retry loop")
+        self.services
+            .upgrade()
+            .ok_or_else(|| anyhow::anyhow!("Could not upgrade service bundle"))?
+            .get_message_queue(meeting_link_name.to_string())
+            .await
+            .map_err(|e| {
+                tracing::warn!("No message queue for room {meeting_link_name}: {e:?}");
+                MeetCoreError::ParticipantNotFound
+            })?
+            .kick_participant(target_uuid)
+            .await
     }
 
     async fn get_group_key(&self, meeting_link_name: &str) -> Result<(String, u64), anyhow::Error> {

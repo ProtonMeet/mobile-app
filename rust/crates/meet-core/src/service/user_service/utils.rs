@@ -1,13 +1,8 @@
-use std::{collections::HashMap, sync::Arc};
-
 use identity::ProtonMeetIdentity;
 use meet_type::fanout::GroupInfoVersion;
 use mls_types::{Credential, ExternalPskId};
 use proton_claims::ClientType;
 use proton_meet_mls::{kv::MemKv, MlsGroup, MlsGroupTrait};
-use tokio::sync::Mutex;
-
-use crate::{service::user_service::QueuedProposal, utils::spawn_detached};
 
 pub const LIVEKIT_OFFLINE_THRESHOLD_MS: u64 = 60_000;
 
@@ -117,34 +112,4 @@ pub fn calculate_retry_delay(attempt_num: u32, base_ms: u64, max_ms: u64) -> u64
     capped_delay
         .saturating_sub(jitter_range)
         .saturating_add(jitter)
-}
-
-/// Restore queued proposals back to the proposal queue on failure
-pub fn restore_proposals_to_queue(
-    proposal_queue: &Arc<Mutex<HashMap<String, Vec<QueuedProposal>>>>,
-    meeting_link_name: String,
-    proposals: Vec<QueuedProposal>,
-    reason: &str,
-) {
-    if proposals.is_empty() {
-        return;
-    }
-
-    let reason = reason.to_string();
-    spawn_detached({
-        let queue = proposal_queue.clone();
-        async move {
-            let mut queue_lock = queue.lock().await;
-            queue_lock.insert(meeting_link_name.clone(), proposals);
-            tracing::debug!(
-                "Restored {} proposals to queue for {}: {}",
-                queue_lock
-                    .get(&meeting_link_name)
-                    .map(|v| v.len())
-                    .unwrap_or(0),
-                meeting_link_name,
-                reason
-            );
-        }
-    });
 }
