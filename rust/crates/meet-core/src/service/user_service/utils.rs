@@ -6,11 +6,6 @@ use proton_meet_mls::{kv::MemKv, MlsGroup, MlsGroupTrait};
 
 pub const LIVEKIT_OFFLINE_THRESHOLD_MS: u64 = 60_000;
 
-// Kick participant retry configuration
-pub const KICK_MAX_ATTEMPTS: u32 = 4; // 1 initial + 3 retries
-pub const KICK_BASE_DELAY_MS: u64 = 500;
-pub const KICK_MAX_DELAY_MS: u64 = 10000;
-
 pub const WR_SETTING_MAX_ATTEMPTS: u32 = 3;
 
 // Supported group info versions for the client
@@ -92,24 +87,4 @@ pub fn psk_id_for_commit(meeting_link_name: &str, has_agent: bool) -> ExternalPs
 pub enum StaggerOutcome {
     Proceed,
     HandledElsewhere,
-}
-
-/// Calculate retry delay with exponential backoff and jitter
-/// - attempt_num: 0-indexed attempt number (0 = first retry after initial failure)
-/// - base_ms: base delay in milliseconds
-/// - max_ms: maximum delay cap
-pub fn calculate_retry_delay(attempt_num: u32, base_ms: u64, max_ms: u64) -> u64 {
-    use rand::Rng;
-
-    // Exponential backoff: base * 2^attempt_num
-    let exponential_delay = base_ms.saturating_mul(1u64 << attempt_num);
-    let capped_delay = exponential_delay.min(max_ms);
-
-    // Add jitter: ±10%
-    let jitter_range = (capped_delay as f64 * 0.1) as u64;
-    let jitter = rand::thread_rng().gen_range(0..=jitter_range * 2);
-
-    capped_delay
-        .saturating_sub(jitter_range)
-        .saturating_add(jitter)
 }

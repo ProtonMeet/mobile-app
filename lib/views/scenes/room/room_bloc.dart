@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:audio_session/audio_session.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
@@ -261,6 +262,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     on<RoomInitialized>(_onRoomInitialized);
     on<RoomIsPaidUserUpdated>(_onIsPaidUserUpdated);
     on<RoomDisposed>(_onRoomDisposed);
+    on<RemoveParticipant>(_onRemoveParticipant);
     // Throttle the high-frequency `DebouncedSortParticipants` stream coming
     // from LiveKit `ParticipantEvent`s (200+/s in 200-person rooms).
     // - leading edge: first event triggers a sort immediately
@@ -1673,5 +1675,31 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     await room.dispose();
 
     // emit(const RoomState());
+  }
+
+  Future<void> _onRemoveParticipant(
+    RemoveParticipant event,
+    Emitter<RoomState> emit,
+  ) async {
+    l.logger.d('Received RemoveParticipant with sid=${event.uuid}');
+
+    final manager = roomManager;
+    if (manager == null) {
+      l.logger.w("Received RemoveParticipant event but no RoomManager is set");
+      return;
+    }
+
+    if (state.room.localParticipant?.identity == event.uuid) {
+      l.logger.w("Received RemoveParticipant for self");
+    } else if (state.room.remoteParticipants.values.none(
+      (v) => v.identity == event.uuid,
+    )) {
+      l.logger.w(
+        "Received RemoveParticipant for unknown participant of sid ${event.uuid}",
+      );
+      return;
+    }
+
+    manager.removeParticipant(event.uuid);
   }
 }

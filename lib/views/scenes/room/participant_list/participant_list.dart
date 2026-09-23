@@ -12,6 +12,7 @@ import 'package:meet/rust/proton_meet/models/meeting_info.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 import 'package:meet/views/scenes/room/participant_list/waiting_room_host_participant_list.dart';
 import 'package:meet/views/scenes/room/room_bloc.dart';
+import 'package:meet/views/scenes/room/room_event.dart';
 import 'package:meet/views/scenes/room/room_state.dart';
 import 'package:meet/views/scenes/room/side_panel_widget.dart';
 import 'package:meet/views/scenes/utils.dart';
@@ -128,7 +129,6 @@ class ParticipantListBody extends StatefulWidget {
 
 class _ParticipantListBodyState extends State<ParticipantListBody> {
   final ScrollController _scrollController = ScrollController();
-  final Map<String, bool> _showMoreButton = {};
   final Map<String, ({Color backgroundColor, Color profileTextColor})>
   _colorCache = {};
   final Map<String, String> _initialsCache = {};
@@ -151,6 +151,12 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
 
   bool _isCaptionsAgentDetail(ParticipantDetail detail) =>
       detail.participant != null && isCaptionAgent(detail.participant!);
+
+  bool _shouldShowMoreButton(ParticipantDetail detail) =>
+      !detail.isMe &&
+      (widget.isHost ||
+          detail.participant?.videoTrackPublications.isNotEmpty == true ||
+          detail.participant?.audioTrackPublications.isNotEmpty == true);
 
   int get _peopleParticipantCount => _partitionedParticipants.people.length;
 
@@ -559,296 +565,281 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
       () => getInitials(p.name),
     );
 
-    return GestureDetector(
-      onLongPress: () {
-        setState(() {
-          _showMoreButton[p.name] = true;
-        });
-      },
-      child: Container(
-        width: double.infinity,
-        height: ParticipantListLayoutConstants.participantItemHeight,
-        padding: const EdgeInsets.only(
-          top: ParticipantListLayoutConstants.verticalPadding,
-          left: RoomSidePanelLayout.horizontalPadding,
-          right: ParticipantListLayoutConstants.spacingSmall,
-          bottom: ParticipantListLayoutConstants.verticalPadding,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: ParticipantListLayoutConstants.avatarSize,
-                    height: ParticipantListLayoutConstants.avatarSize,
-                    child: Container(
-                      clipBehavior: Clip.antiAlias,
-                      decoration: ShapeDecoration(
-                        color: colors.backgroundColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            ParticipantListLayoutConstants.borderRadiusAvatar,
-                          ),
+    return Container(
+      width: double.infinity,
+      height: ParticipantListLayoutConstants.participantItemHeight,
+      padding: const EdgeInsets.only(
+        top: ParticipantListLayoutConstants.verticalPadding,
+        left: RoomSidePanelLayout.horizontalPadding,
+        right: ParticipantListLayoutConstants.spacingSmall,
+        bottom: ParticipantListLayoutConstants.verticalPadding,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: ParticipantListLayoutConstants.avatarSize,
+                  height: ParticipantListLayoutConstants.avatarSize,
+                  child: Container(
+                    clipBehavior: Clip.antiAlias,
+                    decoration: ShapeDecoration(
+                      color: colors.backgroundColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          ParticipantListLayoutConstants.borderRadiusAvatar,
                         ),
                       ),
-                      child: Center(
-                        child: Text(
-                          initials,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: colors.profileTextColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            height: 1.50,
-                          ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        initials,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: colors.profileTextColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          height: 1.50,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(
-                    width: ParticipantListLayoutConstants.spacingLarge,
-                  ),
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
+                ),
+                const SizedBox(
+                  width: ParticipantListLayoutConstants.spacingLarge,
+                ),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              p.name,
+                              style: ProtonStyles.body2Medium(
+                                color: context.colors.textNorm,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (p.isRaisedHand)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4),
                               child: Text(
-                                p.name,
-                                style: ProtonStyles.body2Medium(
+                                raisedHandEmoji,
+                                style: ProtonStyles.headline(
                                   color: context.colors.textNorm,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (p.isRaisedHand)
-                              Padding(
-                                padding: const EdgeInsets.only(left: 4),
-                                child: Text(
-                                  raisedHandEmoji,
-                                  style: ProtonStyles.headline(
-                                    color: context.colors.textNorm,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                        if (p.isHost || p.isRecording)
-                          Text(
-                            _composeStatusLine(
-                              isHost: p.isHost,
-                              isRecording: p.isRecording,
-                              recordingLabel: context.local.recording_label,
-                            ),
-                            style: ProtonStyles.body2Regular(
-                              color: p.isRecording
-                                  ? context.colors.signalDanger
-                                  : context.colors.textWeak,
-                            ),
+                        ],
+                      ),
+                      if (p.isHost || p.isRecording)
+                        Text(
+                          _composeStatusLine(
+                            isHost: p.isHost,
+                            isRecording: p.isRecording,
+                            recordingLabel: context.local.recording_label,
                           ),
-                      ],
+                          style: ProtonStyles.body2Regular(
+                            color: p.isRecording
+                                ? context.colors.signalDanger
+                                : context.colors.textWeak,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: ParticipantListLayoutConstants.spacingMedium),
+          _buildActionButton(
+            context,
+            child: p.hasAudio
+                ? context.images.iconAudioOnWave.svg(
+                    width: ParticipantListLayoutConstants.actionIconSize,
+                    height: ParticipantListLayoutConstants.actionIconSize,
+                    colorFilter: ColorFilter.mode(
+                      context.colors.notificationSuccess,
+                      BlendMode.srcIn,
+                    ),
+                  )
+                : context.images.iconAudioOff.svg(
+                    width: ParticipantListLayoutConstants.actionIconSize,
+                    height: ParticipantListLayoutConstants.actionIconSize,
+                    colorFilter: ColorFilter.mode(
+                      context.colors.signalDanger,
+                      BlendMode.srcIn,
                     ),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(width: ParticipantListLayoutConstants.spacingMedium),
-            _buildActionButton(
-              context,
-              child: p.hasAudio
-                  ? context.images.iconAudioOnWave.svg(
-                      width: ParticipantListLayoutConstants.actionIconSize,
-                      height: ParticipantListLayoutConstants.actionIconSize,
-                      colorFilter: ColorFilter.mode(
-                        context.colors.notificationSuccess,
-                        BlendMode.srcIn,
-                      ),
-                    )
-                  : context.images.iconAudioOff.svg(
-                      width: ParticipantListLayoutConstants.actionIconSize,
-                      height: ParticipantListLayoutConstants.actionIconSize,
-                      colorFilter: ColorFilter.mode(
-                        context.colors.signalDanger,
-                        BlendMode.srcIn,
-                      ),
+          ),
+          const SizedBox(width: ParticipantListLayoutConstants.spacingMedium),
+          _buildActionButton(
+            context,
+            child: p.hasVideo
+                ? context.images.iconVideoOn.svg(
+                    width: ParticipantListLayoutConstants.actionIconSize,
+                    height: ParticipantListLayoutConstants.actionIconSize,
+                    colorFilter: ColorFilter.mode(
+                      context.colors.notificationSuccess,
+                      BlendMode.srcIn,
                     ),
-            ),
-            const SizedBox(width: ParticipantListLayoutConstants.spacingMedium),
-            _buildActionButton(
-              context,
-              child: p.hasVideo
-                  ? context.images.iconVideoOn.svg(
-                      width: ParticipantListLayoutConstants.actionIconSize,
-                      height: ParticipantListLayoutConstants.actionIconSize,
-                      colorFilter: ColorFilter.mode(
-                        context.colors.notificationSuccess,
-                        BlendMode.srcIn,
-                      ),
-                    )
-                  : context.images.iconVideoOff.svg(
-                      width: ParticipantListLayoutConstants.actionIconSize,
-                      height: ParticipantListLayoutConstants.actionIconSize,
-                      colorFilter: ColorFilter.mode(
-                        context.colors.signalDanger,
-                        BlendMode.srcIn,
-                      ),
+                  )
+                : context.images.iconVideoOff.svg(
+                    width: ParticipantListLayoutConstants.actionIconSize,
+                    height: ParticipantListLayoutConstants.actionIconSize,
+                    colorFilter: ColorFilter.mode(
+                      context.colors.signalDanger,
+                      BlendMode.srcIn,
                     ),
-            ),
-            const SizedBox(width: ParticipantListLayoutConstants.spacingMedium),
-            if (_showMoreButton[p.name] == true)
-              _buildActionButton(
-                context,
-                child: IconButtonWithActions(
-                  padding: EdgeInsets.zero,
-                  iconSize: ParticipantListLayoutConstants.actionIconSize,
-                  icon: Icon(
-                    Icons.more_vert_outlined,
-                    color: context.colors.textNorm,
-                    size: ParticipantListLayoutConstants.actionIconSize,
                   ),
-                  offset: const Offset(-220, 0),
-                  actions: p.participant is LocalParticipant
-                      ? []
-                      : [
-                          if (p.participant != null) ...[
-                            if (p
-                                .participant!
-                                .audioTrackPublications
-                                .isNotEmpty)
-                              OverlayActions(
-                                title:
-                                    p
+          ),
+          const SizedBox(width: ParticipantListLayoutConstants.spacingMedium),
+          if (_shouldShowMoreButton(p))
+            _buildActionButton(
+              context,
+              child: IconButtonWithActions(
+                padding: EdgeInsets.zero,
+                iconSize: ParticipantListLayoutConstants.actionIconSize,
+                icon: Icon(
+                  Icons.more_vert_outlined,
+                  color: context.colors.textNorm,
+                  size: ParticipantListLayoutConstants.actionIconSize,
+                ),
+                offset: const Offset(-220, 0),
+                actions: p.participant is LocalParticipant
+                    ? []
+                    : [
+                        if (p.participant != null) ...[
+                          if (p.participant!.audioTrackPublications.isNotEmpty)
+                            OverlayActions(
+                              title:
+                                  p
+                                      .participant!
+                                      .audioTrackPublications
+                                      .first
+                                      .subscribed
+                                  ? context.local.unsubscribe_audio
+                                  : context.local.subscribe_audio,
+                              icon: Icon(
+                                p
                                         .participant!
                                         .audioTrackPublications
                                         .first
                                         .subscribed
-                                    ? context.local.unsubscribe_audio
-                                    : context.local.subscribe_audio,
-                                icon: Icon(
-                                  p
-                                          .participant!
-                                          .audioTrackPublications
-                                          .first
-                                          .subscribed
-                                      ? Icons.mic_off
-                                      : Icons.mic,
-                                ),
-                                onTap: () {
-                                  widget.onTapParticipantAudioLocalAction?.call(
-                                    p.participant,
-                                  );
-                                },
+                                    ? Icons.mic_off
+                                    : Icons.mic,
                               ),
-                            if (p
-                                .participant!
-                                .videoTrackPublications
-                                .isNotEmpty)
-                              OverlayActions(
-                                title:
-                                    p
+                              onTap: () {
+                                widget.onTapParticipantAudioLocalAction?.call(
+                                  p.participant,
+                                );
+                              },
+                            ),
+                          if (p.participant!.videoTrackPublications.isNotEmpty)
+                            OverlayActions(
+                              title:
+                                  p
+                                      .participant!
+                                      .videoTrackPublications
+                                      .first
+                                      .subscribed
+                                  ? context.local.unsubscribe_video
+                                  : context.local.subscribe_video,
+                              icon: Icon(
+                                p
                                         .participant!
                                         .videoTrackPublications
                                         .first
                                         .subscribed
-                                    ? context.local.unsubscribe_video
-                                    : context.local.subscribe_video,
-                                icon: Icon(
-                                  p
-                                          .participant!
-                                          .videoTrackPublications
-                                          .first
-                                          .subscribed
-                                      ? Icons.no_photography_rounded
-                                      : Icons.camera_alt,
-                                ),
-                                onTap: () {
-                                  widget.onTapParticipantVideoLocalAction.call(
-                                    p.participant,
-                                  );
-                                },
+                                    ? Icons.no_photography_rounded
+                                    : Icons.camera_alt,
                               ),
-                            if (p
-                                .participant!
-                                .videoTrackPublications
-                                .isNotEmpty)
-                              OverlayActions(
-                                title: context.local.remote_mute_video,
-                                icon: Icon(
-                                  Icons.close,
-                                  color: context.colors.notificationError,
-                                ),
-                                onTap: () {
-                                  widget.onTapParticipantVideoRemoteAction
-                                      ?.call(p.participant);
-                                },
-                              ),
-                            if (p
-                                .participant!
-                                .audioTrackPublications
-                                .isNotEmpty)
-                              OverlayActions(
-                                title: context.local.remote_mute_audio,
-                                icon: Icon(
-                                  Icons.close,
-                                  color: context.colors.notificationError,
-                                ),
-                                onTap: () {
-                                  widget.onTapParticipantAudioRemoteAction
-                                      ?.call(p.participant);
-                                },
-                              ),
-                          ],
-                          if (widget.isHost) ...[
-                            OverlayActions(
-                              title: context.local.force_mute,
-                              icon: const Icon(Icons.mic_off),
                               onTap: () {
-                                LocalToast.showToastification(
-                                  context,
-                                  'TODO',
-                                  context.local.force_mute_participant(p.name),
+                                widget.onTapParticipantVideoLocalAction.call(
+                                  p.participant,
                                 );
                               },
                             ),
+                          if (p.participant!.videoTrackPublications.isNotEmpty)
                             OverlayActions(
-                              title: context.local.force_disable_camera,
-                              icon: const Icon(Icons.no_photography_rounded),
-                              onTap: () {
-                                LocalToast.showToastification(
-                                  context,
-                                  'TODO',
-                                  context.local
-                                      .force_disable_camera_participant(p.name),
-                                );
-                              },
-                            ),
-                            OverlayActions(
-                              title: context.local.kick_out,
+                              title: context.local.remote_mute_video,
                               icon: Icon(
                                 Icons.close,
                                 color: context.colors.notificationError,
                               ),
                               onTap: () {
-                                LocalToast.showToastification(
-                                  context,
-                                  'TODO',
-                                  context.local.kick_out_participant(p.name),
+                                widget.onTapParticipantVideoRemoteAction?.call(
+                                  p.participant,
                                 );
                               },
                             ),
-                          ],
+                          if (p.participant!.audioTrackPublications.isNotEmpty)
+                            OverlayActions(
+                              title: context.local.remote_mute_audio,
+                              icon: Icon(
+                                Icons.close,
+                                color: context.colors.notificationError,
+                              ),
+                              onTap: () {
+                                widget.onTapParticipantAudioRemoteAction?.call(
+                                  p.participant,
+                                );
+                              },
+                            ),
                         ],
-                ),
+                        if (widget.isHost) ...[
+                          OverlayActions(
+                            title: context.local.force_mute,
+                            icon: const Icon(Icons.mic_off),
+                            onTap: () {
+                              LocalToast.showToastification(
+                                context,
+                                'TODO',
+                                context.local.force_mute_participant(p.name),
+                              );
+                            },
+                          ),
+                          OverlayActions(
+                            title: context.local.force_disable_camera,
+                            icon: const Icon(Icons.no_photography_rounded),
+                            onTap: () {
+                              LocalToast.showToastification(
+                                context,
+                                'TODO',
+                                context.local.force_disable_camera_participant(
+                                  p.name,
+                                ),
+                              );
+                            },
+                          ),
+                          OverlayActions(
+                            title: context.local.kick_out,
+                            icon: Icon(
+                              Icons.close,
+                              color: context.colors.notificationError,
+                            ),
+                            onTap: () {
+                              final participant = p.participant;
+                              if (participant != null) {
+                                context.read<RoomBloc>().add(
+                                  RemoveParticipant(participant.identity),
+                                );
+                              }
+                            },
+                          ),
+                        ],
+                      ],
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }

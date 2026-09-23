@@ -20,7 +20,6 @@ use mls_trait::{
 };
 use mls_types::MlsTypesError;
 use proton_meet_mls::kv::MemKv;
-use uuid::Uuid;
 
 use crate::{
     domain::{
@@ -30,19 +29,15 @@ use crate::{
             ports::{MlsApi, UserService},
         },
     },
-    errors::{core::MeetCoreError, http_client::HttpClientError, service::ServiceError},
+    errors::service::ServiceError,
     infra::{message_cache::CachedMessageType, mimi_subject_parser::MimiSubject},
     service::{
         compute_stagger_time,
         service_state::MlsGroupState,
         services_bundle::ServiceBundle,
         user_service::{
-            credential_is_agent, psk_id_for_commit,
-            utils::{
-                calculate_retry_delay, group_has_agent, KICK_BASE_DELAY_MS, KICK_MAX_ATTEMPTS,
-                KICK_MAX_DELAY_MS,
-            },
-            GroupKeyUpdateReason, ProposalType, QueuedProposal,
+            credential_is_agent, psk_id_for_commit, utils::group_has_agent, GroupKeyUpdateReason,
+            ProposalType, QueuedProposal,
         },
         utils::convert_mls_types_to_spec,
         StaggerStats, RANK_GROUP_DELAY_MS,

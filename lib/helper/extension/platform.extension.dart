@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
-bool get mobile => android || iOS || linux; // linux is only for UI testing
+bool get mobile => android || iOS; // linux is only for UI testing
 bool get desktop => !mobile;
 bool get android => defaultTargetPlatform == TargetPlatform.android;
 bool get iOS => defaultTargetPlatform == TargetPlatform.iOS;

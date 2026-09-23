@@ -103,6 +103,12 @@ class DebouncedSortParticipants extends RoomBlocEvent {
 /// room events
 class RoomDisposed extends RoomBlocEvent {}
 
+class RemoveParticipant extends RoomBlocEvent {
+  final String uuid;
+
+  const RemoveParticipant(this.uuid);
+}
+
 class ToggleFullScreen extends RoomBlocEvent {}
 
 class StartAutoFullScreenTimer extends RoomBlocEvent {}

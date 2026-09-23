@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashSet,
     str::FromStr,
     sync::{Arc, Weak},
     time::Duration,
@@ -68,7 +68,6 @@ use crate::{
             encode_php_waiting_room_data_field, serialize_waiting_room_setting_request,
             PhpWaitingRoomDataField, WaitingRoomSettingRequest,
         },
-        message_cache::MlsMessageCache,
         mimi_subject_parser::MimiSubject,
         ws_client::{self, WebSocketMessage},
     },
@@ -171,7 +170,6 @@ impl Service {
         services: Weak<ServiceBundle>,
     ) -> Self {
         let state = Arc::new(Mutex::new(ServiceState::new()));
-        let message_cache = Arc::new(Mutex::new(MlsMessageCache::new()));
 
         let mls_service = Arc::new(MlsService::new(
             mls_store.clone(),
