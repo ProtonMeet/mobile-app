@@ -58,7 +58,7 @@ mod test {
     use crate::service::auth::AuthServiceImpl;
     use crate::{
         domain::{
-            mls::ports::{KeyPackagePort, MockKeyPackagePort},
+            mls::ports::{KeyPackagePort, MessageCachePort, MockKeyPackagePort},
             room::{RoomService, WaitingRoomService},
             user::ports::{
                 meeting_api::{MeetingApi, MockMeetingApi},
@@ -68,9 +68,15 @@ mod test {
                 MockWebSocketClient, UserService,
             },
         },
-        infra::mimi_subject_parser::ANONYMOUS_USER_IDENTIFIER,
+        infra::{
+            adapters::mls::message_cache_adapter::MessageCacheAdapter,
+            message_cache::MlsMessageCache, mimi_subject_parser::ANONYMOUS_USER_IDENTIFIER,
+        },
         service::{
-            caption::CaptionServiceImpl, services_bundle::ServiceBundle, user_service::Service,
+            caption::CaptionServiceImpl,
+            message_queue::{ArcMessageQueue, MessageQueueImpl},
+            services_bundle::ServiceBundle,
+            user_service::Service,
         },
         utils::server_time::ServerTimeTracker,
     };
@@ -88,6 +94,9 @@ mod test {
         pub key_packages: Option<Arc<dyn KeyPackagePort>>,
         pub user_api: Option<Arc<dyn UserApi>>,
         pub user_repository: Option<ArcUserRepository>,
+        /// Substitute queue returned for every room, e.g. a `MockMessageQueue`. When
+        /// `None` the bundle builds a real [`MessageQueueImpl`] per room.
+        pub message_queue: Option<ArcMessageQueue>,
     }
 
     /// Returned by [`create_test_service_bundle_with_host`] containing all the instances used to create a bundle
@@ -259,7 +268,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
     /// - [`WebSocketClient`][crate::domain::user::ports::WebSocketClient] is set to always return
     ///   [`Connected`](crate::domain::user::ports::ConnectionState::Connected) when
     ///   [`get_connection_state`](crate::domain::user::ports::WebSocketClient::get_connection_state) is called.
-    fn create_test_service_bundle_with_host(
+    pub(super) fn create_test_service_bundle_with_host(
         user_id: &str,
         meet_link_name: &str,
         is_host: bool,
@@ -301,6 +310,9 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let user_repository = di
             .user_repository
             .unwrap_or_else(|| Arc::new(MockUserRepository::new()));
+        let msg_cache: Arc<dyn MessageCachePort> = Arc::new(MessageCacheAdapter::new(Arc::new(
+            tokio::sync::Mutex::new(MlsMessageCache::new()),
+        )));
 
         #[cfg(not(target_family = "wasm"))]
         let mut auth_service = None;
@@ -331,6 +343,14 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 meeting_api.clone(),
             )));
 
+            // Mirrors the production factory in `app::App`, so tests exercise the same
+            // per-room `MessageQueue` wiring as the real bundle.
+            let queue_weak = weak.clone();
+            let queue_mls_store = mls_store.clone();
+            let queue_msg_cache = msg_cache.clone();
+            let queue_mls_api = mls_api.clone();
+            let queue_override = di.message_queue.clone();
+
             ServiceBundle::new(
                 Arc::new(RoomService::new(
                     http_client.clone(),
@@ -345,6 +365,26 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 auth_service.clone().unwrap(),
                 caption_service.clone().unwrap(),
                 user_service,
+                move |room_id| {
+                    let weak = queue_weak.clone();
+                    let mls_store = queue_mls_store.clone();
+                    let msg_cache = queue_msg_cache.clone();
+                    let mls_api = queue_mls_api.clone();
+                    let queue_override = queue_override.clone();
+
+                    Box::pin(async move {
+                        if let Some(queue) = queue_override {
+                            return Some(queue);
+                        }
+
+                        let group = mls_store.read().await.group_map.get(&room_id)?.clone();
+
+                        Some(
+                            MessageQueueImpl::new(room_id, group, msg_cache, weak, mls_api)
+                                as ArcMessageQueue,
+                        )
+                    })
+                },
             )
         });
 

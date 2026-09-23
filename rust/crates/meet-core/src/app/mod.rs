@@ -26,7 +26,7 @@ use crate::infra::{
 #[cfg(not(target_family = "wasm"))]
 use crate::service::auth::AuthServiceImpl;
 use crate::service::caption::CaptionServiceImpl;
-use crate::service::message_queue::MessageQueue;
+use crate::service::message_queue::{ArcMessageQueue, MessageQueueImpl};
 use crate::service::mls_service::MlsService;
 use crate::service::services_bundle::ServiceBundle;
 use crate::service::user_service::Service;
@@ -302,13 +302,13 @@ impl App {
                     Box::pin(async move {
                         let group = mls_store.read().await.group_map.get(&room_id)?.clone();
 
-                        Some(Arc::new(MessageQueue::new(
+                        Some(MessageQueueImpl::new(
                             room_id,
                             group,
                             msg_cache.clone(),
                             weak.clone(),
                             http_client.clone(),
-                        )))
+                        ) as ArcMessageQueue)
                     })
                 },
             )

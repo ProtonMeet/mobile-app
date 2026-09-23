@@ -19,6 +19,7 @@ use mls_trait::{
     ProposalArg, ProtonMeetIdentityProvider,
 };
 use mls_types::MlsTypesError;
+use proton_meet_macro::{async_trait, async_trait_with_mock};
 use proton_meet_mls::kv::MemKv;
 
 use crate::{
@@ -62,7 +63,34 @@ enum ProposalProcessingOutcome {
     NoStateChange,
 }
 
-pub(crate) struct MessageQueue {
+/// Per-room ingress for MLS traffic.
+///
+/// Kept behind a trait so callers hold `ArcMessageQueue` and tests can substitute
+/// `MockMessageQueue` instead of standing up a real MLS group.
+#[cfg(not(target_family = "wasm"))]
+pub(crate) type ArcMessageQueue = Arc<dyn MessageQueue + Send + Sync + 'static>;
+#[cfg(target_family = "wasm")]
+pub(crate) type ArcMessageQueue = Arc<dyn MessageQueue + 'static>;
+
+#[async_trait_with_mock]
+pub(crate) trait MessageQueue {
+    /// Handles an inbound commit for this room, replaying any cached backlog it unblocks.
+    async fn push_commit(&self, commit: mls_types::MlsMessage) -> Result<(), anyhow::Error>;
+
+    /// Handles an inbound proposal for this room, queueing it for the next batched commit.
+    async fn push_proposal(&self, proposal: mls_types::MlsMessage) -> Result<(), anyhow::Error>;
+
+    /// The cache backing this queue, so tests can assert on what was cached.
+    #[cfg(test)]
+    fn msg_cache(&self) -> Arc<dyn MessageCachePort>;
+
+    /// Number of proposals waiting for the next batched commit, so tests can assert
+    /// whether an inbound proposal was queued.
+    #[cfg(test)]
+    fn queued_len(&self) -> usize;
+}
+
+pub(crate) struct MessageQueueImpl {
     room_id: String,
     group: Arc<tokio::sync::RwLock<MlsGroup<MemKv>>>,
     queue: SyncRwLock<Vec<QueuedProposal>>,
@@ -73,17 +101,21 @@ pub(crate) struct MessageQueue {
     timer: SyncRwLock<Option<Epoch>>,
     services: Weak<ServiceBundle>,
     mls_api: Arc<dyn MlsApi>,
+    /// Self-reference, so `&self` methods can hand an owned `Arc` to detached tasks.
+    /// The trait in front of this type needs `&self` receivers for mocking, which rules
+    /// out `self: &Arc<Self>`.
+    self_ref: Weak<MessageQueueImpl>,
 }
 
-impl MessageQueue {
+impl MessageQueueImpl {
     pub fn new(
         room_id: String,
         group: Arc<tokio::sync::RwLock<MlsGroup<MemKv>>>,
         msg_cache: Arc<dyn MessageCachePort>,
         services: Weak<ServiceBundle>,
         mls_api: Arc<dyn MlsApi>,
-    ) -> Self {
-        Self {
+    ) -> Arc<Self> {
+        Arc::new_cyclic(|self_ref| Self {
             room_id,
             group,
             queue: SyncRwLock::new(Vec::new(), |_| {}),
@@ -92,7 +124,8 @@ impl MessageQueue {
             timer: SyncRwLock::new(None, |v| *v = None),
             services,
             mls_api,
-        }
+            self_ref: self_ref.clone(),
+        })
     }
 
     fn services(&self) -> Result<Arc<ServiceBundle>, anyhow::Error> {
@@ -101,101 +134,8 @@ impl MessageQueue {
             .ok_or_else(|| anyhow::anyhow!("Could not upgrade service bundle"))
     }
 
-    pub async fn push_proposal(
-        self: &Arc<Self>,
-        proposal: mls_types::MlsMessage,
-    ) -> Result<(), anyhow::Error> {
-        match self.process_proposal_message(proposal.clone()).await {
-            Ok(ProposalProcessingOutcome::Applied) => {
-                // A proposal accepted into the current epoch can unblock a commit that was
-                // cached because MLS reported `ProposalNotFound`, so replay the backlog.
-                match self.process_cached_messages().await {
-                    Ok(_) => tracing::debug!(
-                        "Cached messages processed successfully for room {}",
-                        self.room_id
-                    ),
-                    Err(e) => tracing::warn!(
-                        "Failed to process cached messages for room {}: {e:?}",
-                        self.room_id,
-                    ),
-                }
-            }
-            Ok(ProposalProcessingOutcome::NoStateChange) => {
-                tracing::debug!(
-                    "Proposal did not change state for room {}, skipping cached message processing",
-                    self.room_id
-                );
-            }
-            Ok(ProposalProcessingOutcome::DeferredFutureEpoch) => {
-                tracing::debug!(
-                    "Proposal deferred for future epoch in room {}, skipping cached message processing",
-                    self.room_id
-                );
-            }
-            Err(e) => {
-                tracing::warn!("Failed to process proposal message: {e}");
-                // Keep the proposal so a later epoch can retry it.
-                if let Err(e) = self.cache_proposal_message(proposal).await {
-                    tracing::warn!(
-                        "Failed to cache proposal message for room {}: {e:?}",
-                        self.room_id
-                    );
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    pub async fn push_commit(
-        self: &Arc<Self>,
-        commit: mls_types::MlsMessage,
-    ) -> Result<(), anyhow::Error> {
-        match self.process_commit_message(commit).await {
-            Ok(CommitProcessingOutcome::Applied) => {
-                // Process cached messages only after we actually advanced/applied commit state.
-                match self.process_cached_messages().await {
-                    Ok(_) => tracing::debug!(
-                        "Cached messages processed successfully for room {}",
-                        self.room_id
-                    ),
-                    Err(e) => tracing::warn!(
-                        "Failed to process cached messages for room {}: {e:?}",
-                        self.room_id,
-                    ),
-                }
-            }
-            Ok(CommitProcessingOutcome::NoStateChange) => {
-                tracing::debug!(
-                    "Commit did not change state for room {}, skipping cached message processing",
-                    self.room_id
-                );
-            }
-            Ok(CommitProcessingOutcome::DeferredFutureEpoch) => {
-                tracing::debug!("Commit deferred for future epoch in room {}, skipping cached message processing", self.room_id);
-            }
-
-            Err(e) => {
-                if let Some(ServiceError::PskProposalMissing) = e.downcast_ref::<ServiceError>() {
-                    tracing::error!(
-                        "Commit rejected: PSK proposal missing or has wrong ID for room {}",
-                        self.room_id
-                    );
-                    return Err(e);
-                } else {
-                    tracing::warn!(
-                        "Failed to process commit message for room {}: {e}",
-                        self.room_id,
-                    );
-                }
-            }
-        }
-
-        Ok(())
-    }
-
     async fn process_commit_message(
-        self: &Arc<Self>,
+        &self,
         commit: mls_types::MlsMessage,
     ) -> Result<CommitProcessingOutcome, anyhow::Error> {
         let group_epoch = self.epoch().await;
@@ -360,7 +300,7 @@ impl MessageQueue {
         Ok(CommitProcessingOutcome::Applied)
     }
 
-    pub(super) async fn process_cached_messages(self: &Arc<Self>) -> Result<(), anyhow::Error> {
+    pub(super) async fn process_cached_messages(&self) -> Result<(), anyhow::Error> {
         #[cfg(debug_assertions)]
         tracing::info!("Processing cached messages for room {}", self.room_id);
         let mut total_processed_epochs = Vec::<u64>::new();
@@ -574,10 +514,7 @@ impl MessageQueue {
         Ok(())
     }
 
-    async fn process_cached_proposals(
-        self: &Arc<Self>,
-        group_epoch: Epoch,
-    ) -> Result<(), anyhow::Error> {
+    async fn process_cached_proposals(&self, group_epoch: Epoch) -> Result<(), anyhow::Error> {
         // handle proposals from msg_cache for this epoch
         if let Some(cached_messages) = self
             .msg_cache
@@ -601,7 +538,7 @@ impl MessageQueue {
     }
 
     async fn cache_commit_message(
-        self: &Arc<Self>,
+        &self,
         commit: mls_types::MlsMessage,
     ) -> Result<(), anyhow::Error> {
         Ok(self
@@ -615,7 +552,7 @@ impl MessageQueue {
             .await?)
     }
     async fn cache_proposal_message(
-        self: &Arc<Self>,
+        &self,
         proposal: mls_types::MlsMessage,
     ) -> Result<(), anyhow::Error> {
         Ok(self
@@ -630,7 +567,7 @@ impl MessageQueue {
     }
 
     fn restore_proposal_queue_on_failure(
-        self: &Arc<Self>,
+        &self,
         queued_proposals: Vec<QueuedProposal>,
         error_context: &str,
     ) {
@@ -650,8 +587,8 @@ impl MessageQueue {
         self.group.read().await.epoch()
     }
 
-    fn validate_psk_proposal(
-        self: &Arc<Self>,
+    pub(super) fn validate_psk_proposal(
+        &self,
         message: &mls_types::MlsMessage,
     ) -> Result<(), anyhow::Error> {
         use crate::service::agent_host_service::agent_psk_id_for_meeting;
@@ -688,7 +625,7 @@ impl MessageQueue {
     }
 
     async fn process_proposal_message(
-        self: &Arc<Self>,
+        &self,
         message: mls_types::MlsMessage,
     ) -> Result<ProposalProcessingOutcome, anyhow::Error> {
         // self.handle_proposal(&room_id, proposal_message.clone())
@@ -783,15 +720,16 @@ impl MessageQueue {
         Ok(ProposalProcessingOutcome::Applied)
     }
 
-    fn start_proposal_timer(
-        self: &Arc<Self>,
-        delay_ms: Duration,
-        epoch_at: Epoch,
-        mls_rank_group: u64,
-    ) {
+    fn start_proposal_timer(&self, delay_ms: Duration, epoch_at: Epoch, mls_rank_group: u64) {
         const BASE_PROPOSAL_DELAY_MS: u64 = 2000; // execute propsoal every 2s
         let delay_ms = delay_ms + Duration::from_millis(BASE_PROPOSAL_DELAY_MS);
-        let queue = self.clone();
+        let Some(queue) = self.self_ref.upgrade() else {
+            tracing::warn!(
+                "Proposal timer not started for room {}: queue is being dropped",
+                self.room_id
+            );
+            return;
+        };
 
         spawn_detached(async move {
             // Check if there's already a timer for this room_id and epoch_at
@@ -904,10 +842,7 @@ impl MessageQueue {
         });
     }
 
-    async fn handle_proposal(
-        self: &Arc<Self>,
-        proposal: mls_types::MlsMessage,
-    ) -> Result<(), anyhow::Error> {
+    async fn handle_proposal(&self, proposal: mls_types::MlsMessage) -> Result<(), anyhow::Error> {
         let epoch_of_proposal = proposal
             .epoch()
             .ok_or(anyhow::anyhow!("Expected proposal to have an epoch"))?;
@@ -966,8 +901,8 @@ impl MessageQueue {
         Ok(())
     }
 
-    async fn handle_batched_proposals(
-        self: &Arc<Self>,
+    pub(super) async fn handle_batched_proposals(
+        &self,
         queued_proposals: Vec<QueuedProposal>,
         mls_rank_group: u64,
     ) -> Result<(), anyhow::Error> {
@@ -1365,11 +1300,117 @@ impl MessageQueue {
     }
 }
 
+#[async_trait]
+impl MessageQueue for MessageQueueImpl {
+    #[cfg(test)]
+    fn msg_cache(&self) -> Arc<dyn MessageCachePort> {
+        self.msg_cache.clone()
+    }
+
+    #[cfg(test)]
+    fn queued_len(&self) -> usize {
+        self.queue.read().len()
+    }
+
+    async fn push_commit(&self, commit: mls_types::MlsMessage) -> Result<(), anyhow::Error> {
+        match self.process_commit_message(commit).await {
+            Ok(CommitProcessingOutcome::Applied) => {
+                // Process cached messages only after we actually advanced/applied commit state.
+                match self.process_cached_messages().await {
+                    Ok(_) => tracing::debug!(
+                        "Cached messages processed successfully for room {}",
+                        self.room_id
+                    ),
+                    Err(e) => tracing::warn!(
+                        "Failed to process cached messages for room {}: {e:?}",
+                        self.room_id,
+                    ),
+                }
+            }
+            Ok(CommitProcessingOutcome::NoStateChange) => {
+                tracing::debug!(
+                    "Commit did not change state for room {}, skipping cached message processing",
+                    self.room_id
+                );
+            }
+            Ok(CommitProcessingOutcome::DeferredFutureEpoch) => {
+                tracing::debug!("Commit deferred for future epoch in room {}, skipping cached message processing", self.room_id);
+            }
+
+            Err(e) => {
+                if let Some(ServiceError::PskProposalMissing) = e.downcast_ref::<ServiceError>() {
+                    tracing::error!(
+                        "Commit rejected: PSK proposal missing or has wrong ID for room {}",
+                        self.room_id
+                    );
+                    return Err(e);
+                } else {
+                    tracing::warn!(
+                        "Failed to process commit message for room {}: {e}",
+                        self.room_id,
+                    );
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    async fn push_proposal(&self, proposal: mls_types::MlsMessage) -> Result<(), anyhow::Error> {
+        match self.process_proposal_message(proposal.clone()).await {
+            Ok(ProposalProcessingOutcome::Applied) => {
+                // A proposal accepted into the current epoch can unblock a commit that was
+                // cached because MLS reported `ProposalNotFound`, so replay the backlog.
+                match self.process_cached_messages().await {
+                    Ok(_) => tracing::debug!(
+                        "Cached messages processed successfully for room {}",
+                        self.room_id
+                    ),
+                    Err(e) => tracing::warn!(
+                        "Failed to process cached messages for room {}: {e:?}",
+                        self.room_id,
+                    ),
+                }
+            }
+            Ok(ProposalProcessingOutcome::NoStateChange) => {
+                tracing::debug!(
+                    "Proposal did not change state for room {}, skipping cached message processing",
+                    self.room_id
+                );
+            }
+            Ok(ProposalProcessingOutcome::DeferredFutureEpoch) => {
+                tracing::debug!(
+                    "Proposal deferred for future epoch in room {}, skipping cached message processing",
+                    self.room_id
+                );
+            }
+            Err(e) => {
+                tracing::warn!("Failed to process proposal message: {e}");
+                // Keep the proposal so a later epoch can retry it.
+                if let Err(e) = self.cache_proposal_message(proposal).await {
+                    tracing::warn!(
+                        "Failed to cache proposal message for room {}: {e:?}",
+                        self.room_id
+                    );
+                }
+            }
+        }
+
+        Ok(())
+    }
+}
+
 #[test]
 #[allow(unreachable_code)]
 #[should_panic]
 fn require_fn_to_be_send() {
     fn require_send<T: Send>(_t: T) {}
-    require_send(MessageQueue::push_commit(todo!(), todo!()));
-    require_send(MessageQueue::push_proposal(todo!(), todo!()));
+    require_send(<MessageQueueImpl as MessageQueue>::push_commit(
+        todo!(),
+        todo!(),
+    ));
+    require_send(<MessageQueueImpl as MessageQueue>::push_proposal(
+        todo!(),
+        todo!(),
+    ));
 }

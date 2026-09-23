@@ -1,5 +1,7 @@
 //! Shared fixtures for `app/` unit tests. Keeps mocks out of production modules.
 
+use std::future::Future;
+use std::pin::Pin;
 use std::sync::{Arc, Weak};
 use std::{collections::HashMap, future::ready, str::FromStr};
 
@@ -27,6 +29,7 @@ use crate::infra::{
 use crate::service::auth::{ArcAuthService, AuthServiceImpl};
 use crate::service::caption::{ArcCaptionService, CaptionServiceImpl};
 use crate::service::create_mock_mls_api;
+use crate::service::message_queue::ArcMessageQueue;
 use crate::service::services_bundle::ServiceBundle;
 use crate::service::user_service::Service;
 use crate::utils::server_time::ServerTimeTracker;
@@ -211,6 +214,17 @@ pub fn minimal_caption_service(service: Arc<RwLock<Service>>) -> ArcCaptionServi
     ))
 }
 
+/// Queue factory for the app-level fixtures, which never exercise the MLS message
+/// queue. Returning `None` makes `ServiceBundle::get_message_queue` report that the
+/// room has no group, which is accurate for these bundles.
+pub fn minimal_queue_factory(
+) -> impl Fn(String) -> Pin<Box<dyn Future<Output = Option<ArcMessageQueue>> + Send + Sync>>
+       + Send
+       + Sync
+       + 'static {
+    |_room_id| Box::pin(async { None })
+}
+
 pub async fn build_app(state: AppState) -> App {
     build_app_with_http(state, test_proton_http_client().await).await
 }
@@ -232,6 +246,7 @@ pub async fn build_app_with_http(state: AppState, http_client: Arc<ProtonHttpCli
             minimal_auth_service(),
             minimal_caption_service(service.clone()),
             service,
+            minimal_queue_factory(),
         )),
     )
 }
@@ -258,6 +273,7 @@ pub async fn build_app_with_test_http(
             minimal_auth_service(),
             minimal_caption_service(service.clone()),
             service,
+            minimal_queue_factory(),
         )),
     )
 }
@@ -283,6 +299,7 @@ pub async fn build_app_with_test_mls_api(
             minimal_auth_service(),
             minimal_caption_service(service.clone()),
             service,
+            minimal_queue_factory(),
         )),
     )
 }
@@ -305,6 +322,7 @@ pub async fn build_app_with_service(state: AppState, service: Service) -> App {
             minimal_auth_service(),
             minimal_caption_service(service.clone()),
             service,
+            minimal_queue_factory(),
         )),
     )
 }
@@ -327,6 +345,7 @@ pub async fn build_app_with_auth_service(state: AppState, auth_service: ArcAuthS
             auth_service,
             minimal_caption_service(service.clone()),
             service,
+            minimal_queue_factory(),
         )),
     )
 }
@@ -353,6 +372,7 @@ pub async fn build_app_with_service_and_mls_api(
             minimal_auth_service(),
             minimal_caption_service(service.clone()),
             service,
+            minimal_queue_factory(),
         )),
     )
 }
@@ -507,6 +527,7 @@ pub async fn build_app_with_room(state: AppState, room_service: RoomService) -> 
             minimal_auth_service(),
             minimal_caption_service(service.clone()),
             service,
+            minimal_queue_factory(),
         )),
     )
 }
@@ -533,6 +554,7 @@ pub async fn build_app_with_room_and_ws(
             minimal_auth_service(),
             minimal_caption_service(service.clone()),
             service,
+            minimal_queue_factory(),
         )),
     )
 }
@@ -560,6 +582,7 @@ pub async fn build_app_with_room_and_service(
             minimal_auth_service(),
             minimal_caption_service(service.clone()),
             service,
+            minimal_queue_factory(),
         )),
     )
 }
@@ -586,6 +609,7 @@ pub async fn build_app_with_ws_and_service(
             minimal_auth_service(),
             minimal_caption_service(service.clone()),
             service,
+            minimal_queue_factory(),
         )),
     )
 }
@@ -611,6 +635,7 @@ pub async fn build_app_with_user_key_provider(
             minimal_auth_service(),
             minimal_caption_service(service.clone()),
             service,
+            minimal_queue_factory(),
         )),
     )
 }
@@ -637,6 +662,7 @@ pub async fn build_app_with_room_and_user_key_provider(
             minimal_auth_service(),
             minimal_caption_service(service.clone()),
             service,
+            minimal_queue_factory(),
         )),
     )
 }
@@ -659,6 +685,7 @@ pub async fn build_app_with_ws(ws: MockWebSocketClient, state: AppState) -> App 
             minimal_auth_service(),
             minimal_caption_service(service.clone()),
             service,
+            minimal_queue_factory(),
         )),
     )
 }
@@ -824,6 +851,7 @@ pub async fn build_app_with_service_room_and_ws(
             minimal_auth_service(),
             minimal_caption_service(service.clone()),
             service,
+            minimal_queue_factory(),
         )),
     )
 }

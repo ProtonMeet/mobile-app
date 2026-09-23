@@ -11,7 +11,7 @@ use tokio::sync::RwLock;
 use crate::service::auth::ArcAuthService;
 use crate::{
     domain::room::{RoomService, WaitingRoomService},
-    service::{caption::ArcCaptionService, message_queue::MessageQueue, user_service::Service},
+    service::{caption::ArcCaptionService, message_queue::ArcMessageQueue, user_service::Service},
     utils::sync::AsyncRwLock,
 };
 
@@ -23,9 +23,9 @@ pub(crate) struct ServiceBundle {
     pub auth_service: ArcAuthService,
     pub caption_service: ArcCaptionService,
     pub user_service: Arc<RwLock<Service>>,
-    pub mls_queues: AsyncRwLock<HashMap<String, Arc<MessageQueue>>>,
+    pub mls_queues: AsyncRwLock<HashMap<String, ArcMessageQueue>>,
     queue_factory: Box<
-        dyn Fn(String) -> Pin<Box<dyn Future<Output = Option<Arc<MessageQueue>>> + Send + Sync>>
+        dyn Fn(String) -> Pin<Box<dyn Future<Output = Option<ArcMessageQueue>> + Send + Sync>>
             + Send
             + Sync,
     >,
@@ -33,7 +33,7 @@ pub(crate) struct ServiceBundle {
 
 impl ServiceBundle {
     pub(crate) fn new<
-        F: Fn(String) -> Pin<Box<dyn Future<Output = Option<Arc<MessageQueue>>> + Send + Sync>>
+        F: Fn(String) -> Pin<Box<dyn Future<Output = Option<ArcMessageQueue>> + Send + Sync>>
             + Send
             + Sync
             + 'static,
@@ -64,7 +64,7 @@ impl ServiceBundle {
     pub async fn get_message_queue(
         &self,
         room_id: String,
-    ) -> Result<Arc<MessageQueue>, anyhow::Error> {
+    ) -> Result<ArcMessageQueue, anyhow::Error> {
         if let Some(queue) = self.mls_queues.read().await.get(&room_id) {
             return Ok(queue.clone());
         }

@@ -2,8 +2,6 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-#[cfg(test)]
-use crate::infra::message_cache::MlsMessageCache;
 use crate::{
     domain::user::ports::{ConnectionState, UserService},
     infra::{dto::websocket::ClientAck, ws_client::WebSocketMessage},
@@ -19,8 +17,6 @@ use meet_type::{
     JoinRoomResponse, WebSocketTextResponse, WebSocketTextResponseCommand,
 };
 use mls_spec::Parsable;
-#[cfg(test)]
-use tokio::sync::Mutex;
 use uuid::Uuid;
 
 impl Service {
@@ -400,7 +396,18 @@ impl Service {
 #[cfg(not(target_family = "wasm"))]
 #[cfg(test)]
 impl Service {
-    pub async fn get_cached_message(&self) -> Result<Arc<Mutex<MlsMessageCache>>, anyhow::Error> {
-        Ok(self.message_cache.clone())
+    /// Returns the message cache backing `room_id`'s [`MessageQueue`].
+    ///
+    /// The cache moved from `Service` onto the per-room queue, so tests reach it through
+    /// the service bundle rather than off a field.
+    pub async fn get_cached_message(
+        &self,
+        room_id: &str,
+    ) -> Result<Arc<dyn crate::domain::mls::ports::MessageCachePort>, anyhow::Error> {
+        Ok(self
+            .services()?
+            .get_message_queue(room_id.to_string())
+            .await?
+            .msg_cache())
     }
 }
