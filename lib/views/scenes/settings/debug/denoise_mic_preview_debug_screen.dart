@@ -321,6 +321,10 @@ class _DenoiseMicPreviewDebugScreenState
       }
 
       final track = await LocalAudioTrack.create(_captureOptions());
+      // Published before the rest of the setup so [_stopMonitoring] can release
+      // the mic if anything below throws. Otherwise the capture track stays open
+      // with no reference and the next start finds the device busy.
+      _audioTrack = track;
       await track.start();
 
       await _applyDenoiseType(
@@ -337,22 +341,20 @@ class _DenoiseMicPreviewDebugScreenState
       await _syncDevicesFromActiveTrack(track);
 
       if (!mounted) {
-        await track.stop();
-        await _loopback.stop();
+        await _stopMonitoring();
         return;
       }
 
       setState(() {
-        _audioTrack = track;
         _monitoring = true;
         _starting = false;
       });
     } catch (e) {
+      await _stopMonitoring();
       if (!mounted) {
         return;
       }
       setState(() {
-        _monitoring = false;
         _starting = false;
         _error = '$e';
       });

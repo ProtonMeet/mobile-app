@@ -28,6 +28,9 @@ Defaults live in `BackgroundBlurConfig` (used by Meet via `const BackgroundBlurC
 | -------------------------- | -------------------------------------------------------- |
 | `blurSigma`                | 128 (Gaussian σ on Apple; mapped to box blur on Android) |
 | `backgroundObscureOpacity` | 0.1                                                      |
+| `maskEdge`                 | See `MaskEdgeTuning` (erode → solidify → feather → gamma) |
+
+`maskEdge` is honoured by every native engine. Apple shapes the mask at frame resolution in Core Image; Android and the desktop engine shape it in mask space, converting the frame-height fractions to mask pixels.
 
 ## Dart API
 
@@ -107,3 +110,9 @@ The CPU segmentation + blur pipeline mirrors Android. Wiring processed frames in
 ## Custom background
 
 Still-image replacement is enabled (`BackgroundBlurConfig.replacementBackgroundEnabled = true`): an image supplied by path or bytes is composited through the same segmentation mask as blur. Callers set it with `setReplacementBackgroundImagePath` / `setReplacementBackgroundImageBytes` and drop it with `clearReplacementBackground`, which also releases the decoded copy the engine caches.
+
+On Linux and Windows the compositing lives in `native/` and the channel handling in `common/desktop/`, so both platforms share one implementation. Only the codec is platform-specific: `common/desktop/desktop_image_decoder.h` declares the interface, and each platform directory implements it — `windows/desktop_image_decoder_win.cpp` on WIC, `linux/desktop_image_decoder_linux.cc` on GdkPixbuf. Both apply EXIF orientation and hand the engine tightly packed RGBA.
+
+The image is cover-scaled to the frame and centre-cropped, so it is never stretched, and the cover-scaled copy is cached per frame size. As on Android and iOS, the obscure veil and desaturation apply to the blurred camera plate only — a picture the user chose is drawn as-is.
+
+Desktop does not pre-rotate the replacement for `rotationDegrees` the way Android does; the desktop engine ignores frame rotation throughout, since desktop capture is not orientation-swapped.

@@ -45,7 +45,11 @@ int GetIntArg(const EncodableMap* args, const char* key, int default_value) {
   if (it == args->end()) {
     return default_value;
   }
+  // Dart ints arrive as int32_t or int64_t depending on magnitude.
   if (const auto* v = std::get_if<int32_t>(&it->second)) {
+    return static_cast<int>(*v);
+  }
+  if (const auto* v = std::get_if<int64_t>(&it->second)) {
     return static_cast<int>(*v);
   }
   return default_value;
@@ -66,19 +70,46 @@ bool GetBoolArg(const EncodableMap* args, const char* key, bool default_value) {
 }
 
 EncodableList BuildDenoiseTypesList() {
-  return EncodableList{
-      EncodableMap{
-          {EncodableValue("id"), EncodableValue("rnnoise")},
-          {EncodableValue("displayName"), EncodableValue("RNNoise")},
-          {EncodableValue("isReady"),
-           EncodableValue(DesktopAudioDenoise::Instance().IsRnnoiseReady())},
-      },
-      EncodableMap{
-          {EncodableValue("id"), EncodableValue("deepfilter")},
-          {EncodableValue("displayName"), EncodableValue("DeepFilter")},
-          {EncodableValue("isReady"), EncodableValue(false)},
-      },
-  };
+  EncodableList list;
+  for (const auto& type : DesktopAudioDenoise::Instance().ListDenoiseTypes()) {
+    list.push_back(EncodableValue(EncodableMap{
+        {EncodableValue("id"), EncodableValue(type.id)},
+        {EncodableValue("displayName"), EncodableValue(type.display_name)},
+        {EncodableValue("isReady"), EncodableValue(type.is_ready)},
+    }));
+  }
+  return list;
+}
+
+EncodableList BuildDiagnosticsList() {
+  EncodableList list;
+  for (const auto& type : DesktopAudioDenoise::Instance().ListDenoiseTypes()) {
+    list.push_back(EncodableValue(EncodableMap{
+        {EncodableValue("id"), EncodableValue(type.id)},
+        {EncodableValue("displayName"), EncodableValue(type.display_name)},
+        {EncodableValue("isReady"), EncodableValue(type.is_ready)},
+        {EncodableValue("details"),
+         EncodableValue(EncodableMap{
+             {EncodableValue("platform"), EncodableValue("windows")},
+             {EncodableValue("status"), EncodableValue(type.status)},
+         })},
+    }));
+  }
+  return list;
+}
+
+EncodableList BuildWarmUpList(const std::string& type_id) {
+  EncodableList list;
+  for (const auto& entry : DesktopAudioDenoise::Instance().WarmUp(type_id)) {
+    list.push_back(EncodableValue(EncodableMap{
+        {EncodableValue("id"), EncodableValue(entry.id)},
+        {EncodableValue("warmUpOk"), EncodableValue(entry.warm_up_ok)},
+        {EncodableValue("warmUpMs"),
+         EncodableValue(static_cast<int32_t>(entry.warm_up_ms))},
+        {EncodableValue("status"), EncodableValue(entry.status)},
+    }));
+  }
+  return list;
 }
 
 }  // namespace
@@ -131,6 +162,14 @@ void ProtonDenoisePlugin::HandleEffectsCall(
     result->Success(EncodableValue(BuildDenoiseTypesList()));
     return;
   }
+  if (method_call.method_name() == "diagnoseDenoise") {
+    result->Success(EncodableValue(BuildDiagnosticsList()));
+    return;
+  }
+  if (method_call.method_name() == "warmUpDenoise") {
+    result->Success(EncodableValue(BuildWarmUpList(type_id)));
+    return;
+  }
   if (method_call.method_name() == "isTypeReady") {
     result->Success(EncodableValue(handled.bool_value));
     return;
@@ -156,13 +195,15 @@ void ProtonDenoisePlugin::HandleLegacyCall(
     }
     const int channels = GetIntArg(args, "channels", 1);
 
-    const auto& typed_data =
-        std::get<flutter::EncodableTypedData>(samples_it->second).data();
-    std::vector<uint8_t> buffer = typed_data;
-    const size_t float_count = buffer.size() / sizeof(float);
+    const auto* samples =
+        std::get_if<std::vector<float>>(&samples_it->second);
+    if (!samples) {
+      result->Error("invalid_args", "samples must be a Float32List");
+      return;
+    }
+    std::vector<float> buffer = *samples;
     const auto processed = DesktopAudioDenoise::Instance().ProcessFrame(
-        reinterpret_cast<float*>(buffer.data()), float_count,
-        channels > 0 ? channels : 1);
+        buffer.data(), buffer.size(), channels > 0 ? channels : 1);
     if (!processed.success) {
       result->Error(processed.error_code, processed.error_message);
       return;
@@ -170,9 +211,7 @@ void ProtonDenoisePlugin::HandleLegacyCall(
 
     EncodableMap response;
     response[EncodableValue("vad")] = EncodableValue(processed.float_value);
-    response[EncodableValue("samples")] = EncodableValue(
-        flutter::EncodableTypedData(flutter::EncodableTypedData::Float32,
-                                    std::move(buffer)));
+    response[EncodableValue("samples")] = EncodableValue(std::move(buffer));
     result->Success(EncodableValue(response));
     return;
   }

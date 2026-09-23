@@ -166,7 +166,9 @@ target_include_directories(rnnoise
 target_compile_definitions(rnnoise PRIVATE OPUS_BUILD=1)
 
 if(MSVC)
-  target_compile_options(rnnoise PRIVATE /W3 /O2)
+  target_compile_options(rnnoise PRIVATE /W3)
+  # /O2 conflicts with Debug /RTC1 (error D8016); apply optimization only for non-Debug.
+  target_compile_options(rnnoise PRIVATE "$<$<NOT:$<CONFIG:Debug>>:/O2>")
 else()
   target_compile_options(rnnoise PRIVATE -Wall -Wno-unused-parameter -O3 -fvisibility=hidden)
   target_link_libraries(rnnoise PRIVATE m)

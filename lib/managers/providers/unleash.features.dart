@@ -184,5 +184,5 @@ const Map<UnleashFeature, bool> kUnleashLocalOverrides = {
   // UnleashFeature.meetInAppPurchase: true,
   // UnleashFeature.meetMeetingRecordingNative: true,
   // UnleashFeature.meetWaitingRoom: true,
-  // UnleashFeature.meetCameraBackgroundBlur: true,
+  UnleashFeature.meetCameraBackgroundBlur: true,
 };

@@ -1,5 +1,7 @@
-# Vendored MediaPipe and package inputs staged by scripts/spm/prepare_ios_spm.sh.
-third_party/
+# Vendored MediaPipe and package inputs staged by scripts/spm/prepare_ios_spm.sh
+# into <plugin>/third_party/mediapipe/. Anchored to the plugin root on purpose:
+# native/third_party/tflite is a committed prebuilt and must stay tracked.
+/third_party/
 ios/proton_video_effects/VendoredFrameworks/
 ios/proton_video_effects/Sources/proton_video_effects/Resources/
 
@@ -36,3 +38,6 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 /build/
 /coverage/
+
+# Local CMake trees for the native engine + its tests (see native/README.md).
+native/build*/

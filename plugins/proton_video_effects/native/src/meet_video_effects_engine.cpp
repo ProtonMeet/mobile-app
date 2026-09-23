@@ -13,16 +13,49 @@
 #include <vector>
 
 #ifdef MEET_VIDEO_EFFECTS_USE_TFLITE
+#include "meet_video_effects_custom_ops.h"
 #include "tensorflow/lite/c/c_api.h"
 #endif
 
 namespace {
 
 constexpr int kSegmenterSize = 256;
-constexpr int kProcessingLongSide = 720;
+// Frames are composited at their own size up to this long side, so a 720p
+// camera now round-trips unscaled. Segmentation is unaffected either way: the
+// mask is always inferred at kSegmenterSize, so only the colour conversions and
+// the composite scale with this, and the blur plate stays cheap via
+// kBlurDownsample. Lower it if compositing cannot keep up with the capture
+// rate; 1080p still downscales to 1280x720.
+constexpr int kProcessingLongSide = 1280;
 constexpr float kBlurDownsample = 0.25f;
 constexpr int kBlurRadius = 8;
-constexpr float kMaskFeatherSigma = 1.5f;
+
+// Floor for the feather sigma, in mask pixels. The bundled segmenter emits a
+// confidence mask, so most of the smoothness comes from the source and this
+// only guarantees the upscale has about a pixel of ramp to interpolate. Matches
+// MASK_FEATHER_SIGMA_MIN_CONFIDENCE on Android.
+constexpr float kMaskFeatherSigmaFloor = 0.9f;
+
+// Mask shaping defaults mirror Dart's MaskEdgeTuning; keep the two in sync.
+constexpr float kDefaultFeatherHeightFraction = 0.010f;
+constexpr float kDefaultErodeHeightFraction = 0.002f;
+constexpr float kDefaultSolidifySlope = 6.f;
+constexpr float kDefaultSolidifyMidpoint = 0.55f;
+constexpr float kDefaultForegroundGamma = 1.f;
+
+// Blur tunables mirror BackgroundBlurConfig / the Android engine so the same
+// slider produces a comparable result on every platform.
+constexpr float kDefaultBlurSigma = 128.f;
+constexpr float kDefaultObscureOpacity = 0.1f;
+
+// Desaturate the blurred camera plate (0 = full colour, 1 = grey).
+// Matches Android BACKGROUND_DESATURATION and iOS backgroundDesaturation.
+constexpr float kBackgroundDesaturation = 0.5f;
+
+// Veil tint over the blurred plate; same neutral grey as Android.
+constexpr int kVeilR = 115;
+constexpr int kVeilG = 115;
+constexpr int kVeilB = 122;
 
 struct I420Buffer {
   int width = 0;
@@ -189,6 +222,90 @@ static void FeatherMask(std::vector<uint8_t>* mask, int w, int h, float sigma) {
   }
 }
 
+// Shape of the mask before blending, as pushed by
+// meet_video_effects_set_mask_edge_tuning. Stored clamped.
+struct MaskEdgeTuning {
+  float feather_height_fraction = kDefaultFeatherHeightFraction;
+  float erode_height_fraction = kDefaultErodeHeightFraction;
+  float solidify_slope = kDefaultSolidifySlope;
+  float solidify_midpoint = kDefaultSolidifyMidpoint;
+  float foreground_gamma = kDefaultForegroundGamma;
+
+  bool operator==(const MaskEdgeTuning& other) const {
+    return feather_height_fraction == other.feather_height_fraction &&
+           erode_height_fraction == other.erode_height_fraction &&
+           solidify_slope == other.solidify_slope &&
+           solidify_midpoint == other.solidify_midpoint &&
+           foreground_gamma == other.foreground_gamma;
+  }
+};
+
+/**
+ * Separable minimum filter — the counterpart of CIMorphologyMinimum on Apple
+ * and erodeMask on Android.
+ *
+ * Erosion by a square structuring element is separable, so this is two
+ * O(w*h*radius) passes rather than a 2-D window. Radii under half a pixel are
+ * dropped, leaving the mask untouched.
+ */
+static void ErodeMask(std::vector<uint8_t>* mask, int w, int h, float radius) {
+  const int r = static_cast<int>(radius + 0.5f);
+  if (r < 1) return;
+  std::vector<uint8_t> pass1(mask->size());
+  for (int y = 0; y < h; ++y) {
+    const int row = y * w;
+    for (int x = 0; x < w; ++x) {
+      uint8_t m = 255;
+      for (int k = -r; k <= r; ++k) {
+        m = std::min(m, (*mask)[row + std::clamp(x + k, 0, w - 1)]);
+      }
+      pass1[row + x] = m;
+    }
+  }
+  for (int x = 0; x < w; ++x) {
+    for (int y = 0; y < h; ++y) {
+      uint8_t m = 255;
+      for (int k = -r; k <= r; ++k) {
+        m = std::min(m, pass1[std::clamp(y + k, 0, h - 1) * w + x]);
+      }
+      (*mask)[y * w + x] = m;
+    }
+  }
+}
+
+/**
+ * Builds the 256-entry table for one of the per-sample tone stages.
+ *
+ * Both solidify and gamma are pure functions of the alpha byte, so evaluating
+ * them per mask pixel — 65 536 powf calls a frame for gamma alone — is wasted
+ * work on the capture thread.
+ */
+static void BuildSolidifyLut(const MaskEdgeTuning& edge, uint8_t lut[256]) {
+  // Same linear stretch about the midpoint that Apple runs as a CIColorMatrix,
+  // clamped for the same reason: the stretch pushes values past 0 and 1, and an
+  // out-of-range alpha would survive into the blend.
+  const float bias = 0.5f - edge.solidify_slope * edge.solidify_midpoint;
+  for (int i = 0; i < 256; ++i) {
+    const float v = edge.solidify_slope > 1.f
+                        ? edge.solidify_slope * (i / 255.f) + bias
+                        : i / 255.f;
+    lut[i] = static_cast<uint8_t>(
+        std::clamp(static_cast<int>(v * 255.f), 0, 255));
+  }
+}
+
+static void BuildGammaLut(const MaskEdgeTuning& edge, uint8_t lut[256]) {
+  for (int i = 0; i < 256; ++i) {
+    const float v = std::pow(i / 255.f, edge.foreground_gamma);
+    lut[i] = static_cast<uint8_t>(
+        std::clamp(static_cast<int>(v * 255.f), 0, 255));
+  }
+}
+
+static void ApplyLut(std::vector<uint8_t>* mask, const uint8_t lut[256]) {
+  for (uint8_t& v : *mask) v = lut[v];
+}
+
 #ifdef MEET_VIDEO_EFFECTS_USE_TFLITE
 struct TfliteSegmenter {
   TfLiteModel* model = nullptr;
@@ -200,6 +317,9 @@ struct TfliteSegmenter {
     if (!model) return false;
     TfLiteInterpreterOptions* options = TfLiteInterpreterOptionsCreate();
     TfLiteInterpreterOptionsSetNumThreads(options, 2);
+    // The bundled MediaPipe models use a custom operator that stock TFLite does
+    // not ship; without this the interpreter fails to build.
+    meet_video_effects::RegisterCustomOps(options);
     interpreter = TfLiteInterpreterCreate(model, options);
     TfLiteInterpreterOptionsDelete(options);
     if (!interpreter) {
@@ -227,7 +347,7 @@ struct TfliteSegmenter {
     TfLiteTensor* input = TfLiteInterpreterGetInputTensor(interpreter, 0);
     const int n = kSegmenterSize * kSegmenterSize;
     if (TfLiteTensorType(input) == kTfLiteFloat32) {
-      float* in = TfLiteTensorData(input);
+      float* in = static_cast<float*>(TfLiteTensorData(input));
       for (int i = 0; i < n; ++i) {
         const uint32_t px = argb256[i];
         in[i * 3 + 0] = ((px >> 16) & 0xFF) / 255.f;
@@ -236,7 +356,7 @@ struct TfliteSegmenter {
       }
     }
     TfLiteInterpreterInvoke(interpreter);
-    TfLiteTensor* output = TfLiteInterpreterGetOutputTensor(interpreter, 0);
+    const TfLiteTensor* output = TfLiteInterpreterGetOutputTensor(interpreter, 0);
     std::vector<uint8_t> alpha(n);
     if (TfLiteTensorType(output) == kTfLiteFloat32) {
       const float* out = static_cast<const float*>(TfLiteTensorData(output));
@@ -258,9 +378,58 @@ struct MeetVideoEffectsEngineImpl {
   std::vector<uint8_t> mask_small;
   std::vector<uint8_t> mask_full;
   std::vector<uint32_t> argb_work;
+  /**
+   * Composited result of the most recent frame, kept so a preview can read it
+   * without re-running the pipeline. Same 0xAARRGGBB packing as [argb_work].
+   */
+  std::vector<uint32_t> last_composed;
+  int last_composed_width = 0;
+  int last_composed_height = 0;
   std::vector<uint32_t> blurred_work;
   I420Buffer output_i420;
   bool ready = false;
+
+  int background_mode = kMeetVideoEffectsBackgroundBlur;
+  float blur_sigma = kDefaultBlurSigma;
+  float obscure_opacity = kDefaultObscureOpacity;
+
+  MaskEdgeTuning mask_edge;
+  // Tone tables for [mask_edge], rebuilt only when the tuning they were derived
+  // from stops matching.
+  uint8_t solidify_lut[256];
+  uint8_t gamma_lut[256];
+  bool tone_luts_valid = false;
+  MaskEdgeTuning tone_lut_edge;
+
+  void EnsureToneLuts() {
+    if (tone_luts_valid && tone_lut_edge == mask_edge) return;
+    BuildSolidifyLut(mask_edge, solidify_lut);
+    BuildGammaLut(mask_edge, gamma_lut);
+    tone_lut_edge = mask_edge;
+    tone_luts_valid = true;
+  }
+
+  // Source pixels as handed over by the platform decoder.
+  std::vector<uint32_t> replacement_argb;
+  int replacement_width = 0;
+  int replacement_height = 0;
+
+  // Cover-scaled copy for the current frame size. Rebuilding it per frame would
+  // resample the whole image on the capture thread for pixels that never change.
+  std::vector<uint32_t> replacement_plate;
+  int replacement_plate_width = 0;
+  int replacement_plate_height = 0;
+
+  bool UsesReplacementImage() const {
+    return background_mode == kMeetVideoEffectsBackgroundImage &&
+           replacement_width > 0 && replacement_height > 0;
+  }
+
+  void InvalidateReplacementPlate() {
+    replacement_plate.clear();
+    replacement_plate_width = 0;
+    replacement_plate_height = 0;
+  }
 };
 
 }  // namespace
@@ -295,6 +464,71 @@ bool meet_video_effects_is_ready(const MeetVideoEffectsEngine* engine) {
   return engine && engine->impl.ready;
 }
 
+void meet_video_effects_set_background_mode(
+    MeetVideoEffectsEngine* engine,
+    MeetVideoEffectsBackgroundMode mode) {
+  if (!engine) return;
+  std::lock_guard<std::mutex> lock(engine->impl.mutex);
+  engine->impl.background_mode = mode;
+}
+
+void meet_video_effects_set_blur_config(MeetVideoEffectsEngine* engine,
+                                        float blur_sigma,
+                                        float background_obscure_opacity) {
+  if (!engine) return;
+  std::lock_guard<std::mutex> lock(engine->impl.mutex);
+  engine->impl.blur_sigma = std::clamp(blur_sigma, 4.f, 256.f);
+  engine->impl.obscure_opacity = std::clamp(background_obscure_opacity, 0.f, 1.f);
+}
+
+void meet_video_effects_set_mask_edge_tuning(MeetVideoEffectsEngine* engine,
+                                             float feather_height_fraction,
+                                             float erode_height_fraction,
+                                             float solidify_slope,
+                                             float solidify_midpoint,
+                                             float foreground_gamma) {
+  if (!engine) return;
+  std::lock_guard<std::mutex> lock(engine->impl.mutex);
+  MaskEdgeTuning edge;
+  edge.feather_height_fraction = std::clamp(feather_height_fraction, 0.f, 0.05f);
+  edge.erode_height_fraction = std::clamp(erode_height_fraction, 0.f, 0.05f);
+  edge.solidify_slope = std::clamp(solidify_slope, 1.f, 16.f);
+  edge.solidify_midpoint = std::clamp(solidify_midpoint, 0.2f, 0.8f);
+  edge.foreground_gamma = std::clamp(foreground_gamma, 0.5f, 3.f);
+  engine->impl.mask_edge = edge;
+}
+
+bool meet_video_effects_set_replacement_image(MeetVideoEffectsEngine* engine,
+                                              const uint8_t* rgba,
+                                              int width,
+                                              int height) {
+  if (!engine) return false;
+  std::lock_guard<std::mutex> lock(engine->impl.mutex);
+
+  if (!rgba || width <= 0 || height <= 0) {
+    engine->impl.replacement_argb.clear();
+    engine->impl.replacement_width = 0;
+    engine->impl.replacement_height = 0;
+    engine->impl.InvalidateReplacementPlate();
+    // Clearing is a valid request, not a decode failure.
+    return rgba == nullptr;
+  }
+
+  const size_t count = static_cast<size_t>(width) * height;
+  engine->impl.replacement_argb.resize(count);
+  for (size_t i = 0; i < count; ++i) {
+    const uint8_t* px = rgba + i * 4;
+    engine->impl.replacement_argb[i] = 0xFF000000u |
+                                       (static_cast<uint32_t>(px[0]) << 16) |
+                                       (static_cast<uint32_t>(px[1]) << 8) |
+                                       static_cast<uint32_t>(px[2]);
+  }
+  engine->impl.replacement_width = width;
+  engine->impl.replacement_height = height;
+  engine->impl.InvalidateReplacementPlate();
+  return true;
+}
+
 static void ResizeArgbNearest(
     const std::vector<uint32_t>& src, int sw, int sh,
     std::vector<uint32_t>* dst, int dw, int dh) {
@@ -308,7 +542,131 @@ static void ResizeArgbNearest(
   }
 }
 
+/**
+ * Aspect-fill: scales to cover the destination and centre-crops the overflow,
+ * so a still background is never stretched. Mirrors Android scaleBitmapCover.
+ */
+static void ResizeArgbCover(
+    const std::vector<uint32_t>& src, int sw, int sh,
+    std::vector<uint32_t>* dst, int dw, int dh) {
+  dst->assign(static_cast<size_t>(dw) * dh, 0xFF000000u);
+  if (sw <= 0 || sh <= 0) return;
+  const float scale = std::max(static_cast<float>(dw) / sw,
+                               static_cast<float>(dh) / sh);
+  const float off_x = (sw * scale - dw) * 0.5f;
+  const float off_y = (sh * scale - dh) * 0.5f;
+  for (int y = 0; y < dh; ++y) {
+    const int sy = std::clamp(static_cast<int>((y + off_y) / scale), 0, sh - 1);
+    for (int x = 0; x < dw; ++x) {
+      const int sx = std::clamp(static_cast<int>((x + off_x) / scale), 0, sw - 1);
+      (*dst)[static_cast<size_t>(y) * dw + x] = src[static_cast<size_t>(sy) * sw + sx];
+    }
+  }
+}
+
+/** Blur radius tracks the configured sigma, as on Android. */
+static int BlurRadiusForSigma(float sigma) {
+  const int radius =
+      static_cast<int>(sigma / kDefaultBlurSigma * kBlurRadius);
+  return std::clamp(radius, 1, 96);
+}
+
+/**
+ * Mutes the real room behind the caller. Applied to the blurred camera plate
+ * only — a replacement image is something the user picked, so tinting it would
+ * just wash it out (same rule as Android BackgroundPlate.wantsObscureVeil).
+ */
+static void ApplyObscureVeil(std::vector<uint32_t>* plate, float opacity) {
+  const int veil = std::clamp(static_cast<int>(opacity * 255.f + 0.5f), 0, 255);
+  const int desat = std::clamp(
+      static_cast<int>(kBackgroundDesaturation * 255.f + 0.5f), 0, 255);
+  if (veil == 0 && desat == 0) return;
+  for (uint32_t& px : *plate) {
+    int r = (px >> 16) & 0xFF;
+    int g = (px >> 8) & 0xFF;
+    int b = px & 0xFF;
+    if (desat > 0) {
+      const int luma = (77 * r + 150 * g + 29 * b) >> 8;
+      r += ((luma - r) * desat) / 255;
+      g += ((luma - g) * desat) / 255;
+      b += ((luma - b) * desat) / 255;
+    }
+    if (veil > 0) {
+      const int keep = 255 - veil;
+      r = (r * keep + kVeilR * veil) / 255;
+      g = (g * keep + kVeilG * veil) / 255;
+      b = (b * keep + kVeilB * veil) / 255;
+    }
+    px = 0xFF000000u | (static_cast<uint32_t>(r) << 16) |
+         (static_cast<uint32_t>(g) << 8) | static_cast<uint32_t>(b);
+  }
+}
+
+/**
+ * Builds the plate drawn behind the segmented person: the chosen still image
+ * when one is set, otherwise a veiled blur of the camera frame.
+ */
+static const std::vector<uint32_t>& BackgroundPlate(
+    MeetVideoEffectsEngineImpl* impl,
+    const std::vector<uint32_t>& input,
+    int w,
+    int h) {
+  if (impl->UsesReplacementImage()) {
+    if (impl->replacement_plate_width != w ||
+        impl->replacement_plate_height != h) {
+      ResizeArgbCover(impl->replacement_argb, impl->replacement_width,
+                      impl->replacement_height, &impl->replacement_plate, w, h);
+      impl->replacement_plate_width = w;
+      impl->replacement_plate_height = h;
+    }
+    return impl->replacement_plate;
+  }
+
+  const int ds_w = std::max(8, static_cast<int>(w * kBlurDownsample));
+  const int ds_h = std::max(8, static_cast<int>(h * kBlurDownsample));
+  std::vector<uint32_t> small;
+  ResizeArgbNearest(input, w, h, &small, ds_w, ds_h);
+  const int radius = BlurRadiusForSigma(impl->blur_sigma);
+  for (int i = 0; i < 3; ++i) BoxBlurArgb(&small, ds_w, ds_h, radius);
+  ResizeArgbNearest(small, ds_w, ds_h, &impl->blurred_work, w, h);
+  ApplyObscureVeil(&impl->blurred_work, impl->obscure_opacity);
+  return impl->blurred_work;
+}
+
+/**
+ * Shapes the raw segmentation alpha in `impl->mask_small` into the mask used
+ * for blending.
+ *
+ * Runs Apple's stages in Apple's order — erode, solidify, feather, gamma —
+ * because the order is what keeps the dials independent: erosion moves the
+ * outline without reshaping the ramp, solidify fixes interior translucency
+ * while leaving a narrow boundary ramp, and the feather then widens that ramp
+ * into the visible soft edge.
+ *
+ * Apple runs all of this after upscaling to frame resolution. Doing that here
+ * would mean per-pixel loops over ~900 k pixels on the capture thread, so like
+ * Android we work in mask space and convert the frame-height fractions to mask
+ * pixels. The cost is quantisation: one mask pixel is several frame pixels, so
+ * sub-pixel erode radii round away rather than nudging the outline.
+ */
+static void ShapeMaskEdge(MeetVideoEffectsEngineImpl* impl) {
+  const MaskEdgeTuning edge = impl->mask_edge;
+  impl->EnsureToneLuts();
+  ErodeMask(&impl->mask_small, kSegmenterSize, kSegmenterSize,
+            edge.erode_height_fraction * kSegmenterSize);
+  if (edge.solidify_slope > 1.f) {
+    ApplyLut(&impl->mask_small, impl->solidify_lut);
+  }
+  FeatherMask(&impl->mask_small, kSegmenterSize, kSegmenterSize,
+              std::max(edge.feather_height_fraction * kSegmenterSize,
+                       kMaskFeatherSigmaFloor));
+  if (edge.foreground_gamma != 1.f) {
+    ApplyLut(&impl->mask_small, impl->gamma_lut);
+  }
+}
+
 static void Compose(
+    MeetVideoEffectsEngineImpl* impl,
     const std::vector<uint32_t>& input,
     int w,
     int h,
@@ -317,13 +675,7 @@ static void Compose(
     int mh,
     std::vector<uint32_t>* out) {
   out->assign(input.begin(), input.end());
-  const int ds_w = std::max(8, static_cast<int>(w * kBlurDownsample));
-  const int ds_h = std::max(8, static_cast<int>(h * kBlurDownsample));
-  std::vector<uint32_t> small;
-  ResizeArgbNearest(input, w, h, &small, ds_w, ds_h);
-  for (int i = 0; i < 3; ++i) BoxBlurArgb(&small, ds_w, ds_h, kBlurRadius);
-  std::vector<uint32_t> blur_full;
-  ResizeArgbNearest(small, ds_w, ds_h, &blur_full, w, h);
+  const std::vector<uint32_t>& plate = BackgroundPlate(impl, input, w, h);
   std::vector<uint8_t> mask_up(static_cast<size_t>(w * h));
   for (int y = 0; y < h; ++y) {
     for (int x = 0; x < w; ++x) {
@@ -335,7 +687,7 @@ static void Compose(
   for (int i = 0; i < w * h; ++i) {
     const uint8_t a = mask_up[i];
     const uint32_t fg = input[i];
-    const uint32_t bg = blur_full[i];
+    const uint32_t bg = plate[i];
     const int af = a;
     const int ab = 255 - a;
     const int r = (((fg >> 16) & 0xFF) * af + ((bg >> 16) & 0xFF) * ab) / 255;
@@ -398,11 +750,16 @@ bool meet_video_effects_process_i420(
   std::vector<uint32_t> small256;
   ResizeArgbNearest(engine->impl.argb_work, tw, th, &small256, kSegmenterSize, kSegmenterSize);
   engine->impl.mask_small = engine->impl.segmenter->Segment(small256);
-  FeatherMask(&engine->impl.mask_small, kSegmenterSize, kSegmenterSize, kMaskFeatherSigma);
-  std::vector<uint32_t> composed;
-  Compose(engine->impl.argb_work, tw, th, engine->impl.mask_small,
-          kSegmenterSize, kSegmenterSize, &composed);
-  ArgbToI420(composed, tw, th, &engine->impl.output_i420);
+  ShapeMaskEdge(&engine->impl);
+  // Composed straight into the retained buffer: it feeds both the I420 result
+  // below and any preview reading it back, and reusing it keeps the per-frame
+  // allocation out of the capture thread.
+  Compose(&engine->impl, engine->impl.argb_work, tw, th,
+          engine->impl.mask_small, kSegmenterSize, kSegmenterSize,
+          &engine->impl.last_composed);
+  ArgbToI420(engine->impl.last_composed, tw, th, &engine->impl.output_i420);
+  engine->impl.last_composed_width = tw;
+  engine->impl.last_composed_height = th;
   *out_y = engine->impl.output_i420.y.data();
   *out_stride_y = engine->impl.output_i420.stride_y;
   *out_u = engine->impl.output_i420.u.data();
@@ -431,4 +788,44 @@ bool meet_video_effects_process_i420(
   (void)out_height;
   return false;
 #endif
+}
+
+bool meet_video_effects_has_tflite(void) {
+#ifdef MEET_VIDEO_EFFECTS_USE_TFLITE
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool meet_video_effects_copy_last_frame_rgba(MeetVideoEffectsEngine* engine,
+                                             uint8_t* dst,
+                                             size_t dst_capacity,
+                                             int* out_width,
+                                             int* out_height) {
+  if (!engine) return false;
+  std::lock_guard<std::mutex> lock(engine->impl.mutex);
+
+  const int w = engine->impl.last_composed_width;
+  const int h = engine->impl.last_composed_height;
+  if (w <= 0 || h <= 0) return false;
+  const size_t pixels = static_cast<size_t>(w) * static_cast<size_t>(h);
+  if (engine->impl.last_composed.size() < pixels) return false;
+
+  if (out_width) *out_width = w;
+  if (out_height) *out_height = h;
+  // Size query: report the dimensions and let the caller allocate.
+  if (!dst) return false;
+  if (dst_capacity < pixels * 4) return false;
+
+  // 0xAARRGGBB words out, R,G,B,A bytes in: the red and blue channels swap.
+  const uint32_t* src = engine->impl.last_composed.data();
+  for (size_t i = 0; i < pixels; ++i) {
+    const uint32_t px = src[i];
+    dst[i * 4 + 0] = static_cast<uint8_t>((px >> 16) & 0xFF);
+    dst[i * 4 + 1] = static_cast<uint8_t>((px >> 8) & 0xFF);
+    dst[i * 4 + 2] = static_cast<uint8_t>(px & 0xFF);
+    dst[i * 4 + 3] = static_cast<uint8_t>((px >> 24) & 0xFF);
+  }
+  return true;
 }
