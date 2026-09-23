@@ -5,8 +5,9 @@ import 'package:proton_video_effects/proton_video_effects.dart';
 
 /// Every mobile/desktop engine now runs the same erode → solidify → feather → gamma stages, so the
 /// dials mean the same thing everywhere. Apple applies them at frame resolution via Core Image;
-/// Android applies them in mask space with the fractions converted to mask pixels.
-bool get maskEdgeTuningSupported => iOS || macOS || android;
+/// Android and the desktop engine apply them in mask space with the fractions converted to mask
+/// pixels.
+bool get maskEdgeTuningSupported => iOS || macOS || android || windows || linux;
 
 /// Inline segmentation is an Apple-only experiment: the Android engine always dispatches
 /// inference asynchronously and drops `synchronousSegmentation` on the floor, so the switch would

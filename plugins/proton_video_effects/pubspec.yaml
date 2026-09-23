@@ -37,4 +37,4 @@ flutter:
       linux:
         pluginClass: ProtonVideoEffectsPlugin
       windows:
-        pluginClass: ProtonVideoEffectsPlugin
+        pluginClass: ProtonVideoEffectsPluginCApi

@@ -1,0 +1,65 @@
+diff --git a/tensorflow/lite/CMakeLists.txt b/tensorflow/lite/CMakeLists.txt
+index e290b096..a34d8aed 100644
+--- a/tensorflow/lite/CMakeLists.txt
++++ b/tensorflow/lite/CMakeLists.txt
+@@ -84,7 +84,7 @@ if(TFLITE_KERNEL_TEST AND ${CMAKE_CROSSCOMPILING})
+   endif()
+ endif()
+ 
+-set(CMAKE_CXX_STANDARD 17)
++set(CMAKE_CXX_STANDARD 20)
+ set(CMAKE_CXX_STANDARD_REQUIRED ON)
+ set(_TFLITE_ENABLE_RUY "${TFLITE_ENABLE_RUY}")
+ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Android")
+@@ -656,7 +656,7 @@ target_link_libraries(tensorflow-lite
+     ${TFLITE_TARGET_DEPENDENCIES}
+ )
+ 
+-if (NOT BUILD_SHARED_LIBS)
++if (NOT BUILD_SHARED_LIBS AND NOT TFLITE_C_BUILD_SHARED_LIBS)
+   list(APPEND TFLITE_TARGET_PUBLIC_OPTIONS "-DTFL_STATIC_LIBRARY_BUILD")
+ endif()
+ 
+diff --git a/tensorflow/lite/c/CMakeLists.txt b/tensorflow/lite/c/CMakeLists.txt
+index b589d1ab..ae7d4a09 100644
+--- a/tensorflow/lite/c/CMakeLists.txt
++++ b/tensorflow/lite/c/CMakeLists.txt
+@@ -36,7 +36,7 @@ add_subdirectory(
+   EXCLUDE_FROM_ALL
+ )
+ 
+-set(CMAKE_CXX_STANDARD 17)
++set(CMAKE_CXX_STANDARD 20)
+ 
+ if(CMAKE_SYSTEM_NAME MATCHES "Windows"
+     AND (MSVC AND (CMAKE_SIZEOF_VOID_P EQUAL 4)))
+@@ -65,6 +65,7 @@ endif()
+ add_library(tensorflowlite_c ${TFLITE_C_LIBTYPE}
+   ${TFLITE_SOURCE_DIR}/core/c/c_api.cc
+   ${TFLITE_SOURCE_DIR}/core/c/c_api_experimental.cc
++  ${TFLITE_SOURCE_DIR}/core/c/c_api_opaque.cc
+   ${TFLITE_SOURCE_DIR}/core/c/common.cc
+   ${TFLITE_SOURCE_DIR}/core/c/operator.cc
+   builtin_op_data.h
+diff --git a/tensorflow/lite/core/c/common.h b/tensorflow/lite/core/c/common.h
+index 96f19f12..28a83059 100644
+--- a/tensorflow/lite/core/c/common.h
++++ b/tensorflow/lite/core/c/common.h
+@@ -129,7 +129,7 @@ size_t TfLiteIntArrayGetSizeInBytes(int size);
+ #ifndef TF_LITE_STATIC_MEMORY
+ /// Create a array of a given `size` (uninitialized entries).
+ /// This returns a pointer, that you must free using TfLiteIntArrayFree().
+-TfLiteIntArray* TfLiteIntArrayCreate(int size);
++TFL_CAPI_EXPORT TfLiteIntArray* TfLiteIntArrayCreate(int size);
+ #endif
+ 
+ /// Check if two intarrays are equal. Returns 1 if they are equal, 0 otherwise.
+@@ -145,7 +145,7 @@ int TfLiteIntArrayEqualsArray(const TfLiteIntArray* a, int b_size,
+ TfLiteIntArray* TfLiteIntArrayCopy(const TfLiteIntArray* src);
+ 
+ /// Free memory of array `a`.
+-void TfLiteIntArrayFree(TfLiteIntArray* a);
++TFL_CAPI_EXPORT void TfLiteIntArrayFree(TfLiteIntArray* a);
+ #endif  // TF_LITE_STATIC_MEMORY
+ 
+ /// Fixed size list of floats. Used for per-channel quantization.

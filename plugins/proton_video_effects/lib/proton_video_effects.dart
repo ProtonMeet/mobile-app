@@ -56,10 +56,18 @@ class ProtonVideoEffects {
   ///
   /// Pass the result to `LocalVideoTrack.createCameraTrack`. Do not construct
   /// [BackgroundBlurTrackProcessor] yourself — it must share this facade's channel.
+  /// Set [effectActive] to false to install the processor without turning an
+  /// effect on. Only useful on Windows and Linux, where the processor publishes
+  /// its own track and so must exist from the moment the track is created.
   BackgroundBlurTrackProcessor createBlurTrackProcessor({
     BackgroundBlurConfig? config,
+    bool effectActive = true,
   }) {
-    return BackgroundBlurTrackProcessor(channel: _channel, config: config);
+    return BackgroundBlurTrackProcessor(
+      channel: _channel,
+      config: config,
+      effectActive: effectActive,
+    );
   }
 
   /// Whether the native blur pipeline and models are loaded on this device.
@@ -109,4 +117,23 @@ class ProtonVideoEffects {
   /// Reads back which segmenter and backend native is using (debug UI).
   Future<SegmentationModelDebugInfo> getSegmentationModelInfo() =>
       _channel.getSegmentationModelInfo();
+
+  /// Runs the desktop camera frames through the engine without publishing them.
+  ///
+  /// Diagnostic only, for Windows and Linux: it proves frames reach the
+  /// segmenter while the publish path is still missing. Progress is logged
+  /// natively under the `ProtonVideoEffects` tag.
+  Future<bool> startFrameTap(String trackId) => _channel.startFrameTap(trackId);
+
+  /// Stops [startFrameTap] and logs how many frames were processed.
+  Future<void> stopFrameTap(String trackId) => _channel.stopFrameTap(trackId);
+
+  /// Creates the desktop track fed by the processed frames, returning its id.
+  ///
+  /// Windows and Linux only; null elsewhere and on failure. Publish this track
+  /// in place of the camera track to make the effect visible to remote peers.
+  Future<String?> createProcessedTrack() => _channel.createProcessedTrack();
+
+  /// Releases the track from [createProcessedTrack].
+  Future<void> destroyProcessedTrack() => _channel.destroyProcessedTrack();
 }
