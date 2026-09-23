@@ -314,6 +314,9 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     registerLiveCaptionsHandlers();
     registerLiveCaptionsTranscriptionHandlers();
     registerLiveCaptionsAgentHandlers();
+    if (isMeetLiveCaptionsEnabled()) {
+      ensureLiveCaptionsTranscriptionHandler(room: room);
+    }
 
     on<ParticipantRecordingStarted>(_onParticipantRecordingStarted);
     on<ParticipantRecordingStopped>(_onParticipantRecordingStopped);
@@ -571,21 +574,22 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     // Setup MLS sync state listener
     setupMlsSyncStateListener();
 
-    // Register waiting-room join request callbacks (host receives live updates)
-    await registerWaitingRoomCallbacks();
-
-    // MLS agent admission (AgentPending → admitAgent)
-    unawaited(registerLiveCaptionsAgentAdmissionCallbacks());
-
     // Setup LiveKit listeners (bridge) See: room_event_bridge.dart
     setUpListeners();
 
     if (isMeetLiveCaptionsEnabled()) {
       ensureLiveCaptionsTranscriptionHandler(room: event.room);
+      syncLiveCaptionsPreferencesFromLocal(emit);
       if (event.room.remoteParticipants.values.any(isCaptionAgent)) {
         add(const LiveCaptionsCaptionAgentConnected());
       }
     }
+
+    // Register waiting-room join request callbacks (host receives live updates)
+    await registerWaitingRoomCallbacks();
+
+    // MLS agent admission (AgentPending → admitAgent)
+    unawaited(registerLiveCaptionsAgentAdmissionCallbacks());
 
     unawaited(DenoiseAudioService.instance.warmUpDeepFilterIfNeeded());
 
