@@ -110,7 +110,46 @@ impl MessageQueue {
         self: &Arc<Self>,
         proposal: mls_types::MlsMessage,
     ) -> Result<(), anyhow::Error> {
-        self.handle_proposal(proposal).await
+        match self.process_proposal_message(proposal.clone()).await {
+            Ok(ProposalProcessingOutcome::Applied) => {
+                // A proposal accepted into the current epoch can unblock a commit that was
+                // cached because MLS reported `ProposalNotFound`, so replay the backlog.
+                match self.process_cached_messages().await {
+                    Ok(_) => tracing::debug!(
+                        "Cached messages processed successfully for room {}",
+                        self.room_id
+                    ),
+                    Err(e) => tracing::warn!(
+                        "Failed to process cached messages for room {}: {e:?}",
+                        self.room_id,
+                    ),
+                }
+            }
+            Ok(ProposalProcessingOutcome::NoStateChange) => {
+                tracing::debug!(
+                    "Proposal did not change state for room {}, skipping cached message processing",
+                    self.room_id
+                );
+            }
+            Ok(ProposalProcessingOutcome::DeferredFutureEpoch) => {
+                tracing::debug!(
+                    "Proposal deferred for future epoch in room {}, skipping cached message processing",
+                    self.room_id
+                );
+            }
+            Err(e) => {
+                tracing::warn!("Failed to process proposal message: {e}");
+                // Keep the proposal so a later epoch can retry it.
+                if let Err(e) = self.cache_proposal_message(proposal).await {
+                    tracing::warn!(
+                        "Failed to cache proposal message for room {}: {e:?}",
+                        self.room_id
+                    );
+                }
+            }
+        }
+
+        Ok(())
     }
 
     pub async fn push_commit(
@@ -1299,196 +1338,6 @@ impl MessageQueue {
                 Err(e.into())
             }
         }
-    }
-
-    /// Removes `target_uuid` from the group, folding any queued proposals into the same
-    /// commit so they are applied alongside the removal.
-    ///
-    /// Retries on HTTP 422 (a concurrent commit beat us to the epoch) with exponential
-    /// backoff, rebuilding the remove proposal from a fresh roster on each attempt.
-    pub(crate) async fn kick_participant(
-        self: &Arc<Self>,
-        target_uuid: Uuid,
-    ) -> Result<(), MeetCoreError> {
-        // Checked before anything is drained, so a rejection has nothing to restore.
-        if self
-            .group
-            .read()
-            .await
-            .own_role_for_current_epoch()?
-            .role_index
-            != UserRole::RoomAdmin.builder().role_index
-        {
-            tracing::warn!("User is not RoomAdmin, cannot kick participant");
-            return Err(MeetCoreError::NotRoomAdmin);
-        }
-
-        for attempt_num in 0..KICK_MAX_ATTEMPTS {
-            tracing::debug!(
-                "Kick attempt {}/{} for participant {} in meeting {}",
-                attempt_num + 1,
-                KICK_MAX_ATTEMPTS,
-                target_uuid,
-                self.room_id
-            );
-
-            let processing_guard = self.processing_lock.lock_send().await;
-
-            let queued_proposals = {
-                let mut queue = self.queue.write();
-                *self.timer.write() = None;
-                mem::take(&mut *queue)
-            };
-
-            let error = match self.try_kick_once(target_uuid, &queued_proposals).await {
-                Ok(()) => return Ok(()),
-                Err(e) => e,
-            };
-
-            // Restoring here may cause some already applied proposals to be pushed back to
-            // the queue, if `try_kick_once` failed after creating the commit.
-            // However, this is not an issue since the `MlsGroup` would answer with `Duplicate`
-            // when re-applying these proposals.
-            self.restore_proposal_queue_on_failure(queued_proposals, "kick attempt failed");
-            drop(processing_guard);
-
-            let is_retryable = matches!(
-                error.downcast_ref::<HttpClientError>(),
-                Some(HttpClientError::ErrorCode(status, _)) if *status == 422
-            );
-
-            if !is_retryable {
-                tracing::warn!(
-                    "Kick failed with non-retryable error on attempt {}: {:?}",
-                    attempt_num + 1,
-                    error
-                );
-                return Err(error.into());
-            }
-
-            if attempt_num >= KICK_MAX_ATTEMPTS - 1 {
-                tracing::error!(
-                    "Kick failed after {} attempts with HTTP 422, max retries exhausted",
-                    KICK_MAX_ATTEMPTS
-                );
-                return Err(MeetCoreError::MaxRetriesReached);
-            }
-
-            let delay_ms =
-                calculate_retry_delay(attempt_num, KICK_BASE_DELAY_MS, KICK_MAX_DELAY_MS);
-            tracing::warn!(
-                "Kick failed with HTTP 422 (attempt {}/{}), retrying in {}ms",
-                attempt_num + 1,
-                KICK_MAX_ATTEMPTS,
-                delay_ms
-            );
-            sleep(Duration::from_millis(delay_ms)).await;
-        }
-
-        Err(MeetCoreError::MaxRetriesReached)
-    }
-
-    /// One kick attempt: builds a commit removing `target_uuid` plus the role updates the
-    /// policy requires, publishes it and merges it.
-    ///
-    /// Returns `Ok(())` when the target is already absent from the roster, since a
-    /// concurrent removal is the outcome the caller asked for.
-    async fn try_kick_once(
-        self: &Arc<Self>,
-        target_uuid: Uuid,
-        queued_proposals: &[QueuedProposal],
-    ) -> Result<(), anyhow::Error> {
-        let mut mls_group = self.group.write().await;
-
-        // Stage the queued proposals so they ride along in the removal commit.
-        for queued in queued_proposals {
-            if let Err(e) = mls_group
-                .decrypt_message(queued.proposal_message.clone())
-                .await
-            {
-                tracing::warn!("Failed to process queued proposal: {:?}", e);
-                // Continue with other proposals - invalid ones filtered by MLS library
-            }
-        }
-
-        let proposal_args = {
-            let Some(target_member) = mls_group.roster().find(|m| match &m.credential {
-                mls_types::Credential::SdCwtDraft04 {
-                    claimset: Some(claimset),
-                    ..
-                } => claimset.uuid == target_uuid.into_bytes(),
-                _ => false,
-            }) else {
-                // Target was removed concurrently, which is the requested outcome.
-                //
-                // NOTE: the proposals staged above are left in the MLS proposal cache and
-                // are not restored to the queue, so nothing commits them until this client
-                // builds its next commit. Pre-existing behaviour, preserved deliberately.
-                tracing::debug!("Target {} removed concurrently", target_uuid);
-                return Ok(());
-            };
-
-            tracing::debug!(
-                "Creating remove proposal for leaf_index {} in epoch {}",
-                target_member.leaf_index(),
-                mls_group.epoch()
-            );
-
-            let authorizer = mls_group.authorizer()?;
-            let epoch = mls_group.epoch();
-            let mut active_participants = HashSet::new();
-            let mut to_remove = Vec::new();
-            let mut proposal_args = Vec::new();
-
-            proposal_args.push(ProposalArg::Remove(target_member.leaf_index()));
-
-            for mut m in mls_group.roster() {
-                let user_id = m.user_id()?;
-                let identity = ProtonMeetIdentityProvider::user_identifier(&user_id);
-                active_participants.insert(identity.clone());
-                if m.leaf_index() == target_member.leaf_index() {
-                    to_remove.push(identity);
-                }
-            }
-
-            for identity in to_remove {
-                proposal_args.extend(
-                    authorizer
-                        .role_proposal_for_removed_user(*epoch, &identity, &active_participants)?
-                        .into_iter()
-                        .map(|component| ProposalArg::UpdateComponent {
-                            id: component.component_id,
-                            data: component.data,
-                        }),
-                );
-            }
-
-            proposal_args.push(ProposalArg::PskExternal {
-                id: psk_id_for_commit(&self.room_id, group_has_agent(&mls_group)),
-            });
-
-            proposal_args
-        };
-
-        self.add_pending_commit(&mut mls_group, proposal_args, None)
-            .await?;
-
-        let old_epoch = mls_group.epoch();
-        mls_group.merge_pending_commit().await?;
-        let new_epoch = mls_group.epoch();
-
-        tracing::info!(
-            "Successfully kicked participant {} from meeting {}",
-            target_uuid,
-            self.room_id
-        );
-
-        drop(mls_group);
-
-        self.handle_group_update(old_epoch, new_epoch, GroupKeyUpdateReason::Leave)
-            .await?;
-
-        Ok(())
     }
 
     async fn handle_group_update(

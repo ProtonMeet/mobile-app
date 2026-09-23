@@ -1516,23 +1516,59 @@ impl UserService for Service {
     ) -> Result<(), MeetCoreError> {
         let target_uuid = Uuid::from_str(target_participant_id)?;
 
-        tracing::debug!(
-            "Starting kick for participant {} in meeting {}",
-            target_participant_id,
-            meeting_link_name,
-        );
+        let group = self
+            .mls_store
+            .read()
+            .await
+            .group_map
+            .get(meeting_link_name)
+            .ok_or(MeetCoreError::ParticipantNotFound)?
+            .clone();
 
-        self.services
-            .upgrade()
-            .ok_or_else(|| anyhow::anyhow!("Could not upgrade service bundle"))?
+        let proposal = {
+            let mut group = group.write().await;
+
+            // Authorization is a service-layer policy decision, not queue mechanics.
+            if group.own_role_for_current_epoch()?.role_index
+                != UserRole::RoomAdmin.builder().role_index
+            {
+                tracing::warn!("User is not RoomAdmin, cannot kick participant");
+                return Err(MeetCoreError::NotRoomAdmin);
+            }
+
+            let target_leaf = {
+                let Some(target) = group.roster().find(|m| match &m.credential {
+                    Credential::SdCwtDraft04 {
+                        claimset: Some(claimset),
+                        ..
+                    } => claimset.uuid == target_uuid.into_bytes(),
+                    _ => false,
+                }) else {
+                    // Already removed concurrently: the requested end state.
+                    tracing::debug!("Target {target_participant_id} is not in the roster");
+                    return Ok(());
+                };
+                target.leaf_index()
+            };
+
+            group
+                .new_proposals([ProposalArg::Remove(target_leaf)])
+                .await?
+                .pop()
+                .ok_or_else(|| anyhow::anyhow!("Expected new_proposals to return a Remove"))?
+        };
+
+        self.services()?
             .get_message_queue(meeting_link_name.to_string())
             .await
             .map_err(|e| {
                 tracing::warn!("No message queue for room {meeting_link_name}: {e:?}");
                 MeetCoreError::ParticipantNotFound
             })?
-            .kick_participant(target_uuid)
-            .await
+            .push_proposal(proposal) // TODO: claude says, locally-created proposals get filtered out
+            .await?;
+
+        Ok(())
     }
 
     async fn get_group_key(&self, meeting_link_name: &str) -> Result<(String, u64), anyhow::Error> {
