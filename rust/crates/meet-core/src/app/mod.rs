@@ -26,7 +26,7 @@ use crate::infra::{
 #[cfg(not(target_family = "wasm"))]
 use crate::service::auth::AuthServiceImpl;
 use crate::service::caption::CaptionServiceImpl;
-use crate::service::message_queue::{ArcMessageQueue, MessageQueueImpl};
+use crate::service::message_queue::MessageQueueServiceImpl;
 use crate::service::mls_service::MlsService;
 use crate::service::services_bundle::ServiceBundle;
 use crate::service::user_service::Service;
@@ -281,36 +281,21 @@ impl App {
                 user_service.clone(),
                 http_client.clone(),
             ));
+            let msg_queue_service = Arc::new(MessageQueueServiceImpl::new(
+                mls_store.clone(),
+                msg_cache.clone(),
+                http_client.clone(),
+                weak.clone(),
+            ));
 
-            let weak = weak.clone();
-            let mls_store = mls_store.clone();
-            let msg_cache = msg_cache.clone();
-            let http_client = http_client.clone();
             ServiceBundle::new(
                 room_service,
                 waiting_room_service,
                 #[cfg(not(target_family = "wasm"))]
                 auth_service,
                 agent_service,
+                msg_queue_service,
                 user_service,
-                move |room_id| {
-                    let weak = weak.clone();
-                    let mls_store = mls_store.clone();
-                    let msg_cache = msg_cache.clone();
-                    let http_client = http_client.clone();
-
-                    Box::pin(async move {
-                        let group = mls_store.read().await.group_map.get(&room_id)?.clone();
-
-                        Some(MessageQueueImpl::new(
-                            room_id,
-                            group,
-                            msg_cache.clone(),
-                            weak.clone(),
-                            http_client.clone(),
-                        ) as ArcMessageQueue)
-                    })
-                },
             )
         });
 

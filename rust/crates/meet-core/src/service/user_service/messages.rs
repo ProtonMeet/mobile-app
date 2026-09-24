@@ -1,5 +1,3 @@
-#[cfg(test)]
-use std::sync::Arc;
 use std::time::Duration;
 
 use crate::{
@@ -229,9 +227,8 @@ impl Service {
                                             );
 
                                             self.services()?
-                                                .get_message_queue(room_id)
-                                                .await?
-                                                .push_commit(commit_message)
+                                                .msg_queue_service
+                                                .push_commit(&room_id, commit_message)
                                                 .await?;
                                         }
                                         RTCMessageInContent::Proposal(proposal_info) => {
@@ -278,9 +275,8 @@ impl Service {
                                             );
 
                                             self.services()?
-                                                .get_message_queue(room_id)
-                                                .await?
-                                                .push_proposal(proposal_message)
+                                                .msg_queue_service
+                                                .push_proposal(&room_id, proposal_message)
                                                 .await?;
                                         }
 
@@ -390,24 +386,5 @@ impl Service {
         }
 
         Ok(())
-    }
-}
-
-#[cfg(not(target_family = "wasm"))]
-#[cfg(test)]
-impl Service {
-    /// Returns the message cache backing `room_id`'s [`MessageQueue`].
-    ///
-    /// The cache moved from `Service` onto the per-room queue, so tests reach it through
-    /// the service bundle rather than off a field.
-    pub async fn get_cached_message(
-        &self,
-        room_id: &str,
-    ) -> Result<Arc<dyn crate::domain::mls::ports::MessageCachePort>, anyhow::Error> {
-        Ok(self
-            .services()?
-            .get_message_queue(room_id.to_string())
-            .await?
-            .msg_cache())
     }
 }

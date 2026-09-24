@@ -1,9 +1,4 @@
-use std::{
-    collections::{hash_map::Entry, HashMap},
-    future::Future,
-    pin::Pin,
-    sync::Arc,
-};
+use std::sync::Arc;
 
 use tokio::sync::RwLock;
 
@@ -11,8 +6,9 @@ use tokio::sync::RwLock;
 use crate::service::auth::ArcAuthService;
 use crate::{
     domain::room::{RoomService, WaitingRoomService},
-    service::{caption::ArcCaptionService, message_queue::ArcMessageQueue, user_service::Service},
-    utils::sync::AsyncRwLock,
+    service::{
+        caption::ArcCaptionService, message_queue::ArcMessageQueueService, user_service::Service,
+    },
 };
 
 /// Services bundle for the meet application
@@ -23,27 +19,17 @@ pub(crate) struct ServiceBundle {
     pub auth_service: ArcAuthService,
     pub caption_service: ArcCaptionService,
     pub user_service: Arc<RwLock<Service>>,
-    pub mls_queues: AsyncRwLock<HashMap<String, ArcMessageQueue>>,
-    queue_factory: Box<
-        dyn Fn(String) -> Pin<Box<dyn Future<Output = Option<ArcMessageQueue>> + Send + Sync>>
-            + Send
-            + Sync,
-    >,
+    pub msg_queue_service: ArcMessageQueueService,
 }
 
 impl ServiceBundle {
-    pub(crate) fn new<
-        F: Fn(String) -> Pin<Box<dyn Future<Output = Option<ArcMessageQueue>> + Send + Sync>>
-            + Send
-            + Sync
-            + 'static,
-    >(
+    pub(crate) fn new(
         room_service: Arc<RoomService>,
         waiting_room_service: Arc<WaitingRoomService>,
         #[cfg(not(target_family = "wasm"))] auth_service: ArcAuthService,
         caption_service: ArcCaptionService,
+        msg_queue_service: ArcMessageQueueService,
         user_service: Arc<RwLock<Service>>,
-        queue_factory: F,
     ) -> Self {
         Self {
             room_service,
@@ -52,33 +38,11 @@ impl ServiceBundle {
             auth_service,
             caption_service,
             user_service,
-            mls_queues: AsyncRwLock::default(),
-            queue_factory: Box::new(queue_factory),
+            msg_queue_service,
         }
     }
 
     pub async fn reset(&self) {
         self.caption_service.reset().await;
-    }
-
-    pub async fn get_message_queue(
-        &self,
-        room_id: String,
-    ) -> Result<ArcMessageQueue, anyhow::Error> {
-        if let Some(queue) = self.mls_queues.read().await.get(&room_id) {
-            return Ok(queue.clone());
-        }
-
-        let mut map = self.mls_queues.write_send().await;
-        match map.entry(room_id.clone()) {
-            Entry::Occupied(occupied_entry) => Ok(occupied_entry.get().clone()),
-            Entry::Vacant(vacant_entry) => {
-                let queue = (self.queue_factory)(room_id.clone())
-                    .await
-                    .ok_or_else(|| anyhow::anyhow!("Group for room {room_id} not found"))?;
-
-                Ok(vacant_entry.insert_entry(queue).get().clone())
-            }
-        }
     }
 }

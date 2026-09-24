@@ -1,6 +1,6 @@
 use std::{
     cmp::Ordering,
-    collections::HashSet,
+    collections::{hash_map::Entry, HashMap, HashSet},
     mem,
     str::FromStr,
     sync::{Arc, Weak},
@@ -20,7 +20,8 @@ use mls_trait::{
 };
 use mls_types::MlsTypesError;
 use proton_meet_macro::{async_trait, async_trait_with_mock};
-use proton_meet_mls::kv::MemKv;
+use proton_meet_mls::{kv::MemKv, MlsStore};
+use tokio::sync::RwLock;
 
 use crate::{
     domain::{
@@ -45,7 +46,7 @@ use crate::{
     },
     utils::{
         sleep, spawn_detached,
-        sync::{AsyncMutex, SyncRwLock},
+        sync::{AsyncMutex, AsyncRwLock, SyncRwLock},
     },
 };
 
@@ -68,29 +69,109 @@ enum ProposalProcessingOutcome {
 /// Kept behind a trait so callers hold `ArcMessageQueue` and tests can substitute
 /// `MockMessageQueue` instead of standing up a real MLS group.
 #[cfg(not(target_family = "wasm"))]
-pub(crate) type ArcMessageQueue = Arc<dyn MessageQueue + Send + Sync + 'static>;
+pub(crate) type ArcMessageQueueService = Arc<dyn MessageQueueService + Send + Sync + 'static>;
 #[cfg(target_family = "wasm")]
-pub(crate) type ArcMessageQueue = Arc<dyn MessageQueue + 'static>;
+pub(crate) type ArcMessageQueueService = Arc<dyn MessageQueueService + 'static>;
 
 #[async_trait_with_mock]
-pub(crate) trait MessageQueue {
+pub(crate) trait MessageQueueService {
     /// Handles an inbound commit for this room, replaying any cached backlog it unblocks.
-    async fn push_commit(&self, commit: mls_types::MlsMessage) -> Result<(), anyhow::Error>;
+    async fn push_commit(
+        &self,
+        room_id: &str,
+        commit: mls_types::MlsMessage,
+    ) -> Result<(), anyhow::Error>;
 
     /// Handles an inbound proposal for this room, queueing it for the next batched commit.
-    async fn push_proposal(&self, proposal: mls_types::MlsMessage) -> Result<(), anyhow::Error>;
-
-    /// The cache backing this queue, so tests can assert on what was cached.
-    #[cfg(test)]
-    fn msg_cache(&self) -> Arc<dyn MessageCachePort>;
-
-    /// Number of proposals waiting for the next batched commit, so tests can assert
-    /// whether an inbound proposal was queued.
-    #[cfg(test)]
-    fn queued_len(&self) -> usize;
+    async fn push_proposal(
+        &self,
+        room_id: &str,
+        proposal: mls_types::MlsMessage,
+    ) -> Result<(), anyhow::Error>;
 }
 
-pub(crate) struct MessageQueueImpl {
+pub(crate) struct MessageQueueServiceImpl {
+    mls_queues: AsyncRwLock<HashMap<String, Arc<MessageQueue>>>,
+    mls_store: Arc<RwLock<MlsStore>>,
+    msg_cache: Arc<dyn MessageCachePort>,
+    mls_api: Arc<dyn MlsApi>,
+    services: Weak<ServiceBundle>,
+}
+
+impl MessageQueueServiceImpl {
+    pub fn new(
+        mls_store: Arc<RwLock<MlsStore>>,
+        msg_cache: Arc<dyn MessageCachePort>,
+        mls_api: Arc<dyn MlsApi>,
+        services: Weak<ServiceBundle>,
+    ) -> Self {
+        Self {
+            mls_queues: Default::default(),
+            mls_store,
+            msg_cache,
+            mls_api,
+            services,
+        }
+    }
+
+    async fn get_message_queue(&self, room_id: &str) -> Result<Arc<MessageQueue>, anyhow::Error> {
+        if let Some(queue) = self.mls_queues.read().await.get(room_id) {
+            return Ok(queue.clone());
+        }
+
+        let mut map = self.mls_queues.write_send().await;
+        match map.entry(room_id.into()) {
+            Entry::Occupied(occupied_entry) => Ok(occupied_entry.get().clone()),
+            Entry::Vacant(vacant_entry) => {
+                let group = self
+                    .mls_store
+                    .read()
+                    .await
+                    .group_map
+                    .get(room_id)
+                    .ok_or_else(|| anyhow::anyhow!("Group for room {room_id} not found"))?
+                    .clone();
+
+                let queue = MessageQueue::new(
+                    room_id.into(),
+                    group,
+                    self.msg_cache.clone(),
+                    self.services.clone(),
+                    self.mls_api.clone(),
+                );
+
+                Ok(vacant_entry.insert_entry(Arc::new(queue)).get().clone())
+            }
+        }
+    }
+}
+
+#[async_trait]
+impl MessageQueueService for MessageQueueServiceImpl {
+    async fn push_commit(
+        &self,
+        room_id: &str,
+        commit: mls_types::MlsMessage,
+    ) -> Result<(), anyhow::Error> {
+        self.get_message_queue(room_id)
+            .await?
+            .push_commit(commit)
+            .await
+    }
+
+    async fn push_proposal(
+        &self,
+        room_id: &str,
+        proposal: mls_types::MlsMessage,
+    ) -> Result<(), anyhow::Error> {
+        self.get_message_queue(room_id)
+            .await?
+            .push_proposal(proposal)
+            .await
+    }
+}
+
+struct MessageQueue {
     room_id: String,
     group: Arc<tokio::sync::RwLock<MlsGroup<MemKv>>>,
     queue: SyncRwLock<Vec<QueuedProposal>>,
@@ -101,21 +182,17 @@ pub(crate) struct MessageQueueImpl {
     timer: SyncRwLock<Option<Epoch>>,
     services: Weak<ServiceBundle>,
     mls_api: Arc<dyn MlsApi>,
-    /// Self-reference, so `&self` methods can hand an owned `Arc` to detached tasks.
-    /// The trait in front of this type needs `&self` receivers for mocking, which rules
-    /// out `self: &Arc<Self>`.
-    self_ref: Weak<MessageQueueImpl>,
 }
 
-impl MessageQueueImpl {
+impl MessageQueue {
     pub fn new(
         room_id: String,
         group: Arc<tokio::sync::RwLock<MlsGroup<MemKv>>>,
         msg_cache: Arc<dyn MessageCachePort>,
         services: Weak<ServiceBundle>,
         mls_api: Arc<dyn MlsApi>,
-    ) -> Arc<Self> {
-        Arc::new_cyclic(|self_ref| Self {
+    ) -> Self {
+        Self {
             room_id,
             group,
             queue: SyncRwLock::new(Vec::new(), |_| {}),
@@ -124,8 +201,7 @@ impl MessageQueueImpl {
             timer: SyncRwLock::new(None, |v| *v = None),
             services,
             mls_api,
-            self_ref: self_ref.clone(),
-        })
+        }
     }
 
     fn services(&self) -> Result<Arc<ServiceBundle>, anyhow::Error> {
@@ -135,7 +211,7 @@ impl MessageQueueImpl {
     }
 
     async fn process_commit_message(
-        &self,
+        self: &Arc<Self>,
         commit: mls_types::MlsMessage,
     ) -> Result<CommitProcessingOutcome, anyhow::Error> {
         let group_epoch = self.epoch().await;
@@ -300,7 +376,7 @@ impl MessageQueueImpl {
         Ok(CommitProcessingOutcome::Applied)
     }
 
-    pub(super) async fn process_cached_messages(&self) -> Result<(), anyhow::Error> {
+    pub(super) async fn process_cached_messages(self: &Arc<Self>) -> Result<(), anyhow::Error> {
         #[cfg(debug_assertions)]
         tracing::info!("Processing cached messages for room {}", self.room_id);
         let mut total_processed_epochs = Vec::<u64>::new();
@@ -625,7 +701,7 @@ impl MessageQueueImpl {
     }
 
     async fn process_proposal_message(
-        &self,
+        self: &Arc<Self>,
         message: mls_types::MlsMessage,
     ) -> Result<ProposalProcessingOutcome, anyhow::Error> {
         // self.handle_proposal(&room_id, proposal_message.clone())
@@ -720,16 +796,15 @@ impl MessageQueueImpl {
         Ok(ProposalProcessingOutcome::Applied)
     }
 
-    fn start_proposal_timer(&self, delay_ms: Duration, epoch_at: Epoch, mls_rank_group: u64) {
+    fn start_proposal_timer(
+        self: &Arc<Self>,
+        delay_ms: Duration,
+        epoch_at: Epoch,
+        mls_rank_group: u64,
+    ) {
         const BASE_PROPOSAL_DELAY_MS: u64 = 2000; // execute propsoal every 2s
         let delay_ms = delay_ms + Duration::from_millis(BASE_PROPOSAL_DELAY_MS);
-        let Some(queue) = self.self_ref.upgrade() else {
-            tracing::warn!(
-                "Proposal timer not started for room {}: queue is being dropped",
-                self.room_id
-            );
-            return;
-        };
+        let queue = self.clone();
 
         spawn_detached(async move {
             // Check if there's already a timer for this room_id and epoch_at
@@ -1300,8 +1375,7 @@ impl MessageQueueImpl {
     }
 }
 
-#[async_trait]
-impl MessageQueue for MessageQueueImpl {
+impl MessageQueue {
     #[cfg(test)]
     fn msg_cache(&self) -> Arc<dyn MessageCachePort> {
         self.msg_cache.clone()
@@ -1312,7 +1386,10 @@ impl MessageQueue for MessageQueueImpl {
         self.queue.read().len()
     }
 
-    async fn push_commit(&self, commit: mls_types::MlsMessage) -> Result<(), anyhow::Error> {
+    async fn push_commit(
+        self: &Arc<Self>,
+        commit: mls_types::MlsMessage,
+    ) -> Result<(), anyhow::Error> {
         match self.process_commit_message(commit).await {
             Ok(CommitProcessingOutcome::Applied) => {
                 // Process cached messages only after we actually advanced/applied commit state.
@@ -1356,7 +1433,10 @@ impl MessageQueue for MessageQueueImpl {
         Ok(())
     }
 
-    async fn push_proposal(&self, proposal: mls_types::MlsMessage) -> Result<(), anyhow::Error> {
+    async fn push_proposal(
+        self: &Arc<Self>,
+        proposal: mls_types::MlsMessage,
+    ) -> Result<(), anyhow::Error> {
         match self.process_proposal_message(proposal.clone()).await {
             Ok(ProposalProcessingOutcome::Applied) => {
                 // A proposal accepted into the current epoch can unblock a commit that was
@@ -1405,12 +1485,6 @@ impl MessageQueue for MessageQueueImpl {
 #[should_panic]
 fn require_fn_to_be_send() {
     fn require_send<T: Send>(_t: T) {}
-    require_send(<MessageQueueImpl as MessageQueue>::push_commit(
-        todo!(),
-        todo!(),
-    ));
-    require_send(<MessageQueueImpl as MessageQueue>::push_proposal(
-        todo!(),
-        todo!(),
-    ));
+    require_send(MessageQueue::push_commit(todo!(), todo!()));
+    require_send(MessageQueue::push_proposal(todo!(), todo!()));
 }

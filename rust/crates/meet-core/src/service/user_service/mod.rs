@@ -1557,13 +1557,8 @@ impl UserService for Service {
         };
 
         self.services()?
-            .get_message_queue(meeting_link_name.to_string())
-            .await
-            .map_err(|e| {
-                tracing::warn!("No message queue for room {meeting_link_name}: {e:?}");
-                MeetCoreError::ParticipantNotFound
-            })?
-            .push_proposal(proposal) // TODO: claude says, locally-created proposals get filtered out
+            .msg_queue_service
+            .push_proposal(meeting_link_name, proposal)
             .await?;
 
         Ok(())

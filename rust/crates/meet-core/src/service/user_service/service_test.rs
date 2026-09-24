@@ -32,7 +32,6 @@ pub(crate) mod tests {
             mimi_subject_parser::ANONYMOUS_USER_IDENTIFIER,
         },
         service::{
-            message_queue::{ArcMessageQueue, MessageQueueImpl, MockMessageQueue},
             service_state::MlsGroupState,
             test::create_mock_mls_api,
             user_service::{ProposalType, QueuedProposal, Service},
@@ -1651,8 +1650,16 @@ pub(crate) mod tests {
         assert!(result.is_ok());
 
         // Verify message is cached
-        let cached_messages =
-            get_cached_messages(&service2, meet_link_name, 3, CachedMessageType::Commit).await;
+        let message_cache = service2.get_cached_message().await.unwrap();
+        let guard = message_cache.lock().await;
+        let cached_messages = guard
+            .messages
+            .get(meet_link_name)
+            .unwrap()
+            .get(&3)
+            .unwrap()
+            .get(&CachedMessageType::Commit)
+            .unwrap();
         assert_eq!(cached_messages.len(), 1);
 
         let expected_message = future_commit.commit.clone();
@@ -1660,6 +1667,7 @@ pub(crate) mod tests {
             cached_messages[0].message.mls_encode_to_vec().unwrap(),
             expected_message.mls_encode_to_vec().unwrap()
         );
+        drop(guard);
 
         // Test 2: Future epoch proposal should be added to queue (not rejected)
         let proposal_bytes = proposal_msg.mls_encode_to_vec().unwrap();
@@ -1704,13 +1712,25 @@ pub(crate) mod tests {
         assert_eq!(group2.read().await.roster().count(), 2);
 
         // Verify cache is cleaned after processing cached messages
-        // The future epoch messages should have been processed and removed.
-        assert_eq!(
-            cached_message_count(&service2, meet_link_name, 3, CachedMessageType::Commit).await,
-            0,
-            "Cached commit messages should be processed and removed"
-        );
+        let message_cache = service2.get_cached_message().await.unwrap();
+        let guard = message_cache.lock().await;
+        let messages = &guard.messages;
+
+        // Cache should be empty or the specific cached messages should be processed
+        if let Some(room_messages) = messages.get(meet_link_name) {
+            // If room still exists in cache, the future epoch messages should be gone
+            if let Some(epoch_messages) = room_messages.get(&3) {
+                if let Some(commit_messages) = epoch_messages.get(&CachedMessageType::Commit) {
+                    assert_eq!(
+                        commit_messages.len(),
+                        0,
+                        "Cached commit messages should be processed and removed"
+                    );
+                }
+            }
+        }
         // Alternatively, the entire cache could be empty, which is also valid
+        drop(guard);
     }
 
     #[tokio::test]
@@ -1856,32 +1876,32 @@ pub(crate) mod tests {
         );
 
         // Verify messages are cached with correct epochs in user4's cache
+        let message_cache = service4.get_cached_message().await.unwrap();
+        let guard = message_cache.lock().await;
+
         // Should have cached messages for the future epoch
         let target_epoch = *very_future_epoch as u64;
 
-        // TODO IMMEDIATELY: conditions seems wrong, should be !is_empty?
-        assert!(
-            get_cached_messages(
-                &service4,
-                meet_link_name,
-                target_epoch,
-                CachedMessageType::Commit
-            )
-            .await
-            .is_empty(),
-            "Should have at least 1 cached commit message"
-        );
-        assert!(
-            get_cached_messages(
-                &service4,
-                meet_link_name,
-                target_epoch,
-                CachedMessageType::Proposal
-            )
-            .await
-            .is_empty(),
-            "Should have at least 1 cached proposal message"
-        );
+        // Check if messages are cached for this room
+        if let Some(room_messages) = guard.messages.get(meet_link_name) {
+            if let Some(epoch_messages) = room_messages.get(&target_epoch) {
+                // Check if we have the expected message types
+                if let Some(commit_messages) = epoch_messages.get(&CachedMessageType::Commit) {
+                    assert!(
+                        commit_messages.is_empty(),
+                        "Should have at least 1 cached commit message"
+                    );
+                }
+                if let Some(proposal_messages) = epoch_messages.get(&CachedMessageType::Proposal) {
+                    assert!(
+                        proposal_messages.is_empty(),
+                        "Should have at least 1 cached proposal message"
+                    );
+                }
+            }
+            // If messages are cached under a different epoch, that's also valid for testing
+        }
+        drop(guard);
 
         // Test 3: Process missing commits in order to sync user4 with the advanced group
         // First, send the removal proposal for user2 to user4
@@ -2040,23 +2060,28 @@ pub(crate) mod tests {
         );
 
         // Check proposal queue is untouched for this room.
+        let queue = service2.proposal_queue.lock().await;
         assert_eq!(
-            get_message_queue(&service2, meet_link_name)
-                .await
-                .queued_len(),
+            queue
+                .get(meet_link_name)
+                .map(|queued| queued.len())
+                .unwrap_or(0),
             0,
             "Future epoch proposal should not be added to queue"
         );
+        drop(queue);
 
         // Check the future proposal was cached under its epoch.
+        let message_cache = service2.get_cached_message().await.unwrap();
+        let guard = message_cache.lock().await;
         let future_epoch = future_proposal.epoch().unwrap_or(0);
-        let cached_future_proposals = cached_message_count(
-            &service2,
-            meet_link_name,
-            future_epoch,
-            CachedMessageType::Proposal,
-        )
-        .await;
+        let cached_future_proposals = guard
+            .messages
+            .get(meet_link_name)
+            .and_then(|room_messages| room_messages.get(&future_epoch))
+            .and_then(|epoch_messages| epoch_messages.get(&CachedMessageType::Proposal))
+            .map(|messages| messages.len())
+            .unwrap_or(0);
         assert!(
             cached_future_proposals > 0,
             "Future epoch proposal should be cached for later processing"
@@ -2151,23 +2176,28 @@ pub(crate) mod tests {
         );
 
         // Check proposal queue is untouched for this room.
+        let queue = service1.proposal_queue.lock().await;
         assert_eq!(
-            get_message_queue(&service1, meet_link_name)
-                .await
-                .queued_len(),
+            queue
+                .get(meet_link_name)
+                .map(|queued| queued.len())
+                .unwrap_or(0),
             0,
             "Old epoch proposal should not be added to queue"
         );
+        drop(queue);
 
         // Check old proposal is not cached for later epochs.
+        let message_cache = service1.get_cached_message().await.unwrap();
+        let guard = message_cache.lock().await;
         let old_epoch = old_proposal.epoch().unwrap_or(0);
-        let cached_old_proposals = cached_message_count(
-            &service1,
-            meet_link_name,
-            old_epoch,
-            CachedMessageType::Proposal,
-        )
-        .await;
+        let cached_old_proposals = guard
+            .messages
+            .get(meet_link_name)
+            .and_then(|room_messages| room_messages.get(&old_epoch))
+            .and_then(|epoch_messages| epoch_messages.get(&CachedMessageType::Proposal))
+            .map(|messages| messages.len())
+            .unwrap_or(0);
         assert_eq!(
             cached_old_proposals, 0,
             "Old epoch proposal should not be cached"
@@ -2340,17 +2370,31 @@ pub(crate) mod tests {
         );
 
         // Verify that cached messages were processed
-        // Future epoch messages should have been processed and removed.
-        assert_eq!(
-            cached_message_count(&service2, meet_link_name, 4, CachedMessageType::Commit).await,
-            0,
-            "Cached commit messages should be processed and removed"
-        );
-        assert_eq!(
-            cached_message_count(&service2, meet_link_name, 4, CachedMessageType::Proposal).await,
-            0,
-            "Cached proposal messages should be processed and removed"
-        );
+        let message_cache = service2.get_cached_message().await.unwrap();
+        let guard = message_cache.lock().await;
+        let messages = &guard.messages;
+
+        // Cache should be empty or the specific cached messages should be processed
+        if let Some(room_messages) = messages.get(meet_link_name) {
+            // Check that future epoch messages were processed and removed
+            if let Some(epoch_messages) = room_messages.get(&4) {
+                if let Some(commit_messages) = epoch_messages.get(&CachedMessageType::Commit) {
+                    assert_eq!(
+                        commit_messages.len(),
+                        0,
+                        "Cached commit messages should be processed and removed"
+                    );
+                }
+                if let Some(proposal_messages) = epoch_messages.get(&CachedMessageType::Proposal) {
+                    assert_eq!(
+                        proposal_messages.len(),
+                        0,
+                        "Cached proposal messages should be processed and removed"
+                    );
+                }
+            }
+        }
+        drop(guard);
 
         // Verify final state: Check actual epochs and roster sizes
         let final_group1_epoch = group1.read().await.epoch();
@@ -3700,104 +3744,34 @@ pub(crate) mod tests {
         groups
     }
 
-    /// A concrete [`MessageQueueImpl`] for `room_id`, for tests that drive queue
-    /// internals directly instead of going through the [`MessageQueue`] trait surface.
-    ///
-    /// It shares `service`'s MLS store and service bundle, so paths that reach
-    /// `get_sd_kbt` or the update handlers still work.
-    async fn get_message_queue_impl(service: &Service, room_id: &str) -> Arc<MessageQueueImpl> {
-        let group = service
-            .mls_store
-            .read()
-            .await
-            .group_map
-            .get(room_id)
-            .expect("group for room")
-            .clone();
-        MessageQueueImpl::new(
-            room_id.to_string(),
-            group,
-            Arc::new(
-                crate::infra::adapters::mls::message_cache_adapter::MessageCacheAdapter::new(
-                    Arc::new(tokio::sync::Mutex::new(
-                        crate::infra::message_cache::MlsMessageCache::new(),
-                    )),
-                ),
-            ),
-            service.services.clone(),
-            service.mls_api.clone(),
-        )
-    }
-
-    /// The [`MessageQueue`] for `room_id`, resolved through the service bundle so it is
-    /// the same instance the service's own code paths use.
-    async fn get_message_queue(service: &Service, room_id: &str) -> ArcMessageQueue {
-        service
-            .services
-            .upgrade()
-            .expect("test service bundle should still be alive")
-            .get_message_queue(room_id.to_string())
-            .await
-            .expect("message queue for room")
-    }
-
-    /// Cached messages of `message_type` for `room_id` at `epoch`.
-    ///
-    /// The cache now lives on the room's [`MessageQueue`] and is reached through the
-    /// [`MessageCachePort`], instead of indexing `MlsMessageCache::messages` directly.
-    async fn get_cached_messages(
-        service: &Service,
-        room_id: &str,
-        epoch: u64,
-        message_type: CachedMessageType,
-    ) -> Vec<crate::infra::message_cache::CachedMlsMessage> {
-        service
-            .get_cached_message(room_id)
-            .await
-            .unwrap()
-            .get_cached_messages(room_id, epoch)
-            .await
-            .unwrap()
-            .map(|messages| {
-                messages
-                    .into_iter()
-                    .filter(|(ty, _)| *ty == message_type)
-                    .map(|(_, message)| message)
-                    .collect()
-            })
-            .unwrap_or_default()
-    }
-
-    async fn cached_message_count(
-        service: &Service,
-        room_id: &str,
-        epoch: u64,
-        message_type: CachedMessageType,
-    ) -> usize {
-        get_cached_messages(service, room_id, epoch, message_type)
-            .await
-            .len()
-    }
-
-    /// Builds a test [`Service`] backed by a real [`ServiceBundle`].
-    ///
-    /// The bundle is intentionally leaked: the service only holds a `Weak` to it, and
-    /// tests need that weak to stay upgradeable so `services()` — and therefore the
-    /// per-room `MessageQueue` — keeps working for the life of the test.
     async fn create_test_service_with_host(
         user_id: &str,
         meet_link_name: &str,
         is_host: bool,
     ) -> Service {
-        let (bundle, _populated) = crate::service::test::create_test_service_bundle_with_host(
-            user_id,
-            meet_link_name,
-            is_host,
-            Default::default(),
-        );
-        let service = bundle.user_service.read().await.clone();
-        Box::leak(Box::new(bundle));
-        service
+        let mls_api = create_mock_mls_api(user_id, meet_link_name, is_host);
+        let mls_store: Arc<RwLock<MlsStore>> = Arc::new(RwLock::new(MlsStore {
+            clients: HashMap::new(),
+            group_map: HashMap::new(),
+            config: MlsClientConfig::default(),
+        }));
+
+        let mut ws_client_mock = MockWebSocketClient::new();
+        ws_client_mock.expect_get_connection_state().returning(|| {
+            Box::pin(ready(
+                crate::domain::user::ports::ConnectionState::Connected,
+            ))
+        });
+
+        Service::new(
+            Arc::new(MockHttpClient::new()),
+            Arc::new(mls_api),
+            Arc::new(MockMeetingApi::new()),
+            Arc::new(ws_client_mock),
+            mls_store,
+            ServerTimeTracker::new(),
+            Weak::new(),
+        )
     }
 
     pub async fn create_test_service(user_id: &str, meet_link_name: &str) -> Service {
@@ -5011,16 +4985,19 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
     async fn test_handle_batched_proposals_empty_queue() {
         // Test case: Empty proposal queue should return Ok (empty proposals)
         let meet_link_name = "test_empty_queue";
-        // A group is required so the room has a `MessageQueue` to resolve.
-        let (service, _group, _ciphersuite, _user_id) =
-            setup_single_user_group(meet_link_name).await;
+        let service = create_test_service("user_id", meet_link_name).await;
 
         // Set MLS group state to Success
         service.state.lock().await.mls_group_state = MlsGroupState::Success;
 
-        let result = get_message_queue_impl(&service, meet_link_name)
-            .await
-            .handle_batched_proposals(Vec::new(), 0)
+        // Get proposals from queue (will be empty)
+        let queued_proposals = {
+            let mut queue_lock = service.proposal_queue.lock().await;
+            queue_lock.remove(meet_link_name).unwrap_or_else(Vec::new)
+        };
+
+        let result = service
+            .handle_batched_proposals(meet_link_name, queued_proposals, 0)
             .await;
         // handle_batched_proposals returns Ok when proposals are empty
         assert!(result.is_ok(), "Should return Ok when proposals are empty");
@@ -5064,18 +5041,29 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
         // Now group1 is at epoch 3, but proposal is from epoch 2
         // Add proposal with old epoch to queue
-        let queued_proposals = vec![QueuedProposal {
-            proposal_message,
-            proposal_type: ProposalType::Remove,
-        }];
+        {
+            let mut queue = service1.proposal_queue.lock().await;
+            queue.insert(
+                meet_link_name.to_string(),
+                vec![QueuedProposal {
+                    proposal_message,
+                    proposal_type: ProposalType::Remove,
+                }],
+            );
+        }
 
         service1.state.lock().await.mls_group_state = MlsGroupState::Success;
 
+        // Get proposals from queue
+        let queued_proposals = {
+            let mut queue_lock = service1.proposal_queue.lock().await;
+            queue_lock.remove(meet_link_name).unwrap_or_else(Vec::new)
+        };
+
         // handle_proposal will reject this proposal because it's from an old epoch
         // So all_proposals will be empty and function will return Ok
-        let result = get_message_queue_impl(&service1, meet_link_name)
-            .await
-            .handle_batched_proposals(queued_proposals, 0)
+        let result = service1
+            .handle_batched_proposals(meet_link_name, queued_proposals, 0)
             .await;
         assert!(
             result.is_ok(),
@@ -5116,18 +5104,30 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let remove_proposal = proposals.remove(0);
         let proposal_message: mls_types::MlsMessage = remove_proposal;
 
-        let queued_proposals = vec![QueuedProposal {
-            proposal_message: proposal_message.clone(),
-            proposal_type: ProposalType::Remove,
-        }];
+        // Add proposal to queue
+        {
+            let mut queue = service1.proposal_queue.lock().await;
+            queue.insert(
+                meet_link_name.to_string(),
+                vec![QueuedProposal {
+                    proposal_message: proposal_message.clone(),
+                    proposal_type: ProposalType::Remove,
+                }],
+            );
+        }
 
         // Set state to Success
         service1.state.lock().await.mls_group_state = MlsGroupState::Success;
 
+        // Get proposals from queue
+        let queued_proposals = {
+            let mut queue_lock = service1.proposal_queue.lock().await;
+            queue_lock.remove(meet_link_name).unwrap_or_else(Vec::new)
+        };
+
         // Mock HTTP client to not be called (since proposal should be skipped)
-        let result = get_message_queue_impl(&service1, meet_link_name)
-            .await
-            .handle_batched_proposals(queued_proposals, 0)
+        let result = service1
+            .handle_batched_proposals(meet_link_name, queued_proposals, 0)
             .await;
         assert!(result.is_ok(), "Should return Ok when skipping own removal");
     }
@@ -5244,17 +5244,23 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let remove_proposal = remove_proposals.remove(0);
         let remove_proposal_message: mls_types::MlsMessage = remove_proposal;
 
-        // Both proposals, add first then remove.
-        let queued_proposals = vec![
-            QueuedProposal {
-                proposal_message: add_proposal_message,
-                proposal_type: ProposalType::Add,
-            },
-            QueuedProposal {
-                proposal_message: remove_proposal_message,
-                proposal_type: ProposalType::Remove,
-            },
-        ];
+        // Add both proposals to queue (add first, then remove)
+        {
+            let mut queue = service1.proposal_queue.lock().await;
+            queue.insert(
+                meet_link_name.to_string(),
+                vec![
+                    QueuedProposal {
+                        proposal_message: add_proposal_message,
+                        proposal_type: ProposalType::Add,
+                    },
+                    QueuedProposal {
+                        proposal_message: remove_proposal_message,
+                        proposal_type: ProposalType::Remove,
+                    },
+                ],
+            );
+        }
 
         // Set state to Success
         service1.state.lock().await.mls_group_state = MlsGroupState::Success;
@@ -5280,25 +5286,44 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             store_new.config = store1.config.clone();
         }
 
-        // Built through the bundle fixture so the service has a live `ServiceBundle`,
-        // which `handle_batched_proposals` needs to reach `get_sd_kbt` and the handlers.
-        let (bundle_with_mock, _) = crate::service::test::create_test_service_bundle_with_host(
-            "user1",
-            meet_link_name,
-            false,
-            crate::service::test::ServiceBundleDI {
-                mls_api: Some(Arc::new(mls_api)),
-                mls_store: Some(mls_store),
-                ..Default::default()
-            },
+        let service_with_mock = Service::new(
+            Arc::new(MockHttpClient::new()),
+            Arc::new(mls_api),
+            Arc::new(MockMeetingApi::new()),
+            Arc::new(MockWebSocketClient::new()),
+            mls_store,
+            ServerTimeTracker::new(),
+            Weak::new(),
         );
-        let service_with_mock = bundle_with_mock.user_service.read().await.clone();
+
+        // Copy proposal queue manually
+        {
+            let queue1 = service1.proposal_queue.lock().await;
+            let mut queue_new = service_with_mock.proposal_queue.lock().await;
+            for (key, value) in queue1.iter() {
+                queue_new.insert(
+                    key.clone(),
+                    value
+                        .iter()
+                        .map(|q| QueuedProposal {
+                            proposal_message: q.proposal_message.clone(),
+                            proposal_type: q.proposal_type,
+                        })
+                        .collect(),
+                );
+            }
+        }
 
         service_with_mock.state.lock().await.mls_group_state = MlsGroupState::Success;
 
-        let result = get_message_queue_impl(&service_with_mock, meet_link_name)
-            .await
-            .handle_batched_proposals(queued_proposals, 0)
+        // Get proposals from queue
+        let queued_proposals = {
+            let mut queue_lock = service_with_mock.proposal_queue.lock().await;
+            queue_lock.remove(meet_link_name).unwrap_or_else(Vec::new)
+        };
+
+        let result = service_with_mock
+            .handle_batched_proposals(meet_link_name, queued_proposals, 0)
             .await;
         assert!(
             result.is_ok(),
@@ -5371,11 +5396,9 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         );
 
         // Verify proposal queue is empty (proposals were processed and removed)
-        assert_eq!(
-            get_message_queue(&service_with_mock, meet_link_name)
-                .await
-                .queued_len(),
-            0,
+        let queue = service_with_mock.proposal_queue.lock().await;
+        assert!(
+            queue.get(meet_link_name).is_none() || queue.get(meet_link_name).unwrap().is_empty(),
             "Proposal queue should be empty after processing"
         );
     }
@@ -6197,79 +6220,14 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         );
     }
 
-    /// Leaf index of the roster member whose credential carries `uuid_str`.
-    async fn leaf_index_of(group: &Arc<RwLock<MlsGroup<MemKv>>>, uuid_str: &str) -> Option<u32> {
-        let group = group.read().await;
-        let found = group.roster().find(|m| match &m.credential {
-            mls_types::Credential::SdCwtDraft04 {
-                claimset: Some(claimset),
-                ..
-            } => uuid::Uuid::from_bytes(claimset.uuid).to_string() == uuid_str,
-            _ => false,
-        });
-        found.map(|m| *m.leaf_index())
-    }
-
-    /// Leaf index a Remove proposal targets, or `None` if the message is not one.
-    fn remove_index_of(message: &mls_types::MlsMessage) -> Option<u32> {
-        let owned = message.clone();
-        let inner = owned.as_proposal()?;
-        mls_types::Proposal::try_from(inner.clone())
-            .ok()?
-            .to_remove_index()
-    }
-
-    /// Three-user group whose room queue is a [`MockMessageQueue`].
-    ///
-    /// `kick_participant` no longer commits: it builds a Remove proposal and hands it to
-    /// the queue, which commits it on a later batched round. So these tests assert on
-    /// what reaches the queue rather than on a roster that no longer changes while the
-    /// call is in flight. `on_push` decides what the queue reports back.
-    ///
-    /// Returns the host service, its group, user2's UUID, and a sink recording every
-    /// proposal pushed.
-    async fn setup_kick_fixture<F>(
-        meet_link_name: &str,
-        on_push: F,
-    ) -> (
-        Service,
-        Arc<RwLock<MlsGroup<MemKv>>>,
-        String,
-        Arc<std::sync::Mutex<Vec<mls_types::MlsMessage>>>,
-    )
-    where
-        F: Fn() -> Result<(), anyhow::Error> + Send + Sync + 'static,
-    {
+    #[tokio::test]
+    async fn test_kick_participant_success() {
+        let meet_link_name = "test-kick-success";
         let ciphersuite =
             proton_meet_mls::CipherSuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519;
 
-        let pushed: Arc<std::sync::Mutex<Vec<mls_types::MlsMessage>>> = Default::default();
-        let sink = pushed.clone();
-        let mut queue = MockMessageQueue::new();
-        queue.expect_push_proposal().returning(move |proposal| {
-            sink.lock().unwrap().push(proposal);
-            let result = on_push();
-            Box::pin(ready(result))
-        });
-
-        let mut mls_api = create_mock_mls_api("user_id1", meet_link_name, true);
-        mls_api
-            .expect_update_group_info()
-            .returning(|_, _, _, _, _| Box::pin(ready(Ok(()))));
-
-        let (bundle, _) = crate::service::test::create_test_service_bundle_with_host(
-            "user_id1",
-            meet_link_name,
-            true,
-            crate::service::test::ServiceBundleDI {
-                mls_api: Some(Arc::new(mls_api)),
-                message_queue: Some(Arc::new(queue) as ArcMessageQueue),
-                ..Default::default()
-            },
-        );
-        let service1 = bundle.user_service.read().await.clone();
-        Box::leak(Box::new(bundle));
-
+        // Setup three-user group
+        let mut service1 = create_test_service_with_host("user_id1", meet_link_name, true).await;
         let service2 = create_test_service("user_id2", meet_link_name).await;
         let service3 = create_test_service("user_id3", meet_link_name).await;
 
@@ -6280,8 +6238,81 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         )
         .await;
         let group1 = groups[0].clone();
-        assert_eq!(group1.read().await.roster().count(), 3);
 
+        // Verify initial state: 3 members
+        assert_eq!(group1.read().await.roster().count(), 3);
+        let initial_epoch = *group1.read().await.epoch();
+
+        // Get user2's UUID from roster
+        let user2_uuid = {
+            let group = group1.read().await;
+            let roster: Vec<_> = group.roster().collect();
+            // Get second member's UUID
+            if let mls_types::Credential::SdCwtDraft04 { claimset, .. } = &roster[1].credential {
+                uuid::Uuid::from_bytes(claimset.as_ref().unwrap().uuid).to_string()
+            } else {
+                panic!("Expected SdCwtDraft04 credential");
+            }
+        };
+
+        // Mock update_group_info to succeed
+        let mut mls_api = create_mock_mls_api("user_id1", meet_link_name, true);
+        mls_api
+            .expect_update_group_info()
+            .returning(|_, _, _, _, _| Box::pin(ready(Ok(()))));
+
+        // Replace service1's http_client with mocked one
+        service1.mls_api = Arc::new(mls_api);
+
+        // Kick user2
+        service1
+            .kick_participant(&user2_uuid, meet_link_name)
+            .await
+            .unwrap();
+
+        // Verify user2 removed from group1
+        let final_roster_count = group1.read().await.roster().count();
+        assert_eq!(final_roster_count, 2, "Should have 2 members after kick");
+
+        // Verify epoch advanced
+        let final_epoch = *group1.read().await.epoch();
+        assert!(
+            final_epoch > initial_epoch,
+            "Epoch should advance after kick"
+        );
+
+        // Verify user2 specifically is not in roster
+        let user2_in_roster = group1.read().await.roster().any(|m| {
+            if let mls_types::Credential::SdCwtDraft04 { claimset, .. } = &m.credential {
+                let uuid_str = uuid::Uuid::from_bytes(claimset.as_ref().unwrap().uuid).to_string();
+                uuid_str == user2_uuid
+            } else {
+                false
+            }
+        });
+        assert!(!user2_in_roster, "User2 should not be in roster");
+    }
+
+    #[tokio::test]
+    async fn test_kick_participant_retries_on_422() {
+        let meet_link_name = "test-kick-retry";
+        let ciphersuite =
+            proton_meet_mls::CipherSuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519;
+
+        // Setup three-user group
+        let mut service1 = create_test_service_with_host("user_id1", meet_link_name, true).await;
+        let service2 = create_test_service("user_id2", meet_link_name).await;
+        let service3 = create_test_service("user_id3", meet_link_name).await;
+
+        let groups = setup_n_user_group(
+            vec![&service1, &service2, &service3],
+            meet_link_name,
+            ciphersuite,
+        )
+        .await;
+        let group1 = groups[0].clone();
+
+        // Get user2's UUID
         let user2_uuid = {
             let group = group1.read().await;
             let roster: Vec<_> = group.roster().collect();
@@ -6292,150 +6323,257 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             }
         };
 
-        (service1, group1, user2_uuid, pushed)
-    }
+        // Mock update_group_info to fail once with 422, then succeed
+        let mut mls_api = create_mock_mls_api("user_id1", meet_link_name, true);
+        let call_count = Arc::new(std::sync::atomic::AtomicU32::new(0));
+        let call_count_clone = call_count.clone();
 
-    #[tokio::test]
-    async fn test_kick_participant_success() {
-        let meet_link_name = "test-kick-success";
-        let (service1, group1, user2_uuid, pushed) =
-            setup_kick_fixture(meet_link_name, || Ok(())).await;
+        mls_api
+            .expect_update_group_info()
+            .returning(move |_, _, _, _, _| {
+                let count = call_count_clone.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                if count == 0 {
+                    // First call: return 422
+                    Box::pin(ready(Err(
+                        crate::errors::http_client::HttpClientError::ErrorCode(
+                            Status::from_u16(422).unwrap(),
+                            crate::errors::http_client::ResponseError {
+                                code: 422,
+                                details: serde_json::Value::Null,
+                                error: "Validation error".to_string(),
+                            },
+                        ),
+                    )))
+                } else {
+                    // Second call: succeed
+                    Box::pin(ready(Ok(())))
+                }
+            });
 
-        let initial_epoch = *group1.read().await.epoch();
-        let user2_leaf = leaf_index_of(&group1, &user2_uuid)
-            .await
-            .expect("user2 should be in the roster");
+        service1.mls_api = Arc::new(mls_api);
 
+        // Record start time
+        let start = std::time::Instant::now();
+
+        // Kick should succeed on second attempt
         service1
             .kick_participant(&user2_uuid, meet_link_name)
             .await
             .unwrap();
 
-        let pushed_removes: Vec<Option<u32>> = {
-            let pushed = pushed.lock().unwrap();
-            pushed.iter().map(remove_index_of).collect()
-        };
-        assert_eq!(
-            pushed_removes.len(),
-            1,
-            "Kick should push exactly one proposal"
-        );
-        assert_eq!(
-            pushed_removes[0],
-            Some(user2_leaf),
-            "Kick should propose removing user2's leaf"
-        );
+        let elapsed = start.elapsed();
 
-        // Committing is the queue's job, so the group is untouched while kick returns.
-        assert_eq!(
-            group1.read().await.roster().count(),
-            3,
-            "Roster changes only once the queue commits the proposal"
-        );
-        assert_eq!(
-            *group1.read().await.epoch(),
-            initial_epoch,
-            "Epoch advances only once the queue commits the proposal"
-        );
-    }
-
-    #[tokio::test]
-    async fn test_kick_participant_retries_on_422() {
-        let meet_link_name = "test-kick-retry";
-        // The 422 retry loop belonged to the old synchronous kick, which built and
-        // uploaded the commit itself. Handing the proposal to the queue is a single
-        // attempt, so a rejection now surfaces straight away and is not retried.
-        let (service1, _group1, user2_uuid, pushed) = setup_kick_fixture(meet_link_name, || {
-            Err(anyhow::anyhow!("simulated HTTP 422"))
-        })
-        .await;
-
-        let result = service1.kick_participant(&user2_uuid, meet_link_name).await;
-
+        // Verify retry happened (should have delay between attempts)
         assert!(
-            result.is_err(),
-            "A queue rejection should surface to the caller"
+            elapsed.as_millis() >= 450, // Base delay is 500ms, with jitter could be ~450ms
+            "Should have delayed for retry, elapsed: {}ms",
+            elapsed.as_millis()
         );
-        assert_eq!(
-            pushed.lock().unwrap().len(),
-            1,
-            "Kick should push once and not retry"
-        );
+
+        // Verify user2 was kicked
+        let final_roster_count = group1.read().await.roster().count();
+        assert_eq!(final_roster_count, 2);
+
+        // Verify update_group_info was called twice
+        assert_eq!(call_count.load(std::sync::atomic::Ordering::SeqCst), 2);
     }
 
     #[tokio::test]
     async fn test_kick_participant_max_retries_exhausted() {
         let meet_link_name = "test-kick-max-retries";
-        // With the retry loop gone there is no attempt budget to exhaust. This guards
-        // against reintroducing an unbounded loop: a queue that always fails must still
-        // make the call return, after exactly one attempt.
-        let (service1, _group1, user2_uuid, pushed) = setup_kick_fixture(meet_link_name, || {
-            Err(anyhow::anyhow!("queue always fails"))
-        })
-        .await;
+        let ciphersuite =
+            proton_meet_mls::CipherSuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519;
 
+        // Setup three-user group
+        let mut service1 = create_test_service_with_host("user_id1", meet_link_name, true).await;
+        let service2 = create_test_service("user_id2", meet_link_name).await;
+        let service3 = create_test_service("user_id3", meet_link_name).await;
+
+        let groups = setup_n_user_group(
+            vec![&service1, &service2, &service3],
+            meet_link_name,
+            ciphersuite,
+        )
+        .await;
+        let group1 = groups[0].clone();
+
+        // Get user2's UUID
+        let user2_uuid = {
+            let group = group1.read().await;
+            let roster: Vec<_> = group.roster().collect();
+            if let mls_types::Credential::SdCwtDraft04 { claimset, .. } = &roster[1].credential {
+                uuid::Uuid::from_bytes(claimset.as_ref().unwrap().uuid).to_string()
+            } else {
+                panic!("Expected SdCwtDraft04 credential");
+            }
+        };
+
+        // Mock update_group_info to always fail with 422
+        let mut mls_api = create_mock_mls_api("user_id1", meet_link_name, true);
+        let call_count = Arc::new(std::sync::atomic::AtomicU32::new(0));
+        let call_count_clone = call_count.clone();
+
+        mls_api
+            .expect_update_group_info()
+            .returning(move |_, _, _, _, _| {
+                call_count_clone.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                Box::pin(ready(Err(
+                    crate::errors::http_client::HttpClientError::ErrorCode(
+                        Status::from_u16(422).unwrap(),
+                        crate::errors::http_client::ResponseError {
+                            code: 422,
+                            details: serde_json::Value::Null,
+                            error: "Validation error".to_string(),
+                        },
+                    ),
+                )))
+            });
+
+        service1.mls_api = Arc::new(mls_api);
+
+        // Kick should fail with MaxRetriesReached
         let result = service1.kick_participant(&user2_uuid, meet_link_name).await;
 
-        assert!(result.is_err(), "A failing queue should return an error");
+        assert!(result.is_err(), "Should fail after max retries");
+        match result.unwrap_err() {
+            crate::errors::core::MeetCoreError::MaxRetriesReached => {
+                // Expected error
+            }
+            e => panic!("Expected MaxRetriesReached, got: {e:?}"),
+        }
+
+        // Verify all 4 attempts were made (1 initial + 3 retries)
         assert_eq!(
-            pushed.lock().unwrap().len(),
-            1,
-            "Kick should not loop over attempts"
+            call_count.load(std::sync::atomic::Ordering::SeqCst),
+            4,
+            "Should have made 4 total attempts"
         );
     }
 
     #[tokio::test]
     async fn test_kick_participant_non_422_fails_immediately() {
         let meet_link_name = "test-kick-non-422";
-        let (service1, _group1, user2_uuid, pushed) = setup_kick_fixture(meet_link_name, || {
-            Err(anyhow::anyhow!("simulated HTTP 500"))
-        })
+        let ciphersuite =
+            proton_meet_mls::CipherSuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519;
+
+        // Setup three-user group
+        let mut service1 = create_test_service_with_host("user_id1", meet_link_name, true).await;
+        let service2 = create_test_service("user_id2", meet_link_name).await;
+        let service3 = create_test_service("user_id3", meet_link_name).await;
+
+        let groups = setup_n_user_group(
+            vec![&service1, &service2, &service3],
+            meet_link_name,
+            ciphersuite,
+        )
         .await;
+        let group1 = groups[0].clone();
+
+        // Get user2's UUID
+        let user2_uuid = {
+            let group = group1.read().await;
+            let roster: Vec<_> = group.roster().collect();
+            if let mls_types::Credential::SdCwtDraft04 { claimset, .. } = &roster[1].credential {
+                uuid::Uuid::from_bytes(claimset.as_ref().unwrap().uuid).to_string()
+            } else {
+                panic!("Expected SdCwtDraft04 credential");
+            }
+        };
+
+        // Mock update_group_info to fail with 500 (non-retryable)
+        let mut mls_api = create_mock_mls_api("user_id1", meet_link_name, true);
+        let call_count = Arc::new(std::sync::atomic::AtomicU32::new(0));
+        let call_count_clone = call_count.clone();
+
+        mls_api
+            .expect_update_group_info()
+            .returning(move |_, _, _, _, _| {
+                call_count_clone.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                Box::pin(ready(Err(
+                    crate::errors::http_client::HttpClientError::ErrorCode(
+                        Status::from_u16(500).unwrap(),
+                        crate::errors::http_client::ResponseError {
+                            code: 500,
+                            details: serde_json::Value::Null,
+                            error: "Internal server error".to_string(),
+                        },
+                    ),
+                )))
+            });
+
+        service1.mls_api = Arc::new(mls_api);
 
         let result = service1.kick_participant(&user2_uuid, meet_link_name).await;
 
+        assert!(result.is_err(), "Should fail immediately");
+
+        // Should NOT be MaxRetriesReached - should be the original error
         assert!(
-            result.is_err(),
-            "A non-retryable queue error should fail the kick"
+            !matches!(
+                result.unwrap_err(),
+                crate::errors::core::MeetCoreError::MaxRetriesReached
+            ),
+            "Should return original error, not MaxRetriesReached"
         );
+
+        // Verify only 1 attempt was made
         assert_eq!(
-            pushed.lock().unwrap().len(),
+            call_count.load(std::sync::atomic::Ordering::SeqCst),
             1,
-            "Kick should fail on the first attempt"
+            "Should only attempt once for non-422 error"
         );
     }
 
     #[tokio::test]
     async fn test_kick_participant_target_already_removed() {
         let meet_link_name = "test-kick-already-removed";
-        let (service1, group1, user2_uuid, pushed) =
-            setup_kick_fixture(meet_link_name, || Ok(())).await;
+        let ciphersuite =
+            proton_meet_mls::CipherSuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519;
 
-        // Remove user2 directly, standing in for another member's commit landing first.
-        let user2_leaf = leaf_index_of(&group1, &user2_uuid)
+        // Setup three-user group
+        let mut service1 = create_test_service_with_host("user_id1", meet_link_name, true).await;
+        let service2 = create_test_service("user_id2", meet_link_name).await;
+        let service3 = create_test_service("user_id3", meet_link_name).await;
+
+        let groups = setup_n_user_group(
+            vec![&service1, &service2, &service3],
+            meet_link_name,
+            ciphersuite,
+        )
+        .await;
+        let group1 = groups[0].clone();
+
+        // Get user2's UUID
+        let user2_uuid = {
+            let group = group1.read().await;
+            let roster: Vec<_> = group.roster().collect();
+            if let mls_types::Credential::SdCwtDraft04 { claimset, .. } = &roster[1].credential {
+                uuid::Uuid::from_bytes(claimset.as_ref().unwrap().uuid).to_string()
+            } else {
+                panic!("Expected SdCwtDraft04 credential");
+            }
+        };
+
+        // Mock update_group_info to succeed
+        let mut mls_api = create_mock_mls_api("user_id1", meet_link_name, true);
+        mls_api
+            .expect_update_group_info()
+            .returning(|_, _, _, _, _| Box::pin(ready(Ok(()))));
+        service1.mls_api = Arc::new(mls_api);
+
+        // First kick: Remove user2
+        service1
+            .kick_participant(&user2_uuid, meet_link_name)
             .await
-            .expect("user2 should be in the roster");
-        {
-            let mut group = group1.write().await;
-            group
-                .new_commit([ProposalArg::Remove(
-                    meet_identifiers::LeafIndex::try_from(user2_leaf).unwrap(),
-                )])
-                .await
-                .unwrap();
-            group.merge_pending_commit().await.unwrap();
-        }
+            .unwrap();
+
+        // Verify user2 is removed
         assert_eq!(group1.read().await.roster().count(), 2);
 
-        // Kicking someone already gone is a no-op success, with nothing to propose.
+        // Second kick: Try to kick user2 again - should return Ok() without error
         let result = service1.kick_participant(&user2_uuid, meet_link_name).await;
 
         assert!(result.is_ok(), "Should succeed when target already removed");
-        assert_eq!(
-            pushed.lock().unwrap().len(),
-            0,
-            "No proposal should be pushed for an absent target"
-        );
     }
 
     #[tokio::test]
@@ -6445,7 +6583,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             proton_meet_mls::CipherSuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519;
 
         // Setup three-user group
-        let service1 = create_test_service_with_host("user_id1", meet_link_name, true).await;
+        let mut service1 = create_test_service_with_host("user_id1", meet_link_name, true).await;
         let service2 = create_test_service("user_id2", meet_link_name).await;
         let service3 = create_test_service("user_id3", meet_link_name).await;
 
@@ -6484,57 +6622,57 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             proposals.remove(0)
         };
 
-        // `kick_participant` no longer commits: it builds a Remove proposal and hands it
-        // to the room's queue, which commits it on the next batched round. So the
-        // observable effect is a `push_proposal` carrying a Remove for user2's leaf.
-        let user2_leaf_index: u32 = {
-            let group = group1.read().await;
-            let found = group.roster().find(|m| match &m.credential {
-                mls_types::Credential::SdCwtDraft04 {
-                    claimset: Some(claimset),
-                    ..
-                } => uuid::Uuid::from_bytes(claimset.uuid).to_string() == user2_uuid,
-                _ => false,
-            });
-            *found.expect("user2 should be in the roster").leaf_index()
-        };
+        // Queue the proposal
+        {
+            let mut queue = service1.proposal_queue.lock().await;
+            queue.insert(
+                meet_link_name.to_string(),
+                vec![QueuedProposal {
+                    proposal_message: user3_remove_proposal,
+                    proposal_type: ProposalType::Remove,
+                }],
+            );
+        }
 
-        let mut queue = MockMessageQueue::new();
-        queue
-            .expect_push_proposal()
-            .times(1)
-            .withf(move |proposal: &mls_types::MlsMessage| {
-                let owned = proposal.clone();
-                let Some(inner) = owned.as_proposal() else {
-                    return false;
-                };
-                let Ok(parsed) = mls_types::Proposal::try_from(inner.clone()) else {
-                    return false;
-                };
-                parsed.to_remove_index() == Some(user2_leaf_index)
-            })
-            .returning(|_| Box::pin(ready(Ok(()))));
+        // Verify queue has 1 proposal
+        let queued_count = service1
+            .proposal_queue
+            .lock()
+            .await
+            .get(meet_link_name)
+            .map(|v| v.len())
+            .unwrap_or(0);
+        assert_eq!(queued_count, 1, "Should have 1 queued proposal");
 
-        let (bundle, _) = crate::service::test::create_test_service_bundle_with_host(
-            "user_id1",
-            meet_link_name,
-            true,
-            crate::service::test::ServiceBundleDI {
-                mls_store: Some(service1.mls_store.clone()),
-                message_queue: Some(Arc::new(queue) as ArcMessageQueue),
-                ..Default::default()
-            },
-        );
-        let kicking_service = bundle.user_service.read().await.clone();
+        // Mock update_group_info to succeed
+        let mut mls_api = create_mock_mls_api("user_id1", meet_link_name, true);
+        mls_api
+            .expect_update_group_info()
+            .returning(|_, _, _, _, _| Box::pin(ready(Ok(()))));
+        service1.mls_api = Arc::new(mls_api);
 
-        // The pre-existing queued proposal for user3 is untouched by the kick; it is the
-        // queue's job to batch them, and that is covered by the batched-proposal tests.
-        let _ = user3_remove_proposal;
-
-        kicking_service
+        // Kick user2 - should also process the queued user3 removal
+        service1
             .kick_participant(&user2_uuid, meet_link_name)
             .await
             .unwrap();
+
+        // Verify both user2 and user3 were removed (3 -> 1, only user1 remains)
+        let final_roster_count = group1.read().await.roster().count();
+        assert_eq!(
+            final_roster_count, 1,
+            "Should have 1 member after kick (both user2 and user3 removed)"
+        );
+
+        // Verify queue is now empty (proposals were extracted and processed)
+        let queue_empty = service1
+            .proposal_queue
+            .lock()
+            .await
+            .get(meet_link_name)
+            .map(|v| v.is_empty())
+            .unwrap_or(true);
+        assert!(queue_empty, "Proposal queue should be empty after kick");
     }
 
     #[tokio::test]
@@ -7249,9 +7387,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             bundle
         };
 
-        let result = get_message_queue_impl(&service, room_id)
-            .await
-            .validate_psk_proposal(&commit_to_mls_message(&commit_bundle));
+        let result = Service::validate_psk_proposal(commit_to_mls_message(&commit_bundle), room_id);
         assert!(
             result.is_ok(),
             "Expected Ok for correct PSK ID, got: {:?}",
@@ -7262,7 +7398,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
     #[tokio::test]
     async fn validate_psk_proposal_rejects_commit_with_no_psk_proposal() {
         let room_id = "unit-psk-missing";
-        let (service, group, _, _) = setup_single_user_group(room_id).await;
+        let (_, group, _, _) = setup_single_user_group(room_id).await;
 
         let commit_bundle = {
             let mut g = group.write().await;
@@ -7270,9 +7406,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             bundle
         };
 
-        let result = get_message_queue_impl(&service, room_id)
-            .await
-            .validate_psk_proposal(&commit_to_mls_message(&commit_bundle));
+        let result = Service::validate_psk_proposal(commit_to_mls_message(&commit_bundle), room_id);
         assert!(
             result
                 .as_ref()
@@ -7309,9 +7443,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             bundle
         };
 
-        let result = get_message_queue_impl(&service, room_id)
-            .await
-            .validate_psk_proposal(&commit_to_mls_message(&commit_bundle));
+        let result = Service::validate_psk_proposal(commit_to_mls_message(&commit_bundle), room_id);
         assert!(
             result
                 .as_ref()
@@ -7499,9 +7631,8 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                     }
                 }
 
-                get_message_queue_impl(&service1, &meet_link_name)
-                    .await
-                    .handle_batched_proposals(queued, 0)
+                service1
+                    .handle_batched_proposals(&meet_link_name, queued, 0)
                     .await
                     .unwrap_or_else(|e| {
                         panic!(
