@@ -58,7 +58,9 @@ mod test {
     use crate::service::auth::AuthServiceImpl;
     use crate::{
         domain::{
-            mls::ports::{KeyPackagePort, MockKeyPackagePort},
+            mls::ports::{
+                KeyPackagePort, MessageCachePort, MockKeyPackagePort, MockMessageCachePort,
+            },
             room::{RoomService, WaitingRoomService},
             user::ports::{
                 meeting_api::{MeetingApi, MockMeetingApi},
@@ -70,10 +72,8 @@ mod test {
         },
         infra::mimi_subject_parser::ANONYMOUS_USER_IDENTIFIER,
         service::{
-            caption::CaptionServiceImpl,
-            message_queue::{ArcMessageQueueService, MockMessageQueueService},
-            services_bundle::ServiceBundle,
-            user_service::Service,
+            caption::CaptionServiceImpl, message_queue::MessageQueueServiceImpl,
+            services_bundle::ServiceBundle, user_service::Service,
         },
         utils::server_time::ServerTimeTracker,
     };
@@ -91,7 +91,7 @@ mod test {
         pub key_packages: Option<Arc<dyn KeyPackagePort>>,
         pub user_api: Option<Arc<dyn UserApi>>,
         pub user_repository: Option<ArcUserRepository>,
-        pub message_queue: Option<ArcMessageQueueService>,
+        pub message_cache: Option<Arc<dyn MessageCachePort>>,
     }
 
     /// Returned by [`create_test_service_bundle_with_host`] containing all the instances used to create a bundle
@@ -112,6 +112,7 @@ mod test {
         #[cfg(not(target_family = "wasm"))]
         pub auth_service: Arc<AuthServiceImpl>,
         pub caption_service: Arc<CaptionServiceImpl>,
+        pub message_queue_service: Arc<MessageQueueServiceImpl>,
     }
 
     fn generate_mimi_device_id(
@@ -305,13 +306,14 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let user_repository = di
             .user_repository
             .unwrap_or_else(|| Arc::new(MockUserRepository::new()));
-        let msg_queue_service = di
-            .message_queue
-            .unwrap_or_else(|| Arc::new(MockMessageQueueService::new()));
+        let message_cache = di
+            .message_cache
+            .unwrap_or_else(|| Arc::new(MockMessageCachePort::new()));
 
         #[cfg(not(target_family = "wasm"))]
         let mut auth_service = None;
         let mut caption_service = None;
+        let mut message_queue_service = None;
         let service_bundle = Arc::new_cyclic(|weak| {
             let user_service = Arc::new(RwLock::new(Service::new(
                 http_client.clone(),
@@ -338,6 +340,13 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 meeting_api.clone(),
             )));
 
+            message_queue_service = Some(Arc::new(MessageQueueServiceImpl::new(
+                mls_store.clone(),
+                message_cache.clone(),
+                mls_api.clone(),
+                weak.clone(),
+            )));
+
             ServiceBundle::new(
                 Arc::new(RoomService::new(
                     http_client.clone(),
@@ -351,7 +360,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 #[cfg(not(target_family = "wasm"))]
                 auth_service.clone().unwrap(),
                 caption_service.clone().unwrap(),
-                msg_queue_service,
+                message_queue_service.clone().unwrap(),
                 user_service,
             )
         });
@@ -372,6 +381,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 #[cfg(not(target_family = "wasm"))]
                 auth_service: auth_service.unwrap(),
                 caption_service: caption_service.unwrap(),
+                message_queue_service: message_queue_service.unwrap(),
             },
         )
     }

@@ -27,7 +27,7 @@ use crate::infra::dto::realtime::{
 };
 use crate::service::user_service::{
     create_test_service, join_switch_service_with_mls_api, mls_group_export_snapshot,
-    setup_n_user_group,
+    setup_n_user_group, Service,
 };
 use crate::JOIN_TYPE_SWITCH_THRESHOLD;
 use mls_spec::drafts::ratchet_tree_options::RatchetTreeOption;
@@ -373,7 +373,10 @@ async fn join_room_with_switch_join_type_falls_back_to_false_on_retryable_error(
         async move { create_test_service(&user_id, meet_link_name).await }
     }))
     .await;
-    let service_refs = services.iter().collect::<Vec<_>>();
+    let service_refs = services
+        .iter()
+        .map(|v| -> &Service { &*v })
+        .collect::<Vec<_>>();
     let groups = setup_n_user_group(service_refs, meet_link_name, config.ciphersuite).await;
     let host_group = groups[0].clone();
 

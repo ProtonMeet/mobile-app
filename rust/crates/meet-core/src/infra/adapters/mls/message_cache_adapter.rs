@@ -8,6 +8,7 @@ use crate::domain::mls::ports::MessageCachePort;
 use crate::infra::message_cache::{CachedMessageType, CachedMlsMessage, MlsMessageCache};
 
 /// Adapter that implements MessageCachePort using existing MlsMessageCache
+#[derive(Default)]
 pub struct MessageCacheAdapter {
     message_cache: Arc<Mutex<MlsMessageCache>>,
 }
