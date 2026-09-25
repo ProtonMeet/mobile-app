@@ -24,23 +24,12 @@ impl MlsStorePort for MlsStoreAdapter {
         &self,
         room_id: &str,
     ) -> Result<Arc<RwLock<MlsGroup<MemKv>>>, anyhow::Error> {
-        let store = self.mls_store.read().await;
-        let group = store
-            .group_map
-            .get(room_id)
-            .ok_or_else(|| anyhow::anyhow!("Failed to find mls group for room {room_id}"))?
-            .clone();
-        Ok(group)
+        Ok(self.mls_store.read().await.find_group(room_id)?)
     }
 
     async fn get_group_epoch(&self, room_id: &str) -> Result<u64, anyhow::Error> {
-        let store = self.mls_store.read().await;
-        let mls_group = store
-            .group_map
-            .get(room_id)
-            .ok_or_else(|| anyhow::anyhow!("Failed to find mls group for room {room_id}"))?
-            .read()
-            .await;
+        let mls_group_lock = self.mls_store.read().await.find_group(room_id)?;
+        let mls_group = mls_group_lock.read().await;
         Ok(*mls_group.epoch())
     }
 

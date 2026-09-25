@@ -2876,14 +2876,12 @@ pub(crate) mod tests {
             .await
             .expect("host should process non-host external commit");
 
-        let non_host_group = {
-            let store = non_host_service.mls_store.read().await;
-            store
-                .group_map
-                .get(meet_link_name)
-                .expect("non-host group should be stored")
-                .clone()
-        };
+        let non_host_group = non_host_service
+            .mls_store
+            .read()
+            .await
+            .find_group(meet_link_name)
+            .expect("non-host group should be stored");
 
         assert_eq!(
             host_group.read().await.epoch(),
@@ -3549,14 +3547,12 @@ pub(crate) mod tests {
             "creator should observe a Commit after host joiner external commit"
         );
 
-        let host_joiner_group = {
-            let store = host_joiner_service.mls_store.read().await;
-            store
-                .group_map
-                .get(meet_link_name)
-                .expect("host joiner group should be stored")
-                .clone()
-        };
+        let host_joiner_group = host_joiner_service
+            .mls_store
+            .read()
+            .await
+            .find_group(meet_link_name)
+            .expect("host joiner group should be stored");
 
         assert_eq!(host_group.read().await.roster().count(), 2);
         assert_eq!(host_joiner_group.read().await.roster().count(), 2);
@@ -3703,10 +3699,12 @@ pub(crate) mod tests {
             .unwrap();
 
         // Get the second user's group
-        let group2 = {
-            let store = service2.mls_store.read().await;
-            store.group_map.get(meet_link_name).unwrap().clone()
-        };
+        let group2 = service2
+            .mls_store
+            .read()
+            .await
+            .find_group(meet_link_name)
+            .unwrap();
 
         // Verify both groups are in sync
         assert_eq!(group1.read().await.epoch(), group2.read().await.epoch());
@@ -3782,10 +3780,12 @@ pub(crate) mod tests {
             .unwrap();
 
         // Get the second user's group
-        let group2 = {
-            let store = service2.mls_store.read().await;
-            store.group_map.get(meet_link_name).unwrap().clone()
-        };
+        let group2 = service2
+            .mls_store
+            .read()
+            .await
+            .find_group(meet_link_name)
+            .unwrap();
 
         // Verify both groups are in sync
         assert_eq!(group1.read().await.epoch(), group2.read().await.epoch());
@@ -3887,10 +3887,12 @@ pub(crate) mod tests {
             }
 
             // Get the new member's group from the service's store
-            let new_group = {
-                let store = service.mls_store.read().await;
-                store.group_map.get(meet_link_name).unwrap().clone()
-            };
+            let new_group = service
+                .mls_store
+                .read()
+                .await
+                .find_group(meet_link_name)
+                .unwrap();
             groups.push(new_group);
 
             last_commit_bundle = commit_bundle;
@@ -4912,10 +4914,12 @@ pub(crate) mod tests {
             .await
             .unwrap();
 
-        let group3 = {
-            let store = service3.mls_store.read().await;
-            store.group_map.get(meet_link_name).unwrap().clone()
-        };
+        let group3 = service3
+            .mls_store
+            .read()
+            .await
+            .find_group(meet_link_name)
+            .unwrap();
 
         println!("All 3 users joined the group");
         println!(
@@ -5390,7 +5394,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         // Get group info and ratchet tree from group1 to create external proposal
         let (group_info, ratchet_tree_option) = {
             let store = service1.mls_store.read().await;
-            let group = store.group_map.get(meet_link_name).unwrap();
+            let group = store.find_group(meet_link_name).unwrap();
             let group_read = group.read().await;
 
             // Get GroupInfo for external proposals
@@ -5556,10 +5560,12 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         // Verify that the proposals were successfully processed
         // Check that roster size: +1 (user3 added) -1 (user2 removed) = same size
         // But since we're removing user2 and adding user3, final size should be 2 (user1 + user3)
-        let final_group = {
-            let store = service_with_mock.mls_store.read().await;
-            store.group_map.get(meet_link_name).unwrap().clone()
-        };
+        let final_group = service_with_mock
+            .mls_store
+            .read()
+            .await
+            .find_group(meet_link_name)
+            .unwrap();
         let final_roster_size = final_group.read().await.roster().count();
         // After adding user3 and removing user2: 2 (initial) + 1 (add) - 1 (remove) = 2
         assert_eq!(
@@ -7147,10 +7153,12 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let (_group1, _group2) =
             setup_two_user_group(&service1, &service2, meet_link_name, config.ciphersuite).await;
 
-        let group1 = {
-            let store = service1.mls_store.read().await;
-            store.group_map.get(meet_link_name).unwrap().clone()
-        };
+        let group1 = service1
+            .mls_store
+            .read()
+            .await
+            .find_group(meet_link_name)
+            .unwrap();
         let (group_info_msg, ratchet_tree_opt) = mls_group_export_snapshot(&group1).await;
 
         let service3 = create_test_service("user3", meet_link_name).await;
@@ -7209,10 +7217,12 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let (_g1, _g2) =
             setup_two_user_group(&service1, &service2, meet_link_name, config.ciphersuite).await;
 
-        let group1 = {
-            let store = service1.mls_store.read().await;
-            store.group_map.get(meet_link_name).unwrap().clone()
-        };
+        let group1 = service1
+            .mls_store
+            .read()
+            .await
+            .find_group(meet_link_name)
+            .unwrap();
         let (group_info_msg, ratchet_tree_opt) = mls_group_export_snapshot(&group1).await;
 
         let service3 = create_test_service("user3", meet_link_name).await;
@@ -7407,8 +7417,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 .mls_store
                 .read()
                 .await
-                .group_map
-                .get(meet_link_name)
+                .find_group(meet_link_name)
                 .expect("joiner group should be stored")
                 .read()
                 .await
@@ -7504,10 +7513,12 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let (_g1, _g2) =
             setup_two_user_group(&service1, &service2, meet_link_name, config.ciphersuite).await;
 
-        let group1 = {
-            let store = service1.mls_store.read().await;
-            store.group_map.get(meet_link_name).unwrap().clone()
-        };
+        let group1 = service1
+            .mls_store
+            .read()
+            .await
+            .find_group(meet_link_name)
+            .unwrap();
         let (group_info_msg, ratchet_tree_opt) = mls_group_export_snapshot(&group1).await;
 
         let service3 = create_test_service("user3", meet_link_name).await;
@@ -7554,10 +7565,12 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let (_g1, _g2) =
             setup_two_user_group(&service1, &service2, meet_link_name, config.ciphersuite).await;
 
-        let group1 = {
-            let store = service1.mls_store.read().await;
-            store.group_map.get(meet_link_name).unwrap().clone()
-        };
+        let group1 = service1
+            .mls_store
+            .read()
+            .await
+            .find_group(meet_link_name)
+            .unwrap();
         let (group_info_msg, _) = mls_group_export_snapshot(&group1).await;
 
         let service3 = create_test_service("user3", meet_link_name).await;

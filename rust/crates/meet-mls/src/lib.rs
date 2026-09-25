@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+use std::hash::Hash;
 use std::{collections::HashMap, sync::Arc};
 
 use kv::MemKv;
@@ -34,6 +36,8 @@ pub struct MlsStore {
 pub enum MlsStoreError {
     #[error("Mls client not found")]
     MlsClientNotFound,
+    #[error("Mls group not found")]
+    MlsGroupNotFound,
 }
 
 impl MlsStore {
@@ -47,5 +51,16 @@ impl MlsStore {
             .get(user_id)
             .and_then(|m| m.get(cs))
             .ok_or(MlsStoreError::MlsClientNotFound)
+    }
+
+    pub fn find_group<Q>(&self, room_id: &Q) -> Result<Arc<RwLock<MlsGroup<MemKv>>>, MlsStoreError>
+    where
+        Q: Hash + Eq + ?Sized,
+        String: Borrow<Q>,
+    {
+        self.group_map
+            .get(room_id)
+            .cloned()
+            .ok_or(MlsStoreError::MlsGroupNotFound)
     }
 }
