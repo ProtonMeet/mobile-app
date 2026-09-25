@@ -117,6 +117,9 @@ enum UnleashFeature {
   /// Long-press message actions: quick reactions + thread reply bottom sheet.
   meetChatThreads('MeetChatThreads'),
 
+  /// @mentions in chat: composer typeahead, token rendering, mention notifications.
+  meetChatMentions('MeetChatMentions'),
+
   /// When enabled, MLS operations use cached server time from HTTP response headers.
   /// When disabled, they fall back to the local clock.
   meetUseCachedServerTime(
@@ -181,5 +184,5 @@ const Map<UnleashFeature, bool> kUnleashLocalOverrides = {
   // UnleashFeature.meetInAppPurchase: true,
   // UnleashFeature.meetMeetingRecordingNative: true,
   // UnleashFeature.meetWaitingRoom: true,
-  // UnleashFeature.meetCameraBackgroundBlur: true,
+  UnleashFeature.meetCameraBackgroundBlur: true,
 };

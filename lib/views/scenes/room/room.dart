@@ -68,13 +68,17 @@ import 'package:meet/views/scenes/exts.dart';
 import 'package:meet/views/scenes/feedbacks/left_meeting_feedback_sheet.dart';
 import 'package:meet/views/scenes/feedbacks/pre_rating_sheet.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
+import 'package:meet/utils/mentions/mention_label.dart';
+import 'package:meet/utils/mentions/mention_plain_text.dart';
 import 'package:meet/views/scenes/room/chat/bloc/chat_bloc.dart';
 import 'package:meet/views/scenes/room/chat/bloc/chat_event.dart';
+import 'package:meet/views/scenes/room/chat/bloc/chat_incoming_notification.dart';
 import 'package:meet/views/scenes/room/chat/bloc/chat_state.dart';
 import 'package:meet/views/scenes/room/chat/bloc/chat_transport.dart';
 import 'package:meet/views/scenes/room/chat/chat_bubble.dart';
 import 'package:meet/views/scenes/room/chat/chat_controller.dart';
 import 'package:meet/views/scenes/room/chat/chat_models.dart';
+import 'package:meet/views/scenes/room/chat/mention_message_content.dart';
 import 'package:meet/views/scenes/room/controls_bar/controls_bar_responsive.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 import 'package:meet/views/scenes/room/layout/fixed_sizing_camera_layout.dart';
@@ -215,6 +219,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
 
   void _openChatSidePanel() {
     if (_openSidePanel == RoomSidePanel.chat) return;
+    LocalToast.dismissActiveToastification();
     if (_openSidePanel != null) {
       dismissRoomPanelBottomSheetIfPresent();
     }
@@ -266,10 +271,10 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   late final ChatBloc _chatBloc;
   late final InRoomSettingsBloc _inRoomSettingsBloc;
 
-  StreamSubscription<RoomChatMessage>? _chatToastSub;
+  StreamSubscription<ChatIncomingNotification>? _chatToastSub;
 
   /// Latest chat message awaiting a toast this frame, if any.
-  RoomChatMessage? _pendingChatToast;
+  ChatIncomingNotification? _pendingChatToast;
   bool _chatToastScheduled = false;
 
   /// Read-only view of the transcript for widgets that still render off the
@@ -285,6 +290,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       .get<DataProviderManager>()
       .unleashDataProvider
       .isMeetChatThreads();
+
+  bool get _chatMentionsEnabled => ManagerFactory()
+      .get<DataProviderManager>()
+      .unleashDataProvider
+      .isMeetChatMentions();
 
   /// Recording-status envelopes received before [RoomState.isRoomInitialized]
   /// flipped true. We can't validate them yet because the participant map (and
@@ -345,6 +355,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         room: () => _bloc.state.room,
       ),
       isThreadedChatEnabled: () => _newChatEnabled,
+      isChatMentionsEnabled: () => _chatMentionsEnabled,
       participantCount: () {
         final roomState = _bloc.state;
         // Either source can be ahead of the other while the roster settles.
@@ -1389,11 +1400,11 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
-  void _showIncomingChatToast(RoomChatMessage msg) {
+  void _showIncomingChatToast(ChatIncomingNotification notification) {
     // Several messages can land in the same frame — an MLS catch-up after a
     // reconnect delivers a whole backlog at once — so show only the most
     // recent instead of stacking a toast per message.
-    _pendingChatToast = msg;
+    _pendingChatToast = notification;
     if (_chatToastScheduled) {
       return;
     }
@@ -1406,13 +1417,49 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       if (pending == null || !mounted || !context.mounted) {
         return;
       }
+      if (_isSidePanelOpen(RoomSidePanel.chat)) {
+        return;
+      }
+
+      final msg = pending.message;
+      final localId = _bloc.state.room.localParticipant?.identity ?? '';
+      final participantTracks = _bloc.state.participantTracks;
+      final nameMap = buildParticipantNameMap(participantTracks);
+      final plainBody = mentionPlainText(
+        msg.message,
+        participantNameMap: nameMap,
+        localIdentity: localId,
+        everyoneName: context.local.chat_mention_everyone,
+        unknownName: context.local.unknown,
+      );
+      final senderName = msg.name.trim().isNotEmpty
+          ? msg.name.trim()
+          : msg.identity;
+      final title = pending.isMention
+          ? context.local.chat_mention_notified_title(senderName)
+          : senderName;
+
+      final hasBody = msg.message.trim().isNotEmpty;
       LocalToast.showToastification(
         context,
-        pending.name,
-        pending.message,
-        onTap: (_) {
-          _openChatSidePanel();
-        },
+        title,
+        hasBody ? plainBody : '',
+        avatarName: senderName,
+        index: resolveParticipantColorIndex(
+          msg.identity,
+          participantTracks: participantTracks,
+        ),
+        autoCloseInSeconds: pending.isMention ? 30 : 8,
+        messageWidget: hasBody
+            ? MentionMessageContent(
+                message: msg.message,
+                localIdentity: localId,
+                participantNameMap: nameMap,
+                participantTracks: participantTracks,
+                selectable: false,
+              )
+            : null,
+        onTap: (_) => _openChatSidePanel(),
       );
     });
   }
@@ -4012,6 +4059,7 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
           userIdentity: localId,
           userName: widget.displayName,
           chatThreadsEnabled: _chatThreadsEnabled,
+          chatMentionsEnabled: _chatMentionsEnabled,
           onSend: sendChatMessage,
           onToggleReaction: toggleChatReaction,
           onRetry: _retryChatMessage,

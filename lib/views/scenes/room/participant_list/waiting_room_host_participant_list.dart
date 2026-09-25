@@ -275,7 +275,7 @@ class _WaitingRoomHostParticipantListState
     required bool actionsDisabled,
   }) {
     final colors = _colorCache.putIfAbsent(participant.id, () {
-      final c = getParticipantDisplayColors(context, participant.id.hashCode);
+      final c = getParticipantAvatarColors(context, participant.id);
       return (
         backgroundColor: c.backgroundColor,
         profileTextColor: c.profileTextColor,

@@ -194,6 +194,22 @@ mixin RoomLiveCaptionsTranscriptionHandlers
     // arrives; a duplicate header for the same stream id then throws
     // DataStreamErrorReason.AlreadyOpened (common when the agent sends while
     // participants are still joining).
+    try {
+      _subscribeTranscriptionTextStream(reader, participantIdentity);
+    } catch (e, stackTrace) {
+      l.logger.w(
+        '[LiveCaptions] transcription handler failed before subscribe: $e',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      _drainTextStream(reader);
+    }
+  }
+
+  void _subscribeTranscriptionTextStream(
+    TextStreamReader reader,
+    String participantIdentity,
+  ) {
     if (!isMeetLiveCaptionsEnabled() || isClosed || !state.liveCaptionsWanted) {
       _drainTextStream(reader);
       return;

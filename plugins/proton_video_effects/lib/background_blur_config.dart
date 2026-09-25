@@ -27,7 +27,7 @@ class BackgroundBlurConfig {
   final double blurSigma;
   final double backgroundObscureOpacity;
 
-  /// How the segmentation mask is shaped before blending. Honoured on Apple and Android.
+  /// How the segmentation mask is shaped before blending. Honoured on every native engine.
   final MaskEdgeTuning maskEdge;
 
   /// Segment inline on the capture thread so each frame gets its own mask. Apple platforms only.

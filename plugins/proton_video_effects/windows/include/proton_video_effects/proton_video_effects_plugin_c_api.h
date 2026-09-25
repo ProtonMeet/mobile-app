@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-FLUTTER_PLUGIN_EXPORT void ProtonVideoEffectsPluginRegisterWithRegistrar(
+FLUTTER_PLUGIN_EXPORT void ProtonVideoEffectsPluginCApiRegisterWithRegistrar(
     FlutterDesktopPluginRegistrarRef registrar);
 
 #if defined(__cplusplus)

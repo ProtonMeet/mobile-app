@@ -4,6 +4,8 @@ project(proton_screen_recorder LANGUAGES CXX)
 set(PLUGIN_NAME "proton_screen_recorder_plugin")
 
 add_library(${PLUGIN_NAME} SHARED
+  "include/proton_screen_recorder/proton_screen_recorder_plugin_c_api.h"
+  "proton_screen_recorder_plugin_c_api.cpp"
   "proton_screen_recorder_plugin.cpp"
 )
 apply_standard_settings(${PLUGIN_NAME})

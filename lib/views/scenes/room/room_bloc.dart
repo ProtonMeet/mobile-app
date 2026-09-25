@@ -314,6 +314,9 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     registerLiveCaptionsHandlers();
     registerLiveCaptionsTranscriptionHandlers();
     registerLiveCaptionsAgentHandlers();
+    if (isMeetLiveCaptionsEnabled()) {
+      ensureLiveCaptionsTranscriptionHandler(room: room);
+    }
 
     on<ParticipantRecordingStarted>(_onParticipantRecordingStarted);
     on<ParticipantRecordingStopped>(_onParticipantRecordingStopped);
@@ -371,6 +374,44 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     Emitter<RoomState> emit,
   ) async {
     await roomManager?.refreshE2EEKey(state.room);
+    unawaited(_logLocalSenderKeyIndex());
+  }
+
+  /// Diagnostic for "others can't hear me after unmuting a muted join".
+  ///
+  /// LiveKit pins a newly created sender frame cryptor to
+  /// `keyProvider.getLatestIndex(identity)`, which the shared-key path never
+  /// updates, so it can sit at 0 while the group key lives at
+  /// `epoch % keyRingSize`. Remote peers then fail to decrypt this track.
+  /// Logs the applied index next to the epoch-derived one so a mismatch is
+  /// visible in a user log without a debugger.
+  Future<void> _logLocalSenderKeyIndex() async {
+    if (!kDebugMode) {
+      return;
+    }
+
+    final e2eeManager = state.room.e2eeManager;
+    final identity = state.room.localParticipant?.identity;
+    if (e2eeManager == null || identity == null) {
+      return;
+    }
+    try {
+      final appCoreManager = ManagerFactory().get<AppCoreManager>();
+      final (_, epoch) = await appCoreManager.appCore.getGroupKey();
+      final expectedIndex = e2eeManager.keyProvider.getKeyIndexFromEpoch(epoch);
+      final appliedIndex = await e2eeManager.getKeyIndex(identity);
+      final latestIndex = e2eeManager.keyProvider.getLatestIndex(identity);
+      final line =
+          '[AudioDiag] sender keyIndex applied=$appliedIndex '
+          'expected=$expectedIndex latest=$latestIndex epoch=$epoch';
+      if (appliedIndex != expectedIndex) {
+        l.logger.e('$line MISMATCH');
+      } else {
+        l.logger.i(line);
+      }
+    } catch (e) {
+      l.logger.w('[AudioDiag] sender keyIndex check failed: $e');
+    }
   }
 
   void _onParticipantRecordingStarted(
@@ -533,21 +574,22 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     // Setup MLS sync state listener
     setupMlsSyncStateListener();
 
-    // Register waiting-room join request callbacks (host receives live updates)
-    await registerWaitingRoomCallbacks();
-
-    // MLS agent admission (AgentPending → admitAgent)
-    unawaited(registerLiveCaptionsAgentAdmissionCallbacks());
-
     // Setup LiveKit listeners (bridge) See: room_event_bridge.dart
     setUpListeners();
 
     if (isMeetLiveCaptionsEnabled()) {
       ensureLiveCaptionsTranscriptionHandler(room: event.room);
+      syncLiveCaptionsPreferencesFromLocal(emit);
       if (event.room.remoteParticipants.values.any(isCaptionAgent)) {
         add(const LiveCaptionsCaptionAgentConnected());
       }
     }
+
+    // Register waiting-room join request callbacks (host receives live updates)
+    await registerWaitingRoomCallbacks();
+
+    // MLS agent admission (AgentPending → admitAgent)
+    unawaited(registerLiveCaptionsAgentAdmissionCallbacks());
 
     unawaited(DenoiseAudioService.instance.warmUpDeepFilterIfNeeded());
 

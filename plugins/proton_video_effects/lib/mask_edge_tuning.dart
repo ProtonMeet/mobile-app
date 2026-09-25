@@ -1,10 +1,10 @@
 /// Shape of the segmentation mask before it is used to blend subject over background.
 ///
-/// Honoured by the Apple and Android engines alike. Apple shapes the mask at frame resolution in
-/// Core Image; Android shapes it in mask space and converts these frame-height fractions to mask
-/// pixels, which is equivalent because the mask is a scaled copy of the frame. The practical
-/// difference is quantisation: one Android mask pixel is a few frame pixels, so sub-pixel erode
-/// radii round away instead of nudging the outline.
+/// Honoured by the Apple, Android and desktop engines alike. Apple shapes the mask at frame
+/// resolution in Core Image; Android and desktop shape it in mask space and convert these
+/// frame-height fractions to mask pixels, which is equivalent because the mask is a scaled copy of
+/// the frame. The practical difference is quantisation: one mask pixel is a few frame pixels, so
+/// sub-pixel erode radii round away instead of nudging the outline.
 ///
 /// The pipeline applies these in a fixed order — upscale, erode, solidify, feather, gamma — and
 /// the order is what keeps the knobs independent. Erosion moves the outline without reshaping the

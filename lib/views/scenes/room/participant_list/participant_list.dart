@@ -132,6 +132,7 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
   final Map<String, ({Color backgroundColor, Color profileTextColor})>
   _colorCache = {};
   final Map<String, String> _initialsCache = {};
+  String _participantTracksSignature = '';
 
   List<ParticipantDetail> get _filteredParticipants => widget.participants;
 
@@ -169,8 +170,19 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
     }
   }
 
+  void _syncParticipantTrackColors(BuildContext context) {
+    final tracks = context.read<RoomBloc>().state.participantTracks;
+    final signature = tracks.map((t) => t.participant.identity).join(',');
+    if (signature == _participantTracksSignature) {
+      return;
+    }
+    _participantTracksSignature = signature;
+    _colorCache.clear();
+  }
+
   @override
   Widget build(BuildContext context) {
+    _syncParticipantTrackColors(context);
     final partitioned = _partitionedParticipants;
     final systemAgents = partitioned.systemAgents;
     final people = partitioned.people;
@@ -546,8 +558,13 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
     ParticipantDetail p,
   ) {
     final participantId = p.participant?.identity ?? p.name;
+    final participantTracks = context.read<RoomBloc>().state.participantTracks;
     final colors = _colorCache.putIfAbsent(participantId, () {
-      final c = getParticipantDisplayColors(context, participantId.hashCode);
+      final c = getParticipantAvatarColors(
+        context,
+        participantId,
+        participantTracks: participantTracks,
+      );
       return (
         backgroundColor: c.backgroundColor,
         profileTextColor: c.profileTextColor,

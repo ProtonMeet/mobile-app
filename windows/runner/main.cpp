@@ -18,6 +18,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
   flutter::DartProject project(L"data");
+  // Impeller's GLES backend can fail to recreate framebuffers when the window
+  // is resized quickly (FATAL in render_pass_gles.cc). Skia is stable here;
+  // macOS uses Impeller-on-Metal which does not hit this path.
+  project.set_impeller_switch(flutter::ImpellerSwitch::Disabled);
 
   std::vector<std::string> command_line_arguments =
       GetCommandLineArguments();

@@ -291,6 +291,7 @@ void main() {
           'MeetWaitingRoom': true,
           'MeetNewChatHandling': true,
           'MeetChatThreads': true,
+          'MeetChatMentions': true,
           'MeetUseCachedServerTime': true,
         },
       );
