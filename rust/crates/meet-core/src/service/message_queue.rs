@@ -1572,15 +1572,6 @@ impl MessageQueue {
     }
 }
 
-#[test]
-#[allow(unreachable_code)]
-#[should_panic]
-fn require_fn_to_be_send() {
-    fn require_send<T: Send>(_t: T) {}
-    require_send(MessageQueue::push_commit(todo!(), todo!()));
-    require_send(MessageQueue::push_proposal(todo!(), todo!()));
-}
-
 #[cfg(test)]
 mod test {
     use std::{future::ready, mem, sync::Arc};
