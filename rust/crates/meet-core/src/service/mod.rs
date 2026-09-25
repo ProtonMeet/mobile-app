@@ -58,9 +58,7 @@ mod test {
     use crate::service::auth::AuthServiceImpl;
     use crate::{
         domain::{
-            mls::ports::{
-                KeyPackagePort, MessageCachePort, MockKeyPackagePort, MockMessageCachePort,
-            },
+            mls::ports::{KeyPackagePort, MessageCachePort, MockKeyPackagePort},
             room::{RoomService, WaitingRoomService},
             user::ports::{
                 meeting_api::{MeetingApi, MockMeetingApi},
@@ -70,7 +68,10 @@ mod test {
                 MockWebSocketClient, UserService,
             },
         },
-        infra::mimi_subject_parser::ANONYMOUS_USER_IDENTIFIER,
+        infra::{
+            adapters::mls::message_cache_adapter::MessageCacheAdapter,
+            mimi_subject_parser::ANONYMOUS_USER_IDENTIFIER,
+        },
         service::{
             caption::CaptionServiceImpl, message_queue::MessageQueueServiceImpl,
             services_bundle::ServiceBundle, user_service::Service,
@@ -308,7 +309,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             .unwrap_or_else(|| Arc::new(MockUserRepository::new()));
         let message_cache = di
             .message_cache
-            .unwrap_or_else(|| Arc::new(MockMessageCachePort::new()));
+            .unwrap_or_else(|| Arc::new(MessageCacheAdapter::default()));
 
         #[cfg(not(target_family = "wasm"))]
         let mut auth_service = None;

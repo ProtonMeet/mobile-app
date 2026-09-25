@@ -11,6 +11,7 @@ use crate::{
         models::{meeting_link_name::MeetingLinkName, UserSettings},
         ports::{new_user_service::NewUserService, ArcWebSocketClient},
     },
+    errors::service::ServiceError,
     infra::crypto_client::derive_external_psk,
     service::{service_state::MlsSyncState, services_bundle::ServiceBundle},
     utils::{instant, sleep},
@@ -113,6 +114,7 @@ struct MessageWithId {
 pub(crate) struct QueuedProposal {
     pub(crate) proposal_message: mls_types::MlsMessage,
     pub(crate) proposal_type: ProposalType,
+    pub(crate) already_applied: bool,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -238,11 +240,13 @@ impl Service {
     pub(super) async fn committer_rank(
         &self,
         mls_group: &MlsGroup<MemKv>,
-    ) -> Result<(u64, u64), anyhow::Error> {
+    ) -> Result<(u64, u64), ServiceError> {
         let self_leaf_index = mls_group.own_leaf_index()?;
         let epoch_at = *mls_group.epoch();
         let authorizer = mls_group.authorizer()?;
-        let own_role = authorizer.own_role(epoch_at)?;
+        let own_role = authorizer
+            .own_role(epoch_at)
+            .map_err(|e| ServiceError::Internal(e.to_string()))?;
         let rank = if own_role.role_index == UserRole::RoomAdmin as u32 {
             0
         } else {
@@ -262,12 +266,14 @@ impl Service {
         own_leaf_index: u32,
         epoch_at: u64,
         roster: Vec<Member>,
-    ) -> Result<u64, anyhow::Error> {
+    ) -> Result<u64, ServiceError> {
         let _own_leaf = roster
             .iter()
             .find(|m| *m.leaf_index() == own_leaf_index)
             .ok_or_else(|| {
-                anyhow::anyhow!("own_leaf_index {own_leaf_index} not found in roster")
+                ServiceError::Internal(format!(
+                    "own_leaf_index {own_leaf_index} not found in roster"
+                ))
             })?;
         let mut all_leaf_indices = self.get_committer_candidate_indices(roster).await?;
 
@@ -282,7 +288,9 @@ impl Service {
             .iter()
             .position(|&x| x == own_leaf_index)
             .ok_or_else(|| {
-                anyhow::anyhow!("own_leaf_index {own_leaf_index} not found in committer candidates")
+                ServiceError::Internal(format!(
+                    "own_leaf_index {own_leaf_index} not found in committer candidates"
+                ))
             })?;
         Ok(rank as u64)
     }
@@ -290,7 +298,7 @@ impl Service {
     async fn get_committer_candidate_indices(
         &self,
         roster: Vec<Member>,
-    ) -> Result<Vec<u32>, anyhow::Error> {
+    ) -> Result<Vec<u32>, ServiceError> {
         let state_lock = self.state.lock().await;
         let livekit_active_uuid_hashmap = state_lock.livekit_active_uuid_hashmap.clone();
         let last_livekit_active_uuid_update_time = state_lock.last_livekit_active_uuid_update_time;
@@ -1514,51 +1522,54 @@ impl UserService for Service {
     ) -> Result<(), MeetCoreError> {
         let target_uuid = Uuid::from_str(target_participant_id)?;
 
-        let group = self
-            .mls_store
-            .read()
-            .await
-            .group_map
-            .get(meeting_link_name)
-            .ok_or(MeetCoreError::ParticipantNotFound)?
-            .clone();
-
-        let proposal = {
-            let mut group = group.write().await;
-
-            // Authorization is a service-layer policy decision, not queue mechanics.
-            if group.own_role_for_current_epoch()?.role_index
-                != UserRole::RoomAdmin.builder().role_index
-            {
-                tracing::warn!("User is not RoomAdmin, cannot kick participant");
-                return Err(MeetCoreError::NotRoomAdmin);
-            }
-
-            let target_leaf = {
-                let Some(target) = group.roster().find(|m| match &m.credential {
-                    Credential::SdCwtDraft04 {
-                        claimset: Some(claimset),
-                        ..
-                    } => claimset.uuid == target_uuid.into_bytes(),
-                    _ => false,
-                }) else {
-                    // Already removed concurrently: the requested end state.
-                    tracing::debug!("Target {target_participant_id} is not in the roster");
-                    return Ok(());
-                };
-                target.leaf_index()
-            };
-
-            group
-                .new_proposals([ProposalArg::Remove(target_leaf)])
-                .await?
-                .pop()
-                .ok_or_else(|| anyhow::anyhow!("Expected new_proposals to return a Remove"))?
-        };
-
         self.services()?
             .msg_queue_service
-            .push_proposal(meeting_link_name, proposal)
+            .push_proposal_and_commit(
+                meeting_link_name,
+                Box::new(move |group: &mut MlsGroup<MemKv>| {
+                    let target_uuid = target_uuid.clone();
+                    Box::pin(async move {
+                        // Authorization is a service-layer policy decision, not queue mechanics.
+                        if group.own_role_for_current_epoch()?.role_index
+                            != UserRole::RoomAdmin.builder().role_index
+                        {
+                            tracing::warn!("User is not RoomAdmin, cannot kick participant");
+                            return Ok(None);
+                        }
+
+                        let target_leaf = {
+                            let Some(target) = group.roster().find(|m| match &m.credential {
+                                Credential::SdCwtDraft04 {
+                                    claimset: Some(claimset),
+                                    ..
+                                } => claimset.uuid == target_uuid.into_bytes(),
+                                _ => false,
+                            }) else {
+                                // Already removed concurrently: the requested end state.
+                                tracing::debug!("Target {target_uuid} is not in the roster");
+                                return Ok(None);
+                            };
+                            target.leaf_index()
+                        };
+
+                        if let Some(proposal) = group
+                            .new_proposals([ProposalArg::Remove(target_leaf)])
+                            .await?
+                            .pop()
+                        {
+                            Ok(Some(QueuedProposal {
+                                proposal_message: proposal,
+                                proposal_type: ProposalType::Remove,
+                                already_applied: true,
+                            }))
+                        } else {
+                            Err(ServiceError::Internal(
+                                "Expected new_proposals to return a Remove".into(),
+                            ))
+                        }
+                    })
+                }),
+            )
             .await?;
 
         Ok(())

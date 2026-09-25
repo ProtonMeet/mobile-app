@@ -26,12 +26,16 @@ pub enum ServiceError {
 
     #[error("User not found")]
     UserNotFound,
+    #[error("Group not found")]
+    GroupNotFound,
     #[error("User private keys not found")]
     UserPrivateKeysNotFound,
     #[error("Private key passphrase not found")]
     PrivateKeyPassphraseNotFound,
     #[error("Address ID is required")]
     AddressIdRequired,
+    #[error("could not upgrade service bundle")]
+    NoServiceBundle,
 
     #[error("repository error: {0}")]
     StorageError(#[from] crate::infra::storage::error::StorageError),
@@ -41,8 +45,17 @@ pub enum ServiceError {
     LoginError(#[from] crate::errors::login::LoginError),
     #[error("crypto error: {0}")]
     CryptoError(#[from] proton_meet_crypto::CryptoError),
+    #[error("mls error: {0}")]
+    MlsError(#[from] mls_trait::MlsError),
+    #[error("mls types error: {0}")]
+    MlsTypesError(#[from] mls_types::MlsTypesError),
 
     /// create meeting errors
     #[error("Start time is required for recurring meetings")]
     StartTimeRequired,
+
+    #[error("internal: {0}")]
+    Internal(String),
+    #[error("max retries reached")]
+    MaxRetriesReached,
 }

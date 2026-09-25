@@ -12,13 +12,13 @@ pub trait MessageCachePort: Send + Sync {
         epoch: u64,
         message_type: CachedMessageType,
         message: MlsMessage,
-    ) -> Result<(), anyhow::Error>;
+    );
 
     async fn get_cached_messages(
         &self,
         room_id: &str,
         epoch: u64,
-    ) -> Result<Option<Vec<(CachedMessageType, CachedMlsMessage)>>, anyhow::Error>;
+    ) -> Option<Vec<(CachedMessageType, CachedMlsMessage)>>;
 
     async fn remove_processed_messages(&self, room_id: &str, epoch: u64);
 

@@ -210,6 +210,7 @@ impl From<crate::errors::service::ServiceError> for MeetCoreError {
         // fell through to `ServiceError` and surfaced as generic `BridgeError::MeetCore`.
         match error {
             ServiceError::HttpClientError(http) => Self::from(http),
+            ServiceError::MaxRetriesReached => Self::MaxRetriesReached,
             other => {
                 if let Some(inner_error) = find_error_type::<HttpClientError>(&other) {
                     match inner_error {

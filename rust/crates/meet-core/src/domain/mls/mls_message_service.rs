@@ -29,7 +29,7 @@ impl MlsMessageService {
             .ok_or(anyhow::anyhow!("Expected commit to have an epoch"))?;
         self.message_cache
             .cache_message(room_id, epoch, CachedMessageType::Commit, commit_message)
-            .await?;
+            .await;
         Ok(())
     }
 
@@ -49,7 +49,7 @@ impl MlsMessageService {
                 CachedMessageType::Proposal,
                 proposal_message,
             )
-            .await?;
+            .await;
         Ok(())
     }
 }

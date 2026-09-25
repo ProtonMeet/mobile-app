@@ -10,7 +10,7 @@ pub(crate) mod tests {
 
     use mls_types::ExternalPskId;
     use muon::http::Status;
-    use tokio::sync::{Mutex, RwLock, RwLockWriteGuard};
+    use tokio::sync::{Mutex, RwLock, RwLockReadGuard};
 
     use crate::{
         domain::{
@@ -1684,7 +1684,6 @@ pub(crate) mod tests {
         let cached_messages = s2_cache
             .get_cached_messages(meet_link_name, 3)
             .await
-            .unwrap()
             .unwrap();
         assert_eq!(cached_messages.len(), 1);
 
@@ -1738,10 +1737,7 @@ pub(crate) mod tests {
         assert_eq!(group2.read().await.roster().count(), 2);
 
         // Verify cache is cleaned after processing cached messages
-        let message_cache = s2_cache
-            .get_cached_messages(meet_link_name, 3)
-            .await
-            .unwrap();
+        let message_cache = s2_cache.get_cached_messages(meet_link_name, 3).await;
         if let Some(cache) = message_cache {
             assert!(
                 cache.is_empty(),
@@ -2491,10 +2487,6 @@ pub(crate) mod tests {
     async fn waiting_room_setting_update_aborts_pending_commit_on_422() {
         let meet_link_name = "waiting_room_setting_422_abort";
         let config = MlsClientConfig::default();
-        let mut host_service = create_test_service_with_host("host", meet_link_name, true).await;
-
-        let (_host_meet_user_id, host_user_id, host_group, _initial_bundle) =
-            setup_solo_waiting_room_group(&host_service, meet_link_name, config.ciphersuite).await;
 
         let mut meeting_api = MockMeetingApi::new();
         meeting_api
@@ -2509,7 +2501,19 @@ pub(crate) mod tests {
                     },
                 ))))
             });
-        host_service.meeting_api = Arc::new(meeting_api);
+        let (bundle, _) = create_test_service_bundle_with_host(
+            "host",
+            meet_link_name,
+            true,
+            ServiceBundleDI {
+                meeting_api: Some(Arc::new(meeting_api)),
+                ..Default::default()
+            },
+        );
+        let host_service = bundle.user_service.read().await;
+
+        let (_host_meet_user_id, host_user_id, host_group, _initial_bundle) =
+            setup_solo_waiting_room_group(&host_service, meet_link_name, config.ciphersuite).await;
 
         let result = host_service
             .update_waiting_room_setting_policy(&host_user_id, meet_link_name, false)
@@ -2527,8 +2531,25 @@ pub(crate) mod tests {
         let meet_link_name = "waiting_room_admit_reject_auth";
         let config = MlsClientConfig::default();
         let creator_service = create_test_service_with_host("creator", meet_link_name, true).await;
-        let mut co_host_service =
-            create_test_service_with_host("co_host", meet_link_name, false).await;
+
+        let mut mls_api = create_mock_mls_api("co_host", meet_link_name, false);
+        mls_api
+            .expect_reject_join_request()
+            .returning(|_, _, _, _| Box::pin(ready(Ok(()))));
+        mls_api
+            .expect_update_group_info()
+            .returning(|_, _, _, _, _| Box::pin(ready(Ok(()))));
+        let (bundle, _) = create_test_service_bundle_with_host(
+            "host",
+            meet_link_name,
+            true,
+            ServiceBundleDI {
+                mls_api: Some(Arc::new(mls_api)),
+                ..Default::default()
+            },
+        );
+        let co_host_service = bundle.user_service.read().await;
+
         let guest_service = create_test_service_with_host("guest", meet_link_name, false).await;
 
         let (_creator_user_id, co_host_user_id, creator_group, co_host_group) =
@@ -2605,15 +2626,6 @@ pub(crate) mod tests {
             meet_link_name,
         )
         .await;
-
-        let mut mls_api = create_mock_mls_api("co_host", meet_link_name, false);
-        mls_api
-            .expect_reject_join_request()
-            .returning(|_, _, _, _| Box::pin(ready(Ok(()))));
-        mls_api
-            .expect_update_group_info()
-            .returning(|_, _, _, _, _| Box::pin(ready(Ok(()))));
-        co_host_service.mls_api = Arc::new(mls_api);
 
         co_host_service
             .reject_waiting_room_join_request(
@@ -3079,22 +3091,20 @@ pub(crate) mod tests {
         user_id: &str,
         meet_link_name: &str,
         is_host: bool,
-    ) -> RwLockWriteGuard<'static, Service> {
+    ) -> RwLockReadGuard<'static, Service> {
         let (bundle, _) = create_test_service_bundle_with_host(
             user_id,
             meet_link_name,
             is_host,
             Default::default(),
         );
-        let guard: RwLockWriteGuard<'static, Service> =
-            Box::leak(Box::new(bundle)).user_service.write().await;
-        guard
+        Box::leak(Box::new(bundle)).user_service.read().await
     }
 
     pub async fn create_test_service(
         user_id: &str,
         meet_link_name: &str,
-    ) -> RwLockWriteGuard<'static, Service> {
+    ) -> RwLockReadGuard<'static, Service> {
         create_test_service_with_host(user_id, meet_link_name, false).await
     }
 
@@ -5084,8 +5094,22 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let ciphersuite =
             proton_meet_mls::CipherSuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519;
 
-        // Setup three-user group
-        let mut service1 = create_test_service_with_host("user_id1", meet_link_name, true).await;
+        // Mock update_group_info to succeed
+        let mut mls_api = create_mock_mls_api("user_id1", meet_link_name, true);
+        mls_api
+            .expect_update_group_info()
+            .returning(|_, _, _, _, _| Box::pin(ready(Ok(()))));
+
+        let (s1_bundle, _) = create_test_service_bundle(
+            "user1",
+            meet_link_name,
+            ServiceBundleDI {
+                message_cache: Some(Arc::new(MessageCacheAdapter::default())),
+                mls_api: Some(Arc::new(mls_api)),
+                ..Default::default()
+            },
+        );
+        let service1 = s1_bundle.user_service.read().await;
         let service2 = create_test_service("user_id2", meet_link_name).await;
         let service3 = create_test_service("user_id3", meet_link_name).await;
 
@@ -5112,15 +5136,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 panic!("Expected SdCwtDraft04 credential");
             }
         };
-
-        // Mock update_group_info to succeed
-        let mut mls_api = create_mock_mls_api("user_id1", meet_link_name, true);
-        mls_api
-            .expect_update_group_info()
-            .returning(|_, _, _, _, _| Box::pin(ready(Ok(()))));
-
-        // Replace service1's http_client with mocked one
-        service1.mls_api = Arc::new(mls_api);
 
         // Kick user2
         service1
@@ -5157,30 +5172,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let ciphersuite =
             proton_meet_mls::CipherSuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519;
 
-        // Setup three-user group
-        let mut service1 = create_test_service_with_host("user_id1", meet_link_name, true).await;
-        let service2 = create_test_service("user_id2", meet_link_name).await;
-        let service3 = create_test_service("user_id3", meet_link_name).await;
-
-        let groups = setup_n_user_group(
-            vec![&service1, &service2, &service3],
-            meet_link_name,
-            ciphersuite,
-        )
-        .await;
-        let group1 = groups[0].clone();
-
-        // Get user2's UUID
-        let user2_uuid = {
-            let group = group1.read().await;
-            let roster: Vec<_> = group.roster().collect();
-            if let mls_types::Credential::SdCwtDraft04 { claimset, .. } = &roster[1].credential {
-                uuid::Uuid::from_bytes(claimset.as_ref().unwrap().uuid).to_string()
-            } else {
-                panic!("Expected SdCwtDraft04 credential");
-            }
-        };
-
         // Mock update_group_info to fail once with 422, then succeed
         let mut mls_api = create_mock_mls_api("user_id1", meet_link_name, true);
         let call_count = Arc::new(std::sync::atomic::AtomicU32::new(0));
@@ -5208,7 +5199,37 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 }
             });
 
-        service1.mls_api = Arc::new(mls_api);
+        // Setup three-user group
+        let (s1_bundle, _) = create_test_service_bundle(
+            "user_id1",
+            meet_link_name,
+            ServiceBundleDI {
+                mls_api: Some(Arc::new(mls_api)),
+                ..Default::default()
+            },
+        );
+        let service1 = s1_bundle.user_service.read().await;
+        let service2 = create_test_service("user_id2", meet_link_name).await;
+        let service3 = create_test_service("user_id3", meet_link_name).await;
+
+        let groups = setup_n_user_group(
+            vec![&service1, &service2, &service3],
+            meet_link_name,
+            ciphersuite,
+        )
+        .await;
+        let group1 = groups[0].clone();
+
+        // Get user2's UUID
+        let user2_uuid = {
+            let group = group1.read().await;
+            let roster: Vec<_> = group.roster().collect();
+            if let mls_types::Credential::SdCwtDraft04 { claimset, .. } = &roster[1].credential {
+                uuid::Uuid::from_bytes(claimset.as_ref().unwrap().uuid).to_string()
+            } else {
+                panic!("Expected SdCwtDraft04 credential");
+            }
+        };
 
         // Record start time
         let start = std::time::Instant::now();
@@ -5242,30 +5263,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let ciphersuite =
             proton_meet_mls::CipherSuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519;
 
-        // Setup three-user group
-        let mut service1 = create_test_service_with_host("user_id1", meet_link_name, true).await;
-        let service2 = create_test_service("user_id2", meet_link_name).await;
-        let service3 = create_test_service("user_id3", meet_link_name).await;
-
-        let groups = setup_n_user_group(
-            vec![&service1, &service2, &service3],
-            meet_link_name,
-            ciphersuite,
-        )
-        .await;
-        let group1 = groups[0].clone();
-
-        // Get user2's UUID
-        let user2_uuid = {
-            let group = group1.read().await;
-            let roster: Vec<_> = group.roster().collect();
-            if let mls_types::Credential::SdCwtDraft04 { claimset, .. } = &roster[1].credential {
-                uuid::Uuid::from_bytes(claimset.as_ref().unwrap().uuid).to_string()
-            } else {
-                panic!("Expected SdCwtDraft04 credential");
-            }
-        };
-
         // Mock update_group_info to always fail with 422
         let mut mls_api = create_mock_mls_api("user_id1", meet_link_name, true);
         let call_count = Arc::new(std::sync::atomic::AtomicU32::new(0));
@@ -5287,7 +5284,37 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 )))
             });
 
-        service1.mls_api = Arc::new(mls_api);
+        // Setup three-user group
+        let (s1_bundle, _) = create_test_service_bundle(
+            "user_id1",
+            meet_link_name,
+            ServiceBundleDI {
+                mls_api: Some(Arc::new(mls_api)),
+                ..Default::default()
+            },
+        );
+        let service1 = s1_bundle.user_service.read().await;
+        let service2 = create_test_service("user_id2", meet_link_name).await;
+        let service3 = create_test_service("user_id3", meet_link_name).await;
+
+        let groups = setup_n_user_group(
+            vec![&service1, &service2, &service3],
+            meet_link_name,
+            ciphersuite,
+        )
+        .await;
+        let group1 = groups[0].clone();
+
+        // Get user2's UUID
+        let user2_uuid = {
+            let group = group1.read().await;
+            let roster: Vec<_> = group.roster().collect();
+            if let mls_types::Credential::SdCwtDraft04 { claimset, .. } = &roster[1].credential {
+                uuid::Uuid::from_bytes(claimset.as_ref().unwrap().uuid).to_string()
+            } else {
+                panic!("Expected SdCwtDraft04 credential");
+            }
+        };
 
         // Kick should fail with MaxRetriesReached
         let result = service1.kick_participant(&user2_uuid, meet_link_name).await;
@@ -5314,30 +5341,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let ciphersuite =
             proton_meet_mls::CipherSuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519;
 
-        // Setup three-user group
-        let mut service1 = create_test_service_with_host("user_id1", meet_link_name, true).await;
-        let service2 = create_test_service("user_id2", meet_link_name).await;
-        let service3 = create_test_service("user_id3", meet_link_name).await;
-
-        let groups = setup_n_user_group(
-            vec![&service1, &service2, &service3],
-            meet_link_name,
-            ciphersuite,
-        )
-        .await;
-        let group1 = groups[0].clone();
-
-        // Get user2's UUID
-        let user2_uuid = {
-            let group = group1.read().await;
-            let roster: Vec<_> = group.roster().collect();
-            if let mls_types::Credential::SdCwtDraft04 { claimset, .. } = &roster[1].credential {
-                uuid::Uuid::from_bytes(claimset.as_ref().unwrap().uuid).to_string()
-            } else {
-                panic!("Expected SdCwtDraft04 credential");
-            }
-        };
-
         // Mock update_group_info to fail with 500 (non-retryable)
         let mut mls_api = create_mock_mls_api("user_id1", meet_link_name, true);
         let call_count = Arc::new(std::sync::atomic::AtomicU32::new(0));
@@ -5359,7 +5362,37 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 )))
             });
 
-        service1.mls_api = Arc::new(mls_api);
+        // Setup three-user group
+        let (s1_bundle, _) = create_test_service_bundle(
+            "user_id1",
+            meet_link_name,
+            ServiceBundleDI {
+                mls_api: Some(Arc::new(mls_api)),
+                ..Default::default()
+            },
+        );
+        let service1 = s1_bundle.user_service.read().await;
+        let service2 = create_test_service("user_id2", meet_link_name).await;
+        let service3 = create_test_service("user_id3", meet_link_name).await;
+
+        let groups = setup_n_user_group(
+            vec![&service1, &service2, &service3],
+            meet_link_name,
+            ciphersuite,
+        )
+        .await;
+        let group1 = groups[0].clone();
+
+        // Get user2's UUID
+        let user2_uuid = {
+            let group = group1.read().await;
+            let roster: Vec<_> = group.roster().collect();
+            if let mls_types::Credential::SdCwtDraft04 { claimset, .. } = &roster[1].credential {
+                uuid::Uuid::from_bytes(claimset.as_ref().unwrap().uuid).to_string()
+            } else {
+                panic!("Expected SdCwtDraft04 credential");
+            }
+        };
 
         let result = service1.kick_participant(&user2_uuid, meet_link_name).await;
 
@@ -5388,8 +5421,22 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let ciphersuite =
             proton_meet_mls::CipherSuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519;
 
+        // Mock update_group_info to succeed
+        let mut mls_api = create_mock_mls_api("user_id1", meet_link_name, true);
+        mls_api
+            .expect_update_group_info()
+            .returning(|_, _, _, _, _| Box::pin(ready(Ok(()))));
+
         // Setup three-user group
-        let mut service1 = create_test_service_with_host("user_id1", meet_link_name, true).await;
+        let (s1_bundle, _) = create_test_service_bundle(
+            "user_id1",
+            meet_link_name,
+            ServiceBundleDI {
+                mls_api: Some(Arc::new(mls_api)),
+                ..Default::default()
+            },
+        );
+        let service1 = s1_bundle.user_service.read().await;
         let service2 = create_test_service("user_id2", meet_link_name).await;
         let service3 = create_test_service("user_id3", meet_link_name).await;
 
@@ -5411,13 +5458,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 panic!("Expected SdCwtDraft04 credential");
             }
         };
-
-        // Mock update_group_info to succeed
-        let mut mls_api = create_mock_mls_api("user_id1", meet_link_name, true);
-        mls_api
-            .expect_update_group_info()
-            .returning(|_, _, _, _, _| Box::pin(ready(Ok(()))));
-        service1.mls_api = Arc::new(mls_api);
 
         // First kick: Remove user2
         service1

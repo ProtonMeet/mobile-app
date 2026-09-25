@@ -11,6 +11,26 @@ use uuid::Uuid;
 
 use crate::errors::core::MeetCoreError;
 
+/// Calculate retry delay with exponential backoff and jitter
+/// - attempt_num: 0-indexed attempt number (0 = first retry after initial failure)
+/// - base_ms: base delay in milliseconds
+/// - max_ms: maximum delay cap
+pub fn calculate_retry_delay(attempt_num: u32, base_ms: u64, max_ms: u64) -> u64 {
+    use rand::Rng;
+
+    // Exponential backoff: base * 2^attempt_num
+    let exponential_delay = base_ms.saturating_mul(1u64 << attempt_num);
+    let capped_delay = exponential_delay.min(max_ms);
+
+    // Add jitter: ±10%
+    let jitter_range = (capped_delay as f64 * 0.1) as u64;
+    let jitter = rand::thread_rng().gen_range(0..=jitter_range * 2);
+
+    capped_delay
+        .saturating_sub(jitter_range)
+        .saturating_add(jitter)
+}
+
 pub(crate) fn ensure_room_admin(mls_group: &MlsGroup<MemKv>) -> Result<(), MeetCoreError> {
     let role = mls_group.own_role_for_current_epoch()?;
     if role.role_index != UserRole::RoomAdmin.builder().role_index {

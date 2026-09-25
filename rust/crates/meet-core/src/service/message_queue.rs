@@ -1,7 +1,9 @@
 use std::{
     cmp::Ordering,
     collections::{hash_map::Entry, HashMap, HashSet},
+    future::Future,
     mem,
+    pin::Pin,
     str::FromStr,
     sync::{Arc, Weak},
     time::Duration,
@@ -31,7 +33,7 @@ use crate::{
             ports::{MlsApi, UserService},
         },
     },
-    errors::service::ServiceError,
+    errors::{http_client::HttpClientError, service::ServiceError},
     infra::{message_cache::CachedMessageType, mimi_subject_parser::MimiSubject},
     service::{
         compute_stagger_time,
@@ -41,7 +43,7 @@ use crate::{
             credential_is_agent, psk_id_for_commit, utils::group_has_agent, GroupKeyUpdateReason,
             ProposalType, QueuedProposal,
         },
-        utils::convert_mls_types_to_spec,
+        utils::{calculate_retry_delay, convert_mls_types_to_spec},
         StaggerStats, RANK_GROUP_DELAY_MS,
     },
     utils::{
@@ -73,6 +75,16 @@ pub(crate) type ArcMessageQueueService = Arc<dyn MessageQueueService + Send + Sy
 #[cfg(target_family = "wasm")]
 pub(crate) type ArcMessageQueueService = Arc<dyn MessageQueueService + 'static>;
 
+type ProposalBuilder = Box<
+    dyn for<'a> Fn(
+            &'a mut MlsGroup<MemKv>,
+        ) -> Pin<
+            Box<dyn Future<Output = Result<Option<QueuedProposal>, ServiceError>> + Send + 'a>,
+        > + Send
+        + Sync
+        + 'static,
+>;
+
 #[async_trait_with_mock]
 pub(crate) trait MessageQueueService {
     /// Handles an inbound commit for this room, replaying any cached backlog it unblocks.
@@ -80,14 +92,20 @@ pub(crate) trait MessageQueueService {
         &self,
         room_id: &str,
         commit: mls_types::MlsMessage,
-    ) -> Result<(), anyhow::Error>;
+    ) -> Result<(), ServiceError>;
 
     /// Handles an inbound proposal for this room, queueing it for the next batched commit.
     async fn push_proposal(
         &self,
         room_id: &str,
         proposal: mls_types::MlsMessage,
-    ) -> Result<(), anyhow::Error>;
+    ) -> Result<(), ServiceError>;
+
+    async fn push_proposal_and_commit(
+        &self,
+        room_id: &str,
+        proposal_builder: ProposalBuilder,
+    ) -> Result<(), ServiceError>;
 }
 
 pub(crate) struct MessageQueueServiceImpl {
@@ -114,7 +132,7 @@ impl MessageQueueServiceImpl {
         }
     }
 
-    async fn get_message_queue(&self, room_id: &str) -> Result<Arc<MessageQueue>, anyhow::Error> {
+    async fn get_message_queue(&self, room_id: &str) -> Result<Arc<MessageQueue>, ServiceError> {
         if let Some(queue) = self.mls_queues.read().await.get(room_id) {
             return Ok(queue.clone());
         }
@@ -129,7 +147,7 @@ impl MessageQueueServiceImpl {
                     .await
                     .group_map
                     .get(room_id)
-                    .ok_or_else(|| anyhow::anyhow!("Group for room {room_id} not found"))?
+                    .ok_or(ServiceError::GroupNotFound)?
                     .clone();
 
                 let queue = MessageQueue::new(
@@ -152,7 +170,7 @@ impl MessageQueueService for MessageQueueServiceImpl {
         &self,
         room_id: &str,
         commit: mls_types::MlsMessage,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(), ServiceError> {
         self.get_message_queue(room_id)
             .await?
             .push_commit(commit)
@@ -163,10 +181,21 @@ impl MessageQueueService for MessageQueueServiceImpl {
         &self,
         room_id: &str,
         proposal: mls_types::MlsMessage,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(), ServiceError> {
         self.get_message_queue(room_id)
             .await?
             .push_proposal(proposal)
+            .await
+    }
+
+    async fn push_proposal_and_commit(
+        &self,
+        room_id: &str,
+        proposal_builder: ProposalBuilder,
+    ) -> Result<(), ServiceError> {
+        self.get_message_queue(room_id)
+            .await?
+            .push_proposal_and_commit(proposal_builder)
             .await
     }
 }
@@ -204,20 +233,16 @@ impl MessageQueue {
         }
     }
 
-    fn services(&self) -> Result<Arc<ServiceBundle>, anyhow::Error> {
-        self.services
-            .upgrade()
-            .ok_or_else(|| anyhow::anyhow!("Could not upgrade service bundle"))
+    fn services(&self) -> Result<Arc<ServiceBundle>, ServiceError> {
+        self.services.upgrade().ok_or(ServiceError::NoServiceBundle)
     }
 
     async fn process_commit_message(
         self: &Arc<Self>,
         commit: mls_types::MlsMessage,
-    ) -> Result<CommitProcessingOutcome, anyhow::Error> {
+    ) -> Result<CommitProcessingOutcome, ServiceError> {
         let group_epoch = self.epoch().await;
-        let commit_epoch = commit
-            .epoch()
-            .ok_or(anyhow::anyhow!("Expected commit to have an epoch"))?;
+        let commit_epoch = commit.epoch().ok_or(ServiceError::NoEpochCommit)?;
 
         tracing::info!("Before processing commit message. epoch: {group_epoch:?}");
 
@@ -297,7 +322,7 @@ impl MessageQueue {
                         self.room_id
                     );
                     Some((
-                        Err(anyhow::Error::from(ServiceError::PskProposalMissing)),
+                        Err(ServiceError::from(ServiceError::PskProposalMissing)),
                         "Commit missing PSK proposal",
                     ))
                 } else {
@@ -310,7 +335,7 @@ impl MessageQueue {
                 tracing::error!("Proposal not found in commit message");
                 self.cache_commit_message(commit).await?;
                 Some((
-                    Err(anyhow::Error::from(ServiceError::ProposalNotFound)),
+                    Err(ServiceError::from(ServiceError::ProposalNotFound)),
                     "Failed to process commit message",
                 ))
             }
@@ -324,7 +349,7 @@ impl MessageQueue {
             _ => {
                 tracing::error!("Received message is not a commit: {:?}", received_message);
                 Some((
-                    Err(anyhow::Error::from(ServiceError::InvalidMlsMessageType)),
+                    Err(ServiceError::from(ServiceError::InvalidMlsMessageType)),
                     "Failed to process commit message",
                 ))
             }
@@ -376,7 +401,7 @@ impl MessageQueue {
         Ok(CommitProcessingOutcome::Applied)
     }
 
-    pub(super) async fn process_cached_messages(self: &Arc<Self>) -> Result<(), anyhow::Error> {
+    pub(super) async fn process_cached_messages(self: &Arc<Self>) -> Result<(), ServiceError> {
         #[cfg(debug_assertions)]
         tracing::info!("Processing cached messages for room {}", self.room_id);
         let mut total_processed_epochs = Vec::<u64>::new();
@@ -434,7 +459,7 @@ impl MessageQueue {
             let cached_messages = match self
                 .msg_cache
                 .get_cached_messages(&self.room_id, epoch_to_process)
-                .await?
+                .await
             {
                 Some(messages) if !messages.is_empty() => messages,
                 Some(_) => {
@@ -590,12 +615,12 @@ impl MessageQueue {
         Ok(())
     }
 
-    async fn process_cached_proposals(&self, group_epoch: Epoch) -> Result<(), anyhow::Error> {
+    async fn process_cached_proposals(&self, group_epoch: Epoch) -> Result<(), ServiceError> {
         // handle proposals from msg_cache for this epoch
         if let Some(cached_messages) = self
             .msg_cache
             .get_cached_messages(&self.room_id, *group_epoch)
-            .await?
+            .await
         {
             for message in cached_messages
                 .into_iter()
@@ -616,7 +641,7 @@ impl MessageQueue {
     async fn cache_commit_message(
         &self,
         commit: mls_types::MlsMessage,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(), ServiceError> {
         Ok(self
             .msg_cache
             .cache_message(
@@ -625,12 +650,12 @@ impl MessageQueue {
                 CachedMessageType::Commit,
                 commit,
             )
-            .await?)
+            .await)
     }
     async fn cache_proposal_message(
         &self,
         proposal: mls_types::MlsMessage,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(), ServiceError> {
         Ok(self
             .msg_cache
             .cache_message(
@@ -639,7 +664,7 @@ impl MessageQueue {
                 CachedMessageType::Proposal,
                 proposal,
             )
-            .await?)
+            .await)
     }
 
     fn restore_proposal_queue_on_failure(
@@ -666,7 +691,7 @@ impl MessageQueue {
     pub(super) fn validate_psk_proposal(
         room_id: &str,
         message: &mls_types::MlsMessage,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(), ServiceError> {
         use crate::service::agent_host_service::agent_psk_id_for_meeting;
         let expected_agent_id = agent_psk_id_for_meeting(room_id);
         if let MlsMessagePayload::Plain(public_message) = &message.mls_message.payload {
@@ -683,7 +708,7 @@ impl MessageQueue {
                                     && id_bytes.as_slice() != expected_agent_id.as_slice()
                                 {
                                     tracing::error!("PSK ID mismatch for room {}", room_id);
-                                    return Err(anyhow::Error::from(
+                                    return Err(ServiceError::from(
                                         ServiceError::PskProposalMissing,
                                     ));
                                 }
@@ -693,7 +718,7 @@ impl MessageQueue {
                 }
                 if !has_psk {
                     tracing::error!("PSK proposal missing for room {}", room_id);
-                    return Err(anyhow::Error::from(ServiceError::PskProposalMissing));
+                    return Err(ServiceError::from(ServiceError::PskProposalMissing));
                 }
             }
         }
@@ -703,10 +728,7 @@ impl MessageQueue {
     async fn process_proposal_message(
         self: &Arc<Self>,
         message: mls_types::MlsMessage,
-    ) -> Result<ProposalProcessingOutcome, anyhow::Error> {
-        // self.handle_proposal(&room_id, proposal_message.clone())
-        //     .await?;
-
+    ) -> Result<ProposalProcessingOutcome, ServiceError> {
         let proposal = match message.clone().as_proposal() {
             Some(p) => {
                 let mls_types_proposal: mls_types::Proposal = p.clone().try_into()?;
@@ -715,9 +737,7 @@ impl MessageQueue {
             None => return Ok(ProposalProcessingOutcome::NoStateChange),
         };
 
-        let proposal_epoch = message
-            .epoch()
-            .ok_or(anyhow::anyhow!("Expected proposal to have an epoch"))?;
+        let proposal_epoch = message.epoch().ok_or(ServiceError::NoEpochProposal)?;
         let current_epoch = self.epoch().await;
 
         match proposal_epoch.cmp(&current_epoch) {
@@ -755,8 +775,8 @@ impl MessageQueue {
                 let queued_proposal = QueuedProposal {
                     proposal_message: message.clone(),
                     proposal_type,
+                    already_applied: false,
                 };
-
                 self.queue.write().push(queued_proposal);
             }
             _ => {
@@ -917,10 +937,8 @@ impl MessageQueue {
         });
     }
 
-    async fn handle_proposal(&self, proposal: mls_types::MlsMessage) -> Result<(), anyhow::Error> {
-        let epoch_of_proposal = proposal
-            .epoch()
-            .ok_or(anyhow::anyhow!("Expected proposal to have an epoch"))?;
+    async fn handle_proposal(&self, proposal: mls_types::MlsMessage) -> Result<(), ServiceError> {
+        let epoch_of_proposal = proposal.epoch().ok_or(ServiceError::NoEpochProposal)?;
 
         let mls_group_epoch = self.epoch().await;
 
@@ -980,7 +998,7 @@ impl MessageQueue {
         &self,
         queued_proposals: Vec<QueuedProposal>,
         mls_rank_group: u64,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(), ServiceError> {
         if queued_proposals.is_empty() {
             return Ok(());
         }
@@ -1073,11 +1091,8 @@ impl MessageQueue {
     async fn decrypt_and_classify_batched_proposals(
         mls_group: &mut MlsGroup<MemKv>,
         queued_proposals: Vec<QueuedProposal>,
-    ) -> Result<Vec<QueuedProposal>, anyhow::Error> {
-        // separate add and remove proposals
-        let mut add_proposals = Vec::new();
-        let mut remove_proposals = Vec::new();
-        let mut app_data_update_proposals = Vec::new();
+    ) -> Result<Vec<QueuedProposal>, ServiceError> {
+        let mut kept_proposals = Vec::new();
 
         // prepare indices for remove proposal validation
         let own_leaf_index = *mls_group.own_leaf_index()?;
@@ -1087,6 +1102,11 @@ impl MessageQueue {
             .collect();
 
         for queued_proposal in queued_proposals {
+            if queued_proposal.already_applied {
+                kept_proposals.push(queued_proposal);
+                continue;
+            }
+
             // TODO: shouldn't remove proposals dropped by the match below be ignored here?
             let result = mls_group
                 .decrypt_message(queued_proposal.proposal_message.clone())
@@ -1097,6 +1117,7 @@ impl MessageQueue {
                 Ok((ReceivedMessage::Duplicate, _)) => {
                     #[cfg(debug_assertions)]
                     tracing::warn!("Received duplicate proposal in batched processing");
+                    eprintln!("Received duplicate proposal in batched processing");
                     false
                 }
                 Ok((_received, _)) => {
@@ -1118,8 +1139,9 @@ impl MessageQueue {
             }
 
             match queued_proposal.proposal_type {
-                ProposalType::AppDataUpdate => app_data_update_proposals.push(queued_proposal),
-                ProposalType::Add => add_proposals.push(queued_proposal),
+                ProposalType::AppDataUpdate | ProposalType::Add => {
+                    kept_proposals.push(queued_proposal)
+                }
                 ProposalType::Remove => {
                     // validate remove proposal
                     let Some(proposal) = queued_proposal.proposal_message.as_proposal() else {
@@ -1151,18 +1173,12 @@ impl MessageQueue {
                         continue;
                     }
 
-                    remove_proposals.push(queued_proposal);
+                    kept_proposals.push(queued_proposal);
                 }
             }
         }
 
-        // TODO: classification is probably not needed
-        // combine all proposals
-        Ok(add_proposals
-            .into_iter()
-            .chain(remove_proposals)
-            .chain(app_data_update_proposals)
-            .collect())
+        Ok(kept_proposals)
     }
 
     fn classify_added_ids(
@@ -1222,7 +1238,7 @@ impl MessageQueue {
         mls_group: &MlsGroup<MemKv>,
         added_user_identifiers: HashSet<UserId>,
         agent_user_identifiers: HashSet<UserId>,
-    ) -> Result<Vec<ProposalArg>, anyhow::Error> {
+    ) -> Result<Vec<ProposalArg>, ServiceError> {
         let mut role_proposals = Vec::with_capacity(added_user_identifiers.len());
         let participant_list: HashSet<_> = mls_group
             .participant_list()?
@@ -1279,12 +1295,13 @@ impl MessageQueue {
         mls_group: &mut MlsGroup<MemKv>,
         role_proposals: Vec<ProposalArg>,
         proposal_infos: Option<Vec<MlsProposalInfo>>,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(), ServiceError> {
         // process all proposals in the same commit
         let (commit_bundle, ..) = mls_group.new_commit(role_proposals).await?;
 
         let own_device_id = mls_group.own_device_id()?;
-        let mimi_subject = MimiSubject::from_str(own_device_id.to_string().as_str())?;
+        let mimi_subject = MimiSubject::from_str(own_device_id.to_string().as_str())
+            .map_err(|e| ServiceError::Internal(e.to_string()))?;
         let user_token_info = UserTokenInfo {
             user_identifier: mls_group.own_user_id()?,
             device_id: mimi_subject.device_id().to_string(),
@@ -1293,13 +1310,14 @@ impl MessageQueue {
         // Update group info to the server
         let group_info = commit_bundle
             .group_info
-            .ok_or_else(|| anyhow::anyhow!("Expected commit to have a GroupInfo"))?;
-        let group_info_message = convert_mls_types_to_spec(&group_info)?;
+            .ok_or_else(|| ServiceError::Internal("Expected commit to have a GroupInfo".into()))?;
+        let group_info_message = convert_mls_types_to_spec(&group_info)
+            .map_err(|e| ServiceError::Internal(e.to_string()))?;
         let ratchet_tree_option = commit_bundle
             .ratchet_tree
-            .ok_or_else(|| anyhow::anyhow!("Expected commit to have a RatchetTree"))?
+            .ok_or_else(|| ServiceError::Internal("Expected commit to have a RatchetTree".into()))?
             .try_into()
-            .map_err(|e| anyhow::anyhow!("Failed to convert ratchet tree: {e}"))?;
+            .map_err(|e| ServiceError::Internal(format!("Failed to convert ratchet tree: {e}")))?;
 
         let base64_sd_kbt = self
             .services()?
@@ -1307,14 +1325,16 @@ impl MessageQueue {
             .read()
             .await
             .get_sd_kbt(&user_token_info.user_id())
-            .await?;
+            .await
+            .map_err(|e| ServiceError::Internal(e.to_string()))?;
 
         let welcome = commit_bundle.welcome.map(TryInto::try_into).transpose()?;
 
         let commit_info = MlsCommitInfo {
             room_id: self.room_id.as_bytes().to_vec(),
             welcome_message: welcome,
-            commit: convert_mls_types_to_spec(&commit_bundle.commit)?,
+            commit: convert_mls_types_to_spec(&commit_bundle.commit)
+                .map_err(|e| ServiceError::Internal(e.to_string()))?,
         };
 
         let result = self
@@ -1350,7 +1370,7 @@ impl MessageQueue {
         old_epoch: Epoch,
         new_epoch: Epoch,
         key_update_reason: GroupKeyUpdateReason,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(), ServiceError> {
         let services = self.services()?;
         let service = services.user_service.read().await;
 
@@ -1373,13 +1393,11 @@ impl MessageQueue {
 
         Ok(())
     }
-}
 
-impl MessageQueue {
     async fn push_commit(
         self: &Arc<Self>,
         commit: mls_types::MlsMessage,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(), ServiceError> {
         match self.process_commit_message(commit).await {
             Ok(CommitProcessingOutcome::Applied) => {
                 // Process cached messages only after we actually advanced/applied commit state.
@@ -1405,7 +1423,7 @@ impl MessageQueue {
             }
 
             Err(e) => {
-                if let Some(ServiceError::PskProposalMissing) = e.downcast_ref::<ServiceError>() {
+                if let ServiceError::PskProposalMissing = &e {
                     tracing::error!(
                         "Commit rejected: PSK proposal missing or has wrong ID for room {}",
                         self.room_id
@@ -1426,7 +1444,7 @@ impl MessageQueue {
     async fn push_proposal(
         self: &Arc<Self>,
         proposal: mls_types::MlsMessage,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(), ServiceError> {
         match self.process_proposal_message(proposal.clone()).await {
             Ok(ProposalProcessingOutcome::Applied) => {
                 // A proposal accepted into the current epoch can unblock a commit that was
@@ -1467,6 +1485,90 @@ impl MessageQueue {
         }
 
         Ok(())
+    }
+
+    async fn push_proposal_and_commit(
+        self: &Arc<Self>,
+        proposal_builder: ProposalBuilder,
+    ) -> Result<(), ServiceError> {
+        const MAX_RETRIES: u32 = 3;
+        const BASE_DELAY_MS: u64 = 500;
+        const MAX_DELAY_MS: u64 = 10000;
+
+        let mut i = 0;
+
+        loop {
+            tracing::info!("Pushing proposal, attempt {i}/{MAX_RETRIES}");
+
+            let _room_processing_lock = self.processing_lock.lock_send().await;
+
+            // Swap queue: take proposals out first to minimize lock time
+            let mut queued_proposals = mem::take(&mut *self.queue.write());
+
+            let Some(proposal) = proposal_builder(&mut *self.group.write().await).await? else {
+                return Ok(());
+            };
+            queued_proposals.push(proposal);
+
+            let Err(e) = self
+                .handle_batched_proposals(queued_proposals.clone(), 0)
+                .await
+            else {
+                return Ok(());
+            };
+            tracing::warn!("Batch handling failed: {e:?}");
+
+            let current_epoch = self.epoch().await;
+            // Restore proposals on error
+            let filtered_queued_proposals = queued_proposals
+                .into_iter()
+                .filter(|proposal| {
+                    let proposal_epoch = proposal.proposal_message.epoch().unwrap_or(0);
+                    proposal_epoch >= *current_epoch
+                })
+                .collect();
+
+            // Restoring here may cause some already applied proposals to be pushed back to
+            // the queue, if `handle_batched_proposals` failed after creating the commit.
+            // However, this is not an issue since the `MlsGroup` would answer with `Duplicate`
+            // when re-applying these proposals.
+            self.restore_proposal_queue_on_failure(
+                filtered_queued_proposals,
+                "Batched proposal with force push failed",
+            );
+
+            let is_retryable = match &e {
+                ServiceError::HttpClientError(HttpClientError::ErrorCode(status, ..)) => {
+                    *status == 422
+                }
+                _ => false,
+            };
+
+            if !is_retryable {
+                tracing::warn!(
+                    "Kick failed with non-retryable error on attempt {i}/{MAX_RETRIES}: {e:?}"
+                );
+                return Err(e.into());
+            }
+
+            if i == MAX_RETRIES {
+                break;
+            }
+
+            let delay_ms = calculate_retry_delay(i, BASE_DELAY_MS, MAX_DELAY_MS);
+
+            tracing::warn!(
+                "Kick failed with HTTP 422 (attempt {}/{}), retrying in {}ms",
+                i,
+                MAX_RETRIES,
+                delay_ms
+            );
+
+            sleep(Duration::from_millis(delay_ms)).await;
+            i += 1;
+        }
+
+        Err(ServiceError::MaxRetriesReached)
     }
 }
 
@@ -1707,12 +1809,7 @@ mod test {
         let result =
             MessageQueue::validate_psk_proposal(room_id, &commit_to_mls_message(&commit_bundle));
         assert!(
-            result
-                .as_ref()
-                .err()
-                .and_then(|e| e.downcast_ref::<ServiceError>())
-                .map(|e| matches!(e, ServiceError::PskProposalMissing))
-                .unwrap_or(false),
+            matches!(result, Err(ServiceError::PskProposalMissing)),
             "Expected PskProposalMissing, got: {result:?}",
         );
     }
@@ -1746,12 +1843,7 @@ mod test {
         let result =
             MessageQueue::validate_psk_proposal(room_id, &commit_to_mls_message(&commit_bundle));
         assert!(
-            result
-                .as_ref()
-                .err()
-                .and_then(|e| e.downcast_ref::<ServiceError>())
-                .map(|e| matches!(e, ServiceError::PskProposalMissing))
-                .unwrap_or(false),
+            matches!(result, Err(ServiceError::PskProposalMissing)),
             "Expected PskProposalMissing, got: {result:?}",
         );
     }
@@ -1849,6 +1941,7 @@ mod test {
         s1_queue.queue.write().push(QueuedProposal {
             proposal_message,
             proposal_type: ProposalType::Remove,
+            already_applied: false,
         });
 
         service1.state.lock().await.mls_group_state = MlsGroupState::Success;
@@ -1914,6 +2007,7 @@ mod test {
         s1_queue.queue.write().push(QueuedProposal {
             proposal_message: proposal_message.clone(),
             proposal_type: ProposalType::Remove,
+            already_applied: false,
         });
 
         // Set state to Success
@@ -2072,10 +2166,12 @@ mod test {
             QueuedProposal {
                 proposal_message: add_proposal_message,
                 proposal_type: ProposalType::Add,
+                already_applied: false,
             },
             QueuedProposal {
                 proposal_message: remove_proposal_message,
                 proposal_type: ProposalType::Remove,
+                already_applied: false,
             },
         ]);
 
@@ -2668,12 +2764,14 @@ mod test {
         s1_queue.queue.write().push(QueuedProposal {
             proposal_message: user3_remove_proposal,
             proposal_type: ProposalType::Remove,
+            already_applied: false,
         });
 
         // Verify queue has 1 proposal
         let queued_count = s1_queue.queue.read().len();
         assert_eq!(queued_count, 1, "Should have 1 queued proposal");
 
+        eprintln!("Kicking 2");
         // Kick user2 - should also process the queued user3 removal
         service1
             .kick_participant(&user2_uuid, meet_link_name)
@@ -2840,6 +2938,7 @@ mod test {
                         queued.push(QueuedProposal {
                             proposal_message,
                             proposal_type: ProposalType::Add,
+                            already_applied: false,
                         });
                     }
                 }
@@ -2872,6 +2971,7 @@ mod test {
                         queued.push(QueuedProposal {
                             proposal_message,
                             proposal_type: ProposalType::Remove,
+                            already_applied: false,
                         });
                     }
                 }
