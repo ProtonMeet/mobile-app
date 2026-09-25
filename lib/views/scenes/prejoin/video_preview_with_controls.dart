@@ -86,7 +86,9 @@ class VideoPreviewWithControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controlHeight = 86.0;
-    final bool isBlurSupported = mobile || macOS;
+    // `mobile` already covers Linux; Windows is the remaining desktop target
+    // with a native background-effects pipeline.
+    final bool isBlurSupported = mobile || macOS || windows;
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableWidth = constraints.maxWidth.isFinite

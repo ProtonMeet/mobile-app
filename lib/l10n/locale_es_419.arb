@@ -165,6 +165,18 @@
   "@waiting_room_disabled_notification": {
     "description": "Global notification when the host disables waiting room in meeting settings"
   },
+  "allow_live_captions": "Permitir subtítulos en directo",
+  "@allow_live_captions": {
+    "description": "Host toggle that lets participants use live captions"
+  },
+  "allow_live_captions_on_description": "Los participantes pueden activar los subtítulos en directo. Active los suyos en Pantalla.",
+  "@allow_live_captions_on_description": {
+    "description": "Live captions availability switch description when enabled for participants"
+  },
+  "allow_live_captions_off_description": "Los participantes no pueden usar los subtítulos en directo.",
+  "@allow_live_captions_off_description": {
+    "description": "Live captions availability switch description when disabled for participants"
+  },
   "hide_self_view": "Ocultar vista propia",
   "allow_all_participants_to": "Permitir a todos los participantes:",
   "chat": "Chat",
@@ -2143,7 +2155,7 @@
   },
   "live_captions": "Subtítulos en directo",
   "@live_captions": {
-    "description": "Label for the live captions row in settings"
+    "description": "Toggle label for enabling live captions in meeting settings"
   },
   "live_captions_all_participants": "Activado para todos los participantes",
   "@live_captions_all_participants": {
@@ -2180,10 +2192,6 @@
   "record_meeting": "Grabar reunión",
   "@record_meeting": {
     "description": "Host toggle that records the meeting"
-  },
-  "allow_live_captions": "Permitir subtítulos en directo",
-  "@allow_live_captions": {
-    "description": "Host toggle that lets participants use live captions"
   },
   "allow_live_captions_description": "Permitir a los participantes usar subtítulos en directo.",
   "@allow_live_captions_description": {
@@ -2264,5 +2272,85 @@
   "mobile_upgrade_warning_link": "actualice a la última versión",
   "@mobile_upgrade_warning_link": {
     "description": "Tappable link text in the outdated mobile client warning; opens the app store"
+  },
+  "live_captions_accessibility": "Accesibilidad",
+  "@live_captions_accessibility": {
+    "description": "Settings section title for live captions"
+  },
+  "live_captions_modal_title": "¿Mostrar subtítulos en directo?",
+  "@live_captions_modal_title": {
+    "description": "Title for first-enable live captions confirmation dialog"
+  },
+  "live_captions_modal_message": "Para crear subtítulos en directo, el servicio de subtítulos necesita acceder al audio de la reunión. Los subtítulos solo son visibles para usted y no se guardan.",
+  "@live_captions_modal_message": {
+    "description": "Body for first-enable live captions confirmation dialog"
+  },
+  "live_captions_enable": "Activar subtítulos en directo",
+  "@live_captions_enable": {
+    "description": "Primary button in live captions confirmation dialog"
+  },
+  "live_captions_spoken_language": "Idioma hablado",
+  "@live_captions_spoken_language": {
+    "description": "Label above caption language picker"
+  },
+  "live_captions_turn_on": "Mostrar subtítulos en directo",
+  "@live_captions_turn_on": {
+    "description": "Tooltip for the top bar live captions button while captions are off"
+  },
+  "live_captions_turn_off": "Ocultar subtítulos en directo",
+  "@live_captions_turn_off": {
+    "description": "Tooltip for the top bar live captions button while captions are on"
+  },
+  "live_captions_settings": "Ajustes de subtítulos",
+  "@live_captions_settings": {
+    "description": "Tooltip for the settings button in the live captions sheet header"
+  },
+  "live_captions_loading": "Cargando…",
+  "@live_captions_loading": {
+    "description": "Caption bar status while waiting for first segment"
+  },
+  "live_captions_ready": "Subtítulos activados",
+  "@live_captions_ready": {
+    "description": "Caption bar status when agent is ready but no lines yet"
+  },
+  "live_captions_failing": "No funcionan los subtítulos en directo. Intente desactivarlos y volverlos a activar.",
+  "@live_captions_failing": {
+    "description": "Caption bar status when decrypt pipeline fails"
+  },
+  "live_captions_summon_failed": "No se pudieron iniciar los subtítulos en directo. Intente de nuevo más tarde.",
+  "@live_captions_summon_failed": {
+    "description": "Toast when the STT agent fails to join within the enable timeout"
+  },
+  "live_captions_disabled_by_host": "El anfitrión desactivó los subtítulos en directo para esta reunión.",
+  "@live_captions_disabled_by_host": {
+    "description": "Warning when a participant tries to enable live captions after the host disabled them"
+  },
+  "live_captions_agent_transcribing": "Transcribiendo…",
+  "@live_captions_agent_transcribing": {
+    "description": "Participant list status for the STT caption agent"
+  },
+  "live_captions_agent_name": "Agente de subtítulos en directo",
+  "@live_captions_agent_name": {
+    "description": "Display name for the STT caption agent in participant list"
+  },
+  "live_captions_agent_disclaimer": "Este agente del sistema crea subtítulos en directo. No es un participante y no puede enviar mensajes.",
+  "@live_captions_agent_disclaimer": {
+    "description": "Participant list disclaimer for the STT caption agent"
+  },
+  "participant_list_system_section": "Sistema",
+  "@participant_list_system_section": {
+    "description": "Section header for system agents in the participant list"
+  },
+  "participant_list_people_section": "Personas",
+  "@participant_list_people_section": {
+    "description": "Section header for human participants in the participant list"
+  },
+  "old_android_sdk_warning_message": "Una actualización futura de Proton Meet requerirá Android 9 o superior. Actualice su dispositivo para seguir usando la aplicación.",
+  "@old_android_sdk_warning_message": {
+    "description": "Warning shown on Android 7/8 devices when OldAndroidSdkWarning flag is enabled; informs users that support will be deprecated soon"
+  },
+  "old_ios_sdk_warning_message": "Una actualización futura de Proton Meet requerirá iOS 17 o superior. Actualice su dispositivo para seguir usando la aplicación.",
+  "@old_ios_sdk_warning_message": {
+    "description": "Warning shown on iOS versions below 17 when OldIosSdkWarning flag is enabled; informs users that support will be deprecated soon"
   }
 }

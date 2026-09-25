@@ -145,9 +145,19 @@ class _BackgroundBlurDebugScreenState extends State<BackgroundBlurDebugScreen> {
         return;
       }
       if (!ready) {
+        // Native knows precisely which condition failed; repeating the bare
+        // "not ready" here is what made this impossible to diagnose.
+        final info = await ProtonVideoEffects.instance
+            .getSegmentationModelInfo();
+        if (!mounted) {
+          return;
+        }
+        final reason = info.reason;
         setState(() {
           _starting = false;
-          _error = 'Native background blur is not ready on this device.';
+          _error = reason == null
+              ? 'Native background blur is not ready on this device.'
+              : 'Native background blur is not ready on this device.\n\n$reason';
         });
         return;
       }

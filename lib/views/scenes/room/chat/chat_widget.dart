@@ -5,9 +5,15 @@ import 'package:meet/constants/app.keys.dart';
 import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/helper/logger.dart' as l;
+import 'package:meet/utils/mentions/mention_label.dart';
+import 'package:meet/utils/mentions/mention_plain_text.dart';
+import 'package:meet/utils/mentions/mention_token.dart';
 import 'package:meet/views/scenes/room/chat/chat_controller.dart';
 import 'package:meet/views/scenes/room/chat/chat_emoji_picker.dart';
 import 'package:meet/views/scenes/room/chat/chat_models.dart';
+import 'package:meet/views/scenes/room/chat/mention_composer.dart';
+import 'package:meet/views/scenes/room/chat/mention_composer_controller.dart';
+import 'package:meet/views/scenes/room/chat/mention_message_content.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 import 'package:meet/views/scenes/room/participant/participant_info.dart';
 import 'package:meet/views/scenes/room/side_panel_widget.dart';
@@ -28,6 +34,7 @@ class ChatWidget extends StatefulWidget {
   final String localIdentity;
   final String localName;
   final bool chatThreadsEnabled;
+  final bool chatMentionsEnabled;
   final ChatSendCallback onSend;
   final ChatReactionCallback onToggleReaction;
   final void Function(RoomChatMessage message)? onRetry;
@@ -41,6 +48,7 @@ class ChatWidget extends StatefulWidget {
     required this.onSend,
     required this.onToggleReaction,
     this.chatThreadsEnabled = false,
+    this.chatMentionsEnabled = false,
     this.onRetry,
     this.onDiscard,
     this.participantTracks,
@@ -123,11 +131,22 @@ class _ChatWidgetState extends State<ChatWidget> {
   final Map<String, ({Color backgroundColor, Color profileTextColor})>
   _colorCache = {};
   final Map<String, String> _initialsCache = {};
+  String _participantTracksSignature = '';
 
   bool _isAtBottom = true;
   bool _isScrollingToBottom = false;
   bool _isReplyFieldFocused = false;
   int _newMessagesOverlayCount = 0;
+  int _newMentionsOverlayCount = 0;
+  MentionComposerController? _mainMentionComposer;
+  final GlobalKey _mainChatInputRowKey = GlobalKey();
+  final Map<String, MentionComposerController> _replyMentionComposers = {};
+  final Map<String, GlobalKey> _replyComposerRowKeys = {};
+
+  GlobalKey _replyComposerRowKey(String rootId) {
+    return _replyComposerRowKeys.putIfAbsent(rootId, GlobalKey.new);
+  }
+
   final Set<String> _trackedMessageIds = {};
   final Set<String> _handledLocalRootScrollIds = {};
 
@@ -136,13 +155,92 @@ class _ChatWidgetState extends State<ChatWidget> {
   @override
   void initState() {
     super.initState();
-    _textController.text = _controller.draftMessage;
-    _textController.addListener(_onTextChanged);
+    if (!widget.chatMentionsEnabled) {
+      _textController.text = _controller.draftMessage;
+      _textController.addListener(_onTextChanged);
+    }
     _inputFocusNode.addListener(_onFocusChanged);
     _scrollController.addListener(_onScroll);
     _controller.addListener(_onControllerChanged);
     _trackedMessageIds.addAll(_controller.messages.map((m) => m.id));
   }
+
+  @override
+  void didUpdateWidget(covariant ChatWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final tracks = widget.participantTracks ?? const [];
+    final signature = tracks.map((t) => t.participant.identity).join(',');
+    if (signature != _participantTracksSignature) {
+      _participantTracksSignature = signature;
+      _colorCache.clear();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (widget.chatMentionsEnabled && _mainMentionComposer == null) {
+      _mainMentionComposer = _createMentionComposer(_controller.draftMessage);
+      _mainMentionComposer!.addListener(_onMainMentionStoredChanged);
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _scrollToBottom(immediate: true);
+    });
+  }
+
+  MentionComposerController _createMentionComposer(String initialStored) {
+    return MentionComposerController(
+      initialStored: initialStored,
+      localIdentity: widget.localIdentity,
+      everyoneName: context.local.chat_mention_everyone,
+      unknownName: context.local.unknown,
+      resolveParticipantName: _resolveParticipantName,
+    );
+  }
+
+  void _onMainMentionStoredChanged() {
+    _controller.setDraftMessage(_mainMentionComposer?.storedText ?? '');
+    setState(() {});
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!_inputScrollController.hasClients || !_inputFocusNode.hasFocus) {
+        return;
+      }
+      final text = _mainMentionComposer?.displayController.text ?? '';
+      if (text.contains('\n') &&
+          _inputScrollController.position.pixels <
+              _inputScrollController.position.maxScrollExtent - 5) {
+        _inputScrollController.animateTo(
+          _inputScrollController.position.maxScrollExtent,
+          duration: const Duration(
+            milliseconds: _ChatWidgetConstants.inputScrollAnimationDuration,
+          ),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  String _resolveParticipantName(String id) {
+    if (id == widget.localIdentity) {
+      final local = widget.localName.trim();
+      if (local.isNotEmpty) {
+        return local;
+      }
+    }
+    final tracks = widget.participantTracks;
+    if (tracks != null) {
+      for (final info in tracks) {
+        if (info.participant.identity == id) {
+          return info.displayName.trim();
+        }
+      }
+    }
+    return '';
+  }
+
+  Map<String, String> get _participantNameMap =>
+      buildParticipantNameMap(widget.participantTracks);
 
   bool _isLocalRootMessage(RoomChatMessage message) {
     return message.isRoot &&
@@ -203,9 +301,14 @@ class _ChatWidgetState extends State<ChatWidget> {
     }
 
     var overlayDelta = 0;
+    var mentionDelta = 0;
     for (final message in newMessages) {
       if (_countsTowardNewMessagesOverlay(message)) {
         overlayDelta++;
+        if (widget.chatMentionsEnabled &&
+            isParticipantMentioned(message.message, widget.localIdentity)) {
+          mentionDelta++;
+        }
       }
     }
 
@@ -219,6 +322,7 @@ class _ChatWidgetState extends State<ChatWidget> {
       _controller.markAllSeen();
     } else if (_isMessageListScrollable && overlayDelta > 0) {
       _newMessagesOverlayCount += overlayDelta;
+      _newMentionsOverlayCount += mentionDelta;
     }
     setState(() {});
   }
@@ -230,6 +334,7 @@ class _ChatWidgetState extends State<ChatWidget> {
 
   void _resetNewMessagesOverlay({bool syncMessageCount = true}) {
     _newMessagesOverlayCount = 0;
+    _newMentionsOverlayCount = 0;
     if (syncMessageCount) {
       _trackedMessageIds
         ..clear()
@@ -270,14 +375,6 @@ class _ChatWidgetState extends State<ChatWidget> {
       if (mounted && _inputFocusNode.hasFocus && _isAtBottom) {
         _scheduleScrollToBottom();
       }
-    });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _scrollToBottom(immediate: true);
     });
   }
 
@@ -359,7 +456,14 @@ class _ChatWidgetState extends State<ChatWidget> {
   @override
   void dispose() {
     _controller.removeListener(_onControllerChanged);
-    _textController.removeListener(_onTextChanged);
+    if (!widget.chatMentionsEnabled) {
+      _textController.removeListener(_onTextChanged);
+    }
+    _mainMentionComposer?.removeListener(_onMainMentionStoredChanged);
+    _mainMentionComposer?.disposeController();
+    for (final composer in _replyMentionComposers.values) {
+      composer.disposeController();
+    }
     _inputFocusNode.removeListener(_onFocusChanged);
     _scrollController.removeListener(_onScroll);
     _textController.dispose();
@@ -376,24 +480,64 @@ class _ChatWidgetState extends State<ChatWidget> {
     super.dispose();
   }
 
+  String _currentComposerStoredText() {
+    if (widget.chatMentionsEnabled) {
+      return _mainMentionComposer?.storedText ?? '';
+    }
+    return _textController.text;
+  }
+
   void _handleSendPressed() {
-    final text = _textController.text.trim();
+    final text = _currentComposerStoredText().trim();
     if (text.isEmpty) return;
     if (_exceedsMessageLimit(text)) {
       _notifyMessageTooLong();
       return;
     }
     widget.onSend(text);
-    _textController.clear();
+    if (widget.chatMentionsEnabled) {
+      _mainMentionComposer?.clear();
+    } else {
+      _textController.clear();
+    }
     _controller.setDraftMessage('');
   }
 
   TextEditingController _replyController(RoomChatMessage root) {
+    if (widget.chatMentionsEnabled) {
+      final composer = _replyMentionComposer(root);
+      return composer.displayController;
+    }
     return _replyControllers.putIfAbsent(root.id, () {
       final c = TextEditingController(text: root.replyDraft ?? '');
       c.addListener(() => _controller.setThreadReplyDraft(root.id, c.text));
       return c;
     });
+  }
+
+  MentionComposerController _replyMentionComposer(RoomChatMessage root) {
+    return _replyMentionComposers.putIfAbsent(root.id, () {
+      final composer = _createMentionComposer(root.replyDraft ?? '');
+      composer.addListener(() {
+        _controller.setThreadReplyDraft(root.id, composer.storedText);
+      });
+      return composer;
+    });
+  }
+
+  String _replyStoredText(RoomChatMessage root) {
+    if (widget.chatMentionsEnabled) {
+      return _replyMentionComposer(root).storedText;
+    }
+    return _replyController(root).text;
+  }
+
+  void _clearReplyComposer(RoomChatMessage root) {
+    if (widget.chatMentionsEnabled) {
+      _replyMentionComposer(root).clear();
+    } else {
+      _replyController(root).clear();
+    }
   }
 
   FocusNode _replyFocus(String rootId) {
@@ -411,8 +555,7 @@ class _ChatWidgetState extends State<ChatWidget> {
   }
 
   void _handleReplySend(RoomChatMessage root) {
-    final controller = _replyController(root);
-    final text = controller.text.trim();
+    final text = _replyStoredText(root).trim();
     if (text.isEmpty) return;
     if (_exceedsMessageLimit(text)) {
       _notifyMessageTooLong();
@@ -420,12 +563,12 @@ class _ChatWidgetState extends State<ChatWidget> {
     }
     final topicId = root.topicId ?? root.id;
     widget.onSend(text, replyToId: root.id, topicId: topicId);
-    controller.clear();
+    _clearReplyComposer(root);
     _controller.setThreadReplyDraft(root.id, null);
   }
 
   void _closeThreadReply(RoomChatMessage root) {
-    _replyControllers[root.id]?.clear();
+    _clearReplyComposer(root);
     _controller.setThreadReplyDraft(root.id, null);
     final current = _controller.messageById(root.id);
     final threadHasReplies = _controller.threads.any(
@@ -522,6 +665,8 @@ class _ChatWidgetState extends State<ChatWidget> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Center(child: _buildNewMessagesOverlay(context)),
+                    if (widget.chatMentionsEnabled)
+                      _buildCharacterCounter(context),
                     RepaintBoundary(
                       child: _buildInputField(context, inputBottomPadding),
                     ),
@@ -577,6 +722,14 @@ class _ChatWidgetState extends State<ChatWidget> {
       return const SizedBox.shrink();
     }
 
+    final mentionCount = _newMentionsOverlayCount;
+    final label = widget.chatMentionsEnabled && mentionCount > 0
+        ? context.local.chat_new_mentions_badge(mentionCount)
+        : context.local.chat_new_messages_badge(count);
+    final leadingIcon = widget.chatMentionsEnabled && mentionCount > 0
+        ? Icons.alternate_email
+        : Icons.arrow_downward;
+
     return Material(
       color: Colors.transparent,
       child: Container(
@@ -597,13 +750,13 @@ class _ChatWidgetState extends State<ChatWidget> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.arrow_downward,
+                    leadingIcon,
                     size: 18,
                     color: context.colors.textInverted,
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    context.local.chat_new_messages_badge(count),
+                    label,
                     style: ProtonStyles.body2Semibold(
                       color: context.colors.textInverted,
                     ),
@@ -645,6 +798,7 @@ class _ChatWidgetState extends State<ChatWidget> {
         child: _isReplyFieldFocused
             ? const SizedBox(width: double.infinity)
             : Row(
+                key: _mainChatInputRowKey,
                 children: [
                   Expanded(child: _buildTextField(context)),
                   const SizedBox(width: _ChatWidgetConstants.spacingMedium),
@@ -686,9 +840,77 @@ class _ChatWidgetState extends State<ChatWidget> {
     return _cachedTextFieldHeights!;
   }
 
+  Widget _buildCharacterCounter(BuildContext context) {
+    final length = _currentComposerStoredText().trim().length;
+    if (length <
+        (_ChatWidgetConstants.maxMessageLength * chatMessageLengthWarningRatio)
+            .round()) {
+      return const SizedBox.shrink();
+    }
+    final atLimit = length >= _ChatWidgetConstants.maxMessageLength;
+    return Padding(
+      padding: const EdgeInsets.only(
+        left: RoomSidePanelLayout.horizontalPadding,
+        right: RoomSidePanelLayout.horizontalPadding,
+        bottom: 4,
+      ),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Text(
+          context.local.chat_character_count(
+            length,
+            _ChatWidgetConstants.maxMessageLength,
+          ),
+          style: ProtonStyles.captionMedium(
+            color: atLimit
+                ? context.colors.notificationError
+                : context.colors.textDisable,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTextField(BuildContext context) {
     final textStyle = ProtonStyles.body2Medium(color: context.colors.textNorm);
     final heights = _calculateTextFieldHeights();
+    final decoration = InputDecoration(
+      hintText: context.local.chat_input_hint,
+      hintStyle: ProtonStyles.body2Medium(color: context.colors.textDisable),
+      border: InputBorder.none,
+      contentPadding: EdgeInsets.zero,
+      isDense: true,
+    );
+
+    Widget inputField;
+    if (widget.chatMentionsEnabled && _mainMentionComposer != null) {
+      inputField = MentionComposer(
+        controller: _mainMentionComposer!,
+        focusNode: _inputFocusNode,
+        participantTracks: widget.participantTracks,
+        localIdentity: widget.localIdentity,
+        textFieldKey: AppKeys.chatMessageTextField,
+        style: textStyle,
+        decoration: decoration,
+        onSubmitted: _handleSendPressed,
+        onTooLongMentionInsert: _notifyMessageTooLong,
+        overlayAnchorKey: _mainChatInputRowKey,
+      );
+    } else {
+      inputField = TextField(
+        key: AppKeys.chatMessageTextField,
+        controller: _textController,
+        focusNode: _inputFocusNode,
+        maxLines: null,
+        minLines: 1,
+        textInputAction: TextInputAction.newline,
+        textAlignVertical: TextAlignVertical.top,
+        style: textStyle,
+        decoration: decoration,
+        onSubmitted: (_) => _handleSendPressed(),
+      );
+    }
+
     return RepaintBoundary(
       child: GestureDetector(
         onTap: _inputFocusNode.requestFocus,
@@ -722,28 +944,7 @@ class _ChatWidgetState extends State<ChatWidget> {
                 minHeight: heights.lineHeight,
                 maxHeight: heights.twoLinesHeight,
               ),
-              child: IntrinsicHeight(
-                child: TextField(
-                  key: AppKeys.chatMessageTextField,
-                  controller: _textController,
-                  focusNode: _inputFocusNode,
-                  maxLines: null,
-                  minLines: 1,
-                  textInputAction: TextInputAction.newline,
-                  textAlignVertical: TextAlignVertical.top,
-                  style: textStyle,
-                  decoration: InputDecoration(
-                    hintText: context.local.chat_input_hint,
-                    hintStyle: ProtonStyles.body2Medium(
-                      color: context.colors.textDisable,
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.zero,
-                    isDense: true,
-                  ),
-                  onSubmitted: (_) => _handleSendPressed(),
-                ),
-              ),
+              child: IntrinsicHeight(child: inputField),
             ),
           ),
         ),
@@ -1010,6 +1211,41 @@ class _ChatWidgetState extends State<ChatWidget> {
   Widget _buildReplyComposer(BuildContext context, RoomChatMessage root) {
     final controller = _replyController(root);
     final focus = _replyFocus(root.id);
+    final replyDecoration = InputDecoration(
+      isDense: true,
+      border: InputBorder.none,
+      hintText: context.local.chat_reply_hint,
+      hintStyle: ProtonStyles.body2Medium(color: context.colors.textDisable),
+    );
+    final replyStyle = ProtonStyles.body2Medium(color: context.colors.textNorm);
+
+    Widget replyField;
+    if (widget.chatMentionsEnabled) {
+      replyField = MentionComposer(
+        controller: _replyMentionComposer(root),
+        focusNode: focus,
+        participantTracks: widget.participantTracks,
+        localIdentity: widget.localIdentity,
+        style: replyStyle,
+        decoration: replyDecoration,
+        minLines: 1,
+        maxLines: 4,
+        onSubmitted: () => _handleReplySend(root),
+        onTooLongMentionInsert: _notifyMessageTooLong,
+        overlayAnchorKey: _replyComposerRowKey(root.id),
+      );
+    } else {
+      replyField = TextField(
+        controller: controller,
+        focusNode: focus,
+        style: replyStyle,
+        minLines: 1,
+        maxLines: 4,
+        decoration: replyDecoration,
+        onSubmitted: (_) => _handleReplySend(root),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
       decoration: ShapeDecoration(
@@ -1024,27 +1260,11 @@ class _ChatWidgetState extends State<ChatWidget> {
         ),
       ),
       child: Row(
+        key: _replyComposerRowKey(root.id),
         children: [
           _buildLocalUserAvatar(size: _ChatWidgetConstants.replyAvatarSize),
           const SizedBox(width: _ChatWidgetConstants.spacingMedium),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              focusNode: focus,
-              style: ProtonStyles.body2Medium(color: context.colors.textNorm),
-              minLines: 1,
-              maxLines: 4,
-              decoration: InputDecoration(
-                isDense: true,
-                border: InputBorder.none,
-                hintText: context.local.chat_reply_hint,
-                hintStyle: ProtonStyles.body2Medium(
-                  color: context.colors.textDisable,
-                ),
-              ),
-              onSubmitted: (_) => _handleReplySend(root),
-            ),
-          ),
+          Expanded(child: replyField),
           _buildReplyComposerIconButton(
             onTap: () => _openEmojiPickerFor(
               root.id,
@@ -1358,7 +1578,11 @@ class _ChatWidgetState extends State<ChatWidget> {
       () => getInitials(displayName),
     );
     final colors = _colorCache.putIfAbsent(identity, () {
-      final c = getParticipantDisplayColors(context, identity.hashCode);
+      final c = getParticipantAvatarColors(
+        context,
+        identity,
+        participantTracks: widget.participantTracks,
+      );
       return (
         backgroundColor: c.backgroundColor,
         profileTextColor: c.profileTextColor,
@@ -1415,6 +1639,15 @@ class _ChatWidgetState extends State<ChatWidget> {
   }
 
   Widget _buildMessageContent(String text, {bool selectable = true}) {
+    if (mentionTokenRegex.hasMatch(text)) {
+      return MentionMessageContent(
+        message: text,
+        localIdentity: widget.localIdentity,
+        participantNameMap: _participantNameMap,
+        participantTracks: widget.participantTracks,
+        selectable: selectable,
+      );
+    }
     final style = ProtonStyles.body2Medium(color: context.colors.textWeak);
     final linkStyle = ProtonStyles.body2Medium(
       color: context.colors.protonBlue,
@@ -1432,6 +1665,19 @@ class _ChatWidgetState extends State<ChatWidget> {
       style: style,
       linkStyle: linkStyle,
       onOpen: _handleLinkOpen,
+    );
+  }
+
+  String _plainMessageText(String text) {
+    if (!mentionTokenRegex.hasMatch(text)) {
+      return text;
+    }
+    return mentionPlainText(
+      text,
+      participantNameMap: _participantNameMap,
+      localIdentity: widget.localIdentity,
+      everyoneName: context.local.chat_mention_everyone,
+      unknownName: context.local.unknown,
     );
   }
 
@@ -1525,7 +1771,9 @@ class _ChatWidgetState extends State<ChatWidget> {
                         onTap: () {
                           Navigator.of(sheetContext).pop();
                           Clipboard.setData(
-                            ClipboardData(text: message.message),
+                            ClipboardData(
+                              text: _plainMessageText(message.message),
+                            ),
                           );
                         },
                       ),

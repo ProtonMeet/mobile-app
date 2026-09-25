@@ -12,6 +12,7 @@ import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/permissions/permission_service.dart';
 import 'package:meet/views/components/bottom.sheets/virtual_background_sheet.dart';
 import 'package:meet/views/components/safe_video_track_renderer.dart';
+import 'package:meet/views/scenes/core/responsive_v2.dart';
 import 'package:meet/views/scenes/settings/debug/mask_edge_sliders.dart';
 import 'package:path/path.dart' as p;
 import 'package:proton_video_effects/proton_video_effects.dart';
@@ -300,6 +301,37 @@ class _VirtualBackgroundDebugScreenState
   }
 
   Widget _preview(BuildContext context) {
+    final content = ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: ColoredBox(
+        color: context.colors.interActionPurpleMinor3,
+        child: _videoTrack != null
+            ? SafeVideoTrackRenderer(
+                videoTrack: _videoTrack!,
+                mirrorMode: _cameraPosition == CameraPosition.front
+                    ? VideoViewMirrorMode.mirror
+                    : VideoViewMirrorMode.off,
+              )
+            : Center(
+                child: _starting
+                    ? const CircularProgressIndicator()
+                    : Icon(
+                        Icons.videocam_off,
+                        size: 48,
+                        color: context.colors.textWeak,
+                      ),
+              ),
+      ),
+    );
+
+    // Wider windows get a landscape preview spanning the full width, which also
+    // matches the camera's own aspect; phone widths keep the tall portrait
+    // frame, where filling the width would leave the preview too short to judge
+    // the mask edges.
+    if (context.width >= ResponsiveBreakpoints.small) {
+      return AspectRatio(aspectRatio: 16 / 9, child: content);
+    }
+
     const aspectRatio = 9 / 16;
     const maxHeight = 600.0;
     final maxWidth = (context.width - 32).clamp(280.0, 360.0);
@@ -307,32 +339,7 @@ class _VirtualBackgroundDebugScreenState
     final width = height * aspectRatio;
 
     return Center(
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: SizedBox(
-          width: width,
-          height: height,
-          child: ColoredBox(
-            color: context.colors.interActionPurpleMinor3,
-            child: _videoTrack != null
-                ? SafeVideoTrackRenderer(
-                    videoTrack: _videoTrack!,
-                    mirrorMode: _cameraPosition == CameraPosition.front
-                        ? VideoViewMirrorMode.mirror
-                        : VideoViewMirrorMode.off,
-                  )
-                : Center(
-                    child: _starting
-                        ? const CircularProgressIndicator()
-                        : Icon(
-                            Icons.videocam_off,
-                            size: 48,
-                            color: context.colors.textWeak,
-                          ),
-                  ),
-          ),
-        ),
-      ),
+      child: SizedBox(width: width, height: height, child: content),
     );
   }
 

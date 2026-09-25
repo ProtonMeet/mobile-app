@@ -53,6 +53,7 @@ void main() {
     ((p) => p.isMeetWaitingRoom(), 'MeetWaitingRoom'),
     ((p) => p.isMeetNewChatHandling(), 'MeetNewChatHandling'),
     ((p) => p.isMeetChatThreads(), 'MeetChatThreads'),
+    ((p) => p.isMeetChatMentions(), 'MeetChatMentions'),
     ((p) => p.isMeetSettingsPreview(), 'MeetSettingsPreview'),
     ((p) => p.isMeetLiveCaptions(), 'MeetLiveCaptions'),
     (
@@ -95,7 +96,7 @@ void main() {
 
   group('UnleashDataProviderFeatureGetters', () {
     test('covers every extension getter', () {
-      expect(getterCases, hasLength(37));
+      expect(getterCases, hasLength(38));
     });
 
     test('each getter reads its unleash toggle when enabled', () async {

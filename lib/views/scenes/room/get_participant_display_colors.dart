@@ -51,6 +51,8 @@ class ParticipantDisplayColors {
 /// 6. Orange
 ///
 /// The local participant is typically at index 0, followed by sorted remote participants.
+int normalizeParticipantColorIndex(int index) => ((index % 6) + 6) % 6;
+
 ParticipantDisplayColors getParticipantDisplayColors(
   BuildContext context,
   int index,
@@ -58,7 +60,7 @@ ParticipantDisplayColors getParticipantDisplayColors(
   // Cycle through 6 colors (0-5), matching WebApp's modulo pattern
   // WebApp: (index % 6) + 1 gives 1-6
   // Meet-app: (index % 6) gives 0-5
-  final colorIndex = index % 6;
+  final colorIndex = normalizeParticipantColorIndex(index);
 
   // Match WebApp color order: Purple, Green, Blue (interaction-norm), Blue, Red, Orange
   final List<Color> profileColors = [
@@ -117,6 +119,43 @@ ParticipantDisplayColors getParticipantDisplayColors(
   );
 }
 
+/// Resolves the palette slot for a participant identity.
+///
+/// Uses roster position when [participantTracks] contains the identity; otherwise
+/// falls back to a stable hash so departed participants keep the same color.
+int resolveParticipantColorIndex(
+  String identity, {
+  List<ParticipantInfo>? participantTracks,
+}) {
+  if (identity.isEmpty) {
+    return 0;
+  }
+  if (participantTracks != null) {
+    final rosterIndex = participantTracks.indexWhere(
+      (info) => info.participant.identity == identity,
+    );
+    if (rosterIndex != -1) {
+      return rosterIndex;
+    }
+  }
+  return identity.hashCode;
+}
+
+/// Canonical avatar / mention colors for a participant identity.
+ParticipantDisplayColors getParticipantAvatarColors(
+  BuildContext context,
+  String identity, {
+  List<ParticipantInfo>? participantTracks,
+}) {
+  return getParticipantDisplayColors(
+    context,
+    resolveParticipantColorIndex(
+      identity,
+      participantTracks: participantTracks,
+    ),
+  );
+}
+
 /// Gets participant display colors by finding the participant's index in the sorted list.
 ///
 /// This is useful for chat messages where we have the participant identity but not the index.
@@ -126,56 +165,9 @@ ParticipantDisplayColors getParticipantDisplayColorsByIdentity(
   String? participantIdentity,
   List<ParticipantInfo>? participantTracks,
 ) {
-  // Try to find the participant's index in the sorted list
-  if (participantIdentity != null && participantTracks != null) {
-    final index = participantTracks.indexWhere(
-      (info) => info.participant.identity == participantIdentity,
-    );
-    if (index != -1) {
-      return getParticipantDisplayColors(context, index);
-    }
-  }
-
-  // Fallback to hash-based assignment (consistent but not matching WebApp index-based)
-  final identifier = participantIdentity ?? 'default';
-  final hash = identifier.hashCode;
-  final colorIndex = hash.abs() % 6;
-
-  // Match WebApp color order: Purple, Green, Blue (interaction-norm), Blue, Red, Orange
-  final List<Color> profileColors = [
-    context.colors.avatarPurple1Text, // 1. Purple
-    context.colors.avatarGreen1Text, // 2. Green
-    context.colors.interActionNorm, // 3. Blue (interaction-norm)
-    context.colors.avatarBlue1Text, // 4. Blue
-    context.colors.signalDanger, // 5. Red
-    context.colors.avatarOrange1Text, // 6. Orange
-  ];
-
-  final List<Color> backgroundColors = [
-    context.colors.avatarPurple1Background, // 1. Purple
-    context.colors.avatarGreen1Background, // 2. Green
-    context.colors.interActionNormMinor3, // 3. Blue (interaction-norm)
-    context.colors.avatarBlue1Background, // 4. Blue
-    context.colors.signalDangerMajor3, // 5. Red
-    context.colors.avatarOrange1Background, // 6. Orange
-  ];
-
-  final List<Color> actionBackgroundColors = [
-    context.colors.interActionPurpleMinor1, // 1. Purple
-    context.colors.greenInteractionNormMajor1, // 2. Green
-    context.colors.interActionNorm, // 3. Blue (interaction-norm)
-    context.colors.avatarBlue1Text, // 4. Blue
-    context.colors.redInteractionNormMajor1, // 5. Red
-    context.colors.signalWaning, // 6. Orange
-  ];
-
-  return ParticipantDisplayColors(
-    profileColor: profileColors[colorIndex],
-    backgroundColor: backgroundColors[colorIndex],
-    profileTextColor: profileColors[colorIndex],
-    actionBackgroundColor: actionBackgroundColors[colorIndex],
-    meetingLogo: null,
-    roomLogo: null,
-    personalLogo: context.images.logoRoomPersonal,
+  return getParticipantAvatarColors(
+    context,
+    participantIdentity ?? '',
+    participantTracks: participantTracks,
   );
 }

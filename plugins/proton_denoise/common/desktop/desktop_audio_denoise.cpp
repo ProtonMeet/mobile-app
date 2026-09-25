@@ -12,9 +12,11 @@
 
 #include "proton_rnnoise_api.h"
 
+#include <chrono>
 #include <mutex>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -27,6 +29,13 @@ namespace {
 
 constexpr char kEffectsChannel[] = "me.proton.meet/denoise";
 constexpr char kLegacyChannel[] = "proton_denoise";
+
+// Must match DenoiseType.id in lib/denoise_type.dart.
+constexpr char kRnnoiseId[] = "rnnoise";
+constexpr char kDeepFilterId[] = "deepfilter";
+constexpr char kDtlnRsId[] = "dtln-rs";
+
+constexpr char kDesktopUnsupported[] = "not implemented on desktop yet";
 
 ProtonRnnoiseHandle* g_rnnoise = nullptr;
 std::mutex g_mutex;
@@ -96,7 +105,75 @@ void DesktopAudioDenoise::DestroyRnnoiseHandle() {
 
 bool DesktopAudioDenoise::IsRnnoiseReady() const {
   std::lock_guard<std::mutex> lock(g_mutex);
-  return g_rnnoise != nullptr;
+  return proton_rnnoise_get_frame_size() > 0;
+}
+
+std::vector<DenoiseTypeEntry> DesktopAudioDenoise::ListDenoiseTypes() const {
+  std::lock_guard<std::mutex> lock(g_mutex);
+
+  DenoiseTypeEntry rnnoise;
+  rnnoise.id = kRnnoiseId;
+  rnnoise.display_name = "RNNoise";
+  // The handle is created lazily on attach, so readiness reflects the linked
+  // library rather than the current session.
+  rnnoise.is_ready = proton_rnnoise_get_frame_size() > 0;
+  rnnoise.status = rnnoise.is_ready ? "ok" : "rnnoise library not linked";
+
+  DenoiseTypeEntry deepfilter;
+  deepfilter.id = kDeepFilterId;
+  deepfilter.display_name = "DeepFilter 3";
+  deepfilter.status = kDesktopUnsupported;
+
+  DenoiseTypeEntry dtln;
+  dtln.id = kDtlnRsId;
+  dtln.display_name = "DTLN";
+  dtln.status = kDesktopUnsupported;
+
+  return {rnnoise, deepfilter, dtln};
+}
+
+std::vector<DenoiseWarmUpEntry> DesktopAudioDenoise::WarmUp(
+    const std::string& type_id) {
+  std::vector<DenoiseWarmUpEntry> out;
+
+  for (const auto& type : ListDenoiseTypes()) {
+    if (!type_id.empty() && type.id != type_id) {
+      continue;
+    }
+
+    DenoiseWarmUpEntry entry;
+    entry.id = type.id;
+
+    if (type.id != kRnnoiseId) {
+      entry.status = type.status;
+      out.push_back(entry);
+      continue;
+    }
+
+    const auto started = std::chrono::steady_clock::now();
+    {
+      std::lock_guard<std::mutex> lock(g_mutex);
+      EnsureRnnoiseHandle();
+      const int frame_size = proton_rnnoise_get_frame_size();
+      if (g_rnnoise != nullptr && frame_size > 0) {
+        // One silent frame forces model/state allocation off the capture path.
+        std::vector<float> silence(static_cast<size_t>(frame_size), 0.f);
+        proton_rnnoise_process_interleaved(g_rnnoise, silence.data(),
+                                           silence.size(), 1);
+        entry.warm_up_ok = true;
+        entry.status = "ok";
+      } else {
+        entry.status = "rnnoise failed to initialize";
+      }
+    }
+    entry.warm_up_ms = static_cast<int>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - started)
+            .count());
+    out.push_back(entry);
+  }
+
+  return out;
 }
 
 DesktopMethodResult DesktopAudioDenoise::Handle(
@@ -125,19 +202,25 @@ DesktopMethodResult DesktopAudioDenoise::HandleEffectsChannel(
   DesktopMethodResult result;
   std::lock_guard<std::mutex> lock(g_mutex);
 
-  if (method == "listDenoiseTypes") {
-    const bool rnnoise_ready = g_rnnoise != nullptr;
+  // Payload is built by the platform plugin from ListDenoiseTypes().
+  if (method == "listDenoiseTypes" || method == "diagnoseDenoise" ||
+      method == "warmUpDenoise") {
     result.success = true;
-    result.json_list_payload =
-        R"([{"id":"rnnoise","displayName":"RNNoise","isReady":)"
-        + std::string(rnnoise_ready ? "true" : "false") +
-        R"(},{"id":"deepfilter","displayName":"DeepFilter 3","isReady":false})"
-        R"(,{"id":"dtln-rs","displayName":"DTLN","isReady":false}])";
     return result;
   }
 
+  // Readiness must reflect the linked library, not the lazily created handle:
+  // Dart checks isTypeReady before attach, which is what creates the handle.
   if (method == "isTypeReady") {
-    result.bool_value = (type_id == "rnnoise" && g_rnnoise != nullptr);
+    result.bool_value =
+        (type_id == kRnnoiseId && proton_rnnoise_get_frame_size() > 0);
+    return result;
+  }
+
+  // DeepFilter never attaches on desktop, so the attenuation limit is a no-op
+  // rather than an error (Dart rethrows PlatformException here).
+  if (method == "setDeepFilterAttenLim") {
+    result.success = true;
     return result;
   }
 
@@ -156,19 +239,19 @@ DesktopMethodResult DesktopAudioDenoise::HandleEffectsChannel(
       result.error_message = "trackId and type required";
       return result;
     }
-    if (type_id == "deepfilter") {
+    if (type_id == kDeepFilterId) {
       result.success = false;
       result.error_code = "NOT_READY";
       result.error_message = "DeepFilter is not available on desktop yet";
       return result;
     }
-    if (type_id == "dtln-rs") {
+    if (type_id == kDtlnRsId) {
       result.success = false;
       result.error_code = "NOT_READY";
       result.error_message = "DTLN is not available on desktop yet";
       return result;
     }
-    if (type_id != "rnnoise") {
+    if (type_id != kRnnoiseId) {
       result.success = false;
       result.error_code = "ARGS";
       result.error_message = "Unknown denoise type";

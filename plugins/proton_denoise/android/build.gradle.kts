@@ -146,7 +146,7 @@ android {
 dependencies {
     compileOnly(project(":flutter_webrtc"))
     // WebRTC SDK types referenced by AudioProcessingAdapter (ExternalAudioProcessingFactory).
-    compileOnly("io.github.webrtc-sdk:android:144.7559.09")
+    compileOnly("io.github.webrtc-sdk:android:150.7871.01")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.mockito:mockito-core:5.23.0")
 }

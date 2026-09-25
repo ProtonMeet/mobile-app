@@ -18,7 +18,7 @@
 #include <permission_handler_windows/permission_handler_windows_plugin.h>
 #include <proton_denoise/proton_denoise_plugin_c_api.h>
 #include <proton_screen_recorder/proton_screen_recorder_plugin_c_api.h>
-#include <proton_video_effects/proton_video_effects_plugin.h>
+#include <proton_video_effects/proton_video_effects_plugin_c_api.h>
 #include <share_plus/share_plus_windows_plugin_c_api.h>
 #include <url_launcher_windows/url_launcher_windows.h>
 
@@ -47,8 +47,8 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("ProtonDenoisePluginCApi"));
   ProtonScreenRecorderPluginCApiRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("ProtonScreenRecorderPluginCApi"));
-  ProtonVideoEffectsPluginRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("ProtonVideoEffectsPlugin"));
+  ProtonVideoEffectsPluginCApiRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("ProtonVideoEffectsPluginCApi"));
   SharePlusWindowsPluginCApiRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("SharePlusWindowsPluginCApi"));
   UrlLauncherWindowsRegisterWithRegistrar(
