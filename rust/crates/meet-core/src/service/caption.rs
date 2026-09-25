@@ -143,14 +143,11 @@ impl CaptionServiceImpl {
     /// stagger below treats as "somebody already asked", so it doubles as the
     /// answer to whether there is anything left to do.
     async fn captions_agent_in_group(&self, room_id: &str) -> bool {
-        let store_lock = self.mls_store.read().await;
-        match store_lock.group_map.get(room_id) {
-            Some(group_arc) => {
-                let mls_group = group_arc.read().await;
-                group_has_agent(&mls_group)
-            }
-            None => false,
-        }
+        let Ok(lock) = self.mls_store.read().await.find_group(room_id) else {
+            return false;
+        };
+        let guard = lock.read().await;
+        group_has_agent(&*guard)
     }
 
     async fn settle_closed_captions(
@@ -366,14 +363,7 @@ impl CaptionService for CaptionServiceImpl {
         let psk_id_bytes = agent_psk_id_for_meeting(meeting_link_name.as_str());
         let room_id = meeting_link_name.as_str().to_string();
 
-        let group_arc = {
-            let store_lock = self.mls_store.read().await;
-            store_lock
-                .group_map
-                .get(&room_id)
-                .ok_or_else(|| anyhow::anyhow!("group not loaded for meeting"))?
-                .clone()
-        };
+        let group_arc = self.mls_store.read().await.find_group(&room_id)?;
 
         {
             use std::str::FromStr;
@@ -614,14 +604,7 @@ impl CaptionService for CaptionServiceImpl {
         use std::str::FromStr;
 
         let room_id = meeting_link_name.as_str().to_string();
-        let group_arc = {
-            let store_lock = self.mls_store.read().await;
-            store_lock
-                .group_map
-                .get(&room_id)
-                .ok_or_else(|| anyhow::anyhow!("group not loaded for meeting"))?
-                .clone()
-        };
+        let group_arc = self.mls_store.read().await.find_group(&room_id)?;
 
         let (epoch_at_start, leaf_index, is_admin) = {
             let mls_group = group_arc.read().await;

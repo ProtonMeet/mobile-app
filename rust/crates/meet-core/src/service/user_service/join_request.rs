@@ -353,17 +353,15 @@ impl Service {
             "reject_waiting_room_join_request start meeting_link_name={} request_id={} participant_uid={}",
             meeting_link_name, request_id, participant_uid
         );
-        let group_arc = {
-            let store = self.mls_store.read().await;
-            store
-                .group_map
-                .get(meeting_link_name)
-                .ok_or_else(|| MeetCoreError::InternalError {
-                    message: format!("MLS group not found for room {meeting_link_name}"),
-                    details: None,
-                })?
-                .clone()
-        };
+        let group_arc = self
+            .mls_store
+            .read()
+            .await
+            .find_group(meeting_link_name)
+            .map_err(|_| MeetCoreError::InternalError {
+                message: format!("MLS group not found for room {meeting_link_name}"),
+                details: None,
+            })?;
 
         {
             let mls_group = group_arc.read().await;
@@ -440,17 +438,15 @@ impl Service {
         }
 
         let room_id = meeting_link_name;
-        let group_arc = {
-            let store = self.mls_store.read().await;
-            store
-                .group_map
-                .get(room_id)
-                .ok_or_else(|| MeetCoreError::InternalError {
-                    message: format!("MLS group not found for room {room_id}"),
-                    details: None,
-                })?
-                .clone()
-        };
+        let group_arc = self
+            .mls_store
+            .read()
+            .await
+            .find_group(room_id)
+            .map_err(|_| MeetCoreError::InternalError {
+                message: format!("MLS group not found for room {room_id}"),
+                details: None,
+            })?;
 
         let mut mls_group = group_arc.write().await;
 

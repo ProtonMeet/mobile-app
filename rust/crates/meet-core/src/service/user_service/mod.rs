@@ -505,16 +505,7 @@ impl Service {
             }
 
             let local_mls_epoch_before = {
-                let mls_group_lock = {
-                    let store_lock = self.mls_store.read().await;
-                    store_lock
-                        .group_map
-                        .get(room_id)
-                        .ok_or_else(|| {
-                            anyhow::anyhow!("Failed to find mls group for room {room_id}")
-                        })?
-                        .clone()
-                };
+                let mls_group_lock = self.mls_store.read().await.find_group(room_id)?;
                 let mls_group = mls_group_lock.read().await;
                 *mls_group.epoch()
                 // mls_group lock release here
@@ -760,19 +751,15 @@ impl Service {
             meet_link_name,
             enable
         );
-        let group_arc = {
-            let store = self.mls_store.read().await;
-            store
-                .group_map
-                .get(meet_link_name)
-                .ok_or_else(|| MeetCoreError::InternalError {
-                    message: format!(
-                        "MLS group not found for room {meet_link_name} (in-call only)"
-                    ),
-                    details: None,
-                })?
-                .clone()
-        };
+        let group_arc = self
+            .mls_store
+            .read()
+            .await
+            .find_group(meet_link_name)
+            .map_err(|_| MeetCoreError::InternalError {
+                message: format!("MLS group not found for room {meet_link_name} (in-call only)"),
+                details: None,
+            })?;
 
         for attempt in 0..WR_SETTING_MAX_ATTEMPTS {
             let mut mls_group = group_arc.write().await;
@@ -924,25 +911,15 @@ impl Service {
 
     /// Helper function to get the current epoch for a room
     pub(super) async fn get_current_epoch(&self, room_id: &str) -> Result<u64, anyhow::Error> {
-        let store = self.mls_store.read().await;
-        let mls_group = store
-            .group_map
-            .get(room_id)
-            .ok_or_else(|| anyhow::anyhow!("Failed to find mls group for room {room_id}"))?
-            .read()
-            .await;
+        let mls_group_lock = self.mls_store.read().await.find_group(room_id)?;
+        let mls_group = mls_group_lock.read().await;
         Ok(*mls_group.epoch())
     }
 
     /// Helper function to get the current group id for a room
     async fn get_current_group_id(&self, room_id: &str) -> Result<Vec<u8>, anyhow::Error> {
-        let store = self.mls_store.read().await;
-        let mls_group = store
-            .group_map
-            .get(room_id)
-            .ok_or_else(|| anyhow::anyhow!("Failed to find mls group for room {room_id}"))?
-            .read()
-            .await;
+        let mls_group_lock = self.mls_store.read().await.find_group(room_id)?;
+        let mls_group = mls_group_lock.read().await;
 
         // Get group_context from mls_group
         let group_info_mls_types = mls_group
@@ -991,14 +968,7 @@ impl Service {
     }
 
     async fn handle_offline_members_impl(&self, room_id: &str) -> Result<(), anyhow::Error> {
-        let mls_group_lock = {
-            let store_lock = self.mls_store.read().await;
-            store_lock
-                .group_map
-                .get(room_id)
-                .ok_or_else(|| anyhow::anyhow!("Failed to find mls group for room {room_id}"))?
-                .clone()
-        };
+        let mls_group_lock = self.mls_store.read().await.find_group(room_id)?;
         let mut mls_group = mls_group_lock.write().await;
         let epoch = *mls_group.epoch();
 
@@ -1593,13 +1563,13 @@ impl UserService for Service {
             };
 
             // Get write lock for this retry attempt
-            let mls_store = self.mls_store.read().await;
-            let mut mls_group = mls_store
-                .group_map
-                .get(meeting_link_name)
-                .ok_or(MeetCoreError::ParticipantNotFound)?
-                .write()
-                .await;
+            let mls_group_lock = self
+                .mls_store
+                .read()
+                .await
+                .find_group(meeting_link_name)
+                .map_err(|_| MeetCoreError::ParticipantNotFound)?;
+            let mut mls_group = mls_group_lock.write().await;
 
             let role = mls_group.own_role_for_current_epoch()?;
             if role.role_index != UserRole::RoomAdmin.builder().role_index {
@@ -1827,15 +1797,8 @@ impl UserService for Service {
     }
 
     async fn get_group_key(&self, meeting_link_name: &str) -> Result<(String, u64), anyhow::Error> {
-        let mls_store = self.mls_store.read().await;
-        let group = mls_store
-            .group_map
-            .get(meeting_link_name)
-            .ok_or(anyhow::anyhow!(
-                "Failed to find mls group for room {meeting_link_name}"
-            ))?
-            .read()
-            .await;
+        let mls_group_lock = self.mls_store.read().await.find_group(meeting_link_name)?;
+        let group = mls_group_lock.read().await;
 
         let group_key = group.export_secret("meet-key", b"", 32).await?;
         let base64_group_key = general_purpose::STANDARD.encode(group_key.as_ref() as &[u8]);
@@ -1844,15 +1807,8 @@ impl UserService for Service {
     }
 
     async fn get_group_len(&self, meeting_link_name: &str) -> Result<u32, anyhow::Error> {
-        let mls_store = self.mls_store.read().await;
-        let group = mls_store
-            .group_map
-            .get(meeting_link_name)
-            .ok_or(anyhow::anyhow!(
-                "Failed to find mls group for room {meeting_link_name}"
-            ))?
-            .read()
-            .await;
+        let mls_group_lock = self.mls_store.read().await.find_group(meeting_link_name)?;
+        let group = mls_group_lock.read().await;
 
         let len = group.roster().count() as u32;
         Ok(len)
@@ -1862,15 +1818,8 @@ impl UserService for Service {
         &self,
         meeting_link_name: &str,
     ) -> Result<String, anyhow::Error> {
-        let mls_store = self.mls_store.read().await;
-        let group = mls_store
-            .group_map
-            .get(meeting_link_name)
-            .ok_or(anyhow::anyhow!(
-                "Failed to find mls group for room {meeting_link_name}"
-            ))?
-            .read()
-            .await;
+        let mls_group_lock = self.mls_store.read().await.find_group(meeting_link_name)?;
+        let group = mls_group_lock.read().await;
 
         let epoch_authenticator = group.epoch_authenticator()?;
 
@@ -1902,16 +1851,7 @@ impl UserService for Service {
         media_type: MediaType,
         content: &[u8],
     ) -> Result<mls_types::MlsMessage, anyhow::Error> {
-        let mls_group_lock = {
-            let store_lock = self.mls_store.read().await;
-            store_lock
-                .group_map
-                .get(meeting_link_name)
-                .ok_or_else(|| {
-                    anyhow::anyhow!("Failed to find mls group for room {meeting_link_name}")
-                })?
-                .clone()
-        };
+        let mls_group_lock = self.mls_store.read().await.find_group(meeting_link_name)?;
         let mut mls_group = mls_group_lock.write().await;
 
         let encrypted_message = mls_group.encrypt_message(media_type, content).await?;
@@ -1946,16 +1886,7 @@ impl UserService for Service {
             }
         }
 
-        let mls_group_lock = {
-            let store_lock = self.mls_store.read().await;
-            store_lock
-                .group_map
-                .get(meeting_link_name)
-                .ok_or_else(|| {
-                    anyhow::anyhow!("Failed to find mls group for room {meeting_link_name}")
-                })?
-                .clone()
-        };
+        let mls_group_lock = self.mls_store.read().await.find_group(meeting_link_name)?;
         let mut mls_group = mls_group_lock.write().await;
 
         let (decrypted_message, _reinit) = mls_group.decrypt_message(message).await?;
@@ -1993,16 +1924,7 @@ impl UserService for Service {
         &self,
         meeting_link_name: &str,
     ) -> Result<String, anyhow::Error> {
-        let mls_group_lock = {
-            let store_lock = self.mls_store.read().await;
-            store_lock
-                .group_map
-                .get(meeting_link_name)
-                .ok_or_else(|| {
-                    anyhow::anyhow!("Failed to find mls group for room {meeting_link_name}")
-                })?
-                .clone()
-        };
+        let mls_group_lock = self.mls_store.read().await.find_group(meeting_link_name)?;
         let mls_group = mls_group_lock.read().await;
         let own_leaf_index = *mls_group.own_leaf_index()?;
         let member = mls_group
@@ -2071,12 +1993,7 @@ impl UserService for Service {
         // find the mlsgroup of the room and decrypt the commit message
         let (remove_proposal, remove_self_from_participant_list_proposal) = {
             let store = self.mls_store.read().await;
-            let group = store
-                .group_map
-                .get(meeting_link_name)
-                .ok_or(anyhow::anyhow!(
-                    "Failed to find mls group for room {meeting_link_name}"
-                ))?;
+            let group = store.find_group(meeting_link_name)?;
             let mut mls_group = group.write().await;
             let cs = store.config.ciphersuite;
 
@@ -2202,14 +2119,7 @@ impl UserService for Service {
     /// Check if user is host and update role to RoomAdmin if needed
     /// Only broadcasts once per epoch
     async fn check_and_update_host_role(&self, room_id: &str) -> Result<(), anyhow::Error> {
-        let mls_group_lock = {
-            let store_lock = self.mls_store.read().await;
-            store_lock
-                .group_map
-                .get(room_id)
-                .ok_or_else(|| anyhow::anyhow!("Failed to find mls group for room {room_id}"))?
-                .clone()
-        };
+        let mls_group_lock = self.mls_store.read().await.find_group(room_id)?;
 
         let mut mls_group = mls_group_lock.write().await;
         let epoch = *mls_group.epoch();

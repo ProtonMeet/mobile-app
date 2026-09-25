@@ -354,13 +354,8 @@ impl Service {
             }
         }
 
-        let store = self.mls_store.read().await;
-        let mut mls_group = store
-            .group_map
-            .get(room_id)
-            .ok_or_else(|| anyhow::anyhow!("Failed to find mls group for room {room_id}"))?
-            .write()
-            .await;
+        let mls_group_lock = self.mls_store.read().await.find_group(room_id)?;
+        let mut mls_group = mls_group_lock.write().await;
         if let Err(e) = Self::validate_psk_proposal(commit_message.clone(), room_id) {
             // PSK validation failed: restore queue and return.
             drop(mls_group);
@@ -595,14 +590,7 @@ impl Service {
             }
         }
 
-        let mls_group_lock = {
-            let store_lock = self.mls_store.read().await;
-            store_lock
-                .group_map
-                .get(room_id)
-                .ok_or_else(|| anyhow::anyhow!("Failed to find mls group for room {room_id}"))?
-                .clone()
-        };
+        let mls_group_lock = self.mls_store.read().await.find_group(room_id)?;
         let mls_group = mls_group_lock.read().await;
 
         let self_leaf_index = mls_group.own_leaf_index()?;
