@@ -5648,7 +5648,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let services = futures::future::join_all(services).await;
         let service_refs = services
             .iter()
-            .map(|v| -> &Service { &*v })
+            .map(|v| -> &Service { v })
             .collect::<Vec<&Service>>();
         let groups = setup_n_user_group(service_refs, meet_link_name, config.ciphersuite).await;
         let host_group = groups[0].clone();

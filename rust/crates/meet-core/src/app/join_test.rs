@@ -375,7 +375,7 @@ async fn join_room_with_switch_join_type_falls_back_to_false_on_retryable_error(
     .await;
     let service_refs = services
         .iter()
-        .map(|v| -> &Service { &*v })
+        .map(|v| -> &Service { v })
         .collect::<Vec<_>>();
     let groups = setup_n_user_group(service_refs, meet_link_name, config.ciphersuite).await;
     let host_group = groups[0].clone();

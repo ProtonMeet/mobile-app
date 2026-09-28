@@ -147,7 +147,7 @@ impl CaptionServiceImpl {
             return false;
         };
         let guard = lock.read().await;
-        group_has_agent(&*guard)
+        group_has_agent(&guard)
     }
 
     async fn settle_closed_captions(

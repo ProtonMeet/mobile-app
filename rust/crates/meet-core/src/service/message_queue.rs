@@ -324,7 +324,7 @@ impl MessageQueue {
                         self.room_id
                     );
                     Some((
-                        Err(ServiceError::from(ServiceError::PskProposalMissing)),
+                        Err(ServiceError::PskProposalMissing),
                         "Commit missing PSK proposal",
                     ))
                 } else {
@@ -337,7 +337,7 @@ impl MessageQueue {
                 tracing::error!("Proposal not found in commit message");
                 self.cache_commit_message(commit).await?;
                 Some((
-                    Err(ServiceError::from(ServiceError::ProposalNotFound)),
+                    Err(ServiceError::ProposalNotFound),
                     "Failed to process commit message",
                 ))
             }
@@ -351,7 +351,7 @@ impl MessageQueue {
             _ => {
                 tracing::error!("Received message is not a commit: {:?}", received_message);
                 Some((
-                    Err(ServiceError::from(ServiceError::InvalidMlsMessageType)),
+                    Err(ServiceError::InvalidMlsMessageType),
                     "Failed to process commit message",
                 ))
             }
@@ -644,29 +644,29 @@ impl MessageQueue {
         &self,
         commit: mls_types::MlsMessage,
     ) -> Result<(), ServiceError> {
-        Ok(self
-            .msg_cache
+        self.msg_cache
             .cache_message(
                 &self.room_id,
                 commit.epoch().ok_or(ServiceError::NoEpochCommit)?,
                 CachedMessageType::Commit,
                 commit,
             )
-            .await)
+            .await;
+        Ok(())
     }
     async fn cache_proposal_message(
         &self,
         proposal: mls_types::MlsMessage,
     ) -> Result<(), ServiceError> {
-        Ok(self
-            .msg_cache
+        self.msg_cache
             .cache_message(
                 &self.room_id,
                 proposal.epoch().ok_or(ServiceError::NoEpochProposal)?,
                 CachedMessageType::Proposal,
                 proposal,
             )
-            .await)
+            .await;
+        Ok(())
     }
 
     fn restore_proposal_queue_on_failure(
@@ -682,7 +682,7 @@ impl MessageQueue {
                 items_count,
                 self.room_id
             );
-            self.queue.write().extend(queued_proposals.into_iter());
+            self.queue.write().extend(queued_proposals);
         }
     }
 
@@ -710,9 +710,7 @@ impl MessageQueue {
                                     && id_bytes.as_slice() != expected_agent_id.as_slice()
                                 {
                                     tracing::error!("PSK ID mismatch for room {}", room_id);
-                                    return Err(ServiceError::from(
-                                        ServiceError::PskProposalMissing,
-                                    ));
+                                    return Err(ServiceError::PskProposalMissing);
                                 }
                             }
                         }
@@ -720,7 +718,7 @@ impl MessageQueue {
                 }
                 if !has_psk {
                     tracing::error!("PSK proposal missing for room {}", room_id);
-                    return Err(ServiceError::from(ServiceError::PskProposalMissing));
+                    return Err(ServiceError::PskProposalMissing);
                 }
             }
         }
@@ -967,19 +965,19 @@ impl MessageQueue {
                     }
                     None => {
                         tracing::info!("Received proposal message with old epoch. proposal epoch: {epoch_of_proposal:?}, group epoch: {mls_group_epoch:?}",);
-                        return Err(ServiceError::OldEpochProposal.into());
+                        return Err(ServiceError::OldEpochProposal);
                     }
                 };
                 {
                     tracing::info!("Received proposal message with old epoch. proposal epoch: {epoch_of_proposal:?}, group epoch: {mls_group_epoch:?}",);
-                    return Err(ServiceError::OldEpochProposal.into());
+                    return Err(ServiceError::OldEpochProposal);
                 }
             }
             Ordering::Equal => {}
             Ordering::Greater => {
                 tracing::info!("Received proposal message with future epoch. proposal epoch: {:?}, group epoch: {:?}", epoch_of_proposal, mls_group_epoch);
                 self.cache_proposal_message(proposal).await?;
-                return Err(ServiceError::FutureEpochProposal.into());
+                return Err(ServiceError::FutureEpochProposal);
             }
         }
 
@@ -1002,7 +1000,7 @@ impl MessageQueue {
             _ => {
                 #[cfg(debug_assertions)]
                 tracing::error!("Received message is not a proposal: {:?}", received_message);
-                return Err(ServiceError::ProposalDecryptionFailed.into());
+                return Err(ServiceError::ProposalDecryptionFailed);
             }
         }
 
@@ -1022,7 +1020,7 @@ impl MessageQueue {
         let mut mls_group = mls_group.write().await;
 
         let all_proposals =
-            Self::decrypt_and_classify_batched_proposals(&mut *mls_group, queued_proposals).await?;
+            Self::decrypt_and_classify_batched_proposals(&mut mls_group, queued_proposals).await?;
 
         #[cfg(debug_assertions)]
         tracing::info!(
@@ -1064,7 +1062,7 @@ impl MessageQueue {
             agent_user_identifiers,
         )?;
 
-        self.add_pending_commit(&mut *mls_group, role_proposals, Some(proposal_infos))
+        self.add_pending_commit(&mut mls_group, role_proposals, Some(proposal_infos))
             .await?;
 
         let old_epoch = mls_group.epoch();
@@ -1291,7 +1289,7 @@ impl MessageQueue {
         }
 
         role_proposals.push(ProposalArg::PskExternal {
-            id: psk_id_for_commit(room_id, group_has_agent(&mls_group)),
+            id: psk_id_for_commit(room_id, group_has_agent(mls_group)),
         });
 
         Ok(role_proposals)
@@ -1565,7 +1563,7 @@ impl MessageQueue {
                 tracing::warn!(
                     "Kick failed with non-retryable error on attempt {i}/{MAX_RETRIES}: {e:?}"
                 );
-                return Err(e.into());
+                return Err(e);
             }
 
             if i == MAX_RETRIES {
