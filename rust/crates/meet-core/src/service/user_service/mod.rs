@@ -1515,7 +1515,6 @@ impl UserService for Service {
             .push_proposal_and_commit(
                 meeting_link_name,
                 Box::new(move |group: &mut MlsGroup<MemKv>| {
-                    let target_uuid = target_uuid.clone();
                     Box::pin(async move {
                         let target_leaf = {
                             let Some(target) = group.roster().find(|m| match &m.credential {
@@ -1563,7 +1562,14 @@ impl UserService for Service {
                             );
                         }
 
-                        if let Some(proposal) = group.new_proposals(proposal_args).await?.pop() {
+                        let mut new_proposals = group.new_proposals(proposal_args).await?;
+                        if new_proposals.len() > 1 {
+                            return Err(ServiceError::Internal(
+                                "Kick proposals generated more than one message".into(),
+                            ));
+                        }
+
+                        if let Some(proposal) = new_proposals.pop() {
                             Ok(Some(QueuedProposal {
                                 proposal_message: proposal,
                                 proposal_type: ProposalType::Remove,

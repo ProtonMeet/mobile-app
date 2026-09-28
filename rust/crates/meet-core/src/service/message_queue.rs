@@ -141,18 +141,9 @@ impl MessageQueueServiceImpl {
         match map.entry(room_id.into()) {
             Entry::Occupied(occupied_entry) => Ok(occupied_entry.get().clone()),
             Entry::Vacant(vacant_entry) => {
-                let group = self
-                    .mls_store
-                    .read()
-                    .await
-                    .group_map
-                    .get(room_id)
-                    .ok_or(ServiceError::GroupNotFound)?
-                    .clone();
-
                 let queue = MessageQueue::new(
                     room_id.into(),
-                    group,
+                    self.mls_store.clone(),
                     self.msg_cache.clone(),
                     self.services.clone(),
                     self.mls_api.clone(),
@@ -202,7 +193,7 @@ impl MessageQueueService for MessageQueueServiceImpl {
 
 struct MessageQueue {
     room_id: String,
-    group: Arc<tokio::sync::RwLock<MlsGroup<MemKv>>>,
+    mls_store: Arc<tokio::sync::RwLock<MlsStore>>,
     queue: SyncRwLock<Vec<QueuedProposal>>,
     msg_cache: Arc<dyn MessageCachePort>,
     // Separate processing guard, such that queue processing can be serialized without preventing
@@ -216,14 +207,14 @@ struct MessageQueue {
 impl MessageQueue {
     pub fn new(
         room_id: String,
-        group: Arc<tokio::sync::RwLock<MlsGroup<MemKv>>>,
+        mls_store: Arc<tokio::sync::RwLock<MlsStore>>,
         msg_cache: Arc<dyn MessageCachePort>,
         services: Weak<ServiceBundle>,
         mls_api: Arc<dyn MlsApi>,
     ) -> Self {
         Self {
             room_id,
-            group,
+            mls_store,
             queue: SyncRwLock::new(Vec::new(), |_| {}),
             msg_cache,
             processing_lock: Default::default(),
@@ -237,11 +228,21 @@ impl MessageQueue {
         self.services.upgrade().ok_or(ServiceError::NoServiceBundle)
     }
 
+    async fn group(&self) -> Result<Arc<RwLock<MlsGroup<MemKv>>>, ServiceError> {
+        self.mls_store
+            .read()
+            .await
+            .group_map
+            .get(&self.room_id)
+            .cloned()
+            .ok_or(ServiceError::GroupNotFound)
+    }
+
     async fn process_commit_message(
         self: &Arc<Self>,
         commit: mls_types::MlsMessage,
     ) -> Result<CommitProcessingOutcome, ServiceError> {
-        let group_epoch = self.epoch().await;
+        let group_epoch = self.epoch().await?;
         let commit_epoch = commit.epoch().ok_or(ServiceError::NoEpochCommit)?;
 
         tracing::info!("Before processing commit message. epoch: {group_epoch:?}");
@@ -289,7 +290,8 @@ impl MessageQueue {
             return Err(e);
         }
 
-        let mut mls_group = self.group.write().await;
+        let mls_group = self.group().await?;
+        let mut mls_group = mls_group.write().await;
         let result = mls_group.decrypt_message(commit.clone()).await;
         let received_message = match result {
             Ok((v, _)) => v,
@@ -419,7 +421,7 @@ impl MessageQueue {
             }
 
             // Get current epoch once and use it for both filtering and validation
-            let current_epoch = self.epoch().await;
+            let current_epoch = self.epoch().await?;
 
             // Get all processable epochs (epochs <= current_epoch) and sort them
             let processable_epochs = self
@@ -445,7 +447,7 @@ impl MessageQueue {
             // The group epoch might have advanced since we started this iteration.
             // We need a fresh check here because the epoch could have advanced between
             // getting the processable epochs list and selecting this specific epoch.
-            let current_group_epoch = self.epoch().await;
+            let current_group_epoch = self.epoch().await?;
 
             // Skip epochs that are no longer processable due to group advancement
             if epoch_to_process > *current_group_epoch {
@@ -511,7 +513,7 @@ impl MessageQueue {
                                 epoch_advanced = true;
 
                                 // Revalidate epoch after commit processing
-                                let new_group_epoch = self.epoch().await;
+                                let new_group_epoch = self.epoch().await?;
 
                                 // If epoch advanced significantly, break to start fresh iteration
                                 if new_group_epoch > current_group_epoch {
@@ -605,7 +607,7 @@ impl MessageQueue {
 
         // Clean up old cached messages to prevent memory leaks
         // Keep messages for up to 10 epochs behind current epoch
-        let final_epoch = self.epoch().await;
+        let final_epoch = self.epoch().await?;
 
         // Remove cached messages that are older than current epoch
         self.msg_cache
@@ -684,8 +686,8 @@ impl MessageQueue {
         }
     }
 
-    async fn epoch(&self) -> Epoch {
-        self.group.read().await.epoch()
+    async fn epoch(&self) -> Result<Epoch, ServiceError> {
+        Ok(self.group().await?.read().await.epoch())
     }
 
     pub(super) fn validate_psk_proposal(
@@ -738,7 +740,7 @@ impl MessageQueue {
         };
 
         let proposal_epoch = message.epoch().ok_or(ServiceError::NoEpochProposal)?;
-        let current_epoch = self.epoch().await;
+        let current_epoch = self.epoch().await?;
 
         match proposal_epoch.cmp(&current_epoch) {
             Ordering::Less => {
@@ -803,7 +805,7 @@ impl MessageQueue {
             .user_service
             .read()
             .await
-            .committer_rank(&*self.group.read().await)
+            .committer_rank(&*self.group().await?.read().await)
             .await?;
         let StaggerStats {
             delay_ms,
@@ -893,16 +895,24 @@ impl MessageQueue {
             }
 
             // Check if epoch has changed, skip if not equal
-            let current_epoch = queue.epoch().await;
-            if current_epoch != epoch_at {
-                #[cfg(debug_assertions)]
-                tracing::info!(
-                    "Proposal timer for room {}: epoch changed from {} to {}, skipping",
-                    queue.room_id,
-                    epoch_at,
-                    current_epoch
-                );
-                return;
+            match queue.epoch().await {
+                Ok(v) if v != epoch_at => {
+                    #[cfg(debug_assertions)]
+                    tracing::info!(
+                        "Proposal timer for room {}: epoch changed from {epoch_at} to {v}, skipping",
+                        queue.room_id,
+                    );
+                    return;
+                }
+                Err(e) => {
+                    #[cfg(debug_assertions)]
+                    tracing::info!(
+                        "Proposal timer for room {}: could not run epoch check ({e:?}, skipping",
+                        queue.room_id,
+                    );
+                    return;
+                }
+                _ => {}
             }
 
             let _room_processing_lock = queue.processing_lock.lock_send().await;
@@ -917,13 +927,17 @@ impl MessageQueue {
                 tracing::warn!("Batched proposal timer: {:?}", e);
                 let current_epoch = queue.epoch().await;
                 // Restore proposals on error
-                let filtered_queued_proposals = queued_proposals
-                    .into_iter()
-                    .filter(|proposal| {
-                        let proposal_epoch = proposal.proposal_message.epoch().unwrap_or(0);
-                        proposal_epoch >= *current_epoch
-                    })
-                    .collect();
+                let filtered_queued_proposals = if let Ok(current_epoch) = current_epoch {
+                    queued_proposals
+                        .into_iter()
+                        .filter(|proposal| {
+                            let proposal_epoch = proposal.proposal_message.epoch().unwrap_or(0);
+                            proposal_epoch >= *current_epoch
+                        })
+                        .collect()
+                } else {
+                    queued_proposals
+                };
 
                 // Restoring here may cause some already applied proposals to be pushed back to
                 // the queue, if `handle_batched_proposals` failed after creating the commit.
@@ -940,7 +954,7 @@ impl MessageQueue {
     async fn handle_proposal(&self, proposal: mls_types::MlsMessage) -> Result<(), ServiceError> {
         let epoch_of_proposal = proposal.epoch().ok_or(ServiceError::NoEpochProposal)?;
 
-        let mls_group_epoch = self.epoch().await;
+        let mls_group_epoch = self.epoch().await?;
 
         match epoch_of_proposal.cmp(&mls_group_epoch) {
             Ordering::Less => {
@@ -970,7 +984,8 @@ impl MessageQueue {
         }
 
         // Re-acquire locks for message processing
-        let mut mls_group = self.group.write().await;
+        let mls_group = self.group().await?;
+        let mut mls_group = mls_group.write().await;
 
         let (received_message, _) = mls_group.decrypt_message(proposal).await?;
         match received_message {
@@ -1003,7 +1018,8 @@ impl MessageQueue {
             return Ok(());
         }
 
-        let mut mls_group = self.group.write().await;
+        let mls_group = self.group().await?;
+        let mut mls_group = mls_group.write().await;
 
         let all_proposals =
             Self::decrypt_and_classify_batched_proposals(&mut *mls_group, queued_proposals).await?;
@@ -1502,7 +1518,8 @@ impl MessageQueue {
 
             let room_processing_lock = self.processing_lock.lock_send().await;
 
-            let Some(proposal) = proposal_builder(&mut *self.group.write().await).await? else {
+            let Some(proposal) = proposal_builder(&mut *self.group().await?.write().await).await?
+            else {
                 return Ok(());
             };
 
@@ -1517,7 +1534,7 @@ impl MessageQueue {
             };
             tracing::warn!("Batch handling failed: {e:?}");
 
-            let current_epoch = self.epoch().await;
+            let current_epoch = self.epoch().await?;
             // Restore proposals on error
             let filtered_queued_proposals = queued_proposals
                 .into_iter()
