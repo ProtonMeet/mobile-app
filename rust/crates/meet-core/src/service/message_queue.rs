@@ -1500,14 +1500,13 @@ impl MessageQueue {
         loop {
             tracing::info!("Pushing proposal, attempt {i}/{MAX_RETRIES}");
 
-            let _room_processing_lock = self.processing_lock.lock_send().await;
-
-            // Swap queue: take proposals out first to minimize lock time
-            let mut queued_proposals = mem::take(&mut *self.queue.write());
+            let room_processing_lock = self.processing_lock.lock_send().await;
 
             let Some(proposal) = proposal_builder(&mut *self.group.write().await).await? else {
                 return Ok(());
             };
+
+            let mut queued_proposals = mem::take(&mut *self.queue.write());
             queued_proposals.push(proposal);
 
             let Err(e) = self
@@ -1536,6 +1535,7 @@ impl MessageQueue {
                 filtered_queued_proposals,
                 "Batched proposal with force push failed",
             );
+            drop(room_processing_lock);
 
             let is_retryable = match &e {
                 ServiceError::HttpClientError(HttpClientError::ErrorCode(status, ..)) => {
@@ -1573,6 +1573,7 @@ impl MessageQueue {
 }
 
 #[cfg(test)]
+#[cfg(not(target_family = "wasm"))]
 mod test {
     use std::{future::ready, mem, sync::Arc};
 

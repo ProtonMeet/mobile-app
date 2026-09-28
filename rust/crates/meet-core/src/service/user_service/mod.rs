@@ -1492,6 +1492,24 @@ impl UserService for Service {
     ) -> Result<(), MeetCoreError> {
         let target_uuid = Uuid::from_str(target_participant_id)?;
 
+        // Check that the user is room admin.
+        {
+            let store = self.mls_store.read().await;
+            let group =
+                store
+                    .find_group(meeting_link_name)
+                    .map_err(|e| MeetCoreError::AuthStoreError {
+                        message: e.to_string(),
+                    })?;
+            let group_lock = group.read().await;
+            if group_lock.own_role_for_current_epoch()?.role_index
+                != UserRole::RoomAdmin.builder().role_index
+            {
+                tracing::warn!("User is not RoomAdmin, cannot kick participant");
+                return Err(MeetCoreError::NotRoomAdmin);
+            }
+        }
+
         self.services()?
             .msg_queue_service
             .push_proposal_and_commit(
@@ -1499,14 +1517,6 @@ impl UserService for Service {
                 Box::new(move |group: &mut MlsGroup<MemKv>| {
                     let target_uuid = target_uuid.clone();
                     Box::pin(async move {
-                        // Authorization is a service-layer policy decision, not queue mechanics.
-                        if group.own_role_for_current_epoch()?.role_index
-                            != UserRole::RoomAdmin.builder().role_index
-                        {
-                            tracing::warn!("User is not RoomAdmin, cannot kick participant");
-                            return Ok(None);
-                        }
-
                         let target_leaf = {
                             let Some(target) = group.roster().find(|m| match &m.credential {
                                 Credential::SdCwtDraft04 {
@@ -1522,11 +1532,38 @@ impl UserService for Service {
                             target.leaf_index()
                         };
 
-                        if let Some(proposal) = group
-                            .new_proposals([ProposalArg::Remove(target_leaf)])
-                            .await?
-                            .pop()
-                        {
+                        let authorizer = group.authorizer()?;
+                        let epoch = group.epoch();
+                        let mut active_participants = HashSet::new();
+                        let mut to_remove = Vec::new();
+                        let mut proposal_args = vec![ProposalArg::Remove(target_leaf)];
+
+                        for mut m in group.roster() {
+                            let user_id = m.user_id()?;
+                            let identity = ProtonMeetIdentityProvider::user_identifier(&user_id);
+                            active_participants.insert(identity.clone());
+                            if m.leaf_index() == target_leaf {
+                                to_remove.push(identity);
+                            }
+                        }
+
+                        for identity in to_remove {
+                            proposal_args.extend(
+                                authorizer
+                                    .role_proposal_for_removed_user(
+                                        *epoch,
+                                        &identity,
+                                        &active_participants,
+                                    )?
+                                    .into_iter()
+                                    .map(|component| ProposalArg::UpdateComponent {
+                                        id: component.component_id,
+                                        data: component.data,
+                                    }),
+                            );
+                        }
+
+                        if let Some(proposal) = group.new_proposals(proposal_args).await?.pop() {
                             Ok(Some(QueuedProposal {
                                 proposal_message: proposal,
                                 proposal_type: ProposalType::Remove,
