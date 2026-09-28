@@ -18,23 +18,16 @@ pub(crate) mod tests {
         domain::user::{
             models::{meeting_link_name::MeetingLinkName, UserId},
             ports::{
-                meeting_api::MockMeetingApi, new_user_service::NewUserService,
-                user_api::MockUserApi, MockHttpClient, MockMlsApi, MockUserRepository,
-                MockWebSocketClient,
+                meeting_api::MockMeetingApi, new_user_service::NewUserService, MockHttpClient,
+                MockMlsApi, MockWebSocketClient,
             },
         },
-        errors::{
-            core::MeetCoreError, http_client::HttpClientError, login::LoginError,
-            service::ServiceError,
-        },
+        errors::{core::MeetCoreError, http_client::HttpClientError, service::ServiceError},
         infra::{
             crypto_client::derive_external_psk,
-            dto::{
-                proton_user::UserData,
-                realtime::{
-                    GroupInfoVersion, MlsCommitInfo, MlsProposalInfo, MlsWelcomeInfo, RTCMessageIn,
-                    RTCMessageInContent, RatchetTreeAndGroupInfo, VersionedGroupInfoData,
-                },
+            dto::realtime::{
+                GroupInfoVersion, MlsCommitInfo, MlsProposalInfo, MlsWelcomeInfo, RTCMessageIn,
+                RTCMessageInContent, RatchetTreeAndGroupInfo, VersionedGroupInfoData,
             },
             message_cache::CachedMessageType,
             mimi_subject_parser::ANONYMOUS_USER_IDENTIFIER,
@@ -71,7 +64,6 @@ pub(crate) mod tests {
         types::{ProposalEffect, ReceivedMessage},
         MlsClientTrait, MlsGroupConfig, ProposalArg, ProtonMeetIdentityProvider,
     };
-    use mockall::predicate::eq;
     use proton_claims::{
         reexports::{cose_key_set::CoseKeySet, Issuer, IssuerParams, SpiceOidcClaims},
         ClientType, MimiProvider, ProtonMeetClaims,
@@ -89,13 +81,6 @@ pub(crate) mod tests {
     use rand::seq::SliceRandom;
     use rand::{Rng, SeedableRng};
 
-    // Test data constants for better maintainability
-    const TEST_USERNAME: &str = "test_user";
-    const TEST_PASSWORD: &str = "test_password";
-    const TEST_USER_ID: &str = "test_user_id";
-    const TEST_USER_EMAIL: &str = "test@example.com";
-    const TEST_USER_NAME: &str = "Test User";
-
     #[test]
     fn test_derive_external_psk_argon2_is_deterministic_and_room_bound() {
         let room_a_first = derive_external_psk("meet_password", "room-a").unwrap();
@@ -105,160 +90,6 @@ pub(crate) mod tests {
         assert_eq!(room_a_first, room_a_second);
         assert_ne!(room_a_first, room_b);
         assert_eq!(room_a_first.0.len(), 32);
-    }
-
-    #[tokio::test]
-    async fn test_login_success() {
-        let http_client = MockHttpClient::new();
-        let mut mock_user_api = MockUserApi::new();
-        mock_user_api
-            .expect_login()
-            .with(eq(TEST_USERNAME), eq(TEST_PASSWORD))
-            .once()
-            .returning(move |_, _| {
-                let user_data = UserData {
-                    user: proton_meet_common::models::ProtonUser {
-                        id: TEST_USER_ID.to_string(),
-                        name: TEST_USER_NAME.to_string(),
-                        email: TEST_USER_EMAIL.to_string(),
-                        ..Default::default()
-                    },
-                    key_salts: vec![],
-                };
-                Box::pin(ready(Ok(user_data)))
-            });
-        mock_user_api
-            .expect_get_user_addresses()
-            .once()
-            .returning(|| Box::pin(ready(Ok(vec![]))));
-
-        let mut user_repository = MockUserRepository::new();
-        user_repository
-            .expect_init_tables()
-            .with(eq(TEST_USER_ID))
-            .once()
-            .returning(|_| Box::pin(ready(Ok(()))));
-
-        user_repository
-            .expect_save_user()
-            .withf(move |user| {
-                user.id == TEST_USER_ID
-                    && user.name == TEST_USER_NAME
-                    && user.email == TEST_USER_EMAIL
-            })
-            .once()
-            .returning(|_| Box::pin(ready(Ok(()))));
-        user_repository
-            .expect_save_user_keys()
-            .withf(|user_id, keys| user_id == TEST_USER_ID && keys.is_empty())
-            .once()
-            .returning(|_, _| Box::pin(ready(Ok(()))));
-
-        let ws_client = Arc::new(MockWebSocketClient::new());
-        let mls_store = Arc::new(RwLock::new(MlsStore {
-            clients: HashMap::new(),
-            group_map: HashMap::new(),
-            config: MlsClientConfig::default(),
-        }));
-        let service = Service::new(
-            Arc::new(http_client),
-            Arc::new(MockMlsApi::new()),
-            Arc::new(MockMeetingApi::new()),
-            Arc::new(mock_user_api),
-            Arc::new(user_repository),
-            ws_client,
-            mls_store,
-            ServerTimeTracker::new(),
-        );
-
-        let result = service.login(TEST_USERNAME, TEST_PASSWORD).await;
-
-        assert!(result.is_ok());
-        let (_, user, user_keys, user_addresses) = result.unwrap();
-        assert_eq!(user.id, TEST_USER_ID.to_string());
-        assert_eq!(user.name, TEST_USER_NAME);
-        assert_eq!(user.email, TEST_USER_EMAIL);
-        assert_eq!(user_keys, vec![]);
-        assert_eq!(user_addresses, vec![]);
-    }
-
-    #[tokio::test]
-    async fn test_login_http_client_error() {
-        let http_client = MockHttpClient::new();
-        let mut mock_user_api = MockUserApi::new();
-        mock_user_api
-            .expect_login()
-            .with(eq(TEST_USERNAME), eq(TEST_PASSWORD))
-            .once()
-            .returning(|_, _| {
-                Box::pin(ready(Err(LoginError::LoginFailed(
-                    "Invalid credentials".to_string(),
-                ))))
-            });
-
-        let user_repository = MockUserRepository::new();
-        let ws_client = Arc::new(MockWebSocketClient::new());
-        let mls_store = Arc::new(RwLock::new(MlsStore {
-            clients: HashMap::new(),
-            group_map: HashMap::new(),
-            config: MlsClientConfig::default(),
-        }));
-        let service = Service::new(
-            Arc::new(http_client),
-            Arc::new(MockMlsApi::new()),
-            Arc::new(MockMeetingApi::new()),
-            Arc::new(mock_user_api),
-            Arc::new(user_repository),
-            ws_client,
-            mls_store,
-            ServerTimeTracker::new(),
-        );
-
-        let result = service.login(TEST_USERNAME, TEST_PASSWORD).await;
-
-        assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), LoginError::LoginFailed(_)));
-    }
-
-    #[tokio::test]
-    async fn test_logout_success() {
-        let user_id = TEST_USER_ID.to_string();
-
-        let http_client = MockHttpClient::new();
-        let mut mock_user_api = MockUserApi::new();
-        mock_user_api
-            .expect_logout()
-            .once()
-            .returning(|| Box::pin(ready(())));
-
-        let mut user_repository = MockUserRepository::new();
-        user_repository
-            .expect_delete_user()
-            .with(eq(user_id.clone()))
-            .once()
-            .returning(|_| Box::pin(ready(Ok(1))));
-
-        let ws_client = Arc::new(MockWebSocketClient::new());
-
-        let mls_store = Arc::new(RwLock::new(MlsStore {
-            clients: HashMap::new(),
-            group_map: HashMap::new(),
-            config: MlsClientConfig::default(),
-        }));
-        let service = Service::new(
-            Arc::new(http_client),
-            Arc::new(MockMlsApi::new()),
-            Arc::new(MockMeetingApi::new()),
-            Arc::new(mock_user_api),
-            Arc::new(user_repository),
-            ws_client,
-            mls_store,
-            ServerTimeTracker::new(),
-        );
-
-        let result = service.logout(&UserId::new(user_id)).await;
-
-        assert!(result.is_ok());
     }
 
     #[tokio::test]
@@ -3924,7 +3755,6 @@ pub(crate) mod tests {
         is_host: bool,
     ) -> Service {
         let mls_api = create_mock_mls_api(user_id, meet_link_name, is_host);
-        let user_repository = Arc::new(MockUserRepository::new());
         let mls_store: Arc<RwLock<MlsStore>> = Arc::new(RwLock::new(MlsStore {
             clients: HashMap::new(),
             group_map: HashMap::new(),
@@ -3942,8 +3772,6 @@ pub(crate) mod tests {
             Arc::new(MockHttpClient::new()),
             Arc::new(mls_api),
             Arc::new(MockMeetingApi::new()),
-            Arc::new(MockUserApi::new()),
-            user_repository,
             Arc::new(ws_client_mock),
             mls_store,
             ServerTimeTracker::new(),
@@ -5496,7 +5324,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             .expect_update_group_info()
             .returning(|_, _, _, _, _| Box::pin(ready(Ok(()))));
 
-        let user_repository = Arc::new(MockUserRepository::new());
         let mls_store = Arc::new(RwLock::new(MlsStore {
             clients: HashMap::new(),
             group_map: HashMap::new(),
@@ -5516,8 +5343,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             Arc::new(MockHttpClient::new()),
             Arc::new(mls_api),
             Arc::new(MockMeetingApi::new()),
-            Arc::new(MockUserApi::new()),
-            user_repository,
             Arc::new(MockWebSocketClient::new()),
             mls_store,
             ServerTimeTracker::new(),
@@ -5687,7 +5512,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             .expect_get_group_info_summary()
             .returning(move |_| Box::pin(ready(Ok(g.clone()))));
 
-        let user_repository = Arc::new(MockUserRepository::new());
         let mls_store = Arc::new(RwLock::new(MlsStore {
             clients: service.mls_store.read().await.clients.clone(),
             group_map: service.mls_store.read().await.group_map.clone(),
@@ -5714,8 +5538,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             Arc::new(MockHttpClient::new()),
             Arc::new(mls_api),
             Arc::new(MockMeetingApi::new()),
-            Arc::new(MockUserApi::new()),
-            user_repository,
             Arc::new(ws_client_mock),
             mls_store,
             ServerTimeTracker::new(),
@@ -5801,7 +5623,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             .expect_get_group_info_summary()
             .returning(move |_| Box::pin(ready(Ok(g.clone()))));
 
-        let user_repository = Arc::new(MockUserRepository::new());
         let mls_store = Arc::new(RwLock::new(MlsStore {
             clients: service1.mls_store.read().await.clients.clone(),
             group_map: service1.mls_store.read().await.group_map.clone(),
@@ -5828,8 +5649,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             Arc::new(MockHttpClient::new()),
             Arc::new(mls_api),
             Arc::new(MockMeetingApi::new()),
-            Arc::new(MockUserApi::new()),
-            user_repository,
             Arc::new(ws_client_mock),
             mls_store,
             ServerTimeTracker::new(),
@@ -7118,7 +6937,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
     ) -> Service {
         let mut mls_api = create_mock_mls_api(email_for_sd_cwt_mock, meet_link_name, false);
         configure_mls(&mut mls_api);
-        let user_repository = Arc::new(MockUserRepository::new());
         let (clients, group_map, cfg) = {
             let store = base_service.mls_store.read().await;
             (
@@ -7136,8 +6954,6 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             Arc::new(MockHttpClient::new()),
             Arc::new(mls_api),
             Arc::new(MockMeetingApi::new()),
-            Arc::new(MockUserApi::new()),
-            user_repository,
             Arc::new(join_switch_ws_client_mock()),
             mls_store,
             ServerTimeTracker::new(),

@@ -1,11 +1,9 @@
-use crate::domain::user::models::{user_settings::UserSettings, Address, UserId, UserTokenInfo};
-use crate::errors::{core::MeetCoreError, login::LoginError, service::ServiceError};
-use crate::infra::{dto::proton_user::UserData, ws_client::WebSocketMessage};
+use crate::domain::user::models::{UserId, UserSettings, UserTokenInfo};
+use crate::errors::core::MeetCoreError;
+use crate::infra::ws_client::WebSocketMessage;
 use mls_spec::{drafts::ratchet_tree_options::RatchetTreeOption, group::group_info::GroupInfo};
 use mls_trait::{CommitBundle, MlsGroup};
 use mls_types::{CipherSuite, ExternalPskId, MlsMessage};
-use proton_meet_common::models::ProtonUser;
-use proton_meet_common::models::ProtonUserKey;
 use proton_meet_macro::async_trait_with_mock;
 use proton_meet_mls::kv::MemKv;
 use std::sync::Arc;
@@ -13,14 +11,6 @@ use tokio::sync::RwLock;
 
 #[async_trait_with_mock]
 pub trait UserService {
-    async fn login(
-        &self,
-        username: &str,
-        password: &str,
-    ) -> Result<(UserData, ProtonUser, Vec<ProtonUserKey>, Vec<Address>), LoginError>;
-
-    async fn logout(&self, user_id: &UserId) -> Result<(), anyhow::Error>;
-
     async fn create_mls_client(
         &self,
         access_token: &str,
@@ -138,30 +128,6 @@ pub trait UserService {
     async fn get_sd_kbt(&self, participant_id: &UserId) -> Result<String, anyhow::Error>;
 
     async fn get_meeting_id(&self, user_identifier: &UserId) -> Result<String, anyhow::Error>;
-
-    async fn login_with_two_factor(&self, two_factor_code: &str) -> Result<UserData, LoginError>;
-
-    async fn get_user(&self, user_id: &UserId) -> Result<ProtonUser, ServiceError> {
-        self.get_user_with_policy(user_id, false).await
-    }
-
-    async fn get_user_with_policy(
-        &self,
-        user_id: &UserId,
-        force_remote: bool,
-    ) -> Result<ProtonUser, ServiceError>;
-
-    async fn get_user_keys(&self, user_id: &UserId) -> Result<Vec<ProtonUserKey>, anyhow::Error> {
-        self.get_user_keys_with_policy(user_id, false).await
-    }
-
-    async fn get_user_keys_with_policy(
-        &self,
-        user_id: &UserId,
-        force_remote: bool,
-    ) -> Result<Vec<ProtonUserKey>, anyhow::Error>;
-
-    async fn get_user_addresses(&self) -> Result<Vec<Address>, anyhow::Error>;
 
     async fn get_user_settings(&self) -> Result<UserSettings, anyhow::Error>;
 

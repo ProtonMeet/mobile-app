@@ -81,10 +81,7 @@ async fn is_websocket_has_reconnected_delegates_to_service() {
     use std::sync::Arc;
 
     use crate::app::test_support::{build_app_with_ws_and_service, test_mls_store};
-    use crate::domain::user::ports::{
-        meeting_api::MockMeetingApi, user_api::MockUserApi, MockHttpClient, MockMlsApi,
-        MockUserRepository,
-    };
+    use crate::domain::user::ports::{meeting_api::MockMeetingApi, MockHttpClient, MockMlsApi};
     use crate::service::user_service::Service;
 
     let mut ws = MockWebSocketClient::new();
@@ -97,8 +94,6 @@ async fn is_websocket_has_reconnected_delegates_to_service() {
         Arc::new(MockHttpClient::new()),
         Arc::new(MockMlsApi::new()),
         Arc::new(MockMeetingApi::new()),
-        Arc::new(MockUserApi::new()),
-        Arc::new(MockUserRepository::new()),
         ws.clone(),
         test_mls_store(),
         test_server_time_tracker(),
