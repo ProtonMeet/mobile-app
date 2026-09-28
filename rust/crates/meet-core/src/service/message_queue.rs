@@ -1511,6 +1511,7 @@ impl MessageQueue {
 
         let mut i = 0;
 
+        // loop rather than for since, after MAX_RETRIES, we want to return an error without doing a final `sleep`
         loop {
             tracing::info!("Pushing proposal, attempt {i}/{MAX_RETRIES}");
 
@@ -1538,7 +1539,7 @@ impl MessageQueue {
                 .into_iter()
                 .filter(|proposal| {
                     let proposal_epoch = proposal.proposal_message.epoch().unwrap_or(0);
-                    proposal_epoch >= *current_epoch
+                    proposal_epoch >= *current_epoch && !proposal.already_applied
                 })
                 .collect();
 
@@ -1567,7 +1568,7 @@ impl MessageQueue {
             }
 
             if i == MAX_RETRIES {
-                break;
+                return Err(ServiceError::MaxRetriesReached);
             }
 
             let delay_ms = calculate_retry_delay(i, BASE_DELAY_MS, MAX_DELAY_MS);
@@ -1582,8 +1583,6 @@ impl MessageQueue {
             sleep(Duration::from_millis(delay_ms)).await;
             i += 1;
         }
-
-        Err(ServiceError::MaxRetriesReached)
     }
 }
 
