@@ -198,24 +198,9 @@ impl App {
 
         // Check if user is host and update role if needed
         let user_id = user_info.user_id();
-
-        let meeting_id_res = self
-            .services
-            .user_service
-            .read()
-            .await
-            .get_meeting_id(&user_id)
-            .await;
-
-        if let Ok(meeting_id) = meeting_id_res {
-            if let Err(e) = self
-                .services
-                .user_service
-                .read()
-                .await
-                .check_and_update_host_role(&meeting_id)
-                .await
-            {
+        let user_service = self.services.user_service.read().await;
+        if let Ok(meeting_id) = user_service.get_meeting_id(&user_id).await {
+            if let Err(e) = user_service.check_and_update_host_role(&meeting_id).await {
                 warn!(
                     "Failed to check and update host role after proposal join: {:?}",
                     e

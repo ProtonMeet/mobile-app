@@ -3,7 +3,7 @@ use std::future::ready;
 use mockall::predicate::eq;
 
 use crate::app::test_support::{
-    auth_service, build_app, build_app_with_service, default_app_state, test_address,
+    auth_service, build_app, build_app_with_auth_service, default_app_state, test_address,
     test_proton_user, test_user_key, test_user_state,
 };
 use crate::domain::user::ports::{user_api::MockUserApi, MockUserRepository};
@@ -87,7 +87,8 @@ async fn get_user_state_errors_when_no_active_user() {
 async fn login_stores_active_user_on_success() {
     let (user_api, user_repository) = login_success_mocks();
     let app =
-        build_app_with_service(default_app_state(), auth_service(user_api, user_repository)).await;
+        build_app_with_auth_service(default_app_state(), auth_service(user_api, user_repository))
+            .await;
 
     let response = app
         .login(TEST_USERNAME.to_string(), TEST_PASSWORD.to_string())
@@ -109,7 +110,7 @@ async fn login_leaves_state_empty_on_failure() {
         ))))
     });
 
-    let app = build_app_with_service(
+    let app = build_app_with_auth_service(
         default_app_state(),
         auth_service(user_api, MockUserRepository::new()),
     )
@@ -156,7 +157,8 @@ async fn fetch_user_state_loads_from_local_cache() {
         });
 
     let app =
-        build_app_with_service(default_app_state(), auth_service(user_api, user_repository)).await;
+        build_app_with_auth_service(default_app_state(), auth_service(user_api, user_repository))
+            .await;
 
     let fetched = app
         .fetch_user_state(TEST_USER_ID.to_string(), false)
@@ -200,7 +202,8 @@ async fn fetch_user_state_force_remote_refreshes_from_api() {
         .returning(|_| Box::pin(ready(Ok(vec![]))));
 
     let app =
-        build_app_with_service(default_app_state(), auth_service(user_api, user_repository)).await;
+        build_app_with_auth_service(default_app_state(), auth_service(user_api, user_repository))
+            .await;
 
     let fetched = app
         .fetch_user_state(TEST_USER_ID.to_string(), true)
@@ -251,7 +254,8 @@ async fn refresh_user_state_from_api_clears_cache_then_reloads() {
         .returning(|_| Box::pin(ready(Ok(vec![]))));
 
     let app =
-        build_app_with_service(default_app_state(), auth_service(user_api, user_repository)).await;
+        build_app_with_auth_service(default_app_state(), auth_service(user_api, user_repository))
+            .await;
 
     let refreshed = app
         .refresh_user_state_from_api(TEST_USER_ID.to_string())
@@ -289,7 +293,8 @@ async fn login_with_two_factor_stores_active_user() {
         .returning(|_| Box::pin(ready(Ok(()))));
 
     let app =
-        build_app_with_service(default_app_state(), auth_service(user_api, user_repository)).await;
+        build_app_with_auth_service(default_app_state(), auth_service(user_api, user_repository))
+            .await;
 
     let response = app
         .login_with_two_factor(TEST_2FA_CODE.to_string())
@@ -315,7 +320,7 @@ async fn get_user_returns_cached_profile() {
             move |_| Box::pin(ready(Ok(Some(user.clone()))))
         });
 
-    let app = build_app_with_service(
+    let app = build_app_with_auth_service(
         default_app_state(),
         auth_service(MockUserApi::new(), user_repository),
     )
@@ -344,7 +349,7 @@ async fn logout_clears_active_user_on_success() {
         .once()
         .returning(|_| Box::pin(ready(Ok(1))));
 
-    let app = build_app_with_service(state, auth_service(user_api, user_repository)).await;
+    let app = build_app_with_auth_service(state, auth_service(user_api, user_repository)).await;
 
     assert!(app.get_user_state().await.is_ok());
     app.logout("user-1".to_string()).await.unwrap();
@@ -374,7 +379,7 @@ async fn logout_keeps_active_user_when_service_fails() {
         )))
     });
 
-    let app = build_app_with_service(state, auth_service(user_api, user_repository)).await;
+    let app = build_app_with_auth_service(state, auth_service(user_api, user_repository)).await;
 
     assert!(app.logout("user-1".to_string()).await.is_err());
     assert!(app.get_user_state().await.is_ok());
@@ -392,7 +397,6 @@ async fn fork_selector_returns_error_without_authenticated_session() {
 #[cfg(all(test, not(target_family = "wasm")))]
 mod manual {
     use crate::app::test_support::manual;
-    use crate::domain::user::ports::user_service::UserService;
     use tempfile::tempdir;
 
     #[tokio::test]
@@ -414,13 +418,7 @@ mod manual {
         )
         .await?;
 
-        let login_result = app
-            .services
-            .user_service
-            .read()
-            .await
-            .login("bart", "bart")
-            .await;
+        let login_result = app.services.auth_service.login("bart", "bart").await;
         let user_id = match &login_result {
             Ok((_, user_data, _, _)) => {
                 assert!(!user_data.id.to_string().is_empty());

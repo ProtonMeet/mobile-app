@@ -21,13 +21,16 @@ use crate::infra::{
     storage::persister::Persister,
     ws_client::WsClient,
 };
+#[cfg(not(target_family = "wasm"))]
+use crate::service::auth::AuthServiceImpl;
 use crate::service::mls_service::MlsService;
 use crate::service::services_bundle::ServiceBundle;
 use crate::service::user_service::Service;
 use futures::FutureExt;
 use proton_meet_mls::{MlsClientConfig, MlsStore};
 use std::future::ready;
-use std::{collections::HashMap, future::Future, sync::Arc};
+use std::sync::Arc;
+use std::{collections::HashMap, future::Future};
 use tokio::sync::RwLock;
 use tracing::error;
 
@@ -35,6 +38,7 @@ use tracing::error;
 use {wasm_bindgen::prelude::wasm_bindgen, wasm_bindgen::JsValue};
 
 mod agent;
+#[cfg(not(target_arch = "wasm32"))]
 mod auth;
 mod chat;
 #[cfg(not(target_arch = "wasm32"))]
@@ -245,8 +249,6 @@ impl App {
             http_client.clone(),
             http_client.clone(),
             http_client.clone(),
-            http_client.clone(),
-            Arc::new(persister),
             ws_client.clone(),
             mls_store.clone(),
             http_client.server_time_tracker(),
@@ -258,10 +260,17 @@ impl App {
             crypto_client.clone(),
         ));
         let waiting_room_service = Arc::new(WaitingRoomService::new(crypto_client, mls_service));
+        #[cfg(not(target_family = "wasm"))]
+        let auth_service = Arc::new(AuthServiceImpl::new(
+            http_client.clone(),
+            Arc::new(persister),
+        ));
 
         let services = Arc::new(ServiceBundle::new(
             room_service,
             waiting_room_service,
+            #[cfg(not(target_family = "wasm"))]
+            auth_service,
             user_service,
         ));
 
@@ -669,12 +678,8 @@ impl App {
         meeting_api: Arc<dyn MeetingApi>,
         event_api: Arc<dyn EventApi>,
         user_key_provider: Arc<dyn UserKeyProvider>,
-        user_service: Service,
-        room_service: RoomService,
-        waiting_room_service: WaitingRoomService,
+        services: Arc<ServiceBundle>,
     ) -> Self {
-        use std::sync::Arc;
-
         Self {
             state,
             ws_client,
@@ -685,11 +690,7 @@ impl App {
             meeting_api,
             event_api,
             user_key_provider,
-            services: Arc::new(ServiceBundle::new(
-                Arc::new(room_service),
-                Arc::new(waiting_room_service),
-                RwLock::new(user_service),
-            )),
+            services,
         }
     }
 }

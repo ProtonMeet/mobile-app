@@ -2,7 +2,6 @@ use super::App;
 use crate::app_state::UserState;
 use crate::domain::user::models::UserId;
 use crate::domain::user::ports::user_api::UserApi;
-use crate::domain::user::ports::UserService;
 use crate::errors::core::MeetCoreError;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::infra::dto::proton_user::UserData;
@@ -38,27 +37,17 @@ impl App {
     ) -> Result<UserState, MeetCoreError> {
         let user = self
             .services
-            .user_service
-            .read()
-            .await
+            .auth_service
             .get_user_with_policy(&UserId::new(user_id.clone()), force_remote)
             .await?;
 
         let user_keys = self
             .services
-            .user_service
-            .read()
-            .await
+            .auth_service
             .get_user_keys(&UserId::new(user_id.clone()))
             .await?;
 
-        let user_addresses = self
-            .services
-            .user_service
-            .read()
-            .await
-            .get_user_addresses()
-            .await?;
+        let user_addresses = self.services.auth_service.get_user_addresses().await?;
         let user_state = UserState {
             user_data: user.clone(),
             user_keys,
@@ -79,9 +68,7 @@ impl App {
     ) -> Result<UserState, MeetCoreError> {
         let id = UserId::new(user_id.clone());
         self.services
-            .user_service
-            .read()
-            .await
+            .auth_service
             .clear_local_user_profile_cache(&id)
             .await?;
         self.fetch_user_state(user_id, true).await
@@ -98,9 +85,7 @@ impl App {
         let password = Zeroizing::new(password);
         let (login_response, user, user_keys, user_addresses) = self
             .services
-            .user_service
-            .read()
-            .await
+            .auth_service
             .login(&username, password.as_str())
             .await?;
         let mut state = self.state.write().await;
@@ -123,9 +108,7 @@ impl App {
 
     pub async fn logout(&self, user_id: String) -> Result<(), MeetCoreError> {
         self.services
-            .user_service
-            .read()
-            .await
+            .auth_service
             .logout(&UserId::new(user_id))
             .await?;
         let mut state = self.state.write().await;
@@ -142,20 +125,12 @@ impl App {
     ) -> Result<UserData, MeetCoreError> {
         let user_data = self
             .services
-            .user_service
-            .read()
-            .await
+            .auth_service
             .login_with_two_factor(&two_factor_code)
             .await?;
         let user = user_data.user.clone();
         let user_keys = user.keys.clone().unwrap_or_default();
-        let user_addresses = self
-            .services
-            .user_service
-            .read()
-            .await
-            .get_user_addresses()
-            .await?;
+        let user_addresses = self.services.auth_service.get_user_addresses().await?;
         let mut state = self.state.write().await;
         state.active_user = Some(UserState {
             user_data: user,
@@ -169,9 +144,7 @@ impl App {
     pub async fn get_user(&self, user_id: String) -> Result<ProtonUser, anyhow::Error> {
         let user_data = self
             .services
-            .user_service
-            .read()
-            .await
+            .auth_service
             .get_user(&UserId::new(user_id))
             .await?;
         Ok(user_data)
