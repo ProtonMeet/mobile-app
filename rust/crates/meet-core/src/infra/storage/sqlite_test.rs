@@ -36,6 +36,13 @@ mod tests {
         Ok(())
     }
 
+    const PGP_HEADER: &str = "BEGIN PGP PRIVATE KEY BLOCK";
+    const PGP_FOOTER: &str = "END PGP PRIVATE KEY BLOCK";
+
+    fn pgp_private_key(body: &str) -> String {
+        format!("-----{PGP_HEADER}-----\n{body}\n-----{PGP_FOOTER}-----")
+    }
+
     #[test]
     fn test_save_and_get() -> Result<(), StorageError> {
         let db = create_test_db();
@@ -788,9 +795,8 @@ mod tests {
 
     #[test]
     fn test_format_query_redacts_long_text() {
-        let private_key =
-            "-----BEGIN PGP PRIVATE KEY BLOCK-----\nsecret\n-----END PGP PRIVATE KEY BLOCK-----";
-        let values = vec![SqlValue::Text(private_key.to_string())];
+        let private_key = pgp_private_key("secret");
+        let values = vec![SqlValue::Text(private_key.clone())];
         let formatted =
             Db::format_query("REPLACE INTO user_keys (private_key) VALUES (?1)", &values);
         assert!(!formatted.contains("BEGIN PGP"));
@@ -801,8 +807,8 @@ mod tests {
 
     #[test]
     fn test_format_query_redacts_blob_content() {
-        let secret = b"-----BEGIN PGP PRIVATE KEY BLOCK-----";
-        let values = vec![SqlValue::Blob(secret.to_vec())];
+        let secret = format!("-----{PGP_HEADER}-----").into_bytes();
+        let values = vec![SqlValue::Blob(secret.clone())];
         let formatted = Db::format_query("REPLACE INTO t (data) VALUES (?1)", &values);
         assert!(!formatted.contains("BEGIN PGP"));
         assert!(formatted.contains(&format!("Blob({})", secret.len())));
@@ -810,14 +816,13 @@ mod tests {
 
     #[test]
     fn test_format_query_user_keys_replace_redacts_all_sensitive_fields() {
-        let private_key =
-            "-----BEGIN PGP PRIVATE KEY BLOCK-----\nsecret-key-bytes\n-----END PGP PRIVATE KEY BLOCK-----";
+        let private_key = pgp_private_key("secret-key-bytes");
         let token = "super-secret-auth-token";
         let signature = "super-secret-signature";
         let values = vec![
             SqlValue::Text("key-id".to_string()),
             SqlValue::Text("user-id".to_string()),
-            SqlValue::Text(private_key.to_string()),
+            SqlValue::Text(private_key.clone()),
             SqlValue::Text(token.to_string()),
             SqlValue::Text(signature.to_string()),
             SqlValue::Integer(1),
@@ -919,7 +924,7 @@ mod tests {
         let mut db = create_test_db();
         setup_user_keys_table(&mut db)?;
 
-        let private_key = "-----BEGIN PGP PRIVATE KEY BLOCK-----\nTOP_SECRET_KEY_MATERIAL\n-----END PGP PRIVATE KEY BLOCK-----";
+        let private_key = pgp_private_key("TOP_SECRET_KEY_MATERIAL");
         let entity = UserKeyEntity::new(
             "key-1".into(),
             "user-1".into(),
