@@ -195,7 +195,8 @@ class LeaveRoom extends RoomBlocEvent {}
 /// foreground-service notification used during the screen-share session.
 ///
 /// [screenShareSourceId] is the desktop window/screen id from
-/// [ScreenSelectDialog]; ignored when stopping share.
+/// [MeetScreenSelectDialog]; ignored when stopping share. Null on Linux
+/// Wayland, where xdg-desktop-portal picks the source.
 class ToggleScreenShare extends RoomBlocEvent {
   final String? notificationTitle;
   final String? notificationText;

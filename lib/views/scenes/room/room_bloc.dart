@@ -86,6 +86,11 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
   StreamSubscription? _audioSessionDevicesSub;
 
   bool _screenShareToggleInFlight = false;
+  /// When the local PipeWire / xdg-desktop-portal capturer was last torn down.
+  DateTime? _lastLocalScreenShareStopAt;
+  static const Duration _linuxScreenCapturePortalSettleDelay = Duration(
+    milliseconds: 350,
+  );
   Timer? _roomHealthSampleTimer;
 
   // Auto fullscreen timer for screenshare
@@ -127,6 +132,58 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       } catch (e) {
         l.logger.w('[RoomBloc] screen share track dispose failed: $e');
       }
+    }
+  }
+
+  bool _hasLocalScreenSharePublications(LocalParticipant participant) {
+    return participant.trackPublications.values
+        .whereType<LocalTrackPublication>()
+        .any((p) => p.isScreenShare);
+  }
+
+  /// Stops screen-share tracks and waits for LiveKit to unpublish. On Linux,
+  /// adds a short delay so PipeWire / xdg-desktop-portal can close before a
+  /// new capture session starts (overlapping sessions can crash the process).
+  Future<void> _stopLocalScreenShareCapturer(
+    LocalParticipant participant,
+  ) async {
+    if (!_hasLocalScreenSharePublications(participant)) {
+      return;
+    }
+
+    try {
+      await participant.setScreenShareEnabled(false);
+    } catch (e) {
+      l.logger.w('[RoomBloc] setScreenShareEnabled(false) failed: $e');
+    }
+
+    await _cleanupLocalScreenSharePublications(participant);
+
+    for (var attempt = 0; attempt < 50; attempt++) {
+      if (!_hasLocalScreenSharePublications(participant)) {
+        break;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+
+    _lastLocalScreenShareStopAt = DateTime.now();
+    if (linux) {
+      await Future<void>.delayed(_linuxScreenCapturePortalSettleDelay);
+    }
+  }
+
+  Future<void> _waitForLinuxScreenCapturePortalReady() async {
+    if (!linux) {
+      return;
+    }
+    final lastStop = _lastLocalScreenShareStopAt;
+    if (lastStop == null) {
+      return;
+    }
+    final elapsed = DateTime.now().difference(lastStop);
+    final remaining = _linuxScreenCapturePortalSettleDelay - elapsed;
+    if (remaining > Duration.zero) {
+      await Future<void>.delayed(remaining);
     }
   }
 
@@ -1070,13 +1127,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
 
       // If disabling screen share, disable + cleanup
       if (!isLocalScreenSharing) {
-        try {
-          await participant.setScreenShareEnabled(false);
-        } catch (e) {
-          l.logger.e('Error disabling screen share: $e');
-        }
-
-        await _cleanupLocalScreenSharePublications(participant);
+        await _stopLocalScreenShareCapturer(participant);
 
         if (android) {
           await _stopScreenShareForegroundService();
@@ -1086,8 +1137,11 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
         return;
       }
 
-      // Before enabling, cleanup any lingering screen share tracks (leak guard)
-      await _cleanupLocalScreenSharePublications(participant);
+      // Before enabling, ensure any lingering screen-share publication is gone
+      // (leak guard). LiveKit only unmutes an existing publication and would
+      // ignore a new [sourceId].
+      await _stopLocalScreenShareCapturer(participant);
+      await _waitForLinuxScreenCapturePortalReady();
 
       // If enabling screen share, check permissions on Android first
       if (android) {
@@ -1126,20 +1180,39 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       }
 
       // Step C: publish the screen-share track via LiveKit.
-      // NOTE: captureScreenAudio is unsupported on iOS (handled by the
-      // Broadcast Extension), so we only enable it elsewhere.
-      final captureScreenAudio = !iOS;
-      final screenShareCaptureOptions = event.screenShareSourceId != null
-          ? room.roomOptions.defaultScreenShareCaptureOptions.copyWith(
-              sourceId: event.screenShareSourceId,
-            )
-          : null;
       try {
-        await participant.setScreenShareEnabled(
-          true,
-          captureScreenAudio: captureScreenAudio,
-          screenShareCaptureOptions: screenShareCaptureOptions,
-        );
+        if (linux) {
+          // Wayland: no [sourceId], getDisplayMedia opens xdg-desktop-portal.
+          // X11: [sourceId] comes from the in-app picker.
+          final sourceId = event.screenShareSourceId;
+          final screenShareCaptureOptions = sourceId != null
+              ? room.roomOptions.defaultScreenShareCaptureOptions.copyWith(
+                  sourceId: sourceId,
+                )
+              : room.roomOptions.defaultScreenShareCaptureOptions;
+          if (sourceId == null) {
+            l.logger.i(
+              '[RoomBloc] Linux screen share: opening system capture portal',
+            );
+          }
+          final track = await LocalVideoTrack.createScreenShareTrack(
+            screenShareCaptureOptions,
+          );
+          await participant.publishVideoTrack(track);
+        } else {
+          // NOTE: captureScreenAudio is unsupported on iOS (Broadcast Extension).
+          final captureScreenAudio = !iOS;
+          final screenShareCaptureOptions = event.screenShareSourceId != null
+              ? room.roomOptions.defaultScreenShareCaptureOptions.copyWith(
+                  sourceId: event.screenShareSourceId,
+                )
+              : null;
+          await participant.setScreenShareEnabled(
+            true,
+            captureScreenAudio: captureScreenAudio,
+            screenShareCaptureOptions: screenShareCaptureOptions,
+          );
+        }
         // Re-arm the E2EE key immediately after the new screen-share track
         // is published. LiveKit builds the frame cryptor per track; if a
         // key rotation was mid-flight at publish time the cryptor can pin

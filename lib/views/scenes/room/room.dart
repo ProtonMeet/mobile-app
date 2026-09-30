@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart' show DesktopCapturerSource;
 import 'package:just_the_tooltip/just_the_tooltip.dart';
 import 'package:livekit_client/livekit_client.dart' hide ConnectionState;
 import 'package:meet/constants/constants.dart';
@@ -53,6 +52,8 @@ import 'package:meet/rust/proton_meet/models/meeting_info.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/rust/proton_meet/user_config.dart';
+import 'package:meet/utils/mentions/mention_label.dart';
+import 'package:meet/utils/mentions/mention_plain_text.dart';
 import 'package:meet/views/components/alerts/media_permission_dialog.dart';
 import 'package:meet/views/components/alerts/meeting_will_end_dialog.dart';
 import 'package:meet/views/components/alerts/session_expired_dialog.dart';
@@ -68,8 +69,6 @@ import 'package:meet/views/scenes/exts.dart';
 import 'package:meet/views/scenes/feedbacks/left_meeting_feedback_sheet.dart';
 import 'package:meet/views/scenes/feedbacks/pre_rating_sheet.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
-import 'package:meet/utils/mentions/mention_label.dart';
-import 'package:meet/utils/mentions/mention_plain_text.dart';
 import 'package:meet/views/scenes/room/chat/bloc/chat_bloc.dart';
 import 'package:meet/views/scenes/room/chat/bloc/chat_event.dart';
 import 'package:meet/views/scenes/room/chat/bloc/chat_incoming_notification.dart';
@@ -98,6 +97,7 @@ import 'package:meet/views/scenes/room/settings/bloc/in_room_settings_transport.
 import 'package:meet/views/scenes/room/settings/in_room_settings_bindings_sync.dart';
 import 'package:meet/views/scenes/room/settings/in_room_settings_panel.dart';
 import 'package:meet/views/scenes/room/widgets/floating.action.button.location.dart';
+import 'package:meet/views/scenes/room/widgets/meet_screen_select_dialog.dart';
 import 'package:meet/views/scenes/signin/auth_bloc.dart';
 import 'package:meet/views/scenes/signin/auth_event.dart';
 import 'package:meet/views/scenes/signin/auth_state.dart';
@@ -3272,7 +3272,38 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
-  /// On desktop, shows LiveKit's window/screen picker before starting share.
+  /// In-app picker with previews ([MeetScreenSelectDialog]). On Linux Wayland
+  /// the xdg-desktop-portal dialog is the picker, since enumerating sources
+  /// crashes libwebrtc there.
+  Future<ScreenSharePickerResult?> _pickDesktopScreenShareSource(
+    BuildContext context,
+  ) async {
+    if (linuxWayland) {
+      return const ScreenSharePickerResult.systemPortal();
+    }
+    return MeetScreenSelectDialog.show(
+      context,
+      titleText: context.local.share_screen,
+      screenTabText: 'Entire screen',
+      cancelText: context.local.cancel,
+      shareText: context.local.share_screen,
+    );
+  }
+
+  void _dispatchDesktopScreenSharePick(
+    ScreenSharePickerResult pick, {
+    required String notificationTitle,
+    required String notificationText,
+  }) {
+    _bloc.add(
+      ToggleScreenShare(
+        screenShareSourceId: pick.useSystemPortal ? null : pick.sourceId,
+        notificationTitle: notificationTitle,
+        notificationText: notificationText,
+      ),
+    );
+  }
+
   Future<void> _onToggleScreenSharePressed(BuildContext context) async {
     if (!_bloc.isScreenShareFeatureEnabled()) return;
 
@@ -3285,17 +3316,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     final notificationText = context.local.sharing_your_screen;
 
     if (lkPlatformIsDesktop()) {
-      final source = await showDialog<DesktopCapturerSource>(
-        context: context,
-        builder: (context) => ScreenSelectDialog(),
-      );
-      if (!context.mounted || source == null) return;
-      _bloc.add(
-        ToggleScreenShare(
-          screenShareSourceId: source.id,
-          notificationTitle: notificationTitle,
-          notificationText: notificationText,
-        ),
+      final pick = await _pickDesktopScreenShareSource(context);
+      if (!context.mounted || pick == null) return;
+      _dispatchDesktopScreenSharePick(
+        pick,
+        notificationTitle: notificationTitle,
+        notificationText: notificationText,
       );
       return;
     }

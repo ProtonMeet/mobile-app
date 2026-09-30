@@ -3,11 +3,21 @@ cmake_minimum_required(VERSION 3.10)
 project(runner LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
-# the on-disk name of your application.
-set(BINARY_NAME "meet")
+# the on-disk name of your application (matches windows/CMakeLists.txt).
+set(BINARY_NAME "ProtonMeet")
+# Shown in the title bar, header bar, and desktop shell (matches windows/runner).
+set(APPLICATION_NAME "Proton Meet")
 # The unique GTK application identifier for this application. See:
 # https://wiki.gnome.org/HowDoI/ChooseApplicationID
 set(APPLICATION_ID "me.proton.meet.linux")
+# PNG for GTK/GdkPixbuf (taskbar, title bar, Steam Deck). ICO is not reliably loaded on Linux.
+set(LINUX_APP_ICON_MACOS_DIR
+  "${CMAKE_CURRENT_SOURCE_DIR}/../macos/Runner/Assets.xcassets/AppIcon.appiconset")
+set(LINUX_APP_ICON_PNG_256 "${LINUX_APP_ICON_MACOS_DIR}/256-mac.png")
+set(LINUX_APP_ICON_PNG_128 "${LINUX_APP_ICON_MACOS_DIR}/128-mac.png")
+set(LINUX_APP_ICON_ICO
+  "${CMAKE_CURRENT_SOURCE_DIR}/../windows/runner/resources/ic_launcher.ico")
+set(LINUX_ICON_ID "me.proton.meet.linux")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
@@ -56,6 +66,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK REQUIRED IMPORTED_TARGET gtk+-3.0)
 
 add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")
+add_definitions(-DAPPLICATION_NAME="${APPLICATION_NAME}")
 
 # Define the application target. To change its name, change BINARY_NAME above,
 # not the value here, or `flutter run` will no longer work.
@@ -92,7 +103,10 @@ set_target_properties(${BINARY_NAME}
 # them to the application.
 include(flutter/generated_plugins.cmake)
 
-include(./rust.cmake)
+# Rust FRB: built once via the rust_builder FFI plugin (Cargokit → `cargo build -p
+# proton_meet_frb`). Do not include ./rust.cmake here — Corrosion would run a
+# second full workspace build (and can touch meet-cli, fuzz bins, etc.).
+# Windows does the same: windows/CMakeLists.txt keeps rust.cmake commented out.
 
 # === Installation ===
 # By default, "installing" just makes a relocatable bundle in the build
@@ -114,6 +128,39 @@ install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
   COMPONENT Runtime)
 
 install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
+  COMPONENT Runtime)
+
+if(EXISTS "${LINUX_APP_ICON_PNG_256}")
+  install(FILES "${LINUX_APP_ICON_PNG_256}"
+    DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
+    RENAME "app_icon.png"
+    COMPONENT Runtime)
+else()
+  message(WARNING "Linux app icon PNG not found: ${LINUX_APP_ICON_PNG_256}")
+endif()
+
+if(EXISTS "${LINUX_APP_ICON_ICO}")
+  install(FILES "${LINUX_APP_ICON_ICO}"
+    DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
+    RENAME "app_icon.ico"
+    COMPONENT Runtime)
+endif()
+
+# Freedesktop icons + .desktop (app menu, Steam Deck "Add non-Steam game").
+if(EXISTS "${LINUX_APP_ICON_PNG_256}")
+  install(FILES "${LINUX_APP_ICON_PNG_256}"
+    DESTINATION "${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/256x256/apps"
+    RENAME "${LINUX_ICON_ID}.png"
+    COMPONENT Runtime)
+endif()
+if(EXISTS "${LINUX_APP_ICON_PNG_128}")
+  install(FILES "${LINUX_APP_ICON_PNG_128}"
+    DESTINATION "${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/128x128/apps"
+    RENAME "${LINUX_ICON_ID}.png"
+    COMPONENT Runtime)
+endif()
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/me.proton.meet.desktop"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/applications"
   COMPONENT Runtime)
 
 install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
