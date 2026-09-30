@@ -14,8 +14,54 @@ struct _MyApplication {
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
+// Load data/app_icon.png from the bundle (see linux/CMakeLists.txt). PNG is required
+// for GdkPixbuf; .ico often fails on Linux and breaks the taskbar / Steam Deck tile.
+static gchar* resolve_bundle_icon_path() {
+  g_autofree gchar* exe_path = g_file_read_link("/proc/self/exe", NULL);
+  if (exe_path == NULL) {
+    return NULL;
+  }
+  g_autofree gchar* exe_dir = g_path_get_dirname(exe_path);
+  const gchar* const candidates[] = {"app_icon.png", "app_icon.ico", NULL};
+  for (int i = 0; candidates[i] != NULL; i++) {
+    g_autofree gchar* path =
+        g_build_filename(exe_dir, "data", candidates[i], NULL);
+    if (g_file_test(path, G_FILE_TEST_EXISTS)) {
+      return g_strdup(path);
+    }
+  }
+  return NULL;
+}
+
+static void try_set_application_icon_from_bundle() {
+  g_autofree gchar* icon_path = resolve_bundle_icon_path();
+  if (icon_path == NULL) {
+    return;
+  }
+  GError* error = NULL;
+  if (!gtk_window_set_default_icon_from_file(icon_path, &error)) {
+    g_warning("Failed to load app icon: %s",
+              error != NULL ? error->message : "unknown");
+    g_clear_error(&error);
+  }
+}
+
+static void try_set_window_icon(GtkWindow* window) {
+  g_autofree gchar* icon_path = resolve_bundle_icon_path();
+  if (icon_path == NULL) {
+    return;
+  }
+  GError* error = NULL;
+  if (!gtk_window_set_icon_from_file(window, icon_path, &error)) {
+    g_warning("Failed to set window icon: %s",
+              error != NULL ? error->message : "unknown");
+    g_clear_error(&error);
+  }
+}
+
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
+  try_set_application_icon_from_bundle();
   MyApplication* self = MY_APPLICATION(application);
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
@@ -40,12 +86,15 @@ static void my_application_activate(GApplication* application) {
   if (use_header_bar) {
     GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
     gtk_widget_show(GTK_WIDGET(header_bar));
-    gtk_header_bar_set_title(header_bar, "Proton Meet");
+    gtk_header_bar_set_title(header_bar, APPLICATION_NAME);
     gtk_header_bar_set_show_close_button(header_bar, TRUE);
     gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
   } else {
-    gtk_window_set_title(window, "Proton Meet");
+    gtk_window_set_title(window, APPLICATION_NAME);
   }
+
+  try_set_window_icon(window);
+  gtk_window_set_role(window, APPLICATION_ID);
 
   gtk_window_set_default_size(window, 1280, 720);
   gtk_widget_show(GTK_WIDGET(window));
@@ -94,7 +143,9 @@ static void my_application_class_init(MyApplicationClass* klass) {
   G_OBJECT_CLASS(klass)->dispose = my_application_dispose;
 }
 
-static void my_application_init(MyApplication* self) {}
+static void my_application_init(MyApplication* self) {
+  g_set_application_name(APPLICATION_NAME);
+}
 
 MyApplication* my_application_new() {
   return MY_APPLICATION(g_object_new(my_application_get_type(),

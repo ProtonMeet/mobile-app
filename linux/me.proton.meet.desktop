@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Proton Meet
+GenericName=Video Conferencing
+Comment=Proton Meet desktop client
+Exec=ProtonMeet
+Icon=me.proton.meet.linux
+Terminal=false
+Categories=Network;VideoConference;Chat;
+StartupWMClass=ProtonMeet

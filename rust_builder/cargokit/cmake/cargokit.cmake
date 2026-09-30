@@ -91,14 +91,18 @@ function(apply_cargokit target manifest_dir lib_name any_symbol_name)
         add_custom_target("${target}_cargokit" ALL DEPENDS ${OUTPUT_LIB})
     endif()
     
-    set(PGP_LIB_FULL_NAME "libgopenpgp-sys${CMAKE_SHARED_MODULE_SUFFIX}")
-    set(PGP_OUTPUT_LIB "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/${PGP_LIB_FULL_NAME}")
-
-    # First add the main output lib
+    # First add the main output lib (proton_meet_frb cdylib).
     set(_local_cargokit_libs ${OUTPUT_LIB})
 
-    # Then add another library
-    list(APPEND _local_cargokit_libs "${PGP_OUTPUT_LIB}")
+    # gopenpgp-sys is linked statically on Linux/macOS (inside libproton_meet_frb).
+    # Windows may ship libgopenpgp-sys.dll next to the FRB dll; build_cmake copies it
+    # into CARGOKIT_OUTPUT_DIR. Use the same output dir as the FRB lib (not a bare
+    # `$<CONFIG>/` subpath on single-config Linux). Android → Gradle, Apple → build_pod.
+    if(WIN32)
+        set(PGP_LIB_FULL_NAME "libgopenpgp-sys${CMAKE_SHARED_MODULE_SUFFIX}")
+        set(PGP_OUTPUT_LIB "${CARGOKIT_OUTPUT_DIR}/${PGP_LIB_FULL_NAME}")
+        list(APPEND _local_cargokit_libs "${PGP_OUTPUT_LIB}")
+    endif()
 
     # Export to parent scope
     set("${target}_cargokit_lib" ${_local_cargokit_libs} PARENT_SCOPE)
