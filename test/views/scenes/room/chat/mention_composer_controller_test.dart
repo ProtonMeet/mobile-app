@@ -66,6 +66,32 @@ void main() {
     });
   });
 
+  group('MentionComposerController punctuation', () {
+    test('removes trailing space when typing comma after mention', () {
+      final token = getMentionToken(aliceId);
+      final controller = createController(initialStored: 'Morning $token ');
+      final formatter = MentionComposerTextInputFormatter(controller);
+
+      final oldText = controller.displayController.text;
+      expect(oldText, 'Morning @Alice ');
+
+      final newText = 'Morning @Alice ,';
+      final newValue = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: newText.length),
+      );
+      final oldValue = TextEditingValue(
+        text: oldText,
+        selection: TextSelection.collapsed(offset: oldText.length),
+      );
+
+      final result = formatter.formatEditUpdate(oldValue, newValue);
+
+      expect(result.text, 'Morning @Alice,');
+      expect(controller.storedText, 'Morning $token,');
+    });
+  });
+
   group('MentionComposerController rebuild', () {
     test('keeps a literal @Name before a real mention', () {
       final token = getMentionToken(aliceId);

@@ -26,7 +26,11 @@ abstract final class RoomSidePanelLayout {
   RoomSidePanelLayout._();
 
   /// Pinned panel title row height (excludes handle bar inset).
-  static const double headerHeight = 51.0;
+  static const double headerHeight = 36.0;
+
+  /// Space below the title inside the pinned header blur.
+  static const double headerBottomPadding = 12.0;
+
   static const double horizontalPadding = 24.0;
   static const double borderRadiusMedium = 24.0;
   static const double borderRadiusLarge = 40.0;
@@ -293,6 +297,7 @@ class RoomSidePanelScroll extends StatelessWidget {
     this.scrollController,
     this.footer,
     this.fillHeight = true,
+    this.headerBlurSigma = 14,
     super.key,
   });
 
@@ -303,6 +308,9 @@ class RoomSidePanelScroll extends StatelessWidget {
 
   /// When false, height follows content + [footer] (mobile chat sheet).
   final bool fillHeight;
+
+  /// Blur strength for the pinned header [BackdropFilter].
+  final double headerBlurSigma;
 
   @override
   Widget build(BuildContext context) {
@@ -338,7 +346,7 @@ class RoomSidePanelScroll extends StatelessWidget {
         shellBorderRadius: shellRadius,
         fillHeight: fillHeight,
         headerOuterCornerRadius: RoomSidePanelLayout.borderRadiusLarge,
-        headerBlurSigma: 14,
+        headerBlurSigma: headerBlurSigma,
         innerEnableHandleDragPassthrough: showSheetHeader && showHandleBar,
         flexibleSpaceChild: _RoomSidePanelHeaderSpace(
           headerTopInset: headerTopInset,
@@ -378,7 +386,7 @@ class _RoomSidePanelHeaderSpace extends StatelessWidget {
       padding: EdgeInsets.only(
         left: RoomSidePanelLayout.horizontalPadding,
         right: RoomSidePanelLayout.horizontalPadding,
-        bottom: RoomSidePanelLayout.horizontalPadding,
+        bottom: RoomSidePanelLayout.headerBottomPadding,
         top: headerTopInset,
       ),
       child: Align(alignment: Alignment.centerLeft, child: child),
@@ -418,7 +426,7 @@ class _RoomSidePanelHeaderOverlay extends StatelessWidget {
             padding: const EdgeInsets.only(
               left: RoomSidePanelLayout.horizontalPadding,
               right: RoomSidePanelLayout.horizontalPadding,
-              bottom: RoomSidePanelLayout.horizontalPadding,
+              bottom: RoomSidePanelLayout.headerBottomPadding,
             ),
             child: Align(alignment: Alignment.centerLeft, child: header),
           ),

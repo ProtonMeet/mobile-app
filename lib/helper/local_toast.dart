@@ -11,7 +11,7 @@ import 'package:meet/views/scenes/utils.dart';
 import 'package:toastification/toastification.dart';
 
 class _ToastificationRequest {
-  const _ToastificationRequest({
+  _ToastificationRequest({
     required this.context,
     required this.title,
     required this.message,
@@ -19,7 +19,10 @@ class _ToastificationRequest {
     required this.index,
     required this.autoCloseInSeconds,
     this.messageWidget,
+    this.titleWidget,
     this.avatarName,
+    this.bottomMargin = 80,
+    this.horizontalMargin = 0,
   });
 
   final BuildContext context;
@@ -29,7 +32,10 @@ class _ToastificationRequest {
   final int index;
   final int autoCloseInSeconds;
   final Widget? messageWidget;
+  final Widget? titleWidget;
   final String? avatarName;
+  final double bottomMargin;
+  final double horizontalMargin;
 }
 
 class _ToastificationContent extends ChangeNotifier {
@@ -39,16 +45,28 @@ class _ToastificationContent extends ChangeNotifier {
     required this.onTap,
     required this.index,
     this.messageWidget,
+    this.titleWidget,
     this.avatarName,
   });
+
+  static const int _contentExitMs = 150;
+  static const int _contentEnterMs = 200;
 
   String title;
   String message;
   void Function(ToastificationItem)? onTap;
   int index;
   Widget? messageWidget;
+  Widget? titleWidget;
   String? avatarName;
+  double bottomMargin = 80;
+  double horizontalMargin = 0;
   bool _disposed = false;
+  double _contentOpacity = 1;
+  int _contentGeneration = 0;
+
+  double get contentOpacity => _contentOpacity;
+  int get contentGeneration => _contentGeneration;
 
   @override
   void dispose() {
@@ -63,7 +81,26 @@ class _ToastificationContent extends ChangeNotifier {
     onTap = request.onTap;
     index = request.index;
     messageWidget = request.messageWidget;
+    titleWidget = request.titleWidget;
     avatarName = request.avatarName;
+    bottomMargin = request.bottomMargin;
+    horizontalMargin = request.horizontalMargin;
+    _contentGeneration++;
+    notifyListeners();
+  }
+
+  Future<void> transitionTo(_ToastificationRequest request) async {
+    if (_disposed) return;
+    _contentOpacity = 0;
+    notifyListeners();
+    await Future<void>.delayed(const Duration(milliseconds: _contentExitMs));
+    if (_disposed) return;
+    apply(request);
+    _contentOpacity = 0;
+    notifyListeners();
+    await Future<void>.delayed(Duration.zero);
+    if (_disposed) return;
+    _contentOpacity = 1;
     notifyListeners();
   }
 }
@@ -144,7 +181,10 @@ class LocalToast {
     int index = 0,
     int autoCloseInSeconds = 2,
     Widget? messageWidget,
+    Widget? titleWidget,
     String? avatarName,
+    double bottomMargin = 80,
+    double horizontalMargin = 0,
   }) {
     if (!isWindowsFocused()) {
       /// do not show toastification when page didn't have focus
@@ -160,7 +200,10 @@ class LocalToast {
       index: index,
       autoCloseInSeconds: autoCloseInSeconds,
       messageWidget: messageWidget,
+      titleWidget: titleWidget,
       avatarName: avatarName,
+      bottomMargin: bottomMargin,
+      horizontalMargin: horizontalMargin,
     );
     if (_toastificationFlushScheduled) return;
     _toastificationFlushScheduled = true;
@@ -181,19 +224,31 @@ class LocalToast {
   }
 
   static void _updateActiveToastification(_ToastificationRequest request) {
-    _activeToastificationContent!.apply(request);
+    unawaited(_updateActiveToastificationAsync(request));
+  }
+
+  static Future<void> _updateActiveToastificationAsync(
+    _ToastificationRequest request,
+  ) async {
+    final content = _activeToastificationContent;
+    if (content == null) return;
+    await content.transitionTo(request);
     _scheduleAutoClose(request.autoCloseInSeconds);
   }
 
   static void _presentToastification(_ToastificationRequest request) {
-    final content = _ToastificationContent(
-      title: request.title,
-      message: request.message,
-      onTap: request.onTap,
-      index: request.index,
-      messageWidget: request.messageWidget,
-      avatarName: request.avatarName,
-    );
+    final content =
+        _ToastificationContent(
+            title: request.title,
+            message: request.message,
+            onTap: request.onTap,
+            index: request.index,
+            messageWidget: request.messageWidget,
+            titleWidget: request.titleWidget,
+            avatarName: request.avatarName,
+          )
+          ..bottomMargin = request.bottomMargin
+          ..horizontalMargin = request.horizontalMargin;
     _activeToastificationContent = content;
 
     _activeToastificationItem = toastification.showCustom(
@@ -211,19 +266,19 @@ class LocalToast {
             final avatarInitials = getInitials(
               content.avatarName ?? content.title,
             );
-            return GestureDetector(
+            final card = GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: content.onTap == null
                   ? null
                   : () => content.onTap!(holder),
               child: Container(
+                width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   color: context.colors.backgroundNorm,
                   border: Border.all(color: context.colors.appBorderNorm),
                 ),
                 padding: const EdgeInsets.all(16),
-                margin: const EdgeInsets.only(bottom: 80),
                 child: Row(
                   children: [
                     CircleAvatar(
@@ -238,30 +293,41 @@ class LocalToast {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            content.title,
-                            style: ProtonStyles.body1Semibold(
-                              color: context.colors.textNorm,
-                            ),
-                          ),
-                          if (content.message.isNotEmpty ||
-                              content.messageWidget != null) ...[
-                            const SizedBox(height: 4),
-                            content.messageWidget ??
+                      child: AnimatedOpacity(
+                        opacity: content.contentOpacity,
+                        duration: Duration(
+                          milliseconds: content.contentOpacity >= 1
+                              ? _ToastificationContent._contentEnterMs
+                              : _ToastificationContent._contentExitMs,
+                        ),
+                        curve: Curves.easeOut,
+                        child: Column(
+                          key: ValueKey<int>(content.contentGeneration),
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            content.titleWidget ??
                                 Text(
-                                  content.message,
-                                  style: ProtonStyles.body2Regular(
-                                    color: context.colors.textWeak,
+                                  content.title,
+                                  style: ProtonStyles.body1Semibold(
+                                    color: context.colors.textNorm,
                                   ),
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
+                            if (content.message.isNotEmpty ||
+                                content.messageWidget != null) ...[
+                              const SizedBox(height: 4),
+                              content.messageWidget ??
+                                  Text(
+                                    content.message,
+                                    style: ProtonStyles.body2Regular(
+                                      color: context.colors.textWeak,
+                                    ),
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
                     GestureDetector(
@@ -281,6 +347,16 @@ class LocalToast {
                   ],
                 ),
               ),
+            );
+
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                content.horizontalMargin,
+                0,
+                content.horizontalMargin,
+                content.bottomMargin,
+              ),
+              child: card,
             );
           },
         );

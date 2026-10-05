@@ -6,7 +6,6 @@ import 'package:meet/constants/proton.styles.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/utils/mentions/mention_label.dart';
 import 'package:meet/utils/mentions/mention_token.dart';
-import 'package:meet/views/scenes/room/participant/participant_info.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Renders stored chat text with inline `@mention` chips and linkified text.
@@ -15,7 +14,6 @@ class MentionMessageContent extends StatelessWidget {
     required this.message,
     required this.localIdentity,
     required this.participantNameMap,
-    required this.participantTracks,
     this.selectable = true,
     super.key,
   });
@@ -23,7 +21,6 @@ class MentionMessageContent extends StatelessWidget {
   final String message;
   final String localIdentity;
   final Map<String, String> participantNameMap;
-  final List<ParticipantInfo>? participantTracks;
   final bool selectable;
 
   Future<void> _handleLinkOpen(LinkableElement link) async {
@@ -57,16 +54,16 @@ class MentionMessageContent extends StatelessWidget {
           everyoneName: everyoneName,
           unknownName: unknownName,
         );
-        final colors = getMentionDisplayColors(
+        final mentionColor = getMentionTextColor(
           context,
           segment.id,
-          participantTracks: participantTracks,
+          localIdentity: localIdentity,
         );
         children.add(
           TextSpan(
             text: '@$label',
             style: textStyle.copyWith(
-              color: colors.profileTextColor,
+              color: mentionColor,
               fontWeight: FontWeight.w600,
               decoration: TextDecoration.none,
             ),
