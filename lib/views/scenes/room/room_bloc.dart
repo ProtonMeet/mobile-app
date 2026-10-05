@@ -86,6 +86,7 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
   StreamSubscription? _audioSessionDevicesSub;
 
   bool _screenShareToggleInFlight = false;
+
   /// When the local PipeWire / xdg-desktop-portal capturer was last torn down.
   DateTime? _lastLocalScreenShareStopAt;
   static const Duration _linuxScreenCapturePortalSettleDelay = Duration(

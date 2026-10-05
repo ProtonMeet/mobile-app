@@ -15,12 +15,12 @@ import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 /// Result of the desktop screen-share source selection.
 class ScreenSharePickerResult {
   const ScreenSharePickerResult.systemPortal()
-      : useSystemPortal = true,
-        sourceId = null;
+    : useSystemPortal = true,
+      sourceId = null;
 
   const ScreenSharePickerResult.source(String id)
-      : useSystemPortal = false,
-        sourceId = id;
+    : useSystemPortal = false,
+      sourceId = id;
 
   /// Linux Wayland path: xdg-desktop-portal via getDisplayMedia (no sourceId).
   final bool useSystemPortal;
@@ -172,8 +172,7 @@ class _MeetScreenSelectDialogState extends State<MeetScreenSelectDialog> {
   static final rtc.ThumbnailSize _previewSize = rtc.ThumbnailSize(480, 360);
 
   final Map<String, rtc.DesktopCapturerSource> _sources = {};
-  final List<StreamSubscription<rtc.DesktopCapturerSource>> _subscriptions =
-      [];
+  final List<StreamSubscription<rtc.DesktopCapturerSource>> _subscriptions = [];
   rtc.SourceType _sourceType = rtc.SourceType.Screen;
   rtc.DesktopCapturerSource? _selectedSource;
   Timer? _refreshTimer;
@@ -371,8 +370,9 @@ class _MeetScreenSelectDialogState extends State<MeetScreenSelectDialog> {
   }
 
   Widget _sourceGrid(rtc.SourceType type) {
-    final entries =
-        _sources.values.where((source) => source.type == type).toList();
+    final entries = _sources.values
+        .where((source) => source.type == type)
+        .toList();
     if (entries.isEmpty) {
       final message = type == rtc.SourceType.Window
           ? 'No windows found.\nOpen an app window and switch to this tab, or check capture permissions.'
