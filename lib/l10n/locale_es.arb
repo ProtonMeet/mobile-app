@@ -186,16 +186,16 @@
   "show_meeting_timer": "Mostrar temporizador de la reunión",
   "unsubscribe_video_by_default": "Desactivar el vídeo entrante",
   "camera_background_blur": "Desenfocar fondo",
-  "virtual_backgrounds_title": "Virtual backgrounds",
+  "virtual_backgrounds_title": "Fondos virtuales",
   "@virtual_backgrounds_title": {
     "description": "Title for virtual backgrounds in meeting settings"
   },
-  "backgrounds_title": "Backgrounds",
+  "backgrounds_title": "Fondos",
   "@backgrounds_title": {
     "description": "Title for backgrounds dialog"
   },
-  "virtual_background_none": "None",
-  "virtual_background_custom": "Custom",
+  "virtual_background_none": "Ninguno",
+  "virtual_background_custom": "Personalizado",
   "audio_noise_cancellation": "Cancelación de ruido",
   "dark_mode": "Modo oscuro",
   "show_connection_indicator": "Mostrar indicador de conexión",
@@ -1166,9 +1166,47 @@
   "@chat_copy_text": {
     "description": "Action to copy chat message text to clipboard"
   },
-  "chat_message_too_long": "Your message exceeds the chat character limit. Please split it into shorter messages, thank you.",
+  "chat_message_too_long": "Tu mensaje supera el límite de caracteres del chat. Divídelo en mensajes más cortos.",
   "@chat_message_too_long": {
     "description": "Error notification shown when a composed chat message is longer than the allowed character limit"
+  },
+  "chat_mention_everyone": "todo el mundo",
+  "@chat_mention_everyone": {
+    "description": "Display label for a room-wide @everyone mention"
+  },
+  "chat_mention_everyone_hint": "Todos los presentes",
+  "@chat_mention_everyone_hint": {
+    "description": "Secondary label shown in the @everyone mention suggestion row"
+  },
+  "chat_mention_notified_title": "{name} te ha mencionado",
+  "@chat_mention_notified_title": {
+    "description": "Global notification title when the local user is @mentioned in chat",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "chat_new_mentions_badge": "{count, plural, =1{1 nueva mención} other{{count} nuevas menciones}}",
+  "@chat_new_mentions_badge": {
+    "description": "Floating badge when new @mentions arrive while scrolled up in chat",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_character_count": "{current}/{max}",
+  "@chat_character_count": {
+    "description": "Composer character counter for stored chat text",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
   },
   "meeting_quality_feedback": "Comentarios sobre calidad de la reunión",
   "@meeting_quality_feedback": {
@@ -2101,7 +2139,7 @@
   "@settings_section_general": {
     "description": "Section header in app settings"
   },
-  "settings_section_meetings": "Meetings",
+  "settings_section_meetings": "Reuniones",
   "@settings_section_meetings": {
     "description": "Section header for meeting-related app settings"
   },
@@ -2261,15 +2299,15 @@
   "@iap_native_test_sign_in_required": {
     "description": "Message shown when sign in is required to open native payments"
   },
-  "in_app_update_downloaded": "The new app version has been downloaded and will be installed automatically.",
+  "in_app_update_downloaded": "Se ha descargado la nueva versión de la app y se instalará automáticamente.",
   "@in_app_update_downloaded": {
     "description": "Notification shown when a Play Store flexible update finished downloading and will be installed"
   },
-  "mobile_upgrade_warning_prefix": "You’re using an older version of the app. Some features may not work as expected. Please ",
+  "mobile_upgrade_warning_prefix": "Estás usando una versión anterior de la app. Es posible que algunas funciones no respondan como se espera. ",
   "@mobile_upgrade_warning_prefix": {
     "description": "Prefix for the outdated mobile client warning shown when joining a meeting"
   },
-  "mobile_upgrade_warning_link": "upgrade to the latest version",
+  "mobile_upgrade_warning_link": "Actualiza a la versión más reciente",
   "@mobile_upgrade_warning_link": {
     "description": "Tappable link text in the outdated mobile client warning; opens the app store"
   },
@@ -2345,11 +2383,11 @@
   "@participant_list_people_section": {
     "description": "Section header for human participants in the participant list"
   },
-  "old_android_sdk_warning_message": "A future Proton Meet update will require Android 9 or later. Please update your device to keep using the app.",
+  "old_android_sdk_warning_message": "Una próxima actualización de Proton Meet requiere Android 9 o posterior. Actualiza tu dispositivo para seguir usando la app.",
   "@old_android_sdk_warning_message": {
     "description": "Warning shown on Android 7/8 devices when OldAndroidSdkWarning flag is enabled; informs users that support will be deprecated soon"
   },
-  "old_ios_sdk_warning_message": "A future Proton Meet update will require iOS 17 or later. Please update your device to keep using the app.",
+  "old_ios_sdk_warning_message": "Una próxima actualización de Proton Meet requiere iOS 17 o posterior. Actualiza tu dispositivo para seguir usando la app.",
   "@old_ios_sdk_warning_message": {
     "description": "Warning shown on iOS versions below 17 when OldIosSdkWarning flag is enabled; informs users that support will be deprecated soon"
   }
