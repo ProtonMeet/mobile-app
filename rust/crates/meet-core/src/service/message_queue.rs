@@ -53,14 +53,14 @@ use crate::{
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum CommitProcessingOutcome {
+pub(super) enum CommitProcessingOutcome {
     Applied,
     DeferredFutureEpoch,
     NoStateChange,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum ProposalProcessingOutcome {
+pub(super) enum ProposalProcessingOutcome {
     Applied,
     DeferredFutureEpoch,
     NoStateChange,

@@ -13,6 +13,7 @@ import 'package:meet/models/native.session.model.dart';
 import 'package:meet/rust/errors.dart';
 import 'package:meet/rust/proton_meet/core.dart';
 import 'package:meet/rust/proton_meet/meet_auth_store.dart';
+import 'package:meet/rust/proton_meet/models/feature_flags.dart';
 import 'package:meet/rust/proton_meet/models/mls_sync_state.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
 import 'package:meet/rust/proton_meet/storage/user_key_provider.dart';
@@ -30,6 +31,10 @@ class AppCoreManager implements Manager {
   final ApiEnv env;
   final userAgent = UserAgent();
   bool _useCachedServerTime = false;
+
+  /// Last value pushed by Unleash; reapplied when [appCore] is rebuilt
+  /// (login/logout). Off until Unleash reports otherwise.
+  bool _useMessageQueues = false;
 
   final _mlsGroupKeyStreamController =
       StreamController<(String, BigInt)?>.broadcast();
@@ -96,6 +101,7 @@ class AppCoreManager implements Manager {
       wsHost: env.wsHost,
       httpHost: env.httpHost,
       userKeyProvider: userKeyProvider,
+      featureFlags: FeatureFlags(useMessageQueues: _useMessageQueues),
     );
     await appCore.setMlsGroupUpdateCallback(callback: mlsGroupUpdateCallback);
     await appCore.setMlsSyncStateUpdateCallback(
@@ -237,6 +243,7 @@ class AppCoreManager implements Manager {
       wsHost: env.wsHost,
       httpHost: env.httpHost,
       userKeyProvider: userKeyProvider,
+      featureFlags: FeatureFlags(useMessageQueues: _useMessageQueues),
     );
     await appCore.setMlsGroupUpdateCallback(callback: mlsGroupUpdateCallback);
     await appCore.setMlsSyncStateUpdateCallback(
@@ -249,6 +256,11 @@ class AppCoreManager implements Manager {
   Future<void> setUseCachedServerTime({required bool enabled}) async {
     _useCachedServerTime = enabled;
     await appCore.setUseCachedServerTime(enabled: enabled);
+  }
+
+  Future<void> setUseMessageQueues({required bool enabled}) async {
+    _useMessageQueues = enabled;
+    await appCore.setUseMessageQueues(enabled: enabled);
   }
 
   Future<void> loadSession() async {

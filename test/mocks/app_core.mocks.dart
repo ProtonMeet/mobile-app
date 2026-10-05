@@ -1431,6 +1431,15 @@ class MockAppCore extends _i1.Mock implements _i16.AppCore {
           as _i17.Future<void>);
 
   @override
+  _i17.Future<void> setUseMessageQueues({required bool? enabled}) =>
+      (super.noSuchMethod(
+            Invocation.method(#setUseMessageQueues, [], {#enabled: enabled}),
+            returnValue: _i17.Future<void>.value(),
+            returnValueForMissingStub: _i17.Future<void>.value(),
+          )
+          as _i17.Future<void>);
+
+  @override
   _i17.Future<void> setWebsocketMaxPingFailures({int? failures}) =>
       (super.noSuchMethod(
             Invocation.method(#setWebsocketMaxPingFailures, [], {

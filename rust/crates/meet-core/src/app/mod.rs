@@ -1,6 +1,7 @@
 use crate::app_state::{AppState, UserState};
 use crate::domain::mls::ports::KeyPackagePort;
 use crate::domain::room::{RoomService, WaitingRoomService};
+use crate::domain::unleash::FeatureFlags;
 use crate::domain::user::models::{
     participant_track_settings::ParticipantTrackSettings, user_settings::UserSettings,
     UnleashResponse,
@@ -133,6 +134,7 @@ pub struct App {
     meeting_api: Arc<dyn MeetingApi>,
     event_api: Arc<dyn EventApi>,
     user_key_provider: Arc<dyn UserKeyProvider>,
+    feature_flags: FeatureFlags,
 
     /// services
     pub(crate) services: Arc<ServiceBundle>,
@@ -151,6 +153,7 @@ impl App {
         ws_host: String,
         user_state: Option<UserState>,
         user_key_provider: Arc<dyn UserKeyProvider>,
+        feature_flags: FeatureFlags,
     ) -> Result<Self, MeetCoreError> {
         let app_version_clone = app_version.clone();
         let user_agent_clone = user_agent.clone();
@@ -172,6 +175,7 @@ impl App {
             user_key_provider,
             app_version_clone,
             user_agent_clone,
+            feature_flags,
         )
         .await
     }
@@ -220,6 +224,8 @@ impl App {
             user_key_provider,
             app_version,
             user_agent,
+            // Web sets the real value via `setUseMessageQueues` once Unleash is loaded.
+            FeatureFlags::default(),
         )
         .await
     }
@@ -234,6 +240,7 @@ impl App {
         user_key_provider: Arc<dyn UserKeyProvider>,
         app_version: String,
         user_agent: String,
+        feature_flags: FeatureFlags,
     ) -> Result<Self, MeetCoreError> {
         let persister = Persister::new(db_path).await?;
 
@@ -261,6 +268,7 @@ impl App {
                 mls_store.clone(),
                 http_client.server_time_tracker(),
                 weak.clone(),
+                feature_flags.clone(),
             )));
 
             let room_service = Arc::new(RoomService::new(
@@ -351,6 +359,7 @@ impl App {
             meeting_api: http_client.clone(),
             event_api: http_client,
             user_key_provider,
+            feature_flags,
         })
     }
 
@@ -712,6 +721,7 @@ impl App {
             meeting_api,
             event_api,
             user_key_provider,
+            feature_flags: FeatureFlags::default(),
             services,
         }
     }

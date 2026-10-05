@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use muon::auth::Auth;
-use proton_meet_core::app::App;
 use proton_meet_core::infra::adapters::storage::UserKeyProviderAdapter;
 use proton_meet_core::infra::muon::AuthStore;
+use proton_meet_core::{app::App, domain::unleash::FeatureFlags};
 use tokio::sync::Mutex;
 use tracing::{error, info};
 
@@ -34,6 +34,7 @@ impl AppRunner {
             ws_host,
             None,
             Arc::new(UserKeyProviderAdapter::new()),
+            FeatureFlags::new(true),
         )
         .await?;
 

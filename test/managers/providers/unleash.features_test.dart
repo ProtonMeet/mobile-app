@@ -69,6 +69,7 @@ void main() {
         UnleashFeature.meetAdminLowerHand,
         UnleashFeature.meetMobileInAppUpdate,
         UnleashFeature.meetUseCachedServerTime,
+        UnleashFeature.meetUseMessageQueues,
         UnleashFeature.meetSettingsPreview,
       };
 

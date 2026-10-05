@@ -73,8 +73,10 @@ mod test {
             mimi_subject_parser::ANONYMOUS_USER_IDENTIFIER,
         },
         service::{
-            caption::CaptionServiceImpl, message_queue::MessageQueueServiceImpl,
-            services_bundle::ServiceBundle, user_service::Service,
+            caption::CaptionServiceImpl,
+            message_queue::MessageQueueServiceImpl,
+            services_bundle::ServiceBundle,
+            user_service::{service_test::tests::test_feature_flags, Service},
         },
         utils::server_time::ServerTimeTracker,
     };
@@ -324,6 +326,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
                 mls_store.clone(),
                 server_time_tracker.clone(),
                 weak.clone(),
+                test_feature_flags(),
             )));
 
             #[cfg(not(target_family = "wasm"))]

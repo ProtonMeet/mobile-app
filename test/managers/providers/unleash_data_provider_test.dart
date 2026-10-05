@@ -65,6 +65,9 @@ void main() {
       when(
         mockAppCore.setUseCachedServerTime(enabled: anyNamed('enabled')),
       ).thenAnswer((_) async {});
+      when(
+        mockAppCore.setUseMessageQueues(enabled: anyNamed('enabled')),
+      ).thenAnswer((_) async {});
     });
 
     Future<UnleashDataProvider> createStartedProvider({
@@ -293,6 +296,7 @@ void main() {
           'MeetChatThreads': true,
           'MeetChatMentions': true,
           'MeetUseCachedServerTime': true,
+          'MeetUseMessageQueues': true,
         },
       );
 
@@ -338,6 +342,34 @@ void main() {
         mockAppCore.setUseCachedServerTime(enabled: anyNamed('enabled')),
       ).called(greaterThan(0));
     });
+
+    test('syncs MeetUseMessageQueues to the core on update', () async {
+      await createStartedProvider(
+        toggles: const {'MeetUseMessageQueues': true},
+      );
+
+      // Bootstrap defaults sync `false` first; the fetched toggle then syncs `true`.
+      await untilCalled(mockAppCore.setUseMessageQueues(enabled: true));
+      expect(
+        verify(
+          mockAppCore.setUseMessageQueues(enabled: captureAnyNamed('enabled')),
+        ).captured.last,
+        isTrue,
+      );
+    });
+
+    test(
+      'MeetUseMessageQueues defaults to off when absent from server',
+      () async {
+        await createStartedProvider();
+        await pumpEventQueue();
+
+        verify(
+          mockAppCore.setUseMessageQueues(enabled: false),
+        ).called(greaterThan(0));
+        verifyNever(mockAppCore.setUseMessageQueues(enabled: true));
+      },
+    );
 
     test('startPeriodicRefresh triggers additional fetches', () {
       fakeAsync((async) {

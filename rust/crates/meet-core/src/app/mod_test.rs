@@ -3,8 +3,8 @@ use std::sync::{Arc, Weak};
 
 use crate::app::test_support::{
     build_app, build_app_with_auth_service, build_app_with_http, build_app_with_service,
-    default_app_state, state_with_participant_only, test_mls_store, test_server_time_tracker,
-    unreachable_test_proton_http_client,
+    default_app_state, state_with_participant_only, test_feature_flags, test_mls_store,
+    test_server_time_tracker, unreachable_test_proton_http_client,
 };
 use crate::domain::user::ports::meeting_api::MockMeetingApi;
 use crate::domain::user::ports::{MockHttpClient, MockMlsApi};
@@ -130,6 +130,7 @@ async fn get_user_settings_propagates_service_error() {
         test_mls_store(),
         test_server_time_tracker(),
         Weak::new(),
+        test_feature_flags(),
     );
 
     let app = build_app_with_service(default_app_state(), service).await;

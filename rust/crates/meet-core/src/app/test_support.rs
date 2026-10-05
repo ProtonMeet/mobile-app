@@ -13,6 +13,7 @@ use crate::app::App;
 use crate::app_state::{AppState, UserState};
 use crate::domain::mls::ports::MockMessageCachePort;
 use crate::domain::room::{RoomService, WaitingRoomService};
+use crate::domain::unleash::FeatureFlags;
 use crate::domain::user::models::meeting::{MeetingType, UpcomingMeeting};
 use crate::domain::user::models::{meet_link_info::MeetInfo, Address, UserTokenInfo};
 use crate::domain::user::ports::{
@@ -87,6 +88,10 @@ pub fn test_mls_store() -> Arc<RwLock<MlsStore>> {
 
 pub fn test_server_time_tracker() -> ServerTimeTracker {
     ServerTimeTracker::new()
+}
+
+pub fn test_feature_flags() -> FeatureFlags {
+    FeatureFlags::new(true)
 }
 
 pub fn default_app_state() -> AppState {
@@ -178,6 +183,7 @@ pub fn minimal_service() -> Arc<RwLock<Service>> {
         test_mls_store(),
         test_server_time_tracker(),
         Weak::new(),
+        test_feature_flags(),
     )))
 }
 
@@ -705,6 +711,7 @@ pub async fn join_test_service_with_mls_client(
         mls_store.clone(),
         test_server_time_tracker(),
         Weak::new(),
+        test_feature_flags(),
     );
     let user_info = service
         .create_mls_client("access-token", meet_link, "meet-password", None)
@@ -739,6 +746,7 @@ async fn mls_test_service(user_id: &str, meet_link: &str) -> (Service, Arc<RwLoc
         mls_store.clone(),
         test_server_time_tracker(),
         Weak::new(),
+        test_feature_flags(),
     );
     (service, mls_store)
 }
@@ -861,6 +869,7 @@ pub async fn build_app_with_service_room_and_ws(
 #[cfg(all(test, not(target_family = "wasm")))]
 pub mod manual {
     use super::App;
+    use crate::app::test_support::test_feature_flags;
     use crate::errors::core::MeetCoreError;
     use crate::infra::adapters::storage::UserKeyProviderAdapter;
     use crate::infra::muon::AuthStore;
@@ -891,6 +900,7 @@ pub mod manual {
             ws_host.into(),
             None,
             user_key_provider(),
+            test_feature_flags(),
         )
         .await
     }
@@ -912,6 +922,7 @@ pub mod manual {
             ws_host.into(),
             None,
             user_key_provider(),
+            test_feature_flags(),
         )
         .await
     }

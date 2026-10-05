@@ -383,6 +383,11 @@ impl App {
         self.set_use_cached_server_time(enabled);
     }
 
+    #[wasm_bindgen(js_name = setUseMessageQueues)]
+    pub fn set_use_message_queues_wasm(&self, enabled: bool) {
+        self.set_use_message_queues(enabled);
+    }
+
     #[wasm_bindgen(js_name = setWebsocketPingInterval)]
     pub async fn set_websocket_ping_interval_wasm(
         &self,

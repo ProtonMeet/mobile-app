@@ -10,6 +10,7 @@ import 'models/app_event.dart';
 import 'models/chat_event.dart';
 import 'models/connection_state.dart';
 import 'models/event.dart';
+import 'models/feature_flags.dart';
 import 'models/join_request.dart';
 import 'models/join_type.dart';
 import 'models/meet_chat_message.dart';
@@ -327,6 +328,7 @@ abstract class AppCore implements RustOpaqueInterface {
     required String httpHost,
     UserState? userState,
     required FrbUserKeyProvider userKeyProvider,
+    required FeatureFlags featureFlags,
   }) => RustLib.instance.api.crateProtonMeetCoreAppCoreNew(
     env: env,
     appVersion: appVersion,
@@ -337,6 +339,7 @@ abstract class AppCore implements RustOpaqueInterface {
     httpHost: httpHost,
     userState: userState,
     userKeyProvider: userKeyProvider,
+    featureFlags: featureFlags,
   );
 
   Future<MeetChatMessage> parseChatMessage({required String chatMessage});
@@ -430,6 +433,10 @@ abstract class AppCore implements RustOpaqueInterface {
   /// When disabled, MLS operations fall back to the local clock instead of cached
   /// server time from HTTP response headers.
   Future<void> setUseCachedServerTime({required bool enabled});
+
+  /// Toggles the MLS message-queue path at runtime. Driven by the
+  /// `MeetUseMessageQueues` Unleash toggle.
+  Future<void> setUseMessageQueues({required bool enabled});
 
   /// Set WebSocket max ping failures (None to use default)
   /// This is particularly useful for Safari when it goes to background, allowing more tolerance

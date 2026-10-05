@@ -127,6 +127,12 @@ enum UnleashFeature {
     clientDefault: FeatureClientDefault.off,
   ),
 
+  /// When enabled, the Rust core routes MLS messages through the message queue.
+  meetUseMessageQueues(
+    'MeetUseMessageQueues',
+    clientDefault: FeatureClientDefault.off,
+  ),
+
   /// Main switch for live captions (Settings UI and related flows).
   meetLiveCaptions('MeetLiveCaptions'),
 

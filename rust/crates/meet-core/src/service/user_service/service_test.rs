@@ -15,6 +15,7 @@ pub(crate) mod tests {
     use crate::{
         domain::{
             mls::ports::MessageCachePort,
+            unleash::FeatureFlags,
             user::{
                 models::{meeting_link_name::MeetingLinkName, UserId},
                 ports::{
@@ -81,6 +82,36 @@ pub(crate) mod tests {
     use rand::rngs::StdRng;
     use rand::seq::SliceRandom;
     use rand::{Rng, SeedableRng};
+
+    pub fn test_feature_flags() -> FeatureFlags {
+        FeatureFlags::new(true)
+    }
+
+    #[tokio::test]
+    async fn test_use_message_queues_follows_runtime_flag_updates() {
+        let flags = FeatureFlags::new(false);
+        let service = Service::new(
+            Arc::new(MockHttpClient::new()),
+            Arc::new(MockMlsApi::new()),
+            Arc::new(MockMeetingApi::new()),
+            Arc::new(MockWebSocketClient::new()),
+            Arc::new(RwLock::new(MlsStore {
+                clients: std::collections::HashMap::new(),
+                group_map: std::collections::HashMap::new(),
+                config: MlsClientConfig::default(),
+            })),
+            ServerTimeTracker::new(),
+            Weak::new(),
+            flags.clone(),
+        );
+        assert!(!service.use_message_queues().await);
+
+        flags.set_use_message_queues(true);
+        assert!(service.use_message_queues().await);
+
+        flags.set_use_message_queues(false);
+        assert!(!service.use_message_queues().await);
+    }
 
     #[test]
     fn test_derive_external_psk_argon2_is_deterministic_and_room_bound() {
@@ -4360,6 +4391,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             mls_store,
             ServerTimeTracker::new(),
             Weak::new(),
+            test_feature_flags(),
         );
 
         // Test is_mls_up_to_date - should return true for same group
@@ -4472,6 +4504,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             mls_store,
             ServerTimeTracker::new(),
             Weak::new(),
+            test_feature_flags(),
         );
 
         // Test is_mls_up_to_date - should return false because user1 is not in group2's roster
@@ -5515,6 +5548,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             mls_store,
             ServerTimeTracker::new(),
             Weak::new(),
+            test_feature_flags(),
         )
     }
 

@@ -10,6 +10,8 @@ use tokio::sync::Mutex;
 use uuid::Uuid;
 
 use crate::errors::core::MeetCoreError;
+use crate::service::user_service::QueuedProposal;
+use crate::utils::spawn_detached;
 
 /// Calculate retry delay with exponential backoff and jitter
 /// - attempt_num: 0-indexed attempt number (0 = first retry after initial failure)
@@ -198,6 +200,36 @@ pub async fn restore_to_queue_sync<T>(
             .or_insert_with(Vec::new)
             .extend(items);
     }
+}
+
+/// Restore queued proposals back to the proposal queue on failure
+pub fn restore_proposals_to_queue(
+    proposal_queue: &Arc<Mutex<HashMap<String, Vec<QueuedProposal>>>>,
+    meeting_link_name: String,
+    proposals: Vec<QueuedProposal>,
+    reason: &str,
+) {
+    if proposals.is_empty() {
+        return;
+    }
+
+    let reason = reason.to_string();
+    spawn_detached({
+        let queue = proposal_queue.clone();
+        async move {
+            let mut queue_lock = queue.lock().await;
+            queue_lock.insert(meeting_link_name.clone(), proposals);
+            tracing::debug!(
+                "Restored {} proposals to queue for {}: {}",
+                queue_lock
+                    .get(&meeting_link_name)
+                    .map(|v| v.len())
+                    .unwrap_or(0),
+                meeting_link_name,
+                reason
+            );
+        }
+    });
 }
 
 #[cfg(not(target_family = "wasm"))]

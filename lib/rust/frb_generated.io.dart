@@ -21,6 +21,7 @@ import 'proton_meet/models/chat_event.dart';
 import 'proton_meet/models/connection_state.dart';
 import 'proton_meet/models/desktop_web_login.dart';
 import 'proton_meet/models/event.dart';
+import 'proton_meet/models/feature_flags.dart';
 import 'proton_meet/models/join_request.dart';
 import 'proton_meet/models/join_type.dart';
 import 'proton_meet/models/meet_chat_message.dart';
@@ -266,6 +267,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool dco_decode_box_autoadd_bool(dynamic raw);
 
   @protected
+  FeatureFlags dco_decode_box_autoadd_feature_flags(dynamic raw);
+
+  @protected
   FrbUserPayload dco_decode_box_autoadd_frb_user_payload(dynamic raw);
 
   @protected
@@ -326,6 +330,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   EventAction dco_decode_event_action(dynamic raw);
+
+  @protected
+  FeatureFlags dco_decode_feature_flags(dynamic raw);
 
   @protected
   FlutterLogLayer dco_decode_flutter_log_layer(dynamic raw);
@@ -696,6 +703,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool sse_decode_box_autoadd_bool(SseDeserializer deserializer);
 
   @protected
+  FeatureFlags sse_decode_box_autoadd_feature_flags(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   FrbUserPayload sse_decode_box_autoadd_frb_user_payload(
     SseDeserializer deserializer,
   );
@@ -768,6 +780,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   EventAction sse_decode_event_action(SseDeserializer deserializer);
+
+  @protected
+  FeatureFlags sse_decode_feature_flags(SseDeserializer deserializer);
 
   @protected
   FlutterLogLayer sse_decode_flutter_log_layer(SseDeserializer deserializer);
@@ -1254,6 +1269,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_autoadd_bool(bool self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_feature_flags(
+    FeatureFlags self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_frb_user_payload(
     FrbUserPayload self,
     SseSerializer serializer,
@@ -1354,6 +1375,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_event_action(EventAction self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_feature_flags(FeatureFlags self, SseSerializer serializer);
 
   @protected
   void sse_encode_flutter_log_layer(

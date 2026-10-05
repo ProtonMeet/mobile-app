@@ -9,7 +9,7 @@ use std::sync::OnceLock;
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::broadcast;
 
-use crate::proton_meet::models::chat_event::FrbChatComposeResult;
+use crate::proton_meet::models::{chat_event::FrbChatComposeResult, feature_flags::FeatureFlags};
 use crate::{
     errors::BridgeError,
     frb_generated::StreamSink,
@@ -158,6 +158,7 @@ impl AppCore {
         http_host: String,
         user_state: Option<UserState>,
         user_key_provider: &FrbUserKeyProvider,
+        feature_flags: FeatureFlags,
     ) -> Result<Self, BridgeError> {
         let app = App::new(
             env,
@@ -169,6 +170,7 @@ impl AppCore {
             http_host,
             user_state,
             Arc::new(user_key_provider.inner.clone()),
+            feature_flags.into(),
         )
         .await?;
         let user_config = UserConfig::load();
@@ -1422,6 +1424,12 @@ impl AppCore {
     /// server time from HTTP response headers.
     pub fn set_use_cached_server_time(&self, enabled: bool) {
         self.inner.set_use_cached_server_time(enabled);
+    }
+
+    /// Toggles the MLS message-queue path at runtime. Driven by the
+    /// `MeetUseMessageQueues` Unleash toggle.
+    pub fn set_use_message_queues(&self, enabled: bool) {
+        self.inner.set_use_message_queues(enabled);
     }
 
     /// Set WebSocket ping interval in seconds (None to use default)

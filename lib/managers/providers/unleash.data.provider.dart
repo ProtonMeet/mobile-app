@@ -42,7 +42,7 @@ class UnleashDataProvider extends DataProvider {
 
   /// Timer for periodic refresh
   Timer? refreshTimer;
-  Future<void> _serverTimeFlagSync = Future.value();
+  Future<void> _coreFlagSync = Future.value();
   int _featureFlagsRevision = 0;
 
   /// Called after Unleash toggles refresh (`ready` / `update`). Wired by
@@ -206,7 +206,7 @@ class UnleashDataProvider extends DataProvider {
   }
 
   void _notifyFeatureFlagsUpdated() {
-    _syncUseCachedServerTimeFlag();
+    _syncCoreFeatureFlags();
     _featureFlagsRevision++;
     emitState(UnleashFeatureFlagsUpdated(_featureFlagsRevision));
     final callback = onFeatureFlagsUpdated;
@@ -215,13 +215,24 @@ class UnleashDataProvider extends DataProvider {
     }
   }
 
-  void _syncUseCachedServerTimeFlag() {
-    final enabled = isFeatureEnabled(UnleashFeature.meetUseCachedServerTime);
-    logger.d('isMeetUseCachedServerTime: $enabled');
+  /// Pushes core-relevant toggles to Rust. Chained so updates apply in order.
+  void _syncCoreFeatureFlags() {
+    final useCachedServerTime = isFeatureEnabled(
+      UnleashFeature.meetUseCachedServerTime,
+    );
+    final useMessageQueues = isFeatureEnabled(
+      UnleashFeature.meetUseMessageQueues,
+    );
+    logger.d(
+      'isMeetUseCachedServerTime: $useCachedServerTime, '
+      'isMeetUseMessageQueues: $useMessageQueues',
+    );
 
-    _serverTimeFlagSync = _serverTimeFlagSync.then((_) async {
+    _coreFlagSync = _coreFlagSync.then((_) async {
       try {
-        await appCoreManager.setUseCachedServerTime(enabled: enabled);
+        await appCoreManager.setUseCachedServerTime(
+          enabled: useCachedServerTime,
+        );
       } catch (e, stackTrace) {
         logger.w(
           '[Unleash] Error syncing MeetUseCachedServerTime flag: $e',
@@ -229,7 +240,16 @@ class UnleashDataProvider extends DataProvider {
           stackTrace: stackTrace,
         );
       }
+      try {
+        await appCoreManager.setUseMessageQueues(enabled: useMessageQueues);
+      } catch (e, stackTrace) {
+        logger.w(
+          '[Unleash] Error syncing MeetUseMessageQueues flag: $e',
+          error: e,
+          stackTrace: stackTrace,
+        );
+      }
     });
-    unawaited(_serverTimeFlagSync);
+    unawaited(_coreFlagSync);
   }
 }
