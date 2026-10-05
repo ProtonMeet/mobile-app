@@ -1170,6 +1170,44 @@
   "@chat_message_too_long": {
     "description": "Error notification shown when a composed chat message is longer than the allowed character limit"
   },
+  "chat_mention_everyone": "herkes",
+  "@chat_mention_everyone": {
+    "description": "Display label for a room-wide @everyone mention"
+  },
+  "chat_mention_everyone_hint": "buradaki herkes",
+  "@chat_mention_everyone_hint": {
+    "description": "Secondary label shown in the @everyone mention suggestion row"
+  },
+  "chat_mention_notified_title": "{name} sizi andı.",
+  "@chat_mention_notified_title": {
+    "description": "Global notification title when the local user is @mentioned in chat",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "chat_new_mentions_badge": "{count, plural, =1{1 yeni anma} other{{count} yeni anma}}",
+  "@chat_new_mentions_badge": {
+    "description": "Floating badge when new @mentions arrive while scrolled up in chat",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_character_count": "{current}/{max}",
+  "@chat_character_count": {
+    "description": "Composer character counter for stored chat text",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "meeting_quality_feedback": "Görüşme kalitesi geri bildirimi",
   "@meeting_quality_feedback": {
     "description": "Title for meeting quality feedback form"

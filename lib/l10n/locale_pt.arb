@@ -26,7 +26,7 @@
   "report_a_problem": "Relatar problema",
   "sign_in_to_proton_title": "Iniciar sessão na Proton",
   "sign_in_to_proton_subtitle": "Insira os detalhes da sua conta da Proton.",
-  "desktop_login_use_browser_for_security_key": "Use browser for security key",
+  "desktop_login_use_browser_for_security_key": "Use o navegador para configurar a chave de segurança",
   "@desktop_login_use_browser_for_security_key": {
     "description": "Opens desktop sign-in in the system browser so USB security keys (WebAuthn) work on macOS"
   },
@@ -113,23 +113,23 @@
   "@meet_server_version_not_supported_title": {
     "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
   },
-  "meet_server_version_not_supported_description": "Your app version can't connect to this meeting. Please update Proton Meet to continue.",
+  "meet_server_version_not_supported_description": "A versão do seu aplicativo não pode se conectar a essa chamada. Atualize seu Proton Meet para continuar.",
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
-  "check_device_clock_title": "Check your device's date and time",
+  "check_device_clock_title": "Confira a data e hora do seu dispositivo",
   "@check_device_clock_title": {
     "description": "Title when the device clock skew prevents joining a meeting"
   },
-  "check_device_clock_description": "We couldn't connect you to this meeting because your device's date and time are out of sync.\n\nTo fix this:\n• Open your device Settings\n• Turn on Set Automatically for date and time\n• Return to Proton Meet and join the meeting again",
+  "check_device_clock_description": "Não pudemos te conectar a essa chamada porque a data e hora do seu dispositivo está dessincronizada.",
   "@check_device_clock_description": {
     "description": "Description when the user must fix device clock settings before joining"
   },
-  "token_is_invalid_title": "Unable to join meeting",
+  "token_is_invalid_title": "Não foi possível se juntar à chamada",
   "@token_is_invalid_title": {
     "description": "Title when the MLS session token is invalid"
   },
-  "token_is_invalid_description": "Something went wrong while connecting. Tap Close and join the meeting again.",
+  "token_is_invalid_description": "Algo deu errado durante a conexão. Clique em Fechar e junte-se novamente à chamada.",
   "@token_is_invalid_description": {
     "description": "Description when the MLS session token is invalid"
   },
@@ -149,11 +149,11 @@
   "picture_in_picture_mode": "Modo picture-in-picture",
   "security": "Segurança",
   "enable_waiting_room": "Ativar sala de espera",
-  "waiting_room_setting_on_description": "Participants join after you approve them",
+  "waiting_room_setting_on_description": "Os participantes entram depois de você aprová-los",
   "@waiting_room_setting_on_description": {
     "description": "Waiting room switch description when enabled in meeting settings"
   },
-  "waiting_room_setting_off_description": "Anyone with the link can join",
+  "waiting_room_setting_off_description": "Qualquer pessoa que tenha o link pode participar",
   "@waiting_room_setting_off_description": {
     "description": "Waiting room switch description when disabled in meeting settings"
   },
@@ -165,7 +165,7 @@
   "@waiting_room_disabled_notification": {
     "description": "Global notification when the host disables waiting room in meeting settings"
   },
-  "allow_live_captions": "Allow live captions",
+  "allow_live_captions": "Permitir legendas ao vivo",
   "@allow_live_captions": {
     "description": "Host toggle that lets participants use live captions"
   },
@@ -173,7 +173,7 @@
   "@allow_live_captions_on_description": {
     "description": "Live captions availability switch description when enabled for participants"
   },
-  "allow_live_captions_off_description": "Participants can't use live captions",
+  "allow_live_captions_off_description": "Os participantes não podem usar legendas ao vivo",
   "@allow_live_captions_off_description": {
     "description": "Live captions availability switch description when disabled for participants"
   },
@@ -245,15 +245,15 @@
   "enter_display_name": "Insira seu nome",
   "display_name_required": "Seu nome é obrigatório",
   "remember_display_name_on_device": "Lembrar meu nome neste dispositivo para reuniões futuras",
-  "use_this_name_next_time": "Use this name next time",
+  "use_this_name_next_time": "Usar este nome na próxima vez",
   "@use_this_name_next_time": {
     "description": "Toggle label on pre-join screen to remember display name"
   },
-  "prejoin_meeting_has_waiting_room": "This meeting has a waiting room",
+  "prejoin_meeting_has_waiting_room": "Essa reunião tem uma sala de espera",
   "@prejoin_meeting_has_waiting_room": {
     "description": "Informational message on pre-join when waiting room is enabled"
   },
-  "waiting_room_host_not_started_title": "Waiting for the host to start",
+  "waiting_room_host_not_started_title": "Aguardando o anfitrião para iniciar",
   "@waiting_room_host_not_started_title": {
     "description": "Title when guest waits for host to start a meeting with waiting room"
   },
@@ -335,7 +335,7 @@
   "camera_view": "Visualização da câmera",
   "is_presenting": "está apresentando",
   "stop_presenting": "Interromper apresentação",
-  "tap_to_stop_sharing": "Tap to stop sharing",
+  "tap_to_stop_sharing": "Toque para parar de compartilhar",
   "notification_permission_settings_title": "Ativar acesso às notificações",
   "@notification_permission_settings_title": {
     "description": "Title when notification permission was denied and screen sharing requires it"
@@ -630,7 +630,7 @@
   "@recording_label": {
     "description": "Chip shown next to participants currently recording the meeting"
   },
-  "record_this_meeting": "Record this meeting",
+  "record_this_meeting": "Gravar esta reunião",
   "@record_this_meeting": {
     "description": "Title for start recording confirmation dialog"
   },
@@ -654,11 +654,11 @@
   "@stop_recording_confirm_message": {
     "description": "Message in stop recording confirmation dialog"
   },
-  "stop_recording_and_save": "Stop recording and save video",
+  "stop_recording_and_save": "Parar de gravar e salvar o vídeo",
   "@stop_recording_and_save": {
     "description": "Primary action in stop recording dialog"
   },
-  "failed_to_start_recording": "Failed to start recording",
+  "failed_to_start_recording": "Falha ao iniciar a gravação",
   "@failed_to_start_recording": {
     "description": "Error toast when recording could not start"
   },
@@ -668,7 +668,7 @@
   "@recording_simulator_not_supported": {
     "description": "Shown when screen recording is unavailable on the platform"
   },
-  "recording_paid_feature": "Local meeting recording is available on paid plans.",
+  "recording_paid_feature": "Gravação de chamadas localmente está disponível em planos pagos.",
   "@recording_paid_feature": {
     "description": "Shown when a free user taps the record button"
   },
@@ -676,11 +676,11 @@
   "@waiting_room_paid_feature": {
     "description": "Subtitle on the in-room waiting room toggle for free users"
   },
-  "recording_recovered_message": "A previous meeting recording was recovered and saved on this device.",
+  "recording_recovered_message": "A gravação de uma chamada anterior foi recuperada e salva neste dispositivo.",
   "@recording_recovered_message": {
     "description": "Toast when orphaned recording files are found after app restart"
   },
-  "recording_interrupted_background": "Recording stopped because the app went to the background. The saved portion is in Saved recordings.",
+  "recording_interrupted_background": "A gravação parou porque o aplicativo foi para o fundo. A porção salva está em Gravações salvas.",
   "@recording_interrupted_background": {
     "description": "Toast when iOS stops ReplayKit capture after backgrounding"
   },
@@ -688,11 +688,11 @@
   "@recording_save_location_section": {
     "description": "Section title in meeting settings for local recording folder"
   },
-  "recording_save_location": "Save recordings to",
+  "recording_save_location": "Salvar as gravações em",
   "@recording_save_location": {
     "description": "Label for local recording save folder setting"
   },
-  "recording_save_location_app_documents": "Proton Meet folder (app storage)",
+  "recording_save_location_app_documents": "Pasta do Proton Meet (armazenamento do aplicativo)",
   "@recording_save_location_app_documents": {
     "description": "Preset: app documents recordings folder"
   },
@@ -708,11 +708,11 @@
   "@recording_save_location_custom": {
     "description": "Preset: user-selected custom folder"
   },
-  "recording_save_location_updated": "Recording save location updated",
+  "recording_save_location_updated": "Local para salvar a gravação atualizado",
   "@recording_save_location_updated": {
     "description": "Toast after changing recording save folder"
   },
-  "recording_save_location_unavailable": "That folder could not be used. Try another location.",
+  "recording_save_location_unavailable": "Essa pasta não pôde ser usada. Tente outro local.",
   "@recording_save_location_unavailable": {
     "description": "Error when selected recording folder is not writable"
   },
@@ -720,7 +720,7 @@
   "@saved_recordings_title": {
     "description": "Title for the list of local meeting recordings"
   },
-  "saved_recordings_empty": "No saved recordings yet. Record a meeting to see files here.",
+  "saved_recordings_empty": "Sem gravações salvas. Grave uma chamada para ver os arquivos aqui.",
   "@saved_recordings_empty": {
     "description": "Empty state when no local recordings exist"
   },
@@ -728,7 +728,7 @@
   "@saved_recordings_share": {
     "description": "Share action for a saved recording"
   },
-  "saved_recordings_share_failed": "Could not open the share sheet. Try again.",
+  "saved_recordings_share_failed": "Não foi possível abrir a planilha compartilhada. Tente novamente.",
   "@saved_recordings_share_failed": {
     "description": "Error when the system share sheet fails to open"
   },
@@ -736,11 +736,11 @@
   "@saved_recordings_folder": {
     "description": "Label above the folder path in saved recordings sheet"
   },
-  "saved_recordings_recovered": "Recovered after app restart",
+  "saved_recordings_recovered": "Recuperado após o aplicativo reiniciar",
   "@saved_recordings_recovered": {
     "description": "Badge for recordings recovered from a crash"
   },
-  "saved_recordings_missing_file": "This recording file is no longer on this device.",
+  "saved_recordings_missing_file": "Esse arquivo de gravação não está mais neste dispositivo.",
   "@saved_recordings_missing_file": {
     "description": "Snackbar when a listed recording file was deleted"
   },
@@ -1082,7 +1082,7 @@
       }
     }
   },
-  "chat_privacy_message": "This is an end to end encrypted chat with ephemeral messages, which disappear at the end of the call.",
+  "chat_privacy_message": "Esse é um chat criptografado de ponta-a-ponta com mensagens temporárias que desaparecerão ao final da chamada.",
   "@chat_privacy_message": {
     "description": "Privacy message displayed in chat when there are no messages."
   },
@@ -1090,7 +1090,7 @@
   "@chat_title": {
     "description": "Title for the in-meeting chat panel"
   },
-  "chat_input_hint": "Type an encrypted message…",
+  "chat_input_hint": "Digite uma mensagem criptografada",
   "@chat_input_hint": {
     "description": "Placeholder for the main chat composer"
   },
@@ -1112,7 +1112,7 @@
       }
     }
   },
-  "chat_thread_view_replies": "{count, plural, =1{View 1 reply} other{View {count} replies}}",
+  "chat_thread_view_replies": "{count, plural, =1{Ver 1 resposta} other{Ver {count} respostas}}",
   "@chat_thread_view_replies": {
     "description": "Collapsed thread toggle to expand and view replies",
     "placeholders": {
@@ -1134,11 +1134,11 @@
   "@chat_thread_new_reply": {
     "description": "Badge shown on a collapsed thread when there are unseen replies"
   },
-  "chat_system_joined_prefix": "Joined ",
+  "chat_system_joined_prefix": "Se juntou ",
   "@chat_system_joined_prefix": {
     "description": "Prefix before the meeting name in a join system chat notice"
   },
-  "chat_system_left_prefix": "Left ",
+  "chat_system_left_prefix": "Saiu ",
   "@chat_system_left_prefix": {
     "description": "Prefix before the meeting name in a leave system chat notice"
   },
@@ -1146,11 +1146,11 @@
   "@chat_reply_hint": {
     "description": "Placeholder for the thread reply composer"
   },
-  "chat_thread_missing_root": "This conversation started before you joined.",
+  "chat_thread_missing_root": "Essa conversa iniciou antes de você se juntar.",
   "@chat_thread_missing_root": {
     "description": "Placeholder when a thread root message is not available locally"
   },
-  "chat_not_delivered": "Not delivered",
+  "chat_not_delivered": "Não entregue",
   "@chat_not_delivered": {
     "description": "Status label for a failed outgoing chat message"
   },
@@ -1169,6 +1169,44 @@
   "chat_message_too_long": "Sua mensagem excede o limite de caracteres permitido. Por favor, divida-a em mensagens menores, obrigado.",
   "@chat_message_too_long": {
     "description": "Error notification shown when a composed chat message is longer than the allowed character limit"
+  },
+  "chat_mention_everyone": "todos",
+  "@chat_mention_everyone": {
+    "description": "Display label for a room-wide @everyone mention"
+  },
+  "chat_mention_everyone_hint": "todos aqui",
+  "@chat_mention_everyone_hint": {
+    "description": "Secondary label shown in the @everyone mention suggestion row"
+  },
+  "chat_mention_notified_title": "{name} mencionou você",
+  "@chat_mention_notified_title": {
+    "description": "Global notification title when the local user is @mentioned in chat",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "chat_new_mentions_badge": "{count, plural, =1{1 nova menção} other{{count} novas menções}}",
+  "@chat_new_mentions_badge": {
+    "description": "Floating badge when new @mentions arrive while scrolled up in chat",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chat_character_count": "{current}/{max}",
+  "@chat_character_count": {
+    "description": "Composer character counter for stored chat text",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
   },
   "meeting_quality_feedback": "Feedback da qualidade da reunião",
   "@meeting_quality_feedback": {
@@ -1198,7 +1236,7 @@
   "@call_quality_share_more_details": {
     "description": "Placeholder for optional feedback text"
   },
-  "call_quality_help_text": "Optional feedback is sent securely to help improve call quality.",
+  "call_quality_help_text": "Feedback opcional é enviado seguramente para aprimorar a qualidade da chamada.",
   "@call_quality_help_text": {
     "description": "Short privacy note under the rating on post-meeting feedback"
   },
@@ -1369,7 +1407,7 @@
   "@meeting_expiry_banner_title_prefix": {
     "description": "Title prefix for meeting expiry countdown banner; duration is appended"
   },
-  "meeting_expiry_banner_description": "Free meetings are limited to 1 hour. This call will disconnect soon.",
+  "meeting_expiry_banner_description": "Chamadas gratuitas são limitadas a 1 hora. Essa chamada será desconectada em breve.",
   "@meeting_expiry_banner_description": {
     "description": "Subtitle on meeting expiry warning banner for free meetings"
   },
@@ -1569,7 +1607,7 @@
   "@call_supports_up_to": {
     "description": "Message prefix showing the maximum number of participants allowed in the call"
   },
-  "call_reached_limit": "This call has reached the ",
+  "call_reached_limit": "Essa chamada atingiu o ",
   "@call_reached_limit": {
     "description": "Message prefix showing the call has reached the limit"
   },
@@ -2153,15 +2191,15 @@
   "@waiting_room": {
     "description": "Label for the waiting room row in app settings"
   },
-  "live_captions": "Live captions",
+  "live_captions": "Legendas ao vivo",
   "@live_captions": {
     "description": "Toggle label for enabling live captions in meeting settings"
   },
-  "live_captions_all_participants": "Enabled for all participants",
+  "live_captions_all_participants": "Ativado para todos os participantes",
   "@live_captions_all_participants": {
     "description": "Live captions value when every participant can use captions"
   },
-  "save_recordings_to": "Save recordings to",
+  "save_recordings_to": "Salvar as gravações em",
   "@save_recordings_to": {
     "description": "Label for the recording folder row in app settings"
   },
@@ -2169,11 +2207,11 @@
   "@test_microphone": {
     "description": "Opens the microphone test in app settings"
   },
-  "test_speakers": "Test speakers",
+  "test_speakers": "Testar alto-falantes",
   "@test_speakers": {
     "description": "Opens the speaker test in app settings"
   },
-  "settings_section_host": "Host settings",
+  "settings_section_host": "Configurações do anfitrião",
   "@settings_section_host": {
     "description": "Section header for host-only in-call settings"
   },
@@ -2189,7 +2227,7 @@
   "@settings_section_display": {
     "description": "Section header for display in-call settings"
   },
-  "record_meeting": "Record meeting",
+  "record_meeting": "Gravar reunião",
   "@record_meeting": {
     "description": "Host toggle that records the meeting"
   },
@@ -2197,7 +2235,7 @@
   "@allow_live_captions_description": {
     "description": "Explanation under the allow live captions toggle"
   },
-  "transcribe_meeting": "Transcribe meeting",
+  "transcribe_meeting": "Transcrever a reunião",
   "@transcribe_meeting": {
     "description": "Host toggle that creates a meeting transcript"
   },
@@ -2205,7 +2243,7 @@
   "@transcribe_meeting_off_description": {
     "description": "Explanation under the transcribe meeting toggle when off"
   },
-  "incoming_video": "Incoming video",
+  "incoming_video": "Vídeo recebido",
   "@incoming_video": {
     "description": "Toggle that shows video from other participants"
   },
@@ -2217,7 +2255,7 @@
   "@picture_in_picture_while_sharing": {
     "description": "Toggle that keeps a picture-in-picture window during screen share"
   },
-  "meeting_timer": "Meeting timer",
+  "meeting_timer": "Temporizador de reunião",
   "@meeting_timer": {
     "description": "Toggle that shows the meeting duration timer"
   },
@@ -2273,11 +2311,11 @@
   "@mobile_upgrade_warning_link": {
     "description": "Tappable link text in the outdated mobile client warning; opens the app store"
   },
-  "live_captions_accessibility": "Accessibility",
+  "live_captions_accessibility": "Acessibilidade",
   "@live_captions_accessibility": {
     "description": "Settings section title for live captions"
   },
-  "live_captions_modal_title": "Show live captions?",
+  "live_captions_modal_title": "Mostrar legendas ao vivo?",
   "@live_captions_modal_title": {
     "description": "Title for first-enable live captions confirmation dialog"
   },
@@ -2285,27 +2323,27 @@
   "@live_captions_modal_message": {
     "description": "Body for first-enable live captions confirmation dialog"
   },
-  "live_captions_enable": "Enable captions",
+  "live_captions_enable": "Ativar legendas",
   "@live_captions_enable": {
     "description": "Primary button in live captions confirmation dialog"
   },
-  "live_captions_spoken_language": "Spoken language",
+  "live_captions_spoken_language": "Idioma falado",
   "@live_captions_spoken_language": {
     "description": "Label above caption language picker"
   },
-  "live_captions_turn_on": "Show live captions",
+  "live_captions_turn_on": "Mostrar legendas ao vivo",
   "@live_captions_turn_on": {
     "description": "Tooltip for the top bar live captions button while captions are off"
   },
-  "live_captions_turn_off": "Hide live captions",
+  "live_captions_turn_off": "Ocultar legendas ao vivo",
   "@live_captions_turn_off": {
     "description": "Tooltip for the top bar live captions button while captions are on"
   },
-  "live_captions_settings": "Caption settings",
+  "live_captions_settings": "Configurações de legenda",
   "@live_captions_settings": {
     "description": "Tooltip for the settings button in the live captions sheet header"
   },
-  "live_captions_loading": "Loading…",
+  "live_captions_loading": "Carregando…",
   "@live_captions_loading": {
     "description": "Caption bar status while waiting for first segment"
   },
@@ -2313,7 +2351,7 @@
   "@live_captions_ready": {
     "description": "Caption bar status when agent is ready but no lines yet"
   },
-  "live_captions_failing": "Live captions aren't working. Try turning them off and on again.",
+  "live_captions_failing": "As legendas ao vivo não estão funcionando. Tente desativar e ativar de novo.",
   "@live_captions_failing": {
     "description": "Caption bar status when decrypt pipeline fails"
   },
@@ -2325,11 +2363,11 @@
   "@live_captions_disabled_by_host": {
     "description": "Warning when a participant tries to enable live captions after the host disabled them"
   },
-  "live_captions_agent_transcribing": "Transcribing…",
+  "live_captions_agent_transcribing": "Transcrevendo…",
   "@live_captions_agent_transcribing": {
     "description": "Participant list status for the STT caption agent"
   },
-  "live_captions_agent_name": "Live caption agent",
+  "live_captions_agent_name": "Agente de legenda ao vivo",
   "@live_captions_agent_name": {
     "description": "Display name for the STT caption agent in participant list"
   },
@@ -2337,11 +2375,11 @@
   "@live_captions_agent_disclaimer": {
     "description": "Participant list disclaimer for the STT caption agent"
   },
-  "participant_list_system_section": "System",
+  "participant_list_system_section": "Sistema",
   "@participant_list_system_section": {
     "description": "Section header for system agents in the participant list"
   },
-  "participant_list_people_section": "People",
+  "participant_list_people_section": "Pessoas",
   "@participant_list_people_section": {
     "description": "Section header for human participants in the participant list"
   },
