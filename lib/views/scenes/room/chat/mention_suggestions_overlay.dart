@@ -23,7 +23,6 @@ class MentionSuggestionsOverlay extends StatelessWidget {
   static const double overlayMinWidth = 280;
   static const double containerRadius = 16;
   static const double itemRadius = 12;
-  static const Color containerColor = Color(0xFF1A1A28);
   static const Color containerBorderColor = Color(0xFF393B51);
 
   final List<MentionSuggestion> suggestions;
@@ -39,7 +38,7 @@ class MentionSuggestionsOverlay extends StatelessWidget {
       color: Colors.transparent,
       child: Container(
         decoration: BoxDecoration(
-          color: containerColor,
+          color: context.colors.backgroundCard,
           borderRadius: BorderRadius.circular(containerRadius),
           border: Border.all(color: containerBorderColor),
         ),
@@ -112,7 +111,7 @@ class _SuggestionRowState extends State<_SuggestionRow> {
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: _highlighted
-                ? context.colors.interActionWeak
+                ? context.colors.cardHighlightColor
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(
               MentionSuggestionsOverlay.itemRadius,

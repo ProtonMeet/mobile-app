@@ -97,6 +97,12 @@ class _ChatWidgetConstants {
 
   static const double sendButtonVerticalPadding = 6.0;
 
+  /// Scroll distance over which the pinned "Chat" title fades to fully hidden.
+  static const double headerTitleFadeScrollExtent = 128;
+
+  /// Pinned header frosted-glass blur (lighter than other side panels).
+  static const double headerBlurSigma = 4;
+
   static const Color inputBackgroundColor = Color(0xFF1A1A28);
   static const Color sendButtonColor = Color(0xFFABABF8);
   static const Color textTertiary = Color(0xFF818199);
@@ -116,6 +122,9 @@ class _ChatWidgetConstants {
   /// Horizontal offset where thread content begins (after line + gap).
   static const double threadContentLeft =
       threadLineLeft + threadLineWidth + threadLineContentGap;
+
+  /// @ suggestion overlay extends past the reply pill to align with the thread line.
+  static const double threadMentionOverlayHorizontalOutset = 16.0;
 }
 
 class _ChatWidgetState extends State<ChatWidget> {
@@ -134,8 +143,11 @@ class _ChatWidgetState extends State<ChatWidget> {
   String _participantTracksSignature = '';
 
   bool _isAtBottom = true;
+  double _headerTitleOpacity = 1;
   bool _isScrollingToBottom = false;
-  bool _isReplyFieldFocused = false;
+  bool _didInitialScroll = false;
+  String? _focusedReplyRootId;
+  double _lastKeyboardHeight = 0;
   int _newMessagesOverlayCount = 0;
   int _newMentionsOverlayCount = 0;
   MentionComposerController? _mainMentionComposer;
@@ -183,9 +195,13 @@ class _ChatWidgetState extends State<ChatWidget> {
       _mainMentionComposer = _createMentionComposer(_controller.draftMessage);
       _mainMentionComposer!.addListener(_onMainMentionStoredChanged);
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _scrollToBottom(immediate: true);
-    });
+
+    if (!_didInitialScroll) {
+      _didInitialScroll = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _scrollToBottom(immediate: true);
+      });
+    }
   }
 
   MentionComposerController _createMentionComposer(String initialStored) {
@@ -346,14 +362,29 @@ class _ChatWidgetState extends State<ChatWidget> {
     if (!_scrollController.hasClients) return;
     final position = _scrollController.position;
     final atBottom = position.pixels >= position.maxScrollExtent - 24;
-    if (_isAtBottom != atBottom) {
-      setState(() => _isAtBottom = atBottom);
+    final headerOpacity =
+        (1 - position.pixels / _ChatWidgetConstants.headerTitleFadeScrollExtent)
+            .clamp(0.0, 1.0);
+    final headerOpacityChanged = _headerTitleOpacity != headerOpacity;
+    final atBottomChanged = _isAtBottom != atBottom;
+
+    if (headerOpacityChanged) {
+      _headerTitleOpacity = headerOpacity;
+    }
+    if (atBottomChanged) {
+      _isAtBottom = atBottom;
       if (atBottom) {
         _resetNewMessagesOverlay();
       }
     }
-    if (_newMessagesOverlayCount > 0) {
-      setState(_resetNewMessagesOverlay);
+    if (headerOpacityChanged ||
+        atBottomChanged ||
+        _newMessagesOverlayCount > 0) {
+      setState(() {
+        if (_newMessagesOverlayCount > 0) {
+          _resetNewMessagesOverlay();
+        }
+      });
     }
   }
 
@@ -434,6 +465,9 @@ class _ChatWidgetState extends State<ChatWidget> {
 
   void _onTextChanged() {
     _controller.setDraftMessage(_textController.text);
+    // Rebuild so the send button enable/disable state reflects the current
+    // text immediately instead of only after the field loses focus.
+    if (mounted) setState(() {});
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (_inputScrollController.hasClients && _inputFocusNode.hasFocus) {
@@ -510,7 +544,10 @@ class _ChatWidgetState extends State<ChatWidget> {
     }
     return _replyControllers.putIfAbsent(root.id, () {
       final c = TextEditingController(text: root.replyDraft ?? '');
-      c.addListener(() => _controller.setThreadReplyDraft(root.id, c.text));
+      c.addListener(() {
+        _controller.setThreadReplyDraft(root.id, c.text);
+        if (mounted) setState(() {});
+      });
       return c;
     });
   }
@@ -520,6 +557,7 @@ class _ChatWidgetState extends State<ChatWidget> {
       final composer = _createMentionComposer(root.replyDraft ?? '');
       composer.addListener(() {
         _controller.setThreadReplyDraft(root.id, composer.storedText);
+        if (mounted) setState(() {});
       });
       return composer;
     });
@@ -550,8 +588,54 @@ class _ChatWidgetState extends State<ChatWidget> {
 
   void _onReplyFocusChanged() {
     if (!mounted) return;
-    final focused = _replyFocusNodes.values.any((node) => node.hasFocus);
-    setState(() => _isReplyFieldFocused = focused);
+    String? focusedRootId;
+    for (final entry in _replyFocusNodes.entries) {
+      if (entry.value.hasFocus) {
+        focusedRootId = entry.key;
+        break;
+      }
+    }
+    setState(() => _focusedReplyRootId = focusedRootId);
+    if (focusedRootId != null) {
+      _scheduleEnsureReplyComposerVisible(focusedRootId);
+    }
+  }
+
+  void _scheduleEnsureReplyComposerVisible(String rootId) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_replyFocus(rootId).hasFocus) {
+        _ensureReplyComposerVisible(rootId);
+      }
+    });
+  }
+
+  void _ensureReplyComposerVisible(String rootId) {
+    final context = _replyComposerRowKeys[rootId]?.currentContext;
+    if (context == null || !mounted) return;
+    Scrollable.ensureVisible(
+      context,
+      alignment: 1,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _onKeyboardInsetChanged(double keyboardHeight) {
+    if (keyboardHeight == _lastKeyboardHeight) return;
+    _lastKeyboardHeight = keyboardHeight;
+    if (keyboardHeight <= 0) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final focusedReply = _focusedReplyRootId;
+      if (focusedReply != null && _replyFocus(focusedReply).hasFocus) {
+        _ensureReplyComposerVisible(focusedReply);
+        return;
+      }
+      if (_inputFocusNode.hasFocus) {
+        _scheduleScrollToBottom();
+      }
+    });
   }
 
   void _handleReplySend(RoomChatMessage root) {
@@ -641,6 +725,7 @@ class _ChatWidgetState extends State<ChatWidget> {
           screenHeight,
         );
         final inputBottomPadding = _calculateInputBottomPadding(keyboardHeight);
+        _onKeyboardInsetChanged(keyboardHeight);
 
         return SizedBox(
           width: chatWidth,
@@ -653,13 +738,8 @@ class _ChatWidgetState extends State<ChatWidget> {
             child: RoomSidePanelScroll(
               scrollController: _scrollController,
               fillHeight: isLandscape,
-              header: Text(
-                context.local.chat_title,
-                style: ProtonStyles.headline(
-                  fontSize: 18,
-                  color: context.colors.textNorm,
-                ),
-              ),
+              headerBlurSigma: _ChatWidgetConstants.headerBlurSigma,
+              header: _buildPanelHeader(context),
               footer: SafeArea(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -679,6 +759,19 @@ class _ChatWidgetState extends State<ChatWidget> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildPanelHeader(BuildContext context) {
+    return Opacity(
+      opacity: _headerTitleOpacity,
+      child: Text(
+        context.local.chat_title,
+        style: ProtonStyles.headline(
+          fontSize: 18,
+          color: context.colors.textNorm,
+        ),
+      ),
     );
   }
 
@@ -791,20 +884,16 @@ class _ChatWidgetState extends State<ChatWidget> {
           left: RoomSidePanelLayout.horizontalPadding,
           right: RoomSidePanelLayout.horizontalPadding,
           bottom: bottomPadding,
-          top: _isReplyFieldFocused ? 0 : _ChatWidgetConstants.inputPadding,
+          top: _ChatWidgetConstants.inputPadding,
         ),
-        // The padding is kept even when hidden so the reply composer still
-        // clears the keyboard.
-        child: _isReplyFieldFocused
-            ? const SizedBox(width: double.infinity)
-            : Row(
-                key: _mainChatInputRowKey,
-                children: [
-                  Expanded(child: _buildTextField(context)),
-                  const SizedBox(width: _ChatWidgetConstants.spacingMedium),
-                  _buildSendButton(context),
-                ],
-              ),
+        child: Row(
+          key: _mainChatInputRowKey,
+          children: [
+            Expanded(child: _buildTextField(context)),
+            const SizedBox(width: _ChatWidgetConstants.spacingMedium),
+            _buildSendButton(context),
+          ],
+        ),
       ),
     );
   }
@@ -953,29 +1042,37 @@ class _ChatWidgetState extends State<ChatWidget> {
   }
 
   Widget _buildSendButton(BuildContext context) {
+    final canSend = _currentComposerStoredText().trim().isNotEmpty;
     return RepaintBoundary(
       child: GestureDetector(
-        onTap: _handleSendPressed,
-        child: Container(
-          width: _ChatWidgetConstants.inputButtonSize,
-          height: _ChatWidgetConstants.inputButtonSize,
-          padding: const EdgeInsets.symmetric(
-            horizontal: _ChatWidgetConstants.spacingMedium,
-            vertical: _ChatWidgetConstants.sendButtonVerticalPadding,
-          ),
-          decoration: const ShapeDecoration(
-            color: _ChatWidgetConstants.sendButtonColor,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(500)),
+        onTap: canSend ? _handleSendPressed : null,
+        child: Opacity(
+          opacity: canSend ? 1 : 0.45,
+          child: Container(
+            width: _ChatWidgetConstants.inputButtonSize,
+            height: _ChatWidgetConstants.inputButtonSize,
+            padding: const EdgeInsets.symmetric(
+              horizontal: _ChatWidgetConstants.spacingMedium,
+              vertical: _ChatWidgetConstants.sendButtonVerticalPadding,
             ),
-          ),
-          child: Center(
-            child: context.images.iconChatSend.svg(
-              width: _ChatWidgetConstants.sendIconSize,
-              height: _ChatWidgetConstants.sendIconSize,
-              colorFilter: ColorFilter.mode(
-                context.colors.textInverted,
-                BlendMode.srcIn,
+            decoration: ShapeDecoration(
+              color: canSend
+                  ? _ChatWidgetConstants.sendButtonColor
+                  : context.colors.interActionWeak,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(500)),
+              ),
+            ),
+            child: Center(
+              child: context.images.iconChatSend.svg(
+                width: _ChatWidgetConstants.sendIconSize,
+                height: _ChatWidgetConstants.sendIconSize,
+                colorFilter: ColorFilter.mode(
+                  canSend
+                      ? context.colors.textInverted
+                      : context.colors.textWeak,
+                  BlendMode.srcIn,
+                ),
               ),
             ),
           ),
@@ -1214,6 +1311,7 @@ class _ChatWidgetState extends State<ChatWidget> {
     final replyDecoration = InputDecoration(
       isDense: true,
       border: InputBorder.none,
+      contentPadding: EdgeInsets.zero,
       hintText: context.local.chat_reply_hint,
       hintStyle: ProtonStyles.body2Medium(color: context.colors.textDisable),
     );
@@ -1233,6 +1331,9 @@ class _ChatWidgetState extends State<ChatWidget> {
         onSubmitted: () => _handleReplySend(root),
         onTooLongMentionInsert: _notifyMessageTooLong,
         overlayAnchorKey: _replyComposerRowKey(root.id),
+        overlayHorizontalOutset:
+            _ChatWidgetConstants.threadMentionOverlayHorizontalOutset,
+        overlayHorizontalTrimPerSide: 16,
       );
     } else {
       replyField = TextField(
@@ -1247,6 +1348,7 @@ class _ChatWidgetState extends State<ChatWidget> {
     }
 
     return Container(
+      key: _replyComposerRowKey(root.id),
       padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
       decoration: ShapeDecoration(
         color: Colors.transparent,
@@ -1260,7 +1362,6 @@ class _ChatWidgetState extends State<ChatWidget> {
         ),
       ),
       child: Row(
-        key: _replyComposerRowKey(root.id),
         children: [
           _buildLocalUserAvatar(size: _ChatWidgetConstants.replyAvatarSize),
           const SizedBox(width: _ChatWidgetConstants.spacingMedium),
@@ -1281,15 +1382,20 @@ class _ChatWidgetState extends State<ChatWidget> {
           const SizedBox(width: 6),
           _buildReplyComposerIconButton(
             onTap: () => _handleReplySend(root),
+            enabled: _replyStoredText(root).trim().isNotEmpty,
             child: context.images.iconChatSend.svg(
               width: 15,
               height: 15,
               colorFilter: ColorFilter.mode(
-                context.colors.textWeak,
+                _replyStoredText(root).trim().isNotEmpty
+                    ? context.colors.textInverted
+                    : context.colors.textWeak,
                 BlendMode.srcIn,
               ),
             ),
-            backgroundColor: context.colors.interActionWeak,
+            backgroundColor: _replyStoredText(root).trim().isNotEmpty
+                ? _ChatWidgetConstants.sendButtonColor
+                : context.colors.interActionWeak,
           ),
         ],
       ),
@@ -1300,22 +1406,26 @@ class _ChatWidgetState extends State<ChatWidget> {
     required VoidCallback onTap,
     required Widget child,
     Color? backgroundColor,
+    bool enabled = true,
   }) {
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: _ChatWidgetConstants.replyActionButtonSize,
-        height: _ChatWidgetConstants.replyActionButtonSize,
-        decoration: ShapeDecoration(
-          color: backgroundColor ?? context.colors.controlButtonBackground,
-          shape: RoundedRectangleBorder(
-            side: BorderSide(
-              color: _ChatWidgetConstants.missingRootAvatarColor,
+      onTap: enabled ? onTap : null,
+      child: Opacity(
+        opacity: enabled ? 1 : 0.45,
+        child: Container(
+          width: _ChatWidgetConstants.replyActionButtonSize,
+          height: _ChatWidgetConstants.replyActionButtonSize,
+          decoration: ShapeDecoration(
+            color: backgroundColor ?? context.colors.controlButtonBackground,
+            shape: RoundedRectangleBorder(
+              side: BorderSide(
+                color: _ChatWidgetConstants.missingRootAvatarColor,
+              ),
+              borderRadius: BorderRadius.circular(999),
             ),
-            borderRadius: BorderRadius.circular(999),
           ),
+          child: Center(child: child),
         ),
-        child: Center(child: child),
       ),
     );
   }
@@ -1644,7 +1754,6 @@ class _ChatWidgetState extends State<ChatWidget> {
         message: text,
         localIdentity: widget.localIdentity,
         participantNameMap: _participantNameMap,
-        participantTracks: widget.participantTracks,
         selectable: selectable,
       );
     }

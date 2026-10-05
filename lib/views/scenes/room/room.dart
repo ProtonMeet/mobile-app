@@ -1438,6 +1438,26 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       final title = pending.isMention
           ? context.local.chat_mention_notified_title(senderName)
           : senderName;
+      final mentionTitleWidget = pending.isMention
+          ? Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: senderName,
+                    style: ProtonStyles.body1Semibold(
+                      color: context.colors.textNorm,
+                    ),
+                  ),
+                  TextSpan(
+                    text: ' ${context.local.chat_mention_notified_suffix}',
+                    style: ProtonStyles.body1Semibold(
+                      color: context.colors.textWeak,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : null;
 
       final hasBody = msg.message.trim().isNotEmpty;
       LocalToast.showToastification(
@@ -1445,17 +1465,19 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         title,
         hasBody ? plainBody : '',
         avatarName: senderName,
+        titleWidget: mentionTitleWidget,
         index: resolveParticipantColorIndex(
           msg.identity,
           participantTracks: participantTracks,
         ),
         autoCloseInSeconds: pending.isMention ? 30 : 8,
+        bottomMargin: bottomControlHeight + 16,
+        horizontalMargin: 16,
         messageWidget: hasBody
             ? MentionMessageContent(
                 message: msg.message,
                 localIdentity: localId,
                 participantNameMap: nameMap,
-                participantTracks: participantTracks,
                 selectable: false,
               )
             : null,

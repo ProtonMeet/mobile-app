@@ -210,6 +210,16 @@ class MentionComposerController extends ChangeNotifier {
 
     if (affectedRanges.isEmpty) {
       _stored = _rebuildStoredFromDisplay(newText);
+      final collapsed = collapseMentionSpaceBeforePunctuation(
+        newText,
+        newValue.selection.baseOffset,
+        ranges: mentionDisplayRanges,
+      );
+      if (collapsed != null) {
+        _applyDisplayText(collapsed.text, collapsed.caret);
+        notifyListeners();
+        return displayController.value;
+      }
       notifyListeners();
       return newValue;
     }
