@@ -11,11 +11,11 @@ use crate::{
         dto::websocket::ClientAck, message_cache::CachedMessageType, ws_client::WebSocketMessage,
     },
     service::{
+        DELAY_PER_RANK_MS, RANK_GROUP_DELAY_MS, RANK_GROUP_SIZE,
         service_state::MlsGroupState,
         user_service::{
             CommitProcessingOutcome, GroupKeyUpdateReason, MessageWithId,
             ProposalProcessingOutcome, ProposalType, QueuedProposal, Service,
-            utils::{DELAY_PER_RANK_MS, RANK_GROUP_DELAY_MS, RANK_GROUP_SIZE},
         },
         utils::describe_proposal_kind,
     },

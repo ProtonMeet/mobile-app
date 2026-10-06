@@ -6,10 +6,9 @@ pub(crate) mod tests {
         collections::HashMap,
         future::ready,
         str::FromStr,
-        sync::{Arc, Mutex as StdMutex},
+        sync::{Arc, Mutex as StdMutex, Weak},
     };
 
-    use esdicawt::spec::CwtAny;
     use mls_types::ExternalPskId;
     use muon::http::Status;
     use tokio::sync::RwLock;
@@ -34,6 +33,7 @@ pub(crate) mod tests {
         },
         service::{
             service_state::MlsGroupState,
+            test::create_mock_mls_api,
             user_service::{ProposalType, QueuedProposal, Service},
             utils::convert_mls_spec_to_types,
             waiting_room_setting::{
@@ -44,11 +44,8 @@ pub(crate) mod tests {
         utils::server_time::ServerTimeTracker,
     };
 
-    use base64::{Engine, prelude::BASE64_STANDARD};
     use cose_key_thumbprint::CoseKeyThumbprint;
-    use ed25519_dalek::pkcs8::{
-        DecodePrivateKey, DecodePublicKey, EncodePublicKey, spki::der::pem::LineEnding,
-    };
+    use ed25519_dalek::pkcs8::{DecodePrivateKey, DecodePublicKey};
     use identity::{
         Disclosure, Ed25519Issuer, IdentityResult, PresentationContext, ProtonMeetIdentity, SdCwt,
     };
@@ -66,7 +63,7 @@ pub(crate) mod tests {
     };
     use proton_claims::{
         ClientType, MimiProvider, ProtonMeetClaims,
-        reexports::{Issuer, IssuerParams, SpiceOidcClaims, cose_key_set::CoseKeySet},
+        reexports::{Issuer, IssuerParams, SpiceOidcClaims},
     };
     use proton_meet_mls::{
         CommitBundle, MlsClient, MlsClientConfig, MlsGroup, MlsStore, kv::MemKv,
@@ -3779,6 +3776,7 @@ pub(crate) mod tests {
             Arc::new(ws_client_mock),
             mls_store,
             ServerTimeTracker::new(),
+            Weak::new(),
         )
     }
 
@@ -4899,53 +4897,6 @@ pub(crate) mod tests {
     }
 
     /// Helper function to create a mock MLS API with common expectations
-    pub fn create_mock_mls_api(email: &str, meeting_link_name: &str, is_host: bool) -> MockMlsApi {
-        let mut mls_api = MockMlsApi::new();
-
-        let issuer_sk = "-----BEGIN PRIVATE KEY-----
-MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
------END PRIVATE KEY-----";
-
-        let issuer_signing_key = ed25519_dalek::SigningKey::from_pkcs8_pem(issuer_sk).unwrap();
-        let cks = CoseKeySet::new(&issuer_signing_key).unwrap();
-        let email = email.to_string();
-        let meeting_link_name = meeting_link_name.to_string();
-
-        mls_api
-            .expect_fetch_sd_cwt()
-            .returning(move |_, _, base64_holder_verifying_key, _| {
-                let holder_verifying_key =
-                    BASE64_STANDARD.decode(base64_holder_verifying_key).unwrap();
-                let holder_verifying_key = ed25519_dalek::VerifyingKey::from_bytes(
-                    &holder_verifying_key.as_slice().try_into().unwrap(),
-                )
-                .unwrap();
-                let holder_verifying_key_pem = holder_verifying_key
-                    .to_public_key_pem(LineEnding::LF)
-                    .unwrap();
-                let (sd_cwt, _issuer_signing_key) = mock_sdcwt_issuance(
-                    &holder_verifying_key_pem,
-                    &meeting_link_name,
-                    &email,
-                    proton_claims::Role::User,
-                    is_host,
-                )
-                .unwrap();
-                let base64_sd_cwt = BASE64_STANDARD.encode(sd_cwt.to_cbor_bytes().unwrap());
-                Box::pin(ready(Ok(base64_sd_cwt)))
-            });
-
-        let cks_clone = cks.clone();
-        mls_api
-            .expect_fetch_cose_key_set()
-            .returning(move || Box::pin(ready(Ok(cks_clone.to_cbor_bytes().unwrap()))));
-        mls_api
-            .expect_fetch_external_sender()
-            .returning(move || Box::pin(ready(Ok(vec![]))));
-
-        mls_api
-    }
-
     pub fn mock_sdcwt_issuance(
         holder_confirmation_key_pem: &str,
         meeting_link_name: &str,
@@ -5350,6 +5301,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             Arc::new(MockWebSocketClient::new()),
             mls_store,
             ServerTimeTracker::new(),
+            Weak::new(),
         );
 
         // Copy proposal queue manually
@@ -5545,6 +5497,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             Arc::new(ws_client_mock),
             mls_store,
             ServerTimeTracker::new(),
+            Weak::new(),
         );
 
         // Test is_mls_up_to_date - should return true for same group
@@ -5656,6 +5609,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             Arc::new(ws_client_mock),
             mls_store,
             ServerTimeTracker::new(),
+            Weak::new(),
         );
 
         // Test is_mls_up_to_date - should return false because user1 is not in group2's roster
@@ -6961,6 +6915,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             Arc::new(join_switch_ws_client_mock()),
             mls_store,
             ServerTimeTracker::new(),
+            Weak::new(),
         )
     }
 
@@ -7957,132 +7912,10 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
              gates the agent decrypting the SFrame'd meeting audio"
         );
     }
-
-    /// A solo caller is a room admin, so it ranks first and only waits out the
-    /// stagger's jitter (up to 2s) before asking.
-    #[tokio::test]
-    async fn request_closed_captions_asks_meet_server_when_no_agent_in_group() {
-        let room_id = "captions_request_no_agent";
-        let (mut service, _group, _cs, _user_key) = setup_single_user_group(room_id).await;
-
-        let mut meeting_api = MockMeetingApi::new();
-        meeting_api
-            .expect_add_closed_captions_agent()
-            .times(1)
-            .withf(move |link| link == room_id)
-            .returning(|_| Box::pin(ready(Ok(()))));
-        service.meeting_api = Arc::new(meeting_api);
-
-        service
-            .request_closed_captions(&MeetingLinkName::from(room_id))
-            .await
-            .unwrap();
-    }
-
-    #[tokio::test]
-    async fn stop_closed_captions_is_a_no_op_without_an_agent_in_group() {
-        let room_id = "captions_stop_no_agent";
-        let (mut service, _group, _cs, _user_key) = setup_single_user_group(room_id).await;
-
-        let mut meeting_api = MockMeetingApi::new();
-        meeting_api
-            .expect_remove_closed_captions_agent()
-            .times(0)
-            .returning(|_| Box::pin(ready(Ok(()))));
-        service.meeting_api = Arc::new(meeting_api);
-
-        service
-            .stop_closed_captions(&MeetingLinkName::from(room_id))
-            .await
-            .unwrap();
-    }
-
-    /// The web client cancels a summon the moment demand disappears, before the
-    /// agent has joined — the state nobody else can see.
-    #[tokio::test]
-    async fn stop_closed_captions_cancels_our_own_request_before_the_agent_arrives() {
-        let room_id = "captions_cancel_in_flight";
-        let (mut service, _group, _cs, _user_key) = setup_single_user_group(room_id).await;
-
-        let mut meeting_api = MockMeetingApi::new();
-        meeting_api
-            .expect_add_closed_captions_agent()
-            .times(1)
-            .returning(|_| Box::pin(ready(Ok(()))));
-        meeting_api
-            .expect_remove_closed_captions_agent()
-            .times(1)
-            .withf(move |link| link == room_id)
-            .returning(|_| Box::pin(ready(Ok(()))));
-        service.meeting_api = Arc::new(meeting_api);
-
-        let meeting_name = MeetingLinkName::from(room_id);
-        service
-            .request_closed_captions(&meeting_name)
-            .await
-            .unwrap();
-        assert!(
-            service
-                .state
-                .lock()
-                .await
-                .is_awaiting_captions_agent(room_id),
-            "the request should be remembered until the agent arrives"
-        );
-
-        service.stop_closed_captions(&meeting_name).await.unwrap();
-        assert!(
-            !service
-                .state
-                .lock()
-                .await
-                .is_awaiting_captions_agent(room_id),
-            "cancelling should clear the outstanding request"
-        );
-    }
-
-    #[tokio::test]
-    async fn request_closed_captions_reports_a_failed_request() {
-        let room_id = "captions_request_http_error";
-        let (mut service, _group, _cs, _user_key) = setup_single_user_group(room_id).await;
-
-        let mut meeting_api = MockMeetingApi::new();
-        meeting_api
-            .expect_add_closed_captions_agent()
-            .times(1)
-            .returning(|_| {
-                Box::pin(ready(Err(HttpClientError::MlsHttpError {
-                    message: "server down".to_string(),
-                })))
-            });
-        service.meeting_api = Arc::new(meeting_api);
-
-        let result = service
-            .request_closed_captions(&MeetingLinkName::from(room_id))
-            .await;
-
-        assert!(result.is_err(), "a failed request must reach the caller");
-    }
-
-    #[tokio::test]
-    async fn request_closed_captions_needs_a_loaded_group_to_rank_itself() {
-        let room_id = "captions_request_no_group";
-        let mut service = create_test_service("captions-no-group", room_id).await;
-        service.meeting_api = Arc::new(MockMeetingApi::new());
-
-        let result = service
-            .request_closed_captions(&MeetingLinkName::from(room_id))
-            .await;
-
-        assert!(
-            result.is_err(),
-            "without a group there is no rank, so nothing should be sent"
-        );
-    }
 }
 
 #[cfg(test)]
 pub use tests::{
-    create_mock_mls_api, create_test_service, join_switch_service_with_mls_api,
-    mls_group_export_snapshot, setup_n_user_group,
+    create_test_service, join_switch_service_with_mls_api, mls_group_export_snapshot,
+    setup_n_user_group,
 };

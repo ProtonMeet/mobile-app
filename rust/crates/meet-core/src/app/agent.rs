@@ -16,9 +16,7 @@ impl App {
         let user_id = self.active_user_id().await?;
         let meeting = Self::parse_meeting_link_name(&meeting_link_name)?;
         self.services
-            .user_service
-            .read()
-            .await
+            .caption_service
             .admit_agent(&meeting, &user_id, agent_device_id, meeting_password)
             .await
             .map_err(MeetCoreError::from)
@@ -32,9 +30,7 @@ impl App {
         let user_id = self.active_user_id().await?;
         let meeting = Self::parse_meeting_link_name(&meeting_link_name)?;
         self.services
-            .user_service
-            .read()
-            .await
+            .caption_service
             .remove_agent(&meeting, &user_id, agent_device_id)
             .await
             .map_err(MeetCoreError::from)
@@ -48,9 +44,7 @@ impl App {
     ) -> Result<(), MeetCoreError> {
         let meeting = Self::parse_meeting_link_name(&meeting_link_name)?;
         self.services
-            .user_service
-            .read()
-            .await
+            .caption_service
             .request_closed_captions(&meeting)
             .await
             .map_err(MeetCoreError::from)
@@ -63,9 +57,7 @@ impl App {
     ) -> Result<(), MeetCoreError> {
         let meeting = Self::parse_meeting_link_name(&meeting_link_name)?;
         self.services
-            .user_service
-            .read()
-            .await
+            .caption_service
             .stop_closed_captions(&meeting)
             .await
             .map_err(MeetCoreError::from)
@@ -78,9 +70,7 @@ impl App {
     ) -> Result<(), MeetCoreError> {
         let meeting = Self::parse_meeting_link_name(&meeting_link_name)?;
         self.services
-            .user_service
-            .read()
-            .await
+            .caption_service
             .set_closed_captions_availability_as_host(&meeting, available)
             .await
             .map_err(MeetCoreError::from)
@@ -95,9 +85,7 @@ impl App {
         // the host's session rather than by an explicit meeting parameter.
         Self::parse_meeting_link_name(&meeting_link_name)?;
         self.services
-            .user_service
-            .read()
-            .await
+            .caption_service
             .list_pending_agents(&user_id)
             .await
             .map_err(MeetCoreError::from)

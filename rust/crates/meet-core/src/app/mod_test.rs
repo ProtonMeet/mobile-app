@@ -1,5 +1,5 @@
 use std::future::ready;
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use crate::app::test_support::{
     build_app, build_app_with_auth_service, build_app_with_http, build_app_with_service,
@@ -129,6 +129,7 @@ async fn get_user_settings_propagates_service_error() {
         Arc::new(crate::app::test_support::minimal_ws_mock()),
         test_mls_store(),
         test_server_time_tracker(),
+        Weak::new(),
     );
 
     let app = build_app_with_service(default_app_state(), service).await;

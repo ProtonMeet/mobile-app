@@ -3,7 +3,7 @@ use crate::app_state::UserState;
 use crate::domain::user::models::UserId;
 use crate::domain::user::ports::user_api::UserApi;
 use crate::errors::core::MeetCoreError;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(target_family = "wasm"))]
 use crate::infra::dto::proton_user::UserData;
 use muon::auth::ForkFlowResult;
 use proton_meet_common::models::ProtonUser;
@@ -75,7 +75,7 @@ impl App {
     }
 
     /// Username/password login (native mobile/desktop only; not used on WASM).
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(not(target_family = "wasm"))]
     pub async fn login(
         &self,
         username: String,
@@ -118,7 +118,7 @@ impl App {
     }
 
     #[tracing::instrument(err, skip_all)]
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(not(target_family = "wasm"))]
     pub async fn login_with_two_factor(
         &self,
         two_factor_code: String,

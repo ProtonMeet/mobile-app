@@ -1,7 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     str::FromStr,
-    sync::Arc,
+    sync::{Arc, Weak},
     time::Duration,
 };
 
@@ -12,7 +12,7 @@ use crate::{
         ports::{ArcWebSocketClient, new_user_service::NewUserService},
     },
     infra::crypto_client::derive_external_psk,
-    service::service_state::MlsSyncState,
+    service::{service_state::MlsSyncState, services_bundle::ServiceBundle},
     utils::{instant, sleep},
 };
 use crate::{
@@ -85,13 +85,12 @@ use crate::{
 use identity::{Disclosure, PresentationContext, ProtonMeetIdentity, SdCwt};
 use meet_identifiers::{Domain, GroupId, Id, LeafIndex};
 
-mod captions;
 pub(crate) mod handlers;
 mod join;
 mod join_request;
 mod messages;
 mod proposals;
-mod utils;
+pub(super) mod utils;
 
 pub(crate) use utils::{credential_is_agent, psk_id_for_commit, public_ratchet_tree_has_agent};
 
@@ -148,25 +147,26 @@ pub enum GroupKeyUpdateReason {
 
 #[derive(Clone)]
 pub struct Service {
-    http_client: Arc<dyn HttpClient>,
-    mls_api: Arc<dyn MlsApi>,
-    meeting_api: Arc<dyn MeetingApi>,
-    ws_client: ArcWebSocketClient,
-    mls_store: Arc<RwLock<MlsStore>>,
-    state: Arc<Mutex<ServiceState>>,
-    message_cache: Arc<Mutex<MlsMessageCache>>,
-    proposal_queue: Arc<Mutex<HashMap<String, Vec<QueuedProposal>>>>,
+    pub(super) http_client: Arc<dyn HttpClient>,
+    pub(super) mls_api: Arc<dyn MlsApi>,
+    pub(super) meeting_api: Arc<dyn MeetingApi>,
+    pub(super) ws_client: ArcWebSocketClient,
+    pub(super) mls_store: Arc<RwLock<MlsStore>>,
+    pub(super) state: Arc<Mutex<ServiceState>>,
+    pub(super) message_cache: Arc<Mutex<MlsMessageCache>>,
+    pub(super) proposal_queue: Arc<Mutex<HashMap<String, Vec<QueuedProposal>>>>,
     // Serializes proposal/commit queue consumption per room to avoid cross-task drains.
-    room_processing_locks: Arc<Mutex<HashMap<String, Arc<Mutex<()>>>>>,
-    proposal_timer: Arc<Mutex<HashMap<String, u64>>>, // room_id -> epoch_at
+    pub(super) room_processing_locks: Arc<Mutex<HashMap<String, Arc<Mutex<()>>>>>,
+    pub(super) proposal_timer: Arc<Mutex<HashMap<String, u64>>>, // room_id -> epoch_at
     // MLS message service for processing commits and proposals
-    mls_msg_service: Arc<crate::domain::mls::mls_message_service::MlsMessageService>,
-    handling_offline_members: Arc<Mutex<bool>>,
-    mls_service: Arc<MlsService>,
+    pub(super) mls_msg_service: Arc<crate::domain::mls::mls_message_service::MlsMessageService>,
+    pub(super) handling_offline_members: Arc<Mutex<bool>>,
+    pub(super) mls_service: Arc<MlsService>,
     /// Wakes tasks waiting on a join-proposal `Welcome` after `welcome_info` is stored.
-    join_proposal_welcome_notify: Arc<Notify>,
-    server_time_tracker: ServerTimeTracker,
+    pub(super) join_proposal_welcome_notify: Arc<Notify>,
+    pub(super) server_time_tracker: ServerTimeTracker,
     pub handlers: Handlers,
+    pub(super) services: Weak<ServiceBundle>,
 }
 
 impl Service {
@@ -178,6 +178,7 @@ impl Service {
         ws_client: ArcWebSocketClient,
         mls_store: Arc<RwLock<MlsStore>>,
         server_time_tracker: ServerTimeTracker,
+        services: Weak<ServiceBundle>,
     ) -> Self {
         let state = Arc::new(Mutex::new(ServiceState::new()));
         let message_cache = Arc::new(Mutex::new(MlsMessageCache::new()));
@@ -229,7 +230,14 @@ impl Service {
             join_proposal_welcome_notify,
             server_time_tracker,
             handlers: Handlers::default(),
+            services,
         }
+    }
+
+    fn services(&self) -> Result<Arc<ServiceBundle>, anyhow::Error> {
+        self.services
+            .upgrade()
+            .ok_or_else(|| anyhow::anyhow!("Could not upgrade service bundle"))
     }
 
     async fn room_processing_lock(&self, room_id: &str) -> Arc<Mutex<()>> {
@@ -276,7 +284,7 @@ impl Service {
     /// Rank for the designated-committer stagger, with the group's epoch it was
     /// read at: room admins go first, everyone else takes a deterministic
     /// per-epoch position among the candidates.
-    async fn committer_rank(
+    pub(super) async fn committer_rank(
         &self,
         mls_group: &MlsGroup<MemKv>,
     ) -> Result<(u64, u64), anyhow::Error> {
@@ -298,7 +306,7 @@ impl Service {
         Ok((epoch_at, rank))
     }
 
-    async fn get_deterministic_random_rank(
+    pub(super) async fn get_deterministic_random_rank(
         &self,
         own_leaf_index: u32,
         epoch_at: u64,
@@ -647,9 +655,7 @@ impl Service {
     }
 
     pub async fn reset_service_state(&self) {
-        let mut state = self.state.lock().await;
-        state.reset();
-        drop(state);
+        self.state.lock().await.reset();
     }
 
     /// Returns whether MLS group info exists on the server (host has started the meeting).
@@ -898,7 +904,7 @@ impl Service {
     }
 
     /// Helper function to get the current epoch for a room
-    async fn get_current_epoch(&self, room_id: &str) -> Result<u64, anyhow::Error> {
+    pub(super) async fn get_current_epoch(&self, room_id: &str) -> Result<u64, anyhow::Error> {
         let mls_group_lock = self.mls_store.read().await.find_group(room_id)?;
         let mls_group = mls_group_lock.read().await;
         Ok(*mls_group.epoch())
@@ -2041,6 +2047,11 @@ impl UserService for Service {
 
         let mut state = self.state.lock().await;
         state.reset();
+        drop(state);
+
+        if let Ok(s) = self.services() {
+            s.reset().await;
+        }
 
         Ok(())
     }
@@ -2240,6 +2251,6 @@ pub(crate) mod service_test;
 
 #[cfg(all(test, not(target_family = "wasm")))]
 pub(crate) use service_test::{
-    create_mock_mls_api, create_test_service, join_switch_service_with_mls_api,
-    mls_group_export_snapshot, setup_n_user_group,
+    create_test_service, join_switch_service_with_mls_api, mls_group_export_snapshot,
+    setup_n_user_group,
 };
