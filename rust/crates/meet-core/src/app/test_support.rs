@@ -13,10 +13,10 @@ use crate::app::App;
 use crate::app_state::{AppState, UserState};
 use crate::domain::room::{RoomService, WaitingRoomService};
 use crate::domain::user::models::meeting::{MeetingType, UpcomingMeeting};
-use crate::domain::user::models::{meet_link_info::MeetInfo, Address, UserTokenInfo};
+use crate::domain::user::models::{Address, UserTokenInfo, meet_link_info::MeetInfo};
 use crate::domain::user::ports::{
-    http_client::MockHttpClient, meeting_api::MockMeetingApi, user_api::MockUserApi,
     ConnectionState, MockMlsApi, MockUserRepository, MockWebSocketClient, UserService,
+    http_client::MockHttpClient, meeting_api::MockMeetingApi, user_api::MockUserApi,
 };
 use crate::infra::{
     crypto_client::MeetCryptoClient,
@@ -26,7 +26,7 @@ use crate::infra::{
 };
 use crate::service::auth::{ArcAuthService, AuthServiceImpl};
 use crate::service::services_bundle::ServiceBundle;
-use crate::service::user_service::{create_mock_mls_api, Service};
+use crate::service::user_service::{Service, create_mock_mls_api};
 use crate::utils::server_time::ServerTimeTracker;
 
 pub fn test_user_key(id: &str, primary: u32, active: u32) -> ProtonUserKey {
@@ -691,7 +691,7 @@ pub async fn two_user_mls_services_with_group(
 ) {
     use crate::domain::user::ports::UserService;
     use mls_rs_codec::MlsEncode;
-    use mls_spec::{messages::MlsMessageContent, Parsable};
+    use mls_spec::{Parsable, messages::MlsMessageContent};
     use mls_trait::MlsClientConfig;
     use proton_meet_mls::MlsGroupTrait;
 

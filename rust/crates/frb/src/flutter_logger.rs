@@ -4,8 +4,8 @@ use std::sync::{Arc, Mutex};
 use flutter_rust_bridge::DartFnFuture;
 use lazy_static::lazy_static;
 use tracing::{Event, Level, Subscriber};
-use tracing_subscriber::layer::Context;
 use tracing_subscriber::Layer;
+use tracing_subscriber::layer::Context;
 
 pub enum RustLevel {
     Trace = 0,

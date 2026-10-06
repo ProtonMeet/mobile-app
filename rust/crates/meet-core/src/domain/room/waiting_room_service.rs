@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
-use base64::{engine::general_purpose, Engine};
+use base64::{Engine, engine::general_purpose};
 use proton_meet_crypto::MEET_KEY_PACKAGE_AAD;
 
 use crate::domain::mls::ports::KeyPackagePort;
 use crate::domain::room::models::join_request::JoinRequest;
 use crate::domain::user::{
-    models::{meeting_link_name::MeetingLinkName, meeting_session_key::MeetingSessionKey, UserId},
+    models::{UserId, meeting_link_name::MeetingLinkName, meeting_session_key::MeetingSessionKey},
     ports::crypto_client::CryptoClient,
 };
 

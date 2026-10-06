@@ -9,7 +9,7 @@ use crate::{
 use crate::{
     domain::user::{
         models::UserId,
-        ports::{user_api::UserApi, ArcUserRepository},
+        ports::{ArcUserRepository, user_api::UserApi},
     },
     errors::service::ServiceError,
     infra::storage::error::StorageError,
@@ -184,7 +184,7 @@ pub mod tests {
     use crate::{
         domain::user::{
             models::UserId,
-            ports::{user_api::MockUserApi, MockUserRepository},
+            ports::{MockUserRepository, user_api::MockUserApi},
         },
         errors::login::LoginError,
         infra::dto::proton_user::UserData,

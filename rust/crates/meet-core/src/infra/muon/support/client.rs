@@ -12,10 +12,10 @@ use super::WasmSleeper;
 #[cfg(not(target_arch = "wasm32"))]
 use super::{MeetOs, TokioExecutor};
 
-// Workspace pins `rand` 0.8 (WASM); muon 2.x's client builder takes `rand` 0.9 RNGs.
-// `rand_v09` is a Cargo alias so both versions can coexist in meet-core.
-fn meet_prng() -> rand_v09::rngs::ThreadRng {
-    rand_v09::rng()
+// Workspace pins `rand` 0.8 (WASM); muon 4.x's client builder takes `rand` 0.10 RNGs.
+// `rand_v10` is a Cargo alias so both versions can coexist in meet-core.
+fn meet_prng() -> rand_v10::rngs::ThreadRng {
+    rand_v10::rng()
 }
 
 /// Strip pre-release/build metadata from a muon [`SemVer`] so it satisfies
@@ -29,7 +29,7 @@ fn sdk_version_from_semver(version: &SemVer) -> Option<String> {
     Some(numeric_core.to_string())
 }
 
-/// SDK identity for `x-pm-sdk-versions` / `x-pm-origin-sdk` (muon 2.x).
+/// SDK identity for `x-pm-sdk-versions` / `x-pm-origin-sdk` (muon 4.x).
 pub fn meet_sdk_from_app(app: &App) -> Option<Sdk> {
     let app_version = app.app_version();
     let name = app_version.name()?;
@@ -46,7 +46,7 @@ pub fn build_meet_client(
     persistence: super::MeetPersistence,
     proxy: Option<&ProxyConfig>,
 ) -> muon::Result<MeetClient> {
-    use muon::common::{EnvProxy, Proxy};
+    use muon::common::{OwnedProxy, Proxy};
 
     let mut prng = meet_prng();
     let meet_sdk = meet_sdk_from_app(&app);
@@ -56,9 +56,13 @@ pub fn build_meet_client(
 
     #[cfg(feature = "allow-dangerous-env")]
     if let Some(proxy_config) = proxy {
-        let proxy_url = format!("http://{}:{}", proxy_config.host, proxy_config.port);
-        std::env::set_var("PROTON_MEET_DEV_PROXY", &proxy_url);
-        builder = builder.proxy(Proxy::from(EnvProxy::all("PROTON_MEET_DEV_PROXY")));
+        builder = builder.proxy(Proxy::from(
+            OwnedProxy::all(format!(
+                "http://{}:{}",
+                proxy_config.host, proxy_config.port
+            ))
+            .map_err(muon::Error::other)?,
+        ));
     }
 
     let mut builder = builder.with_persistence(persistence).without_cookie_store();

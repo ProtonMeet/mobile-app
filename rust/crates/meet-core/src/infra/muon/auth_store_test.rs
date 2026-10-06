@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use muon::{auth::Auth, store::Store, Environment};
+use muon::{Environment, auth::Auth, store::Store};
 use tokio::sync::Mutex;
 
 use super::auth_store::AuthStore;
-use crate::infra::muon::support::{test_support, MUON_DEFAULT_SESSION_KEY};
+use crate::infra::muon::support::{MUON_DEFAULT_SESSION_KEY, test_support};
 
 fn sample_auth() -> Auth {
     Auth::external("user-id", "uid-123")

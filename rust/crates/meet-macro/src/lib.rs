@@ -17,7 +17,7 @@
 //! These macros are designed to work across both native and WebAssembly targets seamlessly.
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, ItemFn, ItemImpl, ItemTrait};
+use syn::{ItemFn, ItemImpl, ItemTrait, parse_macro_input};
 
 /// Platform-unified test macro for async tests.
 ///

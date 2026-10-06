@@ -1,7 +1,7 @@
 use flutter_rust_bridge::frb;
-pub use proton_meet_core::domain::user::models::UserId;
 pub use proton_meet_core::ProtonUser;
 use proton_meet_core::ProtonUserKey;
+pub use proton_meet_core::domain::user::models::UserId;
 use std::collections::HashMap;
 
 #[frb(mirror(UserId))]

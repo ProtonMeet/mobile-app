@@ -1,7 +1,7 @@
 //! Proton environment string parsing (`prod`, `atlas`, `atlas:name`, custom dev URLs).
 
-use muon::env::ParseEnvIdErr;
 use muon::Environment;
+use muon::env::ParseEnvIdErr;
 
 /// Parse a standard Proton environment string (`prod`, `atlas`, `atlas:name`).
 pub fn parse_environment(env: &str) -> Result<Environment, ParseEnvIdErr> {

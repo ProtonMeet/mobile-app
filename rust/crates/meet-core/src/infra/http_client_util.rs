@@ -1,5 +1,5 @@
 use crate::infra::http_client::ProtonHttpClient;
-use muon::{common::ServiceType, ProtonRequest, DELETE, GET, POST, PUT};
+use muon::{DELETE, GET, POST, PUT, ProtonRequest, common::ServiceType};
 use std::{env, time::Duration};
 
 pub const DEFAULT_SERVICE_TYPE: ServiceType = ServiceType::Normal;

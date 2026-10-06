@@ -2,8 +2,8 @@ use proton_meet_macro::async_trait_with_mock;
 
 use crate::{
     domain::user::models::{
-        meeting::{CreateMeetingParams, Meeting, UpdateMeetingScheduleParams},
         MeetingInfo,
+        meeting::{CreateMeetingParams, Meeting, UpdateMeetingScheduleParams},
     },
     errors::http_client::HttpClientError,
 };

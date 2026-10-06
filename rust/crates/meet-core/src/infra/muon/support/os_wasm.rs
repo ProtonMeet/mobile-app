@@ -4,7 +4,10 @@ use std::pin::Pin;
 
 use futures::Future;
 use js_sys;
-use muon::rt::{InstantFactory, Monotonic, MuonInstant, Sleep};
+use muon::rt::{
+    InstantFactory, Monotonic, MuonInstant, MuonSystemTime, SinceUnixEpoch, Sleep,
+    SystemTimeFactory,
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct WasmSleeper;
@@ -27,5 +30,15 @@ impl InstantFactory for WasmSleeper {
 
     fn now(&self) -> Self::Instant {
         MuonInstant::from_duration(std::time::Duration::from_millis(js_sys::Date::now() as u64))
+    }
+}
+
+impl SystemTimeFactory for WasmSleeper {
+    type SystemTime = MuonSystemTime;
+
+    fn now(&self) -> Self::SystemTime {
+        MuonSystemTime::since_unix_epoch(std::time::Duration::from_millis(
+            js_sys::Date::now() as u64
+        ))
     }
 }

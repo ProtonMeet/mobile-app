@@ -13,7 +13,7 @@
 //! any input. We additionally drive the pipeline with two different
 //! sender/timestamp shapes to exercise the `received_at_ms` / id handling.
 use libfuzzer_sys::fuzz_target;
-use proton_meet_chat::{decode_mimi_content, parse_mimi_content, MessageId, ParticipantId};
+use proton_meet_chat::{MessageId, ParticipantId, decode_mimi_content, parse_mimi_content};
 
 fuzz_target!(|data: &[u8]| {
     let Ok(content) = parse_mimi_content(data) else {

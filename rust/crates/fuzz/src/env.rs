@@ -431,15 +431,16 @@ impl TestMlsEnv {
         if let Some(late_tree) = self.tree_bytes_of(late) {
             let late_epoch = self.epoch_of(late);
             for &m in &self.active {
-                if m != late && self.epoch_of(m) == late_epoch {
-                    if let Some(peer_tree) = self.tree_bytes_of(m) {
-                        assert_eq!(
-                            late_tree, peer_tree,
-                            "CATCH-UP divergence: member {late} and peer {m} at the same epoch \
+                if m != late
+                    && self.epoch_of(m) == late_epoch
+                    && let Some(peer_tree) = self.tree_bytes_of(m)
+                {
+                    assert_eq!(
+                        late_tree, peer_tree,
+                        "CATCH-UP divergence: member {late} and peer {m} at the same epoch \
                              have different trees after in-order catch-up"
-                        );
-                        break;
-                    }
+                    );
+                    break;
                 }
             }
         }
@@ -507,14 +508,14 @@ impl TestMlsEnv {
                 .copied()
                 .find(|&m| self.leaf_of[m].map(|l| *l) != Some(leaf));
             let msg = self.tombstones[i].1.clone();
-            if let Some(receiver) = receiver {
-                if let RecvKind::App { sender, .. } = self.deliver_report(receiver as u8, &msg) {
-                    assert_ne!(
-                        sender, leaf,
-                        "SENDER ALIASING (mls-rs #361): a removed member's message was accepted \
+            if let Some(receiver) = receiver
+                && let RecvKind::App { sender, .. } = self.deliver_report(receiver as u8, &msg)
+            {
+                assert_ne!(
+                    sender, leaf,
+                    "SENDER ALIASING (mls-rs #361): a removed member's message was accepted \
                          and attributed to leaf {leaf}, now occupied by a different member"
-                    );
-                }
+                );
             }
             // One-shot per leaf: drop the tombstone after the reuse check.
             self.tombstones.remove(i);

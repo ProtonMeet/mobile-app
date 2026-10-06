@@ -4055,14 +4055,15 @@ checksum = "743fb55ba31b18fb1ecef6bdc9aa2743314978ac084044301a7eee33fb99a20d"
 
 [[package]]
 name = "muon"
-version = "2.6.1"
+version = "4.0.0"
 source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "be9ba1f347e00a86119ff6b70d36356cce28c33fd000290cc1254bf4048155de"
+checksum = "2d30e5b2de4f98a726ec78ad7dfc686b10f8a7b4ac1375541f2809a390a9a560"
 dependencies = [
  "async-lock",
  "bytes",
  "cfg-if",
  "common-multipart-rfc7578",
+ "cookie",
  "cookie_store",
  "data-encoding",
  "derive_more 2.1.1",
@@ -4075,12 +4076,15 @@ dependencies = [
  "http",
  "http-body",
  "hyper",
+ "idna",
+ "ipnet",
  "itertools 0.14.0",
  "muon-rest",
  "pin-project",
  "proton-os-interface",
  "proton-srp",
- "rand_chacha 0.9.0",
+ "psl",
+ "rand_chacha 0.10.0",
  "reqwest",
  "semver",
  "serde",
@@ -5009,6 +5013,7 @@ dependencies = [
  "esdicawt",
  "futures",
  "getrandom 0.3.4",
+ "getrandom 0.4.3",
  "gloo-timers",
  "hex",
  "hkdf 0.12.4",
@@ -5040,8 +5045,8 @@ dependencies = [
  "proton-meet-crypto",
  "proton-meet-macro",
  "proton-meet-mls",
+ "rand 0.10.3",
  "rand 0.8.8",
- "rand 0.9.5",
  "rcgen",
  "reqwest",
  "rusqlite",
@@ -5152,12 +5157,13 @@ dependencies = [
 
 [[package]]
 name = "proton-os-interface"
-version = "0.2.7"
+version = "0.3.3"
 source = "sparse+https://rust-registry.proton.me/index/"
-checksum = "213218ea05202f02a22a5e41fb5bca48b6966c76f6118a7b00c3a936ac07b92c"
+checksum = "255a294a047ca5d8660b73c22a9b4daf6045774947dc1c6445ab2c0a4a74e14f"
 dependencies = [
  "derive_more 1.0.0",
  "futures",
+ "rand 0.10.3",
  "rand 0.9.5",
  "rand_core 0.6.4",
  "serde",
@@ -5216,6 +5222,15 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
+]
+
+[[package]]
+name = "psl"
+version = "2.1.238"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e6aa2cd4e8e062e78ac5d7df6206e2f8e39b624f658efd6f34f9aa1928ac5da"
+dependencies = [
+ "psl-types",
 ]
 
 [[package]]
@@ -5367,6 +5382,16 @@ checksum = "d3022b5f1df60f26e1ffddd6c66e8aa15de382ae63b3a0c1bfc0e4d3e3f325cb"
 dependencies = [
  "ppv-lite86",
  "rand_core 0.9.5",
+]
+
+[[package]]
+name = "rand_chacha"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e6af7f3e25ded52c41df4e0b1af2d047e45896c2f3281792ed68a1c243daedb"
+dependencies = [
+ "ppv-lite86",
+ "rand_core 0.10.1",
 ]
 
 [[package]]

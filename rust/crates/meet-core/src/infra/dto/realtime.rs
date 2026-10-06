@@ -1,5 +1,9 @@
 // Re-export types from meet-type crate
 pub use meet_type::{
+    ConnectionLostMetric, ConnectionLostType, DesignatedCommitterMetric, ErrorCodeMetric,
+    JoinRoomMessage, JoinRoomResponse, JoinType, LeaveRoomMessage, LeaveRoomResponse, MetricType,
+    RejoinReason, ServiceMetric, ServiceMetricsRequest, UserEpochHealthMetric, UserJoinTimeMetric,
+    UserRejoinMetric, UserRetryCountMetric,
     fanout::{
         GroupInfoSummaryData, GroupInfoVersion, GroupInfoVersionError, JoinDecisionInfo,
         JoinDecisionStatus, JoinRequestInfo, JoinRequestRemovedInfo, LiveKitAdminChangeInfo,
@@ -7,8 +11,4 @@ pub use meet_type::{
         MlsWelcomeInfo, RTCMessageIn, RTCMessageInContent, RatchetTreeAndGroupInfo,
         VersionedGroupInfoData,
     },
-    ConnectionLostMetric, ConnectionLostType, DesignatedCommitterMetric, ErrorCodeMetric,
-    JoinRoomMessage, JoinRoomResponse, JoinType, LeaveRoomMessage, LeaveRoomResponse, MetricType,
-    RejoinReason, ServiceMetric, ServiceMetricsRequest, UserEpochHealthMetric, UserJoinTimeMetric,
-    UserRejoinMetric, UserRetryCountMetric,
 };

@@ -1,7 +1,7 @@
 use super::App;
 use crate::chat::{
-    self, compose_local_echo, ChatComposeRequest, ChatIncomingEvent, ChatOutgoingPacket,
-    ParticipantId, LEGACY_MEET_MEDIA, MIMI_CONTENT_MEDIA,
+    self, ChatComposeRequest, ChatIncomingEvent, ChatOutgoingPacket, LEGACY_MEET_MEDIA,
+    MIMI_CONTENT_MEDIA, ParticipantId, compose_local_echo,
 };
 use crate::domain::user::models::UserId;
 use crate::domain::user::ports::UserService;

@@ -1,10 +1,10 @@
 use super::App;
 use crate::domain::user::models::MeetInfo;
 use crate::domain::user::models::{
-    access_token::AccessToken, meet_link_info::MeetParticipant, meeting_link_name::MeetingLinkName,
-    meeting_password::MeetingPassword, UserId,
+    UserId, access_token::AccessToken, meet_link_info::MeetParticipant,
+    meeting_link_name::MeetingLinkName, meeting_password::MeetingPassword,
 };
-use crate::domain::user::ports::{new_user_service::NewUserService, UserService};
+use crate::domain::user::ports::{UserService, new_user_service::NewUserService};
 use crate::errors::core::MeetCoreError;
 use crate::infra::dto::realtime::JoinType;
 use crate::utils::{instant, try_join};
@@ -199,14 +199,14 @@ impl App {
         // Check if user is host and update role if needed
         let user_id = user_info.user_id();
         let user_service = self.services.user_service.read().await;
-        if let Ok(meeting_id) = user_service.get_meeting_id(&user_id).await {
-            if let Err(e) = user_service.check_and_update_host_role(&meeting_id).await {
-                warn!(
-                    "Failed to check and update host role after proposal join: {:?}",
-                    e
-                );
-                // Don't fail the join if role update fails
-            }
+        if let Ok(meeting_id) = user_service.get_meeting_id(&user_id).await
+            && let Err(e) = user_service.check_and_update_host_role(&meeting_id).await
+        {
+            warn!(
+                "Failed to check and update host role after proposal join: {:?}",
+                e
+            );
+            // Don't fail the join if role update fails
         }
 
         Ok(())
@@ -315,14 +315,14 @@ impl App {
         // Check if user is host and update role if needed
         let user_id = user_info.user_id();
         let lock = self.services.user_service.read().await;
-        if let Ok(meeting_id) = lock.get_meeting_id(&user_id).await {
-            if let Err(e) = lock.check_and_update_host_role(&meeting_id).await {
-                warn!(
-                    "Failed to check and update host role after proposal join: {:?}",
-                    e
-                );
-                // Don't fail the join if role update fails
-            }
+        if let Ok(meeting_id) = lock.get_meeting_id(&user_id).await
+            && let Err(e) = lock.check_and_update_host_role(&meeting_id).await
+        {
+            warn!(
+                "Failed to check and update host role after proposal join: {:?}",
+                e
+            );
+            // Don't fail the join if role update fails
         }
 
         Ok(())
@@ -503,21 +503,20 @@ impl App {
             .get_meeting_id(&user_id)
             .await;
 
-        if let Ok(meeting_id) = meeting_id_res {
-            if let Err(e) = self
+        if let Ok(meeting_id) = meeting_id_res
+            && let Err(e) = self
                 .services
                 .user_service
                 .read()
                 .await
                 .check_and_update_host_role(&meeting_id)
                 .await
-            {
-                warn!(
-                    "Failed to check and update host role after proposal join: {:?}",
-                    e
-                );
-                // Don't fail the join if role update fails
-            }
+        {
+            warn!(
+                "Failed to check and update host role after proposal join: {:?}",
+                e
+            );
+            // Don't fail the join if role update fails
         }
 
         Ok(())
@@ -728,8 +727,13 @@ impl App {
         enable_join_type_switch: bool,
         current_participant_count: u32,
     ) -> JoinType {
-        debug!("get_join_type(), is_new_join_type={}, enable_join_type_switch={}, current_participant_count={}, threshold={}",
-            is_new_join_type, enable_join_type_switch, current_participant_count, crate::JOIN_TYPE_SWITCH_THRESHOLD);
+        debug!(
+            "get_join_type(), is_new_join_type={}, enable_join_type_switch={}, current_participant_count={}, threshold={}",
+            is_new_join_type,
+            enable_join_type_switch,
+            current_participant_count,
+            crate::JOIN_TYPE_SWITCH_THRESHOLD
+        );
         if is_new_join_type && enable_join_type_switch {
             if current_participant_count >= crate::JOIN_TYPE_SWITCH_THRESHOLD {
                 debug!("get_join_type() switching to ExternalProposal for large meeting room");

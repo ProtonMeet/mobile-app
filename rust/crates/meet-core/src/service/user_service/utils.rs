@@ -4,7 +4,7 @@ use identity::ProtonMeetIdentity;
 use meet_type::fanout::GroupInfoVersion;
 use mls_types::{Credential, ExternalPskId};
 use proton_claims::ClientType;
-use proton_meet_mls::{kv::MemKv, MlsGroup, MlsGroupTrait};
+use proton_meet_mls::{MlsGroup, MlsGroupTrait, kv::MemKv};
 use tokio::sync::Mutex;
 
 use crate::{

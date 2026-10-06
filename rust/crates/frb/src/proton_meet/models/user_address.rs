@@ -1,7 +1,7 @@
 use flutter_rust_bridge::frb;
 
-pub use proton_meet_core::domain::user::models::Address;
 use proton_meet_core::ProtonUserKey;
+pub use proton_meet_core::domain::user::models::Address;
 #[frb(mirror(Address))]
 pub struct _Address {
     /// The address's ID.

@@ -5,8 +5,8 @@ use web_sys;
 use super::persister::Database;
 use crate::infra::storage::error::StorageError;
 use idb::{Database as IndexedDB, DatabaseEvent, Factory, IndexParams, KeyPath};
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 use serde_wasm_bindgen::Serializer;
 
 pub struct Db(IndexedDB);
@@ -176,7 +176,7 @@ impl Db {
                 return Err(anyhow::anyhow!(
                     "Failed to create user_keys object store: {}",
                     e
-                ))
+                ));
             }
         };
 

@@ -5,10 +5,10 @@ use aes_gcm::aead::generic_array::GenericArray;
 use aes_gcm::aead::{Aead, KeyInit, Payload};
 use aes_gcm::{Aes256Gcm, Nonce};
 use base64::Engine;
+use muon::Environment;
 use muon::app::AppVersion;
 use muon::auth::{Auth, WithCodeFlow, WithCodePollFlow};
 use muon::env::Env;
-use muon::Environment;
 use rand::RngCore;
 use serde::Deserialize;
 
@@ -216,7 +216,7 @@ pub async fn start(
         WithCodeFlow::Ok(_, _) => {
             return Err(MeetCoreError::AuthenticationFailed {
                 message: "Unexpected desktop web login fork response".to_string(),
-            })
+            });
         }
         WithCodeFlow::Failed { reason, .. } => {
             tracing::error!("Desktop web login failed: {reason}");
@@ -380,8 +380,8 @@ mod tests {
 
     #[test]
     fn decrypt_payload_handles_version_3_fork_blob() {
-        use aes_gcm::aead::{Aead, KeyInit, Payload};
         use aes_gcm::Aes256Gcm;
+        use aes_gcm::aead::{Aead, KeyInit, Payload};
 
         let key = [7u8; 32];
         let plaintext = br#"{"keyPassword":"mailbox-secret"}"#;

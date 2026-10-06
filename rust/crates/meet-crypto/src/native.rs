@@ -1,6 +1,6 @@
-use crate::{key::Key, CryptoError, Result, SRPProof, SRPVerifier, SessionKeyAlgorithm};
-use base64::prelude::BASE64_STANDARD;
+use crate::{CryptoError, Result, SRPProof, SRPVerifier, SessionKeyAlgorithm, key::Key};
 use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
 use proton_crypto::{
     crypto::{
         DataEncoding, Decryptor, DecryptorSync, Encryptor, EncryptorSync, PGPMessage, PGPProvider,

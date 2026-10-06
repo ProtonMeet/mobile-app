@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
-use proton_meet_crypto::{SessionKeyAlgorithm, MEET_METADATA_AAD};
+use proton_meet_crypto::{MEET_METADATA_AAD, SessionKeyAlgorithm};
 use tracing::info;
 
 use crate::domain::user::{models::login::Modulus, ports::CryptoClient};

@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::ops::Deref;
 
 use rusqlite::types::Value as SqlValue;
-use rusqlite::{named_params, Connection, OptionalExtension, Row, Transaction};
-use serde::de::DeserializeOwned;
+use rusqlite::{Connection, OptionalExtension, Row, Transaction, named_params};
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 use serde_json::{Number, Value};
 
 use super::{error::StorageError, persister::Database};

@@ -1,7 +1,7 @@
 use super::{
+    Result,
     binary::{Binary, EncryptedBinary},
     room_key::UnlockedRoomKey,
-    Result,
 };
 
 pub trait Message: Binary {

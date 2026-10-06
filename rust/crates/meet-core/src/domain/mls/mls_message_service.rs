@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::sync::Arc;
 
-use mls_trait::{types::ReceivedMessage, MlsGroupTrait};
+use mls_trait::{MlsGroupTrait, types::ReceivedMessage};
 use mls_types::MlsMessage;
 use tracing;
 

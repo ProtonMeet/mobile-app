@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use mls_trait::MlsError;
 use proton_meet_macro::async_trait_with_mock;
-use proton_meet_mls::{kv::MemKv, MlsGroup};
+use proton_meet_mls::{MlsGroup, kv::MemKv};
 use tokio::sync::RwLock;
 
 /// Port for MLS group storage operations
@@ -12,7 +12,7 @@ use tokio::sync::RwLock;
 #[async_trait_with_mock]
 pub trait MlsStorePort: Send + Sync {
     async fn get_group(&self, room_id: &str)
-        -> Result<Arc<RwLock<MlsGroup<MemKv>>>, anyhow::Error>;
+    -> Result<Arc<RwLock<MlsGroup<MemKv>>>, anyhow::Error>;
 
     async fn get_group_epoch(&self, room_id: &str) -> Result<u64, anyhow::Error>;
 

@@ -141,7 +141,9 @@ pub enum MeetCoreError {
         details: Option<String>,
     },
 
-    #[error("Device clock is not in sync. Please check your device clock and refresh the page to try again.")]
+    #[error(
+        "Device clock is not in sync. Please check your device clock and refresh the page to try again."
+    )]
     CheckDeviceClock,
 
     #[error("Token is expired. Please refresh the page and try again.")]
@@ -285,7 +287,7 @@ impl From<anyhow::Error> for MeetCoreError {
             return match http_error {
                 HttpClientError::MeetingLocked => Self::MeetingLocked,
                 HttpClientError::IncorrectPassword => Self::IncorrectPassword,
-                HttpClientError::ErrorCode(_, ref error_detail) => Self::HttpClientError {
+                HttpClientError::ErrorCode(_, error_detail) => Self::HttpClientError {
                     status: error_detail.code,
                     message: error_detail.error.clone(),
                     details: Some(format!("{:?}", error_detail.details)),
@@ -774,10 +776,12 @@ mod tests {
             }
             .is_retryable_switch_join()
         );
-        assert!(!MeetCoreError::RoomJoinFailed {
-            room_id: "room".into(),
-            reason: "Join proposal state is not valid".into(),
-        }
-        .is_retryable_switch_join());
+        assert!(
+            !MeetCoreError::RoomJoinFailed {
+                room_id: "room".into(),
+                reason: "Join proposal state is not valid".into(),
+            }
+            .is_retryable_switch_join()
+        );
     }
 }
