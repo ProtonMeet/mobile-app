@@ -8,5 +8,5 @@ pub trait StateRepositoryPort: Send + Sync {
     async fn get_mls_state(&self, room_id: &str) -> Result<MlsGroupState, anyhow::Error>;
 
     async fn set_mls_state(&self, room_id: &str, state: MlsGroupState)
-        -> Result<(), anyhow::Error>;
+    -> Result<(), anyhow::Error>;
 }

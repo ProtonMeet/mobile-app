@@ -16,10 +16,10 @@ pub(crate) mod tests {
 
     use crate::{
         domain::user::{
-            models::{meeting_link_name::MeetingLinkName, UserId},
+            models::{UserId, meeting_link_name::MeetingLinkName},
             ports::{
-                meeting_api::MockMeetingApi, new_user_service::NewUserService, MockHttpClient,
-                MockMlsApi, MockWebSocketClient,
+                MockHttpClient, MockMlsApi, MockWebSocketClient, meeting_api::MockMeetingApi,
+                new_user_service::NewUserService,
             },
         },
         errors::{core::MeetCoreError, http_client::HttpClientError, service::ServiceError},
@@ -44,10 +44,10 @@ pub(crate) mod tests {
         utils::server_time::ServerTimeTracker,
     };
 
-    use base64::{prelude::BASE64_STANDARD, Engine};
+    use base64::{Engine, prelude::BASE64_STANDARD};
     use cose_key_thumbprint::CoseKeyThumbprint;
     use ed25519_dalek::pkcs8::{
-        spki::der::pem::LineEnding, DecodePrivateKey, DecodePublicKey, EncodePublicKey,
+        DecodePrivateKey, DecodePublicKey, EncodePublicKey, spki::der::pem::LineEnding,
     };
     use identity::{
         Disclosure, Ed25519Issuer, IdentityResult, PresentationContext, ProtonMeetIdentity, SdCwt,
@@ -56,24 +56,24 @@ pub(crate) mod tests {
     use meet_mls::reexports::mimi_room_policy::spec::{preauth::PreAuthData, rbac::RoleData};
     use mls_rs::group::proposal::Proposal;
     use mls_spec::{
-        drafts::ratchet_tree_options::RatchetTreeOption, messages::MlsMessageContent, Parsable,
-        Serializable,
+        Parsable, Serializable, drafts::ratchet_tree_options::RatchetTreeOption,
+        messages::MlsMessageContent,
     };
     use mls_trait::{
+        MlsClientTrait, MlsGroupConfig, ProposalArg, ProtonMeetIdentityProvider,
         meet_policy::{RoomKind, RoomPolicies, UserRole},
         types::{ProposalEffect, ReceivedMessage},
-        MlsClientTrait, MlsGroupConfig, ProposalArg, ProtonMeetIdentityProvider,
     };
     use proton_claims::{
-        reexports::{cose_key_set::CoseKeySet, Issuer, IssuerParams, SpiceOidcClaims},
         ClientType, MimiProvider, ProtonMeetClaims,
+        reexports::{Issuer, IssuerParams, SpiceOidcClaims, cose_key_set::CoseKeySet},
     };
     use proton_meet_mls::{
-        kv::MemKv, CommitBundle, MlsClient, MlsClientConfig, MlsGroup, MlsStore,
+        CommitBundle, MlsClient, MlsClientConfig, MlsGroup, MlsStore, kv::MemKv,
     };
     use uuid::Uuid;
 
-    use crate::domain::user::ports::{user_service::UserService, ConnectionState};
+    use crate::domain::user::ports::{ConnectionState, user_service::UserService};
     use crate::infra::{dto::realtime::GroupInfoSummaryData, ws_client::WebSocketMessage};
     use mls_rs_codec::MlsEncode;
     use proton_meet_mls::MlsGroupTrait;
@@ -133,9 +133,9 @@ pub(crate) mod tests {
         use mls_rs_codec::MlsEncode;
         use mls_types::{MediaType, MlsMessage};
         use proton_meet_chat::{
+            ChatComposeRequest, ChatIncomingEvent, ChatProtocol, MIMI_CONTENT_MEDIA, ParticipantId,
             build_mimi_message, compute_message_id_from_content, decode_mimi_content,
-            extract_mls_ciphertext, meet_room_uri, parse_mimi_content, ChatComposeRequest,
-            ChatIncomingEvent, ChatProtocol, ParticipantId, MIMI_CONTENT_MEDIA,
+            extract_mls_ciphertext, meet_room_uri, parse_mimi_content,
         };
 
         let meet_link = "test_mimi_chat_roundtrip";
@@ -1722,14 +1722,14 @@ pub(crate) mod tests {
         // Cache should be empty or the specific cached messages should be processed
         if let Some(room_messages) = messages.get(meet_link_name) {
             // If room still exists in cache, the future epoch messages should be gone
-            if let Some(epoch_messages) = room_messages.get(&3) {
-                if let Some(commit_messages) = epoch_messages.get(&CachedMessageType::Commit) {
-                    assert_eq!(
-                        commit_messages.len(),
-                        0,
-                        "Cached commit messages should be processed and removed"
-                    );
-                }
+            if let Some(epoch_messages) = room_messages.get(&3)
+                && let Some(commit_messages) = epoch_messages.get(&CachedMessageType::Commit)
+            {
+                assert_eq!(
+                    commit_messages.len(),
+                    0,
+                    "Cached commit messages should be processed and removed"
+                );
             }
         }
         // Alternatively, the entire cache could be empty, which is also valid
@@ -1886,24 +1886,24 @@ pub(crate) mod tests {
         let target_epoch = *very_future_epoch as u64;
 
         // Check if messages are cached for this room
-        if let Some(room_messages) = guard.messages.get(meet_link_name) {
-            if let Some(epoch_messages) = room_messages.get(&target_epoch) {
-                // Check if we have the expected message types
-                if let Some(commit_messages) = epoch_messages.get(&CachedMessageType::Commit) {
-                    assert!(
-                        commit_messages.is_empty(),
-                        "Should have at least 1 cached commit message"
-                    );
-                }
-                if let Some(proposal_messages) = epoch_messages.get(&CachedMessageType::Proposal) {
-                    assert!(
-                        proposal_messages.is_empty(),
-                        "Should have at least 1 cached proposal message"
-                    );
-                }
+        if let Some(room_messages) = guard.messages.get(meet_link_name)
+            && let Some(epoch_messages) = room_messages.get(&target_epoch)
+        {
+            // Check if we have the expected message types
+            if let Some(commit_messages) = epoch_messages.get(&CachedMessageType::Commit) {
+                assert!(
+                    commit_messages.is_empty(),
+                    "Should have at least 1 cached commit message"
+                );
             }
-            // If messages are cached under a different epoch, that's also valid for testing
+            if let Some(proposal_messages) = epoch_messages.get(&CachedMessageType::Proposal) {
+                assert!(
+                    proposal_messages.is_empty(),
+                    "Should have at least 1 cached proposal message"
+                );
+            }
         }
+        // If messages are cached under a different epoch, that's also valid for testing
         drop(guard);
 
         // Test 3: Process missing commits in order to sync user4 with the advanced group
@@ -1962,7 +1962,9 @@ pub(crate) mod tests {
 
         assert_eq!(service4_epoch_after_first_sync, *final_epoch as u64);
         assert_eq!(service4_epoch_after_first_sync, 6);
-        println!("  Initial epoch: {initial_epoch:?}, Final user4 epoch: {service4_epoch_after_first_sync:?}");
+        println!(
+            "  Initial epoch: {initial_epoch:?}, Final user4 epoch: {service4_epoch_after_first_sync:?}"
+        );
     }
 
     #[tokio::test]
@@ -2349,7 +2351,9 @@ pub(crate) mod tests {
         // Check epochs before processing the missing commit
         let group1_epoch = group1.read().await.epoch();
         let group2_epoch = group2.read().await.epoch();
-        println!("Before group3 join commit - Group1 epoch: {group1_epoch}, Group2 epoch: {group2_epoch}");
+        println!(
+            "Before group3 join commit - Group1 epoch: {group1_epoch}, Group2 epoch: {group2_epoch}"
+        );
 
         // Step 3: Finally send the missing group3 join commit (this should process cached messages)
         let commit3_bytes = commit_bundle3.commit.mls_encode_to_vec().unwrap();
@@ -5410,10 +5414,10 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         for leaf_index in roster_members {
             let group_write = final_group.write().await;
             let leaf_index_typed = LeafIndex::try_from(leaf_index).unwrap();
-            if let Ok(mut member) = group_write.find_member(leaf_index_typed) {
-                if let Ok(user_id) = member.credential.user_id() {
-                    user_ids_in_group.push(user_id);
-                }
+            if let Ok(mut member) = group_write.find_member(leaf_index_typed)
+                && let Ok(user_id) = member.credential.user_id()
+            {
+                user_ids_in_group.push(user_id);
             }
             drop(group_write); // Release write lock before next iteration
         }
@@ -7266,10 +7270,12 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             })
             .await;
 
-        assert!(check_service
-            .has_mls_group_info(&user_token.user_id())
-            .await
-            .expect("summary present"));
+        assert!(
+            check_service
+                .has_mls_group_info(&user_token.user_id())
+                .await
+                .expect("summary present")
+        );
 
         let empty_service =
             join_switch_service_with_mls_api(&service, "user1", meet_link_name, |mls| {
@@ -7279,10 +7285,12 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             })
             .await;
 
-        assert!(!empty_service
-            .has_mls_group_info(&user_token.user_id())
-            .await
-            .expect("summary empty"));
+        assert!(
+            !empty_service
+                .has_mls_group_info(&user_token.user_id())
+                .await
+                .expect("summary empty")
+        );
     }
 
     #[tokio::test]
@@ -7312,12 +7320,14 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             join_service.state.lock().await.mls_group_state,
             MlsGroupState::Success
         );
-        assert!(join_service
-            .mls_store
-            .read()
-            .await
-            .group_map
-            .contains_key(meet_link_name));
+        assert!(
+            join_service
+                .mls_store
+                .read()
+                .await
+                .group_map
+                .contains_key(meet_link_name)
+        );
     }
 
     #[tokio::test]
@@ -7812,7 +7822,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
     #[tokio::test]
     async fn agent_admit_full_handshake_derives_same_meet_key() {
-        use crate::service::agent_host_service::{agent_psk_id_for_meeting, AgentHostService};
+        use crate::service::agent_host_service::{AgentHostService, agent_psk_id_for_meeting};
         use identity::Disclosure;
         use meet_identifiers::Domain;
         use mls_trait::{MlsClientTrait, MlsGroupTrait, ProposalArg};

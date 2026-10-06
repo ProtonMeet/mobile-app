@@ -2,7 +2,7 @@
 mod tests {
     use std::sync::Arc;
 
-    use base64::{engine::general_purpose, Engine};
+    use base64::{Engine, engine::general_purpose};
     use mockall::predicate::eq;
     use proton_meet_crypto::MEET_KEY_PACKAGE_AAD;
     use proton_meet_macro::unified_test;
@@ -11,7 +11,7 @@ mod tests {
     use crate::domain::room::WaitingRoomService;
     use crate::domain::user::{
         models::{
-            meeting_link_name::MeetingLinkName, meeting_session_key::MeetingSessionKey, UserId,
+            UserId, meeting_link_name::MeetingLinkName, meeting_session_key::MeetingSessionKey,
         },
         ports::crypto_client::MockCryptoClient,
     };

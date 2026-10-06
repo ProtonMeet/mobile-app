@@ -3,9 +3,9 @@ mod tests {
     use crate::infra::storage::sqlite::{Db, SCHEMAS_TABLE_NAME};
     use crate::infra::storage::{error::StorageError, persister::Database};
     use futures::executor::block_on;
-    use rusqlite::types::Value as SqlValue;
     use rusqlite::Connection;
     use rusqlite::OptionalExtension;
+    use rusqlite::types::Value as SqlValue;
     use serde::{Deserialize, Serialize};
     use serde_json::{Number, Value};
 
@@ -928,7 +928,7 @@ mod tests {
         let entity = UserKeyEntity::new(
             "key-1".into(),
             "user-1".into(),
-            private_key.into(),
+            private_key,
             Some("sensitive-token-value".into()),
             Some("sensitive-signature".into()),
             true,

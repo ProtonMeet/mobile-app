@@ -2,11 +2,11 @@ use meet_type::fanout::GroupInfoSummaryData;
 use proton_meet_macro::async_trait;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex as StdMutex};
-use tokio::sync::{oneshot, Mutex};
+use tokio::sync::{Mutex, oneshot};
 
 use futures::{
-    stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
+    stream::{SplitSink, SplitStream},
 };
 use std::collections::{HashMap, HashSet};
 use std::time::Duration;
@@ -421,10 +421,10 @@ impl WsClient {
     async fn mark_text_request_timed_out(&self, request_id: &str) {
         const MAX_TIMED_OUT_REQUEST_IDS: usize = 1024;
         let mut timed_out = self.timed_out_text_requests.lock().await;
-        if timed_out.len() >= MAX_TIMED_OUT_REQUEST_IDS {
-            if let Some(oldest_seen) = timed_out.iter().next().cloned() {
-                timed_out.remove(&oldest_seen);
-            }
+        if timed_out.len() >= MAX_TIMED_OUT_REQUEST_IDS
+            && let Some(oldest_seen) = timed_out.iter().next().cloned()
+        {
+            timed_out.remove(&oldest_seen);
         }
         timed_out.insert(request_id.to_string());
     }
@@ -468,33 +468,33 @@ impl WsClient {
     }
 
     async fn try_resolve_text_response(&self, text: &str) -> bool {
-        if let Ok(response) = serde_json::from_str::<WebSocketTextResponse>(text) {
-            if let Some(request_id) = response.request_id {
-                let was_timed_out = {
-                    let mut timed_out = self.timed_out_text_requests.lock().await;
-                    timed_out.remove(&request_id)
-                };
-                if was_timed_out {
+        if let Ok(response) = serde_json::from_str::<WebSocketTextResponse>(text)
+            && let Some(request_id) = response.request_id
+        {
+            let was_timed_out = {
+                let mut timed_out = self.timed_out_text_requests.lock().await;
+                timed_out.remove(&request_id)
+            };
+            if was_timed_out {
+                tracing::warn!(
+                    "Discarding late websocket response for timed-out request_id={}",
+                    request_id
+                );
+                return true;
+            }
+
+            let sender = {
+                let mut pending = self.pending_text_requests.lock().await;
+                pending.remove(&request_id)
+            };
+            if let Some(sender) = sender {
+                if sender.send(response.command).is_err() {
                     tracing::warn!(
-                        "Discarding late websocket response for timed-out request_id={}",
+                        "Dropped websocket response because requester is gone: request_id={}",
                         request_id
                     );
-                    return true;
                 }
-
-                let sender = {
-                    let mut pending = self.pending_text_requests.lock().await;
-                    pending.remove(&request_id)
-                };
-                if let Some(sender) = sender {
-                    if sender.send(response.command).is_err() {
-                        tracing::warn!(
-                            "Dropped websocket response because requester is gone: request_id={}",
-                            request_id
-                        );
-                    }
-                    return true;
-                }
+                return true;
             }
         }
         false
@@ -707,13 +707,13 @@ impl WebSocketClient for WsClient {
         drop(state);
 
         let mut sender_guard = self.ws_sender.lock().await;
-        if let Some(sender) = sender_guard.as_mut() {
-            if let Err(err) = sender.close().await {
-                tracing::warn!(
-                    "Failed to close sender when disconnecting websocket: {:?}",
-                    err
-                );
-            }
+        if let Some(sender) = sender_guard.as_mut()
+            && let Err(err) = sender.close().await
+        {
+            tracing::warn!(
+                "Failed to close sender when disconnecting websocket: {:?}",
+                err
+            );
         }
         *sender_guard = None;
         *self.ws_receiver.lock().await = None;
@@ -931,52 +931,43 @@ impl WebSocketClient for WsClient {
                         match msg_result {
                             Some(Ok(msg)) => {
                                 // Check if this is a heartbeat pong
-                                if let TungsteniteMessage::Binary(ref data) = msg {
-                                    if is_heartbeat_message(data) {
-                                        if let Some((msg_type, id, pong_timestamp)) =
-                                            deserialize_heartbeat(data)
+                                if let TungsteniteMessage::Binary(ref data) = msg
+                                    && is_heartbeat_message(data)
+                                    && let Some((msg_type, id, pong_timestamp)) =
+                                        deserialize_heartbeat(data)
+                                    && msg_type == HEARTBEAT_PONG
+                                {
+                                    // Handle pong
+                                    let mut pending = pending_pings_arc.lock().await;
+                                    if let Some(pending_ping) = pending.remove(&id) {
+                                        // Calculate RTT using timestamps
+                                        let now_timestamp = crate::utils::time::unix_timestamp_ms();
+                                        let rtt_ms =
+                                            now_timestamp.saturating_sub(pending_ping.timestamp);
+                                        ping_failed_count = 0; // Reset on successful pong
+                                        tracing::debug!(
+                                            "Pong received for ping {}, RTT: {}ms, timestamp match: {}",
+                                            id,
+                                            rtt_ms,
+                                            pending_ping.timestamp == pong_timestamp
+                                        );
                                         {
-                                            if msg_type == HEARTBEAT_PONG {
-                                                // Handle pong
-                                                let mut pending = pending_pings_arc.lock().await;
-                                                if let Some(pending_ping) = pending.remove(&id) {
-                                                    // Calculate RTT using timestamps
-                                                    let now_timestamp =
-                                                        crate::utils::time::unix_timestamp_ms();
-                                                    let rtt_ms = now_timestamp
-                                                        .saturating_sub(pending_ping.timestamp);
-                                                    ping_failed_count = 0; // Reset on successful pong
-                                                    tracing::debug!(
-                                                        "Pong received for ping {}, RTT: {}ms, timestamp match: {}",
-                                                        id,
-                                                        rtt_ms,
-                                                        pending_ping.timestamp == pong_timestamp
-                                                    );
-                                                    {
-                                                        let mut state =
-                                                            connection_state_arc.lock().await;
-                                                        state.last_rtt_ms = Some(rtt_ms as u32);
-                                                        state.last_ping_timestamp =
-                                                            Some(pending_ping.timestamp);
-                                                        state.last_pong_timestamp =
-                                                            Some(pong_timestamp);
-                                                    }
-                                                } else {
-                                                    tracing::warn!(
-                                                        "Received pong for unknown ping ID: {}",
-                                                        id
-                                                    );
-                                                }
-                                                continue; // Don't pass to application handler
-                                            }
+                                            let mut state = connection_state_arc.lock().await;
+                                            state.last_rtt_ms = Some(rtt_ms as u32);
+                                            state.last_ping_timestamp =
+                                                Some(pending_ping.timestamp);
+                                            state.last_pong_timestamp = Some(pong_timestamp);
                                         }
+                                    } else {
+                                        tracing::warn!("Received pong for unknown ping ID: {}", id);
                                     }
+                                    continue; // Don't pass to application handler
                                 }
 
-                                if let TungsteniteMessage::Text(ref text) = msg {
-                                    if self_clone.try_resolve_text_response(text.as_ref()).await {
-                                        continue;
-                                    }
+                                if let TungsteniteMessage::Text(ref text) = msg
+                                    && self_clone.try_resolve_text_response(text.as_ref()).await
+                                {
+                                    continue;
                                 }
 
                                 let wrapped_msg = WebSocketMessage::from(msg);

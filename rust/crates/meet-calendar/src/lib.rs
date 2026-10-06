@@ -362,8 +362,8 @@ mod tests {
     /// Reproduces the reported bug: when end_timestamp equals start_timestamp (as in
     /// `UID:proton-meet-{ts}-{ts}`), ICS export must not fall back to a 1-minute event.
     #[test]
-    fn ics_export_uses_real_duration_when_start_and_end_timestamps_match(
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    fn ics_export_uses_real_duration_when_start_and_end_timestamps_match()
+    -> Result<(), Box<dyn std::error::Error>> {
         let start = utc_datetime(2026, 7, 1, 11, 53, 0)?;
         let intended_duration_minutes = 30;
 
@@ -392,8 +392,8 @@ mod tests {
     }
 
     #[test]
-    fn ics_export_escapes_special_characters_in_text_fields(
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    fn ics_export_escapes_special_characters_in_text_fields()
+    -> Result<(), Box<dyn std::error::Error>> {
         let start = utc_datetime(2026, 1, 9, 13, 20, 0)?;
         let end = start + Duration::hours(1);
         let event = sample_event(start, end, None, None, |event| {

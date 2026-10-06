@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use flutter_rust_bridge::{frb, DartFnFuture};
+use flutter_rust_bridge::{DartFnFuture, frb};
 use proton_meet_core::infra::UserKeyProviderAdapter;
 
 // Define a new struct that wraps UserKeyProviderAdapter

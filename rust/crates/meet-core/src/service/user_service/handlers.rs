@@ -155,7 +155,7 @@ mod tests {
         domain::room::JoinRequestChange,
         service::{
             service_state::MlsSyncState,
-            user_service::{handlers::Handlers, GroupKeyUpdateReason},
+            user_service::{GroupKeyUpdateReason, handlers::Handlers},
         },
         utils::sleep,
     };

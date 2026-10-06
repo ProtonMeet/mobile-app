@@ -1,4 +1,6 @@
+#![recursion_limit = "256"]
 #![allow(clippy::uninlined_format_args)]
+
 mod frb_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not be accurate, and you can change it according to your needs. */
 // this folder contains flutter rust bridge api
 pub mod init;

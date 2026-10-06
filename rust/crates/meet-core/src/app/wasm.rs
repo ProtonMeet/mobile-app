@@ -17,8 +17,8 @@ use crate::infra::{
 use muon::auth::Auth;
 use std::sync::Arc;
 
-use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsValue;
+use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::domain::user::models::MeetInfo;
 use crate::infra::UserKeyProviderAdapter;

@@ -17,7 +17,7 @@ pub fn create_token(
         .with_name(name)
         .with_grants(VideoGrants {
             room_join: true,
-            room: room,
+            room,
             ..Default::default()
         })
         .to_jwt()?;

@@ -2,16 +2,15 @@ use std::time::Duration;
 
 use crate::{
     domain::user::{
-        models::{meeting_link_name::MeetingLinkName, UserId, UserTokenInfo},
+        models::{UserId, UserTokenInfo, meeting_link_name::MeetingLinkName},
         ports::UserService,
     },
     errors::{core::MeetCoreError, http_client::HttpClientError},
     service::{
         service_state::MlsGroupState,
         user_service::{
-            psk_id_for_commit,
-            utils::{ratchet_tree_option_has_agent, SUPPORTED_GROUP_INFO_VERSIONS},
-            Service, JOIN_PROPOSAL_TIMEOUT,
+            JOIN_PROPOSAL_TIMEOUT, Service, psk_id_for_commit,
+            utils::{SUPPORTED_GROUP_INFO_VERSIONS, ratchet_tree_option_has_agent},
         },
         utils::{convert_mls_spec_to_types, convert_mls_types_to_spec},
     },
@@ -143,31 +142,31 @@ impl Service {
                                 return Ok(());
                             }
                             Err(e) => {
-                                if let HttpClientError::MlsStatusCode(status) = e {
-                                    if status == 422 {
-                                        retry_count += 1;
-                                        if retry_count >= MAX_RETRIES {
-                                            {
-                                                let mut state = self.state.lock().await;
-                                                state.mls_retry_count = retry_count;
-                                            }
-                                            return Err(MeetCoreError::MaxRetriesReached);
+                                if let HttpClientError::MlsStatusCode(status) = e
+                                    && status == 422
+                                {
+                                    retry_count += 1;
+                                    if retry_count >= MAX_RETRIES {
+                                        {
+                                            let mut state = self.state.lock().await;
+                                            state.mls_retry_count = retry_count;
                                         }
-                                        let delay = BASE_DELAY_MS * (1 << retry_count);
-                                        let jitter = rand::thread_rng().gen_range(0..delay);
-                                        let sleep_duration = Duration::from_millis(std::cmp::min(
-                                            delay + jitter,
-                                            MAX_DELAY_MS,
-                                        ));
-                                        tracing::warn!(
-                                            retry_count,
-                                            delay_ms = sleep_duration.as_millis(),
-                                            "Retrying join_room due to 422 error for {:?} ms",
-                                            sleep_duration.as_millis(),
-                                        );
-                                        sleep(sleep_duration).await;
-                                        continue;
+                                        return Err(MeetCoreError::MaxRetriesReached);
                                     }
+                                    let delay = BASE_DELAY_MS * (1 << retry_count);
+                                    let jitter = rand::thread_rng().gen_range(0..delay);
+                                    let sleep_duration = Duration::from_millis(std::cmp::min(
+                                        delay + jitter,
+                                        MAX_DELAY_MS,
+                                    ));
+                                    tracing::warn!(
+                                        retry_count,
+                                        delay_ms = sleep_duration.as_millis(),
+                                        "Retrying join_room due to 422 error for {:?} ms",
+                                        sleep_duration.as_millis(),
+                                    );
+                                    sleep(sleep_duration).await;
+                                    continue;
                                 }
                                 return Err(e.into());
                             }
@@ -218,26 +217,26 @@ impl Service {
                             return Ok(());
                         }
                         Err(e) => {
-                            if let HttpClientError::MlsStatusCode(status) = e {
-                                if status == 422 {
-                                    if retry_count >= MAX_RETRIES {
-                                        return Err(e.into());
-                                    }
-                                    let delay = BASE_DELAY_MS * (1 << retry_count);
-                                    let jitter = rand::thread_rng().gen_range(0..delay);
-                                    let sleep_duration = Duration::from_millis(std::cmp::min(
-                                        delay + jitter,
-                                        MAX_DELAY_MS,
-                                    ));
-                                    tracing::warn!(
-                                        retry_count,
-                                        delay_ms = sleep_duration.as_millis(),
-                                        "Retrying join_room due to 422 error"
-                                    );
-                                    sleep(sleep_duration).await;
-                                    retry_count += 1;
-                                    continue;
+                            if let HttpClientError::MlsStatusCode(status) = e
+                                && status == 422
+                            {
+                                if retry_count >= MAX_RETRIES {
+                                    return Err(e.into());
                                 }
+                                let delay = BASE_DELAY_MS * (1 << retry_count);
+                                let jitter = rand::thread_rng().gen_range(0..delay);
+                                let sleep_duration = Duration::from_millis(std::cmp::min(
+                                    delay + jitter,
+                                    MAX_DELAY_MS,
+                                ));
+                                tracing::warn!(
+                                    retry_count,
+                                    delay_ms = sleep_duration.as_millis(),
+                                    "Retrying join_room due to 422 error"
+                                );
+                                sleep(sleep_duration).await;
+                                retry_count += 1;
+                                continue;
                             }
                             return Err(e.into());
                         }
@@ -318,10 +317,10 @@ impl Service {
                             }
                             Err(e) => {
                                 tracing::warn!("Failed to join group by proposal: {:?}", e);
-                                if let HttpClientError::MlsStatusCode(status) = &e {
-                                    if (400..500).contains(status) {
-                                        cached_group_info = None;
-                                    }
+                                if let HttpClientError::MlsStatusCode(status) = &e
+                                    && (400..500).contains(status)
+                                {
+                                    cached_group_info = None;
                                 }
                                 if retry_count >= MAX_RETRIES {
                                     {
@@ -487,20 +486,20 @@ impl Service {
                             return Ok(());
                         }
                         Err(e) => {
-                            if let HttpClientError::MlsStatusCode(status) = e {
-                                if status == 422 {
-                                    // the other client has joined room first, need retry again to join with extenral proposal
-                                    if retry_count >= MAX_RETRIES {
-                                        {
-                                            let mut state = self.state.lock().await;
-                                            state.mls_retry_count = retry_count;
-                                        }
-                                        return Err(e.into());
+                            if let HttpClientError::MlsStatusCode(status) = e
+                                && status == 422
+                            {
+                                // the other client has joined room first, need retry again to join with extenral proposal
+                                if retry_count >= MAX_RETRIES {
+                                    {
+                                        let mut state = self.state.lock().await;
+                                        state.mls_retry_count = retry_count;
                                     }
-                                    sleep(Duration::from_millis(BASE_DELAY_MS)).await;
-                                    retry_count += 1;
-                                    continue;
+                                    return Err(e.into());
                                 }
+                                sleep(Duration::from_millis(BASE_DELAY_MS)).await;
+                                retry_count += 1;
+                                continue;
                             }
                             return Err(e.into());
                         }
@@ -553,11 +552,11 @@ impl Service {
 
                     return Ok(());
                 }
-                if let HttpClientError::MlsStatusCode(status) = &e {
-                    if (400..500).contains(status) {
-                        tracing::error!("Failed to get group info: {:?}, stopping retry", status);
-                        return Err(e.into());
-                    }
+                if let HttpClientError::MlsStatusCode(status) = &e
+                    && (400..500).contains(status)
+                {
+                    tracing::error!("Failed to get group info: {:?}, stopping retry", status);
+                    return Err(e.into());
                 }
                 return Err(e.into());
             }

@@ -185,11 +185,13 @@ mod tests {
         let user_id = "test_user_id".to_string();
         let result = adapter.get_default_user_key(user_id).await;
         assert!(result.is_err());
-        assert!(result
-            .err()
-            .unwrap()
-            .to_string()
-            .contains("callback not set"));
+        assert!(
+            result
+                .err()
+                .unwrap()
+                .to_string()
+                .contains("callback not set")
+        );
     }
 
     /// Test case for error when passphrase callback is not set
@@ -199,11 +201,13 @@ mod tests {
         let user_id = "test_user_id".to_string();
         let result = adapter.get_user_key_passphrase(user_id).await;
         assert!(result.is_err());
-        assert!(result
-            .err()
-            .unwrap()
-            .to_string()
-            .contains("callback not set"));
+        assert!(
+            result
+                .err()
+                .unwrap()
+                .to_string()
+                .contains("callback not set")
+        );
     }
 
     /// Test case for clearing all callbacks

@@ -1,5 +1,5 @@
 #[cfg(not(target_family = "wasm"))]
-use base64::{prelude::BASE64_STANDARD, Engine};
+use base64::{Engine, prelude::BASE64_STANDARD};
 
 #[cfg(not(target_family = "wasm"))]
 use proton_srp::SrpHashVersion;

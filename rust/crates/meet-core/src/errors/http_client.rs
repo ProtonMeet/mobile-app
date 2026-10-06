@@ -162,10 +162,10 @@ impl fmt::Display for ResponseError {
 
 /// Best-effort parse of a failed API response body so callers see a non-zero code when possible.
 pub(crate) fn response_error_from_api_failure_body(body: &[u8], http_status: u16) -> ResponseError {
-    if let Ok(e) = serde_json::from_slice::<ResponseError>(body) {
-        if e.code != 0 || !e.error.is_empty() {
-            return e;
-        }
+    if let Ok(e) = serde_json::from_slice::<ResponseError>(body)
+        && (e.code != 0 || !e.error.is_empty())
+    {
+        return e;
     }
     if let Ok(v) = serde_json::from_slice::<serde_json::Value>(body) {
         let code = v

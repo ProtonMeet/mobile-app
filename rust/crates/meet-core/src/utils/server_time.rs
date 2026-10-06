@@ -1,9 +1,9 @@
-use crate::utils::{instant, PlatformInstant};
+use crate::utils::{PlatformInstant, instant};
 use chrono::NaiveDateTime;
 use std::{
     sync::{
-        atomic::{AtomicBool, Ordering},
         Arc, RwLock,
+        atomic::{AtomicBool, Ordering},
     },
     time::Duration,
 };

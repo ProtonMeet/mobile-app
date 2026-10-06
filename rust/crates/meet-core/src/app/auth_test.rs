@@ -6,7 +6,7 @@ use crate::app::test_support::{
     auth_service, build_app, build_app_with_auth_service, default_app_state, test_address,
     test_proton_user, test_user_key, test_user_state,
 };
-use crate::domain::user::ports::{user_api::MockUserApi, MockUserRepository};
+use crate::domain::user::ports::{MockUserRepository, user_api::MockUserApi};
 use crate::errors::core::MeetCoreError;
 use crate::errors::login::LoginError;
 use crate::infra::dto::proton_user::UserData;
@@ -116,10 +116,11 @@ async fn login_leaves_state_empty_on_failure() {
     )
     .await;
 
-    assert!(app
-        .login(TEST_USERNAME.to_string(), TEST_PASSWORD.to_string())
-        .await
-        .is_err());
+    assert!(
+        app.login(TEST_USERNAME.to_string(), TEST_PASSWORD.to_string())
+            .await
+            .is_err()
+    );
     assert!(matches!(
         app.get_user_state().await,
         Err(MeetCoreError::NoActiveUser)

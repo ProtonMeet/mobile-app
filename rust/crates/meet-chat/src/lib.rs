@@ -16,8 +16,9 @@ pub use decode::{decode_legacy_plaintext, decode_mimi_content, legacy_message_id
 pub use envelope::extract_mls_ciphertext;
 pub use error::ChatError;
 pub use mimi::{
-    build_mimi_message, compute_message_id, compute_message_id_from_content, domain_id_from_mimi,
-    meet_room_uri, mimi_id_from_domain, parse_mimi_content, LEGACY_MEET_MEDIA, MIMI_CONTENT_MEDIA,
+    LEGACY_MEET_MEDIA, MIMI_CONTENT_MEDIA, build_mimi_message, compute_message_id,
+    compute_message_id_from_content, domain_id_from_mimi, meet_room_uri, mimi_id_from_domain,
+    parse_mimi_content,
 };
 pub use types::{
     ChatComposeRequest, ChatIncomingEvent, ChatOutgoingPacket, ChatProtocol, MessageId,

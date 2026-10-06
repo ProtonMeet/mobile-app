@@ -1,8 +1,8 @@
 //! Ephemeral desktop web login session — isolated from the main app muon client.
 //! Drop or cancel when login finishes or is abandoned.
 
-use muon::auth::Auth;
 use muon::Environment;
+use muon::auth::Auth;
 
 use crate::errors::core::MeetCoreError;
 use crate::errors::http_client::HttpClientError;

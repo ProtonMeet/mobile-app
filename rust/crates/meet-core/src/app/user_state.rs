@@ -1,5 +1,5 @@
 use super::App;
-use crate::app_state::{preferred_user_key_for_crypto, UserState, UserStateInfo};
+use crate::app_state::{UserState, UserStateInfo, preferred_user_key_for_crypto};
 use crate::errors::core::MeetCoreError;
 
 impl App {

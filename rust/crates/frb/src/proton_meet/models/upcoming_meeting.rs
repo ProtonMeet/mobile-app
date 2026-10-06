@@ -49,7 +49,7 @@ impl FrbUpcomingMeeting {
             address_id: None,
             meeting_link_name,
             meeting_name: String::new(),
-            meeting_password: meeting_password,
+            meeting_password,
             meeting_type: MeetingType::Instant,
             start_time: None,
             end_time: None,

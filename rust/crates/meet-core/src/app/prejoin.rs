@@ -96,14 +96,12 @@ impl App {
             disconnect_ws = disconnect_ws,
             "refresh_waiting_room_guest_session"
         );
-        if disconnect_ws {
-            if let Err(error) = self.disconnect_from_ws().await {
-                tracing::debug!(
-                    meet_link_name,
-                    error = %error,
-                    "disconnect before waiting-room join request refresh (best effort)"
-                );
-            }
+        if disconnect_ws && let Err(error) = self.disconnect_from_ws().await {
+            tracing::debug!(
+                meet_link_name,
+                error = %error,
+                "disconnect before waiting-room join request refresh (best effort)"
+            );
         }
 
         self.clear_prejoin_waiting_room_mls_session().await?;

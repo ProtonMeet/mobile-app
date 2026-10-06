@@ -180,7 +180,8 @@ impl RoomService {
             Err(_e) => {
                 #[cfg(debug_assertions)]
                 tracing::info!(
-                    "join_meeting: encrypt display name failed; sending empty ciphertext error={:?}", _e,
+                    "join_meeting: encrypt display name failed; sending empty ciphertext error={:?}",
+                    _e,
                 );
                 String::new()
             }

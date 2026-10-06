@@ -1,11 +1,11 @@
 use meet_identifiers::AsOwned;
 use meet_type::fanout::MlsCommitInfo;
 use mls_spec::{
-    drafts::ratchet_tree_options::RatchetTreeOption, messages::MlsMessageContent, Serializable,
+    Serializable, drafts::ratchet_tree_options::RatchetTreeOption, messages::MlsMessageContent,
 };
 use mls_trait::{
-    meet_policy::UserRole, AuthorizerExt, MlsClientTrait, MlsGroupTrait, ProposalArg,
-    ProtonMeetIdentityProvider,
+    AuthorizerExt, MlsClientTrait, MlsGroupTrait, ProposalArg, ProtonMeetIdentityProvider,
+    meet_policy::UserRole,
 };
 use mls_types::ExternalPskId;
 
@@ -14,12 +14,11 @@ use crate::{
     infra::mimi_subject_parser::MimiSubject,
     service::{
         user_service::{
-            credential_is_agent,
+            GroupKeyUpdateReason, Service, credential_is_agent,
             utils::{
-                group_has_agent, mimi_sub_from_credential, stagger_then_check_agent,
-                stagger_then_check_epoch, StaggerOutcome,
+                StaggerOutcome, group_has_agent, mimi_sub_from_credential,
+                stagger_then_check_agent, stagger_then_check_epoch,
             },
-            GroupKeyUpdateReason, Service,
         },
         utils::convert_mls_types_to_spec,
     },
@@ -48,7 +47,7 @@ impl Service {
         meeting_password: String,
     ) -> Result<(), anyhow::Error> {
         use crate::service::agent_host_service::{
-            agent_psk_id_for_meeting, AgentBundleForPush, AgentHostService,
+            AgentBundleForPush, AgentHostService, agent_psk_id_for_meeting,
         };
         use mls_rs_codec::MlsDecode as _;
 

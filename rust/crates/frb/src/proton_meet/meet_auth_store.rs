@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use crate::errors::BridgeError;
-use flutter_rust_bridge::{frb, DartFnFuture};
+use flutter_rust_bridge::{DartFnFuture, frb};
 use proton_meet_core::muon::Auth;
 use proton_meet_core::{
-    infra::auth_store::{set_auth_persist_callback, AuthStore, SharedAuth},
+    infra::auth_store::{AuthStore, SharedAuth, set_auth_persist_callback},
     muon::{EnvId, Tokens},
 };
 

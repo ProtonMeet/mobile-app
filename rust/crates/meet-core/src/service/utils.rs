@@ -3,7 +3,7 @@ use mls_rs_codec::MlsEncode;
 use mls_spec::{Parsable, Serializable};
 use mls_trait::meet_policy::UserRole;
 use mls_types::{Credential, Member, Proposal};
-use proton_meet_mls::{kv::MemKv, MlsGroup, MlsGroupTrait};
+use proton_meet_mls::{MlsGroup, MlsGroupTrait, kv::MemKv};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -21,11 +21,8 @@ pub(crate) fn ensure_room_admin(mls_group: &MlsGroup<MemKv>) -> Result<(), MeetC
 
 pub fn get_uuid_from_member(member: &mut Member) -> Result<Uuid, anyhow::Error> {
     match &mut member.credential {
-        Credential::SdCwtDraft04 {
-            sd_kbt: ref mut sd_kbt_ref,
-            ..
-        } => {
-            let sd_cwt_payload = sd_kbt_ref.0.sd_cwt_payload()?;
+        Credential::SdCwtDraft04 { sd_kbt, .. } => {
+            let sd_cwt_payload = sd_kbt.0.sd_cwt_payload()?;
             let extra = sd_cwt_payload
                 .inner
                 .extra
@@ -34,10 +31,7 @@ pub fn get_uuid_from_member(member: &mut Member) -> Result<Uuid, anyhow::Error> 
             let uuid_bytes = &extra.uuid;
             Uuid::from_slice(uuid_bytes).map_err(|e| anyhow::anyhow!("Failed to parse UUID: {e}"))
         }
-        _ => Err(anyhow::anyhow!(
-            "other credential: {:?}",
-            &member.credential
-        )),
+        _ => Err(anyhow::anyhow!("other credential: {:?}", member.credential)),
     }
 }
 

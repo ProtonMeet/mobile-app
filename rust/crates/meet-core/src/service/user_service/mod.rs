@@ -8,8 +8,8 @@ use std::{
 use self::utils::*;
 use crate::{
     domain::user::{
-        models::{meeting_link_name::MeetingLinkName, UserSettings},
-        ports::{new_user_service::NewUserService, ArcWebSocketClient},
+        models::{UserSettings, meeting_link_name::MeetingLinkName},
+        ports::{ArcWebSocketClient, new_user_service::NewUserService},
     },
     infra::crypto_client::derive_external_psk,
     service::service_state::MlsSyncState,
@@ -19,28 +19,28 @@ use crate::{
     service::user_service::handlers::Handlers,
     utils::{join, server_time::ServerTimeTracker},
 };
-use base64::{engine::general_purpose, Engine};
+use base64::{Engine, engine::general_purpose};
 use ed25519_dalek::pkcs8::DecodePublicKey;
 use meet_mls::reexports::meet_policy::UserRole;
 use meet_type::RejoinReason;
 use mls_rs_codec::{MlsDecode, MlsEncode};
 use mls_spec::{
+    Parsable, Serializable,
     defs::ProtocolVersion,
     drafts::ratchet_tree_options::RatchetTreeOption,
     group::group_info::GroupInfo,
     messages::{MlsMessage, MlsMessageContent},
-    Parsable, Serializable,
 };
-use mls_trait::{types::ReceivedMessage, AuthorizerExt, ProposalArg, ProtonMeetIdentityProvider};
+use mls_trait::{AuthorizerExt, ProposalArg, ProtonMeetIdentityProvider, types::ReceivedMessage};
 use mls_types::{ContentType, Credential, ExternalPskId, MediaType, Member};
-use proton_claims::reexports::{cose_key_set::CoseKeySet, CwtAny};
+use proton_claims::reexports::{CwtAny, cose_key_set::CoseKeySet};
 use proton_meet_macro::async_trait;
 use proton_meet_mls::{
-    kv::MemKv, CipherSuite, CommitBundle, MlsClient, MlsClientConfig, MlsClientTrait, MlsGroup,
-    MlsGroupConfig, MlsGroupTrait, MlsStore,
+    CipherSuite, CommitBundle, MlsClient, MlsClientConfig, MlsClientTrait, MlsGroup,
+    MlsGroupConfig, MlsGroupTrait, MlsStore, kv::MemKv,
 };
-use rand::seq::SliceRandom;
 use rand::SeedableRng;
+use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, Notify, RwLock};
 use uuid::Uuid;
@@ -52,7 +52,7 @@ use crate::{
     domain::user::{
         models::{UserId, UserTokenInfo},
         ports::{
-            meeting_api::MeetingApi, mls_api::MlsApi, ConnectionState, HttpClient, UserService,
+            ConnectionState, HttpClient, UserService, meeting_api::MeetingApi, mls_api::MlsApi,
         },
     },
     errors::{core::MeetCoreError, http_client::HttpClientError},
@@ -65,8 +65,8 @@ use crate::{
             websocket::WebSocketTextRequestCommand,
         },
         group_info_payload::{
-            encode_php_waiting_room_data_field, serialize_waiting_room_setting_request,
-            PhpWaitingRoomDataField, WaitingRoomSettingRequest,
+            PhpWaitingRoomDataField, WaitingRoomSettingRequest, encode_php_waiting_room_data_field,
+            serialize_waiting_room_setting_request,
         },
         message_cache::MlsMessageCache,
         mimi_subject_parser::MimiSubject,
@@ -1900,7 +1900,9 @@ impl UserService for Service {
                         sender_mimi_uri,
                     ));
                 }
-                Err(anyhow::anyhow!("Failed to get participant id from credential"))
+                Err(anyhow::anyhow!(
+                    "Failed to get participant id from credential"
+                ))
             }
             _ => Err(anyhow::anyhow!(
                 "Expected ApplicationMessage but received different message type: {decrypted_message:?}"
@@ -2090,7 +2092,7 @@ impl UserService for Service {
             .ok_or(anyhow::anyhow!("mls client not found"))?;
 
         let sd_cwt = mls_client.sd_cwt()?;
-        let payload = sd_cwt.0 .0.payload.as_value()?;
+        let payload = sd_cwt.0.0.payload.as_value()?;
         let claims = payload
             .inner
             .extra
