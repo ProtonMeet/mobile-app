@@ -179,12 +179,7 @@ impl App {
                 join_and_connect_start.elapsed().as_millis()
             );
 
-            self.services
-                .user_service
-                .read()
-                .await
-                .reset_service_state()
-                .await;
+            self.services.reset().await;
             if let Err(disconnect_err) = self.disconnect_from_ws().await {
                 warn!("Failed to disconnect from websocket: {:?}", disconnect_err);
             }
@@ -295,12 +290,7 @@ impl App {
                 join_and_connect_start.elapsed().as_millis()
             );
 
-            self.services
-                .user_service
-                .read()
-                .await
-                .reset_service_state()
-                .await;
+            self.services.reset().await;
             if let Err(disconnect_err) = self.disconnect_from_ws().await {
                 warn!("Failed to disconnect from websocket: {:?}", disconnect_err);
             }
@@ -408,12 +398,7 @@ impl App {
                 join_and_connect_start.elapsed().as_millis()
             );
 
-            self.services
-                .user_service
-                .read()
-                .await
-                .reset_service_state()
-                .await;
+            self.services.reset().await;
             if let Err(disconnect_err) = self.disconnect_from_ws().await {
                 warn!("Failed to disconnect from websocket: {:?}", disconnect_err);
             }
@@ -475,12 +460,7 @@ impl App {
                 &e,
                 join_and_connect_start.elapsed().as_millis()
             );
-            self.services
-                .user_service
-                .read()
-                .await
-                .reset_service_state()
-                .await;
+            self.services.reset().await;
             if let Err(disconnect_err) = self.disconnect_from_ws().await {
                 warn!("Failed to disconnect from websocket: {:?}", disconnect_err);
             }

@@ -1,6 +1,6 @@
 use crate::infra::dto::realtime::{ConnectionLostType, MlsWelcomeInfo};
 use crate::utils::unix_timestamp_ms;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -70,9 +70,6 @@ pub struct ServiceState {
     pub pending_waiting_room_join_requests: HashMap<String, PendingWaitingRoomJoinRequest>,
     /// Guest's outstanding waiting-room join request id (for filtering stale reject WS events).
     pub guest_pending_join_request_id: Option<String>,
-    /// Rooms this client has asked a captions agent for and not seen arrive.
-    /// Nobody else can observe that request, so cancelling it is ours to do.
-    pub rooms_awaiting_captions_agent: HashSet<String>,
 }
 
 impl Default for ServiceState {
@@ -97,23 +94,7 @@ impl ServiceState {
             last_host_role_update_proposal_epoch: None,
             pending_waiting_room_join_requests: HashMap::new(),
             guest_pending_join_request_id: None,
-            rooms_awaiting_captions_agent: HashSet::new(),
         }
-    }
-
-    /// Remembered until the agent turns up, the request is cancelled, or the
-    /// meeting is torn down.
-    pub fn set_awaiting_captions_agent(&mut self, room_id: &str, awaiting: bool) {
-        if awaiting {
-            self.rooms_awaiting_captions_agent
-                .insert(room_id.to_string());
-        } else {
-            self.rooms_awaiting_captions_agent.remove(room_id);
-        }
-    }
-
-    pub fn is_awaiting_captions_agent(&self, room_id: &str) -> bool {
-        self.rooms_awaiting_captions_agent.contains(room_id)
     }
 
     pub fn set_mls_group_state(&mut self, mls_group_state: MlsGroupState) {
@@ -250,7 +231,6 @@ impl ServiceState {
         self.last_offline_members_handled_epoch = None;
         self.last_host_role_update_proposal_epoch = None;
         self.pending_waiting_room_join_requests.clear();
-        self.rooms_awaiting_captions_agent.clear();
         self.is_agent_in_livekit = false;
     }
 }
