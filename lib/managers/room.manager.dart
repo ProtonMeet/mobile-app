@@ -482,4 +482,10 @@ class RoomManager {
       keyRotationSubscription: keyRotationSubscription,
     );
   }
+
+  Future<void> removeParticipant(String uuid) async {
+    l.logger.i('[RoomManager] Removing participant $uuid');
+
+    await appCoreManager.appCore.removeParticipant(participantUuid: uuid);
+  }
 }
