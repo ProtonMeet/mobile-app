@@ -419,6 +419,48 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
     }
   }
 
+  /// Re-bind every LiveKit event listener (and the engine signal listener) to
+  /// the CURRENT [state] room/listener, then re-run the roster walk.
+  ///
+  /// A full App-level rejoin ([RoomRejoinHandlers]) replaces `state.room` and
+  /// `state.listener` with a brand-new connection. But [setUpListeners] is
+  /// one-shot (guarded by `_bound`) and its `..on<...>` handlers were attached
+  /// to the OLD listener — which is cancelled/disposed during rejoin cleanup.
+  /// Without re-binding, the bridge goes DEAF to the new room: no
+  /// `ParticipantConnectedEvent` / `TrackPublishedEvent` arrive, so with
+  /// `autoSubscribe: false` the new room's remote AUDIO + screen-share tracks
+  /// are never `.subscribe()`d and stay silent — even though video keeps
+  /// working because the camera grid subscribes those on demand straight from
+  /// `state.room.remoteParticipants`.
+  ///
+  /// Call this right after the rejoin has emitted the new room into [state].
+  void rebindListenersForNewRoom() {
+    // Tear down the signal listener that was created from the OLD room's
+    // engine; it is dead once the old room is disconnected/disposed.
+    try {
+      _signalListener.cancelAll();
+      _signalListener.dispose();
+    } catch (e) {
+      l.logger.w('[LiveKit] rebind: error disposing old signal listener: $e');
+    }
+
+    // The old RoomEvent handlers are already gone with the disposed old
+    // listener, so just allow a fresh bind to the new listener.
+    _bound = false;
+    _clearAllPendingSubscribes(clearRetryCounts: true);
+
+    // Re-bind to `state.listener` (now the NEW listener), recreate the signal
+    // listener from the NEW engine, and (via the roster walk at the end of
+    // [setUpListeners]) re-subscribe the already-present remote audio /
+    // screen-share tracks.
+    setUpListeners();
+
+    l.logger.i(
+      '[LiveKit] Re-bound room event listeners to the new room after rejoin '
+      'and re-subscribed existing remote audio/screen-share',
+    );
+  }
+
   void setUpListeners() {
     if (_bound) return;
     _bound = true;
@@ -428,6 +470,16 @@ mixin RoomEventsBinding on Bloc<RoomBlocEvent, RoomState>, RoomPipHandlers {
       ..on<RoomDisconnectedEvent>((event) async {
         // Drop the in-flight guard; pubs from this connection are stale.
         _clearAllPendingSubscribes(clearRetryCounts: true);
+
+        // A rejoin deliberately disconnects the OLD room early (see
+        // [RoomRejoinHandlers._onStartRejoinMeeting]) while this listener is
+        // still bound to it, so this event also fires for that intentional
+        // teardown. In that case the call is not actually ending — a new
+        // connection is being built — so we must NOT end the call activity /
+        // CallKit here, otherwise every rejoin would tear down CallKit.
+        if (state.isRejoining) {
+          return;
+        }
 
         /// End call activity when room disconnects
         await CallActivityChannel.end(immediately: true);

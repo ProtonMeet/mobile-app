@@ -58,6 +58,41 @@ MediaDevice? findMatchingDevice({
 
 /// Mixin for handling room rejoin after connection loss
 mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
+  // Synchronous latch that collapses racing rejoin requests into one.
+  //
+  // `state.isRejoining` only flips true once the queued [StartRejoinMeeting] is
+  // actually processed. Several independent escalation paths (the MLS-failure
+  // fast path, the LiveKit reconnect watchdog, and the RoomDisconnectedEvent
+  // handler in RoomPage) can all check `isRejoining` in the same turn — see it
+  // false — and each enqueue a rejoin before the first one is handled. This
+  // latch is set the instant the first request is enqueued, so the others
+  // short-circuit. Handed back to the `isRejoining` guard (reset to false) at
+  // the top of [_onStartRejoinMeeting].
+  bool _rejoinRequested = false;
+
+  /// Enqueue a rejoin at most once per outage, deduping racing escalation paths.
+  ///
+  /// Prefer this over `add(StartRejoinMeeting(...))` from any escalation path:
+  /// it closes the window between enqueuing a rejoin and `isRejoining` becoming
+  /// true, during which two paths could otherwise each start a rejoin.
+  void requestRejoin([RejoinReason? reason]) {
+    if (isClosed) {
+      return;
+    }
+    if (_rejoinRequested ||
+        state.isRejoining ||
+        state.rejoinStatus == RejoinStatus.error) {
+      l.logger.w(
+        '[RoomRejoin] requestRejoin($reason) ignored: a rejoin is already '
+        'requested/in-progress (requested=$_rejoinRequested, '
+        'isRejoining=${state.isRejoining}, status=${state.rejoinStatus})',
+      );
+      return;
+    }
+    _rejoinRequested = true;
+    add(StartRejoinMeeting(reason: reason));
+  }
+
   void registerRejoinHandlers() {
     on<StartRejoinMeeting>(_onStartRejoinMeeting);
     on<RejoinMeetingProgress>(_onRejoinMeetingProgress);
@@ -72,6 +107,12 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
     StartRejoinMeeting event,
     Emitter<RoomState> emit,
   ) async {
+    // Hand the dedup guard back to `isRejoining`: from here on, any racing
+    // request is caught by the `state.isRejoining` check below. Resetting at the
+    // very top also clears the latch on every early-return path (feature off,
+    // no room manager, closed, already rejoining) so it can never get stuck.
+    _rejoinRequested = false;
+
     // Check if auto reconnection feature is enabled
     if (this is RoomBloc) {
       final roomBloc = this as RoomBloc;
@@ -196,6 +237,19 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
         l.logger.e('[RoomRejoin] Error saving old room tracks: $e');
       }
 
+      // Intentionally tear down the OLD LiveKit transport BEFORE building the
+      // new connection. This avoids the server briefly seeing two sessions with
+      // the same identity (the "duplicate-identity flap") during reconnect.
+      try {
+        await oldRoom.disconnect();
+        l.logger.i(
+          '[RoomRejoin] Disconnected old LiveKit transport before reconnecting '
+          'to avoid duplicate-identity flap',
+        );
+      } catch (e) {
+        l.logger.e('[RoomRejoin] Error disconnecting old room early: $e');
+      }
+
       final meetLinkName = state.meetInfo.meetLinkName;
       final meetLinkParseResult = parseMeetJoinLink(state.meetingLink);
       final meetLinkPassword = meetLinkParseResult.passcode ?? '';
@@ -266,8 +320,35 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
         ),
       );
 
-      // Use helper to connect to room
-      final shouldReuseToken = state.rejoinFailedCount == 0;
+      // Decide whether to reuse the previous LiveKit/meet access token.
+      //
+      // Reusing the token gives a faster reconnect and lets waiting-room
+      // meetings skip re-queuing. BUT for failures caused by losing our MLS
+      // group membership (we may have been removed by the committer while
+      // offline, or the websocket missed the commits that advanced the epoch),
+      // a reused token can make the server treat us as the still-present old
+      // session — so the external commit / proposal we send to re-join is never
+      // broadcast to the other participants and we never actually get re-added
+      // (remotes see no proposal/commit, and isMlsUpToDate stays false forever).
+      // For those reasons, force a clean re-join so the server processes and
+      // fans out our membership change.
+      final rejoinReason =
+          event.reason ?? state.rejoinReason ?? RejoinReason.other;
+      final isMlsMembershipFailure = switch (rejoinReason) {
+        RejoinReason.epochMismatch ||
+        RejoinReason.websocketDisconnected ||
+        RejoinReason.memberNotFoundInMls ||
+        RejoinReason.fetchTimeout => true,
+        RejoinReason.livekitStateMismatch ||
+        RejoinReason.livekitConnectionTimeout ||
+        RejoinReason.other => false,
+      };
+      final shouldReuseToken =
+          state.rejoinFailedCount == 0 && !isMlsMembershipFailure;
+      l.logger.i(
+        '[RoomRejoin] reuseToken=$shouldReuseToken '
+        '(reason=$rejoinReason, failedCount=${state.rejoinFailedCount})',
+      );
       RoomConnectionResult connectionResult;
       try {
         emit(state.copyWith(rejoinStatus: RejoinStatus.updatingAccessToken));
@@ -813,6 +894,7 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
 
       if (this is RoomBloc) {
         final roomBloc = this as RoomBloc;
+        roomBloc.rebindListenersForNewRoom();
         roomBloc.resetLiveCaptionsTranscriptionPipeline(emitUpdate: false);
         roomBloc.ensureLiveCaptionsTranscriptionHandler(room: newRoom);
         unawaited(roomBloc.registerLiveCaptionsAgentAdmissionCallbacks());
