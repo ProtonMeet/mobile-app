@@ -78,6 +78,7 @@ import 'package:meet/views/scenes/room/chat/chat_bubble.dart';
 import 'package:meet/views/scenes/room/chat/chat_controller.dart';
 import 'package:meet/views/scenes/room/chat/chat_models.dart';
 import 'package:meet/views/scenes/room/chat/mention_message_content.dart';
+import 'package:meet/views/scenes/room/reaction_stream/reaction_stream.dart';
 import 'package:meet/views/scenes/room/controls_bar/controls_bar_responsive.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 import 'package:meet/views/scenes/room/layout/fixed_sizing_camera_layout.dart';
@@ -3458,15 +3459,42 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   /// Floats the captions sheet over the media area, leaving the controls bar
   /// reachable. Taps outside the sheet fall through to [child].
   Widget _withLiveCaptionsSheet(BuildContext context, Widget child) {
+    final withReactionStream = Stack(
+      children: [
+        Positioned.fill(child: child),
+        Positioned.fill(
+          child: IgnorePointer(
+            child: ReactionStream(
+              activeReactions: _activeReactions,
+              localParticipantIdentity:
+                  _bloc.state.room.localParticipant?.identity,
+              displayNameForIdentity: _reactionStreamDisplayName,
+            ),
+          ),
+        ),
+      ],
+    );
     if (!_bloc.isMeetLiveCaptionsEnabled()) {
-      return child;
+      return withReactionStream;
     }
     return Stack(
       children: [
-        Positioned.fill(child: child),
+        Positioned.fill(child: withReactionStream),
         Positioned.fill(child: _buildLiveCaptionsSheet(context)),
       ],
     );
+  }
+
+  String _reactionStreamDisplayName(String identity) {
+    final fromMap = _bloc.state.frbParticipantsMap[identity]?.displayName;
+    if (fromMap != null && fromMap.isNotEmpty) {
+      return fromMap;
+    }
+    final participant = _participantWithIdentity(identity);
+    if (participant != null) {
+      return _bloc.getParticipantDisplayName(participant);
+    }
+    return '';
   }
 
   Widget _buildLiveCaptionsSheet(BuildContext context) {
