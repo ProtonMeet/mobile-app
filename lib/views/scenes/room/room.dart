@@ -916,6 +916,44 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     });
   }
 
+  /// Whether a [RoomDisconnectedEvent] with [reason] should be recovered from
+  /// with a fresh App-level rejoin instead of dropping the user back to the
+  /// dashboard.
+  ///
+  /// These reasons are all *client-side* conditions (the SDK gave up, the
+  /// signal socket dropped, a node is migrating, etc.) rather than the server
+  /// deliberately evicting the participant — so re-joining is safe and is a far
+  /// better experience than a hard exit. Gated behind the `MeetAutoReconnection`
+  /// feature flag so the previous "pop to dashboard" behaviour is fully
+  /// restored when the flag is off. We also avoid re-triggering while a rejoin
+  /// is already running or has surfaced its error dialog, to prevent loops.
+  bool _shouldAttemptRecoveryRejoin(DisconnectReason? reason) {
+    const recoverableReasons = {
+      DisconnectReason.reconnectAttemptsExceeded,
+      DisconnectReason.disconnected,
+      DisconnectReason.signalingConnectionFailure,
+      DisconnectReason.joinFailure,
+      DisconnectReason.serverShutdown,
+      DisconnectReason.migration,
+      DisconnectReason.unknown,
+    };
+
+    if (reason == null || !recoverableReasons.contains(reason)) {
+      return false;
+    }
+    if (_isLeavingByUser) {
+      return false;
+    }
+    if (!_bloc.isMeetAutoReconnectionEnabled()) {
+      return false;
+    }
+    final state = _bloc.state;
+    if (state.isRejoining || state.rejoinStatus == RejoinStatus.error) {
+      return false;
+    }
+    return true;
+  }
+
   /// for more information, see [event types](https://docs.livekit.io/client/events/#events)
   void setUpListeners(EventsListener<RoomEvent> listener) => listener
     ..on<RoomAttemptReconnectEvent>((_) {
@@ -929,6 +967,19 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         // Room disconnected
         l.logger.e('Room disconnected: reason => ${event.reason}');
       }
+
+      // handle RoomDisconnectedEvent during in-progress rejoin
+      final isTerminalReason =
+          event.reason == DisconnectReason.roomDeleted ||
+          event.reason == DisconnectReason.participantRemoved;
+      if (_bloc.state.isRejoining && !isTerminalReason) {
+        l.logger.w(
+          '[RoomPage] Ignoring RoomDisconnectedEvent (${event.reason}) '
+          'from stale connection during in-progress rejoin',
+        );
+        return;
+      }
+
       // Exit PIP and hide notification when room disconnects
       if (android) {
         _bloc.add(ExitPipMode());
@@ -966,10 +1017,23 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             level: SentryLevel.warning,
           );
           // auto rejoin when disconnect reason is state mismatch
-          _bloc.add(const StartRejoinMeeting());
+          _bloc.requestRejoin(RejoinReason.livekitStateMismatch);
           shouldPop = false;
         } else if (_isLeavingByUser) {
           // Manual leave flow handles its own navigation/bottom sheet.
+          shouldPop = false;
+        } else if (_shouldAttemptRecoveryRejoin(event.reason)) {
+          // The LiveKit transport gave up (e.g. reconnectAttemptsExceeded
+          // after ~44s of built-in retries, or the signal socket dropped).
+          // These are client-side conditions, not the server evicting us, so
+          // instead of dumping the user back on the dashboard we fall back to
+          // a fresh App-level rejoin, which builds a brand new Room connection
+          // and is both faster and more predictable than the built-in path.
+          Sentry.captureMessage(
+            'Room disconnected (${event.reason}), attempting fresh rejoin',
+            level: SentryLevel.warning,
+          );
+          _bloc.requestRejoin(RejoinReason.livekitConnectionTimeout);
           shouldPop = false;
         } else if (event.reason != null &&
             event.reason != DisconnectReason.clientInitiated) {
@@ -3286,7 +3350,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                           ),
                         ),
                 ),
-                if (room.localParticipant != null) _buildControlsBarWithFade(),
+                _buildControlsBarWithFade(
+                  hasLocalParticipant: room.localParticipant != null,
+                ),
               ],
             );
           },
@@ -3406,10 +3472,25 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildControlsBarWithFade() {
-    return BlocSelector<RoomBloc, RoomState, bool>(
-      selector: (state) => state.isFullScreen,
-      builder: (context, isFullScreen) {
+  Widget _buildControlsBarWithFade({required bool hasLocalParticipant}) {
+    return BlocSelector<RoomBloc, RoomState, (bool, bool)>(
+      selector: (state) => (
+        state.isFullScreen,
+        state.isRejoining || state.isLiveKitReconnecting,
+      ),
+      builder: (context, data) {
+        final isFullScreen = data.$1;
+        final isReconnecting = data.$2;
+
+        // Normally the bar only exists once we have a local participant. During
+        // a reconnect/rejoin the (old) room may be disconnected and
+        // `localParticipant` is briefly null — keep the bar on screen anyway so
+        // the user can still leave (all other controls are disabled by
+        // [ResponsiveControlsBar.controlsDisabled]).
+        if (!hasLocalParticipant && !isReconnecting) {
+          return const SizedBox.shrink();
+        }
+
         final shouldHide = !desktop && isFullScreen;
 
         return AnimatedContainer(
@@ -3612,6 +3693,10 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       child: ResponsiveControlsBar(
         room: state.room,
         backgroundColor: context.colors.interActionWeakMinor3,
+        // While reconnecting/rejoining, keep the bar visible but disable every
+        // control except "leave", so the user can still exit without being able
+        // to toggle mic/camera/screen-share or change settings mid-reconnect.
+        controlsDisabled: state.isRejoining || state.isLiveKitReconnecting,
         onLeave: () {
           // Only show the "End meeting for all" button when the local
           // participant is the only host in the meeting.
