@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart';
@@ -232,9 +230,6 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
   bool get isScreenShare => widget.type == ParticipantTrackType.kScreenShare;
 
   EventsListener<ParticipantEvent>? _listener;
-  ParticipantReaction? _currentReaction;
-  String? _displayReactionEmoji;
-  Timer? _hideReactionTimer;
 
   /// Last snapshot we rebuilt against. `_onParticipantChanged` short-circuits
   /// when the next snapshot is structurally equal to this.
@@ -269,7 +264,6 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
     });
 
     widget.participant.addListener(_onParticipantChanged);
-    _syncReactionFromWidget();
     // Seed the snapshot. The first frame builds naturally after initState,
     // so we don't need an extra setState here.
     _lastSnapshot = _captureSnapshot();
@@ -279,7 +273,6 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
   void dispose() {
     widget.participant.removeListener(_onParticipantChanged);
     _listener?.dispose();
-    _hideReactionTimer?.cancel();
     super.dispose();
   }
 
@@ -287,61 +280,10 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
   void didUpdateWidget(covariant T oldWidget) {
     oldWidget.participant.removeListener(_onParticipantChanged);
     widget.participant.addListener(_onParticipantChanged);
-    _syncReactionFromWidget();
     // didUpdateWidget always implies a rebuild, so just refresh the snapshot
     // baseline against the (potentially new) participant.
     _lastSnapshot = _captureSnapshot();
     super.didUpdateWidget(oldWidget);
-  }
-
-  void _syncReactionFromWidget() {
-    final incoming = widget.reaction;
-    if (incoming == null) {
-      if (_displayReactionEmoji == null && _currentReaction == null) {
-        return;
-      }
-      _hideReactionTimer?.cancel();
-      _currentReaction = null;
-      setState(() {
-        _displayReactionEmoji = null;
-      });
-      return;
-    }
-
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
-    final elapsedMs = nowMs - incoming.timestamp;
-    final needDisplay = (reactionDisplayDurationMs - elapsedMs) > 0;
-    if (!needDisplay) {
-      // Ignore stale reactions so they do not re-appear after re-render.
-      _hideReactionTimer?.cancel();
-      _currentReaction = null;
-      if (_displayReactionEmoji == null) {
-        return;
-      }
-      setState(() {
-        _displayReactionEmoji = null;
-      });
-      return;
-    }
-
-    if (_currentReaction?.timestamp == incoming.timestamp) return;
-
-    _currentReaction = incoming;
-    _hideReactionTimer?.cancel();
-    setState(() {
-      _displayReactionEmoji = incoming.emoji;
-    });
-
-    _hideReactionTimer = Timer(
-      const Duration(milliseconds: reactionDisplayDurationMs),
-      () {
-        if (!mounted) return;
-        if (_currentReaction?.timestamp != incoming.timestamp) return;
-        setState(() {
-          _displayReactionEmoji = null;
-        });
-      },
-    );
   }
 
   /// Diff the current snapshot against the last one we rebuilt against and
@@ -471,64 +413,31 @@ abstract class _ParticipantWidgetState<T extends ParticipantWidget>
         ),
         // Top right: Connection quality icon + Audio status
         Positioned(top: 0, right: 0, child: _buildTopRightWidgets(ctx)),
-        // Top left: Emoji reaction
-        Positioned(
-          top: 12,
-          left: 12,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 220),
-            reverseDuration: const Duration(milliseconds: 160),
-            switchInCurve: Curves.easeOutBack,
-            switchOutCurve: Curves.easeIn,
-            transitionBuilder: (child, animation) {
-              final offsetAnimation = Tween<Offset>(
-                begin: const Offset(0, 0.12),
-                end: Offset.zero,
-              ).animate(animation);
-              return FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: offsetAnimation,
-                  child: ScaleTransition(scale: animation, child: child),
-                ),
-              );
-            },
-            child: widget.isRaisedHand
-                ? widget.onLowerHand == null
-                      ? const Text(
-                          raisedHandEmoji,
-                          key: ValueKey('raised-hand-display'),
-                          style: TextStyle(fontSize: 30),
-                        )
-                      : Tooltip(
-                          message: ctx.local.lower_participant_hand,
-                          child: Material(
-                            type: MaterialType.transparency,
-                            child: InkWell(
-                              key: const ValueKey('raised-hand-lower-action'),
-                              onTap: widget.onLowerHand,
-                              borderRadius: BorderRadius.circular(999),
-                              child: const Padding(
-                                padding: EdgeInsets.all(2),
-                                child: Text(
-                                  raisedHandEmoji,
-                                  style: TextStyle(fontSize: 30),
-                                ),
-                              ),
-                            ),
+        // Top left: raised hand only (emoji reactions use ReactionStream).
+        if (widget.isRaisedHand)
+          Positioned(
+            top: 12,
+            left: 12,
+            child: widget.onLowerHand == null
+                ? const Text(raisedHandEmoji, style: TextStyle(fontSize: 30))
+                : Tooltip(
+                    message: ctx.local.lower_participant_hand,
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: InkWell(
+                        onTap: widget.onLowerHand,
+                        borderRadius: BorderRadius.circular(999),
+                        child: const Padding(
+                          padding: EdgeInsets.all(2),
+                          child: Text(
+                            raisedHandEmoji,
+                            style: TextStyle(fontSize: 30),
                           ),
-                        )
-                : IgnorePointer(
-                    child: _displayReactionEmoji == null
-                        ? const SizedBox.shrink(key: ValueKey('no-reaction'))
-                        : Text(
-                            _displayReactionEmoji!,
-                            key: const ValueKey('reaction-emoji'),
-                            style: const TextStyle(fontSize: 30),
-                          ),
+                        ),
+                      ),
+                    ),
                   ),
           ),
-        ),
         if (widget.showStatsLayer)
           Positioned(
             top: 130,
