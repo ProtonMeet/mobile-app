@@ -872,6 +872,10 @@ impl AppCore {
                 max_duration: meeting_info.max_duration,
                 max_participants: meeting_info.max_participants,
                 expiration_time: meeting_info.expiration_time,
+                salt: meeting_info.salt,
+                session_key: meeting_info.session_key,
+                manage_waiting_room: meeting_info.manage_waiting_room,
+                personal_meeting: meeting_info.personal_meeting,
             });
         }
 
@@ -902,6 +906,10 @@ impl AppCore {
                         max_duration: meeting_info.max_duration,
                         max_participants: meeting_info.max_participants,
                         expiration_time: meeting_info.expiration_time,
+                        salt: meeting_info.salt,
+                        session_key: meeting_info.session_key,
+                        manage_waiting_room: meeting_info.manage_waiting_room,
+                        personal_meeting: meeting_info.personal_meeting,
                     });
                 }
                 Err(e) => {
@@ -941,6 +949,10 @@ impl AppCore {
             max_duration: meeting_info.max_duration,
             max_participants: meeting_info.max_participants,
             expiration_time: meeting_info.expiration_time,
+            salt: meeting_info.salt,
+            session_key: meeting_info.session_key,
+            manage_waiting_room: meeting_info.manage_waiting_room,
+            personal_meeting: meeting_info.personal_meeting,
         })
     }
 
@@ -992,6 +1004,10 @@ impl AppCore {
             max_duration: meeting_info.max_duration,
             max_participants: meeting_info.max_participants,
             expiration_time: meeting_info.expiration_time,
+            salt: meeting_info.salt,
+            session_key: meeting_info.session_key,
+            manage_waiting_room: meeting_info.manage_waiting_room,
+            personal_meeting: meeting_info.personal_meeting,
         })
     }
 

@@ -29,12 +29,12 @@ FrbMeetingInfo meetingInfoFromMeetPreview(FrbMeetInfo meetInfo) {
   return FrbMeetingInfo(
     meetingLinkName: meetInfo.meetLinkName,
     meetingName: meetInfo.meetName,
-    salt: '',
-    sessionKey: '',
+    salt: meetInfo.salt,
+    sessionKey: meetInfo.sessionKey,
     locked: meetInfo.isLocked ? 1 : 0,
     waitingRoom: meetInfo.hasWaitingRoom ? 1 : 0,
-    manageWaitingRoom: 0,
-    personalMeeting: 0,
+    manageWaitingRoom: meetInfo.manageWaitingRoom,
+    personalMeeting: meetInfo.personalMeeting,
     maxDuration: meetInfo.maxDuration,
     maxParticipants: meetInfo.maxParticipants,
     expirationTime: meetInfo.expirationTime,
@@ -106,13 +106,14 @@ Future<PreJoinJoinAuthResult> authenticateForJoin({
     meetLinkPassword: meetingPassword,
     displayName: displayName,
   );
-  final meetingInfo = await appCoreManager.appCore.getMeetingInfo(
-    meetingLinkName: meetingLinkName,
-  );
+  // `authenticateMeetingLink` already fetched the meeting-info response during SRP
+  // auth and carries the needed fields on [meetInfo], so we build the preview
+  // locally instead of issuing a second `getMeetingInfo` round trip.
+  final meetingInfo = meetingInfoFromMeetPreview(meetInfo);
   return PreJoinJoinAuthResult(
     meetInfo: meetInfo,
     meetingInfo: meetingInfo,
-    isMeetingHost: meetingInfo.manageWaitingRoom == 1,
+    isMeetingHost: meetInfo.manageWaitingRoom == 1,
     authDisplayName: displayName,
   );
 }

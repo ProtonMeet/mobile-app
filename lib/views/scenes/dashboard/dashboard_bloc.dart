@@ -5,6 +5,7 @@ import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:meet/constants/app.config.dart';
 import 'package:meet/helper/extension/bridge_error.extension.dart';
 import 'package:meet/helper/extension/bridge_session_check.extension.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
@@ -13,6 +14,7 @@ import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/extension/response_error.extension.dart';
 import 'package:meet/helper/external.url.dart';
 import 'package:meet/helper/logger.dart' as l;
+import 'package:meet/helper/meet_join_link_parser.dart';
 import 'package:meet/helper/sentry_create_room.dart';
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/app.state.manager.dart';
@@ -220,7 +222,23 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       return;
     }
     try {
-      add(FetchUserStateEvent());
+      // A cold-start deep-link join navigates straight to pre-join, so defer the
+      // heavy dashboard load (fetchUserState + getUpcomingMeetings). This lets the
+      // deep-link warmup + SRP prefetch take the shared HTTP/2 connection and Rust
+      // runtime first; the dashboard still loads shortly after and is ready for
+      // when the user returns from the meeting.
+      if (await _hasPendingJoinDeepLink()) {
+        l.logger.i(
+          '[DashboardBloc] Deferring dashboard load for pending deep-link join',
+        );
+        Future.delayed(_deepLinkDashboardLoadDelay, () {
+          if (!isClosed) {
+            add(FetchUserStateEvent());
+          }
+        });
+      } else {
+        add(FetchUserStateEvent());
+      }
       add(LoadSignInCardVisibilityEvent());
       final dataProviderManager = ManagerFactory().get<DataProviderManager>();
       await dataProviderManager.unleashDataProvider.start();
@@ -230,6 +248,34 @@ class DashboardBloc extends Bloc<DashboardBlocEvent, DashboardState> {
       _reconcileNativeRecordingsAfterDashboardLoad();
     } catch (e) {
       l.logger.e('Error InitDashboardEvent: $e');
+    }
+  }
+
+  /// How long to defer the dashboard's heavy load when a cold-start deep-link join
+  /// is pending, giving the deep-link warmup + SRP prefetch priority on the shared
+  /// connection and runtime.
+  static const Duration _deepLinkDashboardLoadDelay = Duration(
+    milliseconds: 1500,
+  );
+
+  /// True when the app was launched via a fully-valid join deep link (auto-join),
+  /// so the user goes straight to pre-join and the dashboard load can be deferred.
+  /// Partial/invalid links (which open the join dialog on the dashboard) return
+  /// false so the dashboard loads immediately.
+  Future<bool> _hasPendingJoinDeepLink() async {
+    try {
+      final initial = await AppLinks().getInitialLink();
+      if (initial == null) {
+        return false;
+      }
+      return tryParseMeetJoinCredentials(
+            initial.toString(),
+            allowedHost: appConfig.apiEnv.domain,
+          ) !=
+          null;
+    } catch (e) {
+      l.logger.d('[DashboardBloc] pending deep-link check failed: $e');
+      return false;
     }
   }
 

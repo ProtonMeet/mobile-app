@@ -408,6 +408,10 @@ pub fn test_meet_info() -> MeetInfo {
         max_participants: 100,
         expiration_time: None,
         has_waiting_room: false,
+        salt: "salt".to_string(),
+        session_key: "session-key".to_string(),
+        manage_waiting_room: 0,
+        personal_meeting: 0,
     }
 }
 

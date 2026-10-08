@@ -23,6 +23,19 @@ class FrbMeetInfo {
   /// Unix timestamp in seconds (`Option<i64>`)
   final PlatformInt64? expirationTime;
 
+  /// Salt of the password. Carried from SRP auth so pre-join can build the full
+  /// meeting info without a second `get_meeting_info` round trip.
+  final String salt;
+
+  /// Encrypted session key of the meeting. See [`Self::salt`].
+  final String sessionKey;
+
+  /// 1 if the current session can manage the waiting room (host). See [`Self::salt`].
+  final int manageWaitingRoom;
+
+  /// 1 if the meeting is personal. See [`Self::salt`].
+  final int personalMeeting;
+
   const FrbMeetInfo({
     required this.meetName,
     required this.meetLinkName,
@@ -34,6 +47,10 @@ class FrbMeetInfo {
     required this.maxDuration,
     required this.maxParticipants,
     this.expirationTime,
+    required this.salt,
+    required this.sessionKey,
+    required this.manageWaitingRoom,
+    required this.personalMeeting,
   });
 
   @override
@@ -47,7 +64,11 @@ class FrbMeetInfo {
       hasWaitingRoom.hashCode ^
       maxDuration.hashCode ^
       maxParticipants.hashCode ^
-      expirationTime.hashCode;
+      expirationTime.hashCode ^
+      salt.hashCode ^
+      sessionKey.hashCode ^
+      manageWaitingRoom.hashCode ^
+      personalMeeting.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -63,5 +84,9 @@ class FrbMeetInfo {
           hasWaitingRoom == other.hasWaitingRoom &&
           maxDuration == other.maxDuration &&
           maxParticipants == other.maxParticipants &&
-          expirationTime == other.expirationTime;
+          expirationTime == other.expirationTime &&
+          salt == other.salt &&
+          sessionKey == other.sessionKey &&
+          manageWaitingRoom == other.manageWaitingRoom &&
+          personalMeeting == other.personalMeeting;
 }

@@ -340,6 +340,10 @@ async fn get_meeting_info_decrypts_meeting_name_from_prejoin_cache() {
             max_duration: 3600,
             max_participants: 100,
             expiration_time: None,
+            salt: "salt".to_string(),
+            session_key: "session-key".to_string(),
+            manage_waiting_room: 0,
+            personal_meeting: 0,
         },
     });
 
@@ -674,6 +678,10 @@ async fn resolve_meeting_display_name_uses_prejoin_cache() {
             max_duration: 3600,
             max_participants: 100,
             expiration_time: None,
+            salt: "salt".to_string(),
+            session_key: "session-key".to_string(),
+            manage_waiting_room: 0,
+            personal_meeting: 0,
         },
     });
 
