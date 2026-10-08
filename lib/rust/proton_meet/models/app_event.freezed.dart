@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'app_event.dart';
@@ -9,6 +9,7 @@ part of 'app_event.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -20,7 +21,7 @@ mixin _$AppEvent {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppEvent);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is AppEvent);
 }
 
 
@@ -29,7 +30,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'AppEvent()';
+    return 'AppEvent()';
 }
 
 
@@ -208,16 +209,18 @@ $AppEvent_UserStateChangedCopyWith<AppEvent_UserStateChanged> get copyWith => _$
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppEvent_UserStateChanged&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is AppEvent_UserStateChanged&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'AppEvent.userStateChanged(field0: $field0)';
+    return 'AppEvent.userStateChanged(field0: $field0)';
 }
 
 
@@ -274,16 +277,18 @@ $AppEvent_ConnectionChangedCopyWith<AppEvent_ConnectionChanged> get copyWith => 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppEvent_ConnectionChanged&&(identical(other.connected, connected) || other.connected == connected));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is AppEvent_ConnectionChanged&&(identical(other.connected, connected) || other.connected == connected));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,connected);
+int get hashCode {
+    return Object.hash(runtimeType,connected);
+}
 
 @override
 String toString() {
-  return 'AppEvent.connectionChanged(connected: $connected)';
+    return 'AppEvent.connectionChanged(connected: $connected)';
 }
 
 
@@ -340,16 +345,18 @@ $AppEvent_ErrorCopyWith<AppEvent_Error> get copyWith => _$AppEvent_ErrorCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppEvent_Error&&(identical(other.message, message) || other.message == message));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is AppEvent_Error&&(identical(other.message, message) || other.message == message));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,message);
+int get hashCode {
+    return Object.hash(runtimeType,message);
+}
 
 @override
 String toString() {
-  return 'AppEvent.error(message: $message)';
+    return 'AppEvent.error(message: $message)';
 }
 
 
@@ -408,16 +415,18 @@ $AppEvent_MlsGroupUpdatedCopyWith<AppEvent_MlsGroupUpdated> get copyWith => _$Ap
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppEvent_MlsGroupUpdated&&(identical(other.roomId, roomId) || other.roomId == roomId)&&(identical(other.key, key) || other.key == key)&&(identical(other.epoch, epoch) || other.epoch == epoch));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is AppEvent_MlsGroupUpdated&&(identical(other.roomId, roomId) || other.roomId == roomId)&&(identical(other.key, key) || other.key == key)&&(identical(other.epoch, epoch) || other.epoch == epoch));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,roomId,key,epoch);
+int get hashCode {
+    return Object.hash(runtimeType,roomId,key,epoch);
+}
 
 @override
 String toString() {
-  return 'AppEvent.mlsGroupUpdated(roomId: $roomId, key: $key, epoch: $epoch)';
+    return 'AppEvent.mlsGroupUpdated(roomId: $roomId, key: $key, epoch: $epoch)';
 }
 
 
@@ -477,16 +486,18 @@ $AppEvent_MlsSyncStateChangedCopyWith<AppEvent_MlsSyncStateChanged> get copyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppEvent_MlsSyncStateChanged&&(identical(other.state, state) || other.state == state)&&(identical(other.reason, reason) || other.reason == reason));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is AppEvent_MlsSyncStateChanged&&(identical(other.state, state) || other.state == state)&&(identical(other.reason, reason) || other.reason == reason));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,state,reason);
+int get hashCode {
+    return Object.hash(runtimeType,state,reason);
+}
 
 @override
 String toString() {
-  return 'AppEvent.mlsSyncStateChanged(state: $state, reason: $reason)';
+    return 'AppEvent.mlsSyncStateChanged(state: $state, reason: $reason)';
 }
 
 

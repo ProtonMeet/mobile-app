@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'errors.dart';
@@ -9,6 +9,7 @@ part of 'errors.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -20,7 +21,7 @@ mixin _$BridgeError {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError);
 }
 
 
@@ -29,7 +30,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'BridgeError()';
+    return 'BridgeError()';
 }
 
 
@@ -352,16 +353,18 @@ $BridgeError_MutexLockCopyWith<BridgeError_MutexLock> get copyWith => _$BridgeEr
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MutexLock&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MutexLock&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.mutexLock(field0: $field0)';
+    return 'BridgeError.mutexLock(field0: $field0)';
 }
 
 
@@ -418,16 +421,18 @@ $BridgeError_MeetCoreCopyWith<BridgeError_MeetCore> get copyWith => _$BridgeErro
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MeetCore&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MeetCore&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.meetCore(field0: $field0)';
+    return 'BridgeError.meetCore(field0: $field0)';
 }
 
 
@@ -479,7 +484,7 @@ class BridgeError_MissingTwoFactor extends BridgeError {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MissingTwoFactor);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MissingTwoFactor);
 }
 
 
@@ -488,7 +493,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'BridgeError.missingTwoFactor()';
+    return 'BridgeError.missingTwoFactor()';
 }
 
 
@@ -516,16 +521,18 @@ $BridgeError_MeetCoreAnyCopyWith<BridgeError_MeetCoreAny> get copyWith => _$Brid
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MeetCoreAny&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MeetCoreAny&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.meetCoreAny(field0: $field0)';
+    return 'BridgeError.meetCoreAny(field0: $field0)';
 }
 
 
@@ -582,16 +589,18 @@ $BridgeError_LoginCopyWith<BridgeError_Login> get copyWith => _$BridgeError_Logi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_Login&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_Login&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.login(field0: $field0)';
+    return 'BridgeError.login(field0: $field0)';
 }
 
 
@@ -648,16 +657,18 @@ $BridgeError_ApiLockCopyWith<BridgeError_ApiLock> get copyWith => _$BridgeError_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_ApiLock&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_ApiLock&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.apiLock(field0: $field0)';
+    return 'BridgeError.apiLock(field0: $field0)';
 }
 
 
@@ -714,16 +725,18 @@ $BridgeError_AccessTokenCopyWith<BridgeError_AccessToken> get copyWith => _$Brid
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_AccessToken&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_AccessToken&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.accessToken(field0: $field0)';
+    return 'BridgeError.accessToken(field0: $field0)';
 }
 
 
@@ -780,16 +793,18 @@ $BridgeError_MuonAuthSessionCopyWith<BridgeError_MuonAuthSession> get copyWith =
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MuonAuthSession&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MuonAuthSession&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.muonAuthSession(field0: $field0)';
+    return 'BridgeError.muonAuthSession(field0: $field0)';
 }
 
 
@@ -846,16 +861,18 @@ $BridgeError_MuonAuthRefreshCopyWith<BridgeError_MuonAuthRefresh> get copyWith =
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MuonAuthRefresh&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MuonAuthRefresh&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.muonAuthRefresh(field0: $field0)';
+    return 'BridgeError.muonAuthRefresh(field0: $field0)';
 }
 
 
@@ -912,16 +929,18 @@ $BridgeError_MuonClientCopyWith<BridgeError_MuonClient> get copyWith => _$Bridge
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MuonClient&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MuonClient&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.muonClient(field0: $field0)';
+    return 'BridgeError.muonClient(field0: $field0)';
 }
 
 
@@ -978,16 +997,18 @@ $BridgeError_MuonSessionCopyWith<BridgeError_MuonSession> get copyWith => _$Brid
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MuonSession&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MuonSession&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.muonSession(field0: $field0)';
+    return 'BridgeError.muonSession(field0: $field0)';
 }
 
 
@@ -1044,16 +1065,18 @@ $BridgeError_ForkCopyWith<BridgeError_Fork> get copyWith => _$BridgeError_ForkCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_Fork&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_Fork&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.fork(field0: $field0)';
+    return 'BridgeError.fork(field0: $field0)';
 }
 
 
@@ -1110,16 +1133,18 @@ $BridgeError_EncodingCopyWith<BridgeError_Encoding> get copyWith => _$BridgeErro
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_Encoding&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_Encoding&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.encoding(field0: $field0)';
+    return 'BridgeError.encoding(field0: $field0)';
 }
 
 
@@ -1176,16 +1201,18 @@ $BridgeError_ParseErrorCopyWith<BridgeError_ParseError> get copyWith => _$Bridge
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_ParseError&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_ParseError&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.parseError(field0: $field0)';
+    return 'BridgeError.parseError(field0: $field0)';
 }
 
 
@@ -1242,16 +1269,18 @@ $BridgeError_StdCopyWith<BridgeError_Std> get copyWith => _$BridgeError_StdCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_Std&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_Std&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.std(field0: $field0)';
+    return 'BridgeError.std(field0: $field0)';
 }
 
 
@@ -1308,16 +1337,18 @@ $BridgeError_TracingsSubscriberCopyWith<BridgeError_TracingsSubscriber> get copy
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_TracingsSubscriber&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_TracingsSubscriber&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.tracingsSubscriber(field0: $field0)';
+    return 'BridgeError.tracingsSubscriber(field0: $field0)';
 }
 
 
@@ -1374,16 +1405,18 @@ $BridgeError_MeetLinkCopyWith<BridgeError_MeetLink> get copyWith => _$BridgeErro
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MeetLink&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MeetLink&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.meetLink(field0: $field0)';
+    return 'BridgeError.meetLink(field0: $field0)';
 }
 
 
@@ -1440,16 +1473,18 @@ $BridgeError_ChatCopyWith<BridgeError_Chat> get copyWith => _$BridgeError_ChatCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_Chat&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_Chat&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.chat(field0: $field0)';
+    return 'BridgeError.chat(field0: $field0)';
 }
 
 
@@ -1506,16 +1541,18 @@ $BridgeError_TaskJoinCopyWith<BridgeError_TaskJoin> get copyWith => _$BridgeErro
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_TaskJoin&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_TaskJoin&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.taskJoin(field0: $field0)';
+    return 'BridgeError.taskJoin(field0: $field0)';
 }
 
 
@@ -1572,16 +1609,18 @@ $BridgeError_ApiResponseCopyWith<BridgeError_ApiResponse> get copyWith => _$Brid
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_ApiResponse&&(identical(other.field0, field0) || other.field0 == field0));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_ApiResponse&&(identical(other.field0, field0) || other.field0 == field0));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,field0);
+int get hashCode {
+    return Object.hash(runtimeType,field0);
+}
 
 @override
 String toString() {
-  return 'BridgeError.apiResponse(field0: $field0)';
+    return 'BridgeError.apiResponse(field0: $field0)';
 }
 
 
@@ -1633,7 +1672,7 @@ class BridgeError_MeetingLocked extends BridgeError {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MeetingLocked);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MeetingLocked);
 }
 
 
@@ -1642,7 +1681,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'BridgeError.meetingLocked()';
+    return 'BridgeError.meetingLocked()';
 }
 
 
@@ -1665,7 +1704,7 @@ class BridgeError_IncorrectPassword extends BridgeError {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_IncorrectPassword);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_IncorrectPassword);
 }
 
 
@@ -1674,7 +1713,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'BridgeError.incorrectPassword()';
+    return 'BridgeError.incorrectPassword()';
 }
 
 
@@ -1697,7 +1736,7 @@ class BridgeError_MlsServerVersionNotSupported extends BridgeError {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MlsServerVersionNotSupported);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_MlsServerVersionNotSupported);
 }
 
 
@@ -1706,7 +1745,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'BridgeError.mlsServerVersionNotSupported()';
+    return 'BridgeError.mlsServerVersionNotSupported()';
 }
 
 
@@ -1729,7 +1768,7 @@ class BridgeError_WaitingRoomJoinRequestNotFound extends BridgeError {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_WaitingRoomJoinRequestNotFound);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_WaitingRoomJoinRequestNotFound);
 }
 
 
@@ -1738,7 +1777,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'BridgeError.waitingRoomJoinRequestNotFound()';
+    return 'BridgeError.waitingRoomJoinRequestNotFound()';
 }
 
 
@@ -1761,7 +1800,7 @@ class BridgeError_RoomJoinRequestTimeout extends BridgeError {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_RoomJoinRequestTimeout);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_RoomJoinRequestTimeout);
 }
 
 
@@ -1770,7 +1809,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'BridgeError.roomJoinRequestTimeout()';
+    return 'BridgeError.roomJoinRequestTimeout()';
 }
 
 
@@ -1793,7 +1832,7 @@ class BridgeError_WaitingRoomJoinCancelled extends BridgeError {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_WaitingRoomJoinCancelled);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_WaitingRoomJoinCancelled);
 }
 
 
@@ -1802,7 +1841,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'BridgeError.waitingRoomJoinCancelled()';
+    return 'BridgeError.waitingRoomJoinCancelled()';
 }
 
 
@@ -1825,7 +1864,7 @@ class BridgeError_TokenIsInvalid extends BridgeError {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_TokenIsInvalid);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_TokenIsInvalid);
 }
 
 
@@ -1834,7 +1873,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'BridgeError.tokenIsInvalid()';
+    return 'BridgeError.tokenIsInvalid()';
 }
 
 
@@ -1857,7 +1896,7 @@ class BridgeError_TokenIsExpired extends BridgeError {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_TokenIsExpired);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_TokenIsExpired);
 }
 
 
@@ -1866,7 +1905,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'BridgeError.tokenIsExpired()';
+    return 'BridgeError.tokenIsExpired()';
 }
 
 
@@ -1889,7 +1928,7 @@ class BridgeError_CheckDeviceClock extends BridgeError {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_CheckDeviceClock);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is BridgeError_CheckDeviceClock);
 }
 
 
@@ -1898,7 +1937,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'BridgeError.checkDeviceClock()';
+    return 'BridgeError.checkDeviceClock()';
 }
 
 

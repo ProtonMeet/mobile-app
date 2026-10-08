@@ -9129,6 +9129,10 @@ impl SseDecode for crate::proton_meet::models::meet_info::FrbMeetInfo {
         let mut var_maxDuration = <u32>::sse_decode(deserializer);
         let mut var_maxParticipants = <u32>::sse_decode(deserializer);
         let mut var_expirationTime = <Option<i64>>::sse_decode(deserializer);
+        let mut var_salt = <String>::sse_decode(deserializer);
+        let mut var_sessionKey = <String>::sse_decode(deserializer);
+        let mut var_manageWaitingRoom = <u8>::sse_decode(deserializer);
+        let mut var_personalMeeting = <u8>::sse_decode(deserializer);
         return crate::proton_meet::models::meet_info::FrbMeetInfo {
             meet_name: var_meetName,
             meet_link_name: var_meetLinkName,
@@ -9140,6 +9144,10 @@ impl SseDecode for crate::proton_meet::models::meet_info::FrbMeetInfo {
             max_duration: var_maxDuration,
             max_participants: var_maxParticipants,
             expiration_time: var_expirationTime,
+            salt: var_salt,
+            session_key: var_sessionKey,
+            manage_waiting_room: var_manageWaitingRoom,
+            personal_meeting: var_personalMeeting,
         };
     }
 }
@@ -10774,6 +10782,10 @@ impl flutter_rust_bridge::IntoDart for crate::proton_meet::models::meet_info::Fr
             self.max_duration.into_into_dart().into_dart(),
             self.max_participants.into_into_dart().into_dart(),
             self.expiration_time.into_into_dart().into_dart(),
+            self.salt.into_into_dart().into_dart(),
+            self.session_key.into_into_dart().into_dart(),
+            self.manage_waiting_room.into_into_dart().into_dart(),
+            self.personal_meeting.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -12053,6 +12065,10 @@ impl SseEncode for crate::proton_meet::models::meet_info::FrbMeetInfo {
         <u32>::sse_encode(self.max_duration, serializer);
         <u32>::sse_encode(self.max_participants, serializer);
         <Option<i64>>::sse_encode(self.expiration_time, serializer);
+        <String>::sse_encode(self.salt, serializer);
+        <String>::sse_encode(self.session_key, serializer);
+        <u8>::sse_encode(self.manage_waiting_room, serializer);
+        <u8>::sse_encode(self.personal_meeting, serializer);
     }
 }
 

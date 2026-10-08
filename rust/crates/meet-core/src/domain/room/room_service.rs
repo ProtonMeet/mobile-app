@@ -216,6 +216,12 @@ impl RoomService {
                 max_duration: meet_info.max_duration,
                 max_participants: meet_info.max_participants,
                 expiration_time: meet_info.expiration_time.map(|dt| dt.timestamp()),
+                // Carry these forward so pre-join can build the full meeting info
+                // without a second `get_meeting_info` round trip.
+                salt: meet_info.salt,
+                session_key: meet_info.session_key,
+                manage_waiting_room: meet_info.manage_waiting_room,
+                personal_meeting: meet_info.personal_meeting,
             },
             display_name_session_key,
         ))

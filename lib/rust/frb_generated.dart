@@ -7957,8 +7957,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   FrbMeetInfo dco_decode_frb_meet_info(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 10)
-      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    if (arr.length != 14)
+      throw Exception('unexpected arr length: expect 14 but see ${arr.length}');
     return FrbMeetInfo(
       meetName: dco_decode_String(arr[0]),
       meetLinkName: dco_decode_String(arr[1]),
@@ -7970,6 +7970,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       maxDuration: dco_decode_u_32(arr[7]),
       maxParticipants: dco_decode_u_32(arr[8]),
       expirationTime: dco_decode_opt_box_autoadd_i_64(arr[9]),
+      salt: dco_decode_String(arr[10]),
+      sessionKey: dco_decode_String(arr[11]),
+      manageWaitingRoom: dco_decode_u_8(arr[12]),
+      personalMeeting: dco_decode_u_8(arr[13]),
     );
   }
 
@@ -9215,6 +9219,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_maxDuration = sse_decode_u_32(deserializer);
     var var_maxParticipants = sse_decode_u_32(deserializer);
     var var_expirationTime = sse_decode_opt_box_autoadd_i_64(deserializer);
+    var var_salt = sse_decode_String(deserializer);
+    var var_sessionKey = sse_decode_String(deserializer);
+    var var_manageWaitingRoom = sse_decode_u_8(deserializer);
+    var var_personalMeeting = sse_decode_u_8(deserializer);
     return FrbMeetInfo(
       meetName: var_meetName,
       meetLinkName: var_meetLinkName,
@@ -9226,6 +9234,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       maxDuration: var_maxDuration,
       maxParticipants: var_maxParticipants,
       expirationTime: var_expirationTime,
+      salt: var_salt,
+      sessionKey: var_sessionKey,
+      manageWaitingRoom: var_manageWaitingRoom,
+      personalMeeting: var_personalMeeting,
     );
   }
 
@@ -10823,6 +10835,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_u_32(self.maxDuration, serializer);
     sse_encode_u_32(self.maxParticipants, serializer);
     sse_encode_opt_box_autoadd_i_64(self.expirationTime, serializer);
+    sse_encode_String(self.salt, serializer);
+    sse_encode_String(self.sessionKey, serializer);
+    sse_encode_u_8(self.manageWaitingRoom, serializer);
+    sse_encode_u_8(self.personalMeeting, serializer);
   }
 
   @protected
