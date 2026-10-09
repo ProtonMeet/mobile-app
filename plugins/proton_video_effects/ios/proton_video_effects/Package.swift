@@ -18,7 +18,7 @@ let package = Package(
     dependencies: [
         .package(name: "FlutterFramework", path: "../FlutterFramework"),
         // Resolved by the Flutter tool to the flutter_webrtc plugin package.
-        .package(name: "flutter_webrtc", path: "../flutter_webrtc-1.6.2+hotfix.3"),
+        .package(name: "flutter_webrtc", path: "../flutter_webrtc-1.6.2+hotfix.4"),
     ],
     targets: [
         .binaryTarget(
