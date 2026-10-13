@@ -39,7 +39,7 @@ pub(crate) mod tests {
             service_state::MlsGroupState,
             test::{
                 ServiceBundleDI, create_mock_mls_api, create_test_service_bundle,
-                create_test_service_bundle_with_host,
+                create_test_service_bundle_with_host, test_feature_flags,
             },
             user_service::Service,
             utils::convert_mls_spec_to_types,
@@ -82,10 +82,6 @@ pub(crate) mod tests {
     use rand::rngs::StdRng;
     use rand::seq::SliceRandom;
     use rand::{Rng, SeedableRng};
-
-    pub fn test_feature_flags() -> FeatureFlags {
-        FeatureFlags::new(true)
-    }
 
     #[tokio::test]
     async fn test_use_message_queues_follows_runtime_flag_updates() {

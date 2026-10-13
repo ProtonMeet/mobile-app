@@ -60,6 +60,7 @@ mod test {
         domain::{
             mls::ports::{KeyPackagePort, MessageCachePort, MockKeyPackagePort},
             room::{RoomService, WaitingRoomService},
+            unleash::FeatureFlags,
             user::ports::{
                 ArcUserRepository, ArcWebSocketClient, CryptoClient, HttpClient, MlsApi,
                 MockCryptoClient, MockHttpClient, MockMlsApi, MockUserRepository,
@@ -73,10 +74,8 @@ mod test {
             mimi_subject_parser::ANONYMOUS_USER_IDENTIFIER,
         },
         service::{
-            caption::CaptionServiceImpl,
-            message_queue::MessageQueueServiceImpl,
-            services_bundle::ServiceBundle,
-            user_service::{Service, service_test::tests::test_feature_flags},
+            caption::CaptionServiceImpl, message_queue::MessageQueueServiceImpl,
+            services_bundle::ServiceBundle, user_service::Service,
         },
         utils::server_time::ServerTimeTracker,
     };
@@ -116,6 +115,10 @@ mod test {
         pub auth_service: Arc<AuthServiceImpl>,
         pub caption_service: Arc<CaptionServiceImpl>,
         pub message_queue_service: Arc<MessageQueueServiceImpl>,
+    }
+
+    pub(super) fn test_feature_flags() -> FeatureFlags {
+        FeatureFlags::new(true)
     }
 
     fn generate_mimi_device_id(
