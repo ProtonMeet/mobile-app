@@ -197,7 +197,7 @@ pub async fn restore_to_queue_sync<T>(
 }
 
 /// Restore queued proposals back to the proposal queue on failure
-pub fn restore_proposals_to_queue(
+pub(crate) fn restore_proposals_to_queue(
     proposal_queue: &Arc<Mutex<HashMap<String, Vec<QueuedProposal>>>>,
     meeting_link_name: String,
     proposals: Vec<QueuedProposal>,

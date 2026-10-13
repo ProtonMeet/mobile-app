@@ -695,30 +695,29 @@ impl MessageQueue {
     ) -> Result<(), ServiceError> {
         use crate::service::agent_host_service::agent_psk_id_for_meeting;
         let expected_agent_id = agent_psk_id_for_meeting(room_id);
-        if let MlsMessagePayload::Plain(public_message) = &message.mls_message.payload {
-            if let Content::Commit(commit) = &public_message.content.content {
-                let proposals = &commit.proposals;
-                let mut has_psk = false;
-                for proposal in proposals {
-                    if let ProposalOrRef::Proposal(proposal) = proposal {
-                        if let Proposal::Psk(psk) = proposal.as_ref() {
-                            if let Some(psk_id) = psk.external_psk_id() {
-                                has_psk = true;
-                                let id_bytes = psk_id.to_vec();
-                                if id_bytes != room_id.as_bytes()
-                                    && id_bytes.as_slice() != expected_agent_id.as_slice()
-                                {
-                                    tracing::error!("PSK ID mismatch for room {}", room_id);
-                                    return Err(ServiceError::PskProposalMissing);
-                                }
-                            }
-                        }
+        if let MlsMessagePayload::Plain(public_message) = &message.mls_message.payload
+            && let Content::Commit(commit) = &public_message.content.content
+        {
+            let proposals = &commit.proposals;
+            let mut has_psk = false;
+            for proposal in proposals {
+                if let ProposalOrRef::Proposal(proposal) = proposal
+                    && let Proposal::Psk(psk) = proposal.as_ref()
+                    && let Some(psk_id) = psk.external_psk_id()
+                {
+                    has_psk = true;
+                    let id_bytes = psk_id.to_vec();
+                    if id_bytes != room_id.as_bytes()
+                        && id_bytes.as_slice() != expected_agent_id.as_slice()
+                    {
+                        tracing::error!("PSK ID mismatch for room {}", room_id);
+                        return Err(ServiceError::PskProposalMissing);
                     }
                 }
-                if !has_psk {
-                    tracing::error!("PSK proposal missing for room {}", room_id);
-                    return Err(ServiceError::PskProposalMissing);
-                }
+            }
+            if !has_psk {
+                tracing::error!("PSK proposal missing for room {}", room_id);
+                return Err(ServiceError::PskProposalMissing);
             }
         }
         Ok(())
@@ -829,15 +828,15 @@ impl MessageQueue {
             // Check if there's already a timer for this room_id and epoch_at
             {
                 let mut timer = queue.timer.write();
-                if let Some(existing_epoch_at) = &*timer {
-                    if *existing_epoch_at >= epoch_at {
-                        tracing::debug!(
-                            "Proposal timer for room {} with epoch {} already exists, skipping",
-                            queue.room_id,
-                            epoch_at
-                        );
-                        return;
-                    }
+                if let Some(existing_epoch_at) = &*timer
+                    && *existing_epoch_at >= epoch_at
+                {
+                    tracing::debug!(
+                        "Proposal timer for room {} with epoch {} already exists, skipping",
+                        queue.room_id,
+                        epoch_at
+                    );
+                    return;
                 }
                 // Register the timer
                 *timer = Some(epoch_at);
@@ -862,10 +861,10 @@ impl MessageQueue {
             {
                 let mut timer = queue.timer.write();
                 // Only remove if it's still the same epoch_at (in case epoch changed)
-                if let Some(stored_epoch_at) = &*timer {
-                    if *stored_epoch_at == epoch_at {
-                        *timer = None
-                    }
+                if let Some(stored_epoch_at) = &*timer
+                    && *stored_epoch_at == epoch_at
+                {
+                    *timer = None
                 }
             }
 
@@ -1402,14 +1401,14 @@ impl MessageQueue {
             .await;
 
         // Check if epoch advanced and update host role if needed
-        if new_epoch > old_epoch {
-            if let Err(e) = service.check_and_update_host_role(&self.room_id).await {
-                tracing::warn!(
-                    "Failed to check and update host role after batched proposals epoch change: {:?}",
-                    e
-                );
-                // Don't fail the operation if role update fails
-            }
+        if new_epoch > old_epoch
+            && let Err(e) = service.check_and_update_host_role(&self.room_id).await
+        {
+            tracing::warn!(
+                "Failed to check and update host role after batched proposals epoch change: {:?}",
+                e
+            );
+            // Don't fail the operation if role update fails
         }
 
         Ok(())
@@ -2225,10 +2224,10 @@ mod test {
         for leaf_index in roster_members {
             let group_write = final_group.write().await;
             let leaf_index_typed = LeafIndex::try_from(leaf_index).unwrap();
-            if let Ok(mut member) = group_write.find_member(leaf_index_typed) {
-                if let Ok(user_id) = member.credential.user_id() {
-                    user_ids_in_group.push(user_id);
-                }
+            if let Ok(mut member) = group_write.find_member(leaf_index_typed)
+                && let Ok(user_id) = member.credential.user_id()
+            {
+                user_ids_in_group.push(user_id);
             }
             drop(group_write); // Release write lock before next iteration
         }
