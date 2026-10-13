@@ -1,4 +1,4 @@
-use crate::models::{product_bit::ProductBit, ProtonUser};
+use crate::models::{ProtonUser, product_bit::ProductBit};
 
 /// Role constants
 pub const ADMIN_ROLE: u32 = 1;

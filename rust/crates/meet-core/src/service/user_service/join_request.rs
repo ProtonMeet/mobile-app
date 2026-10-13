@@ -4,14 +4,14 @@ use crate::{
     domain::{
         room::JoinRequestChange,
         user::{
-            models::{meeting_link_name::MeetingLinkName, UserId},
+            models::{UserId, meeting_link_name::MeetingLinkName},
             ports::UserService,
         },
     },
     errors::core::MeetCoreError,
     service::{
         service_state::{MlsGroupState, PendingWaitingRoomJoinRequest},
-        user_service::{credential_is_agent, GroupKeyUpdateReason, Service, JOIN_PROPOSAL_TIMEOUT},
+        user_service::{GroupKeyUpdateReason, JOIN_PROPOSAL_TIMEOUT, Service, credential_is_agent},
         utils::convert_mls_types_to_spec,
     },
     utils::{instant, timeout},
@@ -351,7 +351,9 @@ impl Service {
     ) -> Result<(), MeetCoreError> {
         tracing::info!(
             "reject_waiting_room_join_request start meeting_link_name={} request_id={} participant_uid={}",
-            meeting_link_name, request_id, participant_uid
+            meeting_link_name,
+            request_id,
+            participant_uid
         );
         let group_arc = self
             .mls_store

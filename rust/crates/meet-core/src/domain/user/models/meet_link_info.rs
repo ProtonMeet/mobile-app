@@ -54,4 +54,13 @@ pub struct MeetInfo {
     pub max_participants: u32,
     /// Unix timestamp in seconds (`Option<i64>`)
     pub expiration_time: Option<i64>,
+    /// Salt of the password. Carried from the meeting-info response fetched during
+    /// SRP auth so callers (pre-join) don't need a second `get_meeting_info` round trip.
+    pub salt: String,
+    /// Encrypted session key of the meeting. See [`Self::salt`].
+    pub session_key: String,
+    /// 1 if the current session can manage the waiting room (host). See [`Self::salt`].
+    pub manage_waiting_room: u8,
+    /// 1 if the meeting is personal. See [`Self::salt`].
+    pub personal_meeting: u8,
 }

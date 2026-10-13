@@ -1,12 +1,12 @@
 use super::App;
 use crate::domain::user::models::{
+    MeetingInfo,
     meet_link_info::MeetInfo,
     meeting::{Meeting, MeetingType, UpcomingMeeting, UpdateMeetingScheduleParams},
-    MeetingInfo,
 };
 use crate::errors::{
     core::MeetCoreError,
-    create_meeting::{map_create_meeting_service_error, CreateMeetingErrorContext},
+    create_meeting::{CreateMeetingErrorContext, map_create_meeting_service_error},
 };
 use chrono::{DateTime, Utc};
 use proton_meet_common::models::ProtonUserKey;
@@ -301,10 +301,10 @@ impl App {
     ) -> Result<String, MeetCoreError> {
         {
             let state = self.state.read().await;
-            if let Some(cached) = &state.prejoin_srp_auth {
-                if cached.meet_link_name == meet_link_name {
-                    return Ok(cached.meet_info.meet_name.clone());
-                }
+            if let Some(cached) = &state.prejoin_srp_auth
+                && cached.meet_link_name == meet_link_name
+            {
+                return Ok(cached.meet_info.meet_name.clone());
             }
         }
 

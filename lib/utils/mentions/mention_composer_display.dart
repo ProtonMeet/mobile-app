@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:meet/utils/mentions/mention_label.dart';
 import 'package:meet/utils/mentions/mention_token.dart';
-import 'package:meet/views/scenes/room/participant/participant_info.dart';
 
 /// Display-text range occupied by one completed `@mention` in the composer.
 class MentionDisplayRange {
@@ -13,11 +12,11 @@ class MentionDisplayRange {
 
   final int start;
 
-  /// Exclusive end; may include one atomic trailing space after the label.
+  /// Exclusive end at the first index after `@Name` (trailing space is editable).
   final int end;
   final String mentionId;
 
-  bool containsCaret(int offset) => offset > start && offset <= end;
+  bool containsCaret(int offset) => offset > start && offset < end;
 
   bool containsAtSign(int atIndex) => atIndex >= start && atIndex < end;
 
@@ -49,14 +48,7 @@ List<MentionDisplayRange> computeMentionDisplayRanges({
         '@${getMentionLabel(mention.id, participantName: resolveParticipantName(mention.id), localIdentity: localIdentity, everyoneName: everyoneName, unknownName: unknownName)}';
     final start = offset;
     offset += label.length;
-    var end = offset;
-
-    if (i + 1 < segments.length) {
-      final next = segments[i + 1];
-      if (next is TextSegment && next.text.isNotEmpty && next.text[0] == ' ') {
-        end += 1;
-      }
-    }
+    final end = offset;
 
     ranges.add(
       MentionDisplayRange(start: start, end: end, mentionId: mention.id),
@@ -104,6 +96,36 @@ List<MentionDisplayRange> computeMentionDisplayRanges({
   return (atIndex: atIndex, query: match.group(1)!);
 }
 
+const _mentionTrailingPunctuation = ',.!?';
+
+/// Drops the auto-inserted space before [,.!?] typed right after a mention.
+({String text, int caret})? collapseMentionSpaceBeforePunctuation(
+  String text,
+  int caretAfterInsert, {
+  required List<MentionDisplayRange> ranges,
+}) {
+  if (caretAfterInsert <= 0 || caretAfterInsert > text.length) {
+    return null;
+  }
+  final punctIndex = caretAfterInsert - 1;
+  final punct = text[punctIndex];
+  if (!_mentionTrailingPunctuation.contains(punct)) {
+    return null;
+  }
+  if (punctIndex == 0 || text[punctIndex - 1] != ' ') {
+    return null;
+  }
+  final spaceIndex = punctIndex - 1;
+  final followsMention = ranges.any((range) => range.end == spaceIndex);
+  if (!followsMention) {
+    return null;
+  }
+  return (
+    text: text.replaceRange(spaceIndex, spaceIndex + 1, ''),
+    caret: caretAfterInsert - 1,
+  );
+}
+
 /// Inline spans for the composer mirror layer (same colors as sent messages).
 TextSpan buildComposerMentionTextSpan({
   required BuildContext context,
@@ -113,7 +135,6 @@ TextSpan buildComposerMentionTextSpan({
   required String localIdentity,
   required String everyoneName,
   required String unknownName,
-  required List<ParticipantInfo>? participantTracks,
 }) {
   final segments = splitMessageIntoMentionSegments(stored);
   if (segments.every((segment) => segment is TextSegment)) {
@@ -130,18 +151,15 @@ TextSpan buildComposerMentionTextSpan({
         everyoneName: everyoneName,
         unknownName: unknownName,
       );
-      final colors = getMentionDisplayColors(
+      final mentionColor = getMentionTextColor(
         context,
         segment.id,
-        participantTracks: participantTracks,
+        localIdentity: localIdentity,
       );
       children.add(
         TextSpan(
           text: '@$label',
-          style: baseStyle.copyWith(
-            color: colors.profileTextColor,
-            fontWeight: FontWeight.w600,
-          ),
+          style: baseStyle.copyWith(color: mentionColor),
         ),
       );
       continue;

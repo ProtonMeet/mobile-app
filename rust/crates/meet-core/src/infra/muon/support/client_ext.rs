@@ -2,7 +2,7 @@
 
 use proton_meet_macro::{async_trait, async_trait_with_mock};
 
-use super::{MeetClient, MeetSession, MUON_DEFAULT_SESSION_KEY};
+use super::{MUON_DEFAULT_SESSION_KEY, MeetClient, MeetSession};
 
 /// Meet-specific helpers on [`MeetClient`].
 #[async_trait_with_mock]

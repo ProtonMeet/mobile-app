@@ -10,8 +10,8 @@ use crate::{
     domain::{
         unleash::FeatureFlags,
         user::{
-            models::{meeting_link_name::MeetingLinkName, UserSettings},
-            ports::{new_user_service::NewUserService, ArcWebSocketClient},
+            models::{UserSettings, meeting_link_name::MeetingLinkName},
+            ports::{ArcWebSocketClient, new_user_service::NewUserService},
         },
     },
     errors::service::ServiceError,
@@ -27,28 +27,28 @@ use crate::{
     service::user_service::handlers::Handlers,
     utils::{join, server_time::ServerTimeTracker},
 };
-use base64::{engine::general_purpose, Engine};
+use base64::{Engine, engine::general_purpose};
 use ed25519_dalek::pkcs8::DecodePublicKey;
 use meet_mls::reexports::meet_policy::UserRole;
 use meet_type::RejoinReason;
 use mls_rs_codec::{MlsDecode, MlsEncode};
 use mls_spec::{
+    Parsable, Serializable,
     defs::ProtocolVersion,
     drafts::ratchet_tree_options::RatchetTreeOption,
     group::group_info::GroupInfo,
     messages::{MlsMessage, MlsMessageContent},
-    Parsable, Serializable,
 };
-use mls_trait::{types::ReceivedMessage, AuthorizerExt, ProposalArg, ProtonMeetIdentityProvider};
+use mls_trait::{AuthorizerExt, ProposalArg, ProtonMeetIdentityProvider, types::ReceivedMessage};
 use mls_types::{ContentType, Credential, ExternalPskId, MediaType, Member};
-use proton_claims::reexports::{cose_key_set::CoseKeySet, CwtAny};
+use proton_claims::reexports::{CwtAny, cose_key_set::CoseKeySet};
 use proton_meet_macro::async_trait;
 use proton_meet_mls::{
-    kv::MemKv, CipherSuite, CommitBundle, MlsClient, MlsClientConfig, MlsClientTrait, MlsGroup,
-    MlsGroupConfig, MlsGroupTrait, MlsStore,
+    CipherSuite, CommitBundle, MlsClient, MlsClientConfig, MlsClientTrait, MlsGroup,
+    MlsGroupConfig, MlsGroupTrait, MlsStore, kv::MemKv,
 };
-use rand::seq::SliceRandom;
 use rand::SeedableRng;
+use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, Notify, RwLock};
 use uuid::Uuid;
@@ -60,7 +60,7 @@ use crate::{
     domain::user::{
         models::{UserId, UserTokenInfo},
         ports::{
-            meeting_api::MeetingApi, mls_api::MlsApi, ConnectionState, HttpClient, UserService,
+            ConnectionState, HttpClient, UserService, meeting_api::MeetingApi, mls_api::MlsApi,
         },
     },
     errors::{core::MeetCoreError, http_client::HttpClientError},
@@ -73,8 +73,8 @@ use crate::{
             websocket::WebSocketTextRequestCommand,
         },
         group_info_payload::{
-            encode_php_waiting_room_data_field, serialize_waiting_room_setting_request,
-            PhpWaitingRoomDataField, WaitingRoomSettingRequest,
+            PhpWaitingRoomDataField, WaitingRoomSettingRequest, encode_php_waiting_room_data_field,
+            serialize_waiting_room_setting_request,
         },
         mimi_subject_parser::MimiSubject,
         ws_client::{self, WebSocketMessage},
@@ -169,7 +169,6 @@ pub struct Service {
     pub(super) proposal_timer: Arc<Mutex<HashMap<String, u64>>>, // room_id -> epoch_at
     // MLS message service for processing commits and proposals
     pub(super) mls_msg_service: Arc<crate::domain::mls::mls_message_service::MlsMessageService>,
-
     pub(super) handling_offline_members: Arc<Mutex<bool>>,
     pub(super) mls_service: Arc<MlsService>,
     /// Wakes tasks waiting on a join-proposal `Welcome` after `welcome_info` is stored.
@@ -238,18 +237,18 @@ impl Service {
         }
     }
 
+    fn services(&self) -> Result<Arc<ServiceBundle>, anyhow::Error> {
+        self.services
+            .upgrade()
+            .ok_or_else(|| anyhow::anyhow!("Could not upgrade service bundle"))
+    }
+
     async fn room_processing_lock(&self, room_id: &str) -> Arc<Mutex<()>> {
         let mut room_locks = self.room_processing_locks.lock().await;
         room_locks
             .entry(room_id.to_string())
             .or_insert_with(|| Arc::new(Mutex::new(())))
             .clone()
-    }
-
-    fn services(&self) -> Result<Arc<ServiceBundle>, anyhow::Error> {
-        self.services
-            .upgrade()
-            .ok_or_else(|| anyhow::anyhow!("Could not upgrade service bundle"))
     }
 
     /// Generates a unique group id by appending a UUID suffix.
@@ -665,13 +664,7 @@ impl Service {
     }
 
     pub async fn reset_service_state(&self) {
-        let mut state = self.state.lock().await;
-        state.reset();
-        drop(state);
-
-        if let Ok(s) = self.services() {
-            s.reset().await;
-        }
+        self.state.lock().await.reset();
     }
 
     /// Returns whether MLS group info exists on the server (host has started the meeting).
@@ -1790,9 +1783,9 @@ impl UserService for Service {
                         // Case 2: Retryable (422) but max attempts exhausted
                         if attempt_num >= KICK_MAX_ATTEMPTS - 1 {
                             tracing::error!(
-                            "Kick failed after {} attempts with HTTP 422, max retries exhausted",
-                            KICK_MAX_ATTEMPTS
-                        );
+                                "Kick failed after {} attempts with HTTP 422, max retries exhausted",
+                                KICK_MAX_ATTEMPTS
+                            );
                             restore_proposals_to_queue(
                                 &self.proposal_queue,
                                 meeting_link_name.to_string(),
@@ -2038,7 +2031,9 @@ impl UserService for Service {
                         sender_mimi_uri,
                     ));
                 }
-                Err(anyhow::anyhow!("Failed to get participant id from credential"))
+                Err(anyhow::anyhow!(
+                    "Failed to get participant id from credential"
+                ))
             }
             _ => Err(anyhow::anyhow!(
                 "Expected ApplicationMessage but received different message type: {decrypted_message:?}"
@@ -2225,7 +2220,7 @@ impl UserService for Service {
             .ok_or(anyhow::anyhow!("mls client not found"))?;
 
         let sd_cwt = mls_client.sd_cwt()?;
-        let payload = sd_cwt.0 .0.payload.as_value()?;
+        let payload = sd_cwt.0.0.payload.as_value()?;
         let claims = payload
             .inner
             .extra

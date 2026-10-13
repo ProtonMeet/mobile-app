@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, OnceLock, RwLock};
 
 use cfg_if::cfg_if;
-use muon::{auth::Auth, store::Store, Environment};
+use muon::{Environment, auth::Auth, store::Store};
 use tokio::sync::Mutex;
 
 /// Called when muon persists refreshed auth (e.g. after token rotation during API calls).
@@ -32,16 +32,16 @@ fn notify_auth_persisted(auth: Auth) {
     if matches!(auth, Auth::None) {
         return;
     }
-    if let Ok(guard) = auth_persist_slot().read() {
-        if let Some(callback) = guard.as_ref() {
-            callback(auth);
-        }
+    if let Ok(guard) = auth_persist_slot().read()
+        && let Some(callback) = guard.as_ref()
+    {
+        callback(auth);
     }
 }
 
 #[cfg(feature = "allow-dangerous-env")]
 use super::support::MeetCustomEnv;
-use super::support::{environment_from_str, MUON_DEFAULT_SESSION_KEY};
+use super::support::{MUON_DEFAULT_SESSION_KEY, environment_from_str};
 
 /// Shared handle to the active muon auth (Flutter bridge + desktop login).
 pub type SharedAuth = Arc<Mutex<Auth>>;

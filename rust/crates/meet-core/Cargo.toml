@@ -1,7 +1,7 @@
 [package]
 name = "proton-meet-core"
 version = "1.3.11"
-edition = "2021"
+edition = "2024"
 
 [lib]
 crate-type = ["rlib", "cdylib"]
@@ -64,11 +64,13 @@ indexmap = "2"
 aes = "0.8"
 aes-gcm = "0.10.3"
 urlencoding = "2.1.3"
-rand_v09 = { package = "rand", version = "0.9", default-features = false, features = [
+rand_v10 = { package = "rand", version = "0.10", default-features = false, features = [
     "std",
     "std_rng",
     "thread_rng",
 ] }
+# Not used directly but only through rand_v10. This simply forces to include the wasm_js feature
+getrandom = { version = "=0.4.3", features = ["wasm_js"] }
 pastey = "0.2.3"
 
 [target.'cfg(target_os = "ios")'.dependencies]

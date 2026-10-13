@@ -15,10 +15,10 @@ use crate::domain::mls::ports::MockMessageCachePort;
 use crate::domain::room::{RoomService, WaitingRoomService};
 use crate::domain::unleash::FeatureFlags;
 use crate::domain::user::models::meeting::{MeetingType, UpcomingMeeting};
-use crate::domain::user::models::{meet_link_info::MeetInfo, Address, UserTokenInfo};
+use crate::domain::user::models::{Address, UserTokenInfo, meet_link_info::MeetInfo};
 use crate::domain::user::ports::{
-    http_client::MockHttpClient, meeting_api::MockMeetingApi, user_api::MockUserApi,
     ConnectionState, MockMlsApi, MockUserRepository, MockWebSocketClient, UserService,
+    http_client::MockHttpClient, meeting_api::MockMeetingApi, user_api::MockUserApi,
 };
 use crate::infra::{
     crypto_client::MeetCryptoClient,
@@ -434,6 +434,10 @@ pub fn test_meet_info() -> MeetInfo {
         max_participants: 100,
         expiration_time: None,
         has_waiting_room: false,
+        salt: "salt".to_string(),
+        session_key: "session-key".to_string(),
+        manage_waiting_room: 0,
+        personal_meeting: 0,
     }
 }
 
@@ -766,7 +770,7 @@ pub async fn two_user_mls_services_with_group(
 ) {
     use crate::domain::user::ports::UserService;
     use mls_rs_codec::MlsEncode;
-    use mls_spec::{messages::MlsMessageContent, Parsable};
+    use mls_spec::{Parsable, messages::MlsMessageContent};
     use mls_trait::MlsClientConfig;
     use proton_meet_mls::MlsGroupTrait;
 

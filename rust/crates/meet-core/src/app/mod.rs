@@ -3,8 +3,8 @@ use crate::domain::mls::ports::KeyPackagePort;
 use crate::domain::room::{RoomService, WaitingRoomService};
 use crate::domain::unleash::FeatureFlags;
 use crate::domain::user::models::{
-    participant_track_settings::ParticipantTrackSettings, user_settings::UserSettings,
-    UnleashResponse,
+    UnleashResponse, participant_track_settings::ParticipantTrackSettings,
+    user_settings::UserSettings,
 };
 use crate::domain::user::ports::crypto_client::CryptoClient;
 use crate::domain::user::ports::meeting_api::MeetingApi;
@@ -14,9 +14,9 @@ use crate::domain::user::ports::{
 use crate::errors::core::MeetCoreError;
 use crate::infra::adapters::mls::message_cache_adapter::MessageCacheAdapter;
 use crate::infra::message_cache::MlsMessageCache;
-use crate::infra::muon::is_prod_environment;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::infra::muon::AuthStore;
+use crate::infra::muon::is_prod_environment;
 use crate::infra::{
     crypto_client::MeetCryptoClient,
     http_client::{ApiConfig, ProtonHttpClient},
@@ -40,7 +40,7 @@ use tokio::sync::{Mutex, RwLock};
 use tracing::error;
 
 #[cfg(target_family = "wasm")]
-use {wasm_bindgen::prelude::wasm_bindgen, wasm_bindgen::JsValue};
+use {wasm_bindgen::JsValue, wasm_bindgen::prelude::wasm_bindgen};
 
 mod agent;
 #[cfg(not(target_family = "wasm"))]

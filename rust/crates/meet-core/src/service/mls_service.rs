@@ -5,14 +5,14 @@ use meet_identifiers::{Domain, GroupId, Id};
 use meet_type::fanout::{MlsCommitInfo, MlsWelcomeInfo};
 use mls_rs_codec::MlsEncode;
 use mls_spec::{
+    Parsable, Serializable,
     defs::ProtocolVersion,
     drafts::ratchet_tree_options::RatchetTreeOption,
     group::{group_info::GroupInfo, welcome::Welcome},
     messages::{MlsMessage, MlsMessageContent},
-    Parsable, Serializable,
 };
 use mls_trait::{
-    meet_policy::RoomKind, MlsClientTrait, MlsGroupConfig, MlsGroupTrait, ProposalArg,
+    MlsClientTrait, MlsGroupConfig, MlsGroupTrait, ProposalArg, meet_policy::RoomKind,
 };
 use mls_types::{ExternalPskId, PublicRatchetTree};
 use proton_meet_macro::async_trait;
@@ -25,7 +25,7 @@ use crate::{
     utils::server_time::ServerTimeTracker,
 };
 use crate::{
-    domain::user::models::{meeting_link_name::MeetingLinkName, UserId},
+    domain::user::models::{UserId, meeting_link_name::MeetingLinkName},
     service::user_service::{psk_id_for_commit, public_ratchet_tree_has_agent},
 };
 
@@ -338,18 +338,18 @@ mod tests {
         drafts::ratchet_tree_options::RatchetTreeOption, group::welcome::Welcome,
         messages::MlsMessageContent,
     };
-    use mls_trait::{types::ReceivedMessage, MlsClientTrait, MlsGroupTrait};
+    use mls_trait::{MlsClientTrait, MlsGroupTrait, types::ReceivedMessage};
     use proton_claims::{
-        reexports::{cose_key_set::CoseKeySet, Issuer, IssuerParams, SpiceOidcClaims},
         ClientType, MimiProvider, ProtonMeetClaims,
+        reexports::{Issuer, IssuerParams, SpiceOidcClaims, cose_key_set::CoseKeySet},
     };
-    use proton_meet_mls::{kv::MemKv, MlsClient, MlsClientConfig};
+    use proton_meet_mls::{MlsClient, MlsClientConfig, kv::MemKv};
     use tokio::sync::RwLock;
     use uuid::Uuid;
 
     use super::MlsService;
     use crate::{
-        domain::user::models::{meeting_link_name::MeetingLinkName, UserId},
+        domain::user::models::{UserId, meeting_link_name::MeetingLinkName},
         infra::{
             crypto_client::derive_external_psk, mimi_subject_parser::ANONYMOUS_USER_IDENTIFIER,
         },

@@ -106,3 +106,17 @@ List<MentionSuggestion> getMentionSuggestions({
 
   return suggestions;
 }
+
+/// Index of the suggestion row highlighted by default (first participant, not `@everyone`).
+int defaultMentionSuggestionHighlightIndex(
+  List<MentionSuggestion> suggestions,
+) {
+  if (suggestions.isEmpty) {
+    return -1;
+  }
+  final firstParticipant = suggestions.indexWhere((s) => !s.isEveryone);
+  if (firstParticipant >= 0) {
+    return firstParticipant;
+  }
+  return 0;
+}

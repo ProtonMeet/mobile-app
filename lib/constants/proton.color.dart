@@ -14,6 +14,7 @@ class ProtonColors extends ThemeExtension<ProtonColors> {
   final Color defaultLoadBackgroundLight;
   final Color defaultLoadBackgroundDark;
   final Color backgroundCard;
+  final Color cardHighlightColor;
   final Color popupBackground;
   final Color controlBarBtnBackground;
   final Color blurBottomSheetBackground;
@@ -110,6 +111,7 @@ class ProtonColors extends ThemeExtension<ProtonColors> {
     required this.defaultLoadBackgroundDark,
     required this.backgroundSheetPanel,
     required this.backgroundCard,
+    required this.cardHighlightColor,
     required this.popupBackground,
     required this.backgroundDark,
     required this.textNorm,
@@ -191,6 +193,7 @@ class ProtonColors extends ThemeExtension<ProtonColors> {
     Color? defaultLoadBackgroundDark,
     Color? backgroundSheetPanel,
     Color? backgroundCard,
+    Color? cardHighlightColor,
     Color? popupBackground,
     Color? controlBarBtnBackground,
     Color? backgroundDark,
@@ -282,6 +285,7 @@ class ProtonColors extends ThemeExtension<ProtonColors> {
           defaultLoadBackgroundDark ?? this.defaultLoadBackgroundDark,
       backgroundSheetPanel: backgroundSheetPanel ?? this.backgroundSheetPanel,
       backgroundCard: backgroundCard ?? this.backgroundCard,
+      cardHighlightColor: cardHighlightColor ?? this.cardHighlightColor,
       popupBackground: popupBackground ?? this.popupBackground,
       controlBarBtnBackground:
           controlBarBtnBackground ?? this.controlBarBtnBackground,
@@ -419,6 +423,11 @@ class ProtonColors extends ThemeExtension<ProtonColors> {
         t,
       )!,
       backgroundCard: Color.lerp(backgroundCard, other.backgroundCard, t)!,
+      cardHighlightColor: Color.lerp(
+        cardHighlightColor,
+        other.cardHighlightColor,
+        t,
+      )!,
       popupBackground: Color.lerp(popupBackground, other.popupBackground, t)!,
       controlBarBtnBackground: Color.lerp(
         controlBarBtnBackground,
@@ -690,6 +699,7 @@ final lightColorsExtension = ProtonColors(
   defaultLoadBackgroundDark: const Color(0xFF191C32),
   backgroundSheetPanel: const Color(0x001a1a28).withValues(alpha: 0.60),
   backgroundCard: const Color(0xFF232331),
+  cardHighlightColor: const Color(0xFF27253E),
   popupBackground: const Color(0x1A1A28CC),
   backgroundDark: const Color(0xFF16161F),
   textNorm: const Color(0xFF191C32),
@@ -770,6 +780,7 @@ final darkColorsExtension = ProtonColors(
   defaultLoadBackgroundDark: const Color(0xFF191C32),
   backgroundSheetPanel: const Color(0x001a1a28).withValues(alpha: 0.60),
   backgroundCard: const Color(0xFF232331),
+  cardHighlightColor: const Color(0xFF27253E),
   popupBackground: const Color(0x222247CC),
   backgroundDark: const Color(0xFF16161F),
   textNorm: const Color(0xFFFFFFFF),

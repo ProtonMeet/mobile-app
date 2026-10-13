@@ -136,9 +136,11 @@ mod tests {
                 .decode(field.data.as_ref().unwrap())
                 .unwrap();
             let json = zstd::bulk::decompress(&raw, 1024 * 1024).unwrap();
-            assert!(String::from_utf8(json)
-                .unwrap()
-                .contains(&format!(r#""WaitingRoom":{expected}"#)));
+            assert!(
+                String::from_utf8(json)
+                    .unwrap()
+                    .contains(&format!(r#""WaitingRoom":{expected}"#))
+            );
         }
     }
 

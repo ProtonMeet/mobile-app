@@ -50,6 +50,7 @@ class ResponsiveControlsBar extends StatefulWidget {
     this.cameraBackgroundSelection = const CameraBackgroundSelection.none(),
     this.applyAudioDenoise = false,
     this.audioDenoiseType = DenoiseType.rnnoise,
+    this.controlsDisabled = false,
   });
 
   final Room room;
@@ -74,6 +75,12 @@ class ResponsiveControlsBar extends StatefulWidget {
   final CameraBackgroundSelection cameraBackgroundSelection;
   final bool applyAudioDenoise;
   final DenoiseType audioDenoiseType;
+
+  /// When true, every control EXCEPT the leave button is dimmed and stops
+  /// receiving taps. Used while the room is reconnecting/rejoining so the user
+  /// can still leave, but can't toggle mic/camera/screen-share or open settings
+  /// in a way that would interfere with the in-flight reconnection.
+  final bool controlsDisabled;
 
   @override
   State<ResponsiveControlsBar> createState() => _ResponsiveControlsBarState();
@@ -107,6 +114,20 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
     _loadIOSOnMacOSFlag();
     _reloadPermissions();
     _reloadDevices();
+  }
+
+  @override
+  void didUpdateWidget(covariant ResponsiveControlsBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A full rejoin swaps in a brand-new Room (and local participant). Because
+    // the bar now stays mounted across a reconnect, rebind the change listener
+    // to the new participant so mic/camera state keeps updating afterwards.
+    if (!identical(oldWidget.room, widget.room)) {
+      oldWidget.room.localParticipant?.removeListener(_onChange);
+      widget.room.localParticipant?.addListener(_onChange);
+      _reloadDevices();
+      _onChange();
+    }
   }
 
   @override
@@ -456,6 +477,13 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
               );
             }
 
+            // While reconnecting, swallow taps on every control except the
+            // leave button, so the user can still bail out but can't change
+            // mic/camera/screen-share/settings mid-reconnection. Visuals are
+            // kept at full brightness; only interaction is blocked.
+            Widget gate(Widget child) =>
+                IgnorePointer(ignoring: widget.controlsDisabled, child: child);
+
             return Center(
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -463,37 +491,37 @@ class _ResponsiveControlsBarState extends State<ResponsiveControlsBar> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     /// Mic (always)
-                    _buildAudioAction(context),
+                    gate(_buildAudioAction(context)),
                     SizedBox(width: widget.buttonGap),
 
                     /// Video (always)
-                    _buildVideoAction(context),
+                    gate(_buildVideoAction(context)),
                     SizedBox(width: widget.buttonGap),
 
                     // Visible optionals
                     for (final a in visible) ...[
-                      buildIcon(a),
+                      gate(buildIcon(a)),
                       SizedBox(width: widget.buttonGap),
                     ],
 
                     if (widget.recordingControls != null) ...[
-                      widget.recordingControls!,
+                      gate(widget.recordingControls!),
                       SizedBox(width: widget.buttonGap),
                     ],
 
                     // More (only if overflow)
                     if (overflow.isNotEmpty) ...[
-                      buildMoreMenu(),
+                      gate(buildMoreMenu()),
                       SizedBox(width: widget.buttonGap),
                     ],
 
                     /// Trailing control (e.g. stop sharing), second-to-last
                     if (widget.trailing != null) ...[
-                      widget.trailing!,
+                      gate(widget.trailing!),
                       SizedBox(width: widget.buttonGap),
                     ],
 
-                    /// leave button
+                    /// leave button (always active, even while reconnecting)
                     _buildLeaveButton(context),
                   ],
                 ),

@@ -13,7 +13,7 @@ use std::fs;
 use std::path::Path;
 
 use mimi_content::MimiContentSerialize;
-use proton_meet_chat::{build_mimi_message, meet_room_uri, ChatComposeRequest, MessageId};
+use proton_meet_chat::{ChatComposeRequest, MessageId, build_mimi_message, meet_room_uri};
 
 fn write_seed(target: &str, name: &str, bytes: &[u8]) {
     let dir = Path::new("corpus").join(target);

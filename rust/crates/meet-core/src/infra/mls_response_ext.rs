@@ -4,7 +4,7 @@ use meet_type::error::ServerError;
 use reqwest::{Response, StatusCode};
 use serde::de::DeserializeOwned;
 
-use crate::errors::http_client::{response_error_from_api_failure_body, HttpClientError};
+use crate::errors::http_client::{HttpClientError, response_error_from_api_failure_body};
 use crate::infra::dto::common::ApiResponse;
 
 pub(crate) fn mls_error_for_status(status: StatusCode, body: &[u8]) -> HttpClientError {

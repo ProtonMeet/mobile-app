@@ -69,6 +69,15 @@ const int maxAudioSubscribeRetries = 3;
 /// Min interval between sort-path [reconcileInFlightAudioSubscribes] passes.
 const Duration audioReconcileMinInterval = Duration(seconds: 2);
 
+/// How long to let LiveKit's built-in reconnect (resume / full-restart) run
+/// before escalating to a fresh App-level rejoin ([StartRejoinMeeting]).
+const Duration livekitReconnectEscalationTimeout = Duration(seconds: 8);
+
+/// Maximum number of consecutive App-level rejoins triggered by an MLS
+/// out-of-sync failure before we stop auto-rejoining and surface the error
+/// dialog instead of looping forever.
+const int kMaxMlsRecoveryRejoins = 3;
+
 /// When to snapshot remote audio publication + audio engine state after join,
 /// for diagnosing "joined muted and nobody is audible" reports.
 const List<Duration> audioDiagnosticSnapshotDelays = [

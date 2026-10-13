@@ -1,6 +1,6 @@
 use std::{
     cmp::Ordering,
-    collections::{hash_map::Entry, HashMap, HashSet},
+    collections::{HashMap, HashSet, hash_map::Entry},
     future::Future,
     mem,
     pin::Pin,
@@ -17,12 +17,12 @@ use mls_rs::{
 };
 use mls_spec::messages::{ContentTypeInner, MlsMessageContent};
 use mls_trait::{
-    meet_policy::UserRole, types::ReceivedMessage, AuthorizerExt, MlsGroup, MlsGroupTrait,
-    ProposalArg, ProtonMeetIdentityProvider,
+    AuthorizerExt, MlsGroup, MlsGroupTrait, ProposalArg, ProtonMeetIdentityProvider,
+    meet_policy::UserRole, types::ReceivedMessage,
 };
 use mls_types::MlsTypesError;
 use proton_meet_macro::{async_trait, async_trait_with_mock};
-use proton_meet_mls::{kv::MemKv, MlsStore};
+use proton_meet_mls::{MlsStore, kv::MemKv};
 use tokio::sync::RwLock;
 
 use crate::{
@@ -36,15 +36,14 @@ use crate::{
     errors::{http_client::HttpClientError, service::ServiceError},
     infra::{message_cache::CachedMessageType, mimi_subject_parser::MimiSubject},
     service::{
-        compute_stagger_time,
+        RANK_GROUP_DELAY_MS, StaggerStats, compute_stagger_time,
         service_state::MlsGroupState,
         services_bundle::ServiceBundle,
         user_service::{
-            credential_is_agent, psk_id_for_commit, utils::group_has_agent, GroupKeyUpdateReason,
-            ProposalType, QueuedProposal,
+            GroupKeyUpdateReason, ProposalType, QueuedProposal, credential_is_agent,
+            psk_id_for_commit, utils::group_has_agent,
         },
         utils::{calculate_retry_delay, convert_mls_types_to_spec},
-        StaggerStats, RANK_GROUP_DELAY_MS,
     },
     utils::{
         sleep, spawn_detached,
@@ -414,9 +413,9 @@ impl MessageQueue {
             iteration += 1;
             if iteration > max_iterations {
                 tracing::warn!(
-                "Max iterations ({max_iterations}) reached for cached message processing in room {}, stopping",
-                self.room_id
-            );
+                    "Max iterations ({max_iterations}) reached for cached message processing in room {}, stopping",
+                    self.room_id
+                );
                 break;
             }
 
@@ -518,10 +517,10 @@ impl MessageQueue {
                                 // If epoch advanced significantly, break to start fresh iteration
                                 if new_group_epoch > current_group_epoch {
                                     tracing::info!(
-                                            "Group epoch advanced from {} to {} after commit, breaking to revalidate cached messages",
-                                            current_group_epoch,
-                                            new_group_epoch
-                                        );
+                                        "Group epoch advanced from {} to {} after commit, breaking to revalidate cached messages",
+                                        current_group_epoch,
+                                        new_group_epoch
+                                    );
                                     // Mark that we're breaking early due to epoch advancement, not failure
                                     early_break_due_to_epoch_advance = true;
                                     break;
@@ -576,10 +575,10 @@ impl MessageQueue {
                 }
             } else {
                 tracing::warn!(
-                        "Failed to process some cached messages for room {} at epoch {}, stopping cache processing",
-                        self.room_id,
-                        epoch_to_process
-                    );
+                    "Failed to process some cached messages for room {} at epoch {}, stopping cache processing",
+                    self.room_id,
+                    epoch_to_process
+                );
                 break;
             }
 
@@ -964,18 +963,26 @@ impl MessageQueue {
                         mls_types_proposal
                     }
                     None => {
-                        tracing::info!("Received proposal message with old epoch. proposal epoch: {epoch_of_proposal:?}, group epoch: {mls_group_epoch:?}",);
+                        tracing::info!(
+                            "Received proposal message with old epoch. proposal epoch: {epoch_of_proposal:?}, group epoch: {mls_group_epoch:?}",
+                        );
                         return Err(ServiceError::OldEpochProposal);
                     }
                 };
                 {
-                    tracing::info!("Received proposal message with old epoch. proposal epoch: {epoch_of_proposal:?}, group epoch: {mls_group_epoch:?}",);
+                    tracing::info!(
+                        "Received proposal message with old epoch. proposal epoch: {epoch_of_proposal:?}, group epoch: {mls_group_epoch:?}",
+                    );
                     return Err(ServiceError::OldEpochProposal);
                 }
             }
             Ordering::Equal => {}
             Ordering::Greater => {
-                tracing::info!("Received proposal message with future epoch. proposal epoch: {:?}, group epoch: {:?}", epoch_of_proposal, mls_group_epoch);
+                tracing::info!(
+                    "Received proposal message with future epoch. proposal epoch: {:?}, group epoch: {:?}",
+                    epoch_of_proposal,
+                    mls_group_epoch
+                );
                 self.cache_proposal_message(proposal).await?;
                 return Err(ServiceError::FutureEpochProposal);
             }
@@ -1433,7 +1440,10 @@ impl MessageQueue {
                 );
             }
             Ok(CommitProcessingOutcome::DeferredFutureEpoch) => {
-                tracing::debug!("Commit deferred for future epoch in room {}, skipping cached message processing", self.room_id);
+                tracing::debug!(
+                    "Commit deferred for future epoch in room {}, skipping cached message processing",
+                    self.room_id
+                );
             }
 
             Err(e) => {
@@ -1596,16 +1606,16 @@ mod test {
     use meet_type::fanout::{MlsCommitInfo, RTCMessageIn, RTCMessageInContent};
     use mls_rs::group::proposal::Proposal;
     use mls_rs_codec::MlsEncode;
-    use mls_spec::messages::MlsMessageContent;
     use mls_spec::Parsable;
-    use mls_spec::{drafts::ratchet_tree_options::RatchetTreeOption, Serializable};
+    use mls_spec::messages::MlsMessageContent;
+    use mls_spec::{Serializable, drafts::ratchet_tree_options::RatchetTreeOption};
     use mls_trait::{
-        meet_policy::UserRole, CommitBundle, MlsClientConfig, MlsClientTrait, MlsGroupTrait,
-        ProposalArg,
+        CommitBundle, MlsClientConfig, MlsClientTrait, MlsGroupTrait, ProposalArg,
+        meet_policy::UserRole,
     };
     use mls_types::ExternalPskId;
-    use proton_meet_mls::{kv::MemKv, MlsGroup};
-    use rand::{rngs::StdRng, seq::SliceRandom, Rng, SeedableRng};
+    use proton_meet_mls::{MlsGroup, kv::MemKv};
+    use rand::{Rng, SeedableRng, rngs::StdRng, seq::SliceRandom};
     use tokio::sync::{Mutex, RwLock};
     use uuid::Uuid;
 
@@ -1622,16 +1632,16 @@ mod test {
             service_state::MlsGroupState,
             services_bundle::ServiceBundle,
             test::{
-                create_mock_mls_api, create_test_service_bundle,
-                create_test_service_bundle_with_host, setup_single_user_group,
-                PopulatedServiceBundleDI, ServiceBundleDI,
+                PopulatedServiceBundleDI, ServiceBundleDI, create_mock_mls_api,
+                create_test_service_bundle, create_test_service_bundle_with_host,
+                setup_single_user_group,
             },
             user_service::{
-                create_test_service, mls_group_export_snapshot,
+                ProposalType, QueuedProposal, Service, create_test_service,
+                mls_group_export_snapshot,
                 service_test::tests::{
                     setup_n_user_group, setup_two_user_group_with_commit_bundle,
                 },
-                ProposalType, QueuedProposal, Service,
             },
         },
     };

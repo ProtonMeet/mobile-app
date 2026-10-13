@@ -1,8 +1,8 @@
 pub use proton_meet_core::infra::dto::proton_user::UserData;
 use proton_meet_core::{
-    domain::user::models::{compute_mailbox_password, MeetParticipant, MeetingType},
-    muon::{Auth, Tokens},
     ProtonUser,
+    domain::user::models::{MeetParticipant, MeetingType, compute_mailbox_password},
+    muon::{Auth, Tokens},
 };
 use std::sync::Arc;
 use std::sync::OnceLock;
@@ -34,7 +34,7 @@ use crate::{
 use super::meet_auth_store::ProtonMeetAuthStore;
 use super::storage::user_key_provider::FrbUserKeyProvider;
 use super::user_config::UserConfig;
-use flutter_rust_bridge::{frb, DartFnFuture};
+use flutter_rust_bridge::{DartFnFuture, frb};
 use proton_meet_app::user_config::user_config::{ConfigStorage, VideoMaxBitrate, VideoResolution};
 use proton_meet_calendar::{IcsEvent, RecurrenceRule};
 use proton_meet_chat::legacy_wire::MeetChatMessage;
@@ -44,11 +44,11 @@ use proton_meet_core::{
     app::App,
     app_state::UserState,
     domain::user::models::{
+        UnleashResponse,
         access_token::AccessToken,
-        meet_link::{parse_meeting_link, MeetLink},
+        meet_link::{MeetLink, parse_meeting_link},
         meeting_link_name::MeetingLinkName,
         meeting_password::MeetingPassword,
-        UnleashResponse,
     },
 };
 use tokio::sync::Mutex;
@@ -537,9 +537,9 @@ impl AppCore {
     pub async fn set_join_request_callback(
         &self,
         callback: impl Fn(JoinRequestChange, String, String, u64) -> DartFnFuture<()>
-            + Send
-            + Sync
-            + 'static,
+        + Send
+        + Sync
+        + 'static,
     ) -> Result<(), BridgeError> {
         let callback_guard = {
             let mut guard = MEET_JOIN_REQUEST_DART_CALLBACK.lock().await;
@@ -874,6 +874,10 @@ impl AppCore {
                 max_duration: meeting_info.max_duration,
                 max_participants: meeting_info.max_participants,
                 expiration_time: meeting_info.expiration_time,
+                salt: meeting_info.salt,
+                session_key: meeting_info.session_key,
+                manage_waiting_room: meeting_info.manage_waiting_room,
+                personal_meeting: meeting_info.personal_meeting,
             });
         }
 
@@ -904,6 +908,10 @@ impl AppCore {
                         max_duration: meeting_info.max_duration,
                         max_participants: meeting_info.max_participants,
                         expiration_time: meeting_info.expiration_time,
+                        salt: meeting_info.salt,
+                        session_key: meeting_info.session_key,
+                        manage_waiting_room: meeting_info.manage_waiting_room,
+                        personal_meeting: meeting_info.personal_meeting,
                     });
                 }
                 Err(e) => {
@@ -943,6 +951,10 @@ impl AppCore {
             max_duration: meeting_info.max_duration,
             max_participants: meeting_info.max_participants,
             expiration_time: meeting_info.expiration_time,
+            salt: meeting_info.salt,
+            session_key: meeting_info.session_key,
+            manage_waiting_room: meeting_info.manage_waiting_room,
+            personal_meeting: meeting_info.personal_meeting,
         })
     }
 
@@ -994,6 +1006,10 @@ impl AppCore {
             max_duration: meeting_info.max_duration,
             max_participants: meeting_info.max_participants,
             expiration_time: meeting_info.expiration_time,
+            salt: meeting_info.salt,
+            session_key: meeting_info.session_key,
+            manage_waiting_room: meeting_info.manage_waiting_room,
+            personal_meeting: meeting_info.personal_meeting,
         })
     }
 
@@ -1509,9 +1525,9 @@ impl AppCore {
     pub async fn set_mls_sync_state_update_callback(
         &self,
         callback: impl Fn(MlsSyncState, Option<RejoinReason>) -> DartFnFuture<()>
-            + Send
-            + Sync
-            + 'static,
+        + Send
+        + Sync
+        + 'static,
     ) -> Result<(), BridgeError> {
         let mut guard = MEET_MLS_SYNC_STATE_UPDATE_DART_CALLBACK.lock().await;
         *guard = Some(Arc::new(callback));

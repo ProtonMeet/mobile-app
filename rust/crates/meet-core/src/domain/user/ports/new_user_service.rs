@@ -1,7 +1,7 @@
 use proton_meet_macro::async_trait_with_mock;
 
 use crate::{
-    domain::user::models::{meeting_link_name::MeetingLinkName, UserTokenInfo},
+    domain::user::models::{UserTokenInfo, meeting_link_name::MeetingLinkName},
     errors::core::MeetCoreError,
 };
 

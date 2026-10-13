@@ -1,5 +1,5 @@
 use crate::frb_generated::StreamSink;
-use crossbeam_channel::{unbounded, Receiver, Sender};
+use crossbeam_channel::{Receiver, Sender, unbounded};
 use flutter_rust_bridge::frb;
 use once_cell::sync::OnceCell;
 use std::{panic, thread};

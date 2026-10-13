@@ -43,6 +43,8 @@ impl ServiceBundle {
     }
 
     pub async fn reset(&self) {
+        let user_service_lock = self.user_service.write().await;
         self.caption_service.reset().await;
+        user_service_lock.reset_service_state().await;
     }
 }

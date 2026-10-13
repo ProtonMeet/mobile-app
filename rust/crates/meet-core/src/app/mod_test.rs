@@ -140,7 +140,7 @@ async fn get_user_settings_propagates_service_error() {
 #[tokio::test]
 async fn set_mls_group_update_handler_registers_on_service() {
     use crate::app::test_support::auth_service;
-    use crate::domain::user::ports::{user_api::MockUserApi, MockUserRepository};
+    use crate::domain::user::ports::{MockUserRepository, user_api::MockUserApi};
 
     let service = auth_service(MockUserApi::new(), MockUserRepository::new());
     let app = build_app_with_auth_service(default_app_state(), service).await;
@@ -152,7 +152,7 @@ async fn set_mls_group_update_handler_registers_on_service() {
 #[tokio::test]
 async fn set_mls_sync_state_update_handler_registers_on_service() {
     use crate::app::test_support::auth_service;
-    use crate::domain::user::ports::{user_api::MockUserApi, MockUserRepository};
+    use crate::domain::user::ports::{MockUserRepository, user_api::MockUserApi};
 
     let service = auth_service(MockUserApi::new(), MockUserRepository::new());
     let app = build_app_with_auth_service(default_app_state(), service).await;
@@ -164,7 +164,7 @@ async fn set_mls_sync_state_update_handler_registers_on_service() {
 #[tokio::test]
 async fn set_livekit_admin_change_handler_registers_on_service() {
     use crate::app::test_support::auth_service;
-    use crate::domain::user::ports::{user_api::MockUserApi, MockUserRepository};
+    use crate::domain::user::ports::{MockUserRepository, user_api::MockUserApi};
 
     let service = auth_service(MockUserApi::new(), MockUserRepository::new());
     let app = build_app_with_auth_service(default_app_state(), service).await;

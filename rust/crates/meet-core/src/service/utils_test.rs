@@ -10,13 +10,13 @@ mod tests {
     };
     use mls_trait::ProposalArg;
     use proton_claims::{
-        reexports::{cose_key_set::CoseKeySet, Issuer, IssuerParams, SpiceOidcClaims},
         ClientType, MimiProvider,
+        reexports::{Issuer, IssuerParams, SpiceOidcClaims, cose_key_set::CoseKeySet},
     };
     use proton_claims::{ProtonMeetClaims, Role};
     use proton_meet_mls::{
-        kv::MemKv, MlsClient, MlsClientConfig, MlsClientTrait, MlsGroup, MlsGroupConfig,
-        MlsGroupTrait,
+        MlsClient, MlsClientConfig, MlsClientTrait, MlsGroup, MlsGroupConfig, MlsGroupTrait,
+        kv::MemKv,
     };
     use sha2::Sha256;
     use uuid::Uuid;
@@ -94,7 +94,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
         let user_id = client.sd_cwt_mut().unwrap().user_id().unwrap();
         let group_id = GroupId::new(&user_id.domain);
 
-        let group = client
+        client
             .new_group(
                 &group_id,
                 Disclosure::Full,
@@ -105,9 +105,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             .unwrap()
             .store()
             .await
-            .unwrap();
-
-        group
+            .unwrap()
     }
 
     #[tokio::test]

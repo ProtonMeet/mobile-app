@@ -42,6 +42,7 @@ desugaring = "2.1.4"
 # Google
 firebase-bom = "32.7.0"
 firebase-messaging = "23.2.1"
+android-billing = "8.3.0"
 
 # Gradle
 gradlePlugin-android = "8.12.0"
@@ -67,7 +68,7 @@ mediapipe-tasks-vision = "0.10.35"
 litert = "1.4.2"
 
 # WebRTC Android (must match the fork bundled by `flutter_webrtc` on pub.dev — currently
-# `io.github.webrtc-sdk:android:150.7871.01` as of flutter_webrtc 1.6.2+hotfix.3). Added as `compileOnly`
+# `io.github.webrtc-sdk:android:150.7871.01` as of flutter_webrtc 1.6.2+hotfix.4). Added as `compileOnly`
 # in `app/build.gradle` so we get the `org.webrtc.*` symbols at compile time without shipping
 # the AAR twice — flutter_webrtc already packages it at runtime.
 webrtc-sdk = "150.7871.01"
@@ -224,6 +225,8 @@ desugaring-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.r
 
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebase-messaging" }
+
+android-billing = { module = "com.android.billingclient:billing-ktx", version.ref = "android-billing" }
 
 fusion = { module = "me.proton.test:fusion", version.ref = "fusion" }
 junit = { module = "junit:junit", version.ref = "junit" }

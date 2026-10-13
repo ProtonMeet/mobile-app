@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use mls_trait::{MlsError, MlsGroupTrait};
 use proton_meet_macro::async_trait;
-use proton_meet_mls::{kv::MemKv, MlsGroup, MlsStore};
+use proton_meet_mls::{MlsGroup, MlsStore, kv::MemKv};
 use tokio::sync::RwLock;
 
 use crate::domain::mls::ports::MlsStorePort;

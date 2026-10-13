@@ -6,7 +6,7 @@
 #[cfg(not(target_family = "wasm"))]
 use http::header::AUTHORIZATION;
 #[cfg(not(target_family = "wasm"))]
-use tokio_tungstenite::{tungstenite::client::IntoClientRequest, Connector};
+use tokio_tungstenite::{Connector, tungstenite::client::IntoClientRequest};
 #[cfg(not(target_family = "wasm"))]
 use tokio_tungstenite_wasm::{Error, Result, WebSocketStream};
 

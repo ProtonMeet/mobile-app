@@ -5,8 +5,8 @@ use muon::env::Env;
 use muon::{App, Environment};
 
 use super::{
-    build_meet_client, environment_from_str, is_prod_environment, parse_environment, MeetClient,
-    MeetClientExt, MeetSession,
+    MeetClient, MeetClientExt, MeetSession, build_meet_client, environment_from_str,
+    is_prod_environment, parse_environment,
 };
 
 /// Standard test app identity (valid `macos-meet@…` form).

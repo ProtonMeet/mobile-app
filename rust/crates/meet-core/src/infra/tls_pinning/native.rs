@@ -2,12 +2,12 @@ use std::sync::Arc;
 
 use base64::Engine;
 use rustls::{
+    ClientConfig, DigitallySignedStruct, Error, RootCertStore, SignatureScheme,
     client::{
-        danger::{HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier},
         WebPkiServerVerifier,
+        danger::{HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier},
     },
     pki_types::{CertificateDer, ServerName, UnixTime},
-    ClientConfig, DigitallySignedStruct, Error, RootCertStore, SignatureScheme,
 };
 use sha2::{Digest, Sha256};
 use x509_parser::prelude::*;
@@ -129,14 +129,14 @@ mod tests {
     use base64::Engine;
     use rcgen::{CertificateParams, KeyPair, PublicKeyData};
     use rustls::{
+        DigitallySignedStruct, Error, SignatureScheme,
         client::danger::{HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier},
         pki_types::{CertificateDer, ServerName, UnixTime},
-        DigitallySignedStruct, Error, SignatureScheme,
     };
     use sha2::{Digest, Sha256};
     use std::sync::Arc;
 
-    use super::{build_prod_tls_config, spki_sha256, CertPinningVerifier};
+    use super::{CertPinningVerifier, build_prod_tls_config, spki_sha256};
 
     fn make_test_cert_and_pin() -> (CertificateDer<'static>, String) {
         let key_pair = KeyPair::generate().unwrap();

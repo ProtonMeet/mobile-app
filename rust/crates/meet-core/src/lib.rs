@@ -1,3 +1,5 @@
+#![recursion_limit = "256"]
+
 /// Participant / MLS member count at or above which external-proposal join is used when
 /// join-type switching is enabled. Must stay aligned with [`app::App::get_join_type`].
 pub(crate) const JOIN_TYPE_SWITCH_THRESHOLD: u32 = 20;
@@ -17,9 +19,9 @@ pub mod mocks;
 
 pub mod muon {
     pub use muon::{
+        Environment,
         auth::{Auth, Tokens},
         store::Store,
-        Environment,
     };
     /// Backward-compatible alias for Dart/FRB callers.
     pub type EnvId = Environment;

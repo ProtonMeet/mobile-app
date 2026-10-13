@@ -368,7 +368,7 @@ impl UserRepository for Persister {
                 Err(_) => {
                     return Err(StorageError::DbNotFound {
                         name: user_id.to_string(),
-                    })
+                    });
                 }
             };
 
@@ -419,7 +419,7 @@ impl UserRepository for Persister {
                 Err(_) => {
                     return Err(StorageError::DbNotFound {
                         name: user_id.to_string(),
-                    })
+                    });
                 }
             };
 

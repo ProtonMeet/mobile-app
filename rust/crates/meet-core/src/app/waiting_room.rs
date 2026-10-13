@@ -245,7 +245,9 @@ impl App {
     ) -> Result<(), MeetCoreError> {
         tracing::info!(
             "reject_waiting_room_join_request start meet_link_name={} request_id={} participant_uid={}",
-            meet_link_name, request_id, participant_uid
+            meet_link_name,
+            request_id,
+            participant_uid
         );
         let user_id = self.current_user_id().await?;
 
@@ -296,13 +298,12 @@ impl App {
         enable: bool,
         meeting_session_key: Option<MeetingSessionKey>,
     ) -> Result<(), MeetCoreError> {
-        if !enable {
-            if let Err(e) = self
+        if !enable
+            && let Err(e) = self
                 .admit_all_waiting_room_join_requests(meet_link_name.clone(), meeting_session_key)
                 .await
-            {
-                tracing::warn!("best-effort admit before WR disable failed: {e:?}");
-            }
+        {
+            tracing::warn!("best-effort admit before WR disable failed: {e:?}");
         }
         let user_id = self.current_user_id().await?;
         self.services

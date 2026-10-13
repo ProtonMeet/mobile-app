@@ -7,22 +7,22 @@ use crate::{
         dto::websocket::ClientAck, message_cache::CachedMessageType, ws_client::WebSocketMessage,
     },
     service::{
+        DELAY_PER_RANK_MS, RANK_GROUP_DELAY_MS, RANK_GROUP_SIZE,
         message_queue::{CommitProcessingOutcome, ProposalProcessingOutcome},
         service_state::MlsGroupState,
         user_service::{
             GroupKeyUpdateReason, MessageWithId, ProposalType, QueuedProposal, Service,
         },
         utils::describe_proposal_kind,
-        DELAY_PER_RANK_MS, RANK_GROUP_DELAY_MS, RANK_GROUP_SIZE,
     },
     utils::{instant, sleep},
 };
 use meet_type::{
-    fanout::{RTCMessageIn, RTCMessageInContent},
     JoinRoomResponse, WebSocketTextResponse, WebSocketTextResponseCommand,
+    fanout::{RTCMessageIn, RTCMessageInContent},
 };
 use mls_spec::Parsable;
-use mls_trait::{meet_policy::UserRole, types::ReceivedMessage, MlsGroupTrait};
+use mls_trait::{MlsGroupTrait, meet_policy::UserRole, types::ReceivedMessage};
 use rand::Rng;
 use uuid::Uuid;
 
@@ -38,10 +38,10 @@ impl Service {
             iteration += 1;
             if iteration > max_iterations {
                 tracing::warn!(
-                "Max iterations ({}) reached for cached message processing in room {}, stopping",
-                max_iterations,
-                room_id
-            );
+                    "Max iterations ({}) reached for cached message processing in room {}, stopping",
+                    max_iterations,
+                    room_id
+                );
                 break;
             }
 
@@ -164,10 +164,10 @@ impl Service {
                                 // If epoch advanced significantly, break to start fresh iteration
                                 if new_group_epoch > current_group_epoch {
                                     tracing::info!(
-                                            "Group epoch advanced from {} to {} after commit, breaking to revalidate cached messages",
-                                            current_group_epoch,
-                                            new_group_epoch
-                                        );
+                                        "Group epoch advanced from {} to {} after commit, breaking to revalidate cached messages",
+                                        current_group_epoch,
+                                        new_group_epoch
+                                    );
                                     // Mark that we're breaking early due to epoch advancement, not failure
                                     early_break_due_to_epoch_advance = true;
                                     break;
@@ -223,10 +223,10 @@ impl Service {
                 }
             } else {
                 tracing::warn!(
-                        "Failed to process some cached messages for room {} at epoch {}, stopping cache processing",
-                        room_id,
-                        epoch_to_process
-                    );
+                    "Failed to process some cached messages for room {} at epoch {}, stopping cache processing",
+                    room_id,
+                    epoch_to_process
+                );
                 break;
             }
 
@@ -661,7 +661,9 @@ impl Service {
                                 .call_agent_pending_handler(device_id.clone())
                                 .await
                             {
-                                tracing::debug!("AgentPending received but no handler registered: device_id={device_id}");
+                                tracing::debug!(
+                                    "AgentPending received but no handler registered: device_id={device_id}"
+                                );
                             }
                             return Ok(());
                         }
@@ -672,7 +674,9 @@ impl Service {
                                 .call_agent_left_handler(device_id.clone())
                                 .await
                             {
-                                tracing::debug!("AgentLeft received but no handler registered: device_id={device_id}");
+                                tracing::debug!(
+                                    "AgentLeft received but no handler registered: device_id={device_id}"
+                                );
                             }
                             return Ok(());
                         }
@@ -750,7 +754,9 @@ impl Service {
                                             { self.ws_client.get_connection_state().await };
 
                                         if ws_connection_state == ConnectionState::Disconnected {
-                                            tracing::error!("Websocket is disconnected, skipping binary message processing");
+                                            tracing::error!(
+                                                "Websocket is disconnected, skipping binary message processing"
+                                            );
                                             return Ok(());
                                         }
 
@@ -863,17 +869,17 @@ impl Service {
                                                 }
                                                 Ok(CommitProcessingOutcome::NoStateChange) => {
                                                     tracing::debug!(
-                                                "Commit did not change state for room {}, skipping cached message processing",
-                                                room_id
-                                            );
+                                                        "Commit did not change state for room {}, skipping cached message processing",
+                                                        room_id
+                                                    );
                                                 }
                                                 Ok(
                                                     CommitProcessingOutcome::DeferredFutureEpoch,
                                                 ) => {
                                                     tracing::debug!(
-                                                "Commit deferred for future epoch in room {}, skipping cached message processing",
-                                                room_id
-                                            );
+                                                        "Commit deferred for future epoch in room {}, skipping cached message processing",
+                                                        room_id
+                                                    );
                                                 }
                                                 Err(e) => {
                                                     if let Some(ServiceError::ProposalNotFound) =
@@ -890,40 +896,43 @@ impl Service {
                                                             )
                                                             .await;
                                                         tracing::info!(
-                                                    "Cached commit message for later processing"
-                                                );
+                                                            "Cached commit message for later processing"
+                                                        );
                                                     } else if let Some(
                                                         ServiceError::PskProposalMissing,
                                                     ) = e.downcast_ref::<ServiceError>()
                                                     {
                                                         tracing::error!(
-                                                    "Commit rejected: PSK proposal missing or has wrong ID for room {}",
-                                                    room_id
-                                                );
+                                                            "Commit rejected: PSK proposal missing or has wrong ID for room {}",
+                                                            room_id
+                                                        );
                                                         return Err(e);
                                                     } else {
                                                         tracing::warn!(
-                                                    "Failed to process commit message for room {}: {}",
-                                                    room_id,
-                                                    e
-                                                );
+                                                            "Failed to process commit message for room {}: {}",
+                                                            room_id,
+                                                            e
+                                                        );
                                                     }
                                                 }
                                             }
 
                                                 if should_process_cached_messages {
                                                     // Process cached messages only after we actually advanced/applied commit state.
-                                                    match self.process_cached_messages(&room_id).await {
-                                            Ok(_) => tracing::debug!(
-                                                "Cached messages processed successfully for room {}",
-                                                room_id
-                                            ),
-                                            Err(e) => tracing::warn!(
-                                                "Failed to process cached messages for room {}: {:?}",
-                                                room_id,
-                                                e
-                                            ),
-                                        }
+                                                    match self
+                                                        .process_cached_messages(&room_id)
+                                                        .await
+                                                    {
+                                                        Ok(_) => tracing::debug!(
+                                                            "Cached messages processed successfully for room {}",
+                                                            room_id
+                                                        ),
+                                                        Err(e) => tracing::warn!(
+                                                            "Failed to process cached messages for room {}: {:?}",
+                                                            room_id,
+                                                            e
+                                                        ),
+                                                    }
                                                 }
                                             } else {
                                                 self.services()?
@@ -989,17 +998,17 @@ impl Service {
                                                 }
                                                 Ok(ProposalProcessingOutcome::NoStateChange) => {
                                                     tracing::debug!(
-                                                "Proposal did not change state for room {}, skipping cached message processing",
-                                                room_id
-                                            );
+                                                        "Proposal did not change state for room {}, skipping cached message processing",
+                                                        room_id
+                                                    );
                                                 }
                                                 Ok(
                                                     ProposalProcessingOutcome::DeferredFutureEpoch,
                                                 ) => {
                                                     tracing::debug!(
-                                                "Proposal deferred for future epoch in room {}, skipping cached message processing",
-                                                room_id
-                                            );
+                                                        "Proposal deferred for future epoch in room {}, skipping cached message processing",
+                                                        room_id
+                                                    );
                                                 }
                                                 Err(e) => {
                                                     tracing::warn!(
@@ -1017,24 +1026,27 @@ impl Service {
                                                         )
                                                         .await;
                                                     tracing::info!(
-                                                "Cached proposal message for later processing"
-                                            );
+                                                        "Cached proposal message for later processing"
+                                                    );
                                                 }
                                             }
 
                                                 if should_process_cached_messages {
                                                     // Process cached messages only after proposal was accepted into current epoch state.
-                                                    match self.process_cached_messages(&room_id).await {
-                                            Ok(_) => tracing::debug!(
-                                                "Cached messages processed successfully for room {}",
-                                                room_id
-                                            ),
-                                            Err(e) => tracing::warn!(
-                                                "WS-MSG: Failed to process cached messages for room {}: {:?}",
-                                                room_id,
-                                                e
-                                            ),
-                                        }
+                                                    match self
+                                                        .process_cached_messages(&room_id)
+                                                        .await
+                                                    {
+                                                        Ok(_) => tracing::debug!(
+                                                            "Cached messages processed successfully for room {}",
+                                                            room_id
+                                                        ),
+                                                        Err(e) => tracing::warn!(
+                                                            "WS-MSG: Failed to process cached messages for room {}: {:?}",
+                                                            room_id,
+                                                            e
+                                                        ),
+                                                    }
                                                 }
                                             } else {
                                                 self.services()?
@@ -1087,8 +1099,8 @@ impl Service {
                                             _mls_proposal_and_commit_info,
                                         ) => {
                                             tracing::debug!(
-                                        "Received SendProposalAndCommit message (not being used)"
-                                    );
+                                                "Received SendProposalAndCommit message (not being used)"
+                                            );
                                         }
                                         RTCMessageInContent::JoinDecision(join_decision_info) => {
                                             requires_ack = false;
@@ -1101,7 +1113,9 @@ impl Service {
                                         }
                                         RTCMessageInContent::JoinRequest(_)
                                         | RTCMessageInContent::JoinRequestRemoved(_) => {
-                                            unreachable!("join request frames are handled before MLS processing")
+                                            unreachable!(
+                                                "join request frames are handled before MLS processing"
+                                            )
                                         }
                                         RTCMessageInContent::AgentBundle(
                                             _mls_agent_bundle_info,
@@ -1122,23 +1136,21 @@ impl Service {
                     tracing::warn!("No payload extracted from binary message");
                 }
 
-                if requires_ack {
-                    if let Some(message_id) = msg_id {
-                        // Encode UUID back to CBOR for ack
-                        let mut ack_bytes = Vec::new();
-                        ciborium::into_writer(
-                            &ClientAck {
-                                msg_type: "ack".to_string(),
-                                id: message_id,
-                            },
-                            &mut ack_bytes,
-                        )?;
-                        self.ws_client
-                            .send_message(WebSocketMessage::Binary(ack_bytes))
-                            .await?;
-                        #[cfg(debug_assertions)]
-                        tracing::info!("Ack sent for message ID: {:?}", message_id);
-                    }
+                if requires_ack && let Some(message_id) = msg_id {
+                    // Encode UUID back to CBOR for ack
+                    let mut ack_bytes = Vec::new();
+                    ciborium::into_writer(
+                        &ClientAck {
+                            msg_type: "ack".to_string(),
+                            id: message_id,
+                        },
+                        &mut ack_bytes,
+                    )?;
+                    self.ws_client
+                        .send_message(WebSocketMessage::Binary(ack_bytes))
+                        .await?;
+                    #[cfg(debug_assertions)]
+                    tracing::info!("Ack sent for message ID: {:?}", message_id);
                 }
 
                 #[cfg(debug_assertions)]

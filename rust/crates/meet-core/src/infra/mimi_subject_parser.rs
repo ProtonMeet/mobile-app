@@ -277,70 +277,84 @@ mod tests {
     fn test_parse_invalid_scheme() {
         let result = MimiSubject::parse("http://example.com/d/user/device");
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("must start with 'mimi://'"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("must start with 'mimi://'")
+        );
     }
 
     #[test]
     fn test_parse_missing_path() {
         let result = MimiSubject::parse("mimi://example.com");
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("missing path component"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("missing path component")
+        );
     }
 
     #[test]
     fn test_parse_empty_host() {
         let result = MimiSubject::parse("mimi:///d/user/device");
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("host cannot be empty"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("host cannot be empty")
+        );
     }
 
     #[test]
     fn test_parse_wrong_path_parts_count() {
         let result = MimiSubject::parse("mimi://example.com/d/user");
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("must have exactly 3 parts"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("must have exactly 3 parts")
+        );
     }
 
     #[test]
     fn test_parse_invalid_device_code() {
         let result = MimiSubject::parse("mimi://example.com/u/user/device");
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("must start with 'd'"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("must start with 'd'")
+        );
     }
 
     #[test]
     fn test_parse_empty_user_identifier() {
         let result = MimiSubject::parse("mimi://example.com/d//device");
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("User identifier cannot be empty"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("User identifier cannot be empty")
+        );
     }
 
     #[test]
     fn test_parse_empty_device_id() {
         let result = MimiSubject::parse("mimi://example.com/d/user/");
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("device ID cannot be empty"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("device ID cannot be empty")
+        );
     }
 
     #[test]

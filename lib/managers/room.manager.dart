@@ -483,9 +483,9 @@ class RoomManager {
     );
   }
 
-  Future<void> removeParticipant(String sid) async {
-    l.logger.i('[RoomManager] Removing participant $sid');
+  Future<void> removeParticipant(String uuid) async {
+    l.logger.i('[RoomManager] Removing participant $uuid');
 
-    await appCoreManager.appCore.removeParticipant(participantUuid: sid);
+    await appCoreManager.appCore.removeParticipant(participantUuid: uuid);
   }
 }

@@ -104,7 +104,9 @@ pub enum BridgeError {
     #[error("Token is expired. Please refresh the page and try again.")]
     TokenIsExpired,
 
-    #[error("Device clock is not in sync. Please check your device clock and refresh the page to try again.")]
+    #[error(
+        "Device clock is not in sync. Please check your device clock and refresh the page to try again."
+    )]
     CheckDeviceClock,
 }
 

@@ -6,9 +6,10 @@
 
 use mockall::predicate::eq;
 use std::future::ready;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
+use crate::JOIN_TYPE_SWITCH_THRESHOLD;
 use crate::app::test_support::{
     app_state_with_mls_participant, build_app, build_app_with_room, build_app_with_room_and_ws,
     build_app_with_service, build_app_with_service_room_and_ws, build_app_with_ws,
@@ -17,19 +18,18 @@ use crate::app::test_support::{
     state_with_active_participant, state_with_participant_only,
 };
 use crate::domain::user::models::meet_link_info::MeetParticipant;
+use crate::domain::user::ports::MockHttpClient;
 use crate::domain::user::ports::crypto_client::MockCryptoClient;
 use crate::domain::user::ports::meeting_api::MockMeetingApi;
 use crate::domain::user::ports::user_service::UserService;
-use crate::domain::user::ports::MockHttpClient;
 use crate::errors::{core::MeetCoreError, http_client::HttpClientError};
 use crate::infra::dto::realtime::{
     GroupInfoVersion, JoinType, RatchetTreeAndGroupInfo, VersionedGroupInfoData,
 };
 use crate::service::user_service::{
-    create_test_service, join_switch_service_with_mls_api, mls_group_export_snapshot,
-    setup_n_user_group, Service,
+    Service, create_test_service, join_switch_service_with_mls_api, mls_group_export_snapshot,
+    setup_n_user_group,
 };
-use crate::JOIN_TYPE_SWITCH_THRESHOLD;
 use mls_spec::drafts::ratchet_tree_options::RatchetTreeOption;
 use proton_meet_crypto::MEET_DISPLAY_NAME_AAD;
 use proton_meet_mls::MlsClientConfig;
@@ -151,10 +151,11 @@ async fn kick_participant_errors_without_active_participant() {
 #[tokio::test]
 async fn kick_participant_propagates_when_mls_client_missing() {
     let app = build_app(state_with_participant_only("user-1")).await;
-    assert!(app
-        .kick_participant("participant-2".to_string())
-        .await
-        .is_err());
+    assert!(
+        app.kick_participant("participant-2".to_string())
+            .await
+            .is_err()
+    );
 }
 
 #[tokio::test]

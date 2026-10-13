@@ -1,4 +1,4 @@
-//! Muon 2.x glue for Meet: types, environment parsing, platform transport, client builder.
+//! Muon 4.x glue for Meet: types, environment parsing, platform transport, client builder.
 //!
 //! ```text
 //! types (MeetClient, MeetPersistence, …)
@@ -37,7 +37,7 @@ pub use os_native::{MeetOs, TokioExecutor};
 pub use os_wasm::WasmSleeper;
 
 use muon::cookie_store::NoOpCookieStore;
-use muon::{common::GenericContext, Client, NoInfo, Session};
+use muon::{Client, NoInfo, Session, common::GenericContext};
 
 #[cfg(not(target_arch = "wasm32"))]
 use super::auth_store::AuthStore;

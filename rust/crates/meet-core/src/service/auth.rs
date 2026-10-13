@@ -9,7 +9,7 @@ use crate::{
 use crate::{
     domain::user::{
         models::UserId,
-        ports::{user_api::UserApi, ArcUserRepository},
+        ports::{ArcUserRepository, user_api::UserApi},
     },
     errors::service::ServiceError,
     infra::storage::error::StorageError,
@@ -29,10 +29,7 @@ impl AuthServiceImpl {
     }
 }
 
-#[cfg(not(target_family = "wasm"))]
 pub(crate) type ArcAuthService = Arc<dyn AuthService + Send + Sync + 'static>;
-#[cfg(target_family = "wasm")]
-pub(crate) type ArcAuthService = Arc<dyn AuthService + 'static>;
 
 #[async_trait_with_mock]
 pub(crate) trait AuthService {
@@ -72,7 +69,6 @@ pub(crate) trait AuthService {
 
 #[async_trait]
 impl AuthService for AuthServiceImpl {
-    #[cfg(not(target_arch = "wasm32"))]
     async fn login(
         &self,
         username: &str,
@@ -98,31 +94,12 @@ impl AuthService for AuthServiceImpl {
         Ok((login_response, user, user_keys, user_addresses))
     }
 
-    #[cfg(target_arch = "wasm32")]
-    async fn login(
-        &self,
-        _username: &str,
-        _password: &str,
-    ) -> Result<(UserData, ProtonUser, Vec<ProtonUserKey>, Vec<Address>), LoginError> {
-        Err(LoginError::LoginFailed(
-            "password login is not available on web".into(),
-        ))
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
     async fn login_with_two_factor(&self, two_factor_code: &str) -> Result<UserData, LoginError> {
         let user_data = self.user_api.login_with_two_factor(two_factor_code).await?;
         self.user_repository.init_tables(&user_data.user.id).await?;
         let user = user_data.user.clone();
         self.user_repository.save_user(&user).await?;
         Ok(user_data)
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    async fn login_with_two_factor(&self, _two_factor_code: &str) -> Result<UserData, LoginError> {
-        Err(LoginError::LoginFailed(
-            "password login is not available on web".into(),
-        ))
     }
 
     async fn get_user_with_policy(
@@ -204,7 +181,7 @@ pub mod tests {
     use crate::{
         domain::user::{
             models::UserId,
-            ports::{user_api::MockUserApi, MockUserRepository},
+            ports::{MockUserRepository, user_api::MockUserApi},
         },
         errors::login::LoginError,
         infra::dto::proton_user::UserData,

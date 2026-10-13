@@ -1,14 +1,14 @@
 use std::str::FromStr;
 
 use meet_identifiers::UserId;
-use mls_spec::{drafts::ratchet_tree_options::RatchetTreeOption, Serializable};
+use mls_spec::{Serializable, drafts::ratchet_tree_options::RatchetTreeOption};
 use mls_trait::{
+    ProposalArg,
     meet_policy::{RoomKind, RoomPolicies},
     mimi_protocol_mls::UserIdentifier,
-    ProposalArg,
 };
 use mls_types::ExternalPskId;
-use proton_meet_mls::{kv::MemKv, MlsGroup, MlsGroupTrait};
+use proton_meet_mls::{MlsGroup, MlsGroupTrait, kv::MemKv};
 
 use crate::{
     errors::core::MeetCoreError,

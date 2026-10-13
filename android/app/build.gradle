@@ -258,4 +258,12 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.serialization.json)
 
+    // Play Billing Library, Google requires >= 8.0.0 after November, 2026. Proton Core (payment-iap) still
+    // transitively pulls billing-ktx:7.1.1, so force the
+    // resolved version up via a dependency constraint. Remove once Proton Core upgrades.
+    constraints {
+        implementation(libs.android.billing) {
+            because("Google Play requires Billing Library >= 8.0.0; Proton Core still brings 7.1.1")
+        }
+    }
 }

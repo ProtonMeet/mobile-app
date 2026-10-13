@@ -10,8 +10,8 @@ use crate::{
     service::{
         service_state::MlsGroupState,
         user_service::{
-            credential_is_agent, psk_id_for_commit, utils::group_has_agent, GroupKeyUpdateReason,
-            ProposalType, QueuedProposal, Service,
+            GroupKeyUpdateReason, ProposalType, QueuedProposal, Service, credential_is_agent,
+            psk_id_for_commit, utils::group_has_agent,
         },
         utils::{convert_mls_spec_to_types, convert_mls_types_to_spec},
     },
@@ -31,10 +31,10 @@ use mls_spec::{
     messages::{ContentTypeInner, MlsMessage, MlsMessageContent},
 };
 use mls_trait::{
-    meet_policy::UserRole, types::ReceivedMessage, AuthorizerExt, MlsGroupTrait, ProposalArg,
-    ProtonMeetIdentityProvider,
+    AuthorizerExt, MlsGroupTrait, ProposalArg, ProtonMeetIdentityProvider, meet_policy::UserRole,
+    types::ReceivedMessage,
 };
-use proton_meet_mls::{kv::MemKv, CipherSuite, MlsClientTrait, MlsGroup};
+use proton_meet_mls::{CipherSuite, MlsClientTrait, MlsGroup, kv::MemKv};
 
 impl Service {
     pub(super) async fn handle_batched_proposals(
@@ -326,14 +326,14 @@ impl Service {
         drop(mls_group);
 
         // Check if epoch advanced and update host role if needed
-        if new_epoch > old_epoch {
-            if let Err(e) = self.check_and_update_host_role(room_id).await {
-                tracing::warn!(
-                    "Failed to check and update host role after batched proposals epoch change: {:?}",
-                    e
-                );
-                // Don't fail the operation if role update fails
-            }
+        if new_epoch > old_epoch
+            && let Err(e) = self.check_and_update_host_role(room_id).await
+        {
+            tracing::warn!(
+                "Failed to check and update host role after batched proposals epoch change: {:?}",
+                e
+            );
+            // Don't fail the operation if role update fails
         }
 
         // update the designated committer metrics
@@ -377,15 +377,15 @@ impl Service {
             // Check if there's already a timer for this room_id and epoch_at
             {
                 let mut timer_map = service_clone.proposal_timer.lock().await;
-                if let Some(existing_epoch_at) = timer_map.get(&room_id_clone) {
-                    if *existing_epoch_at == epoch_at {
-                        tracing::debug!(
-                            "Proposal timer for room {} with epoch {} already exists, skipping",
-                            room_id_clone,
-                            epoch_at
-                        );
-                        return;
-                    }
+                if let Some(existing_epoch_at) = timer_map.get(&room_id_clone)
+                    && *existing_epoch_at == epoch_at
+                {
+                    tracing::debug!(
+                        "Proposal timer for room {} with epoch {} already exists, skipping",
+                        room_id_clone,
+                        epoch_at
+                    );
+                    return;
                 }
                 // Register this timer
                 timer_map.insert(room_id_clone.clone(), epoch_at);
@@ -410,10 +410,10 @@ impl Service {
             {
                 let mut timer_map = service_clone.proposal_timer.lock().await;
                 // Only remove if it's still the same epoch_at (in case epoch changed)
-                if let Some(&stored_epoch_at) = timer_map.get(&room_id_clone) {
-                    if stored_epoch_at == epoch_at {
-                        timer_map.remove(&room_id_clone);
-                    }
+                if let Some(&stored_epoch_at) = timer_map.get(&room_id_clone)
+                    && stored_epoch_at == epoch_at
+                {
+                    timer_map.remove(&room_id_clone);
                 }
             }
 
@@ -526,32 +526,29 @@ impl Service {
     ) -> Result<(), anyhow::Error> {
         use crate::service::agent_host_service::agent_psk_id_for_meeting;
         let expected_agent_id = agent_psk_id_for_meeting(room_id);
-        if let MlsMessagePayload::Plain(public_message) = mls_message.mls_message.payload {
-            if let Content::Commit(commit) = public_message.content.content {
-                let proposals = commit.proposals;
-                let mut has_psk = false;
-                for proposal in proposals {
-                    if let ProposalOrRef::Proposal(proposal) = proposal {
-                        if let Proposal::Psk(psk) = proposal.as_ref() {
-                            if let Some(psk_id) = psk.external_psk_id() {
-                                has_psk = true;
-                                let id_bytes = psk_id.to_vec();
-                                if id_bytes != room_id.as_bytes()
-                                    && id_bytes.as_slice() != expected_agent_id.as_slice()
-                                {
-                                    tracing::error!("PSK ID mismatch for room {room_id}");
-                                    return Err(anyhow::Error::from(
-                                        ServiceError::PskProposalMissing,
-                                    ));
-                                }
-                            }
-                        }
+        if let MlsMessagePayload::Plain(public_message) = mls_message.mls_message.payload
+            && let Content::Commit(commit) = public_message.content.content
+        {
+            let proposals = commit.proposals;
+            let mut has_psk = false;
+            for proposal in proposals {
+                if let ProposalOrRef::Proposal(proposal) = proposal
+                    && let Proposal::Psk(psk) = proposal.as_ref()
+                    && let Some(psk_id) = psk.external_psk_id()
+                {
+                    has_psk = true;
+                    let id_bytes = psk_id.to_vec();
+                    if id_bytes != room_id.as_bytes()
+                        && id_bytes.as_slice() != expected_agent_id.as_slice()
+                    {
+                        tracing::error!("PSK ID mismatch for room {room_id}");
+                        return Err(anyhow::Error::from(ServiceError::PskProposalMissing));
                     }
                 }
-                if !has_psk {
-                    tracing::error!("PSK proposal missing for room {room_id}");
-                    return Err(anyhow::Error::from(ServiceError::PskProposalMissing));
-                }
+            }
+            if !has_psk {
+                tracing::error!("PSK proposal missing for room {room_id}");
+                return Err(anyhow::Error::from(ServiceError::PskProposalMissing));
             }
         }
         Ok(())
@@ -664,18 +661,26 @@ impl Service {
                         mls_types_proposal
                     }
                     None => {
-                        tracing::info!("Received proposal message with old epoch. proposal epoch: {epoch_of_proposal:?}, group epoch: {mls_group_epoch:?}",);
+                        tracing::info!(
+                            "Received proposal message with old epoch. proposal epoch: {epoch_of_proposal:?}, group epoch: {mls_group_epoch:?}",
+                        );
                         return Err(ServiceError::OldEpochProposal.into());
                     }
                 };
                 {
-                    tracing::info!("Received proposal message with old epoch. proposal epoch: {epoch_of_proposal:?}, group epoch: {mls_group_epoch:?}",);
+                    tracing::info!(
+                        "Received proposal message with old epoch. proposal epoch: {epoch_of_proposal:?}, group epoch: {mls_group_epoch:?}",
+                    );
                     return Err(ServiceError::OldEpochProposal.into());
                 }
             }
             Ordering::Equal => {}
             Ordering::Greater => {
-                tracing::info!("Received proposal message with future epoch. proposal epoch: {:?}, group epoch: {:?}", epoch_of_proposal, mls_group_epoch);
+                tracing::info!(
+                    "Received proposal message with future epoch. proposal epoch: {:?}, group epoch: {:?}",
+                    epoch_of_proposal,
+                    mls_group_epoch
+                );
                 self.cache_proposal_message(room_id, proposal).await?;
                 return Err(ServiceError::FutureEpochProposal.into());
             }

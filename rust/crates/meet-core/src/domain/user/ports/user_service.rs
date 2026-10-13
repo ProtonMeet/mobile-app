@@ -99,7 +99,7 @@ pub trait UserService {
     ) -> Result<(Vec<u8>, mls_types::MediaType, UserId, String), anyhow::Error>;
 
     async fn local_mimi_sender_uri(&self, meeting_link_name: &str)
-        -> Result<String, anyhow::Error>;
+    -> Result<String, anyhow::Error>;
 
     async fn join_room(
         &self,

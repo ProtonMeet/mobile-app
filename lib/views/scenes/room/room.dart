@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart' show DesktopCapturerSource;
 import 'package:just_the_tooltip/just_the_tooltip.dart';
 import 'package:livekit_client/livekit_client.dart' hide ConnectionState;
 import 'package:meet/constants/constants.dart';
@@ -53,6 +52,8 @@ import 'package:meet/rust/proton_meet/models/meeting_info.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
 import 'package:meet/rust/proton_meet/models/upcoming_meeting.dart';
 import 'package:meet/rust/proton_meet/user_config.dart';
+import 'package:meet/utils/mentions/mention_label.dart';
+import 'package:meet/utils/mentions/mention_plain_text.dart';
 import 'package:meet/views/components/alerts/media_permission_dialog.dart';
 import 'package:meet/views/components/alerts/meeting_will_end_dialog.dart';
 import 'package:meet/views/components/alerts/session_expired_dialog.dart';
@@ -68,8 +69,6 @@ import 'package:meet/views/scenes/exts.dart';
 import 'package:meet/views/scenes/feedbacks/left_meeting_feedback_sheet.dart';
 import 'package:meet/views/scenes/feedbacks/pre_rating_sheet.dart';
 import 'package:meet/views/scenes/prejoin/prejoin_arguments.dart';
-import 'package:meet/utils/mentions/mention_label.dart';
-import 'package:meet/utils/mentions/mention_plain_text.dart';
 import 'package:meet/views/scenes/room/chat/bloc/chat_bloc.dart';
 import 'package:meet/views/scenes/room/chat/bloc/chat_event.dart';
 import 'package:meet/views/scenes/room/chat/bloc/chat_incoming_notification.dart';
@@ -79,6 +78,7 @@ import 'package:meet/views/scenes/room/chat/chat_bubble.dart';
 import 'package:meet/views/scenes/room/chat/chat_controller.dart';
 import 'package:meet/views/scenes/room/chat/chat_models.dart';
 import 'package:meet/views/scenes/room/chat/mention_message_content.dart';
+import 'package:meet/views/scenes/room/reaction_stream/reaction_stream.dart';
 import 'package:meet/views/scenes/room/controls_bar/controls_bar_responsive.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 import 'package:meet/views/scenes/room/layout/fixed_sizing_camera_layout.dart';
@@ -98,6 +98,7 @@ import 'package:meet/views/scenes/room/settings/bloc/in_room_settings_transport.
 import 'package:meet/views/scenes/room/settings/in_room_settings_bindings_sync.dart';
 import 'package:meet/views/scenes/room/settings/in_room_settings_panel.dart';
 import 'package:meet/views/scenes/room/widgets/floating.action.button.location.dart';
+import 'package:meet/views/scenes/room/widgets/meet_screen_select_dialog.dart';
 import 'package:meet/views/scenes/signin/auth_bloc.dart';
 import 'package:meet/views/scenes/signin/auth_event.dart';
 import 'package:meet/views/scenes/signin/auth_state.dart';
@@ -915,6 +916,44 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     });
   }
 
+  /// Whether a [RoomDisconnectedEvent] with [reason] should be recovered from
+  /// with a fresh App-level rejoin instead of dropping the user back to the
+  /// dashboard.
+  ///
+  /// These reasons are all *client-side* conditions (the SDK gave up, the
+  /// signal socket dropped, a node is migrating, etc.) rather than the server
+  /// deliberately evicting the participant — so re-joining is safe and is a far
+  /// better experience than a hard exit. Gated behind the `MeetAutoReconnection`
+  /// feature flag so the previous "pop to dashboard" behaviour is fully
+  /// restored when the flag is off. We also avoid re-triggering while a rejoin
+  /// is already running or has surfaced its error dialog, to prevent loops.
+  bool _shouldAttemptRecoveryRejoin(DisconnectReason? reason) {
+    const recoverableReasons = {
+      DisconnectReason.reconnectAttemptsExceeded,
+      DisconnectReason.disconnected,
+      DisconnectReason.signalingConnectionFailure,
+      DisconnectReason.joinFailure,
+      DisconnectReason.serverShutdown,
+      DisconnectReason.migration,
+      DisconnectReason.unknown,
+    };
+
+    if (reason == null || !recoverableReasons.contains(reason)) {
+      return false;
+    }
+    if (_isLeavingByUser) {
+      return false;
+    }
+    if (!_bloc.isMeetAutoReconnectionEnabled()) {
+      return false;
+    }
+    final state = _bloc.state;
+    if (state.isRejoining || state.rejoinStatus == RejoinStatus.error) {
+      return false;
+    }
+    return true;
+  }
+
   /// for more information, see [event types](https://docs.livekit.io/client/events/#events)
   void setUpListeners(EventsListener<RoomEvent> listener) => listener
     ..on<RoomAttemptReconnectEvent>((_) {
@@ -928,6 +967,19 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         // Room disconnected
         l.logger.e('Room disconnected: reason => ${event.reason}');
       }
+
+      // handle RoomDisconnectedEvent during in-progress rejoin
+      final isTerminalReason =
+          event.reason == DisconnectReason.roomDeleted ||
+          event.reason == DisconnectReason.participantRemoved;
+      if (_bloc.state.isRejoining && !isTerminalReason) {
+        l.logger.w(
+          '[RoomPage] Ignoring RoomDisconnectedEvent (${event.reason}) '
+          'from stale connection during in-progress rejoin',
+        );
+        return;
+      }
+
       // Exit PIP and hide notification when room disconnects
       if (android) {
         _bloc.add(ExitPipMode());
@@ -965,10 +1017,23 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
             level: SentryLevel.warning,
           );
           // auto rejoin when disconnect reason is state mismatch
-          _bloc.add(const StartRejoinMeeting());
+          _bloc.requestRejoin(RejoinReason.livekitStateMismatch);
           shouldPop = false;
         } else if (_isLeavingByUser) {
           // Manual leave flow handles its own navigation/bottom sheet.
+          shouldPop = false;
+        } else if (_shouldAttemptRecoveryRejoin(event.reason)) {
+          // The LiveKit transport gave up (e.g. reconnectAttemptsExceeded
+          // after ~44s of built-in retries, or the signal socket dropped).
+          // These are client-side conditions, not the server evicting us, so
+          // instead of dumping the user back on the dashboard we fall back to
+          // a fresh App-level rejoin, which builds a brand new Room connection
+          // and is both faster and more predictable than the built-in path.
+          Sentry.captureMessage(
+            'Room disconnected (${event.reason}), attempting fresh rejoin',
+            level: SentryLevel.warning,
+          );
+          _bloc.requestRejoin(RejoinReason.livekitConnectionTimeout);
           shouldPop = false;
         } else if (event.reason != null &&
             event.reason != DisconnectReason.clientInitiated) {
@@ -1438,6 +1503,26 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       final title = pending.isMention
           ? context.local.chat_mention_notified_title(senderName)
           : senderName;
+      final mentionTitleWidget = pending.isMention
+          ? Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: senderName,
+                    style: ProtonStyles.body1Semibold(
+                      color: context.colors.textNorm,
+                    ),
+                  ),
+                  TextSpan(
+                    text: ' ${context.local.chat_mention_notified_suffix}',
+                    style: ProtonStyles.body1Semibold(
+                      color: context.colors.textWeak,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : null;
 
       final hasBody = msg.message.trim().isNotEmpty;
       LocalToast.showToastification(
@@ -1445,17 +1530,19 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
         title,
         hasBody ? plainBody : '',
         avatarName: senderName,
+        titleWidget: mentionTitleWidget,
         index: resolveParticipantColorIndex(
           msg.identity,
           participantTracks: participantTracks,
         ),
         autoCloseInSeconds: pending.isMention ? 30 : 8,
+        bottomMargin: bottomControlHeight + 16,
+        horizontalMargin: 16,
         messageWidget: hasBody
             ? MentionMessageContent(
                 message: msg.message,
                 localIdentity: localId,
                 participantNameMap: nameMap,
-                participantTracks: participantTracks,
                 selectable: false,
               )
             : null,
@@ -3263,7 +3350,9 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
                           ),
                         ),
                 ),
-                if (room.localParticipant != null) _buildControlsBarWithFade(),
+                _buildControlsBarWithFade(
+                  hasLocalParticipant: room.localParticipant != null,
+                ),
               ],
             );
           },
@@ -3272,7 +3361,38 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
-  /// On desktop, shows LiveKit's window/screen picker before starting share.
+  /// In-app picker with previews ([MeetScreenSelectDialog]). On Linux Wayland
+  /// the xdg-desktop-portal dialog is the picker, since enumerating sources
+  /// crashes libwebrtc there.
+  Future<ScreenSharePickerResult?> _pickDesktopScreenShareSource(
+    BuildContext context,
+  ) async {
+    if (linuxWayland) {
+      return const ScreenSharePickerResult.systemPortal();
+    }
+    return MeetScreenSelectDialog.show(
+      context,
+      titleText: context.local.share_screen,
+      screenTabText: 'Entire screen',
+      cancelText: context.local.cancel,
+      shareText: context.local.share_screen,
+    );
+  }
+
+  void _dispatchDesktopScreenSharePick(
+    ScreenSharePickerResult pick, {
+    required String notificationTitle,
+    required String notificationText,
+  }) {
+    _bloc.add(
+      ToggleScreenShare(
+        screenShareSourceId: pick.useSystemPortal ? null : pick.sourceId,
+        notificationTitle: notificationTitle,
+        notificationText: notificationText,
+      ),
+    );
+  }
+
   Future<void> _onToggleScreenSharePressed(BuildContext context) async {
     if (!_bloc.isScreenShareFeatureEnabled()) return;
 
@@ -3285,17 +3405,12 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     final notificationText = context.local.sharing_your_screen;
 
     if (lkPlatformIsDesktop()) {
-      final source = await showDialog<DesktopCapturerSource>(
-        context: context,
-        builder: (context) => ScreenSelectDialog(),
-      );
-      if (!context.mounted || source == null) return;
-      _bloc.add(
-        ToggleScreenShare(
-          screenShareSourceId: source.id,
-          notificationTitle: notificationTitle,
-          notificationText: notificationText,
-        ),
+      final pick = await _pickDesktopScreenShareSource(context);
+      if (!context.mounted || pick == null) return;
+      _dispatchDesktopScreenSharePick(
+        pick,
+        notificationTitle: notificationTitle,
+        notificationText: notificationText,
       );
       return;
     }
@@ -3357,10 +3472,25 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildControlsBarWithFade() {
-    return BlocSelector<RoomBloc, RoomState, bool>(
-      selector: (state) => state.isFullScreen,
-      builder: (context, isFullScreen) {
+  Widget _buildControlsBarWithFade({required bool hasLocalParticipant}) {
+    return BlocSelector<RoomBloc, RoomState, (bool, bool)>(
+      selector: (state) => (
+        state.isFullScreen,
+        state.isRejoining || state.isLiveKitReconnecting,
+      ),
+      builder: (context, data) {
+        final isFullScreen = data.$1;
+        final isReconnecting = data.$2;
+
+        // Normally the bar only exists once we have a local participant. During
+        // a reconnect/rejoin the (old) room may be disconnected and
+        // `localParticipant` is briefly null — keep the bar on screen anyway so
+        // the user can still leave (all other controls are disabled by
+        // [ResponsiveControlsBar.controlsDisabled]).
+        if (!hasLocalParticipant && !isReconnecting) {
+          return const SizedBox.shrink();
+        }
+
         final shouldHide = !desktop && isFullScreen;
 
         return AnimatedContainer(
@@ -3410,15 +3540,42 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
   /// Floats the captions sheet over the media area, leaving the controls bar
   /// reachable. Taps outside the sheet fall through to [child].
   Widget _withLiveCaptionsSheet(BuildContext context, Widget child) {
+    final withReactionStream = Stack(
+      children: [
+        Positioned.fill(child: child),
+        Positioned.fill(
+          child: IgnorePointer(
+            child: ReactionStream(
+              activeReactions: _activeReactions,
+              localParticipantIdentity:
+                  _bloc.state.room.localParticipant?.identity,
+              displayNameForIdentity: _reactionStreamDisplayName,
+            ),
+          ),
+        ),
+      ],
+    );
     if (!_bloc.isMeetLiveCaptionsEnabled()) {
-      return child;
+      return withReactionStream;
     }
     return Stack(
       children: [
-        Positioned.fill(child: child),
+        Positioned.fill(child: withReactionStream),
         Positioned.fill(child: _buildLiveCaptionsSheet(context)),
       ],
     );
+  }
+
+  String _reactionStreamDisplayName(String identity) {
+    final fromMap = _bloc.state.frbParticipantsMap[identity]?.displayName;
+    if (fromMap != null && fromMap.isNotEmpty) {
+      return fromMap;
+    }
+    final participant = _participantWithIdentity(identity);
+    if (participant != null) {
+      return _bloc.getParticipantDisplayName(participant);
+    }
+    return '';
   }
 
   Widget _buildLiveCaptionsSheet(BuildContext context) {
@@ -3536,6 +3693,10 @@ class _RoomPageState extends State<RoomPage> with WidgetsBindingObserver {
       child: ResponsiveControlsBar(
         room: state.room,
         backgroundColor: context.colors.interActionWeakMinor3,
+        // While reconnecting/rejoining, keep the bar visible but disable every
+        // control except "leave", so the user can still exit without being able
+        // to toggle mic/camera/screen-share or change settings mid-reconnect.
+        controlsDisabled: state.isRejoining || state.isLiveKitReconnecting,
         onLeave: () {
           // Only show the "End meeting for all" button when the local
           // participant is the only host in the meeting.

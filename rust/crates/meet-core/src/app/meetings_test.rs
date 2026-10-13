@@ -2,6 +2,7 @@ use chrono::{TimeZone, Utc};
 use mockall::predicate::eq;
 use std::{future::ready, sync::Arc};
 
+use crate::app::App;
 use crate::app::test_support::{
     build_app, build_app_with_http, build_app_with_room, build_app_with_room_and_user_key_provider,
     build_app_with_user_key_provider, default_app_state, room_service_with_http,
@@ -9,13 +10,12 @@ use crate::app::test_support::{
     room_service_with_meeting_api_and_crypto, state_with_authenticated_user,
     unreachable_test_proton_http_client,
 };
-use crate::app::App;
 use crate::domain::user::{
     models::{
         meet_link_info::{AccessTokenInfo, MeetLinkAuthInfo, MeetLinkInfo},
         meeting::{Meeting, MeetingInfo, MeetingType},
     },
-    ports::{crypto_client::MockCryptoClient, meeting_api::MockMeetingApi, MockHttpClient},
+    ports::{MockHttpClient, crypto_client::MockCryptoClient, meeting_api::MockMeetingApi},
 };
 use crate::errors::{core::MeetCoreError, http_client::HttpClientError};
 use crate::infra::{ports::user_key_provider::MockUserKeyProvider, storage::error::StorageError};
@@ -175,14 +175,15 @@ async fn authenticate_meeting_link_propagates_room_service_error() {
     });
 
     let app = build_app_with_room(default_app_state(), room_service_with_http(http)).await;
-    assert!(app
-        .authenticate_meeting_link(
+    assert!(
+        app.authenticate_meeting_link(
             "LINK123".to_string(),
             "password".to_string(),
             "Alice".to_string(),
         )
         .await
-        .is_err());
+        .is_err()
+    );
 }
 
 #[tokio::test]
@@ -195,8 +196,8 @@ async fn create_meeting_without_session_propagates_room_service_error() {
     });
 
     let app = build_app_with_room(default_app_state(), room_service_with_http(http)).await;
-    assert!(app
-        .create_meeting(
+    assert!(
+        app.create_meeting(
             "instant".to_string(),
             false,
             MeetingType::Scheduled,
@@ -208,7 +209,8 @@ async fn create_meeting_without_session_propagates_room_service_error() {
             false,
         )
         .await
-        .is_err());
+        .is_err()
+    );
 }
 
 #[tokio::test]
@@ -338,6 +340,10 @@ async fn get_meeting_info_decrypts_meeting_name_from_prejoin_cache() {
             max_duration: 3600,
             max_participants: 100,
             expiration_time: None,
+            salt: "salt".to_string(),
+            session_key: "session-key".to_string(),
+            manage_waiting_room: 0,
+            personal_meeting: 0,
         },
     });
 
@@ -672,6 +678,10 @@ async fn resolve_meeting_display_name_uses_prejoin_cache() {
             max_duration: 3600,
             max_participants: 100,
             expiration_time: None,
+            salt: "salt".to_string(),
+            session_key: "session-key".to_string(),
+            manage_waiting_room: 0,
+            personal_meeting: 0,
         },
     });
 

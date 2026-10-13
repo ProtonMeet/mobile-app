@@ -1,10 +1,10 @@
 use proton_meet_macro::unified_test;
 
 use super::test_support;
-use super::{meet_sdk_from_app, MeetClientExt, MUON_DEFAULT_SESSION_KEY};
-use crate::infra::muon::environment_from_str;
+use super::{MUON_DEFAULT_SESSION_KEY, MeetClientExt, meet_sdk_from_app};
 #[cfg(not(target_arch = "wasm32"))]
 use crate::infra::muon::AuthStore;
+use crate::infra::muon::environment_from_str;
 use muon::App;
 
 #[cfg(all(test, target_family = "wasm"))]

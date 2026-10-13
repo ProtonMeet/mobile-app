@@ -5,6 +5,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
+import 'package:meet/rust/proton_meet/models/mls_sync_state.dart';
+import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
+import 'package:meet/views/scenes/room/room_bloc.dart';
 import 'package:meet/views/scenes/room/room_event.dart';
 import 'package:meet/views/scenes/room/room_state.dart';
 
@@ -105,12 +108,72 @@ mixin RoomConnectionCheckHandlers on Bloc<RoomBlocEvent, RoomState> {
     final isNetworkAvailable = _isNetworkAvailable(result);
 
     if (isNetworkAvailable) {
+      final wasOffline = !_hasNetwork;
       _hasNetwork = true;
+      // The moment the network comes back after an outage, proactively kick a
+      // fresh App-level rejoin instead of passively waiting for LiveKit's slow
+      // built-in reconnect backoff (which can take 20-30s). Only when we were
+      // actually offline before, so switching interfaces (e.g. wifi -> mobile)
+      // without a real outage doesn't spuriously rejoin.
+      if (wasOffline) {
+        _maybeTriggerRejoinOnNetworkRestored();
+      }
       // Network is available, check connection status and reconnect if needed
       await _checkConnection();
     } else {
       // Network is not available
       _hasNetwork = false;
+    }
+  }
+
+  /// Proactively start a fresh rejoin when connectivity is restored after an
+  /// outage and the meeting connection is not healthy.
+  ///
+  /// Without this, recovery depends entirely on LiveKit's built-in reconnect
+  /// backoff or an outage-time rejoin attempt timing out — both of which are
+  /// much slower than simply re-joining as soon as the network is back.
+  void _maybeTriggerRejoinOnNetworkRestored() {
+    if (isClosed || this is! RoomBloc) {
+      return;
+    }
+    final roomBloc = this as RoomBloc;
+
+    if (!roomBloc.isMeetAutoReconnectionEnabled()) {
+      return;
+    }
+
+    // A rejoin is already running — let it finish.
+    if (state.isRejoining) {
+      return;
+    }
+
+    // Connection is already healthy — nothing to recover.
+    final isLivekitConnected =
+        state.room.localParticipant != null && !state.isLiveKitReconnecting;
+    final isMlsSynced = state.mlsSyncState == MlsSyncState.success;
+    if (isLivekitConnected && isMlsSynced) {
+      return;
+    }
+
+    l.logger.w(
+      '[RoomConnectionCheck] Network restored while connection unhealthy '
+      '(livekitReconnecting=${state.isLiveKitReconnecting}, '
+      'mls=${state.mlsSyncState}, rejoinStatus=${state.rejoinStatus}) — '
+      'triggering a fresh rejoin',
+    );
+
+    // If an outage-time rejoin already failed into the error state (and halted
+    // auto-rejoin), clear it first so a fresh attempt can run now that the
+    // network is back. Using `add` directly here is a controlled single-shot
+    // path (one network-restore edge), so it doesn't need the requestRejoin
+    // dedup latch.
+    if (state.rejoinStatus == RejoinStatus.error) {
+      roomBloc.add(const CancelRejoinMeeting());
+      roomBloc.add(
+        const StartRejoinMeeting(reason: RejoinReason.websocketDisconnected),
+      );
+    } else {
+      roomBloc.requestRejoin(RejoinReason.websocketDisconnected);
     }
   }
 

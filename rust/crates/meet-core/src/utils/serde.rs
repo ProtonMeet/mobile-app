@@ -1,6 +1,6 @@
 use chrono::DateTime;
-use serde::de::{self, Visitor};
 use serde::Deserializer;
+use serde::de::{self, Visitor};
 use std::fmt;
 
 /// Custom deserializer that handles both integer (Unix timestamp) and string (RFC3339) formats

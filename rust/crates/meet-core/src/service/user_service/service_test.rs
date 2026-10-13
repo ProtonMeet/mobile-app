@@ -17,10 +17,10 @@ pub(crate) mod tests {
             mls::ports::MessageCachePort,
             unleash::FeatureFlags,
             user::{
-                models::{meeting_link_name::MeetingLinkName, UserId},
+                models::{UserId, meeting_link_name::MeetingLinkName},
                 ports::{
-                    meeting_api::MockMeetingApi, new_user_service::NewUserService, MockHttpClient,
-                    MockMlsApi, MockWebSocketClient,
+                    MockHttpClient, MockMlsApi, MockWebSocketClient, meeting_api::MockMeetingApi,
+                    new_user_service::NewUserService,
                 },
             },
         },
@@ -38,8 +38,8 @@ pub(crate) mod tests {
         service::{
             service_state::MlsGroupState,
             test::{
-                create_mock_mls_api, create_test_service_bundle,
-                create_test_service_bundle_with_host, ServiceBundleDI,
+                ServiceBundleDI, create_mock_mls_api, create_test_service_bundle,
+                create_test_service_bundle_with_host,
             },
             user_service::Service,
             utils::convert_mls_spec_to_types,
@@ -58,24 +58,24 @@ pub(crate) mod tests {
     use meet_mls::reexports::mimi_room_policy::spec::{preauth::PreAuthData, rbac::RoleData};
     use mls_rs::group::proposal::Proposal;
     use mls_spec::{
-        drafts::ratchet_tree_options::RatchetTreeOption, messages::MlsMessageContent, Parsable,
-        Serializable,
+        Parsable, Serializable, drafts::ratchet_tree_options::RatchetTreeOption,
+        messages::MlsMessageContent,
     };
     use mls_trait::{
+        MlsClientTrait, MlsGroupConfig, ProposalArg, ProtonMeetIdentityProvider,
         meet_policy::{RoomKind, RoomPolicies, UserRole},
         types::{ProposalEffect, ReceivedMessage},
-        MlsClientTrait, MlsGroupConfig, ProposalArg, ProtonMeetIdentityProvider,
     };
     use proton_claims::{
-        reexports::{Issuer, IssuerParams, SpiceOidcClaims},
         ClientType, MimiProvider, ProtonMeetClaims,
+        reexports::{Issuer, IssuerParams, SpiceOidcClaims},
     };
     use proton_meet_mls::{
-        kv::MemKv, CommitBundle, MlsClient, MlsClientConfig, MlsGroup, MlsStore,
+        CommitBundle, MlsClient, MlsClientConfig, MlsGroup, MlsStore, kv::MemKv,
     };
     use uuid::Uuid;
 
-    use crate::domain::user::ports::{user_service::UserService, ConnectionState};
+    use crate::domain::user::ports::{ConnectionState, user_service::UserService};
     use crate::infra::{dto::realtime::GroupInfoSummaryData, ws_client::WebSocketMessage};
     use mls_rs_codec::MlsEncode;
     use proton_meet_mls::MlsGroupTrait;
@@ -165,9 +165,9 @@ pub(crate) mod tests {
         use mls_rs_codec::MlsEncode;
         use mls_types::{MediaType, MlsMessage};
         use proton_meet_chat::{
+            ChatComposeRequest, ChatIncomingEvent, ChatProtocol, MIMI_CONTENT_MEDIA, ParticipantId,
             build_mimi_message, compute_message_id_from_content, decode_mimi_content,
-            extract_mls_ciphertext, meet_room_uri, parse_mimi_content, ChatComposeRequest,
-            ChatIncomingEvent, ChatProtocol, ParticipantId, MIMI_CONTENT_MEDIA,
+            extract_mls_ciphertext, meet_room_uri, parse_mimi_content,
         };
 
         let meet_link = "test_mimi_chat_roundtrip";
@@ -5861,10 +5861,12 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             })
             .await;
 
-        assert!(check_service
-            .has_mls_group_info(&user_token.user_id())
-            .await
-            .expect("summary present"));
+        assert!(
+            check_service
+                .has_mls_group_info(&user_token.user_id())
+                .await
+                .expect("summary present")
+        );
 
         let empty_service =
             join_switch_service_with_mls_api(&service, "user1", meet_link_name, |mls| {
@@ -5874,10 +5876,12 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             })
             .await;
 
-        assert!(!empty_service
-            .has_mls_group_info(&user_token.user_id())
-            .await
-            .expect("summary empty"));
+        assert!(
+            !empty_service
+                .has_mls_group_info(&user_token.user_id())
+                .await
+                .expect("summary empty")
+        );
     }
 
     #[tokio::test]
@@ -5907,12 +5911,14 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
             join_service.state.lock().await.mls_group_state,
             MlsGroupState::Success
         );
-        assert!(join_service
-            .mls_store
-            .read()
-            .await
-            .group_map
-            .contains_key(meet_link_name));
+        assert!(
+            join_service
+                .mls_store
+                .read()
+                .await
+                .group_map
+                .contains_key(meet_link_name)
+        );
     }
 
     #[tokio::test]
@@ -6083,7 +6089,7 @@ MC4CAQAwBQYDK2VwBCIEIDR7w12ON3uzdZd8g6HIGOiGe/ozjj0rpBKs1VTVCyCM
 
     #[tokio::test]
     async fn agent_admit_full_handshake_derives_same_meet_key() {
-        use crate::service::agent_host_service::{agent_psk_id_for_meeting, AgentHostService};
+        use crate::service::agent_host_service::{AgentHostService, agent_psk_id_for_meeting};
         use identity::Disclosure;
         use meet_identifiers::Domain;
         use mls_trait::{MlsClientTrait, MlsGroupTrait, ProposalArg};

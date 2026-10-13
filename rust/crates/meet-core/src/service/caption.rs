@@ -1,13 +1,13 @@
-use std::{collections::HashSet, sync::Arc};
+use std::{collections::HashSet, sync::Arc, time::Duration};
 
 use meet_identifiers::AsOwned;
 use meet_type::fanout::MlsCommitInfo;
 use mls_spec::{
-    drafts::ratchet_tree_options::RatchetTreeOption, messages::MlsMessageContent, Serializable,
+    Serializable, drafts::ratchet_tree_options::RatchetTreeOption, messages::MlsMessageContent,
 };
 use mls_trait::{
-    meet_policy::UserRole, AuthorizerExt, MlsClientTrait, MlsGroupTrait, ProposalArg,
-    ProtonMeetIdentityProvider,
+    AuthorizerExt, MlsClientTrait, MlsGroupTrait, ProposalArg, ProtonMeetIdentityProvider,
+    meet_policy::UserRole,
 };
 use mls_types::ExternalPskId;
 use proton_meet_macro::{async_trait, async_trait_with_mock};
@@ -18,18 +18,16 @@ use tracing::error;
 use crate::{
     domain::user::{
         models::meeting_link_name::MeetingLinkName,
-        ports::{meeting_api::MeetingApi, MlsApi, UserService},
+        ports::{MlsApi, UserService, meeting_api::MeetingApi},
     },
     infra::mimi_subject_parser::MimiSubject,
     service::{
-        compute_stagger_time,
+        RANK_GROUP_DELAY_MS, StaggerStats, compute_stagger_time,
         user_service::{
-            credential_is_agent,
-            utils::{group_has_agent, mimi_sub_from_credential, StaggerOutcome},
-            GroupKeyUpdateReason, Service,
+            GroupKeyUpdateReason, Service, credential_is_agent,
+            utils::{StaggerOutcome, group_has_agent, mimi_sub_from_credential},
         },
         utils::convert_mls_types_to_spec,
-        StaggerStats, RANK_GROUP_DELAY_MS,
     },
     utils::{sleep, sync::SyncRwLock},
 };
@@ -134,7 +132,9 @@ impl CaptionServiceImpl {
             // The program can never panic when locking this, as it only operates insertion/deletion
             // while the lock is held. Hence, recovery is not needed.
             rooms_awaiting_captions_agent: SyncRwLock::new(HashSet::new(), |_| {
-                error!("Recovery called for CaptionServiceImpl::rooms_awaiting_captions_agent, this should never happen")
+                error!(
+                    "Recovery called for CaptionServiceImpl::rooms_awaiting_captions_agent, this should never happen"
+                )
             }),
         }
     }
@@ -356,7 +356,7 @@ impl CaptionService for CaptionServiceImpl {
         meeting_password: String,
     ) -> Result<(), anyhow::Error> {
         use crate::service::agent_host_service::{
-            agent_psk_id_for_meeting, AgentBundleForPush, AgentHostService,
+            AgentBundleForPush, AgentHostService, agent_psk_id_for_meeting,
         };
         use mls_rs_codec::MlsDecode as _;
 
@@ -788,7 +788,7 @@ mod test {
             models::meeting_link_name::MeetingLinkName, ports::meeting_api::MockMeetingApi,
         },
         errors::http_client::HttpClientError,
-        service::test::{create_test_service_bundle, setup_single_user_group, ServiceBundleDI},
+        service::test::{ServiceBundleDI, create_test_service_bundle, setup_single_user_group},
     };
 
     /// A solo caller is a room admin, so it ranks first and only waits out the

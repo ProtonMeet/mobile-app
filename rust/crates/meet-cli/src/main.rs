@@ -9,7 +9,7 @@ use crate::{
     app_runner::AppRunner,
     app_test_runner::AppTestRunner,
     commands::{Args, Commands},
-    config::{load_test_config, AppConfig},
+    config::{AppConfig, load_test_config},
 };
 
 fn get_args_with_default() -> Args {

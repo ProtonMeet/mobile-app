@@ -1,10 +1,10 @@
 use crate::CryptoError;
 use crate::Result;
 use aes_gcm::{
-    aead::{Aead, KeyInit},
     AeadCore, Aes256Gcm, Key, Nonce,
+    aead::{Aead, KeyInit},
 };
-use base64::{prelude::BASE64_STANDARD, Engine};
+use base64::{Engine, prelude::BASE64_STANDARD};
 
 // UnlockedRoomKey represents a key that can be used to encrypt and decrypt data.
 // Wrapped in a tuple struct, it hides its internal representation while still allowing
@@ -139,13 +139,13 @@ impl UnlockedRoomKey {
 mod test {
 
     use crate::{
+        CryptoError,
         binary::{Binary, EncryptedBinary},
         chat_message::{ChatMessage, EncryptedChatMessage},
         message::Message,
         room_key::UnlockedRoomKey,
-        CryptoError,
     };
-    use aes_gcm::{aead::Aead, AeadCore, Aes256Gcm};
+    use aes_gcm::{AeadCore, Aes256Gcm, aead::Aead};
 
     #[test]
     fn test_meet_key() {

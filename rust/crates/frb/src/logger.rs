@@ -2,7 +2,6 @@ use chrono::Local;
 use flutter_rust_bridge::frb;
 use lazy_static::lazy_static;
 use std::{
-    env,
     fs::{File, OpenOptions},
     io::{self, Write},
     path::Path,
@@ -11,7 +10,7 @@ use std::{
 use tracing::{error, info};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{
-    fmt::time::ChronoLocal, fmt::MakeWriter, layer::SubscriberExt, EnvFilter,
+    EnvFilter, fmt::MakeWriter, fmt::time::ChronoLocal, layer::SubscriberExt,
 };
 
 use crate::{errors::BridgeError, flutter_logger::FlutterLogLayer};
@@ -29,23 +28,17 @@ pub fn init_rust_logging(
     // meet-core only; silence muon and other noisy HTTP/TLS deps.
     // Release builds must not emit debug-level Rust logs to logcat / log files.
     #[cfg(debug_assertions)]
-    const DEFAULT_RUST_LOG: &str = concat!(
-        "proton_meet_core=debug,",
-        "muon=off,hyper=off,hyper_util=off,h2=off,tower=off,rustls=off,want=off"
-    );
+    const DEFAULT_RUST_LOG: &str = "proton_meet_core=debug,muon=off,hyper=off,hyper_util=off,h2=off,tower=off,rustls=off,want=off";
     #[cfg(not(debug_assertions))]
-    const DEFAULT_RUST_LOG: &str = concat!(
-        "proton_meet_core=info,",
-        "muon=off,hyper=off,hyper_util=off,h2=off,tower=off,rustls=off,want=off"
-    );
-    env::set_var("RUST_LOG", DEFAULT_RUST_LOG);
-    let env_filter =
-        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(DEFAULT_RUST_LOG));
-
-    info!("Initializing Rust logging with file: {}", file_path);
+    const DEFAULT_RUST_LOG: &str = "proton_meet_core=info,muon=off,hyper=off,hyper_util=off,h2=off,tower=off,rustls=off,want=off";
 
     // Acquire the lock on LOG_GUARD
     let guard_check = LOG_GUARD.lock()?;
+
+    let env_filter = EnvFilter::new(DEFAULT_RUST_LOG);
+
+    info!("Initializing Rust logging with file: {}", file_path);
+
     // Check if LOG_GUARD contains Some(WorkerGuard)
     if (guard_check.is_some()) {
         return Err(BridgeError::MutexLock(

@@ -2,7 +2,7 @@ use identity::ProtonMeetIdentity;
 use meet_type::fanout::GroupInfoVersion;
 use mls_types::{Credential, ExternalPskId};
 use proton_claims::ClientType;
-use proton_meet_mls::{kv::MemKv, MlsGroup, MlsGroupTrait};
+use proton_meet_mls::{MlsGroup, MlsGroupTrait, kv::MemKv};
 
 pub const LIVEKIT_OFFLINE_THRESHOLD_MS: u64 = 60_000;
 

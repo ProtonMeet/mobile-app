@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:meet/helper/extension/build.context.extension.dart';
 import 'package:meet/utils/mentions/mention_token.dart';
 import 'package:meet/views/scenes/room/get_participant_display_colors.dart';
 import 'package:meet/views/scenes/room/participant/participant_info.dart';
@@ -30,7 +31,20 @@ String getMentionLabel(
 /// Color index used for `@everyone` mentions (web palette index 2).
 const int everyoneMentionColorIndex = 2;
 
-/// Returns display colors for an inline `@mention`, matching roster avatars.
+/// Text color for inline `@mention` chips (not roster avatar colors).
+Color getMentionTextColor(
+  BuildContext context,
+  String id, {
+  required String localIdentity,
+}) {
+  final colors = context.colors;
+  if (id == localIdentity) {
+    return colors.greenInteractionNormMajor1;
+  }
+  return colors.interActionNormMajor1;
+}
+
+/// Avatar colors for mention suggestion rows (roster / `@everyone` palette).
 ParticipantDisplayColors getMentionDisplayColors(
   BuildContext context,
   String id, {

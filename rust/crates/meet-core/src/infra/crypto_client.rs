@@ -3,7 +3,7 @@ use argon2::{Algorithm, Argon2, Params, Version};
 use hkdf::Hkdf;
 use proton_meet_common::models::ProtonUserKey;
 use proton_meet_crypto::{
-    key::Key as CryptoKey, CryptoError, MeetCrypto, SRPProof, SRPVerifier, SessionKeyAlgorithm,
+    CryptoError, MeetCrypto, SRPProof, SRPVerifier, SessionKeyAlgorithm, key::Key as CryptoKey,
 };
 use proton_meet_macro::async_trait;
 use sha2::{Digest, Sha256};

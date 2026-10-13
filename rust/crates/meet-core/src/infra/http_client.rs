@@ -1,7 +1,7 @@
 use muon::auth::Auth;
-use muon::common::sdk::Sdk;
 #[cfg(not(target_family = "wasm"))]
 use muon::common::Scheme;
+use muon::common::sdk::Sdk;
 use muon::{App, ProtonRequest, ProtonResponse};
 
 use crate::domain::user::models::login::Modulus;
@@ -32,11 +32,11 @@ use crate::infra::http_client_util::HttpClientUtil;
 use crate::infra::muon::environment_from_str;
 #[cfg(all(not(target_family = "wasm"), not(feature = "insecure-tls")))]
 use crate::infra::muon::is_prod_environment;
-use crate::infra::muon::{
-    build_meet_client, meet_sdk_from_app, MeetClient, MeetClientExt, MeetSession,
-};
 #[cfg(not(target_arch = "wasm32"))]
 use crate::infra::muon::{AuthStore, SharedAuth};
+use crate::infra::muon::{
+    MeetClient, MeetClientExt, MeetSession, build_meet_client, meet_sdk_from_app,
+};
 use crate::infra::proton_response_ext::ProtonResponseExt;
 use crate::utils::server_time::ServerTimeTracker;
 use proton_meet_macro::async_trait;

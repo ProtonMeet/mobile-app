@@ -13,10 +13,10 @@ use crate::infra::dto::realtime::{
     RTCMessageInContent, RatchetTreeAndGroupInfo, ServiceMetricsRequest, VersionedGroupInfoData,
 };
 use crate::infra::group_info_payload::{
-    compress_group_info_json, serialize_update_group_info_request, UpdateGroupInfoRequest,
+    UpdateGroupInfoRequest, compress_group_info_json, serialize_update_group_info_request,
 };
 use crate::infra::http_client::ProtonHttpClient;
-use crate::infra::mls_response_ext::{mls_error_for_status, MlsResponseExt};
+use crate::infra::mls_response_ext::{MlsResponseExt, mls_error_for_status};
 
 #[async_trait]
 impl MlsApi for ProtonHttpClient {
@@ -220,16 +220,15 @@ impl MlsApi for ProtonHttpClient {
 
         if let Ok(api_response) =
             serde_json::from_slice::<ApiResponse<SubmitJoinRequestData>>(&body_bytes)
+            && !api_response.success
         {
-            if !api_response.success {
-                return Err(HttpClientError::MlsResponseError {
-                    status,
-                    details: None,
-                    message: api_response
-                        .error
-                        .unwrap_or_else(|| "Join request rejected".into()),
-                });
-            }
+            return Err(HttpClientError::MlsResponseError {
+                status,
+                details: None,
+                message: api_response
+                    .error
+                    .unwrap_or_else(|| "Join request rejected".into()),
+            });
         }
 
         let parsed = crate::errors::http_client::response_error_from_api_failure_body(
@@ -335,8 +334,8 @@ impl MlsApi for ProtonHttpClient {
         welcome: &[u8],
         ratchet_tree: &[u8],
     ) -> Result<(), HttpClientError> {
-        use base64::engine::general_purpose::STANDARD as B64;
         use base64::Engine as _;
+        use base64::engine::general_purpose::STANDARD as B64;
 
         let url = self.build_http_url("v1/agent/bundle")?;
 
@@ -375,8 +374,8 @@ impl MlsApi for ProtonHttpClient {
         base64_sd_kbt: &str,
         agent_device_id: &str,
     ) -> Result<AgentKeyPackage, HttpClientError> {
-        use base64::engine::general_purpose::STANDARD as B64;
         use base64::Engine as _;
+        use base64::engine::general_purpose::STANDARD as B64;
 
         let mut url = self.build_http_url("v1/agent/keypackage")?;
         url.query_pairs_mut()

@@ -42,15 +42,15 @@ pub(crate) use test::create_mock_mls_api;
 mod test {
     use std::{collections::HashMap, future::ready, sync::Arc};
 
-    use base64::{prelude::BASE64_STANDARD, Engine};
+    use base64::{Engine, prelude::BASE64_STANDARD};
     use cose_key_thumbprint::CoseKeyThumbprint;
     use ed25519_dalek::pkcs8::DecodePrivateKey;
-    use esdicawt::{cose_key_set::CoseKeySet, spec::CwtAny, Issuer, IssuerParams};
+    use esdicawt::{Issuer, IssuerParams, cose_key_set::CoseKeySet, spec::CwtAny};
     use identity::{Ed25519Issuer, IdentityResult, SdCwt};
     use mls_trait::{MlsClientConfig, MlsGroup};
-    use proton_claims::{reexports::SpiceOidcClaims, ClientType, MimiProvider, ProtonMeetClaims};
-    use proton_meet_mls::{kv::MemKv, MlsStore};
-    use spki::{der::pem::LineEnding, DecodePublicKey, EncodePublicKey};
+    use proton_claims::{ClientType, MimiProvider, ProtonMeetClaims, reexports::SpiceOidcClaims};
+    use proton_meet_mls::{MlsStore, kv::MemKv};
+    use spki::{DecodePublicKey, EncodePublicKey, der::pem::LineEnding};
     use tokio::sync::RwLock;
     use uuid::Uuid;
 
@@ -61,11 +61,11 @@ mod test {
             mls::ports::{KeyPackagePort, MessageCachePort, MockKeyPackagePort},
             room::{RoomService, WaitingRoomService},
             user::ports::{
-                meeting_api::{MeetingApi, MockMeetingApi},
-                user_api::{MockUserApi, UserApi},
                 ArcUserRepository, ArcWebSocketClient, CryptoClient, HttpClient, MlsApi,
                 MockCryptoClient, MockHttpClient, MockMlsApi, MockUserRepository,
                 MockWebSocketClient, UserService,
+                meeting_api::{MeetingApi, MockMeetingApi},
+                user_api::{MockUserApi, UserApi},
             },
         },
         infra::{
@@ -76,7 +76,7 @@ mod test {
             caption::CaptionServiceImpl,
             message_queue::MessageQueueServiceImpl,
             services_bundle::ServiceBundle,
-            user_service::{service_test::tests::test_feature_flags, Service},
+            user_service::{Service, service_test::tests::test_feature_flags},
         },
         utils::server_time::ServerTimeTracker,
     };

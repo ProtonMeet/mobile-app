@@ -1,6 +1,6 @@
 use flutter_rust_bridge::frb;
 use proton_meet_common::models::{
-    can_pay as can_pay_impl, get_user_byte as get_user_byte_impl,
+    ProtonUser, can_pay as can_pay_impl, get_user_byte as get_user_byte_impl,
     has_paid_drive as has_paid_drive_impl, has_paid_lumo as has_paid_lumo_impl,
     has_paid_mail as has_paid_mail_impl, has_paid_meet as has_paid_meet_impl,
     has_paid_pass as has_paid_pass_impl, has_paid_vpn as has_paid_vpn_impl,
@@ -8,7 +8,7 @@ use proton_meet_common::models::{
     has_pass_lifetime_or_via_simple_login as has_pass_lifetime_or_via_simple_login_impl,
     has_pass_via_simple_login as has_pass_via_simple_login_impl, is_admin as is_admin_impl,
     is_delinquent as is_delinquent_impl, is_free as is_free_impl, is_member as is_member_impl,
-    is_paid as is_paid_impl, is_private as is_private_impl, is_self as is_self_impl, ProtonUser,
+    is_paid as is_paid_impl, is_private as is_private_impl, is_self as is_self_impl,
 };
 
 /// Check if user has paid Mail subscription

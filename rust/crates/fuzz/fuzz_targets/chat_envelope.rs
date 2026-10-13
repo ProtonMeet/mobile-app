@@ -16,12 +16,12 @@ use libfuzzer_sys::fuzz_target;
 use proton_meet_chat::extract_mls_ciphertext;
 
 fuzz_target!(|data: &[u8]| {
-    if let Ok(out) = extract_mls_ciphertext(data) {
-        if data.first() != Some(&b'{') {
-            assert_eq!(
-                out, data,
-                "non-JSON input must pass through unchanged: in={data:?} out={out:?}"
-            );
-        }
+    if let Ok(out) = extract_mls_ciphertext(data)
+        && data.first() != Some(&b'{')
+    {
+        assert_eq!(
+            out, data,
+            "non-JSON input must pass through unchanged: in={data:?} out={out:?}"
+        );
     }
 });

@@ -51,7 +51,7 @@ mls-types = { path = "../vendor/client/core/mls-types" }
 identity = { path = "../vendor/client/core/identity" }
 
 tokio = { version = "1.45.1", features = ["full"] }
-muon = { version = "=2.6.1", registry = "proton_public", default-features = false }
+muon = { version = "=4.0.0", registry = "proton_public", default-features = false }
 
 ###
 tracing = "0.1.41"

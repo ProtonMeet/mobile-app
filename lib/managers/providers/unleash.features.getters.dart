@@ -1,3 +1,4 @@
+import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/managers/providers/unleash.data.provider.dart';
 
 /// Named accessors for feature flags.
@@ -69,8 +70,9 @@ extension UnleashDataProviderFeatureGetters on UnleashDataProvider {
       isFeatureEnabled(UnleashFeature.meetInAppPurchase);
 
   /// Native pipeline for camera background blur (pass-through until ML / Vision ship).
+  /// Always off on Linux: proton_video_effects has no Linux segmentation model.
   bool isMeetCameraBackgroundBlur() =>
-      isFeatureEnabled(UnleashFeature.meetCameraBackgroundBlur);
+      !linux && isFeatureEnabled(UnleashFeature.meetCameraBackgroundBlur);
 
   /// Experimental: in app update (currently only support android)
   bool isMeetMobileInAppUpdate() =>

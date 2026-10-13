@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:meet/helper/extension/build.context.extension.dart';
-import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/utils/mentions/mention_composer_display.dart';
 import 'package:meet/utils/mentions/mention_suggestions.dart';
 import 'package:meet/views/scenes/room/chat/mention_composer_controller.dart';
@@ -31,6 +30,8 @@ class MentionComposer extends StatefulWidget {
     this.padding,
     this.onTooLongMentionInsert,
     this.overlayAnchorKey,
+    this.overlayHorizontalOutset = 0,
+    this.overlayHorizontalTrimPerSide = 0,
     super.key,
   });
 
@@ -53,6 +54,12 @@ class MentionComposer extends StatefulWidget {
   /// Suggestion list width follows this widget (e.g. full input row).
   final GlobalKey? overlayAnchorKey;
 
+  /// Extra width on each side of [overlayAnchorKey] (e.g. thread reply alignment).
+  final double overlayHorizontalOutset;
+
+  /// Narrows the suggestion list by this amount on each horizontal edge.
+  final double overlayHorizontalTrimPerSide;
+
   @override
   State<MentionComposer> createState() => _MentionComposerState();
 }
@@ -62,6 +69,11 @@ class _MentionComposerState extends State<MentionComposer> {
   final Object _composerTapGroup = Object();
   OverlayEntry? _overlayEntry;
   static const int _noKeyboardSelection = -1;
+  static const TextHeightBehavior _mirrorTextHeightBehavior =
+      TextHeightBehavior(
+        applyHeightToFirstAscent: false,
+        applyHeightToLastDescent: false,
+      );
 
   int _selectedSuggestionIndex = _noKeyboardSelection;
   List<MentionSuggestion> _suggestions = const [];
@@ -142,7 +154,7 @@ class _MentionComposerState extends State<MentionComposer> {
           );
 
     final previousQuery = _activeQuery?.query;
-    final defaultIndex = desktop ? 0 : _noKeyboardSelection;
+    final defaultIndex = defaultMentionSuggestionHighlightIndex(suggestions);
     setState(() {
       _activeQuery = active;
       _suggestions = suggestions;
@@ -189,22 +201,33 @@ class _MentionComposerState extends State<MentionComposer> {
     RenderBox anchorBox,
   ) {
     const horizontalMargin = 16.0;
+    final outset = widget.overlayHorizontalOutset;
     final anchorOffset = anchorBox.localToGlobal(Offset.zero);
     final anchorWidth = anchorBox.size.width;
     final screenWidth = MediaQuery.sizeOf(context).width;
     final maxWidth = screenWidth - horizontalMargin * 2;
 
     var width = math.max(
-      anchorWidth,
+      anchorWidth + outset * 2,
       MentionSuggestionsOverlay.overlayMinWidth,
     );
     width = math.min(width, maxWidth);
 
-    var left = anchorOffset.dx;
-    if (width > anchorWidth) {
+    var left = anchorOffset.dx - outset;
+    if (outset == 0 && width > anchorWidth) {
       left -= (width - anchorWidth) / 2;
     }
     left = left.clamp(horizontalMargin, screenWidth - horizontalMargin - width);
+
+    final trim = widget.overlayHorizontalTrimPerSide;
+    if (trim > 0) {
+      left += trim;
+      width = math.max(width - trim * 2, 0);
+      left = left.clamp(
+        horizontalMargin,
+        screenWidth - horizontalMargin - width,
+      );
+    }
 
     return (left: left, width: width);
   }
@@ -235,9 +258,7 @@ class _MentionComposerState extends State<MentionComposer> {
             groupId: _composerTapGroup,
             child: MentionSuggestionsOverlay(
               suggestions: _suggestions,
-              selectedIndex: desktop
-                  ? _selectedSuggestionIndex
-                  : _noKeyboardSelection,
+              selectedIndex: _selectedSuggestionIndex,
               participantTracks: widget.participantTracks,
               everyoneSubtitle: context.local.chat_mention_everyone_hint,
               onEnsureComposerFocus: _restoreComposerFocus,
@@ -300,7 +321,9 @@ class _MentionComposerState extends State<MentionComposer> {
     if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
       setState(() {
         if (_selectedSuggestionIndex < 0) {
-          _selectedSuggestionIndex = 0;
+          _selectedSuggestionIndex = defaultMentionSuggestionHighlightIndex(
+            _suggestions,
+          );
         } else {
           _selectedSuggestionIndex =
               (_selectedSuggestionIndex + 1) % _suggestions.length;
@@ -359,7 +382,6 @@ class _MentionComposerState extends State<MentionComposer> {
       localIdentity: widget.controller.localIdentity,
       everyoneName: widget.controller.everyoneName,
       unknownName: widget.controller.unknownName,
-      participantTracks: widget.participantTracks,
     );
 
     return IgnorePointer(
@@ -367,8 +389,18 @@ class _MentionComposerState extends State<MentionComposer> {
         span,
         maxLines: widget.maxLines,
         textAlign: TextAlign.start,
+        textHeightBehavior: _mirrorTextHeightBehavior,
+        strutStyle: StrutStyle.fromTextStyle(baseStyle, forceStrutHeight: true),
       ),
     );
+  }
+
+  TextAlignVertical _textAlignVertical() {
+    final maxLines = widget.maxLines;
+    if (maxLines != null && maxLines > 1) {
+      return TextAlignVertical.top;
+    }
+    return TextAlignVertical.center;
   }
 
   @override
@@ -385,7 +417,10 @@ class _MentionComposerState extends State<MentionComposer> {
             focusNode: widget.focusNode,
             minLines: widget.minLines,
             maxLines: widget.maxLines,
-            style: _editableStyle(context),
+            style: _editableStyle(
+              context,
+            ).copyWith(height: _effectiveStyle(context).height),
+            textAlignVertical: _textAlignVertical(),
             cursorColor: _effectiveStyle(context).color,
             decoration: widget.decoration,
             scrollController: widget.scrollController,

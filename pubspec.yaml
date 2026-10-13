@@ -97,9 +97,10 @@ dependencies:
   device_info_plus: ^12.2.0
   package_info_plus: ^9.0.0
   # Workspace-shared with proton_denoise / proton_video_effects (resolution: workspace).
-  livekit_client: ^2.13.0
+  livekit_client: 2.13.1
   # Pin version so ios/macos Podfile.lock WebRTC-SDK stays aligned (avoid `any` + stale lock).
-  flutter_webrtc: ^1.6.2+hotfix.3
+  # After bumping livekit_client / flutter_webrtc: `make sync-rtc-native-refs`.
+  flutter_webrtc: 1.6.2+hotfix.4
 
   # livekit example dependencies
   permission_handler: ^12.0.0+1

@@ -123,7 +123,7 @@ void main() {
       when(mockAndroidBuildVersion.release).thenReturn('11');
       when(mockAndroidInfo.version).thenReturn(mockAndroidBuildVersion);
       when(mockAndroidInfo.model).thenReturn('Pixel 4');
-      when(mockAndroidInfo.manufacturer).thenReturn('Google');
+      when(mockAndroidInfo.brand).thenReturn('Google');
       when(
         mockDeviceInfo.androidInfo,
       ).thenAnswer((_) async => Future.value(mockAndroidInfo));
