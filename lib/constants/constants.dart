@@ -36,6 +36,14 @@ const VideoMaxBitrate defaultScreenSharingMaxBitrate = VideoMaxBitrate.kbps1000;
 const CameraPosition defaultCameraPosition = CameraPosition.front;
 const int maxDisplayNameLength = 50;
 
+/// Dart-side watchdog for meeting-link join/auth calls that reach the server
+/// over the muon HTTP path, which has no request timeout. A reused-but-dead
+/// keep-alive connection can otherwise hang these calls forever and leave the
+/// loading spinner stuck. Used by both the pre-join `authenticateForJoin` SRP
+/// auth and the waiting-room `RoomManager.connectToRoom` join, so either screen
+/// can surface an error and let the user retry instead of spinning indefinitely.
+const Duration kAuthenticateMeetingLinkTimeout = Duration(seconds: 20);
+
 /// Earliest start when scheduling a new meeting (buffer while the user fills the form).
 const int scheduleMeetingMinLeadMinutes = 15;
 

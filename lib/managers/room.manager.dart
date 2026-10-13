@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:livekit_client/livekit_client.dart';
+import 'package:meet/constants/constants.dart';
 import 'package:meet/helper/denoise/denoise_audio_capture_options.dart';
 import 'package:meet/helper/extension/platform.extension.dart';
 import 'package:meet/helper/extension/proton.meet.key.extension.dart';
@@ -306,28 +307,35 @@ class RoomManager {
     final joinMlsStopwatch = Stopwatch()..start();
 
     if (isMeetNewJoinFunctions) {
-      meetInfo = await appCoreManager.appCore.joinMeeting2(
-        meetLinkName: config.meetLinkName,
-        meetLinkPassword: config.meetLinkPassword,
-        displayName: config.displayName,
-        sessionId: sessionId,
-        reuseToken: reuseToken,
-        reusePrejoinAuth: config.reusePrejoinAuth,
-        isWaitingRoom: config.isWaitingRoom,
-      );
+      meetInfo = await appCoreManager.appCore
+          .joinMeeting2(
+            meetLinkName: config.meetLinkName,
+            meetLinkPassword: config.meetLinkPassword,
+            displayName: config.displayName,
+            sessionId: sessionId,
+            reuseToken: reuseToken,
+            reusePrejoinAuth: config.reusePrejoinAuth,
+            isWaitingRoom: config.isWaitingRoom,
+          )
+          // Default onTimeout throws dart:async's TimeoutException. We avoid
+          // referencing the symbol directly because livekit_client also exports
+          // a `TimeoutException` with a different constructor.
+          .timeout(kAuthenticateMeetingLinkTimeout);
     } else {
-      meetInfo = await appCoreManager.appCore.joinMeeting(
-        meetLinkName: config.meetLinkName,
-        meetLinkPassword: config.meetLinkPassword,
-        displayName: config.displayName,
-        sessionId: sessionId,
-        isMeetNewJoinType: isMeetNewJoinType,
-        isMeetSwitchJoinType: isMeetSwitchJoinType,
-        reuseToken: reuseToken,
-        isMeetNewSwitchJoinType: isMeetNewSwitchJoinType,
-        reusePrejoinAuth: config.reusePrejoinAuth,
-        isWaitingRoom: config.isWaitingRoom,
-      );
+      meetInfo = await appCoreManager.appCore
+          .joinMeeting(
+            meetLinkName: config.meetLinkName,
+            meetLinkPassword: config.meetLinkPassword,
+            displayName: config.displayName,
+            sessionId: sessionId,
+            isMeetNewJoinType: isMeetNewJoinType,
+            isMeetSwitchJoinType: isMeetSwitchJoinType,
+            reuseToken: reuseToken,
+            isMeetNewSwitchJoinType: isMeetNewSwitchJoinType,
+            reusePrejoinAuth: config.reusePrejoinAuth,
+            isWaitingRoom: config.isWaitingRoom,
+          )
+          .timeout(kAuthenticateMeetingLinkTimeout);
     }
 
     joinMlsStopwatch.stop();

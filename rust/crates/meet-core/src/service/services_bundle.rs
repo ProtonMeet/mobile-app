@@ -38,8 +38,12 @@ impl ServiceBundle {
     }
 
     pub async fn reset(&self) {
+        tracing::info!("[WS-HANG] services_bundle.reset: acquiring user_service lock");
         let user_service_lock = self.user_service.write().await;
+        tracing::info!("[WS-HANG] services_bundle.reset: user_service lock acquired");
         self.caption_service.reset().await;
+        tracing::info!("[WS-HANG] services_bundle.reset: caption reset done");
         user_service_lock.reset_service_state().await;
+        tracing::info!("[WS-HANG] services_bundle.reset: reset_service_state done");
     }
 }
