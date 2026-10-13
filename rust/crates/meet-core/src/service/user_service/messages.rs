@@ -312,8 +312,16 @@ impl Service {
             }
         }
 
+        tracing::info!(
+            room_id = room_id,
+            "[WS-HANG] process_commit_message: acquiring room_processing_lock"
+        );
         let room_processing_lock = self.room_processing_lock(room_id).await;
         let _room_processing_guard = room_processing_lock.lock().await;
+        tracing::info!(
+            room_id = room_id,
+            "[WS-HANG] process_commit_message: room_processing_lock acquired"
+        );
 
         let mut queued_proposals: Vec<QueuedProposal> = {
             let mut proposal_lock = self.proposal_queue.lock().await;
@@ -354,8 +362,16 @@ impl Service {
             }
         }
 
+        tracing::info!(
+            room_id = room_id,
+            "[WS-HANG] process_commit_message: acquiring mls_store.read() + group write lock"
+        );
         let mls_group_lock = self.mls_store.read().await.find_group(room_id)?;
         let mut mls_group = mls_group_lock.write().await;
+        tracing::info!(
+            room_id = room_id,
+            "[WS-HANG] process_commit_message: group write lock acquired, decrypting commit"
+        );
         if let Err(e) = Self::validate_psk_proposal(commit_message.clone(), room_id) {
             // PSK validation failed: restore queue and return.
             drop(mls_group);
@@ -657,6 +673,15 @@ impl Service {
     ) -> Result<(), anyhow::Error> {
         const MLS_STATE_CHECK_TIMEOUT: u64 = 3; // seconds
 
+        tracing::info!(
+            "[WS-HANG] handle_websocket_message_impl: entered (variant={})",
+            match &message {
+                WebSocketMessage::Text(_) => "Text",
+                WebSocketMessage::Binary(_) => "Binary",
+                _ => "Other",
+            }
+        );
+
         match message {
             WebSocketMessage::Text(text) => {
                 if let Ok(envelope) = serde_json::from_str::<WebSocketTextResponse>(&text) {
@@ -748,6 +773,10 @@ impl Service {
                                     self.handle_join_request_removed(info).await?;
                                 }
                                 other => {
+                                    tracing::info!(
+                                        ws_msg_id = msg_id_for_log.as_deref().unwrap_or("n/a"),
+                                        "[WS-HANG] binary MLS message: entering MLS-ready wait loop"
+                                    );
                                     // check if the mls group is ready before we process the message
                                     let mls_check_start = instant::now();
 
@@ -803,6 +832,9 @@ impl Service {
                                             || state.mls_group_state
                                                 == MlsGroupState::WaitingForJoinProposalWelcome
                                         {
+                                            tracing::info!(
+                                                "[WS-HANG] binary MLS message: MLS-ready wait loop done (state ready), proceeding to dispatch"
+                                            );
                                             break;
                                         }
 

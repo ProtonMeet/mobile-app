@@ -294,13 +294,17 @@ impl App {
                 };
 
                 Box::pin(async move {
-                    match bundle
-                        .user_service
-                        .read()
-                        .await
-                        .handle_websocket_message(message)
-                        .await
-                    {
+                    tracing::info!("[WS-HANG] handler: acquiring user_service.read()");
+                    let guard = bundle.user_service.read().await;
+                    tracing::info!(
+                        "[WS-HANG] handler: user_service.read() acquired, dispatching message"
+                    );
+                    let result = guard.handle_websocket_message(message).await;
+                    tracing::info!(
+                        "[WS-HANG] handler: handle_websocket_message returned, releasing read guard"
+                    );
+                    drop(guard);
+                    match result {
                         Ok(_) => (),
                         Err(e) => {
                             error!("Error handling message: {:?}", e);

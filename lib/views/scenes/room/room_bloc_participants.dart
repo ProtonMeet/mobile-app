@@ -38,8 +38,14 @@ mixin RoomParticipantsHandlers on Bloc<RoomBlocEvent, RoomState> {
     BackgroundRefreshFrbParticipants event,
     Emitter<RoomState> emit,
   ) async {
+    if (isClosed) {
+      return;
+    }
     try {
       final updated = await loadFrbParticipants();
+      if (isClosed) {
+        return;
+      }
       emit(state.copyWith(frbParticipantsMap: updated));
       add(SortParticipants());
     } catch (e, stackTrace) {
@@ -48,7 +54,9 @@ mixin RoomParticipantsHandlers on Bloc<RoomBlocEvent, RoomState> {
         error: e,
         stackTrace: stackTrace,
       );
-      add(const RetryLoadParticipants());
+      if (!isClosed) {
+        add(const RetryLoadParticipants());
+      }
     }
   }
 
@@ -293,6 +301,12 @@ mixin RoomParticipantsHandlers on Bloc<RoomBlocEvent, RoomState> {
   }
 
   Future<Map<String, MeetParticipant>> loadFrbParticipants() async {
+    // Once the bloc is closing (e.g. the user left the meeting), stop hitting
+    // the Rust core. Otherwise an in-flight background refresh / retry keeps
+    // calling into the core after leave and races a subsequent rejoin.
+    if (isClosed) {
+      return state.frbParticipantsMap;
+    }
     final meetInfo = state.meetInfo;
     final appCoreManager = ManagerFactory().get<AppCoreManager>();
     final frbParticipants = await appCoreManager.appCore.getParticipants(

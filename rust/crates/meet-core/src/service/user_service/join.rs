@@ -518,6 +518,11 @@ impl Service {
     ) -> Result<(), MeetCoreError> {
         let base64_sd_kbt = self.get_sd_kbt(&user_info_token.user_id()).await?;
 
+        tracing::info!(
+            switch_join_type,
+            is_waiting_room,
+            "[WS-HANG] join_room_with_switch_join_type_impl: fetching group info (get_group_info)"
+        );
         let ratchet_tree_and_group_info = match self.mls_api.get_group_info(&base64_sd_kbt).await {
             Ok(ratchet_tree_and_group_info) => ratchet_tree_and_group_info,
             Err(e) => {
@@ -615,6 +620,9 @@ impl Service {
                 let mut state = self.state.lock().await;
                 state.set_mls_group_state(MlsGroupState::WaitingForJoinProposalWelcome);
             }
+            tracing::info!(
+                "[WS-HANG] join (external proposal): proposal sent, waiting for welcome (holds user_service.read())"
+            );
 
             let join_deadline = Duration::from_secs(JOIN_PROPOSAL_TIMEOUT);
             let start_time = instant::now();
@@ -684,6 +692,9 @@ impl Service {
             }
             Ok(())
         } else {
+            tracing::info!(
+                "[WS-HANG] join (external commit): building commit via join_group_via_external_commit"
+            );
             let (group_info_message, ratchet_tree_option, commit_info) = self
                 .mls_service
                 .join_group_via_external_commit(
@@ -693,6 +704,9 @@ impl Service {
                     ratchet_tree_option.clone(),
                 )
                 .await?;
+            tracing::info!(
+                "[WS-HANG] join (external commit): commit built, calling update_group_info (HTTP)"
+            );
             self.mls_api
                 .update_group_info(
                     &base64_sd_kbt,
@@ -702,6 +716,9 @@ impl Service {
                     None,
                 )
                 .await?;
+            tracing::info!(
+                "[WS-HANG] join (external commit): update_group_info done, setting state=Success"
+            );
             {
                 let mut state = self.state.lock().await;
                 state.set_mls_group_state(MlsGroupState::Success);
