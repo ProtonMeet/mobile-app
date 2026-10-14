@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:meet/constants/constants.dart';
 import 'package:meet/helper/extension/frb_upcoming_meeting.dart';
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/rust/proton_meet/models/meet_info.dart';
@@ -101,11 +104,19 @@ Future<PreJoinJoinAuthResult> authenticateForJoin({
   required String meetingPassword,
   required String displayName,
 }) async {
-  final meetInfo = await appCoreManager.appCore.authenticateMeetingLink(
-    meetLinkName: meetingLinkName,
-    meetLinkPassword: meetingPassword,
-    displayName: displayName,
-  );
+  final meetInfo = await appCoreManager.appCore
+      .authenticateMeetingLink(
+        meetLinkName: meetingLinkName,
+        meetLinkPassword: meetingPassword,
+        displayName: displayName,
+      )
+      .timeout(
+        kAuthenticateMeetingLinkTimeout,
+        onTimeout: () => throw TimeoutException(
+          'authenticateMeetingLink timed out',
+          kAuthenticateMeetingLinkTimeout,
+        ),
+      );
   // `authenticateMeetingLink` already fetched the meeting-info response during SRP
   // auth and carries the needed fields on [meetInfo], so we build the preview
   // locally instead of issuing a second `getMeetingInfo` round trip.

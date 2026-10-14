@@ -1584,6 +1584,9 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
     RetryLoadParticipants event,
     Emitter<RoomState> emit,
   ) async {
+    if (isClosed) {
+      return;
+    }
     try {
       l.logger.i('[RoomBloc] Retrying to load FRB participants...');
       // Use the existing retry utility function with 2 retries
@@ -1593,6 +1596,11 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
         delay: const Duration(milliseconds: 500),
       );
 
+      // The user may have left (bloc closing) while we were retrying; don't
+      // emit or hit the core again in that case.
+      if (isClosed) {
+        return;
+      }
       emit(state.copyWith(frbParticipantsMap: updated));
       // Resort participants after successful load
       add(SortParticipants());

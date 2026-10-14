@@ -2103,6 +2103,7 @@ impl UserService for Service {
         participant_id: &UserId,
         meeting_link_name: &str,
     ) -> Result<(), anyhow::Error> {
+        tracing::info!("[WS-HANG] leave_room: entered (holds user_service.read() from caller)");
         // find the mlsgroup of the room and decrypt the commit message
         let (remove_proposal, remove_self_from_participant_list_proposal) = {
             let store = self.mls_store.read().await;
@@ -2154,6 +2155,9 @@ impl UserService for Service {
         let leave_room_message = LeaveRoomMessage {
             room_id: meeting_link_name.to_string(),
         };
+        tracing::info!(
+            "[WS-HANG] leave_room: sending LeaveRoom WS request (timeout=0s) and waiting"
+        );
         let _ = self
             .ws_client
             .send_text_request_and_wait(
@@ -2161,13 +2165,27 @@ impl UserService for Service {
                 Duration::from_secs(0),
             )
             .await;
+        tracing::info!("[WS-HANG] leave_room: LeaveRoom WS request wait returned");
 
         let mut state = self.state.lock().await;
         state.reset();
         drop(state);
 
+        // Do NOT call `services().reset()` here. `leave_room` runs while the
+        // caller (`App::leave_meeting`) holds `user_service.read()`, and
+        // `services().reset()` re-acquires `user_service` on the *same* lock.
+        // If a concurrent `set_*_handler` / `clear_*_handler` has requested
+        // `user_service.write()` (e.g. a rejoin registering its callbacks), the
+        // pending writer makes this recursive read block (tokio RwLock is
+        // write-preferring) — a self-deadlock: the outer read can't drop because
+        // this task is parked on the inner read, the writer can't proceed, and
+        // every later reader (the WS message handler) hangs behind the writer.
+        //
+        // The MLS/service state was already reset above via `state.reset()`.
+        // The only remaining piece `services().reset()` would do is the caption
+        // reset, which uses its own interior lock and never touches user_service.
         if let Ok(s) = self.services() {
-            s.reset().await;
+            s.caption_service.reset().await;
         }
 
         Ok(())

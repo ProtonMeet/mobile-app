@@ -52,6 +52,31 @@ const MEETING_LOCKED_ERROR_CODE: u16 = 2502;
 /// URL/custom password the caller supplied does not match the meeting link.
 const INVALID_SRP_PARAMS_ERROR_CODE: u16 = 2026;
 
+/// Max time to wait for a full MLS HTTP request/response round-trip before
+/// giving up. reqwest has no default timeout, so without this a stalled
+/// connection (e.g. a reused but silently-dropped keep-alive socket, or a
+/// server that received the request but never responds) hangs the whole join
+/// flow forever. Applied per-request in [`ProtonHttpClient::send_mls`], so it
+/// guards every MLS call on both native and wasm.
+const MLS_REQUEST_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
+
+/// Max time to wait for the TCP/TLS connection to be established (native only;
+/// not configurable on the wasm fetch backend).
+#[cfg(not(target_family = "wasm"))]
+const MLS_CONNECT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
+
+/// How long an idle pooled connection may be kept before being discarded
+/// (native only). Kept short so we stop reusing connections that an
+/// intermediary (NAT/load balancer) has silently closed — the main cause of
+/// the intermittent "stuck forever" joins.
+#[cfg(not(target_family = "wasm"))]
+const MLS_POOL_IDLE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(15);
+
+/// TCP keepalive interval for pooled connections (native only). Helps detect
+/// dead peers instead of waiting indefinitely on a half-open socket.
+#[cfg(not(target_family = "wasm"))]
+const MLS_TCP_KEEPALIVE: std::time::Duration = std::time::Duration::from_secs(15);
+
 fn single_header<'a>(headers: &'a HeaderMap, name: &str) -> Option<&'a str> {
     let mut values = headers.get_all(name).iter();
     let value = values.next()?;
@@ -131,7 +156,11 @@ impl ProtonHttpClient {
         &self,
         request: reqwest::RequestBuilder,
     ) -> Result<reqwest::Response, HttpClientError> {
-        let response = request.send().await?;
+        // Per-request timeout is the lowest-level guard every MLS request goes
+        // through. It works on both native and wasm (browser fetch via
+        // AbortController), so no MLS call can hang forever. A timeout surfaces
+        // as `HttpClientError::MlsNetworkTimeout` (see `From<reqwest::Error>`).
+        let response = request.timeout(MLS_REQUEST_TIMEOUT).send().await?;
         self.observe_server_time_headers(response.headers());
         Ok(response)
     }
@@ -429,9 +458,23 @@ impl ProtonHttpClient {
                     })?,
                 );
             }
-            mls_builder.default_headers(mls_default_headers).build()?
+            mls_builder
+                // Fail fast on a stalled connect/response instead of hanging
+                // the join flow indefinitely.
+                .connect_timeout(MLS_CONNECT_TIMEOUT)
+                .timeout(MLS_REQUEST_TIMEOUT)
+                // Avoid reusing keep-alive connections that have been silently
+                // dropped by an intermediary; this is the main source of the
+                // intermittent "stuck on Encrypting with MLS" joins.
+                .pool_idle_timeout(MLS_POOL_IDLE_TIMEOUT)
+                .tcp_keepalive(MLS_TCP_KEEPALIVE)
+                .default_headers(mls_default_headers)
+                .build()?
         };
 
+        // The wasm fetch backend does not support connection-level timeout /
+        // pooling knobs, so the per-request timeout in `send_mls` is what
+        // guards MLS calls on wasm.
         #[cfg(target_family = "wasm")]
         let mls_session = reqwest::ClientBuilder::new()
             .default_headers(mls_default_headers)

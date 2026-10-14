@@ -7,7 +7,7 @@ use crate::domain::user::models::{
 use crate::domain::user::ports::{UserService, new_user_service::NewUserService};
 use crate::errors::core::MeetCoreError;
 use crate::infra::dto::realtime::JoinType;
-use crate::utils::{instant, try_join};
+use crate::utils::{instant, timeout, try_join};
 use backon::{ExponentialBuilder, Retryable};
 use std::time::Duration;
 use tracing::{debug, error, info, warn};
@@ -46,12 +46,14 @@ impl App {
             (user_id, meeting_id)
         };
         // Step 2: Leave room
+        tracing::info!("[WS-HANG] leave_meeting: acquiring user_service.read() to call leave_room");
         self.services
             .user_service
             .read()
             .await
             .leave_room(&participant_id, &meeting_id)
             .await?;
+        tracing::info!("[WS-HANG] leave_meeting: leave_room returned, read guard released");
         // Step 3: Disconnect from WebSocket
         self.disconnect_from_ws().await?;
 
@@ -62,6 +64,19 @@ impl App {
             let mut store = state.mls_store.write().await;
             store.clients.remove(&participant_id.to_string());
         }
+
+        // Step 5: Reset the MLS/service state so a subsequent re-join starts
+        // from a clean slate. Without this, `mls_group_state` can stay at
+        // `Success` (and other per-meeting state lingers), which makes the
+        // `is_mls_group_joined` guard in `join_meeting`/`join_meeting2`
+        // wrongly skip the MLS join on re-join and leaves the join handshake
+        // stuck forever ("Encrypting with MLS").
+        self.services
+            .user_service
+            .read()
+            .await
+            .reset_service_state()
+            .await;
 
         Ok(())
     }
@@ -571,11 +586,27 @@ impl App {
         // Retry mechanism: retry up to 3 times on HTTP/WebSocket errors
         const MAX_RETRIES: u32 = 3;
         const RETRY_DELAY_MS: u64 = 200;
+        // Upper bound for a single connect attempt. Without this, a stalled
+        // TLS/upgrade handshake — or a `connect_lock` held by a stuck
+        // reconnection task — makes `connect()` hang forever and the retry
+        // loop below never runs. On timeout we treat it as a retryable error.
+        const CONNECT_TIMEOUT_SECS: u64 = 15;
         let mut last_error = None;
 
         for attempt in 1..=MAX_RETRIES {
             let attempt_start = instant::now();
-            match client.connect(&sd_kbt).await {
+            let connect_result = match timeout(
+                Duration::from_secs(CONNECT_TIMEOUT_SECS),
+                client.connect(&sd_kbt),
+            )
+            .await
+            {
+                Ok(result) => result,
+                Err(_) => Err(anyhow::anyhow!(
+                    "WebSocket connect timed out after {CONNECT_TIMEOUT_SECS}s"
+                )),
+            };
+            match connect_result {
                 Ok(_) => {
                     if attempt > 1 {
                         warn!(
