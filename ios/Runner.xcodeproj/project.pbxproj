@@ -480,6 +480,7 @@
 				7568C17F2EB0B07D00B469D6 /* Embed App Extensions */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				0318E00E6FC55B26263C18FC /* [CP] Embed Pods Frameworks */,
+				F3A8B2C14D5E6F708192A3B4 /* Strip Static MediaPipe Frameworks */,
 			);
 			buildRules = (
 			);
@@ -576,7 +577,7 @@
 			);
 			mainGroup = 97C146E51CF9000F007C117D;
 			packageReferences = (
-				781AD8BC2B33823900A9FFBB /* XCLocalSwiftPackageReference "FlutterGeneratedPluginSwiftPackage" */,
+				781AD8BC2B33823900A9FFBB /* XCLocalSwiftPackageReference "Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage" */,
 				7548DA142B180182002588F4 /* XCRemoteSwiftPackageReference "protoncore_ios" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -636,9 +637,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -718,6 +723,21 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		F3A8B2C14D5E6F708192A3B4 /* Strip Static MediaPipe Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Strip Static MediaPipe Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/scripts/strip_static_mediapipe_frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -1457,7 +1477,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		781AD8BC2B33823900A9FFBB /* XCLocalSwiftPackageReference "FlutterGeneratedPluginSwiftPackage" */ = {
+		781AD8BC2B33823900A9FFBB /* XCLocalSwiftPackageReference "Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage;
 		};
@@ -1642,12 +1662,12 @@
 		};
 		75E1AAC32F010003002588F4 /* ProtonCorePaymentsV2 */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 7548DA142B180182002588F4 /* XCRemoteSwiftPackageReference "protoncore" */;
+			package = 7548DA142B180182002588F4 /* XCRemoteSwiftPackageReference "protoncore_ios" */;
 			productName = ProtonCorePaymentsV2;
 		};
 		75E1AAC42F010004002588F4 /* ProtonCorePaymentsUIV2 */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 7548DA142B180182002588F4 /* XCRemoteSwiftPackageReference "protoncore" */;
+			package = 7548DA142B180182002588F4 /* XCRemoteSwiftPackageReference "protoncore_ios" */;
 			productName = ProtonCorePaymentsUIV2;
 		};
 		78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */ = {

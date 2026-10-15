@@ -88,6 +88,23 @@ fetch_pod() {
 fetch_pod MediaPipeTasksCommon
 fetch_pod MediaPipeTasksVision
 
+# Google ships static MediaPipe "frameworks" without CFBundleShortVersionString /
+# CFBundleVersion. Patch every slice so local archives validate if a framework
+# is still embedded before the Runner strip script runs.
+patch_mediapipe_framework_plists() {
+  pod_name="$1"
+  for plist in "${VENDOR_DIR}/${pod_name}/${pod_name}.xcframework"/*/"${pod_name}.framework/Info.plist"; do
+    [ -f "${plist}" ] || continue
+    /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string ${MEDIAPIPE_VERSION}" "${plist}" 2>/dev/null \
+      || /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${MEDIAPIPE_VERSION}" "${plist}"
+    /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string ${MEDIAPIPE_VERSION}" "${plist}" 2>/dev/null \
+      || /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${MEDIAPIPE_VERSION}" "${plist}"
+  done
+}
+
+patch_mediapipe_framework_plists MediaPipeTasksCommon
+patch_mediapipe_framework_plists MediaPipeTasksVision
+
 link_xcframework() {
   name="$1"
   source_path="$2"
