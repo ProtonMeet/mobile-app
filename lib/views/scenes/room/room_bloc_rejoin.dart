@@ -17,6 +17,7 @@ import 'package:meet/rust/proton_meet/models/meet_participant.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
 import 'package:meet/views/scenes/room/recording/recording_status_handler.dart';
 import 'package:meet/views/scenes/room/room_bloc.dart';
+import 'package:meet/views/scenes/room/room_bloc_connection_check.dart';
 import 'package:meet/views/scenes/room/room_event.dart';
 import 'package:meet/views/scenes/room/room_state.dart';
 import 'package:sentry/sentry.dart';
@@ -79,6 +80,16 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
     if (isClosed) {
       return;
     }
+    if (this is RoomConnectionCheckHandlers &&
+        !(this as RoomConnectionCheckHandlers).hasMeetingNetwork) {
+      (this as RoomConnectionCheckHandlers).deferAutoRejoinUntilNetwork(
+        reason ?? RejoinReason.other,
+      );
+      l.logger.w(
+        '[RoomRejoin] requestRejoin($reason) deferred: device is offline',
+      );
+      return;
+    }
     if (_rejoinRequested ||
         state.isRejoining ||
         state.rejoinStatus == RejoinStatus.error) {
@@ -134,6 +145,15 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
     // Prevent multiple rejoin attempts
     if (state.isRejoining) {
       l.logger.w('[RoomRejoin] Rejoin already in progress, skipping');
+      return;
+    }
+
+    if (this is RoomConnectionCheckHandlers &&
+        !(this as RoomConnectionCheckHandlers).hasMeetingNetwork) {
+      (this as RoomConnectionCheckHandlers).deferAutoRejoinUntilNetwork(
+        event.reason ?? RejoinReason.other,
+      );
+      l.logger.w('[RoomRejoin] StartRejoinMeeting deferred: device is offline');
       return;
     }
 
@@ -1118,6 +1138,15 @@ mixin RoomRejoinHandlers on Bloc<RoomBlocEvent, RoomState> {
     TriggerWebsocketReconnect event,
     Emitter<RoomState> emit,
   ) async {
+    if (this is RoomConnectionCheckHandlers &&
+        !(this as RoomConnectionCheckHandlers).hasMeetingNetwork) {
+      (this as RoomConnectionCheckHandlers)
+          .deferWebsocketReconnectUntilNetwork();
+      l.logger.w(
+        '[RoomRejoin] WebSocket reconnect deferred: device is offline',
+      );
+      return;
+    }
     try {
       final appCoreManager = ManagerFactory().get<AppCoreManager>();
       await appCoreManager.appCore.triggerWebsocketReconnect();

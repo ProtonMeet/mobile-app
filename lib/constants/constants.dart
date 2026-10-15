@@ -79,7 +79,7 @@ const Duration audioReconcileMinInterval = Duration(seconds: 2);
 
 /// How long to let LiveKit's built-in reconnect (resume / full-restart) run
 /// before escalating to a fresh App-level rejoin ([StartRejoinMeeting]).
-const Duration livekitReconnectEscalationTimeout = Duration(seconds: 8);
+const Duration livekitReconnectEscalationTimeout = Duration(seconds: 20);
 
 /// Maximum number of consecutive App-level rejoins triggered by an MLS
 /// out-of-sync failure before we stop auto-rejoining and surface the error
