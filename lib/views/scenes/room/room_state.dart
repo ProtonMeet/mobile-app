@@ -287,6 +287,10 @@ class RoomState extends Equatable {
   /// LiveKit room reconnecting state - true when LiveKit is reconnecting (not our custom rejoin)
   final bool isLiveKitReconnecting;
 
+  /// Whether the device has a usable network interface (Wi‑Fi / cellular / ethernet).
+  /// When false, auto-rejoin and websocket reconnect are paused until connectivity returns.
+  final bool isNetworkAvailable;
+
   /// Current device IDs - saved for rejoin device restoration
   final String? currentAudioInputDeviceId;
   final String? currentVideoInputDeviceId;
@@ -469,6 +473,7 @@ class RoomState extends Equatable {
     this.forceShowConnectionStatusBanner = false,
     this.isRejoinFailedDialogShowing = false,
     this.isLiveKitReconnecting = false,
+    this.isNetworkAvailable = true,
     this.currentAudioInputDeviceId,
     this.currentVideoInputDeviceId,
     this.currentAudioOutputDeviceId,
@@ -555,6 +560,7 @@ class RoomState extends Equatable {
     bool? forceShowConnectionStatusBanner,
     bool? isRejoinFailedDialogShowing,
     bool? isLiveKitReconnecting,
+    bool? isNetworkAvailable,
     String? currentAudioInputDeviceId,
     String? currentVideoInputDeviceId,
     String? currentAudioOutputDeviceId,
@@ -672,6 +678,7 @@ class RoomState extends Equatable {
           isRejoinFailedDialogShowing ?? this.isRejoinFailedDialogShowing,
       isLiveKitReconnecting:
           isLiveKitReconnecting ?? this.isLiveKitReconnecting,
+      isNetworkAvailable: isNetworkAvailable ?? this.isNetworkAvailable,
       currentAudioInputDeviceId:
           currentAudioInputDeviceId ?? this.currentAudioInputDeviceId,
       currentVideoInputDeviceId:
@@ -781,6 +788,7 @@ class RoomState extends Equatable {
     forceShowConnectionStatusBanner,
     isRejoinFailedDialogShowing,
     isLiveKitReconnecting,
+    isNetworkAvailable,
     currentAudioInputDeviceId,
     currentVideoInputDeviceId,
     currentAudioOutputDeviceId,

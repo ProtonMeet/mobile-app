@@ -9,10 +9,24 @@ import 'package:meet/managers/providers/data.provider.manager.dart';
 import 'package:meet/managers/providers/unleash.data.provider.dart';
 import 'package:meet/rust/proton_meet/models/mls_sync_state.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
+import 'package:meet/views/scenes/room/room_bloc_connection_check.dart';
 import 'package:meet/views/scenes/room/room_bloc_feature_flags.dart';
 import 'package:meet/views/scenes/room/room_bloc_rejoin.dart';
 import 'package:meet/views/scenes/room/room_event.dart';
 import 'package:meet/views/scenes/room/room_state.dart';
+import 'package:sentry/sentry.dart';
+
+/// Why a LiveKit built-in reconnect episode escalated to [StartRejoinMeeting].
+enum _LiveKitReconnectEscalationCause {
+  /// [livekitReconnectEscalationTimeout] elapsed while still reconnecting.
+  watchdogTimeout,
+
+  /// [RoomReconnectedEvent] arrived but total outage ≥ escalation window.
+  lateResume,
+
+  /// [MlsSyncState.failed] while [RoomState.isLiveKitReconnecting].
+  mlsFailedWhileLiveKitReconnecting,
+}
 
 /// Mixin for handling reconnection-related listeners and state management
 /// This includes MLS sync state monitoring and key rotation subscription management
@@ -20,7 +34,8 @@ mixin RoomReconnectionListeners
     on
         Bloc<RoomBlocEvent, RoomState>,
         RoomFeatureFlagsHandlers,
-        RoomRejoinHandlers {
+        RoomRejoinHandlers,
+        RoomConnectionCheckHandlers {
   // Subscription for key rotation listener from RoomConnectionHelper
   StreamSubscription<(String, BigInt)?>? _keyRotationSubscription;
   // Subscription for MLS sync state listener
@@ -40,6 +55,11 @@ mixin RoomReconnectionListeners
   // loop when a rejoin reconnects the transport but can't re-add us to the MLS
   // group (see [kMaxMlsRecoveryRejoins]).
   int _mlsRecoveryRejoinAttempts = 0;
+
+  /// Cleared when network returns so MLS can retry websocket-before-rejoin.
+  void resetWebsocketReconnectAttemptFlag() {
+    _hasTriggeredWebsocketReconnect = false;
+  }
 
   /// Set key rotation subscription (called by RoomRejoinHandlers mixin)
   void setKeyRotationSubscription(
@@ -82,16 +102,41 @@ mixin RoomReconnectionListeners
 
     if (event.state == MlsSyncState.success) {
       _hasLoggedConnectionLost = false;
+      _hasTriggeredWebsocketReconnect = false;
       // MLS is healthy again — clear the recovery-rejoin budget so a future,
       // unrelated failure starts from a clean slate.
       _mlsRecoveryRejoinAttempts = 0;
       // Connection is healthy: forget any in-flight LiveKit outage timestamp so
       // a later, unrelated short blip isn't mis-measured as a long outage.
       _livekitReconnectingStartedAt = null;
+      cancelNetworkRestoreRejoinGrace();
     }
 
     // If MLS sync failed, log connection lost and trigger rejoin
     if (event.state == MlsSyncState.failed) {
+      if (!hasMeetingNetwork) {
+        l.logger.w(
+          '[RoomBloc] MLS sync failed while device is offline — deferring '
+          'reconnection until network returns',
+        );
+        deferAutoRejoinUntilNetwork(event.reason ?? RejoinReason.other);
+        return;
+      }
+
+      // LiveKit often recovers first after a short radio drop; let the network-
+      // restore grace window finish before App rejoin (grace timer or MLS success).
+      if (isNetworkRestoreRejoinGraceActive) {
+        l.logger.i(
+          '[RoomBloc] MLS sync failed during network-restore grace — '
+          'skipping App rejoin (grace timer or MLS recovery owns escalation)',
+        );
+        if (!_hasTriggeredWebsocketReconnect) {
+          add(const TriggerWebsocketReconnect());
+          _hasTriggeredWebsocketReconnect = true;
+        }
+        return;
+      }
+
       // Don't trigger rejoin if:
       // 1. Already rejoining
       // 2. Rejoin has already failed (user has seen the failed dialog)
@@ -269,7 +314,22 @@ mixin RoomReconnectionListeners
   /// us and the committer has removed us from the MLS group — so the resumed
   /// transport is riding on a dead MLS session. In that case we do not trust the
   /// resume and force a full reconnection anyway (see [_forceFullReconnection]).
+  /// Stop timers and escalation while the device has no network.
+  void pauseReconnectionWhileOffline() {
+    _livekitReconnectWatchdog?.cancel();
+    _livekitReconnectWatchdog = null;
+    _livekitReconnectingStartedAt = null;
+    l.logger.i('[RoomBloc] Pausing auto-reconnection while offline');
+  }
+
   void handleLiveKitReconnectingChanged(bool isReconnecting) {
+    if (!hasMeetingNetwork) {
+      if (isReconnecting) {
+        pauseReconnectionWhileOffline();
+      }
+      return;
+    }
+
     if (!isReconnecting) {
       _livekitReconnectWatchdog?.cancel();
       _livekitReconnectWatchdog = null;
@@ -298,7 +358,10 @@ mixin RoomReconnectionListeners
             '(>= ${livekitReconnectEscalationTimeout.inSeconds}s) — MLS '
             'membership was likely dropped, forcing a full reconnection',
           );
-          _forceFullReconnection();
+          _forceFullReconnection(
+            _LiveKitReconnectEscalationCause.lateResume,
+            outage: outage,
+          );
         }
       }
       return;
@@ -331,7 +394,9 @@ mixin RoomReconnectionListeners
         '[RoomBloc] LiveKit reconnecting while MLS already failed — escalating '
         'to full rejoin immediately (skipping resume wait)',
       );
-      _forceFullReconnection();
+      _forceFullReconnection(
+        _LiveKitReconnectEscalationCause.mlsFailedWhileLiveKitReconnecting,
+      );
       return;
     }
 
@@ -351,13 +416,59 @@ mixin RoomReconnectionListeners
       if (!isMeetAutoReconnectionEnabled()) {
         return;
       }
+      final startedAt = _livekitReconnectingStartedAt;
+      final outage = startedAt != null
+          ? DateTime.now().difference(startedAt)
+          : livekitReconnectEscalationTimeout;
       l.logger.w(
         '[RoomBloc] LiveKit still reconnecting after '
         '${livekitReconnectEscalationTimeout.inSeconds}s, forcing a full '
         'reconnection instead of waiting for the resume',
       );
-      _forceFullReconnection();
+      _forceFullReconnection(
+        _LiveKitReconnectEscalationCause.watchdogTimeout,
+        outage: outage,
+      );
     });
+  }
+
+  void _captureLiveKitReconnectEscalationToSentry(
+    _LiveKitReconnectEscalationCause cause, {
+    Duration? outage,
+  }) {
+    if (cause != _LiveKitReconnectEscalationCause.watchdogTimeout &&
+        cause != _LiveKitReconnectEscalationCause.lateResume) {
+      return;
+    }
+
+    final causeTag = switch (cause) {
+      _LiveKitReconnectEscalationCause.watchdogTimeout =>
+        'livekit_watchdog_timeout',
+      _LiveKitReconnectEscalationCause.lateResume => 'livekit_late_resume',
+      _ => cause.name,
+    };
+
+    Sentry.captureMessage(
+      'LiveKit reconnect escalated to App rejoin ($causeTag)',
+      level: SentryLevel.warning,
+      withScope: (scope) {
+        scope.setTag('livekit_escalation', causeTag);
+        scope.setTag('rejoin_reason', RejoinReason.websocketDisconnected.name);
+        scope.setTag('meeting_link_name', state.meetInfo.meetLinkName);
+        scope.setContexts('livekit_reconnect_escalation', {
+          'cause': causeTag,
+          'outage_seconds': outage?.inSeconds,
+          'escalation_timeout_seconds':
+              livekitReconnectEscalationTimeout.inSeconds,
+          'mls_sync_state': state.mlsSyncState?.name,
+          'is_livekit_reconnecting': state.isLiveKitReconnecting,
+          'is_network_available': state.isNetworkAvailable,
+          'is_rejoining': state.isRejoining,
+          'rejoin_status': state.rejoinStatus?.name,
+          'local_participant_present': state.room.localParticipant != null,
+        });
+      },
+    );
   }
 
   /// Force a full App-level reconnection ([StartRejoinMeeting]) in response to a
@@ -369,7 +480,12 @@ mixin RoomReconnectionListeners
   /// rejoin must do a clean re-join (no token reuse) to actually re-establish our
   /// MLS membership — reusing the old session can leave the server treating us
   /// as the still-present old member, so our re-join is never broadcast.
-  void _forceFullReconnection() {
+  void _forceFullReconnection(
+    _LiveKitReconnectEscalationCause escalation, {
+    Duration? outage,
+  }) {
+    _captureLiveKitReconnectEscalationToSentry(escalation, outage: outage);
+
     // Any pending watchdog is now redundant.
     _livekitReconnectWatchdog?.cancel();
     _livekitReconnectWatchdog = null;
@@ -378,9 +494,24 @@ mixin RoomReconnectionListeners
     requestRejoin(RejoinReason.websocketDisconnected);
   }
 
+  Future<void> _onMeetingNetworkAvailabilityChanged(
+    MeetingNetworkAvailabilityChanged event,
+    Emitter<RoomState> emit,
+  ) async {
+    if (state.isNetworkAvailable != event.isAvailable) {
+      emit(state.copyWith(isNetworkAvailable: event.isAvailable));
+    }
+    if (event.isAvailable) {
+      resetWebsocketReconnectAttemptFlag();
+    } else {
+      pauseReconnectionWhileOffline();
+    }
+  }
+
   /// Register handlers for reconnection-related events
   void registerReconnectionListeners() {
     on<MlsSyncStateUpdated>(_onMlsSyncStateUpdated);
+    on<MeetingNetworkAvailabilityChanged>(_onMeetingNetworkAvailabilityChanged);
   }
 
   /// Cleanup reconnection-related subscriptions

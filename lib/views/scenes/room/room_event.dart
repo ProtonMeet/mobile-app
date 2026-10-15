@@ -312,6 +312,16 @@ class StopConnectionHealthCheck extends RoomBlocEvent {}
 
 class CheckConnectionStatus extends RoomBlocEvent {}
 
+/// Device-level network availability (connectivity_plus), not LiveKit/MLS health.
+class MeetingNetworkAvailabilityChanged extends RoomBlocEvent {
+  const MeetingNetworkAvailabilityChanged({required this.isAvailable});
+
+  final bool isAvailable;
+
+  @override
+  List<Object?> get props => [isAvailable];
+}
+
 class MlsGroupUpdated extends RoomBlocEvent {}
 
 class SwapCamera extends RoomBlocEvent {}
