@@ -8,6 +8,76 @@ import 'package:meet/views/scenes/room/room_bloc.dart';
 import 'package:meet/views/scenes/room/room_state.dart';
 import 'package:meet/views/scenes/room/room_state_exts.dart';
 
+/// What to show in [ConnectionStatusBanner], in priority order.
+///
+/// Offline → rejoin → MLS banner states → LiveKit reconnecting → debug force-show.
+class _ConnectionBannerPresentation {
+  const _ConnectionBannerPresentation({
+    required this.displayStatus,
+    required this.showSpinner,
+  });
+
+  final Object displayStatus;
+  final bool showSpinner;
+
+  static _ConnectionBannerPresentation? resolve({
+    required bool isNetworkAvailable,
+    required bool isRejoining,
+    required RejoinStatus? rejoinStatus,
+    required MlsSyncState? mlsSyncState,
+    required bool isLivekitReconnecting,
+    required bool forceShow,
+  }) {
+    if (!isNetworkAvailable) {
+      return const _ConnectionBannerPresentation(
+        displayStatus: 'no_network',
+        showSpinner: false,
+      );
+    }
+    if (isRejoining && rejoinStatus != null) {
+      return _ConnectionBannerPresentation(
+        displayStatus: rejoinStatus,
+        showSpinner: true,
+      );
+    }
+    if (mlsSyncState != null && mlsSyncState.shouldShowBanner) {
+      return _ConnectionBannerPresentation(
+        displayStatus: mlsSyncState,
+        showSpinner: false,
+      );
+    }
+    if (isLivekitReconnecting) {
+      return const _ConnectionBannerPresentation(
+        displayStatus: 'livekit_reconnecting',
+        showSpinner: true,
+      );
+    }
+    if (forceShow) {
+      return _ConnectionBannerPresentation(
+        displayStatus: mlsSyncState ?? 'force_show',
+        showSpinner: mlsSyncState == null,
+      );
+    }
+    return null;
+  }
+}
+
+String _bannerMessage(BuildContext context, Object displayStatus) {
+  if (displayStatus is RejoinStatus) {
+    return displayStatus.message(context);
+  }
+  if (displayStatus is MlsSyncState) {
+    return displayStatus.message(context);
+  }
+  if (displayStatus == 'livekit_reconnecting') {
+    return context.local.trying_to_reconnect;
+  }
+  if (displayStatus == 'no_network') {
+    return context.local.no_connection;
+  }
+  return 'Connection status';
+}
+
 /// Banner widget that displays network and livekit/MLS connection status
 /// Shows rejoin status or MLS sync state when applicable
 class ConnectionStatusBanner extends StatefulWidget {
@@ -41,7 +111,7 @@ class _ConnectionStatusBannerState extends State<ConnectionStatusBanner>
     return BlocSelector<
       RoomBloc,
       RoomState,
-      (MlsSyncState?, bool, RejoinStatus?, bool, bool, bool)
+      (MlsSyncState?, bool, RejoinStatus?, bool, bool, bool, bool)
     >(
       selector: (state) => (
         state.mlsSyncState,
@@ -50,6 +120,7 @@ class _ConnectionStatusBannerState extends State<ConnectionStatusBanner>
         state.isRoomInitialized && state.isTrackInitialized,
         state.forceShowConnectionStatusBanner,
         state.isLiveKitReconnecting,
+        state.isNetworkAvailable,
       ),
       builder: (context, data) {
         final mlsSyncState = data.$1;
@@ -58,41 +129,18 @@ class _ConnectionStatusBannerState extends State<ConnectionStatusBanner>
         final isRoomReady = data.$4;
         final forceShow = data.$5;
         final isLivekitReconnecting = data.$6;
+        final isNetworkAvailable = data.$7;
 
-        // Determine if banner should be shown
-        // Priority: 1. Force show (highest), 2. Rejoin status, 3. MLS sync state, 4. LiveKit reconnecting (lowest/general)
-        final shouldShowRejoinBanner = isRejoining && rejoinStatus != null;
-        final shouldShowMlsBanner =
-            !shouldShowRejoinBanner &&
-            mlsSyncState != null &&
-            mlsSyncState.shouldShowBanner;
-        final shouldShowLivekitReconnectingBanner =
-            !shouldShowRejoinBanner &&
-            !shouldShowMlsBanner &&
-            isLivekitReconnecting;
+        final presentation = _ConnectionBannerPresentation.resolve(
+          isNetworkAvailable: isNetworkAvailable,
+          isRejoining: isRejoining,
+          rejoinStatus: rejoinStatus,
+          mlsSyncState: mlsSyncState,
+          isLivekitReconnecting: isLivekitReconnecting,
+          forceShow: forceShow,
+        );
 
-        // If force show is enabled, always show banner (highest priority)
-        final shouldShowBanner =
-            forceShow ||
-            shouldShowRejoinBanner ||
-            shouldShowMlsBanner ||
-            shouldShowLivekitReconnectingBanner;
-
-        // Determine which status to display
-        // Priority: 1. Rejoin status, 2. MLS sync state, 3. LiveKit reconnecting (general), 4. Force show (show MLS state if available, otherwise show default)
-        Object? displayStatus;
-        if (shouldShowRejoinBanner) {
-          displayStatus = rejoinStatus;
-        } else if (mlsSyncState != null && mlsSyncState.shouldShowBanner) {
-          displayStatus = mlsSyncState;
-        } else if (shouldShowLivekitReconnectingBanner) {
-          displayStatus = 'livekit_reconnecting';
-        } else if (forceShow) {
-          // When force show is enabled but no other status, show MLS state if available, otherwise use a placeholder
-          displayStatus = mlsSyncState ?? 'force_show';
-        }
-
-        if (!shouldShowBanner || displayStatus == null || !isRoomReady) {
+        if (presentation == null || !isRoomReady) {
           return const SizedBox.shrink();
         }
 
@@ -107,13 +155,7 @@ class _ConnectionStatusBannerState extends State<ConnectionStatusBanner>
             children: [
               Expanded(
                 child: Text(
-                  displayStatus is RejoinStatus
-                      ? displayStatus.message(context)
-                      : displayStatus is MlsSyncState
-                      ? displayStatus.message(context)
-                      : displayStatus == 'livekit_reconnecting'
-                      ? context.local.trying_to_reconnect
-                      : 'Connection status', // Default message for force show when no other status
+                  _bannerMessage(context, presentation.displayStatus),
                   style: ProtonStyles.captionSemibold(
                     color: context.colors.textNorm,
                   ),
@@ -121,9 +163,7 @@ class _ConnectionStatusBannerState extends State<ConnectionStatusBanner>
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (displayStatus is RejoinStatus ||
-                  displayStatus == 'livekit_reconnecting' ||
-                  (forceShow && displayStatus == 'force_show'))
+              if (presentation.showSpinner)
                 RotationTransition(
                   turns: _rotationController,
                   child: context.images.iconReload.svg(width: 24, height: 24),

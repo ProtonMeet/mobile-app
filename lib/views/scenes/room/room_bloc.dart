@@ -1479,6 +1479,9 @@ class RoomBloc extends Bloc<RoomBlocEvent, RoomState>
       // Arm/cancel the watchdog that escalates a stuck LiveKit built-in
       // reconnect to a fresh App-level rejoin (avoids the ~44s worst case).
       handleLiveKitReconnectingChanged(event.isLiveKitReconnecting);
+      if (!event.isLiveKitReconnecting) {
+        cancelNetworkRestoreRejoinGraceIfHealthy();
+      }
     } catch (e) {
       l.logger.e('[RoomBloc] Error setting reconnecting state: $e');
     }

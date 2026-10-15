@@ -2,26 +2,64 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:meet/constants/constants.dart';
 import 'package:meet/helper/logger.dart' as l;
 import 'package:meet/managers/app.core.manager.dart';
 import 'package:meet/managers/manager.factory.dart';
 import 'package:meet/rust/proton_meet/models/mls_sync_state.dart';
 import 'package:meet/rust/proton_meet/models/rejoin_reason.dart';
-import 'package:meet/views/scenes/room/room_bloc.dart';
+import 'package:meet/views/scenes/room/room_bloc_feature_flags.dart';
 import 'package:meet/views/scenes/room/room_event.dart';
 import 'package:meet/views/scenes/room/room_state.dart';
 
 /// Mixin for handling connection status checks
 ///
 /// This mixin listens to connectivity changes and triggers reconnection when needed.
-/// If the connection is not reconnecting and MLS is not up-to-date, it sets
-/// connectionLost to true in the state.
+/// While the device has no network, auto-rejoin and websocket reconnect are deferred.
 mixin RoomConnectionCheckHandlers on Bloc<RoomBlocEvent, RoomState> {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _mlsCheckTimer;
   Timer? _epochHealthCheckTimer;
+  Timer? _networkRestoreGraceTimer;
   bool _startHealthCheck = false;
   bool _hasNetwork = true;
+  RejoinReason? _deferredRejoinReason;
+  bool _deferredWebsocketReconnect = false;
+
+  /// Whether connectivity_plus reports a usable network interface.
+  bool get hasMeetingNetwork => _hasNetwork;
+
+  /// True while waiting after network restore before escalating to App rejoin.
+  bool get isNetworkRestoreRejoinGraceActive =>
+      _networkRestoreGraceTimer?.isActive ?? false;
+
+  /// Clears the post-outage grace timer (e.g. MLS/LiveKit recovered).
+  void cancelNetworkRestoreRejoinGrace() {
+    _networkRestoreGraceTimer?.cancel();
+    _networkRestoreGraceTimer = null;
+    _deferredRejoinReason = null;
+  }
+
+  void cancelNetworkRestoreRejoinGraceIfHealthy() {
+    if (!_isMeetingConnectionHealthy()) {
+      return;
+    }
+    cancelNetworkRestoreRejoinGrace();
+  }
+
+  void deferAutoRejoinUntilNetwork(RejoinReason reason) {
+    _deferredRejoinReason ??= reason;
+    l.logger.i(
+      '[RoomConnectionCheck] Deferred rejoin until network returns (reason=$reason)',
+    );
+  }
+
+  void deferWebsocketReconnectUntilNetwork() {
+    _deferredWebsocketReconnect = true;
+    l.logger.i(
+      '[RoomConnectionCheck] Deferred websocket reconnect until network returns',
+    );
+  }
 
   void registerConnectionCheckHandlers() {
     on<StartConnectionHealthCheck>(_onStartConnectionHealthCheck);
@@ -35,6 +73,8 @@ mixin RoomConnectionCheckHandlers on Bloc<RoomBlocEvent, RoomState> {
     }
     _startHealthCheck = true;
 
+    unawaited(_syncInitialNetworkState());
+
     // Set up connectivity listener
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
       _onConnectivityChanged,
@@ -42,6 +82,15 @@ mixin RoomConnectionCheckHandlers on Bloc<RoomBlocEvent, RoomState> {
 
     _checkConnectionWithDelay();
     _logUserEpochHealth();
+  }
+
+  Future<void> _syncInitialNetworkState() async {
+    try {
+      final result = await Connectivity().checkConnectivity();
+      _applyNetworkAvailability(_isNetworkAvailable(result));
+    } catch (e) {
+      l.logger.w('[RoomConnectionCheck] Initial connectivity check failed: $e');
+    }
   }
 
   /// Check connection and schedule next check after completion
@@ -69,6 +118,10 @@ mixin RoomConnectionCheckHandlers on Bloc<RoomBlocEvent, RoomState> {
     _mlsCheckTimer = null;
     _epochHealthCheckTimer?.cancel();
     _epochHealthCheckTimer = null;
+    _networkRestoreGraceTimer?.cancel();
+    _networkRestoreGraceTimer = null;
+    _deferredRejoinReason = null;
+    _deferredWebsocketReconnect = false;
   }
 
   Future<void> _onStartConnectionHealthCheck(
@@ -99,82 +152,149 @@ mixin RoomConnectionCheckHandlers on Bloc<RoomBlocEvent, RoomState> {
         connectivityResult.contains(ConnectivityResult.ethernet);
   }
 
+  void _applyNetworkAvailability(bool isAvailable) {
+    if (_hasNetwork == isAvailable) {
+      /// nothing to do when network is off
+      /// or network was ok and is still ok
+      return;
+    }
+
+    if (isAvailable) {
+      /// network is back, trigger reconnection and mark network as ok
+      _hasNetwork = true;
+      add(const MeetingNetworkAvailabilityChanged(isAvailable: true));
+      _onNetworkRestored();
+    } else {
+      /// network is off, mark network as off
+      _hasNetwork = false;
+      _networkRestoreGraceTimer?.cancel();
+      _networkRestoreGraceTimer = null;
+      add(const MeetingNetworkAvailabilityChanged(isAvailable: false));
+    }
+  }
+
   /// Handle connectivity changes and trigger reconnection if needed
   Future<void> _onConnectivityChanged(List<ConnectivityResult> result) async {
     if (!_startHealthCheck || isClosed) {
       return;
     }
 
-    final isNetworkAvailable = _isNetworkAvailable(result);
-
-    if (isNetworkAvailable) {
-      final wasOffline = !_hasNetwork;
-      _hasNetwork = true;
-      // The moment the network comes back after an outage, proactively kick a
-      // fresh App-level rejoin instead of passively waiting for LiveKit's slow
-      // built-in reconnect backoff (which can take 20-30s). Only when we were
-      // actually offline before, so switching interfaces (e.g. wifi -> mobile)
-      // without a real outage doesn't spuriously rejoin.
-      if (wasOffline) {
-        _maybeTriggerRejoinOnNetworkRestored();
-      }
-      // Network is available, check connection status and reconnect if needed
-      await _checkConnection();
-    } else {
-      // Network is not available
-      _hasNetwork = false;
-    }
+    _applyNetworkAvailability(_isNetworkAvailable(result));
   }
 
-  /// Proactively start a fresh rejoin when connectivity is restored after an
-  /// outage and the meeting connection is not healthy.
-  ///
-  /// Without this, recovery depends entirely on LiveKit's built-in reconnect
-  /// backoff or an outage-time rejoin attempt timing out — both of which are
-  /// much slower than simply re-joining as soon as the network is back.
-  void _maybeTriggerRejoinOnNetworkRestored() {
-    if (isClosed || this is! RoomBloc) {
+  void _onNetworkRestored() {
+    _resumeReconnectionAfterNetworkRestore();
+  }
+
+  bool _isMeetingConnectionHealthy() {
+    final isLivekitConnected =
+        state.room.localParticipant != null && !state.isLiveKitReconnecting;
+    final isMlsSynced = state.mlsSyncState == MlsSyncState.success;
+    return isLivekitConnected && isMlsSynced;
+  }
+
+  /// LiveKit may resume on its own after a short radio outage if the Room
+  /// object is still alive (local participant present or SDK already reconnecting).
+  bool _livekitTransportMayRecoverAfterNetworkRestore() {
+    return state.isLiveKitReconnecting || state.room.localParticipant != null;
+  }
+
+  void _scheduleNetworkRestoreRejoinEscalation() {
+    _networkRestoreGraceTimer?.cancel();
+    _networkRestoreGraceTimer = Timer(livekitReconnectEscalationTimeout, () {
+      _networkRestoreGraceTimer = null;
+      if (isClosed || !_hasNetwork || state.isRejoining) {
+        return;
+      }
+      if (_isMeetingConnectionHealthy()) {
+        _deferredRejoinReason = null;
+        return;
+      }
+
+      final reason =
+          _deferredRejoinReason ?? RejoinReason.websocketDisconnected;
+      _deferredRejoinReason = null;
+
+      l.logger.w(
+        '[RoomConnectionCheck] Network restore grace '
+        '(${livekitReconnectEscalationTimeout.inSeconds}s) elapsed — '
+        'starting App rejoin (reason=$reason)',
+      );
+
+      if (state.rejoinStatus == RejoinStatus.error) {
+        add(const CancelRejoinMeeting());
+      }
+      add(StartRejoinMeeting(reason: reason));
+    });
+  }
+
+  /// Recovery when connectivity returns after an outage.
+  void _resumeReconnectionAfterNetworkRestore() {
+    if (isClosed) {
       return;
     }
-    final roomBloc = this as RoomBloc;
 
-    if (!roomBloc.isMeetAutoReconnectionEnabled()) {
+    if (_deferredWebsocketReconnect && !state.isRejoining) {
+      _deferredWebsocketReconnect = false;
+      add(const TriggerWebsocketReconnect());
+    }
+
+    if (this is RoomFeatureFlagsHandlers &&
+        !(this as RoomFeatureFlagsHandlers).isMeetAutoReconnectionEnabled()) {
+      _deferredRejoinReason = null;
+      _networkRestoreGraceTimer?.cancel();
+      _networkRestoreGraceTimer = null;
       return;
     }
 
-    // A rejoin is already running — let it finish.
     if (state.isRejoining) {
       return;
     }
 
-    // Connection is already healthy — nothing to recover.
-    final isLivekitConnected =
-        state.room.localParticipant != null && !state.isLiveKitReconnecting;
-    final isMlsSynced = state.mlsSyncState == MlsSyncState.success;
-    if (isLivekitConnected && isMlsSynced) {
+    if (_isMeetingConnectionHealthy()) {
+      _deferredRejoinReason = null;
+      _networkRestoreGraceTimer?.cancel();
+      _networkRestoreGraceTimer = null;
       return;
     }
 
+    // Short Wi‑Fi drops: prefer LiveKit built-in reconnect + MLS websocket
+    // before tearing down the Room (full App rejoin hides the meeting UI).
+    if (_livekitTransportMayRecoverAfterNetworkRestore()) {
+      l.logger.i(
+        '[RoomConnectionCheck] Network restored while session may recover via '
+        'LiveKit (livekitReconnecting=${state.isLiveKitReconnecting}, '
+        'localParticipant=${state.room.localParticipant != null}, '
+        'mls=${state.mlsSyncState}) — deferring App rejoin for '
+        '${livekitReconnectEscalationTimeout.inSeconds}s',
+      );
+
+      if (state.mlsSyncState != MlsSyncState.success) {
+        add(const TriggerWebsocketReconnect());
+      }
+
+      _deferredRejoinReason ??= RejoinReason.websocketDisconnected;
+      _scheduleNetworkRestoreRejoinEscalation();
+      return;
+    }
+
+    _networkRestoreGraceTimer?.cancel();
+    _networkRestoreGraceTimer = null;
+
+    final reason = _deferredRejoinReason ?? RejoinReason.websocketDisconnected;
+    _deferredRejoinReason = null;
+
     l.logger.w(
-      '[RoomConnectionCheck] Network restored while connection unhealthy '
+      '[RoomConnectionCheck] Network restored but LiveKit session is gone '
       '(livekitReconnecting=${state.isLiveKitReconnecting}, '
-      'mls=${state.mlsSyncState}, rejoinStatus=${state.rejoinStatus}) — '
-      'triggering a fresh rejoin',
+      'localParticipant=${state.room.localParticipant != null}) — '
+      'starting App rejoin (reason=$reason)',
     );
 
-    // If an outage-time rejoin already failed into the error state (and halted
-    // auto-rejoin), clear it first so a fresh attempt can run now that the
-    // network is back. Using `add` directly here is a controlled single-shot
-    // path (one network-restore edge), so it doesn't need the requestRejoin
-    // dedup latch.
     if (state.rejoinStatus == RejoinStatus.error) {
-      roomBloc.add(const CancelRejoinMeeting());
-      roomBloc.add(
-        const StartRejoinMeeting(reason: RejoinReason.websocketDisconnected),
-      );
-    } else {
-      roomBloc.requestRejoin(RejoinReason.websocketDisconnected);
+      add(const CancelRejoinMeeting());
     }
+    add(StartRejoinMeeting(reason: reason));
   }
 
   /// Check connection status, trigger reconnection if disconnected, and check MLS status
