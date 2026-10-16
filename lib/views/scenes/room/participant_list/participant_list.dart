@@ -153,11 +153,9 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
   bool _isCaptionsAgentDetail(ParticipantDetail detail) =>
       detail.participant != null && isCaptionAgent(detail.participant!);
 
+  /// Use for host kickout
   bool _shouldShowMoreButton(ParticipantDetail detail) =>
-      !detail.isMe &&
-      (widget.isHost ||
-          detail.participant?.videoTrackPublications.isNotEmpty == true ||
-          detail.participant?.audioTrackPublications.isNotEmpty == true);
+      !detail.isMe && widget.isHost;
 
   int get _peopleParticipantCount => _partitionedParticipants.people.length;
 
@@ -734,109 +732,109 @@ class _ParticipantListBodyState extends State<ParticipantListBody> {
                 actions: p.participant is LocalParticipant
                     ? []
                     : [
-                        if (p.participant != null) ...[
-                          if (p.participant!.audioTrackPublications.isNotEmpty)
-                            OverlayActions(
-                              title:
-                                  p
-                                      .participant!
-                                      .audioTrackPublications
-                                      .first
-                                      .subscribed
-                                  ? context.local.unsubscribe_audio
-                                  : context.local.subscribe_audio,
-                              icon: Icon(
-                                p
-                                        .participant!
-                                        .audioTrackPublications
-                                        .first
-                                        .subscribed
-                                    ? Icons.mic_off
-                                    : Icons.mic,
-                              ),
-                              onTap: () {
-                                widget.onTapParticipantAudioLocalAction?.call(
-                                  p.participant,
-                                );
-                              },
-                            ),
-                          if (p.participant!.videoTrackPublications.isNotEmpty)
-                            OverlayActions(
-                              title:
-                                  p
-                                      .participant!
-                                      .videoTrackPublications
-                                      .first
-                                      .subscribed
-                                  ? context.local.unsubscribe_video
-                                  : context.local.subscribe_video,
-                              icon: Icon(
-                                p
-                                        .participant!
-                                        .videoTrackPublications
-                                        .first
-                                        .subscribed
-                                    ? Icons.no_photography_rounded
-                                    : Icons.camera_alt,
-                              ),
-                              onTap: () {
-                                widget.onTapParticipantVideoLocalAction.call(
-                                  p.participant,
-                                );
-                              },
-                            ),
-                          if (p.participant!.videoTrackPublications.isNotEmpty)
-                            OverlayActions(
-                              title: context.local.remote_mute_video,
-                              icon: Icon(
-                                Icons.close,
-                                color: context.colors.notificationError,
-                              ),
-                              onTap: () {
-                                widget.onTapParticipantVideoRemoteAction?.call(
-                                  p.participant,
-                                );
-                              },
-                            ),
-                          if (p.participant!.audioTrackPublications.isNotEmpty)
-                            OverlayActions(
-                              title: context.local.remote_mute_audio,
-                              icon: Icon(
-                                Icons.close,
-                                color: context.colors.notificationError,
-                              ),
-                              onTap: () {
-                                widget.onTapParticipantAudioRemoteAction?.call(
-                                  p.participant,
-                                );
-                              },
-                            ),
-                        ],
+                        // if (p.participant != null) ...[
+                        //   if (p.participant!.audioTrackPublications.isNotEmpty)
+                        //     OverlayActions(
+                        //       title:
+                        //           p
+                        //               .participant!
+                        //               .audioTrackPublications
+                        //               .first
+                        //               .subscribed
+                        //           ? context.local.unsubscribe_audio
+                        //           : context.local.subscribe_audio,
+                        //       icon: Icon(
+                        //         p
+                        //                 .participant!
+                        //                 .audioTrackPublications
+                        //                 .first
+                        //                 .subscribed
+                        //             ? Icons.mic_off
+                        //             : Icons.mic,
+                        //       ),
+                        //       onTap: () {
+                        //         widget.onTapParticipantAudioLocalAction?.call(
+                        //           p.participant,
+                        //         );
+                        //       },
+                        //     ),
+                        //   if (p.participant!.videoTrackPublications.isNotEmpty)
+                        //     OverlayActions(
+                        //       title:
+                        //           p
+                        //               .participant!
+                        //               .videoTrackPublications
+                        //               .first
+                        //               .subscribed
+                        //           ? context.local.unsubscribe_video
+                        //           : context.local.subscribe_video,
+                        //       icon: Icon(
+                        //         p
+                        //                 .participant!
+                        //                 .videoTrackPublications
+                        //                 .first
+                        //                 .subscribed
+                        //             ? Icons.no_photography_rounded
+                        //             : Icons.camera_alt,
+                        //       ),
+                        //       onTap: () {
+                        //         widget.onTapParticipantVideoLocalAction.call(
+                        //           p.participant,
+                        //         );
+                        //       },
+                        //     ),
+                        //   if (p.participant!.videoTrackPublications.isNotEmpty)
+                        //     OverlayActions(
+                        //       title: context.local.remote_mute_video,
+                        //       icon: Icon(
+                        //         Icons.close,
+                        //         color: context.colors.notificationError,
+                        //       ),
+                        //       onTap: () {
+                        //         widget.onTapParticipantVideoRemoteAction?.call(
+                        //           p.participant,
+                        //         );
+                        //       },
+                        //     ),
+                        //   if (p.participant!.audioTrackPublications.isNotEmpty)
+                        //     OverlayActions(
+                        //       title: context.local.remote_mute_audio,
+                        //       icon: Icon(
+                        //         Icons.close,
+                        //         color: context.colors.notificationError,
+                        //       ),
+                        //       onTap: () {
+                        //         widget.onTapParticipantAudioRemoteAction?.call(
+                        //           p.participant,
+                        //         );
+                        //       },
+                        //     ),
+                        // ],
                         if (widget.isHost) ...[
-                          OverlayActions(
-                            title: context.local.force_mute,
-                            icon: const Icon(Icons.mic_off),
-                            onTap: () {
-                              LocalToast.showToastification(
-                                context,
-                                'TODO',
-                                context.local.force_mute_participant(p.name),
-                              );
-                            },
-                          ),
-                          OverlayActions(
-                            title: context.local.force_disable_camera,
-                            icon: const Icon(Icons.no_photography_rounded),
-                            onTap: () {
-                              LocalToast.showToastification(
-                                context,
-                                'TODO',
-                                context.local.force_disable_camera_participant(
-                                  p.name,
-                                ),
-                              );
-                            },
-                          ),
+                          // OverlayActions(
+                          //   title: context.local.force_mute,
+                          //   icon: const Icon(Icons.mic_off),
+                          //   onTap: () {
+                          //     LocalToast.showToastification(
+                          //       context,
+                          //       'TODO',
+                          //       context.local.force_mute_participant(p.name),
+                          //     );
+                          //   },
+                          // ),
+                          // OverlayActions(
+                          //   title: context.local.force_disable_camera,
+                          //   icon: const Icon(Icons.no_photography_rounded),
+                          //   onTap: () {
+                          //     LocalToast.showToastification(
+                          //       context,
+                          //       'TODO',
+                          //       context.local.force_disable_camera_participant(
+                          //         p.name,
+                          //       ),
+                          //     );
+                          //   },
+                          // ),
                           OverlayActions(
                             title: context.local.kick_out,
                             icon: Icon(
