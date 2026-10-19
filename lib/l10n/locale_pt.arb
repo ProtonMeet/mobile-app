@@ -34,7 +34,7 @@
   "@desktop_login_open_browser_again": {
     "description": "Re-opens the desktop sign-in page in the system browser"
   },
-  "desktop_login_complete_in_browser": "Complete sign-in in your browser, then return to Meet.",
+  "desktop_login_complete_in_browser": "Faça o acesso completo no seu navegador e, em seguida, retorne ao Meet.",
   "@desktop_login_complete_in_browser": {
     "description": "Shown while polling for session after user signs in via external browser"
   },
@@ -71,7 +71,7 @@
   "user_name": "Nome de usuário",
   "account": "Conta",
   "password": "Senha",
-  "session_expired_content": "For your security, your session timed out. Sign in again to continue managing your meetings.",
+  "session_expired_content": "Para sua segurança, sua sessão foi cronometrada. Entre novamente para continuar gerenciando suas reuniões.",
   "session_expired_title": "Sessão expirada!",
   "session_expired_continue_without_signing_in": "Continuar sem iniciar sessão",
   "@session_expired_continue_without_signing_in": {
@@ -137,7 +137,7 @@
   "@token_is_expired_title": {
     "description": "Title when the MLS session token has expired"
   },
-  "token_is_expired_description": "Your connection expired before you could join. Tap Close and join the meeting again.",
+  "token_is_expired_description": "Sua conexão expirou antes que você pudesse participar. Toque em Fechar e participar da reunião novamente.",
   "@token_is_expired_description": {
     "description": "Description when the MLS session token has expired"
   },
@@ -157,11 +157,11 @@
   "@waiting_room_setting_off_description": {
     "description": "Waiting room switch description when disabled in meeting settings"
   },
-  "waiting_room_enabled_notification": "Enabled waiting room, participants join after you approve them.",
+  "waiting_room_enabled_notification": "Na sala de espera habilitada, os participantes se juntam após aprová-los.",
   "@waiting_room_enabled_notification": {
     "description": "Global notification when the host enables waiting room in meeting settings"
   },
-  "waiting_room_disabled_notification": "Disabled waiting room, anyone with the link can join.",
+  "waiting_room_disabled_notification": "Sala de espera para deficientes, qualquer pessoa com o link pode participar.",
   "@waiting_room_disabled_notification": {
     "description": "Global notification when the host disables waiting room in meeting settings"
   },
@@ -169,7 +169,7 @@
   "@allow_live_captions": {
     "description": "Host toggle that lets participants use live captions"
   },
-  "allow_live_captions_on_description": "Participants can turn live captions on. Turn on your own under Display.",
+  "allow_live_captions_on_description": "Os participantes podem ativar legendas ao vivo. Liga o teu próprio em Expositor.",
   "@allow_live_captions_on_description": {
     "description": "Live captions availability switch description when enabled for participants"
   },
@@ -257,15 +257,15 @@
   "@waiting_room_host_not_started_title": {
     "description": "Title when guest waits for host to start a meeting with waiting room"
   },
-  "waiting_room_host_not_started_description": "You'll join when the host starts the meeting and admits you.",
+  "waiting_room_host_not_started_description": "Você se juntará quando o anfitrião começar a reunião e admitir.",
   "@waiting_room_host_not_started_description": {
     "description": "Description when guest waits for host to start"
   },
-  "waiting_room_awaiting_admission_title": "Waiting for the host to admit you",
+  "waiting_room_awaiting_admission_title": "Esperando o anfitrião admitir você",
   "@waiting_room_awaiting_admission_title": {
     "description": "Title when guest waits for host admission"
   },
-  "waiting_room_awaiting_admission_description": "The host has been notified that you're waiting.",
+  "waiting_room_awaiting_admission_description": "O anfitrião foi notificado de que você está esperando.",
   "@waiting_room_awaiting_admission_description": {
     "description": "Description when guest waits for host admission"
   },
@@ -278,19 +278,19 @@
       }
     }
   },
-  "waiting_room_join_request_rejected": "The host declined your request to join",
+  "waiting_room_join_request_rejected": "O anfitrião recusou o seu pedido para participar",
   "@waiting_room_join_request_rejected": {
     "description": "Global notification when the host rejects a waiting-room join request"
   },
-  "waiting_room_admission_timed_out": "Your request to join timed out. Please try again.",
+  "waiting_room_admission_timed_out": "Seu pedido para participar cronometrado. Por favor, tente de novo.",
   "@waiting_room_admission_timed_out": {
     "description": "Global notification when the guest waiting room admission countdown reaches zero"
   },
-  "waiting_room_host_join_request_notification": "Someone is waiting in the waiting room to join",
+  "waiting_room_host_join_request_notification": "Alguém está esperando na sala de espera para participar",
   "@waiting_room_host_join_request_notification": {
     "description": "Global notification shown to the host when a guest submits a waiting-room join request"
   },
-  "waiting_room_join_request_not_found": "This join request is no longer available. It may have expired or already been handled.",
+  "waiting_room_join_request_not_found": "Este pedido de adesão já não está disponível. Pode ter expirado ou já ter sido tratado.",
   "@waiting_room_join_request_not_found": {
     "description": "Toast shown when the host tries to admit a waiting-room request that is no longer pending"
   },
@@ -306,7 +306,7 @@
   "@participant_list_admit_all": {
     "description": "Button label to admit all waiting room participants"
   },
-  "participant_list_joined_at": "Joined at {time}",
+  "participant_list_joined_at": "Juntou-se ao{time}",
   "@participant_list_joined_at": {
     "description": "Subtitle for a waiting room participant row",
     "placeholders": {
@@ -315,7 +315,7 @@
       }
     }
   },
-  "participant_list_no_waiting_participants": "No one is waiting to join",
+  "participant_list_no_waiting_participants": "Ninguém está esperando para participar",
   "@participant_list_no_waiting_participants": {
     "description": "Empty state when the waiting room participant list is empty"
   },
@@ -340,7 +340,7 @@
   "@notification_permission_settings_title": {
     "description": "Title when notification permission was denied and screen sharing requires it"
   },
-  "notification_permission_settings_message": "Screen sharing requires notification permission so the meeting can stay active in the background.\n\nYou previously denied access. To share your screen, please enable Notifications in your system settings:\n• Open Settings\n• Find this app\n• Allow Notifications",
+  "notification_permission_settings_message": "O compartilhamento de tela requer permissão de notificação para que a reunião possa permanecer ativa em segundo plano.\n\nVocê negou acesso anteriormente. Para compartilhar sua tela, ative Notificações nas configurações do sistema:\n• Configurações Abertas\n• Encontre este aplicativo\n• Permitir Notificações",
   "@notification_permission_settings_message": {
     "description": "Body for notification permission inform sheet shown before screen sharing"
   },
@@ -481,7 +481,7 @@
   "@left_meeting_title": {
     "description": "Title shown in left meeting bottom sheet"
   },
-  "left_meeting_subtitle_guest_free": "Host your own secure meeting. Start a call in Proton Meet and share the link to invite anyone to join. Simple, secure, and free.",
+  "left_meeting_subtitle_guest_free": "Organize sua própria reunião segura. Inicie uma chamada no Proton Meet e compartilhe o link para convidar qualquer pessoa para participar. Simples, seguro e livre.",
   "@left_meeting_subtitle_guest_free": {
     "description": "Subtitle shown for non-paid non-host users after leaving a meeting"
   },
@@ -634,7 +634,7 @@
   "@record_this_meeting": {
     "description": "Title for start recording confirmation dialog"
   },
-  "recording_will_begin_attendees_notified": "Recording will begin and attendees will be notified.",
+  "recording_will_begin_attendees_notified": "A gravação começará e os participantes serão notificados.",
   "@recording_will_begin_attendees_notified": {
     "description": "Message in start recording confirmation dialog"
   },
@@ -662,9 +662,9 @@
   "@failed_to_start_recording": {
     "description": "Error toast when recording could not start"
   },
-  "recording_not_supported": "Meeting recordings aren't supported on this device.",
+  "recording_not_supported": "As gravações de reuniões não são suportadas neste dispositivo.",
   "@recording_not_supported": {},
-  "recording_simulator_not_supported": "Local meeting recording isn't available in the iOS Simulator. Test on a physical iPhone or iPad.",
+  "recording_simulator_not_supported": "A gravação de reuniões locais não está disponível no iOS Simulador. Teste em um iPhone ou iPad físico.",
   "@recording_simulator_not_supported": {
     "description": "Shown when screen recording is unavailable on the platform"
   },
@@ -1187,6 +1187,10 @@
       }
     }
   },
+  "chat_mention_notified_suffix": "Mencionou você",
+  "@chat_mention_notified_suffix": {
+    "description": "Secondary part of the @mention toast title (shown in textWeak after the sender name)"
+  },
   "chat_new_mentions_badge": "{count, plural, =1{1 nova menção} other{{count} novas menções}}",
   "@chat_new_mentions_badge": {
     "description": "Floating badge when new @mentions arrive while scrolled up in chat",
@@ -1619,7 +1623,7 @@
   "@participants_reached_limit_suffix": {
     "description": "Message suffix after the call reached limit message"
   },
-  "no_more_participants_can_join": "Remove a participant or upgrade your plan to invite more people.",
+  "no_more_participants_can_join": "Remova um participante ou atualize seu plano para convidar mais pessoas.",
   "@no_more_participants_can_join": {
     "description": "Message shown when the call has reached the maximum number of participants"
   },
@@ -1715,7 +1719,7 @@
   "@switch_off": {
     "description": "Label when switch off"
   },
-  "schedule_waiting_room_off_hint": "Anyone with the link can join immediately",
+  "schedule_waiting_room_off_hint": "Qualquer pessoa com o link pode participar imediatamente",
   "@schedule_waiting_room_off_hint": {
     "description": "Waiting room disabled option hint"
   },
@@ -2103,23 +2107,23 @@
   "@sign_in_card_title": {
     "description": "Title text for the sign-in card displayed on dashboard"
   },
-  "sign_in_card_description": "Schedule meetings, access your personal room, and create new rooms.",
+  "sign_in_card_description": "Programe reuniões, acesse sua sala pessoal e crie novas salas.",
   "@sign_in_card_description": {
     "description": "Description text for the sign-in card explaining benefits of signing in"
   },
-  "almost_there_title": "You are almost there",
+  "almost_there_title": "Você está quase lá",
   "@almost_there_title": {
     "description": "Title for the almost there bottom sheet"
   },
-  "almost_there_content_before": "To schedule a meeting, create a free ",
+  "almost_there_content_before": "Para agendar uma reunião, crie um livre ",
   "@almost_there_content_before": {
     "description": "Content before Proton account in almost there bottom sheet (schedule meeting)"
   },
-  "almost_there_content_before_create_room": "To create a room, create a free ",
+  "almost_there_content_before_create_room": "Para criar uma sala, crie um livre ",
   "@almost_there_content_before_create_room": {
     "description": "Content before Proton account in almost there bottom sheet (create room)"
   },
-  "almost_there_content_before_personal_room": "To use your personal meeting room, create a free ",
+  "almost_there_content_before_personal_room": "Para usar sua sala de reuniões pessoal, crie um livre ",
   "@almost_there_content_before_personal_room": {
     "description": "Content before Proton account in almost there bottom sheet (personal meeting room)"
   },
@@ -2127,7 +2131,7 @@
   "@almost_there_proton_account": {
     "description": "Proton account text in almost there bottom sheet"
   },
-  "almost_there_content_after": ". You will return to Proton Meet automatically.",
+  "almost_there_content_after": ". Você retornará ao Proton Meet automaticamente.",
   "@almost_there_content_after": {
     "description": "Content after Proton account in almost there bottom sheet"
   },
@@ -2231,7 +2235,7 @@
   "@record_meeting": {
     "description": "Host toggle that records the meeting"
   },
-  "allow_live_captions_description": "Allow participants to use captions.",
+  "allow_live_captions_description": "Permitir que os participantes usem legendas.",
   "@allow_live_captions_description": {
     "description": "Explanation under the allow live captions toggle"
   },
@@ -2239,7 +2243,7 @@
   "@transcribe_meeting": {
     "description": "Host toggle that creates a meeting transcript"
   },
-  "transcribe_meeting_off_description": "No meeting transcript will be created",
+  "transcribe_meeting_off_description": "Nenhuma transcrição de reunião será criada",
   "@transcribe_meeting_off_description": {
     "description": "Explanation under the transcribe meeting toggle when off"
   },
@@ -2247,11 +2251,11 @@
   "@incoming_video": {
     "description": "Toggle that shows video from other participants"
   },
-  "self_view": "Self view",
+  "self_view": "Auto-visão",
   "@self_view": {
     "description": "Toggle that shows the local camera tile"
   },
-  "picture_in_picture_while_sharing": "Picture-in-picture while sharing",
+  "picture_in_picture_while_sharing": "Imagem-na-imagem enquanto compartilha",
   "@picture_in_picture_while_sharing": {
     "description": "Toggle that keeps a picture-in-picture window during screen share"
   },
@@ -2263,7 +2267,7 @@
   "@pre_rating_sheet_title": {
     "description": "Title on the pre-rating bottom sheet before in-app review"
   },
-  "pre_rating_sheet_subtitle": "We read and appreciate all feedback.",
+  "pre_rating_sheet_subtitle": "Nós lemos e apreciamos todos os comentários.",
   "@pre_rating_sheet_subtitle": {
     "description": "Subtitle on the pre-rating bottom sheet"
   },
@@ -2283,7 +2287,7 @@
   "@iap_native_test_title": {
     "description": "Title for dev sheet that invokes native IAP / plans"
   },
-  "iap_native_test_body": "Uses the native Proton payments stack (same channel as Proton Wallet). Sign in required.",
+  "iap_native_test_body": "Utiliza a pilha de pagamentos Proton nativa (mesmo canal que a Proton Wallet). Entrar necessário.",
   "@iap_native_test_body": {
     "description": "Explains native channel test sheet"
   },
@@ -2295,19 +2299,19 @@
   "@iap_native_test_upgrade": {
     "description": "Button: native.navigation.plan.upgrade"
   },
-  "iap_native_test_sign_in_required": "Sign in with a Proton account to open native payments.",
+  "iap_native_test_sign_in_required": "Entre com uma conta Proton para abrir pagamentos nativos.",
   "@iap_native_test_sign_in_required": {
     "description": "Message shown when sign in is required to open native payments"
   },
-  "in_app_update_downloaded": "The new app version has been downloaded and will be installed automatically.",
+  "in_app_update_downloaded": "A nova versão do aplicativo foi baixada e será instalada automaticamente.",
   "@in_app_update_downloaded": {
     "description": "Notification shown when a Play Store flexible update finished downloading and will be installed"
   },
-  "mobile_upgrade_warning_prefix": "You’re using an older version of the app. Some features may not work as expected. Please ",
+  "mobile_upgrade_warning_prefix": "Você está usando uma versão mais antiga do aplicativo. Algumas funcionalidades podem não funcionar como esperado. Por favor ",
   "@mobile_upgrade_warning_prefix": {
     "description": "Prefix for the outdated mobile client warning shown when joining a meeting"
   },
-  "mobile_upgrade_warning_link": "upgrade to the latest version",
+  "mobile_upgrade_warning_link": "Atualize para a versão mais recente",
   "@mobile_upgrade_warning_link": {
     "description": "Tappable link text in the outdated mobile client warning; opens the app store"
   },
@@ -2319,7 +2323,7 @@
   "@live_captions_modal_title": {
     "description": "Title for first-enable live captions confirmation dialog"
   },
-  "live_captions_modal_message": "To create live captions, the captioning service needs access to the meeting audio. Captions are only visible to you and are not saved.",
+  "live_captions_modal_message": "Para criar legendas ao vivo, o serviço de legenda precisa de acesso ao áudio da reunião. As legendas são visíveis apenas para você e não são salvas.",
   "@live_captions_modal_message": {
     "description": "Body for first-enable live captions confirmation dialog"
   },
@@ -2347,7 +2351,7 @@
   "@live_captions_loading": {
     "description": "Caption bar status while waiting for first segment"
   },
-  "live_captions_ready": "Captions are on",
+  "live_captions_ready": "As legendas estão em",
   "@live_captions_ready": {
     "description": "Caption bar status when agent is ready but no lines yet"
   },
@@ -2355,11 +2359,11 @@
   "@live_captions_failing": {
     "description": "Caption bar status when decrypt pipeline fails"
   },
-  "live_captions_summon_failed": "Couldn't start live captions. Try again later.",
+  "live_captions_summon_failed": "Não consegui começar as legendas ao vivo. Tente novamente mais tarde.",
   "@live_captions_summon_failed": {
     "description": "Toast when the STT agent fails to join within the enable timeout"
   },
-  "live_captions_disabled_by_host": "Host has disabled live captions for this meeting.",
+  "live_captions_disabled_by_host": "O Host desativou legendas ao vivo para esta reunião.",
   "@live_captions_disabled_by_host": {
     "description": "Warning when a participant tries to enable live captions after the host disabled them"
   },
@@ -2371,7 +2375,7 @@
   "@live_captions_agent_name": {
     "description": "Display name for the STT caption agent in participant list"
   },
-  "live_captions_agent_disclaimer": "This system agent creates live captions. It is not a participant and cannot send messages.",
+  "live_captions_agent_disclaimer": "Este agente do sistema cria legendas ao vivo. Não é um participante e não pode enviar mensagens.",
   "@live_captions_agent_disclaimer": {
     "description": "Participant list disclaimer for the STT caption agent"
   },
@@ -2383,11 +2387,11 @@
   "@participant_list_people_section": {
     "description": "Section header for human participants in the participant list"
   },
-  "old_android_sdk_warning_message": "A future Proton Meet update will require Android 9 or later. Please update your device to keep using the app.",
+  "old_android_sdk_warning_message": "Uma futura atualização do Proton Meet exigirá o Android 9 ou posterior. Por favor, atualize o seu dispositivo para continuar usando o aplicativo.",
   "@old_android_sdk_warning_message": {
     "description": "Warning shown on Android 7/8 devices when OldAndroidSdkWarning flag is enabled; informs users that support will be deprecated soon"
   },
-  "old_ios_sdk_warning_message": "A future Proton Meet update will require iOS 17 or later. Please update your device to keep using the app.",
+  "old_ios_sdk_warning_message": "Uma futura atualização do Proton Meet exigirá o iOS 17 ou posterior. Por favor, atualize o seu dispositivo para continuar usando o aplicativo.",
   "@old_ios_sdk_warning_message": {
     "description": "Warning shown on iOS versions below 17 when OldIosSdkWarning flag is enabled; informs users that support will be deprecated soon"
   }
