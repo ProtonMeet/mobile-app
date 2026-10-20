@@ -1,6 +1,6 @@
 [package]
 name = "proton-meet-core"
-version = "1.3.11"
+version = "1.3.12"
 edition = "2024"
 
 [lib]
