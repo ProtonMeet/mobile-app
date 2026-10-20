@@ -1187,6 +1187,10 @@
       }
     }
   },
+  "chat_mention_notified_suffix": "mentioned you",
+  "@chat_mention_notified_suffix": {
+    "description": "Secondary part of the @mention toast title (shown in textWeak after the sender name)"
+  },
   "chat_new_mentions_badge": "{count, plural, =1{1 новае згадванне} few{{count} новыя згадванні} many{{count} новых згадванняў} other{{count} новых згадванняў}}",
   "@chat_new_mentions_badge": {
     "description": "Floating badge when new @mentions arrive while scrolled up in chat",

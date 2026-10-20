@@ -26,15 +26,15 @@
   "report_a_problem": "Сообщить о проблеме",
   "sign_in_to_proton_title": "Войдите в Proton",
   "sign_in_to_proton_subtitle": "Введите данные вашей учетной записи Proton.",
-  "desktop_login_use_browser_for_security_key": "Use browser for security key",
+  "desktop_login_use_browser_for_security_key": "Открыть браузер для работы с ключом WebAuthn",
   "@desktop_login_use_browser_for_security_key": {
     "description": "Opens desktop sign-in in the system browser so USB security keys (WebAuthn) work on macOS"
   },
-  "desktop_login_open_browser_again": "Open browser again",
+  "desktop_login_open_browser_again": "Открыть браузер снова",
   "@desktop_login_open_browser_again": {
     "description": "Re-opens the desktop sign-in page in the system browser"
   },
-  "desktop_login_complete_in_browser": "Complete sign-in in your browser, then return to Meet.",
+  "desktop_login_complete_in_browser": "Выполните вход в браузере, затем вернитесь в приложение Meet",
   "@desktop_login_complete_in_browser": {
     "description": "Shown while polling for session after user signs in via external browser"
   },
@@ -109,35 +109,35 @@
   "@meeting_locked_notification": {
     "description": "Toast notification when meeting is locked by host"
   },
-  "meet_server_version_not_supported_title": "Update required",
+  "meet_server_version_not_supported_title": "Требуется обновление",
   "@meet_server_version_not_supported_title": {
     "description": "Title when the client cannot connect because the meeting server MLS version is unsupported"
   },
-  "meet_server_version_not_supported_description": "Your app version can't connect to this meeting. Please update Proton Meet to continue.",
+  "meet_server_version_not_supported_description": "Ваша версия приложения не может подключиться ко встрече. Пожалуйста, обновите Proton Meet, чтобы продолжить",
   "@meet_server_version_not_supported_description": {
     "description": "Description when the client must be updated to join a meeting"
   },
-  "check_device_clock_title": "Check your device's date and time",
+  "check_device_clock_title": "Проверьте дату и время на устройстве",
   "@check_device_clock_title": {
     "description": "Title when the device clock skew prevents joining a meeting"
   },
-  "check_device_clock_description": "We couldn't connect you to this meeting because your device's date and time are out of sync.\n\nTo fix this:\n• Open your device Settings\n• Turn on Set Automatically for date and time\n• Return to Proton Meet and join the meeting again",
+  "check_device_clock_description": "Мы не можем подключить вам к этой встрече, потому что время на вашем компьютере не совпадает с нашим.",
   "@check_device_clock_description": {
     "description": "Description when the user must fix device clock settings before joining"
   },
-  "token_is_invalid_title": "Unable to join meeting",
+  "token_is_invalid_title": "Не удалось подключиться ко встрече",
   "@token_is_invalid_title": {
     "description": "Title when the MLS session token is invalid"
   },
-  "token_is_invalid_description": "Something went wrong while connecting. Tap Close and join the meeting again.",
+  "token_is_invalid_description": "Что-то пошло не так при подключении. Закройте окно встречи, и попробуйте подключиться снова.",
   "@token_is_invalid_description": {
     "description": "Description when the MLS session token is invalid"
   },
-  "token_is_expired_title": "Connection expired",
+  "token_is_expired_title": "Подключение просрочено",
   "@token_is_expired_title": {
     "description": "Title when the MLS session token has expired"
   },
-  "token_is_expired_description": "Your connection expired before you could join. Tap Close and join the meeting again.",
+  "token_is_expired_description": "Срок подключения истёк да того, как вы смогли подключиться. Закройте окно встречи, и попробуйте подключиться снова.",
   "@token_is_expired_description": {
     "description": "Description when the MLS session token has expired"
   },
@@ -149,31 +149,31 @@
   "picture_in_picture_mode": "Режим «картинка в картинке»",
   "security": "Безопасность",
   "enable_waiting_room": "Включить зал ожидания",
-  "waiting_room_setting_on_description": "Participants join after you approve them",
+  "waiting_room_setting_on_description": "Участники подключаются после вашего одобрения",
   "@waiting_room_setting_on_description": {
     "description": "Waiting room switch description when enabled in meeting settings"
   },
-  "waiting_room_setting_off_description": "Anyone with the link can join",
+  "waiting_room_setting_off_description": "Кто угодно может подключиться с помощью ссылки",
   "@waiting_room_setting_off_description": {
     "description": "Waiting room switch description when disabled in meeting settings"
   },
-  "waiting_room_enabled_notification": "Enabled waiting room, participants join after you approve them.",
+  "waiting_room_enabled_notification": "Включена комната ожидания. Участники подключаются после того, как вы одобрите их.",
   "@waiting_room_enabled_notification": {
     "description": "Global notification when the host enables waiting room in meeting settings"
   },
-  "waiting_room_disabled_notification": "Disabled waiting room, anyone with the link can join.",
+  "waiting_room_disabled_notification": "Комната ожидания отключена, кто угодно со ссылкой может подключиться",
   "@waiting_room_disabled_notification": {
     "description": "Global notification when the host disables waiting room in meeting settings"
   },
-  "allow_live_captions": "Allow live captions",
+  "allow_live_captions": "Разрешить субтитры в реальном времени",
   "@allow_live_captions": {
     "description": "Host toggle that lets participants use live captions"
   },
-  "allow_live_captions_on_description": "Participants can turn live captions on. Turn on your own under Display.",
+  "allow_live_captions_on_description": "Участники могут включить субтитры в реальном времени. Включите для себя под Дисплеем.",
   "@allow_live_captions_on_description": {
     "description": "Live captions availability switch description when enabled for participants"
   },
-  "allow_live_captions_off_description": "Participants can't use live captions",
+  "allow_live_captions_off_description": "Участники не могут использовать субтитры в реальном времени",
   "@allow_live_captions_off_description": {
     "description": "Live captions availability switch description when disabled for participants"
   },
@@ -185,18 +185,18 @@
   "meeting": "Встреча",
   "show_meeting_timer": "Показать таймер встречи",
   "unsubscribe_video_by_default": "Отключить входящее видео",
-  "camera_background_blur": "Background blur",
-  "virtual_backgrounds_title": "Virtual backgrounds",
+  "camera_background_blur": "Размытие фона",
+  "virtual_backgrounds_title": "Виртуальные фоны",
   "@virtual_backgrounds_title": {
     "description": "Title for virtual backgrounds in meeting settings"
   },
-  "backgrounds_title": "Backgrounds",
+  "backgrounds_title": "Фоны",
   "@backgrounds_title": {
     "description": "Title for backgrounds dialog"
   },
-  "virtual_background_none": "None",
-  "virtual_background_custom": "Custom",
-  "audio_noise_cancellation": "Noise cancellation",
+  "virtual_background_none": "Ничего",
+  "virtual_background_custom": "Своё",
+  "audio_noise_cancellation": "Подавление шума",
   "dark_mode": "Тёмная тема",
   "show_connection_indicator": "Показать индикатор подключения",
   "desktop_notifications": "Уведомления на рабочем столе",
@@ -245,31 +245,31 @@
   "enter_display_name": "Введите ваше имя",
   "display_name_required": "Требуется указать ваше имя",
   "remember_display_name_on_device": "Запомнить моё имя на этом устройстве для будущих встреч",
-  "use_this_name_next_time": "Use this name next time",
+  "use_this_name_next_time": "Использовать это имя в следующий раз",
   "@use_this_name_next_time": {
     "description": "Toggle label on pre-join screen to remember display name"
   },
-  "prejoin_meeting_has_waiting_room": "This meeting has a waiting room",
+  "prejoin_meeting_has_waiting_room": "В этой встрече есть комната ожидания",
   "@prejoin_meeting_has_waiting_room": {
     "description": "Informational message on pre-join when waiting room is enabled"
   },
-  "waiting_room_host_not_started_title": "Waiting for the host to start",
+  "waiting_room_host_not_started_title": "Ожидание, пока владелец запустит встречу",
   "@waiting_room_host_not_started_title": {
     "description": "Title when guest waits for host to start a meeting with waiting room"
   },
-  "waiting_room_host_not_started_description": "You'll join when the host starts the meeting and admits you.",
+  "waiting_room_host_not_started_description": "Вы присоединитесь, когда владелец запустит встречу и примет вас",
   "@waiting_room_host_not_started_description": {
     "description": "Description when guest waits for host to start"
   },
-  "waiting_room_awaiting_admission_title": "Waiting for the host to admit you",
+  "waiting_room_awaiting_admission_title": "Ожидание, пока владелец примет вас",
   "@waiting_room_awaiting_admission_title": {
     "description": "Title when guest waits for host admission"
   },
-  "waiting_room_awaiting_admission_description": "The host has been notified that you're waiting.",
+  "waiting_room_awaiting_admission_description": "Владелец был уведомлен, что вы ожидаете.",
   "@waiting_room_awaiting_admission_description": {
     "description": "Description when guest waits for host admission"
   },
-  "waiting_room_expires_in": "Expires in {time}",
+  "waiting_room_expires_in": "Оставшееся время: {time}",
   "@waiting_room_expires_in": {
     "description": "Countdown pill label while waiting for admission",
     "placeholders": {
@@ -278,35 +278,35 @@
       }
     }
   },
-  "waiting_room_join_request_rejected": "The host declined your request to join",
+  "waiting_room_join_request_rejected": "Владелец отклонил ваш запрос на подключение",
   "@waiting_room_join_request_rejected": {
     "description": "Global notification when the host rejects a waiting-room join request"
   },
-  "waiting_room_admission_timed_out": "Your request to join timed out. Please try again.",
+  "waiting_room_admission_timed_out": "Время вашего запроса истекло. Можете попробовать ещё раз.",
   "@waiting_room_admission_timed_out": {
     "description": "Global notification when the guest waiting room admission countdown reaches zero"
   },
-  "waiting_room_host_join_request_notification": "Someone is waiting in the waiting room to join",
+  "waiting_room_host_join_request_notification": "Кто-то в комнате ожидания ждёт подключения",
   "@waiting_room_host_join_request_notification": {
     "description": "Global notification shown to the host when a guest submits a waiting-room join request"
   },
-  "waiting_room_join_request_not_found": "This join request is no longer available. It may have expired or already been handled.",
+  "waiting_room_join_request_not_found": "Запрос на подключение более недоступен. Либо он истёк, либо уже обработан.",
   "@waiting_room_join_request_not_found": {
     "description": "Toast shown when the host tries to admit a waiting-room request that is no longer pending"
   },
-  "participant_list_waiting_room_tab": "Waiting Room",
+  "participant_list_waiting_room_tab": "Комната ожидания",
   "@participant_list_waiting_room_tab": {
     "description": "Tab label for waiting room participants in host participant list"
   },
-  "participant_list_all_participants_tab": "All participants",
+  "participant_list_all_participants_tab": "Все участники",
   "@participant_list_all_participants_tab": {
     "description": "Tab label for in-meeting participants in host participant list"
   },
-  "participant_list_admit_all": "Admit all",
+  "participant_list_admit_all": "Принять всех",
   "@participant_list_admit_all": {
     "description": "Button label to admit all waiting room participants"
   },
-  "participant_list_joined_at": "Joined at {time}",
+  "participant_list_joined_at": "Подключился {time}",
   "@participant_list_joined_at": {
     "description": "Subtitle for a waiting room participant row",
     "placeholders": {
@@ -315,12 +315,12 @@
       }
     }
   },
-  "participant_list_no_waiting_participants": "No one is waiting to join",
+  "participant_list_no_waiting_participants": "Нет никого в комнате ожидания",
   "@participant_list_no_waiting_participants": {
     "description": "Empty state when the waiting room participant list is empty"
   },
   "join_meeting_button": "Присоединиться к встрече",
-  "create_meeting_button": "Create",
+  "create_meeting_button": "Создать",
   "import_meeting_button": "Импортировать встречу",
   "import_meeting_title": "Импортировать встречу",
   "import_meeting_hint_text": "Введите ссылку на встречу",
@@ -1186,6 +1186,10 @@
         "type": "String"
       }
     }
+  },
+  "chat_mention_notified_suffix": "mentioned you",
+  "@chat_mention_notified_suffix": {
+    "description": "Secondary part of the @mention toast title (shown in textWeak after the sender name)"
   },
   "chat_new_mentions_badge": "{count, plural, =1{1 new mention} few{{count} new mentions} many{{count} new mentions} other{{count} new mentions}}",
   "@chat_new_mentions_badge": {

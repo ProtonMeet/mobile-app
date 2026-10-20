@@ -642,11 +642,11 @@
   "@start_recording": {
     "description": "Button to start local meeting recording"
   },
-  "stop_recording": "Aturar l'enregistrament",
+  "stop_recording": "Atura l'enregistrament",
   "@stop_recording": {
     "description": "Button to stop local meeting recording"
   },
-  "stop_recording_title": "Aturar l'enregistrament",
+  "stop_recording_title": "Atura l'enregistrament",
   "@stop_recording_title": {
     "description": "Title for stop recording confirmation dialog"
   },
@@ -1186,6 +1186,10 @@
         "type": "String"
       }
     }
+  },
+  "chat_mention_notified_suffix": "us han esmentat",
+  "@chat_mention_notified_suffix": {
+    "description": "Secondary part of the @mention toast title (shown in textWeak after the sender name)"
   },
   "chat_new_mentions_badge": "{count, plural, =1{1 nova menció} other{{count} noves mencions}}",
   "@chat_new_mentions_badge": {
@@ -2227,7 +2231,7 @@
   "@settings_section_display": {
     "description": "Section header for display in-call settings"
   },
-  "record_meeting": "Enregistrar la reunió",
+  "record_meeting": "Enregistra la reunió",
   "@record_meeting": {
     "description": "Host toggle that records the meeting"
   },

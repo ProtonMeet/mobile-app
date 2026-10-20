@@ -1187,6 +1187,10 @@
       }
     }
   },
+  "chat_mention_notified_suffix": "vás zmínil(a)",
+  "@chat_mention_notified_suffix": {
+    "description": "Secondary part of the @mention toast title (shown in textWeak after the sender name)"
+  },
   "chat_new_mentions_badge": "{count, plural, =1{1 nová zmínka} few{{count} nové zmínky} many{{count} nových zmínek} other{{count} nových zmínek}}",
   "@chat_new_mentions_badge": {
     "description": "Floating badge when new @mentions arrive while scrolled up in chat",
